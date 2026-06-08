@@ -10,7 +10,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormField } from "./FormField";
 
 export interface SearchableSelectOption {
   value: string;
@@ -80,14 +80,8 @@ export function SearchableSelect({
     setSearchQuery("");
   };
 
-  return (
-    <div className={cn("space-y-2", className)}>
-      {label && (
-        <Label>
-          {label}
-          {required && <span className="text-destructive ml-1">*</span>}
-        </Label>
-      )}
+  const control = (
+    <div className={cn("min-w-0", !label && className)}>
       <div className="flex gap-2 min-w-0">
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
@@ -183,5 +177,15 @@ export function SearchableSelect({
         {addButton && <div className="flex-shrink-0">{addButton}</div>}
       </div>
     </div>
+  );
+
+  if (!label) {
+    return control;
+  }
+
+  return (
+    <FormField label={label} required={required} className={className}>
+      {control}
+    </FormField>
   );
 }

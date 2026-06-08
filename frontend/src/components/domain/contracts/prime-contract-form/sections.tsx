@@ -4,7 +4,7 @@ import * as React from "react";
 
 import { FileUploadField } from "@/components/forms/FileUploadField";
 import { DateField } from "@/components/forms/DateField";
-import { FormGrid, FormGridRow } from "@/components/forms";
+import { FormGrid } from "@/components/forms";
 import { FormSection } from "@/components/forms/FormSection";
 import { MultiSelectField } from "@/components/forms/MultiSelectField";
 import { NumberField } from "@/components/forms/NumberField";
@@ -24,13 +24,6 @@ import {
 } from "@/components/ui/unified-modal";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { HelpCircle } from "lucide-react";
 
 import type { ContractFormData } from "./types";
 
@@ -60,120 +53,98 @@ export function PrimeContractGeneralInfoSection({
       title="General Information"
       description="Set the core contract details and assign primary companies."
     >
-      <FormGrid columns={12} className="gap-y-8">
-        <FormGridRow>
-          <div className="col-span-12 md:col-span-4">
-            <TextField
-              label="Contract #"
-              value={formData.number || ""}
-              onChange={(e) => {
-                onClearValidationError("number");
-                onUpdateFormData({ number: e.target.value });
-              }}
-              placeholder="Enter contract number"
-              error={validationErrors.number}
-              required
-            />
-          </div>
-          <div className="col-span-12 md:col-span-4">
-            <SearchableSelect
-              label="Owner/Client"
-              options={companyOptions}
-              value={formData.ownerCompanyId}
-              onValueChange={(value) =>
-                onUpdateFormData({
-                  ownerCompanyId: value,
-                  contractCompanyId: value,
-                })
+      <FormGrid columns={2} className="gap-y-8">
+        <TextField
+          label="Contract #"
+          value={formData.number || ""}
+          onChange={(e) => {
+            onClearValidationError("number");
+            onUpdateFormData({ number: e.target.value });
+          }}
+          placeholder="Enter contract number"
+          error={validationErrors.number}
+          required
+        />
+        <SearchableSelect
+          label="Owner/Client"
+          options={companyOptions}
+          value={formData.ownerCompanyId}
+          onValueChange={(value) =>
+            onUpdateFormData({
+              ownerCompanyId: value,
+              contractCompanyId: value,
+            })
+          }
+          placeholder="Select company"
+          searchPlaceholder="Search"
+          disabled={companiesLoading}
+          triggerTestId="owner-client-select"
+          optionTestIdPrefix="owner-client-option"
+          onCreateNew={onCreateCompany}
+          createNewLabel="+ Create New Company"
+        />
+        <TextField
+          label="Title"
+          value={formData.title || ""}
+          onChange={(e) => {
+            onClearValidationError("title");
+            onUpdateFormData({ title: e.target.value });
+          }}
+          placeholder="Enter title"
+          error={validationErrors.title}
+          required
+        />
+        <SelectField
+          label="Status"
+          options={contractStatuses}
+          value={formData.status || "draft"}
+          onValueChange={(value) => onUpdateFormData({ status: value })}
+          required
+        />
+        <SearchableSelect
+          label="Contractor"
+          options={companyOptions}
+          value={formData.contractorId}
+          onValueChange={(value) => onUpdateFormData({ contractorId: value })}
+          placeholder="Select contractor"
+          searchPlaceholder="Search"
+          disabled={companiesLoading}
+        />
+        <SearchableSelect
+          label="Architect/Engineer"
+          options={companyOptions}
+          value={formData.architectEngineerId}
+          onValueChange={(value) => onUpdateFormData({ architectEngineerId: value })}
+          placeholder="Select architect/engineer"
+          searchPlaceholder="Search"
+          disabled={companiesLoading}
+        />
+        <NumberField
+          label="Default Retainage"
+          value={formData.defaultRetainage}
+          onChange={(value) => onUpdateFormData({ defaultRetainage: value })}
+          suffix="%"
+          placeholder=""
+          min={0}
+          max={100}
+        />
+        <div className="flex items-start gap-x-2">
+          <Label className="w-28 shrink-0 pt-2 text-sm font-medium text-foreground">
+            Executed
+          </Label>
+          <div className="flex h-10 min-w-0 flex-1 items-center">
+            <Checkbox
+              id="executed"
+              checked={formData.executed || false}
+              onCheckedChange={(checked) =>
+                onUpdateFormData({ executed: checked === true })
               }
-              placeholder="Select company"
-              searchPlaceholder="Search"
-              disabled={companiesLoading}
-              triggerTestId="owner-client-select"
-              optionTestIdPrefix="owner-client-option"
-              onCreateNew={onCreateCompany}
-              createNewLabel="+ Create New Company"
             />
+            <Label htmlFor="executed" className="ml-2 text-sm font-normal">
+              Contract is executed
+            </Label>
           </div>
-          <div className="col-span-12 md:col-span-4">
-            <TextField
-              label="Title"
-              value={formData.title || ""}
-              onChange={(e) => {
-                onClearValidationError("title");
-                onUpdateFormData({ title: e.target.value });
-              }}
-              placeholder="Enter title"
-              error={validationErrors.title}
-              required
-            />
-          </div>
-        </FormGridRow>
-
-        <FormGridRow>
-          <div className="col-span-12 md:col-span-4">
-            <SelectField
-              label="Status"
-              options={contractStatuses}
-              value={formData.status || "draft"}
-              onValueChange={(value) => onUpdateFormData({ status: value })}
-              required
-            />
-          </div>
-          <div className="col-span-12 md:col-span-4">
-            <SearchableSelect
-              label="Contractor"
-              options={companyOptions}
-              value={formData.contractorId}
-              onValueChange={(value) => onUpdateFormData({ contractorId: value })}
-              placeholder="Select contractor"
-              searchPlaceholder="Search"
-              disabled={companiesLoading}
-            />
-          </div>
-          <div className="col-span-12 md:col-span-4">
-            <SearchableSelect
-              label="Architect/Engineer"
-              options={companyOptions}
-              value={formData.architectEngineerId}
-              onValueChange={(value) => onUpdateFormData({ architectEngineerId: value })}
-              placeholder="Select architect/engineer"
-              searchPlaceholder="Search"
-              disabled={companiesLoading}
-            />
-          </div>
-        </FormGridRow>
-
-        <FormGridRow align="center">
-          <div className="col-span-12 md:col-span-4">
-            <NumberField
-              label="Default Retainage"
-              value={formData.defaultRetainage}
-              onChange={(value) => onUpdateFormData({ defaultRetainage: value })}
-              suffix="%"
-              placeholder=""
-              min={0}
-              max={100}
-            />
-          </div>
-          <div className="col-span-12 md:col-span-4">
-            <div className="space-y-2">
-              <Label>Executed</Label>
-              <div className="flex h-10 items-center">
-                <Checkbox
-                  id="executed"
-                  checked={formData.executed || false}
-                  onCheckedChange={(checked) =>
-                    onUpdateFormData({ executed: checked === true })
-                  }
-                />
-                <Label htmlFor="executed" className="ml-2 text-sm font-normal">
-                  Contract is executed
-                </Label>
-              </div>
-            </div>
-          </div>
-        </FormGridRow>
+        </div>
       </FormGrid>
     </FormSection>
   );
@@ -191,75 +162,44 @@ export function PrimeContractDatesSection({
       title="Contract Dates"
       description="Track key schedule and execution milestones for this contract."
     >
-      <FormGrid columns={12} className="gap-y-8">
-        <FormGridRow>
-          <div className="col-span-12 md:col-span-4">
-            <DateField
-              label="Start Date"
-              value={formData.startDate}
-              onChange={(date) => onUpdateFormData({ startDate: date })}
-              placeholder="mm / dd / yyyy"
-            />
-          </div>
-          <div className="col-span-12 md:col-span-4">
-            <DateField
-              label="Estimated Completion Date"
-              value={formData.estimatedCompletionDate}
-              onChange={(date) => onUpdateFormData({ estimatedCompletionDate: date })}
-              placeholder="mm / dd / yyyy"
-            />
-          </div>
-          <div className="col-span-12 md:col-span-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-1">
-                <Label>Substantial Completion Date</Label>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Date when work is sufficiently complete for its intended use</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <DateField
-                label=""
-                value={formData.substantialCompletionDate}
-                onChange={(date) => onUpdateFormData({ substantialCompletionDate: date })}
-                placeholder="mm / dd / yyyy"
-              />
-            </div>
-          </div>
-        </FormGridRow>
-
-        <FormGridRow>
-          <div className="col-span-12 md:col-span-4">
-            <DateField
-              label="Actual Completion Date"
-              value={formData.actualCompletionDate}
-              onChange={(date) => onUpdateFormData({ actualCompletionDate: date })}
-              placeholder="mm / dd / yyyy"
-            />
-          </div>
-          <div className="col-span-12 md:col-span-4">
-            <DateField
-              label="Signed Contract Received Date"
-              value={formData.signedContractReceivedDate}
-              onChange={(date) => onUpdateFormData({ signedContractReceivedDate: date })}
-              placeholder="mm / dd / yyyy"
-            />
-          </div>
-          <div className="col-span-12 md:col-span-4">
-            <DateField
-              label="Contract Termination Date"
-              value={formData.contractTerminationDate}
-              onChange={(date) => onUpdateFormData({ contractTerminationDate: date })}
-              placeholder="mm / dd / yyyy"
-            />
-          </div>
-        </FormGridRow>
+      <FormGrid columns={2} className="gap-y-8">
+        <DateField
+          label="Start Date"
+          value={formData.startDate}
+          onChange={(date) => onUpdateFormData({ startDate: date })}
+          placeholder="mm / dd / yyyy"
+        />
+        <DateField
+          label="Estimated Completion Date"
+          value={formData.estimatedCompletionDate}
+          onChange={(date) => onUpdateFormData({ estimatedCompletionDate: date })}
+          placeholder="mm / dd / yyyy"
+        />
+        <DateField
+          label="Substantial Completion Date"
+          hint="Date when work is sufficiently complete for its intended use."
+          value={formData.substantialCompletionDate}
+          onChange={(date) => onUpdateFormData({ substantialCompletionDate: date })}
+          placeholder="mm / dd / yyyy"
+        />
+        <DateField
+          label="Actual Completion Date"
+          value={formData.actualCompletionDate}
+          onChange={(date) => onUpdateFormData({ actualCompletionDate: date })}
+          placeholder="mm / dd / yyyy"
+        />
+        <DateField
+          label="Signed Contract Received Date"
+          value={formData.signedContractReceivedDate}
+          onChange={(date) => onUpdateFormData({ signedContractReceivedDate: date })}
+          placeholder="mm / dd / yyyy"
+        />
+        <DateField
+          label="Contract Termination Date"
+          value={formData.contractTerminationDate}
+          onChange={(date) => onUpdateFormData({ contractTerminationDate: date })}
+          placeholder="mm / dd / yyyy"
+        />
       </FormGrid>
     </FormSection>
   );
