@@ -1,120 +1,90 @@
 "use client";
 
-import { MessageSquare, MessageSquarePlus, Video } from "lucide-react";
+import * as React from "react";
+import { MessageSquare, MessageSquarePlus, MessagesSquare } from "lucide-react";
 import {
   VeltCommentTool,
-  VeltRecorderTool,
   VeltSidebarButton,
   useCommentModeState,
 } from "@veltdev/react";
-
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
-function HeaderIconButton({
-  active,
-  children,
-  label,
-}: {
-  active?: boolean;
-  children: React.ReactNode;
-  label: string;
-}) {
+export function CommentsSidebarButton() {
+  const [open, setOpen] = React.useState(false);
+  const commentModeActive = useCommentModeState();
+
+  // Close the popover automatically when comment mode activates
+  React.useEffect(() => {
+    if (commentModeActive) setOpen(false);
+  }, [commentModeActive]);
+
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
         <Button
           type="button"
           variant="ghost"
           size="icon-sm"
-          aria-label={label}
-          aria-pressed={active ? "true" : "false"}
+          aria-label="Comments"
+          aria-pressed={commentModeActive ? "true" : "false"}
           className={cn(
             "h-8 w-8",
-            active
+            commentModeActive
               ? "bg-primary/10 text-primary hover:bg-primary/20"
               : "text-muted-foreground hover:bg-accent hover:text-foreground",
           )}
         >
-          {children}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  );
-}
-
-function HeaderIconButtonShell({
-  active,
-  children,
-  label,
-}: {
-  active?: boolean;
-  children: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span
-          aria-label={label}
-          aria-pressed={active ? "true" : "false"}
-          className={cn(
-            buttonVariants({ variant: "ghost", size: "icon-sm" }),
-            "h-8 w-8",
-            active
-              ? "bg-primary/10 text-primary hover:bg-primary/20"
-              : "text-muted-foreground hover:bg-accent hover:text-foreground",
-          )}
-        >
-          {children}
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  );
-}
-
-export function CommentsSidebarButton() {
-  const commentModeActive = useCommentModeState();
-
-  return (
-    <div className="flex items-center gap-1">
-      <VeltCommentTool
-        sourceId="site-header-comment-mode"
-        targetElementId="app-main-content"
-        shadowDom={false}
-      >
-        <HeaderIconButtonShell
-          active={commentModeActive}
-          label={commentModeActive ? "Exit comment mode" : "Comment mode"}
-        >
-          <MessageSquarePlus className="h-4 w-4" />
-        </HeaderIconButtonShell>
-      </VeltCommentTool>
-
-      <VeltRecorderTool
-        type="all"
-        buttonLabel="Record comment"
-        shadowDom={false}
-        recordingCountdown
-        maxLength={120}
-      >
-        <HeaderIconButton label="Record comment">
-          <Video className="h-4 w-4" />
-        </HeaderIconButton>
-      </VeltRecorderTool>
-
-      <VeltSidebarButton shadowDom={false}>
-        <HeaderIconButtonShell label="Comments">
           <MessageSquare className="h-4 w-4" />
-        </HeaderIconButtonShell>
-      </VeltSidebarButton>
-    </div>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="end"
+        sideOffset={6}
+        className="w-52 p-1 shadow-sm"
+      >
+        <VeltCommentTool
+          sourceId="site-header-comment-mode"
+          targetElementId="app-main-content"
+          shadowDom={false}
+        >
+          <span
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "sm" }),
+              "w-full cursor-pointer justify-start gap-2.5 px-2.5 font-normal",
+              commentModeActive
+                ? "text-primary"
+                : "text-foreground",
+            )}
+            aria-label="Leave a comment"
+          >
+            <MessageSquarePlus className="h-4 w-4 shrink-0" />
+            Leave a comment
+          </span>
+        </VeltCommentTool>
+
+        <div className="my-1 h-px bg-border/50" />
+
+        <div onClick={() => setOpen(false)}>
+          <VeltSidebarButton shadowDom={false}>
+            <span
+              className={cn(
+                buttonVariants({ variant: "ghost", size: "sm" }),
+                "w-full cursor-pointer justify-start gap-2.5 px-2.5 font-normal text-foreground",
+              )}
+              aria-label="All comments"
+            >
+              <MessagesSquare className="h-4 w-4 shrink-0" />
+              All comments
+            </span>
+          </VeltSidebarButton>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

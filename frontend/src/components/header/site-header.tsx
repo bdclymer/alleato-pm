@@ -134,13 +134,10 @@ export function SiteHeader() {
   const router = useRouter();
   const pathname = usePathname()!;
   const nav = useHeaderNav();
-  const { permissions, userType, isAppAdmin } = useProjectPermissions(
+  const { permissions, userType, isAppAdmin, isDeveloper } = useProjectPermissions(
     nav.projectId,
   );
   const [user, setUser] = React.useState<User | null>(null);
-  const isDeveloper =
-    (user?.app_metadata as Record<string, unknown> | undefined)
-      ?.is_developer === true;
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
   const [userManagementBreadcrumbTitle, setUserManagementBreadcrumbTitle] =
     React.useState<string | null>(null);
