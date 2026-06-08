@@ -291,7 +291,7 @@ def rewrite_action_items(
                         {"role": "user", "content": user_prompt},
                     ],
                     temperature=0,
-                    max_tokens=2400,
+                    max_completion_tokens=2400,
                     response_format={"type": "json_object"},
                 ),
                 provider_name=provider["name"],

@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
-from backend.src.services.supabase_helpers import get_supabase_client, SupabaseRagStore
+from backend.src.services.supabase_helpers import get_supabase_client, get_rag_read_client, SupabaseRagStore
 from backend.src.services.ingestion.fireflies_pipeline import FirefliesIngestionPipeline
 
 
@@ -58,9 +58,10 @@ def get_meetings_needing_chunks(
     limit: Optional[int] = None,
 ) -> List[dict]:
     """Return document_metadata rows for Fireflies meetings with no transcript chunks."""
-    # Meetings that already have transcript chunks
+    # document_chunks lives in the AI Database (RAG project), not the PM APP
+    rag_client = get_rag_read_client()
     existing_resp = (
-        client.table("document_chunks")
+        rag_client.table("document_chunks")
         .select("document_id")
         .eq("source_type", "meeting_transcript")
         .execute()

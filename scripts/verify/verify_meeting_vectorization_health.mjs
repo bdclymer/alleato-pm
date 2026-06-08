@@ -19,20 +19,35 @@
  * Run:  npm run rag:verify:meetings
  */
 
-import "dotenv/config";
+import dotenv from "dotenv";
 import postgres from "postgres";
+
+dotenv.config({ path: ".env" });
+dotenv.config({ path: "frontend/.env.local", override: true });
 
 const databaseUrl = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
 const ragDatabaseUrl = process.env.RAG_DATABASE_URL;
+const appRestUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const appRestKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.SUPABASE_SERVICE_KEY ||
+  process.env.SUPABASE_SECRET_KEY;
+const ragRestUrl = process.env.RAG_SUPABASE_URL;
+const ragRestKey = process.env.RAG_SUPABASE_SERVICE_ROLE_KEY;
 const aiGatewayKey = process.env.AI_GATEWAY_API_KEY;
 const openAiKey = process.env.OPENAI_API_KEY;
+const directSqlMode = process.env.MEETING_VERIFY_DIRECT_SQL === "true";
 
-if (!databaseUrl) {
+if (directSqlMode && !databaseUrl) {
   console.error("[FATAL] DATABASE_URL or SUPABASE_DB_URL is required.");
   process.exit(1);
 }
-if (!ragDatabaseUrl) {
+if (directSqlMode && !ragDatabaseUrl) {
   console.error("[FATAL] RAG_DATABASE_URL is required. document_chunks and fireflies_ingestion_jobs live in the AI/RAG database.");
+  process.exit(1);
+}
+if (!directSqlMode && (!appRestUrl || !appRestKey || !ragRestUrl || !ragRestKey)) {
+  console.error("[FATAL] Supabase REST env is required: SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY and RAG_SUPABASE_URL/RAG_SUPABASE_SERVICE_ROLE_KEY.");
   process.exit(1);
 }
 
@@ -50,9 +65,6 @@ const EXCLUDED_DOCUMENT_STATUSES = [
   "skipped_low_content",
 ];
 
-const appSql = postgres(databaseUrl, { max: 1, ssl: "require" });
-const ragSql = postgres(ragDatabaseUrl, { max: 1, ssl: "require", prepare: false });
-
 const failures = [];
 const warnings = [];
 
@@ -62,6 +74,163 @@ function fail(msg) {
 
 function warn(msg) {
   warnings.push(msg);
+}
+
+function printAndExit() {
+  if (warnings.length > 0) {
+    console.error("\nWARNINGS:");
+    for (const w of warnings) console.error(`   - ${w}`);
+  }
+
+  if (failures.length > 0) {
+    console.error("\nMEETING VECTORIZATION HEALTH: FAIL");
+    console.error("The AI Strategist is degraded or about to be. Fix these now:\n");
+    for (const f of failures) console.error(`   FAIL: ${f}`);
+    console.error("");
+    process.exit(1);
+  }
+
+  console.log("\nMeeting vectorization health: PASS");
+}
+
+function isExcludedMeeting(row) {
+  const value = `${row.title ?? ""} ${row.category ?? ""} ${row.type ?? ""}`.toLowerCase();
+  return value.includes("interview") || value.includes("inteview");
+}
+
+function isNotActionable(row) {
+  return EXCLUDED_DOCUMENT_STATUSES.includes(String(row.status ?? ""));
+}
+
+async function restSelect(baseUrl, key, path, { timeoutMs = 30_000 } = {}) {
+  const res = await fetch(`${baseUrl.replace(/\/$/, "")}/rest/v1/${path}`, {
+    signal: AbortSignal.timeout(timeoutMs),
+    headers: {
+      apikey: key,
+      authorization: `Bearer ${key}`,
+      Prefer: "count=exact",
+    },
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(`${path} returned ${res.status}: ${text.slice(0, 300)}`);
+  }
+  return {
+    data: JSON.parse(text || "[]"),
+    count: Number((res.headers.get("content-range") || "0/0").split("/").pop() || 0),
+  };
+}
+
+async function runRestVerifier() {
+  warn("Using Supabase REST verification. Set MEETING_VERIFY_DIRECT_SQL=true to also exercise direct SQL/RPC probes.");
+
+  const since = new Date(Date.now() - RECENT_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const recentRows = await restSelect(
+    appRestUrl,
+    appRestKey,
+    `document_metadata?select=id,title,type,category,source,status,created_at` +
+      `&created_at=gte.${encodeURIComponent(since)}` +
+      `&source=eq.fireflies&deleted_at=is.null&order=created_at.desc&limit=1000`
+  );
+  const recentMeetings = recentRows.data.filter((row) => !isExcludedMeeting(row) && !isNotActionable(row));
+
+  const chunkRows = [];
+  for (const meeting of recentMeetings) {
+    const chunksForMeeting = await restSelect(
+      ragRestUrl,
+      ragRestKey,
+      `document_chunks?select=chunk_id,source_type` +
+        `&document_id=eq.${encodeURIComponent(meeting.id)}` +
+        `&embedding=not.is.null&limit=1`
+    );
+    chunkRows.push({
+      document_id: meeting.id,
+      embedded_chunk_count: chunksForMeeting.count,
+      embedded_transcript_chunk_count: chunksForMeeting.count,
+    });
+  }
+
+  const chunkByDocumentId = new Map(chunkRows.map((row) => [row.document_id, row]));
+  const recentChunkCoverage = {
+    recent_meetings: recentMeetings.length,
+    recent_meetings_with_embedded_chunks: recentMeetings.filter(
+      (row) => (chunkByDocumentId.get(row.id)?.embedded_chunk_count ?? 0) > 0
+    ).length,
+    recent_meetings_with_embedded_transcript_chunks: recentMeetings.filter(
+      (row) => (chunkByDocumentId.get(row.id)?.embedded_transcript_chunk_count ?? 0) > 0
+    ).length,
+    recent_embedded_chunks: chunkRows.reduce((sum, row) => sum + Number(row.embedded_chunk_count ?? 0), 0),
+  };
+
+  const ratio =
+    recentMeetings.length > 0
+      ? recentChunkCoverage.recent_meetings_with_embedded_chunks / recentMeetings.length
+      : 1;
+  const transcriptRatio =
+    recentMeetings.length > 0
+      ? recentChunkCoverage.recent_meetings_with_embedded_transcript_chunks / recentMeetings.length
+      : 1;
+
+  if (ratio < RECENT_MIN_EMBEDDED_RATIO) {
+    fail(
+      `Only ${recentChunkCoverage.recent_meetings_with_embedded_chunks} of ${recentMeetings.length} ` +
+        `eligible Fireflies meetings from the last ${RECENT_WINDOW_DAYS} days have embedded chunks.`
+    );
+  }
+  if (transcriptRatio < RECENT_MIN_TRANSCRIPT_CHUNK_RATIO) {
+    fail(
+      `Only ${recentChunkCoverage.recent_meetings_with_embedded_transcript_chunks} of ${recentMeetings.length} ` +
+        `eligible Fireflies meetings from the last ${RECENT_WINDOW_DAYS} days have embedded transcript chunks.`
+    );
+  }
+
+  const rawIngestedJobs = await restSelect(
+    ragRestUrl,
+    ragRestKey,
+    `fireflies_ingestion_jobs?select=id&stage=eq.raw_ingested&updated_at=gte.${encodeURIComponent(since)}&limit=1`
+  );
+  const quotaErrorJobs = await restSelect(
+    ragRestUrl,
+    ragRestKey,
+    `fireflies_ingestion_jobs?select=id&stage=eq.error&error_message=ilike.*quota*` +
+      `&updated_at=gte.${encodeURIComponent(since)}&limit=1`
+  );
+  if (rawIngestedJobs.count > 100) {
+    fail(`${rawIngestedJobs.count} Fireflies ingestion jobs are stuck at raw_ingested.`);
+  }
+  if (quotaErrorJobs.count > 0) {
+    fail(`${quotaErrorJobs.count} Fireflies ingestion jobs failed with quota/provider errors.`);
+  }
+
+  const provider = await probeEmbeddingProvider();
+  const result = {
+    mode: "rest",
+    metadata: {
+      total_meetings: recentMeetings.length,
+      latest_meeting_at: recentMeetings[0]?.created_at ?? null,
+    },
+    recent: {
+      recent_meetings: recentMeetings.length,
+      excluded_recent_fireflies: recentRows.data.length - recentMeetings.length,
+    },
+    recentChunkCoverage,
+    pipelineJobs: {
+      raw_ingested_recent: rawIngestedJobs.count,
+      quota_error_recent: quotaErrorJobs.count,
+    },
+    probes: {
+      documentChunkSearch: {
+        skipped: true,
+        reason: "REST mode verifies chunk coverage but does not exercise search_document_chunks RPC",
+      },
+      embeddingProvider: provider,
+    },
+    warnings,
+    failures,
+  };
+
+  console.log(JSON.stringify(result, null, 2));
+  printAndExit();
 }
 
 async function probeEmbeddingProvider() {
@@ -144,6 +313,13 @@ async function probeEmbeddingProvider() {
 
   return { ok: successes.length > 0, providers: successes };
 }
+
+if (!directSqlMode) {
+  await runRestVerifier();
+}
+
+const appSql = postgres(databaseUrl, { max: 1, ssl: "require" });
+const ragSql = postgres(ragDatabaseUrl, { max: 1, ssl: "require", prepare: false });
 
 try {
   await appSql`set statement_timeout = '45s'`;
