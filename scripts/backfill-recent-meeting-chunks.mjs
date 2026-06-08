@@ -38,7 +38,7 @@ if (!aiGatewayKey && !openAiKey) {
 
 const sql = postgres(databaseUrl, { max: 1, ssl: "require" });
 const ragSql = ragWritesEnabled
-  ? postgres(ragDatabaseUrl, { max: 1, ssl: "require" })
+  ? postgres(ragDatabaseUrl, { max: 1, ssl: "require", prepare: false })
   : sql;
 const EMBEDDING_MODEL = "text-embedding-3-large";
 const EMBEDDING_DIMS = 3072;

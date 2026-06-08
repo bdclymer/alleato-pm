@@ -362,29 +362,31 @@ services:
       - key: ALLEATO_RUNTIME_ENV
         value: production
       - key: AI_GATEWAY_REQUIRED
-        value: true
+        value: "true"
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
       # The web service should only serve API traffic. Background sync jobs run
       # as explicit Render cron services so they can be suspended/throttled.
       - key: DISABLE_SCHEDULER
-        value: true
+        value: "true"
       - key: GRAPH_SYNC_ENABLED
-        value: false
+        value: "false"
       - key: INTELLIGENCE_COMPILER_ENABLED
-        value: false
+        value: "false"
       - key: SOURCE_SYNC_HEALTH_RECOMPUTE_ENABLED
-        value: false
+        value: "false"
       - key: FIREFLIES_PIPELINE_BACKLOG_ENABLED
-        value: false
+        value: "false"
       - key: TASK_EXTRACTION_ENABLED
-        value: false
+        value: "false"
       - key: GRAPH_SYNC_OUTLOOK
-        value: false
+        value: "false"
       - key: GRAPH_SYNC_TEAMS
-        value: false
+        value: "false"
       - key: GRAPH_SYNC_TEAMS_DM
-        value: false
+        value: "false"
       - key: GRAPH_SYNC_ONEDRIVE
-        value: false
+        value: "false"
       - key: GRAPH_SYNC_INTERVAL_MINUTES
         value: 60
       - key: PIPELINE_MAX_CONCURRENCY

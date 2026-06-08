@@ -37,7 +37,7 @@ const batchSize = Number(process.env.RAG_METADATA_COPY_BATCH_SIZE || "250");
 const dryRun = process.argv.includes("--dry-run");
 
 const sourceSql = postgres(sourceUrl, { max: 1, ssl: "require", idle_timeout: 5 });
-const ragSql = postgres(ragUrl, { max: 1, ssl: "require", idle_timeout: 5 });
+const ragSql = postgres(ragUrl, { max: 1, ssl: "require", idle_timeout: 5, prepare: false });
 
 function hashContent(value) {
   if (!value) return null;

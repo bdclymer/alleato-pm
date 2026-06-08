@@ -12,6 +12,7 @@ const SUPABASE_LOGS_URL = `https://api.supabase.com/v1/projects/${PROJECT_REF}/a
 const DEFAULT_WINDOW_MINUTES = 30;
 
 const REQUIRED_WEB_FLAGS = new Map([
+  ["APP_DB_PRESSURE_GUARD_REQUIRED", "true"],
   ["DISABLE_SCHEDULER", "true"],
   ["GRAPH_SYNC_ENABLED", "false"],
   ["GRAPH_SYNC_OUTLOOK", "false"],
@@ -78,9 +79,6 @@ const SAFE_RESUMED_CRON_ENV = new Map([
 ]);
 
 const SAFE_RESUMED_CRONS = new Set([
-  "alleato-acumatica-financial-sync",
-  "alleato-executive-daily-brief-evening",
-  "alleato-executive-daily-brief-morning",
   "alleato-graph-sync",
   "alleato-rag-health",
   "alleato-source-rag-health",

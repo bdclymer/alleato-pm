@@ -45,7 +45,7 @@ const RECENT_MIN_CHUNK_RATIO = 0.5;
 const RECENT_MIN_TRANSCRIPT_CHUNK_RATIO = 0.9;
 
 const appSql = postgres(databaseUrl, { max: 1, ssl: "require" });
-const ragSql = postgres(ragDatabaseUrl, { max: 1, ssl: "require" });
+const ragSql = postgres(ragDatabaseUrl, { max: 1, ssl: "require", prepare: false });
 
 const failures = [];
 const warnings = [];

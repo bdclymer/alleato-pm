@@ -47,7 +47,7 @@ const tables = [
 ];
 
 const sourceSql = postgres(sourceUrl, { max: 1, ssl: "require", idle_timeout: 5 });
-const ragSql = postgres(ragUrl, { max: 1, ssl: "require", idle_timeout: 5 });
+const ragSql = postgres(ragUrl, { max: 1, ssl: "require", idle_timeout: 5, prepare: false });
 const insertBatchSize = Number(process.env.RAG_TABLE_COPY_BATCH_SIZE || "500");
 
 function tableIdentifier(sql, table) {

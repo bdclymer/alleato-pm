@@ -86,7 +86,12 @@ if (!dryRun && !ragWritesEnabled) {
 }
 
 const sql = postgres(databaseUrl, { max: 1, ssl: "require", idle_timeout: 5 });
-const ragSql = postgres(ragDatabaseUrl, { max: 1, ssl: "require", idle_timeout: 5 });
+const ragSql = postgres(ragDatabaseUrl, {
+  max: 1,
+  ssl: "require",
+  idle_timeout: 5,
+  prepare: false,
+});
 
 const EMBEDDING_MODEL = "text-embedding-3-large";
 const EMBEDDING_DIMS = 3072;
