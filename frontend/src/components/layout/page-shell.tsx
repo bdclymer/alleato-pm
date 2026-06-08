@@ -165,12 +165,14 @@ export function PageShell({
         <div className="mt-2 h-0.5 w-10 bg-primary rounded-full" />
       </div>
     ) : undefined);
+  const headerDescription =
+    variant === "form" && !titleContent ? undefined : description;
 
   const header = showHeader ? (
     <PageHeader
       title={title}
       eyebrow={eyebrow}
-      description={description}
+      description={headerDescription}
       titleContent={effectiveTitleContent}
       actions={resolvedActions}
       statusBadge={statusBadge}
