@@ -145,7 +145,7 @@ COO, CHRO, CRO, and VP BD agents are designed (prompts exist at `frontend/src/li
 | `backend/src/services/pipeline/document_parser.py` | Stage 1B: PDF/DOCX/text extraction → meeting_segments. LLM segmentation is the default, but `DOC_SEGMENT_USE_LLM=false` uses deterministic line-window segments for table-heavy technical documents. |
 | `backend/src/services/pipeline/financial_parser.py` | Stage 1C: CSV/XLSX → document_rows with text summaries for embedding. |
 | `backend/src/services/pipeline/embedder.py` | Stage 2: Chunking (3000 char target, 500 overlap) + embedding via text-embedding-3-small. Generic documents that do not parse as meeting transcripts fall back to source line chunks and write `document_chunks.source_type='document'`. |
-| `backend/src/services/pipeline/extractor.py` | Stage 3: Normalizes and upserts decisions, risks, tasks, opportunities. |
+| `backend/src/services/pipeline/extractor.py` | Stage 3: Normalizes and upserts decisions, risks, tasks, opportunities. The Fireflies compatibility enrichment path now preserves direct transcript wording while backfilling missing assignee, due-date, email, and priority fields from the best matching LLM-normalized task so legacy callers do not lose task ownership context. |
 | `backend/src/services/pipeline/digest.py` | Stage 4: Daily digest generation (non-blocking). |
 | `backend/src/services/pipeline/llm.py` | Backend LLM/embedding client. Current defaults: chat=gpt-4o-mini, embeddings=text-embedding-3-small. |
 | `backend/src/services/daily_digest.py` | Daily meeting digest generation. |

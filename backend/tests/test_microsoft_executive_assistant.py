@@ -121,7 +121,7 @@ def test_run_microsoft_assistant_fails_loudly_without_provider(monkeypatch):
 
     assert response.mode == "unavailable"
     assert response.tool_trace[0].status == "failed"
-    assert "AI_GATEWAY_API_KEY or OPENAI_API_KEY" in response.answer
+    assert "OPENAI_API_KEY is required for the Microsoft Executive Assistant." in response.answer
     assert response.actions[0].action_type == "blocked"
 
 

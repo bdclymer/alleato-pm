@@ -234,7 +234,7 @@ def test_deep_agents_runtime_can_synthesize_behind_contract():
             return {"messages": [{"role": "assistant", "content": "Runtime synthesis from Deep Agents."}]}
 
     def create_agent(**kwargs):
-        assert kwargs["model"] == "openai:gpt-5.4-mini"
+        assert kwargs["model"] == "openai:gpt-5.5"
         tool_names = [getattr(tool, "name", getattr(tool, "__name__", "")) for tool in kwargs["tools"]]
         assert "source_coverage" in tool_names
         assert "pm_budget_summary" in tool_names
@@ -770,7 +770,7 @@ def test_executive_deep_agents_runtime_can_synthesize_business_packet():
             return {"messages": [{"role": "assistant", "content": "Executive synthesis from Deep Agents."}]}
 
     def create_agent(**kwargs):
-        assert kwargs["model"] == "openai:gpt-5.4-mini"
+        assert kwargs["model"] == "openai:gpt-5.5"
         assert kwargs["tools"]
         assert "system_prompt" in kwargs
         return _Agent()

@@ -146,16 +146,46 @@ def _enrich_fireflies_tasks_with_llm_context(  # noqa: D401 — kept for backwar
     direct_tasks: List[TaskItem],
     llm_tasks: List[TaskItem],
 ) -> List[TaskItem]:
-    """DEPRECATED — replaced by fireflies_task_rewriter.
+    """Preserve direct Fireflies wording while backfilling missing LLM context.
 
-    The original implementation kept Fireflies' third-person narration as task
-    text, which produced tasks like "Provide support to Brandon Clymer..."
-    assigned to Brandon himself. The rewriter now runs upstream of this code
-    path, so this function is unused. Retained as a no-op to avoid breaking
-    legacy imports during the rollout window.
+    The preferred path is still the newer rewriter, but some callers and tests
+    continue to rely on this compatibility function. Keep the original direct
+    task description, then copy assignee/due-date/priority from the best
+    matching LLM-normalized task only when the direct task is missing that
+    context.
     """
-    _ = llm_tasks  # noqa: F841 — historical signature
-    return list(direct_tasks)
+    if not direct_tasks:
+        return []
+    if not llm_tasks:
+        return list(direct_tasks)
+
+    enriched: List[TaskItem] = []
+    for direct_task in direct_tasks:
+        best_match: TaskItem | None = None
+        best_score = 0.0
+
+        for llm_task in llm_tasks:
+            score = _task_overlap_score(direct_task.description, llm_task.description)
+            if score > best_score:
+                best_score = score
+                best_match = llm_task
+
+        if not best_match or best_score < 0.35:
+            enriched.append(direct_task)
+            continue
+
+        enriched.append(
+            TaskItem(
+                description=direct_task.description,
+                embedding=direct_task.embedding,
+                assignee=direct_task.assignee or best_match.assignee,
+                assignee_email=direct_task.assignee_email or best_match.assignee_email,
+                due_date=direct_task.due_date or best_match.due_date,
+                priority=direct_task.priority or best_match.priority,
+            )
+        )
+
+    return enriched
 
 
 def run_extractor(metadata_id: str) -> Dict[str, Any]:
