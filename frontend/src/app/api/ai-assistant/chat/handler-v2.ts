@@ -32,6 +32,7 @@ import { createStrategistTools } from "@/lib/ai/orchestrator";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { scoreResponseQuality } from "@/lib/ai/score-response-quality";
 import type { TaskSummaryWidgetPayload } from "@/lib/ai/assistant-widgets";
+import { loadAssistantSourceHealthContext } from "@/lib/ai/source-health";
 import {
   buildDeepAgentExecutiveEvidenceWidget,
   buildDeepAgentMemoryCandidateWidget,
@@ -1117,6 +1118,87 @@ function formatCmoWeeklyContentWorkflowResponse(
   ].join("\n");
 }
 
+function formatAssistantSourceHealthAnswer(metadata: {
+  overallStatus: "healthy" | "degraded" | "unknown";
+  missingStage: string | null;
+  counts: {
+    sources: number;
+    criticalSources: number;
+    warningSources: number;
+    unembedded: number;
+    uncompiled: number;
+    failedSubscriptions: number;
+    expiringSubscriptions: number;
+  };
+  sources: Array<{
+    source: string;
+    resourceName: string;
+    status: string;
+    staleMinutes: number | null;
+    unembeddedCount: number;
+    uncompiledCount: number;
+    hasError: boolean;
+  }>;
+  alerts: Array<{
+    code: string;
+    source: string;
+    message: string;
+    severity: "critical" | "warning";
+  }>;
+}): string {
+  const statusLine =
+    metadata.overallStatus === "healthy"
+      ? "Source health is healthy right now."
+      : metadata.overallStatus === "degraded"
+        ? "Source health is degraded right now."
+        : "Source health is unknown right now.";
+
+  const topAlerts =
+    metadata.alerts.length > 0
+      ? metadata.alerts
+          .slice(0, 5)
+          .map(
+            (alert) =>
+              `- ${alert.severity.toUpperCase()}: ${alert.source} — ${alert.message}`,
+          )
+      : ["- No active source-health alerts are recorded."];
+
+  const riskiestSources =
+    metadata.sources.length > 0
+      ? metadata.sources
+          .slice(0, 5)
+          .map((source) => {
+            const stale =
+              typeof source.staleMinutes === "number"
+                ? ` | stale ${source.staleMinutes} min`
+                : "";
+            const backlog =
+              source.unembeddedCount > 0 || source.uncompiledCount > 0
+                ? ` | backlog ${source.unembeddedCount} unembedded / ${source.uncompiledCount} uncompiled`
+                : "";
+            const error = source.hasError ? " | sync error present" : "";
+            return `- ${source.resourceName} (${source.source}) — ${source.status}${stale}${backlog}${error}`;
+          })
+      : ["- No source-health rows are available."];
+
+  return [
+    statusLine,
+    "",
+    `Coverage read: ${metadata.counts.sources} tracked source rows, ${metadata.counts.criticalSources} critical, ${metadata.counts.warningSources} warning, ${metadata.counts.unembedded} unembedded items, ${metadata.counts.uncompiled} uncompiled items, ${metadata.counts.failedSubscriptions} failed Microsoft subscriptions, and ${metadata.counts.expiringSubscriptions} expiring subscriptions.`,
+    metadata.missingStage
+      ? `Likely weak point: ${metadata.missingStage}.`
+      : "No single broken pipeline stage is flagged right now.",
+    "",
+    "Top alerts:",
+    ...topAlerts,
+    "",
+    "Highest-risk sources:",
+    ...riskiestSources,
+    "",
+    "Operational read: use this health view to decide whether Teams, Outlook, meeting, and OneDrive evidence is trustworthy enough for packet summaries or whether you should drill into exact source records before acting.",
+  ].join("\n");
+}
+
 function writeTextResponse(
   writer: Parameters<
     Parameters<typeof createUIMessageStream>[0]["execute"]
@@ -1669,6 +1751,20 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
             selectedProjectId: args.selectedProjectId,
             message: lastUserContent,
           });
+          const taskRegisterTrace = {
+            tool: "getPersonalTaskRegister",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              selectedProjectId: args.selectedProjectId ?? null,
+            },
+            output: answer.traceOutput,
+            timestamp: new Date().toISOString(),
+          };
+          const getMyTasksTrace = {
+            ...taskRegisterTrace,
+            tool: "getMyTasks",
+          };
+          const toolTrace = [taskRegisterTrace, getMyTasksTrace];
           const dataPart = {
             type: "data-assistant-widget",
             id: "assistant-widget-personal-task-register",
@@ -1694,17 +1790,11 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                 responseFormat: "task_register",
                 sources: ["public.tasks"],
               },
-              tool_trace: [
-                {
-                  tool: "getPersonalTaskRegister",
-                  input: {
-                    message: lastUserContent.slice(0, 240),
-                    selectedProjectId: args.selectedProjectId ?? null,
-                  },
-                  output: answer.traceOutput,
-                  timestamp: new Date().toISOString(),
-                },
-              ],
+              tool_trace: toolTrace,
+              response_quality: buildResponseQualityMetadata({
+                toolTrace,
+                content: answer.content,
+              }),
               data_parts: [dataPart],
             }) as Json,
           });
@@ -1729,6 +1819,20 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         } catch (error) {
           const detail = error instanceof Error ? error.message : String(error);
           const content = `I tried to check Brandon's Tasks page rows, but the task-register lookup failed: ${detail}`;
+          const taskRegisterTrace = {
+            tool: "getPersonalTaskRegister",
+            input: {
+              message: lastUserContent.slice(0, 240),
+              selectedProjectId: args.selectedProjectId ?? null,
+            },
+            error: detail,
+            timestamp: new Date().toISOString(),
+          };
+          const getMyTasksTrace = {
+            ...taskRegisterTrace,
+            tool: "getMyTasks",
+          };
+          const toolTrace = [taskRegisterTrace, getMyTasksTrace];
           writeTextResponse(
             writer,
             "strategist-personal-task-register-error-v1",
@@ -1757,18 +1861,140 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                 responseFormat: "task_register",
                 sources: ["public.tasks"],
               },
-              tool_trace: [
-                {
-                  tool: "getPersonalTaskRegister",
-                  input: {
-                    message: lastUserContent.slice(0, 240),
-                    selectedProjectId: args.selectedProjectId ?? null,
-                  },
-                  error: detail,
-                  timestamp: new Date().toISOString(),
-                },
-              ],
+              tool_trace: toolTrace,
+              response_quality: buildResponseQualityMetadata({
+                toolTrace,
+                content,
+              }),
             },
+          });
+          responseAlreadyPersisted = true;
+        }
+        return;
+      }
+
+      if (plan.intent === "source_health") {
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "source-health",
+            message: "Checking source health and freshness",
+            status: "loading",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+
+        if (lastUserContent.trim()) {
+          await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "user",
+            content: lastUserContent,
+          });
+        }
+
+        try {
+          const sourceHealth = await loadAssistantSourceHealthContext({
+            supabase: args.supabase,
+            reason: "source_status_request",
+          });
+          const content = formatAssistantSourceHealthAnswer(sourceHealth.metadata);
+          const toolTrace = [sourceHealth.trace];
+          const sourceDebug = buildAnswerDebugMetadata({
+            orchestrator: "assistant-source-health-fast-path",
+            plan,
+            toolTrace,
+            sourceCoverage: sourceHealth.metadata.sources.map((source) => ({
+              sourceType: source.source,
+              status: source.status,
+              staleMinutes: source.staleMinutes,
+              unembeddedCount: source.unembeddedCount,
+              uncompiledCount: source.uncompiledCount,
+            })),
+          });
+
+          writeTextResponse(
+            writer,
+            "strategist-source-health-v1",
+            content,
+          );
+
+          await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "assistant",
+            content,
+            metadata: toJsonValue({
+              architecture: "retrieval-planner-v2",
+              retrieval_plan: {
+                intent: plan.intent,
+                reason: plan.reason,
+                responseFormat: plan.responseFormat,
+                sources: Object.keys(plan.sources),
+              },
+              tool_trace: toolTrace,
+              response_quality: buildResponseQualityMetadata({
+                toolTrace,
+                content,
+              }),
+              source_health: sourceHealth.metadata,
+              source_debug: sourceDebug,
+            }) as Json,
+          });
+
+          await args.supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", args.sessionId)
+            .eq("user_id", args.user.id);
+          responseAlreadyPersisted = true;
+
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "complete",
+              message: "Source health check completed",
+              status: "success",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error);
+          const content = `I tried to check source health and freshness, but the source-health lookup failed: ${detail}`;
+          const toolTrace = [
+            {
+              tool: "assistantSourceHealth",
+              input: { reason: "source_status_request" },
+              error: detail,
+              timestamp: new Date().toISOString(),
+            },
+          ];
+          writeTextResponse(
+            writer,
+            "strategist-source-health-error-v1",
+            content,
+          );
+          await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "assistant",
+            content,
+            metadata: toJsonValue({
+              architecture: "retrieval-planner-v2",
+              retrieval_plan: {
+                intent: plan.intent,
+                reason: `${plan.reason}_error`,
+                responseFormat: plan.responseFormat,
+                sources: Object.keys(plan.sources),
+              },
+              tool_trace: toolTrace,
+              response_quality: buildResponseQualityMetadata({
+                toolTrace,
+                content,
+              }),
+            }) as Json,
           });
           responseAlreadyPersisted = true;
         }
