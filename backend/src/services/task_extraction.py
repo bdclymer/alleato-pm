@@ -26,7 +26,7 @@ from .task_assignees import TaskAssigneeResolver, clean_text
 logger = logging.getLogger(__name__)
 
 TASK_EXTRACTION_MODEL = "gpt-5.5"
-TASK_EXTRACTION_PROMPT_VERSION = "task_extraction.v5.gpt-5.5"
+TASK_EXTRACTION_PROMPT_VERSION = "task_extraction.v6.gpt-5.5.max_completion_tokens"
 TASK_EXTRACTION_DEFAULT_LIMIT = 25
 TASK_EXTRACTION_MAX_RUN_DOCS = 50
 TASK_EXTRACTION_CANDIDATE_MULTIPLIER = 4
@@ -333,7 +333,7 @@ def _extract_tasks(
             model=model,
             messages=[{"role": "user", "content": prompt}],
             temperature=0,
-            max_tokens=1600,
+            max_completion_tokens=1600,
         )
         raw = (resp.choices[0].message.content or "").strip()
         cleaned = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
