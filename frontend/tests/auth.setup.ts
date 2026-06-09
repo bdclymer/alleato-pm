@@ -32,10 +32,21 @@ function getProjectRef(): string {
   return match?.[1] ?? "lgveqfnpkxvzbnnwuled";
 }
 
+function authCookieOptions(baseUrl: string) {
+  const parsed = new URL(baseUrl);
+  const isHttps = parsed.protocol === "https:";
+
+  return {
+    domain: parsed.hostname,
+    secure: isHttps,
+    sameSite: "Lax" as const,
+  };
+}
+
 /**
  * Check if the existing user.json has a valid (non-expired) access token.
  */
-function hasValidExistingSession(): boolean {
+function hasValidExistingSession(baseUrl: string): boolean {
   try {
     if (!fs.existsSync(authFile)) return false;
     const state = JSON.parse(fs.readFileSync(authFile, "utf-8"));
@@ -43,6 +54,9 @@ function hasValidExistingSession(): boolean {
       /^sb-.*-auth-token/.test(c.name),
     );
     if (!authCookie) return false;
+    const expectedCookie = authCookieOptions(baseUrl);
+    if (authCookie.domain !== expectedCookie.domain) return false;
+    if (Boolean(authCookie.secure) !== expectedCookie.secure) return false;
     if (
       typeof authCookie.expires === "number" &&
       authCookie.expires > 0 &&
@@ -146,7 +160,7 @@ setup("authenticate", async ({ page, baseURL }) => {
   const url = baseURL ?? "http://localhost:3000";
 
   // Fast path: reuse existing valid session without any API calls
-  if (hasValidExistingSession()) {
+  if (hasValidExistingSession(url)) {
     console.log("Existing auth session is still valid; verifying protected route access");
     await loadExistingSessionIntoContext(page);
     await verifySavedAuthState(page, url);
@@ -221,20 +235,21 @@ setup("authenticate", async ({ page, baseURL }) => {
   });
   const cookieValue = `base64-${Buffer.from(sessionJson).toString("base64")}`;
   const projectRef = getProjectRef();
+  const cookieOptions = authCookieOptions(url);
 
   // Set the auth cookie directly in the Playwright browser context
   await page.context().addCookies([
     {
       name: `sb-${projectRef}-auth-token`,
       value: cookieValue,
-      domain: "localhost",
+      domain: cookieOptions.domain,
       path: "/",
       // Cookie expires 1 year from now; the JWT access token expires sooner
       // but the browser will use the refresh token to get a new one.
       expires: Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60,
       httpOnly: false,
-      secure: false,
-      sameSite: "Lax",
+      secure: cookieOptions.secure,
+      sameSite: cookieOptions.sameSite,
     },
   ]);
 

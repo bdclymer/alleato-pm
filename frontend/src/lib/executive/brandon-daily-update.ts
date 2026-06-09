@@ -431,6 +431,9 @@ const FALLBACK_KEYWORDS = [
 ];
 
 const EXECUTIVE_BRIEFING_EMBEDDING_TIMEOUT_MS = 15_000;
+const EXECUTIVE_BRIEFING_RAG_SEARCH_TIMEOUT_MS = 12_000;
+const EXECUTIVE_BRIEFING_SYNTHESIS_TIMEOUT_MS = 20_000;
+const EXECUTIVE_BRIEFING_ENRICHMENT_TIMEOUT_MS = 20_000;
 
 function withBriefingTimeout<T>(
   promise: Promise<T>,
@@ -1438,6 +1441,7 @@ async function synthesizeSections(
   sections: BrandonDailyUpdatePacket["sections"];
   modelUsed: string;
   warnings: string[];
+  degraded: boolean;
 }> {
   const candidates = [
     ...sections.needsBrandon,
@@ -1446,7 +1450,7 @@ async function synthesizeSections(
   ];
   const synthesisModel = executiveBriefingSynthesisModel();
   if (candidates.length === 0) {
-    return { sections, modelUsed: synthesisModel, warnings: [] };
+    return { sections, modelUsed: synthesisModel, warnings: [], degraded: false };
   }
 
   const candidatePayload = candidates.map((item, index) => ({
@@ -1490,12 +1494,16 @@ async function synthesizeSections(
     JSON.stringify(candidatePayload, null, 2);
 
   try {
-    const result = await generateText({
-      model: getLanguageModel(synthesisModel),
-      temperature: 0.1,
-      system,
-      messages: [{ role: "user", content: user }],
-    });
+    const result = await withBriefingTimeout(
+      generateText({
+        model: getLanguageModel(synthesisModel),
+        temperature: 0.1,
+        system,
+        messages: [{ role: "user", content: user }],
+      }),
+      EXECUTIVE_BRIEFING_SYNTHESIS_TIMEOUT_MS,
+      "Executive briefing synthesis",
+    );
 
     const raw = result.text.trim();
     if (!raw) {
@@ -1523,6 +1531,7 @@ async function synthesizeSections(
       },
       modelUsed: synthesisModel,
       warnings: [],
+      degraded: false,
     };
   } catch (error) {
     const message = formatAIProviderFailure(
@@ -1535,6 +1544,7 @@ async function synthesizeSections(
       warnings: [
         `Executive briefing synthesis failed with ${synthesisModel}; using pre-synthesis source assignments. ${message}`,
       ],
+      degraded: true,
     };
   }
 }
@@ -2112,12 +2122,16 @@ async function enrichBriefSections(
     JSON.stringify(payload, null, 2);
 
   try {
-    const result = await generateText({
-      model: getLanguageModel(synthesisModel),
-      temperature: 0.1,
-      system,
-      messages: [{ role: "user", content: user }],
-    });
+    const result = await withBriefingTimeout(
+      generateText({
+        model: getLanguageModel(synthesisModel),
+        temperature: 0.1,
+        system,
+        messages: [{ role: "user", content: user }],
+      }),
+      EXECUTIVE_BRIEFING_ENRICHMENT_TIMEOUT_MS,
+      "Executive briefing evidence enrichment",
+    );
 
     const raw = result.text.trim();
     if (!raw)
@@ -2264,15 +2278,33 @@ export async function generateBrandonDailyUpdate(
     embeddingsBySpec = [];
   }
 
+  const chunkSearchWarnings: string[] = [];
   const rawHitGroups = embeddingsBySpec.length
-    ? await Promise.all(
-        embeddingsBySpec.flatMap(({ spec, queryEmbedding }) =>
-          SOURCE_GROUPS.map(async (sourceGroup) => {
-            const rows = await runChunkSearch(queryEmbedding, sourceGroup);
-            return rows.map((row) => ({ spec, sourceGroup, row }));
-          }),
-        ),
-      )
+    ? (
+        await Promise.allSettled(
+          embeddingsBySpec.flatMap(({ spec, queryEmbedding }) =>
+            SOURCE_GROUPS.map(async (sourceGroup) => {
+              const rows = await withBriefingTimeout(
+                runChunkSearch(queryEmbedding, sourceGroup),
+                EXECUTIVE_BRIEFING_RAG_SEARCH_TIMEOUT_MS,
+                `Daily Brief chunk search for ${spec.title} (${sourceGroup.label})`,
+              );
+              return rows.map((row) => ({ spec, sourceGroup, row }));
+            }),
+          ),
+        )
+      ).flatMap((result) => {
+        if (result.status === "fulfilled") {
+          return [result.value];
+        }
+        chunkSearchWarnings.push(
+          `Daily Brief chunk search degraded: ${formatAIProviderFailure(
+            result.reason,
+            "Executive briefing RAG search",
+          )}`,
+        );
+        return [];
+      })
     : [];
   const rawHits = rawHitGroups.flat();
 
@@ -2344,6 +2376,16 @@ export async function generateBrandonDailyUpdate(
           "Daily Brief evidence enrichment skipped in source-backed fallback mode.",
         ],
       }
+    : synthesizedResult.degraded
+      ? {
+          sections: mapBriefSections(supportedResult.sections, (item) => ({
+            ...item,
+            evidenceFacts: fallbackEvidenceFacts(item),
+          })),
+          warnings: [
+            "Daily Brief evidence enrichment skipped because synthesis already degraded to source-backed fallback mode.",
+          ],
+        }
     : await enrichBriefSections(supportedResult.sections);
   const sections = enforceExecutiveBriefBullets(enrichedResult.sections);
   const operatingBrief = buildExecutiveOperatingBrief(sections);
@@ -2354,6 +2396,7 @@ export async function generateBrandonDailyUpdate(
   const sourceHealthWarnings = [
     ...fallbackResult.warnings,
     ...preflightWarnings,
+    ...chunkSearchWarnings,
     ...synthesizedResult.warnings,
     ...communicationSignalResult.warnings,
     ...supportedResult.warnings,
