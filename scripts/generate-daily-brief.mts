@@ -41,6 +41,23 @@ try {
     }
   }
 
+  if (packet.financialPulse) {
+    const fp = packet.financialPulse;
+    const fmt = (n: number) =>
+      n >= 1_000_000 ? `$${(n / 1_000_000).toFixed(2)}M` : `$${Math.round(n / 1_000)}K`;
+    console.log(`\nFinancial Pulse:`);
+    console.log(`  Outstanding AR: ${fmt(fp.totalOutstandingAR)} total | ${fmt(fp.totalOverdueAR)} OVERDUE`);
+    if (fp.arByProject.length > 0) {
+      console.log(`  Top overdue AR:`);
+      for (const ar of fp.arByProject.filter((a) => a.overdueBalance > 0).slice(0, 5)) {
+        console.log(`    • ${ar.projectName}: ${fmt(ar.overdueBalance)} overdue`);
+      }
+    }
+    if (fp.pendingCOsByProject.length > 0) {
+      console.log(`  Pending COs: ${fmt(fp.totalPendingCORevenue)} revenue across ${fp.pendingCOsByProject.length} projects`);
+    }
+  }
+
   console.log(`\nSource coverage:`);
   for (const source of packet.sourceCoverage) {
     const status = source.status === "empty" ? "⚠ empty" : `${source.count} docs`;

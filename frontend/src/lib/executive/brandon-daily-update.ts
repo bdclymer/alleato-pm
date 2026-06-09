@@ -11,6 +11,11 @@ import {
   getOpenAI,
 } from "@/lib/ai/tools/tool-utils";
 import { getExecutiveBriefBullets } from "@/lib/executive/executive-brief-bullets";
+import {
+  type FinancialPulseData,
+  financialPulseToSynthesisContext,
+  loadFinancialPulse,
+} from "@/lib/executive/financial-pulse";
 
 type BriefTone = "neutral" | "good" | "watch" | "risk";
 type BriefSource = "Email" | "Teams" | "Meeting" | "Document";
@@ -136,6 +141,8 @@ export type BrandonDailyUpdatePacket = {
     importantUpdates: BrandonBriefItem[];
   };
   operatingBrief?: ExecutiveOperatingBrief;
+  /** Structured financial data from Acumatica ERP — ground-truth AR, COs, budgets. */
+  financialPulse?: FinancialPulseData;
   sourceCoverage: BrandonBriefSourceCoverage[];
   retrievalNotes: string[];
 };
@@ -430,10 +437,12 @@ const FALLBACK_KEYWORDS = [
   "retainage",
 ];
 
-const EXECUTIVE_BRIEFING_EMBEDDING_TIMEOUT_MS = 15_000;
-const EXECUTIVE_BRIEFING_RAG_SEARCH_TIMEOUT_MS = 12_000;
-const EXECUTIVE_BRIEFING_SYNTHESIS_TIMEOUT_MS = 20_000;
-const EXECUTIVE_BRIEFING_ENRICHMENT_TIMEOUT_MS = 20_000;
+const EXECUTIVE_BRIEFING_EMBEDDING_TIMEOUT_MS = 30_000;
+const EXECUTIVE_BRIEFING_RAG_SEARCH_TIMEOUT_MS = 20_000;
+// gpt-5.5 is a reasoning model and can take 2-3 minutes for a complex synthesis.
+// These timeouts were previously 20s which caused consistent fallback to source-backed mode.
+const EXECUTIVE_BRIEFING_SYNTHESIS_TIMEOUT_MS = 180_000;
+const EXECUTIVE_BRIEFING_ENRICHMENT_TIMEOUT_MS = 120_000;
 
 function withBriefingTimeout<T>(
   promise: Promise<T>,
@@ -1435,8 +1444,160 @@ function normalizeSynthesizedItem(
   };
 }
 
+function fmtCurrency(amount: number): string {
+  if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(2)}M`;
+  if (amount >= 1_000) return `$${Math.round(amount / 1_000)}K`;
+  return `$${Math.round(amount)}`;
+}
+
+function daysPastDue(dateStr: string | null): number {
+  if (!dateStr) return 0;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return 0;
+  return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86_400_000));
+}
+
+/**
+ * Builds deterministic BrandonBriefItems from the financial pulse data.
+ * These are ALWAYS included in the brief regardless of LLM synthesis — they
+ * come from authoritative Acumatica ERP data, not from communication signals.
+ */
+function buildFinancialBriefItems(
+  pulse: FinancialPulseData,
+): BrandonDailyUpdatePacket["sections"] {
+  const sections: BrandonDailyUpdatePacket["sections"] = {
+    needsBrandon: [],
+    waitingOnOthers: [],
+    importantUpdates: [],
+  };
+
+  const todayStr = formatDate(new Date());
+
+  // --- Overdue AR → needsBrandon (cash collection is owner-level) ---
+  const overdueProjects = pulse.arByProject.filter((ar) => ar.overdueBalance > 10_000);
+  if (overdueProjects.length > 0 && pulse.totalOverdueAR > 50_000) {
+    const topOverdue = overdueProjects.slice(0, 6);
+    const evidenceFacts = [
+      `${fmtCurrency(pulse.totalOverdueAR)} total overdue across ${overdueProjects.length} project${overdueProjects.length !== 1 ? "s" : ""}`,
+      ...topOverdue.map((ar) => {
+        const days = daysPastDue(ar.latestDueDate);
+        return `${ar.projectName} (${ar.jobNumber ?? ar.projectId}): ${fmtCurrency(ar.overdueBalance)} overdue${ar.latestDueDate ? ` — due ${ar.latestDueDate}${days > 0 ? `, ${days}d past due` : ""}` : ""}`;
+      }),
+    ];
+    const evidenceText = evidenceFacts.join(". ");
+    const citation: BriefCitation = {
+      source: "Document",
+      sourceDetail: "Acumatica ERP — AR Aging Report",
+      sourceId: `financial-ar-${todayStr}`,
+      evidence: evidenceText,
+      date: todayStr,
+    };
+    sections.needsBrandon.push({
+      title: `${fmtCurrency(pulse.totalOverdueAR)} overdue AR — collections needed on ${overdueProjects.length} project${overdueProjects.length !== 1 ? "s" : ""}`,
+      summary: `${fmtCurrency(pulse.totalOverdueAR)} in outstanding invoices are past due. Largest: ${topOverdue[0].projectName} at ${fmtCurrency(topOverdue[0].overdueBalance)}${topOverdue[0].latestDueDate ? ` (due ${topOverdue[0].latestDueDate}, ${daysPastDue(topOverdue[0].latestDueDate)}d ago)` : ""}.`,
+      evidenceFacts,
+      bullets: [
+        `${fmtCurrency(pulse.totalOverdueAR)} overdue across ${overdueProjects.length} projects`,
+        ...topOverdue.slice(0, 3).map((ar) => {
+          const days = daysPastDue(ar.latestDueDate);
+          return `${ar.projectName}: ${fmtCurrency(ar.overdueBalance)} overdue${days > 0 ? ` (${days}d past due)` : ""}`;
+        }),
+        `Total open AR (incl. not-yet-due): ${fmtCurrency(pulse.totalOutstandingAR)}`,
+      ],
+      recommendedAction: `Confirm collections status on ${topOverdue.slice(0, 3).map((ar) => ar.projectName).join(", ")}. Verify accounting has follow-up queued for invoices past 30 days.`,
+      whyItMatters: `${fmtCurrency(pulse.totalOverdueAR)} in overdue receivables directly impacts cash flow. The top project (${topOverdue[0].projectName}) alone is ${daysPastDue(topOverdue[0].latestDueDate)} days past due.`,
+      source: "Document",
+      sourceDetail: "Acumatica ERP — AR Aging Report",
+      sourceId: `financial-ar-${todayStr}`,
+      evidence: evidenceText,
+      date: todayStr,
+      citations: [citation],
+      project: `Multiple (${overdueProjects.length} projects)`,
+      owner: "Finance / Accounting / Brandon",
+      status: "Collections required",
+      tone: "risk",
+      retrieval: "Financial pulse: acumatica_ar_invoices",
+    });
+  }
+
+  // --- Open (not yet overdue) significant AR → importantUpdates ---
+  const currentOpenProjects = pulse.arByProject.filter(
+    (ar) => ar.totalBalance - ar.overdueBalance > 50_000,
+  );
+  if (currentOpenProjects.length > 0) {
+    const totalCurrentOpen = currentOpenProjects.reduce(
+      (sum, ar) => sum + (ar.totalBalance - ar.overdueBalance),
+      0,
+    );
+    if (totalCurrentOpen > 100_000) {
+      const citation: BriefCitation = {
+        source: "Document",
+        sourceDetail: "Acumatica ERP — AR Report",
+        sourceId: `financial-ar-open-${todayStr}`,
+        evidence: `${fmtCurrency(totalCurrentOpen)} in open (not-yet-overdue) AR across ${currentOpenProjects.length} projects.`,
+        date: todayStr,
+      };
+      sections.importantUpdates.push({
+        title: `${fmtCurrency(totalCurrentOpen)} in open AR invoices (not yet overdue) across ${currentOpenProjects.length} projects`,
+        summary: citation.evidence!,
+        evidenceFacts: currentOpenProjects.slice(0, 5).map((ar) => `${ar.projectName}: ${fmtCurrency(ar.totalBalance - ar.overdueBalance)} open${ar.latestDueDate ? `, due ${ar.latestDueDate}` : ""}`),
+        bullets: currentOpenProjects.slice(0, 4).map((ar) => `${ar.projectName}: ${fmtCurrency(ar.totalBalance - ar.overdueBalance)} open${ar.latestDueDate ? `, due ${ar.latestDueDate}` : ""}`),
+        source: "Document",
+        sourceDetail: "Acumatica ERP — AR Report",
+        sourceId: `financial-ar-open-${todayStr}`,
+        evidence: citation.evidence,
+        date: todayStr,
+        citations: [citation],
+        project: `Multiple (${currentOpenProjects.length} projects)`,
+        owner: "Finance / Accounting",
+        status: "Monitor",
+        tone: "neutral",
+        retrieval: "Financial pulse: acumatica_ar_invoices",
+      });
+    }
+  }
+
+  // --- Pending COs → importantUpdates ---
+  if (pulse.pendingCOsByProject.length > 0 && pulse.totalPendingCORevenue > 20_000) {
+    const topCOs = pulse.pendingCOsByProject.slice(0, 6);
+    const evidenceFacts = [
+      `${pulse.pendingCOsByProject.length} project${pulse.pendingCOsByProject.length !== 1 ? "s" : ""} with on-hold COs — ${fmtCurrency(pulse.totalPendingCORevenue)} total pending revenue (2026 only)`,
+      ...topCOs.map((co) => `${co.projectName} (${co.jobNumber ?? co.projectId}): ${co.coCount} CO${co.coCount !== 1 ? "s" : ""} on hold, ${fmtCurrency(co.pendingRevenue)}${co.oldestDate ? ` — oldest since ${co.oldestDate}` : ""}`),
+    ];
+    const citation: BriefCitation = {
+      source: "Document",
+      sourceDetail: "Acumatica ERP — Change Order Report",
+      sourceId: `financial-co-${todayStr}`,
+      evidence: evidenceFacts[0],
+      date: todayStr,
+    };
+    sections.importantUpdates.push({
+      title: `${fmtCurrency(pulse.totalPendingCORevenue)} in pending COs on hold — ${pulse.pendingCOsByProject.length} projects awaiting approval`,
+      summary: `${pulse.pendingCOsByProject.length} projects have change orders on hold totaling ${fmtCurrency(pulse.totalPendingCORevenue)} in pending revenue. These COs were created in 2026 and have not yet moved to approval.`,
+      evidenceFacts,
+      bullets: evidenceFacts.slice(0, 5),
+      recommendedAction: `Confirm PMs on ${topCOs.slice(0, 3).map((co) => co.projectName).join(", ")} are moving pending COs to approval this week.`,
+      whyItMatters: "On-hold change orders age out, complicate closeouts, and delay billing. Each week without approval costs revenue momentum.",
+      source: "Document",
+      sourceDetail: "Acumatica ERP — Change Order Report",
+      sourceId: `financial-co-${todayStr}`,
+      evidence: citation.evidence,
+      date: todayStr,
+      citations: [citation],
+      project: `Multiple (${pulse.pendingCOsByProject.length} projects)`,
+      owner: "Project managers / accounting",
+      status: "Pending approval",
+      tone: "watch",
+      retrieval: "Financial pulse: acumatica_change_orders",
+    });
+  }
+
+  return sections;
+}
+
 async function synthesizeSections(
   sections: BrandonDailyUpdatePacket["sections"],
+  financialPulse: FinancialPulseData | null,
 ): Promise<{
   sections: BrandonDailyUpdatePacket["sections"];
   modelUsed: string;
@@ -1449,9 +1610,17 @@ async function synthesizeSections(
     ...sections.importantUpdates,
   ];
   const synthesisModel = executiveBriefingSynthesisModel();
-  if (candidates.length === 0) {
+  if (candidates.length === 0 && !financialPulse) {
     return { sections, modelUsed: synthesisModel, warnings: [], degraded: false };
   }
+
+  const todayLabel = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "America/New_York",
+  }).format(new Date());
 
   const candidatePayload = candidates.map((item, index) => ({
     index,
@@ -1471,26 +1640,38 @@ async function synthesizeSections(
     evidence: item.evidence ?? item.summary,
     existingCitationCount: item.citations.length,
   }));
+
+  const financialContext = financialPulse
+    ? "\n\n" + financialPulseToSynthesisContext(financialPulse)
+    : "";
+
   const system =
-    "You write a daily executive business brief from an AI business strategist to Brandon. " +
+    "You write a daily executive business brief from an AI business strategist to Brandon, owner of Alleato Group, a commercial construction company. " +
+    "Today is " + todayLabel + ". Use this date whenever you write 'today', 'this week', or other relative references. " +
     "Do not refer to Brandon in the third person. Prefer direct facts and, only when needed, 'you'. " +
-    "Turn raw RAG excerpts into clear business insights. Do not copy truncated excerpts. " +
-    "Use concrete names, dates, dollars, quantities, blockers, and commitments when present. " +
+    "Turn raw communication excerpts and financial data into clear business intelligence. Do not copy truncated excerpts verbatim. " +
+    "Use concrete names, dates, dollar amounts, quantities, blockers, and commitments. " +
     "When using relative dates such as next Wednesday, include the exact calendar date in the same sentence. " +
-    "If a source is too vague to be useful, exclude it. " +
+    "FINANCIAL CONTEXT IS AUTHORITATIVE: When the financial ground truth section is provided, use those figures to enrich and contextualize communication items. " +
+    "If an email or meeting item involves a project that appears in the financial data (e.g., overdue AR), include the dollar figure in that item's evidenceFacts. " +
+    "Do NOT create separate financial items from the financial ground truth — those are handled separately. Focus on enriching communication signals with financial context. " +
+    "If a communication source is too vague or generic to be useful, exclude it. " +
     "CRITICAL - cross-source synthesis: when multiple candidates describe the same underlying issue (same project + same vendor/contract/topic, even from different sources like an email + a meeting + a Teams thread), MERGE them into a single item and list ALL relevant candidate indexes in sourceIndexes. Each candidate index may appear in only one item across the whole output, but each item may cite multiple indexes. Prefer corroborated multi-source items over single-source items. " +
     "Use needsBrandon only when the evidence shows a decision, confirmation, commitment, money/risk issue, or escalation that belongs at owner level. " +
     "Use waitingOnOthers for project-team, client, vendor, estimating, finance, or design inputs that are pending. " +
     "Return ONLY valid JSON with keys needsBrandon, waitingOnOthers, importantUpdates. " +
-    "Each item must include: title, summary, evidenceFacts, bullets, recommendedAction, whyItMatters, sourceIndexes (array of integers, ordered most-relevant first), status, tone. " +
+    "Each item must include: title, summary, evidenceFacts, bullets, recommendedAction, whyItMatters, sourceIndexes (array of integers, ordered most-relevant first — use [] for financial-only items), status, tone. " +
     "Owner-facing summaries are NOT paragraphs: bullets must contain 3 to 5 concise executive bullets. Each bullet must include the key business impact, deadline/date when present, and blocker or decision needed when present. " +
-    "evidenceFacts must be a concise bulleted fact list synthesized from all selected sources for that item. Use direct facts with names, dates, dollars, blockers, and commitments. Do not include unsupported facts. " +
+    "evidenceFacts must be a concise bulleted fact list synthesized from all selected sources. Use direct facts with names, dates, dollars, blockers, and commitments. Do not include unsupported facts. " +
     "Titles should be specific, not bucket names. Bullets should be short facts, not paragraphs or run-on prose. " +
     "Tone must be one of risk, watch, good, neutral.";
+
   const user =
-    "Create the Daily Brief using the Brandon audience preset from these retrieved source candidates. " +
-    "Do not use hard caps. Include every material decision, blocker, cash/margin issue, schedule risk, customer issue, vendor issue, accountability gap, or executive move that a construction business owner would reasonably care about today. " +
-    "Rank the highest-leverage executive items first in each section, but put additional material items in the same JSON arrays instead of suppressing them.\n\n" +
+    "Create the Daily Brief using the Brandon audience preset. " +
+    "Include every material decision, blocker, cash/margin issue, schedule risk, customer issue, vendor issue, accountability gap, or executive move that a construction business owner would reasonably care about today. " +
+    "Rank the highest-leverage executive items first in each section, but put additional material items in the same JSON arrays instead of suppressing them.\n" +
+    financialContext +
+    "\n\nCOMMUNICATION SOURCE CANDIDATES:\n" +
     JSON.stringify(candidatePayload, null, 2);
 
   try {
@@ -2071,6 +2252,7 @@ export function buildExecutiveOperatingBrief(
 
 async function enrichBriefSections(
   sections: BrandonDailyUpdatePacket["sections"],
+  financialPulse: FinancialPulseData | null,
 ): Promise<{
   sections: BrandonDailyUpdatePacket["sections"];
   warnings: string[];
@@ -2109,16 +2291,32 @@ async function enrichBriefSections(
     citations: itemEvidencePayload(item),
   }));
 
+  const todayLabel = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "America/New_York",
+  }).format(new Date());
+
+  const financialContext = financialPulse
+    ? "\n\n" + financialPulseToSynthesisContext(financialPulse) + "\n"
+    : "";
+
   const system =
     "You turn executive briefing source evidence into usable operating intelligence. " +
-    "Use only the supplied citation evidence. Do not invent, infer beyond the evidence, or add placeholder facts. " +
+    "Today is " + todayLabel + ". " +
+    "Use only the supplied citation evidence and financial ground truth data. Do not invent, infer beyond the evidence, or add placeholder facts. " +
     "For each item, write one tighter summary, 3 to 5 owner-facing bullets, 3 to 6 evidenceFacts, one recommendedAction, and whyItMatters. " +
+    "When an item relates to a project that appears in the financial ground truth, include the exact dollar figures (AR balance, overdue amount, CO value) in the evidenceFacts and bullets. " +
     "Owner-facing bullets are the product contract: no paragraph summaries, no run-on prose, and each bullet must carry business impact plus deadline/date and blocker/decision when present. " +
     "Evidence facts must synthesize across all citations for the same item and remove repeated wording. " +
     "Prefer concrete names, dates, dollar amounts, projects, blockers, commitments, and owner/action state. " +
     "If the evidence does not support a fact, omit it. Return ONLY valid JSON.";
   const user =
-    'Enrich these executive briefing items. Return JSON as {"items":[{"section":"needsBrandon|waitingOnOthers|importantUpdates","index":0,"summary":"...","bullets":["..."],"evidenceFacts":["..."],"recommendedAction":"...","whyItMatters":"..."}]}.\n\n' +
+    'Enrich these executive briefing items. Return JSON as {"items":[{"section":"needsBrandon|waitingOnOthers|importantUpdates","index":0,"summary":"...","bullets":["..."],"evidenceFacts":["..."],"recommendedAction":"...","whyItMatters":"..."}]}.' +
+    financialContext +
+    "\n\n" +
     JSON.stringify(payload, null, 2);
 
   try {
@@ -2344,10 +2542,30 @@ export async function generateBrandonDailyUpdate(
     })
     .filter((hit) => hit.text.length > 30)
     .filter((hit) => isWithinWindow(hit.date, windowStartDateKey))
-    .filter((hit) => hit.similarity >= 0.25);
+    // Raised from 0.25 → 0.35 to reduce low-signal noise in the brief.
+    .filter((hit) => hit.similarity >= 0.35);
 
   const dedupedHits = dedupeHits(rankedHits);
-  const fallbackResult = await loadFallbackMetadata(cutoff);
+
+  // Fetch financial pulse and fallback metadata in parallel — both are independent.
+  const [fallbackResult, financialPulseResult] = await Promise.all([
+    loadFallbackMetadata(cutoff),
+    loadFinancialPulse().catch((err: unknown) => {
+      const msg = err instanceof Error ? err.message : String(err);
+      return {
+        generatedAt: new Date().toISOString(),
+        totalOutstandingAR: 0,
+        totalOverdueAR: 0,
+        arByProject: [],
+        totalPendingCORevenue: 0,
+        pendingCOsByProject: [],
+        warnings: [`Financial pulse load failed: ${msg}`],
+      } satisfies FinancialPulseData;
+    }),
+  ]);
+
+  const financialPulse: FinancialPulseData = financialPulseResult;
+
   const fallbackItems = fallbackResult.rows
     .map(makeFallbackItem)
     .filter((item): item is BrandonBriefItem => item !== null);
@@ -2359,14 +2577,20 @@ export async function generateBrandonDailyUpdate(
         warnings: [
           "Daily Brief synthesis skipped in source-backed fallback mode.",
         ],
+        degraded: false,
       }
-    : await synthesizeSections(seededSections);
+    : await synthesizeSections(seededSections, financialPulse);
   const communicationSignalResult =
     await loadRecentCommunicationSignalItems(cutoffIso);
+
+  // Build deterministic financial brief items — always included regardless of LLM behavior.
+  const financialBriefItems = buildFinancialBriefItems(financialPulse);
+
+  // Merge order: financial items first (highest priority), then communication signals, then LLM synthesis.
   const supportedResult = filterSupportedSections(
     mergeSeedItems(
-      synthesizedResult.sections,
-      communicationSignalResult.sections,
+      mergeSeedItems(synthesizedResult.sections, communicationSignalResult.sections),
+      financialBriefItems,
     ),
   );
   const enrichedResult = sourceBackedOnly
@@ -2386,7 +2610,7 @@ export async function generateBrandonDailyUpdate(
             "Daily Brief evidence enrichment skipped because synthesis already degraded to source-backed fallback mode.",
           ],
         }
-    : await enrichBriefSections(supportedResult.sections);
+    : await enrichBriefSections(supportedResult.sections, financialPulse);
   const sections = enforceExecutiveBriefBullets(enrichedResult.sections);
   const operatingBrief = buildExecutiveOperatingBrief(sections);
   const sourceCoverage = await loadRecentSourceCoverage(cutoffIso);
@@ -2395,6 +2619,7 @@ export async function generateBrandonDailyUpdate(
     .filter((warning): warning is string => Boolean(warning));
   const sourceHealthWarnings = [
     ...fallbackResult.warnings,
+    ...financialPulse.warnings,
     ...preflightWarnings,
     ...chunkSearchWarnings,
     ...synthesizedResult.warnings,
@@ -2408,20 +2633,24 @@ export async function generateBrandonDailyUpdate(
     generatedAt: new Date().toISOString(),
     windowDays,
     retrievalOrder: [
-      "1. Recent email evidence",
-      "2. Recent Teams messages",
-      "3. Recent meeting transcripts and summaries",
-      "4. Recent document records",
-      "5. Older knowledge only as secondary context",
+      "1. Acumatica ERP financial data (AR, change orders) — authoritative ground truth",
+      "2. Recent email evidence",
+      "3. Recent Teams messages",
+      "4. Recent meeting transcripts and summaries",
+      "5. Recent document records",
+      "6. Older knowledge only as secondary context",
     ],
     sections,
     operatingBrief,
+    financialPulse,
     sourceCoverage,
     retrievalNotes: [
       `Executive briefing source of truth: recap_kind=executive_briefing. Backend recap_kind=meeting_digest is the legacy meeting digest and must not be treated as the CEO operating brief.`,
       `Executive synthesis model: ${synthesizedResult.modelUsed}. Override with EXECUTIVE_BRIEFING_SYNTHESIS_MODEL only when the CEO brief intentionally needs a different model.`,
+      `Financial pulse: ${financialPulse.totalOutstandingAR > 0 ? `$${Math.round(financialPulse.totalOutstandingAR / 1000)}K total outstanding AR, $${Math.round(financialPulse.totalOverdueAR / 1000)}K overdue across ${financialPulse.arByProject.length} projects; ${financialPulse.pendingCOsByProject.length} projects with pending COs ($${Math.round(financialPulse.totalPendingCORevenue / 1000)}K revenue)` : "No financial data available"}.`,
       "The briefing window now follows calendar days in Eastern time so day-stamped email and Teams activity is not dropped mid-morning.",
-      "Recent communication evidence leads the brief so stale memory does not dominate.",
+      "Financial data from Acumatica ERP (AR invoices, change orders) is treated as authoritative ground truth in the synthesis — these figures cannot be hallucinated.",
+      "RAG similarity threshold is 0.35 (raised from 0.25) to reduce low-signal noise.",
       "Low-confidence items are excluded unless they have recent source evidence.",
       "Every surfaced item keeps its source title, date, and link when the ingestion data provides one.",
       "The CEO operating brief ranks by financial impact, schedule impact, customer impact, contractual risk, urgency, Brandon uniqueness, compounding risk, and blocked work; material overflow is kept in additional lanes instead of dropped.",
