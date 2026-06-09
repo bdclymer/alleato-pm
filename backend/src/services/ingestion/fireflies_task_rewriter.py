@@ -244,7 +244,6 @@ def rewrite_action_items(
                     {"role": "system", "content": _REWRITER_SYSTEM_PROMPT},
                     {"role": "user", "content": user_prompt},
                 ],
-                temperature=0,
                 max_completion_tokens=2400,
                 response_format={"type": "json_object"},
             ),
