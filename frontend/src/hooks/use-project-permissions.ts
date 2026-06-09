@@ -9,6 +9,7 @@ interface ProjectPermissions {
   permissions: Record<string, string[]>;
   userType: string | null;
   isAppAdmin: boolean;
+  isDeveloper: boolean;
   isLoading: boolean;
 }
 
@@ -28,12 +29,14 @@ const ADMIN_PERMISSIONS: Record<string, string[]> = {
 function mapProjectPermissions(
   userPermissions: UserPermissions,
   userType: string | null,
+  isDeveloper: boolean,
 ): ProjectPermissionsResult {
   if (userPermissions.isAdmin) {
     return {
       permissions: ADMIN_PERMISSIONS,
-      userType: userType ?? "developer",
+      userType: userType ?? "admin",
       isAppAdmin: true,
+      isDeveloper,
     };
   }
 
@@ -57,6 +60,7 @@ function mapProjectPermissions(
     ),
     userType: userType || "employee",
     isAppAdmin: false,
+    isDeveloper,
   };
 }
 
@@ -75,11 +79,16 @@ export function useProjectPermissions(
         permissions: {},
         userType: null,
         isAppAdmin: false,
+        isDeveloper: false,
       };
     }
 
-    return mapProjectPermissions(shell.data.permissions, shell.data.userType);
-  }, [shell.data?.permissions, shell.data?.userType]);
+    return mapProjectPermissions(
+      shell.data.permissions,
+      shell.data.userType,
+      shell.data.profile.isDeveloper === true,
+    );
+  }, [shell.data?.permissions, shell.data?.profile.isDeveloper, shell.data?.userType]);
 
   return { ...mapped, isLoading: shell.isLoading };
 }

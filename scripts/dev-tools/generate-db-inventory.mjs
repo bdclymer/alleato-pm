@@ -354,6 +354,10 @@ function serializeRefs(refs) {
   return `[\n${refs.map((r) => `          ${serializeRef(r)},`).join("\n")}\n        ]`;
 }
 
+function escapeTemplateLiteralContent(value) {
+  return value.replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
+}
+
 // ─── Markdown table list (agent-facing) ───────────────────────────────────────
 
 function renderTableListMarkdown(tableEntries, generatedAt) {
@@ -591,7 +595,28 @@ async function main() {
     }`;
     });
 
-    const totalSizeBytes = tableEntries.reduce((sum, { liveStats }) => sum + 0, 0);
+    const inventoryPayload = {
+      generatedAt,
+      generatorVersion: "1",
+      tables: tableEntries.map(({ entry, liveStats, columns, refs }) => ({
+        name: entry.name,
+        db: entry.db,
+        domain: entry.domain,
+        status: entry.status,
+        purpose: entry.purpose ? String(entry.purpose).trim() : "",
+        gotchas: entry.gotchas ? String(entry.gotchas).trim() : null,
+        cleanupPriority: entry.cleanup_priority ?? null,
+        owner: entry.owner || "unknown",
+        relatedTables: Array.isArray(entry.related_tables) ? entry.related_tables : [],
+        notesForAi: entry.notes_for_ai ? String(entry.notes_for_ai).trim() : null,
+        liveStats,
+        columns,
+        references: refs,
+      })),
+    };
+    const serializedInventoryJson = escapeTemplateLiteralContent(
+      JSON.stringify(inventoryPayload),
+    );
 
     const output = `// AUTO-GENERATED — DO NOT EDIT BY HAND.
 // Regenerate with: npm run db:inventory
@@ -654,13 +679,9 @@ export type DbInventory = {
   tables: DbInventoryTable[];
 };
 
-export const DB_INVENTORY: DbInventory = {
-  generatedAt: ${JSON.stringify(generatedAt)},
-  generatorVersion: "1",
-  tables: [
-${tableLines.join(",\n")}
-  ],
-};
+const DB_INVENTORY_JSON = String.raw\`${serializedInventoryJson}\`;
+
+export const DB_INVENTORY: DbInventory = JSON.parse(DB_INVENTORY_JSON) as DbInventory;
 `;
 
     fs.writeFileSync(outputPath, output, "utf8");

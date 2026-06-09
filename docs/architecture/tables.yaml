@@ -217,9 +217,9 @@ tables:
     db: MAIN
     domain: intelligence
     owner: pipeline
-    status: live
-    purpose: "Per-project risk roll-up snapshots. No app-level writer found — likely trigger-driven or backend job not in repo."
-    gotchas: "78 rows but no identifiable writer in codebase grep. Investigate before modifying schema."
+    status: deleted
+    purpose: "Legacy CRO risk roll-up table removed on 2026-06-09. Live risk reads now compute from current PM tables instead of reading a stored summary."
+    gotchas: "Historical documentation only. The live PM risk tool does not read this deleted table."
     relatedTables:
       - projects
 
@@ -2127,9 +2127,9 @@ tables:
     db: MAIN
     domain: intelligence
     owner: core
-    status: archive-candidate
-    purpose: "Human review queue for intelligence decisions. Insert/read paths exist, but no complete review UI is shipped. Keep only if the review workflow is built now; otherwise archive."
-    gotchas: "Do not let this become a silent junk drawer for AI corrections. It needs either a real owner/UI or an archive decision."
+    status: live
+    purpose: "Human review queue for packet/card feedback. Low row count today, but active insert/read paths make it the durable app-side review ledger."
+    gotchas: "Do not let this become a silent junk drawer for AI corrections. Keep ownership tight around packet/card feedback until a broader review workflow exists."
     cleanupPriority: medium
     relatedTables:
       - insight_cards
@@ -2191,9 +2191,9 @@ tables:
     db: MAIN
     domain: pipeline
     owner: pipeline
-    status: duplicate-read-model
-    purpose: "App-side source sync health read model. RAG.source_sync_health_snapshots is canonical; keep this only if an app/admin path needs a compact local summary."
-    gotchas: "Do not use this as project intelligence content. Prefer RAG-backed source health reads unless a deliberate local read model is documented."
+    status: deleted
+    purpose: "Former PM APP duplicate of the source sync health read model. Removed on 2026-06-09 after runtime reads were confirmed to use the RAG database directly."
+    gotchas: "Historical documentation only. Use RAG.source_sync_health_snapshots via createRagServiceClient()."
     cleanupPriority: medium
     relatedTables:
       - system_alerts

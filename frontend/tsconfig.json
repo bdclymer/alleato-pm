@@ -52,6 +52,10 @@
     "**/__tests__/**",
     "tests/**",
     "**/*.stories.tsx",
-    "**/*.stories.ts"
+    "**/*.stories.ts",
+    ".storybook/**",
+    "vitest.config.ts",
+    "vitest.shims.d.ts",
+    "src/types/database.local.types.ts"
   ]
 }

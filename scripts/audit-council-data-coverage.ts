@@ -151,11 +151,6 @@ async function auditProject(projectId: number, projectName: string): Promise<Pro
       .select("id", { count: "exact", head: true })
       .eq("project_id", projectId),
 
-    // Risk snapshot existence
-    supabase
-      .from("project_risk_snapshots")
-      .select("id", { count: "exact", head: true })
-      .eq("project_id", projectId),
   ]);
 
   const meetingCount30d = meetingsResult.count ?? 0;
@@ -164,7 +159,6 @@ async function auditProject(projectId: number, projectName: string): Promise<Pro
   const risks = risksResult.data ?? [];
   const openRisks = risks.length;
   const criticalRisks = risks.filter((r) => r.severity === "critical" || r.severity === "high").length;
-  const hasRiskSnapshot = (snapshotResult.count ?? 0) > 0;
   const openRFIs = rfiResult.count ?? 0;
   const agingRFIs = agingRfiResult.count ?? 0;
   const openTasks = tasksResult.count ?? 0;
@@ -188,12 +182,12 @@ async function auditProject(projectId: number, projectName: string): Promise<Pro
     (openRFIs > 0 ? 20 : 0),
   );
 
-  // CRO: needs risks + snapshot
+  // CRO: needs live risks and operational drag signals
   const croScore = Math.min(100,
     (openRisks > 0 ? 40 : 0) +
-    (hasRiskSnapshot ? 30 : 0) +
     (criticalRisks > 0 ? 20 : 0) +
-    (agingRFIs > 0 ? 10 : 0),
+    (agingRFIs > 0 ? 20 : 0) +
+    (overdueTasks > 0 ? 20 : 0),
   );
 
   // CHRO: needs enriched segments (for people extraction) + tasks
@@ -222,7 +216,6 @@ async function auditProject(projectId: number, projectName: string): Promise<Pro
     enrichedSegments,
     openRisks,
     criticalRisks,
-    hasRiskSnapshot,
     openRFIs,
     agingRFIs,
     openTasks,

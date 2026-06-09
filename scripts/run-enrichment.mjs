@@ -1,10 +1,10 @@
 /**
- * Local runner for meeting segment enrichment + risk snapshots
+ * Local runner for meeting segment enrichment
  * Uses frontend node_modules and .env.local
  *
  * Usage:
- *   node scripts/run-enrichment.mjs [--segments] [--snapshots] [--both]
- *   (defaults to --both)
+ *   node scripts/run-enrichment.mjs [--segments]
+ *   (defaults to --segments)
  */
 
 import { createClient } from "../frontend/node_modules/@supabase/supabase-js/dist/index.mjs";
@@ -157,173 +157,15 @@ async function runSegmentEnrichment() {
   return { enriched, errors };
 }
 
-// ─── Risk Snapshots ───────────────────────────────────────────────────────────
-
-async function gatherRiskSignals(projectId) {
-  const rfiCutoff = new Date();
-  rfiCutoff.setDate(rfiCutoff.getDate() - 14);
-
-  const [risksResult, issuesResult, tasksResult, rfisResult, insightsResult] =
-    await Promise.all([
-      supabase.from("project_insights").select("id, severity").eq("project_id", projectId),
-      supabase.from("issues").select("id").eq("project_id", projectId).eq("status", "open"),
-      supabase
-        .from("schedule_tasks")
-        .select("id")
-        .eq("project_id", projectId)
-        .eq("status", "in_progress")
-        .lt("end_date", new Date().toISOString()),
-      supabase
-        .from("rfis")
-        .select("id")
-        .eq("project_id", projectId)
-        .eq("status", "open")
-        .lt("created_at", rfiCutoff.toISOString()),
-      supabase.from("ai_insights").select("id").eq("project_id", projectId).eq("status", "open"),
-    ]);
-
-  const risks = risksResult.data ?? [];
-  const criticalRisks = risks.filter(
-    (r) => r.severity === "critical" || r.severity === "high",
-  ).length;
-
-  return {
-    project_id: projectId,
-    open_risks: risks.length,
-    critical_risks: criticalRisks,
-    open_issues: issuesResult.data?.length ?? 0,
-    overdue_tasks: tasksResult.data?.length ?? 0,
-    aging_rfis: rfisResult.data?.length ?? 0,
-    unresolved_insights: insightsResult.data?.length ?? 0,
-    risk_score: 0,
-  };
-}
-
-function computeRiskScore(signals) {
-  const score =
-    signals.critical_risks * 15 +
-    signals.unresolved_insights * 8 +
-    signals.open_risks * 5 +
-    signals.aging_rfis * 4 +
-    signals.overdue_tasks * 2 +
-    signals.open_issues * 3;
-  return Math.min(100, Math.round(score));
-}
-
-async function computeTrend(projectId, currentScore, today) {
-  const { data: prior } = await supabase
-    .from("project_risk_snapshots")
-    .select("risk_score")
-    .eq("project_id", projectId)
-    .lt("snapshot_date", today)
-    .order("snapshot_date", { ascending: false })
-    .limit(1)
-    .single();
-
-  if (!prior) return "new";
-  const delta = currentScore - prior.risk_score;
-  if (delta > 8) return "deteriorating";
-  if (delta < -8) return "improving";
-  return "stable";
-}
-
-async function generateRiskNarrative(projectName, signals, trend) {
-  const prompt = `Write ONE sentence (max 20 words) summarizing the dominant risk for "${projectName}" this week. Be specific, not generic.
-
-Data: ${signals.critical_risks} critical risks, ${signals.overdue_tasks} overdue tasks, ${signals.aging_rfis} aging RFIs, ${signals.unresolved_insights} unresolved AI insights. Trend: ${trend}.
-
-Return only the sentence, no quotes.`;
-
-  const response = await openai.chat.completions.create({
-    model: ENRICHMENT_MODEL,
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0.3,
-    max_tokens: 60,
-  });
-
-  return response.choices[0]?.message?.content?.trim() ?? "";
-}
-
-async function runRiskSnapshots() {
-  const today = new Date().toISOString().split("T")[0];
-  console.log(`\n[snapshots] snapshotting all projects for ${today}...`);
-
-  const { data: projects, error } = await supabase
-    .from("projects")
-    .select("id, name")
-    .not("phase", "eq", "closed");
-
-  if (error || !projects?.length) {
-    console.log("[snapshots] no projects:", error?.message);
-    return { snapshotted: 0, errors: 0 };
-  }
-
-  console.log(`[snapshots] processing ${projects.length} projects...`);
-  let snapshotted = 0;
-  let errors = 0;
-
-  for (let i = 0; i < projects.length; i++) {
-    const project = projects[i];
-    process.stdout.write(`  [${i + 1}/${projects.length}] ${project.name}...`);
-
-    try {
-      const signals = await gatherRiskSignals(project.id);
-      const riskScore = computeRiskScore(signals);
-      const trend = await computeTrend(project.id, riskScore, today);
-
-      let riskNarrative = null;
-      if (trend === "deteriorating" || riskScore > 60) {
-        riskNarrative = await generateRiskNarrative(project.name, signals, trend);
-      }
-
-      const { error: insertError } = await supabase
-        .from("project_risk_snapshots")
-        .upsert(
-          {
-            project_id: project.id,
-            snapshot_date: today,
-            risk_score: riskScore,
-            open_risks: signals.open_risks,
-            critical_risks: signals.critical_risks,
-            open_issues: signals.open_issues,
-            overdue_tasks: signals.overdue_tasks,
-            aging_rfis: signals.aging_rfis,
-            unresolved_insights: signals.unresolved_insights,
-            trend,
-            risk_narrative: riskNarrative,
-          },
-          { onConflict: "project_id,snapshot_date" },
-        );
-
-      if (insertError) {
-        console.log(` ✗ ${insertError.message}`);
-        errors++;
-      } else {
-        const narrative = riskNarrative ? ` — "${riskNarrative}"` : "";
-        console.log(` ✓ score=${riskScore} trend=${trend}${narrative}`);
-        snapshotted++;
-      }
-    } catch (e) {
-      console.log(` ✗ ${e.message}`);
-      errors++;
-    }
-  }
-
-  console.log(`\n[snapshots] done — snapshotted: ${snapshotted}, errors: ${errors}`);
-  return { snapshotted, errors };
-}
-
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 const args = process.argv.slice(2);
-const runSegments = args.includes("--segments") || args.includes("--both") || args.length === 0;
-const runSnapshots = args.includes("--snapshots") || args.includes("--both") || args.length === 0;
+const runSegments = args.includes("--segments") || args.length === 0;
 
 console.log("╔══════════════════════════════════════════════╗");
 console.log("║  Council Mode — Enrichment Runner            ║");
 console.log("╚══════════════════════════════════════════════╝");
 
 if (runSegments) await runSegmentEnrichment();
-if (runSnapshots) await runRiskSnapshots();
 
 console.log("\n✅ Done.\n");

@@ -31,8 +31,8 @@ The cleanup direction is:
 | `insight_cards` | MAIN / PM APP (`lgveqfnpkxvzbnnwuled`) | Product intelligence | Durable promoted findings: risks, updates, obligations, decisions, follow-ups, document signals, and other project intelligence. | Keep |
 | `insight_card_evidence` | MAIN / PM APP (`lgveqfnpkxvzbnnwuled`) | Evidence | Links insight cards to source documents/messages/snippets/pages. This is the audit trail that prevents unsupported AI claims. | Keep |
 | `insight_card_targets` | MAIN / PM APP (`lgveqfnpkxvzbnnwuled`) | Attribution | Links insight cards to intelligence targets, including the primary target relationship. | Keep |
-| `intelligence_reviews` | MAIN / PM APP (`lgveqfnpkxvzbnnwuled`) | Feedback / review | Human review queue for packet/card/evidence issues. There are insert/read paths, but the table is effectively empty/underused and no complete UI is shipped. | Archive unless review UI is built now |
-| `project_risk_snapshots` | MAIN / PM APP (`lgveqfnpkxvzbnnwuled`) | Legacy risk rollup | Per-project risk roll-up snapshots. Existing docs say no clear app-level writer was found. This overlaps with packet/card risk intelligence. | Audit, then likely archive/delete |
+| `intelligence_reviews` | MAIN / PM APP (`lgveqfnpkxvzbnnwuled`) | Feedback / review | Packet/card feedback queue with active insert/read paths. Current live usage is small, but it is the durable app-side review record for packet feedback. | Keep |
+| `project_risk_snapshots` | MAIN / PM APP (`lgveqfnpkxvzbnnwuled`) | Legacy risk rollup | Old CRO roll-up snapshots and convenience views. Runtime AI risk reads now compute from live PM tables instead of this stored summary. | Deleted |
 | `source_intelligence_jobs` | RAG / AI Database (`fqcvmfqldlewvbsuxdvz`) | Compiler queue | Canonical durable job queue for source-level attribution, signal extraction, card upsert, and packet refresh work. Drained by the Render intelligence compiler cron. | Keep in RAG |
 | `source_intelligence_jobs_archive_20260609` | MAIN / PM APP (`lgveqfnpkxvzbnnwuled`) | Former mirror | Former MAIN job queue kept briefly during the cutover audit, then dropped once no active dependency remained. | Deleted |
 | `source_signal_candidates` | RAG / AI Database (`fqcvmfqldlewvbsuxdvz`) | Compiler staging | Canonical staging table for extracted signals before promotion to `insight_cards`. | Keep in RAG |
@@ -40,7 +40,7 @@ The cleanup direction is:
 | `packet_refresh_jobs` | RAG / AI Database (`fqcvmfqldlewvbsuxdvz`) | Compiler queue | Canonical queue for regenerating `intelligence_packets`. Written by source promotion and periodic refresh jobs; drained by the compiler cron. | Keep in RAG |
 | `packet_refresh_jobs_archive_20260609` | MAIN / PM APP (`lgveqfnpkxvzbnnwuled`) | Former mirror | Former MAIN packet-refresh queue kept briefly during the cutover audit, then dropped once no active dependency remained. | Deleted |
 | `source_sync_health_snapshots` | RAG / AI Database (`fqcvmfqldlewvbsuxdvz`) | Observability | Canonical source-sync and compiler-health snapshots. Used for source health, readiness, and pipeline diagnostics. | Keep in RAG |
-| `source_sync_health_snapshots` | MAIN / PM APP (`lgveqfnpkxvzbnnwuled`) | Observability summary / duplicate | App-side copy or summary of source health. Keep only if the admin UI truly needs local low-latency reads; otherwise replace reads with a RAG-backed API and delete this copy. | Keep temporarily; replace or delete |
+| `source_sync_health_snapshots` | MAIN / PM APP (`lgveqfnpkxvzbnnwuled`) | Former observability duplicate | PM APP duplicate of the RAG source-health read model. Runtime reads already use the RAG service client directly, so the MAIN copy was redundant. | Deleted |
 
 ## Clean Workflow
 
@@ -91,26 +91,26 @@ Reason: the stale live MAIN names were removed first so hidden dependencies
 would fail loudly during audit. After the audit confirmed the app/runtime no
 longer depended on the PM APP copies, the archive tables were dropped.
 
-### Archive Or Delete After Product Decision
+### Product Decisions Locked On 2026-06-09
 
-- `intelligence_reviews`
-- `project_risk_snapshots`
+- `intelligence_reviews`: keep
+- `project_risk_snapshots`: delete
 
 Reason:
 
-- `intelligence_reviews` has code paths but appears underused without a complete
-  review UI. If review is important, build it now; otherwise archive it.
-- `project_risk_snapshots` overlaps with packet/card risk intelligence and has
-  no clear current writer in the repo audit. If historical risk trend UI is not
-  using it, archive/delete it.
+- `intelligence_reviews` has active app-side insert/read paths for packet card
+  feedback, even though the current row count is small.
+- `project_risk_snapshots` had historical rows but no runtime PM agent/tool now
+  depends on it. The live `project_risk_snapshot` tool computes from current PM
+  tables instead of this stored summary.
 
-### Keep But Simplify Access
+### Deleted After Runtime Audit
 
 - MAIN `source_sync_health_snapshots`
 
-Reason: source health is useful, but a duplicated health table should exist only
-if the app UI needs a compact local read model. Preferred future state is a
-single RAG-backed health API that returns a compact summary to the app.
+Reason: the app and assistant already read source health from the RAG database
+through `createRagServiceClient()`, so the PM APP copy had no remaining runtime
+owner.
 
 ## Required Cleanup Audit Before Dropping Tables
 
@@ -195,6 +195,9 @@ node scripts/verify/verify_rag_client_boundary.mjs
   - drop `source_intelligence_jobs_archive_20260609`
   - drop `source_signal_candidates_archive_20260609`
   - drop `packet_refresh_jobs_archive_20260609`
+  - drop MAIN `source_sync_health_snapshots`
+  - drop `project_risk_snapshots`
+  - drop views `project_risk_current` and `project_risk_deteriorating`
 
 ### Phase 5: Simplify Docs And Assistant Policy
 
