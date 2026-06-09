@@ -178,6 +178,8 @@ def test_run_microsoft_assistant_formats_last_five_deterministically():
     assert "Megan" not in response.answer
     assert "Approvals needed" not in response.answer
     assert "draft" not in response.answer.lower()
+    assert "Security-related email noted in the broader inbox" not in response.answer
+    assert response.answer.count("Response path:") == 5
 
 
 def test_run_microsoft_assistant_formats_urgent_inbox_into_action_buckets():
@@ -218,6 +220,82 @@ def test_run_microsoft_assistant_formats_urgent_inbox_into_action_buckets():
     assert "Recommended next steps for Brandon" in response.answer
     assert "Draft Teams message" not in response.answer
     assert "Megan" not in response.answer
+
+
+def test_run_microsoft_assistant_limits_this_morning_to_same_day_morning_messages():
+    class MorningInboxAgent:
+        def invoke(self, *_args, **_kwargs):
+            return {
+                "messages": [
+                    {
+                        "type": "tool",
+                        "name": "read_live_outlook_inbox",
+                        "content": (
+                            '{"ok":true,"source":"microsoft_graph_live","mailbox_user_id":"bclymer@alleatogroup.com","count":4,'
+                            '"messages":['
+                            '{"subject":"RE: ULTA update needed.","from_name":"Walter Allen","from_email":"wallen@ulta.com","received_at":"2026-06-09T09:59:34Z","body_text":"Can you confirm by Thursday afternoon?","has_attachments":false},'
+                            '{"subject":"Sign in to Perplexity","from_name":"Perplexity","from_email":"team@mail.perplexity.ai","received_at":"2026-06-09T09:37:58Z","body_text":"Your verification code is 12345.","has_attachments":false},'
+                            '{"subject":"Champaign Pay App","from_name":"Glendon Griesbaum","from_email":"ggriesbaum@niemannfoods.com","received_at":"2026-06-08T20:39:00Z","body_text":"Reminder to keep invoicing timely.","has_attachments":false},'
+                            '{"subject":"Acumatica maintenance","from_name":"Revive Support","from_email":"support@reviveerp.com","received_at":"2026-06-08T18:47:00Z","body_text":"Scheduled maintenance notice.","has_attachments":false}'
+                            ']}'
+                        ),
+                    },
+                    {"content": "freeform assistant output that should be ignored"},
+                ]
+            }
+
+    response = run_microsoft_executive_assistant(
+        MicrosoftExecutiveAssistantRequest(
+            userId="user-1",
+            mailboxUserId="bclymer@alleatogroup.com",
+            prompt="What are the important emails this morning?",
+        ),
+        create_agent=lambda **_kwargs: MorningInboxAgent(),
+    )
+
+    assert "Important emails this morning" in response.answer
+    assert "Walter Allen" in response.answer
+    assert "Perplexity" in response.answer
+    assert "Glendon Griesbaum" not in response.answer
+    assert "Revive Support" not in response.answer
+
+
+def test_run_microsoft_assistant_arrived_today_separates_action_needed_from_informational():
+    class TodayInboxAgent:
+        def invoke(self, *_args, **_kwargs):
+            return {
+                "messages": [
+                    {
+                        "type": "tool",
+                        "name": "read_live_outlook_inbox",
+                        "content": (
+                            '{"ok":true,"source":"microsoft_graph_live","mailbox_user_id":"bclymer@alleatogroup.com","count":4,'
+                            '"messages":['
+                            '{"subject":"RE: ULTA update needed.","from_name":"Walter Allen","from_email":"wallen@ulta.com","received_at":"2026-06-09T09:59:34Z","body_text":"Can you confirm by Thursday afternoon?","has_attachments":false},'
+                            '{"subject":"RE: Exol Morrisville PA","from_name":"Steve Fischer","from_email":"steve.fischer@exol.com","received_at":"2026-06-09T02:59:12Z","body_text":"Please review the comments and reply.","has_attachments":false},'
+                            '{"subject":"ERP Integrations Daily Summary","from_name":"Alleato Group notifications","from_email":"no-reply@alleatogroup.com","received_at":"2026-06-09T06:15:56Z","body_text":"Daily summary.","has_attachments":false},'
+                            '{"subject":"[Reminder] Your payment is due in 1 day","from_name":"Ryan Niddel","from_email":"payments@example.com","received_at":"2026-06-09T03:54:13Z","body_text":"Payment is due in 1 day.","has_attachments":false}'
+                            ']}'
+                        ),
+                    },
+                    {"content": "freeform assistant output that should be ignored"},
+                ]
+            }
+
+    response = run_microsoft_executive_assistant(
+        MicrosoftExecutiveAssistantRequest(
+            userId="user-1",
+            mailboxUserId="bclymer@alleatogroup.com",
+            prompt="What Outlook emails arrived today that matter?",
+        ),
+        create_agent=lambda **_kwargs: TodayInboxAgent(),
+    )
+
+    assert "Action needed" in response.answer
+    assert "Watch / informational" in response.answer
+    assert "ERP Integrations Daily Summary" in response.answer
+    assert "Response path: Ignore" in response.answer or "Response path: Watch" in response.answer
+    assert "Recommended next steps for Brandon" not in response.answer
 
 
 def test_run_microsoft_assistant_fails_loudly_without_provider(monkeypatch):

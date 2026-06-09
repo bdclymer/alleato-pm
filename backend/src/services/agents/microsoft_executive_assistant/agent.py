@@ -318,6 +318,11 @@ def _format_received_at(value: Any) -> str:
     return dt.strftime("%Y-%m-%d %H:%M UTC") if dt else "unknown time"
 
 
+def _received_on_utc_day(message: dict[str, Any], day: datetime.date) -> bool:
+    dt = _parse_received_at(message.get("received_at"))
+    return bool(dt and dt.date() == day)
+
+
 def _message_text(message: dict[str, Any]) -> str:
     return " ".join(
         str(message.get(key) or "")
@@ -331,6 +336,17 @@ def _is_internal_sender(message: dict[str, Any]) -> bool:
 
 
 def _short_action_label(message: dict[str, Any]) -> str:
+    bucket = _action_bucket(message)
+    if bucket == "Alert now":
+        return "Reply now"
+    if bucket == "Reply":
+        return "Reply"
+    if bucket == "Delegate":
+        return "Delegate"
+    if bucket == "Watch":
+        return "Watch"
+    if bucket == "Ignore/noise":
+        return "Ignore"
     text = _message_text(message)
     if "sign in" in text or "verification" in text or "login code" in text:
         return "Login verification"
@@ -373,7 +389,9 @@ def _action_bucket(message: dict[str, Any]) -> str:
         return "Reply"
     if _likely_reply_needed(message) and _is_internal_sender(message):
         return "Delegate"
-    if message.get("has_attachments") or subject.lower().startswith("re:"):
+    if "daily summary" in text or "summary" in text:
+        return "Ignore/noise"
+    if message.get("has_attachments"):
         return "Watch"
     return "Ignore/noise"
 
@@ -381,28 +399,36 @@ def _action_bucket(message: dict[str, Any]) -> str:
 def _message_reason(message: dict[str, Any], bucket: str) -> str:
     text = _message_text(message)
     if bucket == "Alert now":
-        return "External sender is asking for a time-bound confirmation."
+        return "The email contains a direct external ask with explicit timing."
     if bucket == "Reply":
-        return "This reads like a direct sender ask that needs a response."
+        return "The sender appears to be asking for a direct response."
     if bucket == "Delegate":
-        return "This looks like an internal/project follow-up that likely needs ownership or routing."
+        return "This looks like an internal follow-up that needs ownership or routing."
     if "quarantine" in text or "security" in text:
         return "Security/admin notice exists, but the inbox evidence alone does not prove an immediate incident."
     if "approaching spend limit" in text or "payment is due" in text:
-        return "Time-sensitive admin reminder, but not clearly a same-minute operator issue from the email alone."
+        return "Admin reminder; time-sensitive, but not clearly an immediate reply item from the email alone."
     if "sign in" in text or "verification code" in text:
         return "Authentication message; usually ignorable unless the sign-in was requested."
+    if "daily summary" in text or "summary" in text:
+        return "Operational summary or digest; no direct action is shown in the email itself."
     return "Present in the inbox, but the email evidence does not prove an immediate action."
 
 
 def _trimmed_messages_for_today(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    now = datetime.now(timezone.utc).date()
-    today_messages = [
-        message
-        for message in messages
-        if (_parse_received_at(message.get("received_at")) or datetime.min.replace(tzinfo=timezone.utc)).date() == now
-    ]
+    today = datetime.now(timezone.utc).date()
+    today_messages = [message for message in messages if _received_on_utc_day(message, today)]
     return today_messages or messages
+
+
+def _messages_for_this_morning(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    today = datetime.now(timezone.utc).date()
+    rows: list[dict[str, Any]] = []
+    for message in messages:
+        dt = _parse_received_at(message.get("received_at"))
+        if dt and dt.date() == today and dt.hour < 12:
+            rows.append(message)
+    return rows
 
 
 def _render_last_five_answer(messages: list[dict[str, Any]], mailbox: str) -> str:
@@ -411,11 +437,49 @@ def _render_last_five_answer(messages: list[dict[str, Any]], mailbox: str) -> st
     for index, message in enumerate(rows, start=1):
         sender = str(message.get("from_name") or message.get("from_email") or "Unknown sender")
         subject = str(message.get("subject") or "(no subject)")
+        bucket = _action_bucket(message)
         lines.append(
             f"{index}. {subject} — {sender} — {_format_received_at(message.get('received_at'))}"
         )
-        lines.append(f"   {_short_action_label(message)}.")
+        lines.append(f"   Response path: {_short_action_label(message)}.")
+        lines.append(f"   Why: {_message_reason(message, bucket)}")
         lines.append("")
+    return "\n".join(lines).strip()
+
+
+def _render_action_lists(
+    *,
+    heading: str,
+    action_needed: list[dict[str, Any]],
+    informational: list[dict[str, Any]],
+) -> str:
+    lines = [heading, ""]
+
+    if action_needed:
+        lines.append("Action needed")
+        for message in action_needed:
+            sender = str(message.get("from_name") or message.get("from_email") or "Unknown sender")
+            subject = str(message.get("subject") or "(no subject)")
+            bucket = _action_bucket(message)
+            lines.append(f"- {subject} — {sender} — {_format_received_at(message.get('received_at'))}")
+            lines.append(f"  Response path: {_short_action_label(message)}")
+            lines.append(f"  Why: {_message_reason(message, bucket)}")
+        lines.append("")
+
+    if informational:
+        lines.append("Watch / informational")
+        for message in informational:
+            sender = str(message.get("from_name") or message.get("from_email") or "Unknown sender")
+            subject = str(message.get("subject") or "(no subject)")
+            bucket = _action_bucket(message)
+            lines.append(f"- {subject} — {sender} — {_format_received_at(message.get('received_at'))}")
+            lines.append(f"  Response path: {_short_action_label(message)}")
+            lines.append(f"  Why: {_message_reason(message, bucket)}")
+        lines.append("")
+
+    if not action_needed and not informational:
+        lines.append("No matching inbox items were identified from the live inbox read.")
+
     return "\n".join(lines).strip()
 
 
@@ -425,8 +489,9 @@ def _render_bucketed_triage_answer(
     messages: list[dict[str, Any]],
     mailbox_owner: str,
     include_only_reply_needed: bool = False,
+    same_day_only: bool = False,
 ) -> str:
-    candidates = _trimmed_messages_for_today(messages)
+    candidates = _trimmed_messages_for_today(messages) if same_day_only else messages
     if include_only_reply_needed:
         candidates = [message for message in candidates if _likely_reply_needed(message)]
 
@@ -466,6 +531,34 @@ def _render_bucketed_triage_answer(
     return "\n".join(lines).strip()
 
 
+def _render_morning_answer(messages: list[dict[str, Any]], mailbox: str) -> str:
+    rows = _messages_for_this_morning(messages)
+    if not rows:
+        return (
+            f"Important emails this morning for {mailbox}:\n\n"
+            "No emails from this morning were identified in the live inbox read."
+        )
+
+    action_needed = [message for message in rows if _action_bucket(message) in {"Alert now", "Reply", "Delegate"}][:6]
+    informational = [message for message in rows if _action_bucket(message) not in {"Alert now", "Reply", "Delegate"}][:6]
+    return _render_action_lists(
+        heading=f"Important emails this morning for {mailbox}:",
+        action_needed=action_needed,
+        informational=informational,
+    )
+
+
+def _render_arrived_today_answer(messages: list[dict[str, Any]], mailbox: str) -> str:
+    rows = _trimmed_messages_for_today(messages)
+    action_needed = [message for message in rows if _action_bucket(message) in {"Alert now", "Reply", "Delegate"}][:6]
+    informational = [message for message in rows if _action_bucket(message) not in {"Alert now", "Reply", "Delegate"}][:6]
+    return _render_action_lists(
+        heading=f"Messages that arrived today for {mailbox}:",
+        action_needed=action_needed,
+        informational=informational,
+    )
+
+
 def _deterministic_inbox_answer(
     request: MicrosoftExecutiveAssistantRequest,
     result: Any,
@@ -489,17 +582,9 @@ def _deterministic_inbox_answer(
             mailbox_owner=owner,
         )
     if kind == "important_morning":
-        return _render_bucketed_triage_answer(
-            heading=f"Important emails this morning for {mailbox}:",
-            messages=messages,
-            mailbox_owner=owner,
-        )
+        return _render_morning_answer(messages, mailbox)
     if kind == "arrived_today":
-        return _render_bucketed_triage_answer(
-            heading=f"Messages that arrived today for {mailbox}:",
-            messages=messages,
-            mailbox_owner=owner,
-        )
+        return _render_arrived_today_answer(messages, mailbox)
     if kind == "reply_triage":
         return _render_bucketed_triage_answer(
             heading=f"Emails that most likely need a reply in {mailbox}:",
