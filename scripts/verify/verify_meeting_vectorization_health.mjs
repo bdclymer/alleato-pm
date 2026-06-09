@@ -50,9 +50,16 @@ const STALENESS_DAYS = 7;
 const RECENT_WINDOW_DAYS = 14;
 const HISTORY_WINDOW_DAYS = 180;
 const MEETING_SIGNAL_LIMIT = 2_000;
-const RECENT_MIN_EMBEDDED_RATIO = 0.5;
-const RECENT_MIN_CHUNK_RATIO = 0.5;
-const RECENT_MIN_TRANSCRIPT_CHUNK_RATIO = 0.9;
+const RECENT_MIN_EMBEDDED_RATIO = 1;
+const RECENT_MIN_CHUNK_RATIO = 1;
+const RECENT_MIN_TRANSCRIPT_CHUNK_RATIO = 1;
+const MEETING_CHUNK_SOURCE_TYPES = [
+  "meeting_transcript",
+  "meeting_summary",
+  "meeting_segment_summary",
+  "meeting_notes",
+  "meeting_section",
+];
 const EXCLUDED_DOCUMENT_STATUSES = [
   "intentionally_excluded",
   "metadata_only",
@@ -83,6 +90,11 @@ function isNotActionable(row) {
   return EXCLUDED_DOCUMENT_STATUSES.includes(String(row.status ?? ""));
 }
 
+function hasTranscriptLikeContent(row) {
+  const text = `${row.raw_text ?? ""}\n${row.content ?? ""}`;
+  return /\[\d{1,2}:\d{2}(?::\d{2})?\]/.test(text) || text.length >= 5_000;
+}
+
 async function restSelect(baseUrl, key, path, { timeoutMs = 30_000 } = {}) {
   const res = await fetch(`${baseUrl.replace(/\/$/, "")}/rest/v1/${path}`, {
     signal: AbortSignal.timeout(timeoutMs),
@@ -102,6 +114,64 @@ async function restSelect(baseUrl, key, path, { timeoutMs = 30_000 } = {}) {
   };
 }
 
+async function restRpc(baseUrl, key, name, body, { timeoutMs = 30_000 } = {}) {
+  const res = await fetch(`${baseUrl.replace(/\/$/, "")}/rest/v1/rpc/${name}`, {
+    method: "POST",
+    signal: AbortSignal.timeout(timeoutMs),
+    headers: {
+      apikey: key,
+      authorization: `Bearer ${key}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(`rpc/${name} returned ${res.status}: ${text.slice(0, 300)}`);
+  }
+  return JSON.parse(text || "[]");
+}
+
+async function probeDocumentChunkSearchRpc() {
+  const sample = await restSelect(
+    ragRestUrl,
+    ragRestKey,
+    "document_chunks?select=embedding" +
+      "&source_type=eq.meeting_transcript" +
+      "&embedding=not.is.null" +
+      "&limit=1"
+  );
+  const queryEmbedding = sample.data[0]?.embedding;
+  if (!queryEmbedding) {
+    fail("No embedded meeting transcript chunk exists to use as a search_document_chunks probe.");
+    return {
+      result_count: 0,
+      max_similarity: null,
+      source: "rest-rpc",
+    };
+  }
+
+  const rows = await restRpc(ragRestUrl, ragRestKey, "search_document_chunks", {
+    query_embedding: queryEmbedding,
+    filter_source_types: ["meeting_transcript"],
+    filter_project_id: null,
+    match_count: 5,
+    match_threshold: 0.1,
+  });
+  const maxSimilarity = rows.reduce(
+    (max, row) => Math.max(max, Number(row.similarity ?? 0)),
+    0
+  );
+  if (!rows.some((row) => row.source_type === "meeting_transcript")) {
+    fail("RPC search_document_chunks returned no meeting_transcript results for a known-good probe vector.");
+  }
+  return {
+    result_count: rows.length,
+    max_similarity: maxSimilarity,
+    source: "rest-rpc",
+  };
+}
+
 async function runRestFallback(originalError) {
   if (!appRestUrl || !appRestKey || !ragRestUrl || !ragRestKey) {
     throw originalError;
@@ -109,19 +179,22 @@ async function runRestFallback(originalError) {
 
   warn(
     `Direct Postgres verification failed (${originalError.code || originalError.message}); ` +
-      "using Supabase REST fallback for vectorization coverage."
+      "using Supabase REST for coverage and retrieval verification."
   );
-  warn("REST fallback cannot exercise the search_document_chunks RPC probe; fix direct Postgres credentials to restore that probe.");
 
   const since = new Date(Date.now() - RECENT_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
   const recentRows = await restSelect(
     appRestUrl,
     appRestKey,
-    `document_metadata?select=id,title,type,category,source,status,created_at` +
+    `document_metadata?select=id,title,type,category,source,status,created_at,content,raw_text` +
       `&created_at=gte.${encodeURIComponent(since)}` +
       `&source=eq.fireflies&deleted_at=is.null&order=created_at.desc&limit=1000`
   );
   const recentMeetings = recentRows.data.filter((row) => !isExcludedMeeting(row) && !isNotActionable(row));
+  const transcriptExpectedMeetingIds = new Set(
+    recentMeetings.filter(hasTranscriptLikeContent).map((row) => row.id)
+  );
+  const sourceTypeFilter = `(${MEETING_CHUNK_SOURCE_TYPES.map((type) => `"${type}"`).join(",")})`;
 
   const chunkRows = [];
   for (const meeting of recentMeetings) {
@@ -130,12 +203,21 @@ async function runRestFallback(originalError) {
       ragRestKey,
       `document_chunks?select=chunk_id,source_type` +
         `&document_id=eq.${encodeURIComponent(meeting.id)}` +
+        `&source_type=in.${encodeURIComponent(sourceTypeFilter)}` +
+        `&embedding=not.is.null&limit=1`
+    );
+    const transcriptChunksForMeeting = await restSelect(
+      ragRestUrl,
+      ragRestKey,
+      `document_chunks?select=chunk_id,source_type` +
+        `&document_id=eq.${encodeURIComponent(meeting.id)}` +
+        `&source_type=eq.meeting_transcript` +
         `&embedding=not.is.null&limit=1`
     );
     chunkRows.push({
       document_id: meeting.id,
       embedded_chunk_count: chunksForMeeting.count,
-      embedded_transcript_chunk_count: chunksForMeeting.count,
+      embedded_transcript_chunk_count: transcriptChunksForMeeting.count,
     });
   }
 
@@ -145,8 +227,11 @@ async function runRestFallback(originalError) {
     recent_meetings_with_embedded_chunks: recentMeetings.filter(
       (row) => (chunkByDocumentId.get(row.id)?.embedded_chunk_count ?? 0) > 0
     ).length,
-    recent_meetings_with_embedded_transcript_chunks: recentMeetings.filter(
-      (row) => (chunkByDocumentId.get(row.id)?.embedded_transcript_chunk_count ?? 0) > 0
+    transcript_expected_meetings: transcriptExpectedMeetingIds.size,
+    transcript_expected_meetings_with_embedded_transcript_chunks: recentMeetings.filter(
+      (row) =>
+        transcriptExpectedMeetingIds.has(row.id) &&
+        (chunkByDocumentId.get(row.id)?.embedded_transcript_chunk_count ?? 0) > 0
     ).length,
     recent_embedded_chunks: chunkRows.reduce((sum, row) => sum + Number(row.embedded_chunk_count ?? 0), 0),
   };
@@ -156,8 +241,9 @@ async function runRestFallback(originalError) {
       ? recentChunkCoverage.recent_meetings_with_embedded_chunks / recentMeetings.length
       : 1;
   const transcriptRatio =
-    recentMeetings.length > 0
-      ? recentChunkCoverage.recent_meetings_with_embedded_transcript_chunks / recentMeetings.length
+    transcriptExpectedMeetingIds.size > 0
+      ? recentChunkCoverage.transcript_expected_meetings_with_embedded_transcript_chunks /
+        transcriptExpectedMeetingIds.size
       : 1;
 
   if (ratio < RECENT_MIN_EMBEDDED_RATIO) {
@@ -168,8 +254,9 @@ async function runRestFallback(originalError) {
   }
   if (transcriptRatio < RECENT_MIN_TRANSCRIPT_CHUNK_RATIO) {
     fail(
-      `Only ${recentChunkCoverage.recent_meetings_with_embedded_transcript_chunks} of ${recentMeetings.length} ` +
-        `eligible Fireflies meetings from the last ${RECENT_WINDOW_DAYS} days have embedded transcript chunks.`
+      `Only ${recentChunkCoverage.transcript_expected_meetings_with_embedded_transcript_chunks} of ` +
+        `${transcriptExpectedMeetingIds.size} transcript-bearing Fireflies meetings from the last ` +
+        `${RECENT_WINDOW_DAYS} days have embedded transcript chunks.`
     );
   }
 
@@ -191,9 +278,12 @@ async function runRestFallback(originalError) {
     fail(`${quotaErrorJobs.count} Fireflies ingestion jobs failed with quota/provider errors.`);
   }
 
-  const provider = await probeEmbeddingProvider();
+  const [provider, documentChunkSearch] = await Promise.all([
+    probeEmbeddingProvider(),
+    probeDocumentChunkSearchRpc(),
+  ]);
   const result = {
-    mode: "rest-fallback",
+    mode: "rest-rpc-fallback",
     metadata: {
       total_meetings: recentMeetings.length,
       latest_meeting_at: recentMeetings[0]?.created_at ?? null,
@@ -208,10 +298,7 @@ async function runRestFallback(originalError) {
       quota_error_recent: quotaErrorJobs.count,
     },
     probes: {
-      documentChunkSearch: {
-        skipped: true,
-        reason: "direct Postgres connection failed before RPC probe",
-      },
+      documentChunkSearch,
       embeddingProvider: provider,
     },
     warnings,
