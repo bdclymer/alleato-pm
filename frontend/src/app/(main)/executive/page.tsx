@@ -142,12 +142,22 @@ function normalizeProjectLabel(value: string) {
   return normalizeWhitespace(value || "No project linked");
 }
 
+function projectHrefFromItem(item: BrandonBriefItem) {
+  const id = item.projectInternalId ?? projectIdFromLabel(item.project);
+  return id ? `/${id}/home` : null;
+}
+
+function projectIdFromItem(item: BrandonBriefItem) {
+  return item.projectInternalId ?? projectIdFromLabel(item.project);
+}
+
 function projectHrefFromLabel(value: string) {
   const projectId = projectIdFromLabel(value);
   return projectId ? `/${projectId}/home` : null;
 }
 
 function projectIdFromLabel(value: string) {
+  // Legacy fallback: parse a leading numeric ID from the label string.
   const match = normalizeProjectLabel(value).match(/^(\d{2,5})\b/);
   return match ? Number(match[1]) : null;
 }
@@ -857,8 +867,8 @@ export default async function ExecutiveDailyInsightsPage({
           entry.section === "importantUpdates"
             ? undefined
             : actionQueueLabel(entry),
-        projectHref: projectHrefFromLabel(item.project),
-        currentProjectId: projectIdFromLabel(item.project),
+        projectHref: projectHrefFromItem(item),
+        currentProjectId: projectIdFromItem(item),
       };
     },
   );

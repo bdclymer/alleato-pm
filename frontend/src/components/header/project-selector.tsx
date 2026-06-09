@@ -63,8 +63,15 @@ export function ProjectSelector({
         >
           <span className="flex min-w-0 items-center gap-1.5">
             {currentProject ? (
-              <span className="truncate text-xs text-foreground/80">
-                {currentProject.name}
+              <span className="flex min-w-0 items-center gap-1.5 truncate">
+                <span className="truncate text-xs text-foreground/80">
+                  {currentProject.name}
+                </span>
+                {currentProject["job number"] && (
+                  <span className="shrink-0 text-xs text-muted-foreground/60">
+                    {currentProject["job number"]}
+                  </span>
+                )}
               </span>
             ) : (
               <span className="text-xs text-muted-foreground">Select Project</span>
@@ -129,19 +136,19 @@ export function ProjectSelector({
                             : "text-foreground/75 hover:bg-muted hover:text-foreground",
                         )}
                       >
-                        <div className="min-w-0 flex-1">
-                          <div
+                        <div className="flex min-w-0 flex-1 items-center gap-2">
+                          <span
                             className={cn(
                               "truncate text-[13px]",
                               isSelected ? "font-semibold" : "font-normal",
                             )}
                           >
                             {project.name ?? "Unnamed Project"}
-                          </div>
+                          </span>
                           {project["job number"] && (
-                            <div className="truncate text-[11px] text-muted-foreground">
+                            <span className="shrink-0 text-[11px] text-muted-foreground/60">
                               {project["job number"]}
-                            </div>
+                            </span>
                           )}
                         </div>
                         <Check

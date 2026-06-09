@@ -4,19 +4,88 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
+// Types excluded from the default view — they live in Communications, not Documents.
+// The user can still filter to see them explicitly via ?type=teams_dm etc.
+const DEFAULT_EXCLUDED_TYPES = [
+  "teams_dm",
+  "teams_dm_conversation",
+  "teams_message",
+  "email",
+  "meeting",
+  "Interview",
+];
+
+const MAX_PER_PAGE = 500;
+const DEFAULT_PER_PAGE = 25;
+
+const PROCESSING_PIPELINE_STAGES = [
+  "segmented",
+  "chunked",
+  "embedded",
+  "structured_extracted",
+] as const;
+
+const ALLOWED_SORT_COLUMNS: Record<string, string> = {
+  created_at: "created_at",
+  captured_at: "captured_at",
+  date: "date",
+  title: "title",
+  type: "type",
+  category: "category",
+  source: "source",
+};
+
+function normalizePipelineStage(
+  stage: string | null | undefined,
+  errorMessage: string | null | undefined,
+): string {
+  if (errorMessage || stage === "error") {
+    return "failed";
+  }
+
+  if (stage && PROCESSING_PIPELINE_STAGES.includes(stage as (typeof PROCESSING_PIPELINE_STAGES)[number])) {
+    return "processing";
+  }
+
+  return stage ?? "unknown";
+}
+
 export const GET = withApiGuardrails(
   "documents/status#GET",
-  async () => {
-  
+  async ({ request }) => {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "documents/status#GET", message: "Authentication required." });
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "documents/status#GET",
+        message: "Authentication required.",
+      });
     }
 
-    // Fetch document metadata with ingestion job status (left join — documents
-    // without ingestion jobs still appear, pipeline_stage shows as "unknown")
-    const { data: documents, error } = await supabase
+    const { searchParams } = new URL(request.url);
+    const source = searchParams.get("source") || undefined;
+    const typeFilter = searchParams.get("type") || undefined;
+    const category = searchParams.get("category") || undefined;
+    const search = searchParams.get("search") || undefined;
+    const dateFrom = searchParams.get("date_from") || undefined;
+    const dateTo = searchParams.get("date_to") || undefined;
+    const pipelineStage = searchParams.get("pipeline_stage") || undefined;
+    const requestedSort = searchParams.get("sort") || "created_at";
+    const sortColumn = ALLOWED_SORT_COLUMNS[requestedSort] ?? "created_at";
+    const sortDirection =
+      searchParams.get("sort_dir") === "asc" ? "asc" : "desc";
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const perPage = Math.min(
+      MAX_PER_PAGE,
+      Math.max(10, parseInt(searchParams.get("per_page") || String(DEFAULT_PER_PAGE), 10)),
+    );
+    const offset = (page - 1) * perPage;
+
+    let query = supabase
       .from("document_metadata")
       .select(
         `
@@ -27,12 +96,20 @@ export const GET = withApiGuardrails(
         type,
         category,
         source,
+        source_system,
+        source_web_url,
         date,
         created_at,
+        captured_at,
         file_path,
         storage_bucket,
         url,
+        summary,
+        overview,
+        participants,
+        participants_array,
         project_id,
+        projects!document_metadata_project_id_fkey ( name ),
         fireflies_ingestion_jobs!fireflies_ingestion_jobs_metadata_id_fkey (
           stage,
           attempt_count,
@@ -40,39 +117,124 @@ export const GET = withApiGuardrails(
           error_message
         )
       `,
+        { count: "exact" },
       )
-      .order("created_at", { ascending: false });
+      .order(sortColumn, {
+        ascending: sortDirection === "asc",
+        nullsFirst: false,
+      })
+      .range(offset, offset + perPage - 1);
 
-    if (error) {
-      console.error("[documents/status] Supabase query failed:", error);
-      return NextResponse.json(
-        { error: `Failed to fetch documents: ${error.message}` },
-        { status: 500 },
+    // Source filter
+    if (source) {
+      query = query.eq("source", source);
+    }
+
+    // Type filter — if set, use exact match (allows viewing comms types explicitly).
+    // If not set, exclude the default high-volume comms types.
+    if (typeFilter) {
+      query = query.eq("type", typeFilter);
+    } else {
+      for (const t of DEFAULT_EXCLUDED_TYPES) {
+        query = query.neq("type", t);
+      }
+    }
+
+    // Category filter
+    if (category) {
+      query = query.eq("category", category);
+    }
+
+    // Full-text search on title
+    if (search) {
+      const escapedSearch = search.replace(/[%_,]/g, (char) => `\\${char}`);
+      query = query.or(
+        [
+          `title.ilike.%${escapedSearch}%`,
+          `summary.ilike.%${escapedSearch}%`,
+          `overview.ilike.%${escapedSearch}%`,
+          `participants.ilike.%${escapedSearch}%`,
+        ].join(","),
       );
     }
 
-    // Transform the data for easier consumption
-    const transformedDocuments =
-      documents?.map((doc) => ({
-        id: doc.id,
-        fireflies_id: doc.fireflies_id,
-        title: doc.title,
-        status: doc.status,
-        type: doc.type,
-        category: doc.category,
-        source: doc.source,
-        date: doc.date,
-        created_at: doc.created_at,
-        file_path: doc.file_path,
-        storage_bucket: doc.storage_bucket,
-        url: doc.url,
-        project_id: doc.project_id,
-        pipeline_stage: doc.fireflies_ingestion_jobs[0]?.stage || "unknown",
-        attempt_count: doc.fireflies_ingestion_jobs[0]?.attempt_count || 0,
-        last_attempt_at: doc.fireflies_ingestion_jobs[0]?.last_attempt_at,
-        error_message: doc.fireflies_ingestion_jobs[0]?.error_message,
-      })) || [];
+    // Date range on created_at
+    if (dateFrom) {
+      query = query.gte("created_at", dateFrom);
+    }
+    if (dateTo) {
+      // Include the full end day
+      query = query.lte("created_at", dateTo + "T23:59:59.999Z");
+    }
 
-    return NextResponse.json({ documents: transformedDocuments });
-    },
+    if (pipelineStage === "done" || pipelineStage === "pending" || pipelineStage === "raw_ingested") {
+      query = query.eq("fireflies_ingestion_jobs.stage", pipelineStage);
+    } else if (pipelineStage === "processing") {
+      query = query.in("fireflies_ingestion_jobs.stage", [
+        ...PROCESSING_PIPELINE_STAGES,
+      ]);
+    } else if (pipelineStage === "failed") {
+      query = query.eq("fireflies_ingestion_jobs.stage", "error");
+    } else if (pipelineStage === "unknown") {
+      query = query.is("fireflies_ingestion_jobs.stage", null);
+    }
+
+    const { data: documents, error, count } = await query;
+
+    if (error) {
+      return apiErrorResponse(error);
+    }
+
+    const transformedDocuments =
+      documents?.map((doc) => {
+        const jobs = Array.isArray(doc.fireflies_ingestion_jobs)
+          ? doc.fireflies_ingestion_jobs
+          : doc.fireflies_ingestion_jobs
+            ? [doc.fireflies_ingestion_jobs]
+            : [];
+
+        const job = jobs[0];
+        const stage = normalizePipelineStage(job?.stage, job?.error_message);
+
+        return {
+          id: doc.id,
+          fireflies_id: doc.fireflies_id,
+          title: doc.title,
+          status: doc.status,
+          type: doc.type,
+          category: doc.category,
+          source: doc.source,
+          source_system: doc.source_system,
+          source_web_url: doc.source_web_url,
+          date: doc.date,
+          created_at: doc.created_at,
+          captured_at: doc.captured_at,
+          file_path: doc.file_path,
+          storage_bucket: doc.storage_bucket,
+          url: doc.url,
+          project_id: doc.project_id,
+          project_name: Array.isArray(doc.projects)
+            ? (doc.projects[0]?.name ?? null)
+            : ((doc.projects as { name?: string | null } | null)?.name ?? null),
+          summary: doc.summary,
+          overview: doc.overview,
+          participants: doc.participants,
+          participants_array: doc.participants_array,
+          pipeline_stage: stage,
+          attempt_count: job?.attempt_count || 0,
+          last_attempt_at: job?.last_attempt_at,
+          error_message: job?.error_message,
+        };
+      }) || [];
+
+    const filtered = transformedDocuments;
+
+    return NextResponse.json({
+      documents: filtered,
+      total: count ?? filtered.length,
+      page,
+      per_page: perPage,
+      total_pages: Math.ceil((count ?? filtered.length) / perPage),
+    });
+  },
 );

@@ -31,6 +31,7 @@ const FILTER_VALUE = z.union([
 const VIEW_CONFIG = z.object({
   visible_columns: z.array(z.string()).max(200).optional().nullable(),
   column_order: z.array(z.string()).max(200).optional().nullable(),
+  column_widths: z.record(z.string(), z.number().min(80).max(1200)).optional().nullable(),
   sort_by: z.string().trim().max(120).optional().nullable(),
   sort_direction: z.enum(["asc", "desc"]).optional().nullable(),
   filters: z.record(z.string(), FILTER_VALUE).optional().nullable(),
@@ -75,7 +76,7 @@ export const GET = withApiGuardrails(
     const { data, error } = await supabase
       .from("user_table_views")
       .select(
-        "id, scope_key, name, is_default, visible_columns, column_order, sort_by, sort_direction, filters, created_at, updated_at",
+        "id, scope_key, name, is_default, visible_columns, column_order, column_widths, sort_by, sort_direction, filters, created_at, updated_at",
       )
       .eq("user_id", userId)
       .eq("scope_key", scopeKey)
@@ -136,6 +137,7 @@ export const POST = withApiGuardrails(
       is_default: p.is_default ?? false,
       visible_columns: p.visible_columns ?? null,
       column_order: p.column_order ?? null,
+      column_widths: p.column_widths ?? null,
       sort_by: p.sort_by ?? null,
       sort_direction: p.sort_direction ?? null,
       filters: p.filters ?? null,
@@ -145,7 +147,7 @@ export const POST = withApiGuardrails(
       .from("user_table_views")
       .insert(insertRow)
       .select(
-        "id, scope_key, name, is_default, visible_columns, column_order, sort_by, sort_direction, filters, created_at, updated_at",
+        "id, scope_key, name, is_default, visible_columns, column_order, column_widths, sort_by, sort_direction, filters, created_at, updated_at",
       )
       .single();
 

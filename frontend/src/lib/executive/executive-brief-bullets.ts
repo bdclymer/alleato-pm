@@ -1,5 +1,21 @@
-export const EXECUTIVE_BRIEF_MIN_BULLETS = 3;
-export const EXECUTIVE_BRIEF_MAX_BULLETS = 5;
+export const EXECUTIVE_BRIEF_MIN_BULLETS = 2;
+export const EXECUTIVE_BRIEF_MAX_BULLETS = 4;
+
+// Decimal points and dotted abbreviations must not be treated as sentence
+// endings, or "7.7 feet" gets split into "7." and "7 feet". We temporarily
+// swap the dot in number.number (and a few common abbreviations) for a private
+// sentinel before any sentence splitting, then restore it.
+const DECIMAL_SENTINEL = String.fromCharCode(1);
+
+function protectInlineDots(value: string): string {
+  return value
+    .replace(/(\d)\.(\d)/g, `$1${DECIMAL_SENTINEL}$2`)
+    .replace(/\b(No|Inc|Ltd|Co|St|Ave|Rd|Mr|Mrs|Ms|Dr|Jr|Sr|vs|approx|Ph)\.(\s)/gi, `$1${DECIMAL_SENTINEL}$2`);
+}
+
+function restoreInlineDots(value: string): string {
+  return value.replace(new RegExp(DECIMAL_SENTINEL, "g"), ".");
+}
 
 export type ExecutiveBriefBulletInput = {
   summary?: string | null;
@@ -23,18 +39,22 @@ function compactCompleteText(value: string, maxLength = 220): string {
     .trim();
   if (text.length <= maxLength) return text;
 
-  const clipped = text.slice(0, maxLength);
+  // Protect inline dots so we don't clip in the middle of "7.7" or "$1.5M".
+  const protectedText = protectInlineDots(text);
+  const clipped = protectedText.slice(0, maxLength);
   const sentenceEnd = Math.max(
     clipped.lastIndexOf("."),
     clipped.lastIndexOf("?"),
     clipped.lastIndexOf("!"),
   );
   if (sentenceEnd >= Math.min(80, maxLength - 1)) {
-    return clipped.slice(0, sentenceEnd + 1).trim();
+    return restoreInlineDots(clipped.slice(0, sentenceEnd + 1)).trim();
   }
 
   const lastSpace = clipped.lastIndexOf(" ");
-  return clipped.slice(0, lastSpace > 0 ? lastSpace : maxLength).trim();
+  return restoreInlineDots(
+    clipped.slice(0, lastSpace > 0 ? lastSpace : maxLength),
+  ).trim();
 }
 
 function capitalize(value: string): string {
@@ -42,7 +62,9 @@ function capitalize(value: string): string {
 }
 
 function splitSentences(value: string): string[] {
-  return normalizeText(value).match(/[^.!?]+[.!?]+|[^.!?]+$/g) ?? [];
+  const protectedText = protectInlineDots(normalizeText(value));
+  const parts = protectedText.match(/[^.!?]+[.!?]+|[^.!?]+$/g) ?? [];
+  return parts.map((part) => restoreInlineDots(part).trim()).filter(Boolean);
 }
 
 function normalizeDeadlineOpening(value: string): string {
@@ -140,38 +162,25 @@ function expandCandidate(value: string): string[] {
 export function getExecutiveBriefBullets(
   input: ExecutiveBriefBulletInput,
 ): string[] {
+  // Trust the model's bullets. They are already written as clean, plain,
+  // complete sentences by the synthesis prompt. We dedupe and cap them, but we
+  // do NOT pad the list with the summary, recommended action, or "why it
+  // matters" — that padding is what produced the repetitive trailing bullet
+  // that restated the first one. The insight line is rendered separately from
+  // whyItMatters, so it must never be folded back in as a bullet here.
   const bullets: string[] = [];
 
-  pushUnique(bullets, (input.bullets ?? []).flatMap((value) =>
-    value ? expandCandidate(value) : [],
-  ));
-  pushUnique(bullets, (input.evidenceFacts ?? []).flatMap((value) =>
-    value ? expandCandidate(value) : [],
-  ));
+  pushUnique(
+    bullets,
+    (input.bullets ?? []).flatMap((value) =>
+      value ? expandCandidate(value) : [],
+    ),
+  );
 
-  if (bullets.length < EXECUTIVE_BRIEF_MIN_BULLETS && input.summary) {
+  // Only when the model returned no usable bullets at all, fall back to a
+  // single summary-derived bullet so the item is never empty.
+  if (bullets.length === 0 && input.summary) {
     pushUnique(bullets, expandCandidate(input.summary));
-  }
-
-  if (bullets.length < EXECUTIVE_BRIEF_MIN_BULLETS && input.recommendedAction) {
-    pushUnique(bullets, [`Decision needed: ${input.recommendedAction}`]);
-  }
-
-  if (bullets.length < EXECUTIVE_BRIEF_MIN_BULLETS && input.whyItMatters) {
-    pushUnique(bullets, [`Business impact: ${input.whyItMatters}`]);
-  }
-
-  if (bullets.length < EXECUTIVE_BRIEF_MIN_BULLETS && input.status) {
-    pushUnique(bullets, [`Status: ${input.status}`]);
-  }
-
-  if (bullets.length < EXECUTIVE_BRIEF_MIN_BULLETS) {
-    pushUnique(
-      bullets,
-      (input.citations ?? []).flatMap((citation) =>
-        citation.evidence ? expandCandidate(citation.evidence) : [],
-      ),
-    );
   }
 
   return bullets.slice(0, EXECUTIVE_BRIEF_MAX_BULLETS);

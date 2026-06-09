@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import Link from "next/link";
 
 import { formatDate } from "@/lib/format";
 import {
@@ -136,6 +137,24 @@ function getProjectDocumentColumn(id: string): ColumnConfig {
   return column;
 }
 
+function projectDocumentPreviewHref(projectId: string, documentId: number): string {
+  return `/${projectId}/documents/${documentId}`;
+}
+
+function projectDocumentInlineFileHref(
+  projectId: string,
+  documentId: number,
+): string {
+  return `/api/projects/${projectId}/documents/${documentId}/download?disposition=inline`;
+}
+
+function projectDocumentDownloadHref(
+  projectId: string,
+  documentId: number,
+): string {
+  return `/api/projects/${projectId}/documents/${documentId}/download`;
+}
+
 export function inferProjectDocumentFormat(item: ProjectDocument): {
   label: string;
   icon: ReactElement;
@@ -207,21 +226,38 @@ export function buildDocumentTableColumns(opts?: {
     item: ProjectDocument,
     category: string | null,
   ) => void | Promise<void>;
+  projectId?: string;
 }): TableColumn<ProjectDocument>[] {
   return [
     {
       ...getProjectDocumentColumn("title"),
       width: 280,
-      render: (item) => (
-        <div className="flex items-center gap-1.5">
-          {item.is_private && (
-            <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          )}
-          <span className="font-medium text-primary underline decoration-primary/40 underline-offset-4">
-            {item.title}
-          </span>
-        </div>
-      ),
+      render: (item) => {
+        const content = (
+          <div className="flex min-w-0 items-center gap-1.5">
+            {item.is_private && (
+              <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            )}
+            <span className="truncate font-medium text-primary underline decoration-primary/40 underline-offset-4">
+              {item.title}
+            </span>
+          </div>
+        );
+
+        if (!opts?.projectId) {
+          return content;
+        }
+
+        return (
+          <Link
+            href={projectDocumentPreviewHref(opts.projectId, item.id)}
+            className="block min-w-0"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {content}
+          </Link>
+        );
+      },
       csvValue: (item) => item.title,
       sortValue: (item) => item.title,
       sortable: true,
@@ -474,8 +510,16 @@ function getFileTypeInfo(fileName: string): {
 export function renderDocumentCard(
   item: ProjectDocument,
   onClick: (doc: ProjectDocument) => void,
+  projectId?: string,
 ): ReactElement {
   const { icon, bg, ext } = getFileTypeInfo(item.file_name ?? "");
+  const format = inferProjectDocumentFormat(item).label;
+  const inlineHref =
+    projectId && (item.storage_path || item.file_url)
+      ? projectDocumentInlineFileHref(projectId, item.id)
+      : null;
+  const canShowImagePreview = inlineHref && format === "Image";
+  const canShowPdfPreview = inlineHref && format === "PDF";
 
   return (
     <div
@@ -483,8 +527,26 @@ export function renderDocumentCard(
       onClick={() => onClick(item)}
     >
       {/* Preview area */}
-      <div className={`flex h-32 items-center justify-center ${bg} relative`}>
-        {icon}
+      <div
+        className={`relative flex h-32 items-center justify-center overflow-hidden ${canShowImagePreview || canShowPdfPreview ? "bg-muted" : bg}`}
+      >
+        {canShowImagePreview ? (
+          <img
+            src={inlineHref}
+            alt=""
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+        ) : canShowPdfPreview ? (
+          <iframe
+            src={`${inlineHref}#toolbar=0&navpanes=0&scrollbar=0`}
+            title={`${item.title} preview`}
+            className="h-full w-full pointer-events-none bg-background"
+            loading="lazy"
+          />
+        ) : (
+          icon
+        )}
         {ext && (
           <span className="absolute bottom-2 right-2 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-background/80 text-foreground">
             {ext}
@@ -559,7 +621,8 @@ export function renderDocumentRowActions(
   onEdit: (doc: ProjectDocument) => void,
   onDelete: (doc: ProjectDocument) => void,
 ): ReactElement {
-  const documentUrl = `/api/projects/${projectId}/documents/${item.id}/download`;
+  const previewUrl = projectDocumentPreviewHref(projectId, item.id);
+  const downloadUrl = projectDocumentDownloadHref(projectId, item.id);
 
   return (
     <DropdownMenu>
@@ -576,15 +639,15 @@ export function renderDocumentRowActions(
       <DropdownMenuContent align="end">
         {(item.storage_path || item.file_url) && (
           <DropdownMenuItem asChild>
-            <a href={documentUrl} target="_blank" rel="noopener noreferrer">
+            <Link href={previewUrl}>
               <Eye className="mr-2 h-4 w-4" />
-              View File
-            </a>
+              Preview
+            </Link>
           </DropdownMenuItem>
         )}
         {(item.storage_path || item.file_url) && (
           <DropdownMenuItem asChild>
-            <a href={documentUrl} download={item.file_name}>
+            <a href={downloadUrl} download={item.file_name}>
               <Download className="mr-2 h-4 w-4" />
               Download
             </a>

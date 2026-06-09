@@ -37,7 +37,9 @@ const EMPTY_CHANNEL: TeamChannel = {
 
 export function ChatLayout({ username }: ChatLayoutProps) {
   const [channels, setChannels] = useState<TeamChannel[]>([]);
+  const [dms, setDms] = useState<TeamChannel[]>([]);
   const [adminUsers, setAdminUsers] = useState<TeamChatAdminUser[]>([]);
+  const [allUsers, setAllUsers] = useState<TeamChatAdminUser[]>([]);
   const [canManageChannels, setCanManageChannels] = useState(false);
   const [activeChannel, setActiveChannel] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -48,12 +50,21 @@ export function ChatLayout({ username }: ChatLayoutProps) {
   const [activeView] = useState<NavView>("chats");
 
   const fetchChannels = useCallback(async (): Promise<ChannelListResponse> => {
-    // Refresh channel list, admin roster, and permission state from server.
     const payload = await apiFetch<ChannelListResponse>("/api/team-chat/channels");
     setChannels(payload.channels ?? []);
     setAdminUsers(payload.adminUsers ?? []);
     setCanManageChannels(payload.canManageChannels === true);
     return payload;
+  }, []);
+
+  const fetchDms = useCallback(async () => {
+    const data = await apiFetch<TeamChannel[]>("/api/team-chat/direct-messages");
+    setDms(Array.isArray(data) ? data : []);
+  }, []);
+
+  const fetchAllUsers = useCallback(async () => {
+    const data = await apiFetch<TeamChatAdminUser[]>("/api/team-chat/users");
+    setAllUsers(Array.isArray(data) ? data : []);
   }, []);
 
   useEffect(() => {
@@ -62,7 +73,6 @@ export function ChatLayout({ username }: ChatLayoutProps) {
       setIsMobile(mobile);
       if (mobile) setRightPanelOpen(false);
     };
-
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
@@ -74,26 +84,27 @@ export function ChatLayout({ username }: ChatLayoutProps) {
       setAdminUsers([]);
       setCanManageChannels(false);
     });
-  }, [fetchChannels]);
+    fetchDms().catch(() => setDms([]));
+    fetchAllUsers().catch(() => setAllUsers([]));
+  }, [fetchChannels, fetchDms, fetchAllUsers]);
+
+  const allChannels = useMemo(() => [...channels, ...dms], [channels, dms]);
 
   useEffect(() => {
-    if (channels.length === 0) {
-      if (activeChannel) {
-        setActiveChannel("");
-      }
+    if (allChannels.length === 0) {
+      if (activeChannel) setActiveChannel("");
       return;
     }
-
-    const hasActive = channels.some((channel) => channel.id === activeChannel);
+    const hasActive = allChannels.some((ch) => ch.id === activeChannel);
     if (!hasActive) {
-      setActiveChannel(channels[0].id);
+      setActiveChannel(allChannels[0].id);
       setSelectedMessage(null);
     }
-  }, [channels, activeChannel]);
+  }, [allChannels, activeChannel]);
 
   const activeChannelDetails = useMemo(
-    () => channels.find((channel) => channel.id === activeChannel) ?? EMPTY_CHANNEL,
-    [channels, activeChannel],
+    () => allChannels.find((ch) => ch.id === activeChannel) ?? EMPTY_CHANNEL,
+    [allChannels, activeChannel],
   );
 
   const selectedThreadReplies = selectedMessage
@@ -115,12 +126,10 @@ export function ChatLayout({ username }: ChatLayoutProps) {
   };
 
   const handleCreateChannel = async (name: string, topic: string) => {
-    // Create a channel and focus it immediately once persisted.
     const created = await apiFetch<TeamChannel>("/api/team-chat/channels", {
       method: "POST",
       body: JSON.stringify({ name, topic }),
     });
-
     await fetchChannels();
     if (created?.id) {
       setActiveChannel(created.id);
@@ -129,39 +138,55 @@ export function ChatLayout({ username }: ChatLayoutProps) {
   };
 
   const handleDeleteChannel = async (channelId: string) => {
-    // Delete a channel then fall back to first available channel.
     await apiFetch(`/api/team-chat/channels/${encodeURIComponent(channelId)}`, {
       method: "DELETE",
     });
-
     const payload = await fetchChannels();
-
     if (activeChannel === channelId) {
-      const remaining = (payload.channels ?? []).filter((channel) => channel.id !== channelId);
+      const remaining = (payload.channels ?? []).filter((ch) => ch.id !== channelId);
       setActiveChannel(remaining[0]?.id ?? "");
       setSelectedMessage(null);
     }
   };
 
+  const handleOpenDm = async (targetUserId: string) => {
+    const dm = await apiFetch<TeamChannel>("/api/team-chat/direct-messages", {
+      method: "POST",
+      body: JSON.stringify({ targetUserId }),
+    });
+    await fetchDms();
+    if (dm?.id) {
+      setActiveChannel(dm.id);
+      setSelectedMessage(null);
+      setSidebarOpen(false);
+    }
+  };
+
   const handleMessageSent = useCallback(() => {
     fetchChannels().catch(() => {});
-  }, [fetchChannels]);
+    fetchDms().catch(() => {});
+  }, [fetchChannels, fetchDms]);
+
+  const selectChannel = (channelId: string) => {
+    setActiveChannel(channelId);
+    setSelectedMessage(null);
+  };
 
   return (
     <div className="flex h-full min-h-0 overflow-hidden bg-background text-foreground">
       <div className="hidden lg:block">
         <ChatSidebar
           channels={channels}
+          dms={dms}
           adminUsers={adminUsers}
+          allUsers={allUsers}
           activeChannel={activeChannel}
           activeView={activeView}
           canManageChannels={canManageChannels}
-          onChannelSelect={(channelId) => {
-            setActiveChannel(channelId);
-            setSelectedMessage(null);
-          }}
+          onChannelSelect={selectChannel}
           onCreateChannel={handleCreateChannel}
           onDeleteChannel={handleDeleteChannel}
+          onOpenDm={handleOpenDm}
         />
       </div>
 
@@ -169,17 +194,16 @@ export function ChatLayout({ username }: ChatLayoutProps) {
         <SheetContent side="left" className="w-95 p-0 sm:max-w-95">
           <ChatSidebar
             channels={channels}
+            dms={dms}
             adminUsers={adminUsers}
+            allUsers={allUsers}
             activeChannel={activeChannel}
             activeView={activeView}
             canManageChannels={canManageChannels}
-            onChannelSelect={(channelId) => {
-              setActiveChannel(channelId);
-              setSelectedMessage(null);
-              setSidebarOpen(false);
-            }}
+            onChannelSelect={(id) => { selectChannel(id); setSidebarOpen(false); }}
             onCreateChannel={handleCreateChannel}
             onDeleteChannel={handleDeleteChannel}
+            onOpenDm={handleOpenDm}
           />
         </SheetContent>
       </Sheet>

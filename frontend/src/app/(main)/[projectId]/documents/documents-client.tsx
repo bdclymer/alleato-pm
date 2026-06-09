@@ -68,6 +68,8 @@ const FORMAT_FILTER_OPTIONS = [
   { value: "File", label: "File" },
 ];
 
+const DEFAULT_HIDDEN_DOCUMENT_COLUMNS = new Set(["file_name", "file_size"]);
+
 function sortValueForDate(value: string | null | undefined): number {
   if (!value) return 0;
   const date = new Date(value);
@@ -156,10 +158,30 @@ export function DocumentsClient({
     const preferred = projectDocumentDefaultVisibleColumns;
     const preferredSet = new Set(preferred);
     const preservedExtras = tableState.visibleColumns.filter(
-      (columnId) => columnId !== "file_name" && !preferredSet.has(columnId),
+      (columnId) =>
+        !DEFAULT_HIDDEN_DOCUMENT_COLUMNS.has(columnId) &&
+        !preferredSet.has(columnId),
     );
 
     tableState.setVisibleColumns([...preferred, ...preservedExtras]);
+    window.localStorage.setItem(migrationKey, "1");
+  }, [tableState.setVisibleColumns, tableState.visibleColumns]);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const migrationKey =
+      "project-documents:visibleColumns:hide-file-name-size-2026-06-09";
+    if (window.localStorage.getItem(migrationKey) === "1") return;
+
+    const nextVisibleColumns = tableState.visibleColumns.filter(
+      (columnId) => !DEFAULT_HIDDEN_DOCUMENT_COLUMNS.has(columnId),
+    );
+
+    if (nextVisibleColumns.length !== tableState.visibleColumns.length) {
+      tableState.setVisibleColumns(nextVisibleColumns);
+    }
+
     window.localStorage.setItem(migrationKey, "1");
   }, [tableState.setVisibleColumns, tableState.visibleColumns]);
 
@@ -277,8 +299,9 @@ export function DocumentsClient({
     () =>
       buildDocumentTableColumns({
         onCategoryChange: handleCategoryChange,
+        projectId,
       }),
-    [handleCategoryChange],
+    [handleCategoryChange, projectId],
   );
 
   const sortedDocuments = React.useMemo(() => {
@@ -371,11 +394,7 @@ export function DocumentsClient({
       return;
     }
 
-    window.open(
-      `/api/projects/${projectId}/documents/${item.id}/download`,
-      "_blank",
-      "noopener,noreferrer",
-    );
+    router.push(`/${projectId}/documents/${item.id}`);
   };
 
   const handleEdit = (item: ProjectDocument) => {
@@ -574,7 +593,7 @@ export function DocumentsClient({
           enableInlineEditing: true,
         }}
         views={{
-          card: (item) => renderDocumentCard(item, handleRowClick),
+          card: (item) => renderDocumentCard(item, handleRowClick, projectId),
           list: (item) => renderDocumentList(item, handleRowClick),
         }}
         emptyState={{

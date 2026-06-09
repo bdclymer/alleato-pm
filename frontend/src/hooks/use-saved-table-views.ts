@@ -21,6 +21,7 @@ export interface SavedTableView {
   is_default: boolean;
   visible_columns: string[] | null;
   column_order: string[] | null;
+  column_widths: Record<string, number> | null;
   sort_by: string | null;
   sort_direction: "asc" | "desc" | null;
   filters: Record<string, SavedViewFilterValue> | null;
@@ -31,6 +32,7 @@ export interface SavedTableView {
 export interface SavedTableViewConfig {
   visible_columns?: string[] | null;
   column_order?: string[] | null;
+  column_widths?: Record<string, number> | null;
   sort_by?: string | null;
   sort_direction?: "asc" | "desc" | null;
   filters?: Record<string, SavedViewFilterValue> | null;

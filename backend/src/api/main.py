@@ -1378,7 +1378,7 @@ async def run_deep_agent_project_status(
         request,
         store,
         runtime=os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME", "contract_spike"),
-        model=os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL", "openai:gpt-5.4-mini"),
+        model=os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL", "openai:gpt-5.5"),
     )
     if (
         response.tool_trace
@@ -1426,7 +1426,7 @@ async def run_deep_agent_executive_briefing(
         request,
         store,
         runtime=os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_RUNTIME", "contract_spike"),
-        model=os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL", "openai:gpt-5.4-mini"),
+        model=os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL", "openai:gpt-5.5"),
     )
     return response.model_dump(by_alias=True)
 

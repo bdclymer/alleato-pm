@@ -52,11 +52,12 @@ const ACTIVE_CARD_STATUSES = new Set([
   "stale",
 ]);
 
-// Reject-attribution cards never surface.
+// Only fully-attributed or manually approved cards surface.
+// needs_review and candidate are still in the review queue — their content is
+// often placeholder boilerplate and should not appear in the owner brief.
 const VALID_ATTRIBUTION_STATUSES = new Set([
   "auto_assigned",
-  "needs_review",
-  "candidate",
+  "approved",
 ]);
 
 // -----------------------------------------------------------------------------
@@ -243,9 +244,15 @@ export async function buildOwnerBriefingData(
   const newSinceThresholdMs = now.getTime() - NEW_SINCE_HOURS * 3_600_000;
   const cardsByTarget = new Map<string, OwnerBriefingCardItem[]>();
 
+  // Cards created by the source-attribution pipeline before full intelligence
+  // extraction have this placeholder text stamped in why_it_matters. They are
+  // not real actionable intelligence — skip them.
+  const ATTRIBUTION_PLACEHOLDER = "This source contains project-relevant language";
+
   for (const row of cardRows ?? []) {
     if (!ACTIVE_CARD_STATUSES.has(row.current_status)) continue;
     if (!VALID_ATTRIBUTION_STATUSES.has(row.attribution_status)) continue;
+    if (row.why_it_matters?.startsWith(ATTRIBUTION_PLACEHOLDER)) continue;
 
     const firstSeenAt = row.first_seen_at;
     const lastSeenAt = row.last_seen_at;

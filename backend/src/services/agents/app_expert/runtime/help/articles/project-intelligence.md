@@ -1,6 +1,6 @@
 ---
 title: Project Intelligence
-description: Review the AI-compiled intelligence packet with KPIs, insight cards, freshness status, and evidence citations for a project.
+description: Review the AI-compiled project storyline with an executive snapshot, current focus, risks, decisions, timeline, and evidence citations.
 audience: client
 visibility: published
 module: intelligence
@@ -19,7 +19,7 @@ related_actions: []
 
 # Project Intelligence
 
-Project Intelligence is an AI-compiled snapshot of everything the platform knows about a project. It synthesizes meetings, emails, RFIs, change events, schedule data, and financials into a single page of structured insight cards with evidence citations.
+Project Intelligence is an AI-compiled snapshot of everything the platform knows about a project. It synthesizes meetings, emails, RFIs, change events, schedule data, and financials into a single page that explains what matters now, what changed, what could hurt the job, which decisions are still open, and how the project got here.
 
 ## Open Project Intelligence
 
@@ -28,18 +28,32 @@ Project Intelligence is an AI-compiled snapshot of everything the platform knows
 
 ## What You See
 
-### KPI Summary
+### Executive Snapshot
 
-Key metrics at a glance:
+The top of the page is designed to answer the present-state questions first:
 
-- Schedule status (on track, at risk, late)
-- Budget variance (revised budget vs. forecast)
-- Open item counts (RFIs, submittals, change events, punch items)
-- Recent activity (new meetings, emails, records in the last 7 days)
+- Project stage
+- Schedule status
+- Budget status
+- Risk status
+- Overall health
+- A short executive summary
+- The immediate-attention list
 
-### Confidence Rating
+### Current Focus
 
-A rating of how much underlying evidence supports the current intelligence — High, Medium, or Low. A Low rating usually means the project has limited recent activity in the system. A High rating means multiple sources (meetings, emails, project records) have contributed recent evidence.
+The next sections stay in present tense:
+
+- Current focus areas
+- Critical risks
+- Decisions needed
+- Executive-level action items
+
+These sections are intentionally selective. They are meant to surface the highest-signal operating issues, not every task or every record in the system.
+
+### Project Timeline
+
+Below the present-state sections, the page shows the project storyline as a vertical timeline. This is the historical memory of the job: what changed, when it changed, and why it mattered.
 
 ### Freshness Status
 
@@ -50,9 +64,9 @@ Shows when the intelligence was last compiled and whether it is current.
 - **Partial** — some data sources were unavailable during the last compile
 - **Failed** — the last compile attempt did not complete; retry from the page
 
-### Insight Cards
+### Supporting Insight Detail
 
-Insights are grouped by type. Each card includes a short narrative, the source it was derived from, and a link to the underlying record.
+Supporting insight cards are still available deeper on the page for drill-down and auditability. Each card includes a short narrative, the source it was derived from, and a link to the underlying record.
 
 | Card Type | What It Represents |
 |-----------|-------------------|
@@ -65,6 +79,10 @@ Insights are grouped by type. Each card includes a short narrative, the source i
 | **Open Question** | Unresolved questions surfaced from meetings or emails |
 | **Project Update** | General status information extracted from recent sources |
 
+### Confidence Rating
+
+A rating of how much underlying evidence supports the current intelligence — High, Medium, or Low. A Low rating usually means the project has limited recent activity in the system. A High rating means multiple sources (meetings, emails, project records) have contributed recent evidence.
+
 ## Evidence Citations
 
 Every insight card cites at least one source. Click the citation to open the meeting transcript, email, document, RFI, or record it was derived from. Verify the source before acting on a high-impact card.
@@ -75,7 +93,7 @@ Intelligence recompiles automatically as new evidence arrives. Trigger a manual 
 
 ## Difference from the AI Chat
 
-Project Intelligence is a precompiled packet — it gives you a structured overview. The AI chat assistant is interactive — ask follow-up questions, drill into specifics, and request analysis across multiple projects. Use both together: start with Intelligence for the overview, then ask the assistant to go deeper on anything that needs attention.
+Project Intelligence is a precompiled packet — it gives you a strategic overview first. The AI chat assistant is interactive — ask follow-up questions, drill into specifics, and request analysis across multiple projects. Use both together: start with Intelligence for the storyline, then ask the assistant to go deeper on anything that needs attention.
 
 ## Related Articles
 

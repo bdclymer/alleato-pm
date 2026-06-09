@@ -72,6 +72,7 @@ export const dbInventoryFilters: FilterConfig[] = [
       { value: "live-empty", label: "Live (Empty)" },
       { value: "dormant", label: "Dormant" },
       { value: "dead", label: "Dead" },
+      { value: "deleted", label: "Deleted" },
       { value: "legacy", label: "Legacy" },
       { value: "orphan-mirror", label: "Orphan Mirror" },
     ],
@@ -108,6 +109,7 @@ export const STATUS_VARIANT: Record<
   "live-empty": "secondary",
   dormant: "warning",
   dead: "destructive",
+  deleted: "outline",
   legacy: "warning",
   "orphan-mirror": "warning",
 };

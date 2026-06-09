@@ -149,6 +149,13 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     description: "Company files and documents",
   },
   {
+    name: "Teams Conversations",
+    path: "teams-conversations",
+    requiresProject: false,
+    icon: MessageCircle,
+    description: "Compiled Microsoft Teams conversation threads",
+  },
+  {
     name: "Assignment Inbox",
     path: "assignment-inbox",
     requiresProject: false,
@@ -271,6 +278,7 @@ export const companyWideToolSections: CompanyWideToolSection[] = [
       "Tasks",
       "Knowledge Base",
       "Documents",
+      "Teams Conversations",
     ],
   },
   {

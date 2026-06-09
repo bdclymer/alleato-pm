@@ -54,6 +54,7 @@ import { cn } from "@/lib/utils";
 export interface TableViewsMenuCurrentState {
   visible_columns: string[];
   column_order?: string[] | null;
+  column_widths?: Record<string, number> | null;
   sort_by: string | null;
   sort_direction: "asc" | "desc";
   filters: Record<string, SavedViewFilterValue>;
@@ -118,12 +119,42 @@ function shallowEqualFilters(
   return true;
 }
 
+function shallowEqualWidths(
+  a: Record<string, number> | null | undefined,
+  b: Record<string, number> | null | undefined,
+): boolean {
+  const normalize = (value: Record<string, number> | null | undefined) => {
+    if (!value) return {};
+    return Object.fromEntries(
+      Object.entries(value).filter(
+        ([key, width]) =>
+          key.length > 0 && Number.isFinite(width) && width > 0,
+      ),
+    );
+  };
+
+  const left = normalize(a);
+  const right = normalize(b);
+  const leftKeys = Object.keys(left).sort();
+  const rightKeys = Object.keys(right).sort();
+  if (leftKeys.length !== rightKeys.length) return false;
+
+  for (let index = 0; index < leftKeys.length; index += 1) {
+    const key = leftKeys[index];
+    if (key !== rightKeys[index]) return false;
+    if (left[key] !== right[key]) return false;
+  }
+
+  return true;
+}
+
 function isStateEqualToView(
   state: TableViewsMenuCurrentState,
   view: SavedTableView,
 ): boolean {
   if (!shallowEqualArray(state.visible_columns, view.visible_columns)) return false;
   if (!shallowEqualArray(state.column_order ?? null, view.column_order)) return false;
+  if (!shallowEqualWidths(state.column_widths, view.column_widths)) return false;
   if ((state.sort_by ?? null) !== view.sort_by) return false;
   if (view.sort_by && state.sort_direction !== view.sort_direction) return false;
   if (!shallowEqualFilters(state.filters, view.filters)) return false;
@@ -195,6 +226,7 @@ export function TableViewsMenu({
         is_default: newViewAsDefault,
         visible_columns: currentState.visible_columns,
         column_order: currentState.column_order ?? currentState.visible_columns,
+        column_widths: currentState.column_widths ?? null,
         sort_by: currentState.sort_by,
         sort_direction: currentState.sort_by ? currentState.sort_direction : null,
         filters: currentState.filters,
@@ -217,6 +249,7 @@ export function TableViewsMenu({
       input: {
         visible_columns: currentState.visible_columns,
         column_order: currentState.column_order ?? currentState.visible_columns,
+        column_widths: currentState.column_widths ?? null,
         sort_by: currentState.sort_by,
         sort_direction: currentState.sort_by ? currentState.sort_direction : null,
         filters: currentState.filters,
@@ -427,7 +460,7 @@ export function TableViewsMenu({
               Set as default for this table
             </label>
             <p className="text-xs text-muted-foreground">
-              This view will save your current columns, sort, and filters. You
+              This view will save your columns, widths, sort, and filters. You
               can switch back to defaults any time.
             </p>
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Info, Menu, MessageSquare, Users, Video } from "lucide-react";
+import { Menu, MessageSquare, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ChatHeaderProps {
@@ -8,6 +8,8 @@ interface ChatHeaderProps {
   topic: string;
   teamName: string;
   memberCount: number;
+  isDm?: boolean;
+  dmPartnerName?: string;
   onToggleSidebar: () => void;
   onToggleRightPanel: () => void;
   isConnected: boolean;
@@ -19,9 +21,14 @@ export function ChatHeader({
   channelName,
   topic,
   memberCount,
+  isDm,
+  dmPartnerName,
   onToggleSidebar,
   onToggleRightPanel,
 }: ChatHeaderProps) {
+  const displayName = isDm ? (dmPartnerName ?? channelName) : channelName;
+  const displayTopic = isDm ? "Direct message" : topic;
+
   return (
     <div className="flex h-14 shrink-0 items-center gap-3 bg-background px-4">
       {/* Mobile sidebar toggle */}
@@ -34,12 +41,12 @@ export function ChatHeader({
         <Menu className="h-4 w-4" />
       </Button>
 
-      {/* Channel name + topic */}
+      {/* Channel / DM name + subtitle */}
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <div className="min-w-0">
           {/* eslint-disable-next-line design-system/no-raw-heading */}
-          <h2 className="truncate text-sm font-semibold text-foreground">{channelName}</h2>
-          <p className="truncate text-xs text-muted-foreground">{topic}</p>
+          <h2 className="truncate text-sm font-semibold text-foreground">{displayName}</h2>
+          <p className="truncate text-xs text-muted-foreground">{displayTopic}</p>
         </div>
       </div>
 
@@ -53,15 +60,6 @@ export function ChatHeader({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-muted-foreground hover:text-foreground"
-          title="Start video call"
-        >
-          <Video className="h-4 w-4" />
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="icon"
           onClick={onToggleRightPanel}
           className="h-8 w-8 text-muted-foreground hover:text-foreground"
           title="Thread panel"
@@ -69,14 +67,6 @@ export function ChatHeader({
           <MessageSquare className="h-4 w-4" />
         </Button>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-muted-foreground hover:text-foreground"
-          title="Channel info"
-        >
-          <Info className="h-4 w-4" />
-        </Button>
       </div>
     </div>
   );

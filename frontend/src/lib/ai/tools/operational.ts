@@ -45,6 +45,7 @@ import {
   retrievalWeightMultiplierForItem,
   type RetrievalWeightScoringRow,
 } from "@/lib/ai/retrieval/retrieval-weight-scoring";
+import { triageEmailForOperator } from "@/lib/ai/email-operator-policy";
 
 type AnyRow = Record<string, unknown>;
 
@@ -345,6 +346,14 @@ function groupRecentEmailsByThread(rows: RecentEmailRow[], limit: number) {
         latestPreview: latest.body_text
           ? latest.body_text.slice(0, 280).replace(/\s+/g, " ").trim()
           : null,
+        operatorTriage: triageEmailForOperator({
+          subject: latest.subject,
+          fromName: latest.from_name,
+          fromEmail: latest.from_email,
+          preview: latest.body_text,
+          bodyText: latest.body_text,
+          hasAttachments: sorted.some((row) => row.has_attachments === true),
+        }),
         hasAttachments: sorted.some((row) => row.has_attachments === true),
         projectIds: Array.from(
           new Set(
@@ -409,6 +418,14 @@ function formatRecentEmailRows(
     hasAttachments: e.has_attachments,
     projectId: e.project_id,
     webLink: e.web_link,
+    operatorTriage: triageEmailForOperator({
+      subject: e.subject,
+      fromName: e.from_name,
+      fromEmail: e.from_email,
+      preview: e.body_text,
+      bodyText: e.body_text,
+      hasAttachments: e.has_attachments,
+    }),
   }));
 
   const threads = groupByThread ? groupRecentEmailsByThread(data, limit) : [];

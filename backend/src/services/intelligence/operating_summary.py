@@ -590,7 +590,19 @@ def ensure_operating_target(supabase: Any, project_id: int) -> Dict[str, Any]:
         raise ValueError(f"projects row not found: {project_id}")
 
     name = project.get("name") or f"Project {project_id}"
-    slug = _slugify(" ".join(str(part) for part in [project.get("project_number"), name] if part))
+    base_slug = _slugify(" ".join(str(part) for part in [project.get("project_number"), name] if part))
+    slug = base_slug
+    existing_slug = _single_row(
+        _execute(
+            supabase.table("intelligence_targets")
+            .select("id,project_id")
+            .eq("slug", slug)
+            .limit(1),
+            operation="check operating summary target slug",
+        )
+    )
+    if existing_slug:
+        slug = f"{base_slug}-{int(project_id)}"
     payload = {
         "target_type": "client_project",
         "name": name,
@@ -881,7 +893,7 @@ def _source_aliases(index: int) -> List[str]:
 
 def generate_operating_summary(source_set: Dict[str, Any], *, model: Optional[str] = None) -> Dict[str, Any]:
     client, prefix = _provider_client()
-    raw_model = model or os.getenv("OPERATING_SUMMARY_MODEL", "gpt-5.4-mini")
+    raw_model = model or os.getenv("OPERATING_SUMMARY_MODEL", "gpt-5.5")
     model_name = raw_model if raw_model.startswith(prefix) else f"{prefix}{raw_model}"
     sources = source_set["sources"]
     alias_to_source_id = {}
@@ -902,6 +914,8 @@ def generate_operating_summary(source_set: Dict[str, Any], *, model: Optional[st
             "context": "string",
             "confidence": "low|medium|high",
             "currentExecutiveRead": "string",
+            "immediateAttention": [{"title": "string", "detail": "string", "priority": "low|medium|high|critical", "sourceIds": ["one or more availableSourceIds"]}],
+            "currentFocus": [{"title": "string", "status": "string|null", "owner": "string|null", "summary": "string", "nextDecision": "string|null", "riskSeverity": "low|medium|high|critical|null", "sourceIds": ["one or more availableSourceIds"]}],
             "timeline": [{"title": "string", "sourceIds": ["one or more availableSourceIds"]}],
             "whatChanged": [{"title": "string", "impact": "string", "sourceIds": ["one or more availableSourceIds"]}],
             "recentChanges": [{"title": "string", "sourceIds": ["one or more availableSourceIds"]}],
@@ -932,6 +946,15 @@ def generate_operating_summary(source_set: Dict[str, Any], *, model: Optional[st
                 "role": "system",
                 "content": (
                     "Return only valid JSON. Use only the provided source IDs. "
+                    "Write this as an executive project intelligence brief, not a project-management widget dump. "
+                    "Present state first: currentExecutiveRead, immediateAttention, and currentFocus should explain what matters now before history. "
+                    "If a CEO opened the page after being away for 30 days, these fields should let them understand the job in under five minutes. "
+                    "Keep immediateAttention to the short list of items leadership should notice first. "
+                    "Keep currentFocus to the few workstreams actively shaping the project. "
+                    "Good immediateAttention example: 'Approve revised site plan to restore lost parking count.' "
+                    "Bad immediateAttention example: 'Meeting discussed parking and site plan options.' "
+                    "Good currentFocus example: 'Site design | status: Revision Required | owner: Andrew | summary: Parking redesign is underway after owner rejection of the revised layout.' "
+                    "Bad currentFocus example: 'Site design was mentioned in multiple sources.' "
                     "Do not cite raw Outlook IDs, task IDs, or any ID not in availableSourceIds. "
                     "Prioritize source_quality=clean_source and recent meeting/Teams sources. "
                     "Treat source_quality=raw_dump as evidence that must be synthesized, not copied. "
@@ -1062,6 +1085,8 @@ def _card_defs(summary: Dict[str, Any], source_set: Optional[Dict[str, Any]] = N
     money_impact = summary.get("moneyImpact") or summary.get("financialPosition") or {}
     promises_made = summary.get("promisesMade") or []
     recommended_actions = summary.get("recommendedActions") or summary.get("recommendedFocus") or []
+    immediate_attention = summary.get("immediateAttention") or recommended_actions[:5]
+    current_focus = summary.get("currentFocus") or []
     cards = [
         {
             "key": "operating-current-read",
@@ -1071,13 +1096,28 @@ def _card_defs(summary: Dict[str, Any], source_set: Optional[Dict[str, Any]] = N
             "title": summary.get("headline") or "Current project operating read",
             "summary": summary.get("currentExecutiveRead") or summary.get("context") or "",
             "why": summary.get("context"),
-            "nextAction": (recommended_actions[0] or {}).get("title") if recommended_actions else None,
+            "nextAction": (immediate_attention[0] or {}).get("title") if immediate_attention else None,
             "sourceIds": summary.get("sourceIds", [])[:8],
+        },
+        {
+            "key": "operating-immediate-attention",
+            "section": "current_state",
+            "rank": 2,
+            "type": "open_question",
+            "title": "Immediate attention",
+            "summary": " ".join(
+                f"{item.get('title', '')}: {item.get('detail', '')}".strip(": ")
+                for item in immediate_attention
+            )
+            or "No immediate-attention list was explicit.",
+            "why": "Keeps the first-read leadership attention list separate from the deeper recommendation and history layers.",
+            "nextAction": (immediate_attention[0] or {}).get("title") if immediate_attention else None,
+            "sourceIds": list({sid for item in immediate_attention for sid in item.get("sourceIds", [])})[:12],
         },
         {
             "key": "operating-what-changed",
             "section": "timeline",
-            "rank": 2,
+            "rank": 3,
             "type": "change_management",
             "title": "What changed",
             "summary": " ".join(
@@ -1094,7 +1134,7 @@ def _card_defs(summary: Dict[str, Any], source_set: Optional[Dict[str, Any]] = N
         {
             "key": "operating-risks",
             "section": "risks",
-            "rank": 3,
+            "rank": 4,
             "type": "risk",
             "title": "Risks and exposure",
             "summary": " ".join(
@@ -1109,7 +1149,7 @@ def _card_defs(summary: Dict[str, Any], source_set: Optional[Dict[str, Any]] = N
         {
             "key": "operating-open-decisions",
             "section": "decisions",
-            "rank": 4,
+            "rank": 5,
             "type": "decision",
             "title": "Open decisions",
             "summary": " ".join(item.get("title", "") for item in open_decisions) or "No open decisions were explicit.",
@@ -1122,7 +1162,7 @@ def _card_defs(summary: Dict[str, Any], source_set: Optional[Dict[str, Any]] = N
         {
             "key": "operating-financial-position",
             "section": "financials",
-            "rank": 5,
+            "rank": 6,
             "type": "financial_exposure",
             "title": "Money impact",
             "summary": money_impact.get("summary") or "",
@@ -1142,7 +1182,7 @@ def _card_defs(summary: Dict[str, Any], source_set: Optional[Dict[str, Any]] = N
         {
             "key": "operating-promises-made",
             "section": "commitments",
-            "rank": 6,
+            "rank": 7,
             "type": "task",
             "title": "Promises made",
             "summary": " ".join(item.get("title", "") for item in promises_made) or "No promises were explicit.",
@@ -1155,22 +1195,27 @@ def _card_defs(summary: Dict[str, Any], source_set: Optional[Dict[str, Any]] = N
         {
             "key": "operating-recommended-actions",
             "section": "next_actions",
-            "rank": 7,
+            "rank": 8,
             "type": "open_question",
-            "title": "Recommended actions",
+            "title": "Current focus and recommended actions",
             "summary": " ".join(
+                f"{item.get('title', '')}: {item.get('summary', '')}".strip(": ")
+                for item in current_focus
+            )
+            + " "
+            + " ".join(
                 f"{item.get('title', '')}: {item.get('reason', '')}".strip(": ")
                 for item in recommended_actions
             )
             or "No recommended actions were explicit.",
-            "why": "Sets the next-action baseline for the assistant.",
+            "why": "Sets the present-state workstream baseline for the assistant.",
             "nextAction": (recommended_actions[0] or {}).get("title") if recommended_actions else None,
-            "sourceIds": list({sid for item in recommended_actions for sid in item.get("sourceIds", [])})[:12],
+            "sourceIds": list({sid for item in [*current_focus, *recommended_actions] for sid in item.get("sourceIds", [])})[:12],
         },
         {
             "key": "operating-project-controls",
             "section": "controls",
-            "rank": 8,
+            "rank": 9,
             "type": "task",
             "title": "Project controls and tasks",
             "summary": " ".join(item.get("title", "") for item in controls.get("tasks", [])) or "No task/control items were explicit.",
@@ -1269,6 +1314,8 @@ def refresh_project_operating_packet(
     what_changed = summary.get("whatChanged") or summary.get("recentChanges") or []
     open_decisions = summary.get("openDecisions") or summary.get("openQuestions") or []
     promises_made = summary.get("promisesMade") or []
+    immediate_attention = summary.get("immediateAttention") or recommended_actions[:5]
+    current_focus = summary.get("currentFocus") or []
 
     source_coverage = {
         "freshnessStatus": "fresh",
@@ -1308,10 +1355,10 @@ def refresh_project_operating_packet(
             1600,
         ),
         "why_it_matters": _truncate(
-            " ".join(item.get("title", "") for item in recommended_actions[:5]) or summary.get("context") or "",
+            " ".join(item.get("title", "") for item in immediate_attention[:5]) or summary.get("context") or "",
             1600,
         ),
-        "recommended_next_moves": [item.get("title") for item in recommended_actions if item.get("title")][:8],
+        "recommended_next_moves": [item.get("title") for item in immediate_attention if item.get("title")][:8],
         "confidence_summary": {
             "overall": confidence,
             "status": confidence,
@@ -1330,6 +1377,8 @@ def refresh_project_operating_packet(
             "sourceSet": source_set,
             "summary": summary,
             "strategicReport": {
+                "immediateAttention": immediate_attention,
+                "currentFocus": current_focus,
                 "whatChanged": what_changed,
                 "risks": risks,
                 "openDecisions": open_decisions,

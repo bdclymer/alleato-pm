@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 DOMAIN_COMPILER_VERSION = "domain_compiler_v0_1"
 DEFAULT_LOOKBACK_DAYS = int(os.getenv("DOMAIN_PACKET_LOOKBACK_DAYS", "60"))
 DEFAULT_DOC_LIMIT = int(os.getenv("DOMAIN_PACKET_DOC_LIMIT", "150"))
-DEFAULT_MODEL = os.getenv("DOMAIN_PACKET_MODEL", "gpt-5.4-mini")
+DEFAULT_MODEL = os.getenv("DOMAIN_PACKET_MODEL", "gpt-5.5")
 DOC_SNIPPET_CHARS = 1800
 TOTAL_PROMPT_DOC_CHARS = 80_000
 

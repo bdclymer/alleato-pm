@@ -347,13 +347,24 @@ function createOperatingCards(
       cardType: "project_update",
       summary: operating.currentExecutiveRead,
       whyItMatters: summary.context,
-      nextAction: operating.recommendedFocus[0]?.title ?? null,
+      nextAction: operating.immediateAttention[0]?.title ?? operating.recommendedFocus[0]?.title ?? null,
       sourceIds: summary.sourceIds.slice(0, 8),
+    },
+    {
+      key: "operating-immediate-attention",
+      section: "current_state",
+      rank: 2,
+      title: "Immediate attention",
+      cardType: "open_question",
+      summary: operating.immediateAttention.map((item) => item.title).join(" ") || "No immediate-attention list was explicit in the summarized sources.",
+      whyItMatters: "This keeps the first-read leadership list separate from the longer recommendation and history sections.",
+      nextAction: operating.immediateAttention[0]?.title ?? null,
+      sourceIds: [...new Set(operating.immediateAttention.flatMap((item) => item.sourceIds))].slice(0, 8),
     },
     {
       key: "operating-recent-changes",
       section: "timeline",
-      rank: 2,
+      rank: 3,
       title: "Recent changes and timeline",
       cardType: "change_management",
       summary: operating.recentChanges.map((item) => item.title).join(" ") || "No recent changes were explicit in the summarized sources.",
@@ -369,7 +380,7 @@ function createOperatingCards(
     {
       key: "operating-financial-position",
       section: "financials",
-      rank: 3,
+      rank: 4,
       title: "Financial position and exposure",
       cardType: "financial_exposure",
       summary: operating.financialPosition.summary,
@@ -385,7 +396,7 @@ function createOperatingCards(
     {
       key: "operating-schedule-procurement",
       section: "schedule",
-      rank: 4,
+      rank: 5,
       title: "Schedule and procurement",
       cardType: "schedule_risk",
       summary: operating.scheduleAndProcurement.summary,
@@ -401,7 +412,7 @@ function createOperatingCards(
     {
       key: "operating-project-controls",
       section: "controls",
-      rank: 5,
+      rank: 6,
       title: "Project controls and tasks",
       cardType: "task",
       summary:
@@ -431,7 +442,7 @@ function createOperatingCards(
     {
       key: "operating-open-questions",
       section: "next_actions",
-      rank: 6,
+      rank: 7,
       title: "Open questions and recommended focus",
       cardType: "open_question",
       summary:
@@ -444,6 +455,7 @@ function createOperatingCards(
       sourceIds: [
         ...new Set([
           ...operating.openQuestions.flatMap((item) => item.sourceIds),
+          ...operating.currentFocus.flatMap((item) => item.sourceIds),
           ...operating.recommendedFocus.flatMap((item) => item.sourceIds),
         ]),
       ].slice(0, 8),
@@ -496,6 +508,17 @@ export function formatProjectOperatingSummaryContext(input: {
       `Headline: ${summary.headline}`,
       "",
       `Current read: ${summary.operatingSummary.currentExecutiveRead}`,
+      "",
+      "Immediate attention:",
+      formatCitedItems(summary.operatingSummary.immediateAttention),
+      "",
+      "Current focus:",
+      formatCitedItems(
+        summary.operatingSummary.currentFocus.map((item) => ({
+          title: item.title,
+          sourceIds: item.sourceIds,
+        })),
+      ),
       "",
       "Timeline:",
       formatCitedItems(summary.operatingSummary.timeline),

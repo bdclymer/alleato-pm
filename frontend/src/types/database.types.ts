@@ -30751,6 +30751,7 @@ export type Database = {
       user_table_views: {
         Row: {
           column_order: Json | null
+          column_widths: Json | null
           created_at: string
           filters: Json | null
           id: string
@@ -30765,6 +30766,7 @@ export type Database = {
         }
         Insert: {
           column_order?: Json | null
+          column_widths?: Json | null
           created_at?: string
           filters?: Json | null
           id?: string
@@ -30779,6 +30781,7 @@ export type Database = {
         }
         Update: {
           column_order?: Json | null
+          column_widths?: Json | null
           created_at?: string
           filters?: Json | null
           id?: string

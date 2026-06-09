@@ -190,9 +190,9 @@ export const POST = withApiGuardrails("team-chat/channels#POST", async ({ reques
   const [{ count: existingCount, error: existingError }, { data: profile, error: profileError }] =
     await Promise.all([
       supabase
-        .from("team_chat_messages")
+        .from("team_chat_channels")
         .select("id", { count: "exact", head: true })
-        .eq("channel_id", channelId),
+        .eq("id", channelId),
       supabase
         .from("user_profiles")
         .select("full_name, email")
@@ -210,6 +210,14 @@ export const POST = withApiGuardrails("team-chat/channels#POST", async ({ reques
 
   if ((existingCount ?? 0) > 0 || channelId === "general") {
     return NextResponse.json({ error: "A channel with this name already exists." }, { status: 409 });
+  }
+
+  const { error: channelError } = await supabase
+    .from("team_chat_channels")
+    .insert({ id: channelId, name: channelName, topic, created_by: userId });
+
+  if (channelError) {
+    return apiErrorResponse(channelError);
   }
 
   const { error } = await supabase

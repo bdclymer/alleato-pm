@@ -24,6 +24,11 @@ import { Check, Copy, ExternalLink } from "lucide-react";
 import { TextEffect } from "@/components/motion/text-effect";
 import { Button } from "@/components/ui/button";
 
+import executiveDailyBriefCard from "@/data/adaptive-card-samples/executive-daily-brief.json";
+import taskListCard from "@/data/adaptive-card-samples/task-list.json";
+import meetingRecapCard from "@/data/adaptive-card-samples/meeting-recap.json";
+import surveyPulseCard from "@/data/adaptive-card-samples/survey-pulse.json";
+
 import accountCard from "@/data/adaptive-card-samples/account.json";
 import authorVideoCard from "@/data/adaptive-card-samples/author-highlight-video.json";
 import bookARoomCard from "@/data/adaptive-card-samples/book-a-room.json";
@@ -41,6 +46,33 @@ import simpleTimeOffCard from "@/data/adaptive-card-samples/simple-time-off-requ
 import standardVideoCard from "@/data/adaptive-card-samples/standard-video.json";
 import timeOffCard from "@/data/adaptive-card-samples/time-off-request.json";
 import workItemCard from "@/data/adaptive-card-samples/work_item.json";
+
+const ALLEATO_CARD_SAMPLES = [
+  {
+    name: "Executive Daily Brief",
+    slug: "executive-daily-brief",
+    card: executiveDailyBriefCard,
+    tags: ["ToggleVisibility", "RichTextBlock", "Icon", "collapsible"],
+  },
+  {
+    name: "Task List",
+    slug: "task-list",
+    card: taskListCard,
+    tags: ["grouped", "priority colors", "due dates"],
+  },
+  {
+    name: "Meeting Recap",
+    slug: "meeting-recap",
+    card: meetingRecapCard,
+    tags: ["FactSet", "ToggleVisibility", "action items"],
+  },
+  {
+    name: "Weekly Pulse Survey",
+    slug: "survey-pulse",
+    card: surveyPulseCard,
+    tags: ["Input.ChoiceSet", "Input.Text", "Action.Submit"],
+  },
+];
 
 const ADAPTIVE_CARD_SAMPLES = [
   { name: "Account / Project Summary", slug: "account", card: accountCard, tags: ["Badge", "targetWidth", "responsive"] },
@@ -256,6 +288,18 @@ export default function ComponentsPage() {
 
         {/* Apple Style Dock */}
 
+        {/* Alleato Cards */}
+        <ComponentSection
+          title="Alleato Cards"
+          description="Teams + AI chat cards for the daily brief, task list, meeting recap, and weekly pulse survey."
+        >
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            {ALLEATO_CARD_SAMPLES.map((sample) => (
+              <AdaptiveCardSample key={sample.slug} sample={sample} />
+            ))}
+          </div>
+        </ComponentSection>
+
         {/* Adaptive Card Samples */}
         <ComponentSection
           title="Adaptive Card Samples"
@@ -311,29 +355,29 @@ function AdaptiveCardSample({ sample }: { sample: AdaptiveCardSampleEntry }) {
   const designerUrl = `https://adaptivecards.io/designer/`;
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-lg bg-background shadow-xs">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2 border-b border-border px-4 py-3">
+    <div className="flex flex-col overflow-hidden rounded-xl bg-background shadow-sm ring-1 ring-border">
+      {/* Label bar */}
+      <div className="flex items-center justify-between gap-2 px-4 py-2.5">
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-foreground">
+          <p className="truncate text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {sample.name}
           </p>
           <div className="mt-1 flex flex-wrap gap-1">
             {sample.tags.map((tag) => (
               <span
                 key={tag}
-                className="inline-block rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
+                className="inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
               >
                 {tag}
               </span>
             ))}
           </div>
         </div>
-        <div className="flex shrink-0 gap-1">
+        <div className="flex shrink-0 gap-0.5">
           <Button
             variant="ghost"
             size="icon"
-            className="size-7"
+            className="size-7 text-muted-foreground hover:text-foreground"
             onClick={handleCopy}
             title="Copy JSON"
           >
@@ -346,17 +390,32 @@ function AdaptiveCardSample({ sample }: { sample: AdaptiveCardSampleEntry }) {
           <Button
             variant="ghost"
             size="icon"
-            className="size-7"
+            className="size-7 text-muted-foreground hover:text-foreground"
             onClick={() => window.open(designerUrl, "_blank")}
-            title="Open Designer"
+            title="Open in Designer"
           >
             <ExternalLink className="size-3.5" />
           </Button>
         </div>
       </div>
-      {/* Card preview */}
-      <div className="overflow-auto p-4">
-        <AdaptiveCardRenderer card={sample.card} />
+
+      {/* Teams-style chat message wrapper */}
+      <div className="border-t border-border bg-muted px-4 py-5">
+        {/* Teams message bubble */}
+        <div className="mx-auto max-w-md">
+          {/* Sender row */}
+          <div className="mb-2 flex items-center gap-2">
+            <div className="flex size-7 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
+              A
+            </div>
+            <span className="text-xs font-semibold text-foreground">Alleato</span>
+            <span className="text-[11px] text-muted-foreground">9:00 AM</span>
+          </div>
+          {/* Card surface */}
+          <div className="ml-9 overflow-hidden rounded border border-border bg-background shadow-sm">
+            <AdaptiveCardRenderer card={sample.card} />
+          </div>
+        </div>
       </div>
     </div>
   );

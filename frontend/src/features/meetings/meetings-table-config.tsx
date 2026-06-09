@@ -2,6 +2,7 @@ import * as React from "react";
 
 import {
   ArrowUpRight,
+  Download,
   FileText,
   Headphones,
   type LucideIcon,
@@ -1216,7 +1217,7 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
             className="flex items-center gap-1"
             onClick={(event) => event.stopPropagation()}
           >
-            {item.source ? (
+            {item.source && !item.source.includes("supabase.co/storage") ? (
               <MinimalIconLink href={item.source} icon={FileText} label="Transcript" />
             ) : null}
             {item.fireflies_link ? (
@@ -1275,6 +1276,7 @@ export function renderMeetingRowActions(
   onDelete: (meeting: Meeting) => void,
   onOpenSource: (meeting: Meeting) => void,
   onOpenRecording: (meeting: Meeting) => void,
+  onDownloadPdf: (meeting: Meeting) => void,
 ): React.ReactElement {
   return (
     <TableRowActionsMenu
@@ -1311,6 +1313,12 @@ export function renderMeetingRowActions(
               },
             ]
           : []),
+        {
+          key: "download-pdf",
+          label: "Download transcript PDF",
+          icon: Download,
+          onSelect: () => onDownloadPdf(item),
+        },
         {
           key: "delete",
           label: "Delete",

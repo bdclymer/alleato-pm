@@ -17,7 +17,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
-from ...ai_transport import retry_ai_call
+from ...ai_transport import get_openai_client, retry_ai_call
 from ...supabase_helpers import get_rag_read_client, get_rag_write_client, rag_database_writes_enabled
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,6 @@ MIN_EMBEDDABLE_CHARS_BY_TYPE = {
 }
 EMBEDDING_MODEL = "text-embedding-3-large"
 EMBEDDING_DIMENSIONS = 3072
-AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh/v1"
 INTENTIONAL_EMBEDDING_EXCLUSION_STATUS = "intentionally_excluded"
 
 
@@ -94,40 +93,6 @@ def _run_source_intelligence_compiler(supabase_client, metadata_id: str) -> None
         )
 
 
-def _provider_configs() -> List[Dict[str, str]]:
-    providers: List[Dict[str, str]] = []
-    gateway_key = os.getenv("AI_GATEWAY_API_KEY")
-    if gateway_key:
-        providers.append(
-            {
-                "name": "AI Gateway",
-                "api_key": gateway_key,
-                "base_url": AI_GATEWAY_BASE_URL,
-                "model_prefix": "openai/",
-            }
-        )
-
-    openai_key = os.getenv("OPENAI_API_KEY")
-    if openai_key:
-        providers.append(
-            {
-                "name": "OpenAI direct",
-                "api_key": openai_key,
-                "base_url": "",
-                "model_prefix": "",
-            }
-        )
-
-    if not providers:
-        raise RuntimeError("AI_GATEWAY_API_KEY or OPENAI_API_KEY is required for Graph embeddings")
-    return providers
-
-
-def _model_for_provider(model: str, provider: Dict[str, str]) -> str:
-    prefix = provider.get("model_prefix", "")
-    if prefix and not model.startswith(prefix):
-        return f"{prefix}{model}"
-    return model
 
 
 def _split_text(text: str) -> List[str]:
@@ -217,48 +182,27 @@ def _substantive_text_length(text: str) -> int:
 
 
 def _batch_embed(texts: List[str]) -> List[List[float]]:
-    """Embed a batch of texts using configured providers."""
+    """Embed a batch of texts via OpenAI."""
     if not texts:
         return []
 
-    from openai import OpenAI
-
     truncated = [t[:8000] for t in texts]
-    errors: List[str] = []
-    for provider in _provider_configs():
-        kwargs: Dict[str, str] = {"api_key": provider["api_key"]}
-        if provider.get("base_url"):
-            kwargs["base_url"] = provider["base_url"]
-
-        try:
-            response = retry_ai_call(
-                lambda: OpenAI(**kwargs).embeddings.create(
-                    model=_model_for_provider(EMBEDDING_MODEL, provider),
-                    input=truncated,
-                    dimensions=EMBEDDING_DIMENSIONS,
-                ),
-                provider_name=provider["name"],
-                operation="graph embedding batch",
-            )
-            embeddings = [item.embedding for item in response.data]
-            if len(embeddings) != len(texts):
-                raise RuntimeError(f"expected {len(texts)} embeddings, got {len(embeddings)}")
-            if any(len(embedding) != EMBEDDING_DIMENSIONS for embedding in embeddings):
-                raise RuntimeError(f"one or more embeddings did not have {EMBEDDING_DIMENSIONS} dimensions")
-            logger.info(
-                "[GraphEmbed] Embedded %d chunks via %s with %s (dim=%d)",
-                len(texts),
-                provider["name"],
-                EMBEDDING_MODEL,
-                EMBEDDING_DIMENSIONS,
-            )
-            return embeddings
-        except Exception as e:
-            message = f"{provider['name']}: {e}"
-            logger.error("[GraphEmbed] Embedding provider failed: %s", message)
-            errors.append(message)
-
-    raise RuntimeError("Graph embedding failed across all providers: " + " | ".join(errors))
+    response = retry_ai_call(
+        lambda: get_openai_client().embeddings.create(
+            model=EMBEDDING_MODEL,
+            input=truncated,
+            dimensions=EMBEDDING_DIMENSIONS,
+        ),
+        provider_name="OpenAI",
+        operation="graph embedding batch",
+    )
+    embeddings = [item.embedding for item in response.data]
+    if len(embeddings) != len(texts):
+        raise RuntimeError(f"expected {len(texts)} embeddings, got {len(embeddings)}")
+    if any(len(e) != EMBEDDING_DIMENSIONS for e in embeddings):
+        raise RuntimeError(f"one or more embeddings did not have {EMBEDDING_DIMENSIONS} dimensions")
+    logger.info("[GraphEmbed] Embedded %d chunks via OpenAI with %s (dim=%d)", len(texts), EMBEDDING_MODEL, EMBEDDING_DIMENSIONS)
+    return embeddings
 
 
 def embed_graph_document(supabase_client, metadata_id: str) -> int:

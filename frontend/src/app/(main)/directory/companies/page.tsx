@@ -18,10 +18,8 @@ import {
 import { toast } from "sonner";
 
 import { getDirectoryTabs } from "@/config/directory-tabs";
-import { useGlobalProjectCompanies } from "@/hooks/use-global-project-companies";
 import {
   UnifiedTablePage,
-  useUnifiedTableState,
   CellBadge,
   CellText,
   CellEmail,
@@ -32,34 +30,16 @@ import {
   type CellColorMap,
 } from "@/components/tables/unified";
 import type { ColumnConfig, FilterConfig, TableColumn } from "@/components/tables/unified";
+import { useServerTableDefinition } from "@/features/tables/server-table";
+import {
+  companyColumns,
+  createGlobalCompaniesTableDefinition,
+  EMPTY_COMPANY_FILTERS,
+  type CompanyFilterState,
+  type CompanyRow,
+} from "@/features/companies/directory-companies-table-definition";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api-client";
-
-interface CompanyRow {
-  id: string;
-  project_id: number;
-  company_id: string;
-  business_phone: string | null;
-  email_address: string | null;
-  primary_contact_id: string | null;
-  erp_vendor_id: string | null;
-  company_type: string | null;
-  status: string | null;
-  logo_url: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-  company_name: string | null;
-  website: string | null;
-  contact_count: number;
-  project_count: number;
-}
-
-type CompanyFilterState = Record<string, FilterValue>;
-
-const EMPTY_FILTERS: CompanyFilterState = {
-  status: undefined,
-  company_type: undefined,
-};
 
 const STATUS_COLORS: CellColorMap = {
   active: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
@@ -72,26 +52,6 @@ const TYPE_COLORS: CellColorMap = {
   vendor: "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
   "connected company": "bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300",
 };
-
-const companyColumns: ColumnConfig[] = [
-  { id: "company_name", label: "Name", alwaysVisible: true },
-  { id: "company_type", label: "Type", defaultVisible: true },
-  { id: "status", label: "Status", defaultVisible: true },
-  { id: "contact_count", label: "Contacts", defaultVisible: true },
-  { id: "project_count", label: "Projects", defaultVisible: true },
-  { id: "business_phone", label: "Phone", defaultVisible: true },
-  { id: "website", label: "Website", defaultVisible: true },
-  { id: "email_address", label: "Email", defaultVisible: false },
-  { id: "erp_vendor_id", label: "ERP Vendor ID", defaultVisible: false },
-  { id: "created_at", label: "Date Added", defaultVisible: false },
-  { id: "updated_at", label: "Last Updated", defaultVisible: false },
-  { id: "primary_contact_id", label: "Primary Contact ID", defaultVisible: false },
-  { id: "logo_url", label: "Logo URL", defaultVisible: false },
-];
-
-const companyDefaultVisibleColumns = companyColumns
-  .filter((column) => column.defaultVisible !== false)
-  .map((column) => column.id);
 
 function buildCompanyTableColumns(): TableColumn<CompanyRow>[] {
   const colMap = Object.fromEntries(companyColumns.map((c) => [c.id, c]));
@@ -349,56 +309,38 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
   const isClientsRoute =
     pathname === "/directory/clients" || pathname.endsWith("/directory/clients");
   const forcedCompanyType = isClientsRoute ? "client" : undefined;
+  const definition = React.useMemo(
+    () =>
+      createGlobalCompaniesTableDefinition({
+        entityKey: isClientsRoute
+          ? "global-directory-clients-v3"
+          : "global-directory-companies-v3",
+        forcedCompanyType,
+      }),
+    [forcedCompanyType, isClientsRoute],
+  );
 
-  const initialStatus = searchParams.get("status") ?? "";
-  const initialCompanyType = forcedCompanyType ?? searchParams.get("company_type") ?? "";
-  const initialFilters: CompanyFilterState = {
-    status: initialStatus || undefined,
-    company_type: initialCompanyType || undefined,
-  };
-
-  const tableState = useUnifiedTableState({
-    entityKey: isClientsRoute ? "global-directory-clients-v2" : "global-directory-companies-v2",
+  const {
+    tableState,
+    items: companies,
+    totalItems,
+    totalPages,
+    isLoading,
+    isFetching,
+    error,
+    activeFilters,
+    refresh,
+    handleViewChange,
+    handleFilterChange,
+    handleSortChange,
+    handlePageChange,
+    handlePerPageChange,
+  } = useServerTableDefinition<CompanyRow, CompanyFilterState>({
+    definition,
     searchParams,
     pathname,
     router,
-    defaults: {
-      view: "table",
-      allowedViews: ["table", "card", "list"],
-      page: 1,
-      perPage: 50,
-      search: "",
-      sortBy: "updated_at",
-      sortDirection: "desc",
-      visibleColumns: companyDefaultVisibleColumns,
-      filters: initialFilters,
-    },
   });
-
-  React.useEffect(() => {
-    const nextStatus = searchParams.get("status") ?? "";
-    const nextCompanyType = forcedCompanyType ?? searchParams.get("company_type") ?? "";
-    tableState.setActiveFilters((prev) => {
-      const normalizedStatus = nextStatus || undefined;
-      const normalizedType = nextCompanyType || undefined;
-      if (prev.status === normalizedStatus && prev.company_type === normalizedType) {
-        return prev;
-      }
-      return {
-        status: normalizedStatus,
-        company_type: normalizedType,
-      };
-    });
-  }, [forcedCompanyType, searchParams, tableState.setActiveFilters]);
-
-  const activeFilters = tableState.activeFilters as CompanyFilterState;
-  const statusFilter =
-    typeof activeFilters.status === "string"
-      ? (activeFilters.status as "ACTIVE" | "INACTIVE" | "all")
-      : "all";
-  const companyTypeFilter =
-    forcedCompanyType ??
-    (typeof activeFilters.company_type === "string" ? activeFilters.company_type : undefined);
 
   const [isSyncing, setIsSyncing] = React.useState(false);
 
@@ -420,22 +362,13 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
           `${result.companiesCreated ?? 0} companies created, ${result.companiesUpdated ?? 0} companies updated` +
           (result.errors.length > 0 ? ` (${result.errors.length} errors)` : ""),
       );
-      router.refresh();
+      await refresh();
     } catch (err) {
       toast.error("ERP sync failed");
     } finally {
       setIsSyncing(false);
     }
-  }, [router]);
-
-  const { companies, pagination, isLoading, isFetching, error } = useGlobalProjectCompanies({
-    search: tableState.debouncedSearch || undefined,
-    status: statusFilter || "all",
-    company_type: companyTypeFilter,
-    sort: `${tableState.sortBy}:${tableState.sortDirection}`,
-    page: tableState.page,
-    per_page: tableState.perPage,
-  });
+  }, [refresh]);
 
   const companyTypeOptions = React.useMemo(() => {
     const uniqueTypes = Array.from(
@@ -484,13 +417,12 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
       try {
         await apiFetch(`/api/directory/companies/${company.id}`, { method: "DELETE" });
         toast.success("Company deleted");
-        // Trigger re-fetch by navigating to same page
-        router.refresh();
+        await refresh();
       } catch (err) {
         toast.error("Failed to delete company");
       }
     },
-    [router],
+    [refresh],
   );
 
   const openCompanyPage = React.useCallback(
@@ -501,7 +433,7 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
     [router],
   );
 
-  const handleFilterChange = (nextFilters: CompanyFilterState) => {
+  const handleCompanyFilterChange = (nextFilters: CompanyFilterState) => {
     const mergedFilters: CompanyFilterState = forcedCompanyType
       ? {
           ...nextFilters,
@@ -509,14 +441,7 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
         }
       : nextFilters;
 
-    tableState.setActiveFilters(mergedFilters);
-    tableState.setSearchParams({
-      status: typeof mergedFilters.status === "string" ? mergedFilters.status : null,
-      company_type:
-        typeof mergedFilters.company_type === "string" ? mergedFilters.company_type : null,
-      page: "1",
-    });
-    tableState.setPage(1);
+    handleFilterChange(mergedFilters);
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -605,29 +530,36 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
       }}
       tabs={tabs}
       toolbar={{
-        totalItems: pagination?.total ?? companies.length,
-        filteredItems: pagination?.total ?? companies.length,
+        totalItems,
+        filteredItems: totalItems,
         selectedCount: tableState.selectedIds.length,
         searchValue: tableState.searchInput,
         onSearchChange: tableState.setSearchInput,
-        searchPlaceholder: "Search name, phone, email, ERP ID...",
+        searchPlaceholder: definition.searchPlaceholder,
         currentView: tableState.currentView,
-        onViewChange: (view) => {
-          tableState.setCurrentView(view);
-          tableState.setSearchParams({ view });
-        },
-        enabledViews: ["table", "card", "list"],
+        onViewChange: handleViewChange,
+        enabledViews: definition.allowedViews,
         filters,
         activeFilters,
-        onFilterChange: handleFilterChange,
+        onFilterChange: (filters) =>
+          handleCompanyFilterChange(filters as CompanyFilterState),
         onClearFilters: () =>
-          handleFilterChange({
-            ...EMPTY_FILTERS,
+          handleCompanyFilterChange({
+            ...EMPTY_COMPANY_FILTERS,
             ...(forcedCompanyType ? { company_type: forcedCompanyType } : {}),
           }),
         columns: companyColumns,
         visibleColumns: tableState.visibleColumns,
         onColumnVisibilityChange: tableState.setVisibleColumns,
+        savedViewsScope: definition.entityKey,
+        savedViewsDefaults: {
+          visibleColumns: definition.defaultVisibleColumns,
+          columnOrder: companyColumns.map((column) => column.id),
+          columnWidths: {},
+          sortBy: definition.defaultSortBy,
+          sortDirection: definition.defaultSortDirection,
+          filters: definition.defaultFilters,
+        },
       }}
       data={{
         items: companies,
@@ -657,16 +589,7 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
       sorting={{
         sortBy: tableState.sortBy,
         sortDirection: tableState.sortDirection,
-        onSortChange: (sortBy, direction) => {
-          tableState.setSortBy(sortBy);
-          tableState.setSortDirection(direction);
-          tableState.setSearchParams({
-            sort: sortBy,
-            sort_dir: direction,
-            page: "1",
-          });
-          tableState.setPage(1);
-        },
+        onSortChange: handleSortChange,
       }}
       selection={{
         selectedIds: tableState.selectedIds,
@@ -683,19 +606,10 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
       }}
       pagination={{
         page: tableState.page,
-        totalPages: pagination?.total_pages ?? 1,
+        totalPages,
         perPage: tableState.perPage,
-        onPageChange: (nextPage) => {
-          tableState.setPage(nextPage);
-          tableState.setSearchParams({ page: String(nextPage) });
-        },
-        onPerPageChange: (nextPerPage) => {
-          const parsed = Number(nextPerPage);
-          if (!Number.isFinite(parsed) || parsed <= 0) return;
-          tableState.setPerPage(parsed);
-          tableState.setSearchParams({ per_page: String(parsed), page: "1" });
-          tableState.setPage(1);
-        },
+        onPageChange: handlePageChange,
+        onPerPageChange: handlePerPageChange,
       }}
       features={{
         enableExport: false,

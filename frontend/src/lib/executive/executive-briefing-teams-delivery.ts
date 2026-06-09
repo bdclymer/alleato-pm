@@ -6,10 +6,16 @@ import {
   type BrandonDailyUpdatePacket,
 } from "@/lib/executive/brandon-daily-update";
 import { CEO_EXECUTIVE_BRIEFING_RECAP_KIND } from "@/lib/executive/executive-briefing-workflow";
+import {
+  formatExecutiveBriefingTeamsMessage,
+  getBriefHeader,
+  getBullets,
+  insightLine,
+  linkedClaimSources,
+  projectName,
+} from "@/lib/executive/executive-briefing-render";
 
-const APP_BASE_URL =
-  process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-  "https://projects.alleatogroup.com";
+export { formatExecutiveBriefingTeamsMessage } from "@/lib/executive/executive-briefing-render";
 
 export type ExecutiveBriefingTeamsSendResult =
   | {
@@ -34,125 +40,70 @@ async function sendTeamsMessage(userId: string, card: PostableCard) {
   await sendProactiveCard(userId, card);
 }
 
-// Return 2–3 bullet strings for an item (cleaned, clipped).
-function getBullets(item: BrandonBriefItem, max = 3): string[] {
-  const bullets = (item.bullets ?? [])
-    .map(cleanBullet)
-    .filter((b) => b.length > 8)
-    .slice(0, max);
-  if (bullets.length > 0) return bullets.map((b) => clip(b, 110));
-  const fallback = clip(item.recommendedAction ?? item.summary, 160);
-  return [fallback];
-}
-
 export function buildExecutiveBriefingCard(
   packet: BrandonDailyUpdatePacket,
   firstName: string | null,
   options: { now?: Date } = {},
 ): PostableCard {
   const now = options.now ?? new Date();
-  const today = new Intl.DateTimeFormat("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    timeZone: "America/New_York",
-  }).format(now);
-  const easternHour = Number(
-    new Intl.DateTimeFormat("en-US", {
-      hour: "numeric",
-      hour12: false,
-      timeZone: "America/New_York",
-    }).format(now),
-  );
-  const daypart =
-    easternHour < 12 ? "morning" : easternHour < 17 ? "afternoon" : "evening";
-  const greeting = firstName
-    ? `Good ${daypart}, ${firstName}.`
-    : `Good ${daypart}.`;
+  const { today, greeting } = getBriefHeader(now, firstName);
 
   const { needsBrandon, waitingOnOthers, importantUpdates } = packet.sections;
-
-  type SectionKey = keyof typeof packet.sections;
-  const sectionRank: Record<SectionKey, number> = {
-    needsBrandon: 0,
-    waitingOnOthers: 1,
-    importantUpdates: 2,
-  };
-
-  const meetingMap = new Map<string, { item: BrandonBriefItem; section: SectionKey }>();
-  for (const [section, items] of [
-    ["needsBrandon", needsBrandon],
-    ["waitingOnOthers", waitingOnOthers],
-    ["importantUpdates", importantUpdates],
-  ] as [SectionKey, BrandonBriefItem[]][]) {
-    for (const item of items) {
-      if (item.source !== "Meeting") continue;
-      const key = String(item.sourceDetail ?? "").trim() || "Untitled meeting";
-      const existing = meetingMap.get(key);
-      if (!existing || sectionRank[section] < sectionRank[existing.section]) {
-        meetingMap.set(key, { item, section });
-      }
-    }
-  }
-
-  const meetings = Array.from(meetingMap.entries()).sort(
-    (a, b) => sectionRank[a[1].section] - sectionRank[b[1].section],
-  );
+  const updates = importantUpdates;
 
   const children: CardChild[] = [];
 
-  // ── Today's Meetings ───────────────────────────────────────────────────────
+  const renderItem = (item: BrandonBriefItem, heading: string, bulletMax: number) => {
+    children.push(ChatText(heading, { style: "bold" }));
+    for (const bullet of getBullets(item, bulletMax)) {
+      children.push(ChatText(`• ${bullet}`));
+    }
+    const insight = insightLine(item);
+    if (insight) {
+      children.push(ChatText(`What this means: ${insight}`, { style: "muted" }));
+    }
+    const sources = linkedClaimSources(item);
+    if (sources.length > 0) {
+      children.push(
+        ChatText(
+          sources.map((source) => `[${source.label}](${source.href})`).join("  ·  "),
+          { style: "muted" },
+        ),
+      );
+    }
+  };
+
   if (needsBrandon.length > 0) {
     children.push(Divider());
-    children.push(ChatText(`Brandon's Top Priorities (${needsBrandon.length})`, { style: "bold" }));
-    needsBrandon.forEach((item, i) => {
-      children.push(ChatText(`${i + 1}. ${projectName(item.project)}`, { style: "bold" }));
-      for (const bullet of getBullets(item, 3)) {
-        children.push(ChatText(`• ${bullet}`));
-      }
-      for (const source of linkedClaimSources(item)) {
-        children.push(ChatText(`Source: ${source.label} — ${source.href}`, { style: "muted" }));
-      }
-    });
+    children.push(ChatText(`Needs your attention (${needsBrandon.length})`, { style: "bold" }));
+    needsBrandon.forEach((item, i) =>
+      renderItem(item, `${i + 1}. ${projectName(item.project)}`, 4),
+    );
   }
 
-  if (meetings.length > 0) {
-    children.push(Divider());
-    children.push(ChatText(`Today's Meetings (${meetings.length})`, { style: "bold" }));
-    for (const [title, { item }] of meetings) {
-      children.push(Divider());
-      children.push(ChatText(clip(title, 70), { style: "bold" }));
-      for (const bullet of getBullets(item, 3)) {
-        children.push(ChatText(`• ${bullet}`));
-      }
-      for (const source of linkedClaimSources(item)) {
-        children.push(ChatText(`Source: ${source.label} — ${source.href}`, { style: "muted" }));
-      }
-    }
-  }
-
-  // ── Pending ────────────────────────────────────────────────────────────────
   if (waitingOnOthers.length > 0) {
     children.push(Divider());
-    children.push(ChatText(`Pending (${waitingOnOthers.length})`, { style: "bold" }));
+    children.push(ChatText(`Waiting on others (${waitingOnOthers.length})`, { style: "bold" }));
     for (const item of waitingOnOthers) {
-      children.push(ChatText(projectName(item.project), { style: "bold" }));
-      for (const bullet of getBullets(item, 2)) {
-        children.push(ChatText(`• ${bullet}`));
-      }
-      for (const source of linkedClaimSources(item)) {
-        children.push(ChatText(`Source: ${source.label} — ${source.href}`, { style: "muted" }));
-      }
+      renderItem(item, projectName(item.project), 3);
     }
   }
 
-  const totalItems = needsBrandon.length + waitingOnOthers.length + meetings.length;
+  if (updates.length > 0) {
+    children.push(Divider());
+    children.push(ChatText(`Worth knowing (${updates.length})`, { style: "bold" }));
+    for (const item of updates) {
+      renderItem(item, projectName(item.project), 3);
+    }
+  }
+
+  const totalItems = needsBrandon.length + waitingOnOthers.length + updates.length;
   children.push(Divider());
   children.push(
     ChatText(
       totalItems > 0
-        ? "Reply with a project name to get source detail or draft a follow-up."
-        : "No action items today. Ask about a specific project if you need a drill-down.",
+        ? "Each item links to its source — open it for the full meeting, email, or thread."
+        : "Nothing needs your attention today.",
       { style: "muted" },
     ),
   );
@@ -173,200 +124,6 @@ export function buildExecutiveBriefingCard(
     card,
     fallbackText: `Daily Brief — ${today}. ${greeting} ${totalItems} item${totalItems !== 1 ? "s" : ""} require attention.`,
   };
-}
-
-// Strip leading project number "31 Uniqlo..." → "Uniqlo..."
-function projectName(value: string | null | undefined): string {
-  const s = String(value ?? "").replace(/\s+/g, " ").trim();
-  if (!s || /^no project linked$/i.test(s)) return "Company-wide";
-  return s.replace(/^\d+\s+/, "").trim() || s;
-}
-
-// Clip at sentence/word boundary.
-function clip(value: string | null | undefined, max = 110): string {
-  const s = String(value ?? "").replace(/\s+/g, " ").trim();
-  if (s.length <= max) return s;
-  const cut = s.slice(0, max);
-  const dot = Math.max(cut.lastIndexOf("."), cut.lastIndexOf("?"), cut.lastIndexOf("!"));
-  if (dot >= 50) return cut.slice(0, dot + 1);
-  const sp = cut.lastIndexOf(" ");
-  return (sp > 0 ? cut.slice(0, sp) : cut) + "…";
-}
-
-// Strip "Label: " prefix the AI adds to bullets. Keep just the substance.
-function cleanBullet(s: string): string {
-  return s
-    .replace(/^[A-Z][^:]{0,40}:\s*/, "")
-    .replace(/^[-•]\s*/, "")
-    .trim();
-}
-
-// Return 2–3 bullet lines for an item, one per line, markdown list format.
-function bulletBlock(item: BrandonBriefItem, max = 3): string {
-  const bullets = (item.bullets ?? [])
-    .map(cleanBullet)
-    .filter((b) => b.length > 8)
-    .slice(0, max);
-
-  if (bullets.length > 0) {
-    return bullets.map((b) => `- ${clip(b, 110)}`).join("\n");
-  }
-  // fallback to recommendedAction or summary
-  const fallback = clip(item.recommendedAction ?? item.summary, 160);
-  return `- ${fallback}`;
-}
-
-function projectIdFromLabel(value: string | null | undefined): number | null {
-  const match = String(value ?? "").replace(/\s+/g, " ").trim().match(/^(\d{2,5})\b/);
-  return match ? Number.parseInt(match[1], 10) : null;
-}
-
-function citationHref(item: BrandonBriefItem, index: number): string | null {
-  const citation = item.citations[index];
-  if (!citation) return null;
-  if (citation.sourceUrl?.trim()) return citation.sourceUrl.trim();
-  if (citation.sourceId?.trim()) {
-    const projectId = projectIdFromLabel(item.project);
-    if (projectId) {
-      return `${APP_BASE_URL}/${projectId}/intelligence/sources/${encodeURIComponent(
-        citation.sourceId.trim(),
-      )}`;
-    }
-  }
-  return null;
-}
-
-function citationLabel(item: BrandonBriefItem, index: number): string {
-  const citation = item.citations[index];
-  if (!citation) return `Source ${index + 1}`;
-  return clip(citation.sourceDetail?.trim() || citation.source, 44);
-}
-
-function linkedClaimSources(
-  item: BrandonBriefItem,
-  max = 2,
-): Array<{ label: string; href: string }> {
-  const links: Array<{ label: string; href: string }> = [];
-  const seen = new Set<string>();
-  item.citations.forEach((_, index) => {
-    const href = citationHref(item, index);
-    if (!href || seen.has(href)) return;
-    seen.add(href);
-    links.push({ label: citationLabel(item, index), href });
-  });
-  return links.slice(0, max);
-}
-
-export function formatExecutiveBriefingTeamsMessage(
-  packet: BrandonDailyUpdatePacket,
-  firstName: string | null,
-  options: { now?: Date } = {},
-): string {
-  const now = options.now ?? new Date();
-  const today = new Intl.DateTimeFormat("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    timeZone: "America/New_York",
-  }).format(now);
-  const easternHour = Number(
-    new Intl.DateTimeFormat("en-US", {
-      hour: "numeric",
-      hour12: false,
-      timeZone: "America/New_York",
-    }).format(now),
-  );
-  const daypart =
-    easternHour < 12 ? "morning" : easternHour < 17 ? "afternoon" : "evening";
-  const greeting = firstName
-    ? `Good ${daypart}, ${firstName}.`
-    : `Good ${daypart}.`;
-
-  const { needsBrandon, waitingOnOthers, importantUpdates } = packet.sections;
-
-  type SectionKey = keyof typeof packet.sections;
-  const sectionRank: Record<SectionKey, number> = {
-    needsBrandon: 0,
-    waitingOnOthers: 1,
-    importantUpdates: 2,
-  };
-
-  // Group meeting-sourced items by meeting title, pick highest-priority per meeting.
-  const meetingMap = new Map<string, { item: BrandonBriefItem; section: SectionKey }>();
-  for (const [section, items] of [
-    ["needsBrandon", needsBrandon],
-    ["waitingOnOthers", waitingOnOthers],
-    ["importantUpdates", importantUpdates],
-  ] as [SectionKey, BrandonBriefItem[]][]) {
-    for (const item of items) {
-      if (item.source !== "Meeting") continue;
-      const key = String(item.sourceDetail ?? "").trim() || "Untitled meeting";
-      const existing = meetingMap.get(key);
-      if (!existing || sectionRank[section] < sectionRank[existing.section]) {
-        meetingMap.set(key, { item, section });
-      }
-    }
-  }
-
-  const meetings = Array.from(meetingMap.entries()).sort(
-    (a, b) => sectionRank[a[1].section] - sectionRank[b[1].section],
-  );
-
-  const lines: string[] = [
-    `**Daily Brief — ${today}**`,
-    greeting,
-    "",
-  ];
-
-  // ── Today's Meetings ──────────────────────────────────────────────────────
-  if (needsBrandon.length > 0) {
-    lines.push(`**Brandon's Top Priorities (${needsBrandon.length})**`);
-    lines.push("");
-    needsBrandon.forEach((item, i) => {
-      lines.push(`**${i + 1}. ${projectName(item.project)}**`);
-      lines.push(bulletBlock(item, 3));
-      linkedClaimSources(item).forEach((source) => {
-        lines.push(`Source: [${source.label}](${source.href})`);
-      });
-      lines.push("");
-    });
-  }
-
-  if (meetings.length > 0) {
-    lines.push(`**Today's Meetings (${meetings.length})**`);
-    lines.push("");
-    for (const [title, { item }] of meetings) {
-      lines.push(`**${clip(title, 70)}**`);
-      lines.push(bulletBlock(item, 3));
-      linkedClaimSources(item).forEach((source) => {
-        lines.push(`Source: [${source.label}](${source.href})`);
-      });
-      lines.push("");
-    }
-  }
-
-  // ── Pending ───────────────────────────────────────────────────────────────
-  if (waitingOnOthers.length > 0) {
-    lines.push(`**Pending (${waitingOnOthers.length})**`);
-    lines.push("");
-    for (const item of waitingOnOthers) {
-      lines.push(`**${projectName(item.project)}**`);
-      lines.push(bulletBlock(item, 2));
-      linkedClaimSources(item).forEach((source) => {
-        lines.push(`Source: [${source.label}](${source.href})`);
-      });
-      lines.push("");
-    }
-  }
-
-  const totalItems = needsBrandon.length + waitingOnOthers.length + meetings.length;
-  lines.push(
-    totalItems > 0
-      ? "_Reply with a project name to get source detail or draft a follow-up._"
-      : "_No action items today. Ask about a specific project if you need a drill-down._",
-  );
-
-  return lines.join("\n");
 }
 
 async function resolveAllTeamsUserIds(

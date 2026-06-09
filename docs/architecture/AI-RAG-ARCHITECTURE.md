@@ -14,6 +14,8 @@ The architecture is a multi-agent system (C-Suite model) where a Chief Strategis
 
 AI SDK public types used by app code, including `ModelMessage`, must be imported from the `ai` package. Do not import those public app-facing types from transitive `@ai-sdk/*` packages; those packages may be present in the lockfile without being directly resolvable by TypeScript.
 
+2026-06-09 update: Microsoft Graph embedding now uses the shared backend AI transport client (`get_openai_client()` plus `retry_ai_call`) instead of a route-local AI Gateway/OpenAI provider loop, so Graph email/Teams vectorization follows the same fail-loud provider path as the rest of the backend. Source-specific RAG adds stricter recent Teams/email routing and an `email-operator-policy` triage layer that suppresses non-operational security/auth/card notifications unless explicitly requested, while operating-summary sources carry richer evidence metadata for project-intelligence packets.
+
 ---
 
 ## 2. Architecture Diagram

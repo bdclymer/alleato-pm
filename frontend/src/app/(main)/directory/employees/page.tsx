@@ -14,63 +14,31 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { createClient } from "@/lib/supabase/client";
 import { getDirectoryTabs } from "@/config/directory-tabs";
 import {
   UnifiedTablePage,
-  useUnifiedTableState,
   CellBadge,
   CellEmail,
   CellText,
   TableDateValue,
-  type FilterValue,
   type CellColorMap,
 } from "@/components/tables/unified";
 import type { ColumnConfig, TableColumn } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
-
-const ALLEATO_COMPANY = "Alleato Group";
-
-interface EmployeeRow {
-  id: string;
-  first_name: string;
-  last_name: string;
-  full_name: string;
-  email: string;
-  job_title: string;
-  business_unit: string;
-  phone: string;
-  status: string;
-  person_type: string;
-  created_at: string | null;
-}
-
-type EmployeeFilterState = Record<string, FilterValue>;
-
-const EMPTY_FILTERS: EmployeeFilterState = {
-  status: undefined,
-  business_unit: undefined,
-};
+import { useServerTableDefinition } from "@/features/tables/server-table";
+import {
+  ALLEATO_COMPANY,
+  EMPTY_EMPLOYEE_FILTERS,
+  employeeColumns,
+  employeesTableDefinition,
+  type EmployeeFilterState,
+  type EmployeeRow,
+} from "@/features/employees/directory-employees-table-definition";
 
 const STATUS_COLORS: CellColorMap = {
   active: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
   inactive: "bg-muted text-muted-foreground",
 };
-
-const employeeColumns: ColumnConfig[] = [
-  { id: "full_name", label: "Name", alwaysVisible: true },
-  { id: "job_title", label: "Job Title", defaultVisible: true },
-  { id: "business_unit", label: "Business Unit", defaultVisible: true },
-  { id: "email", label: "Email", defaultVisible: true },
-  { id: "phone", label: "Phone", defaultVisible: true },
-  { id: "status", label: "Status", defaultVisible: true },
-  { id: "person_type", label: "Type", defaultVisible: false },
-  { id: "created_at", label: "Added", defaultVisible: false },
-];
-
-const employeeDefaultVisibleColumns = employeeColumns
-  .filter((col) => col.defaultVisible !== false)
-  .map((col) => col.id);
 
 function buildEmployeeTableColumns(): TableColumn<EmployeeRow>[] {
   return [
@@ -254,97 +222,31 @@ export default function DirectoryEmployeesPage(): ReactElement {
   const router = useRouter();
   const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
 
-  const initialStatus = searchParams.get("status") ?? "";
-  const initialBusinessUnit = searchParams.get("business_unit") ?? "";
-  const initialFilters: EmployeeFilterState = {
-    status: initialStatus || undefined,
-    business_unit: initialBusinessUnit || undefined,
-  };
-
-  const tableState = useUnifiedTableState({
-    entityKey: "global-directory-employees",
+  const {
+    tableState,
+    items: tableData,
+    totalItems,
+    totalPages,
+    isLoading,
+    isFetching,
+    error,
+    activeFilters,
+    isFiltered,
+    handleViewChange,
+    handleFilterChange,
+    handleSortChange,
+    handlePageChange,
+    handlePerPageChange,
+  } = useServerTableDefinition<EmployeeRow, EmployeeFilterState>({
+    definition: employeesTableDefinition,
     searchParams,
     pathname,
     router,
-    defaults: {
-      view: "table",
-      allowedViews: ["table", "card", "list"],
-      page: 1,
-      perPage: 50,
-      search: "",
-      sortBy: "full_name",
-      sortDirection: "asc",
-      visibleColumns: employeeDefaultVisibleColumns,
-      filters: initialFilters,
-    },
   });
 
-  const [employees, setEmployees] = React.useState<EmployeeRow[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState<Error | null>(null);
-
-  const fetchEmployees = React.useCallback(async () => {
-    try {
-      setError(null);
-      const supabase = createClient();
-      const { data, error: fetchError } = await supabase
-        .from("people")
-        .select("*")
-        .ilike("company", `%${ALLEATO_COMPANY}%`)
-        .order("last_name", { ascending: true });
-
-      if (fetchError) throw fetchError;
-
-      setEmployees(
-        (data || []).map((person) => ({
-          id: person.id,
-          first_name: person.first_name || "",
-          last_name: person.last_name || "",
-          full_name: `${person.first_name || ""} ${person.last_name || ""}`.trim() || "Unnamed",
-          email: person.email || "",
-          job_title: person.job_title || "",
-          business_unit: person.business_unit || "",
-          phone: person.phone_business || person.phone_mobile || "",
-          status: person.status || "",
-          person_type: person.person_type || "",
-          created_at: person.created_at,
-        })),
-      );
-    } catch (err) {
-      setError(err as Error);
-      toast.error("Failed to load employees");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  React.useEffect(() => {
-    void fetchEmployees();
-  }, [fetchEmployees]);
-
-  const activeFilters = tableState.activeFilters as EmployeeFilterState;
-
-  const tableData = React.useMemo<EmployeeRow[]>(() => {
-    const search = tableState.debouncedSearch.trim().toLowerCase();
-    const statusFilter = typeof activeFilters.status === "string" ? activeFilters.status : "";
-    const unitFilter = typeof activeFilters.business_unit === "string" ? activeFilters.business_unit : "";
-
-    return employees.filter((emp) => {
-      if (statusFilter && emp.status.toLowerCase() !== statusFilter.toLowerCase()) return false;
-      if (unitFilter && emp.business_unit.toLowerCase() !== unitFilter.toLowerCase()) return false;
-      if (!search) return true;
-      return (
-        emp.full_name.toLowerCase().includes(search) ||
-        emp.email.toLowerCase().includes(search) ||
-        emp.job_title.toLowerCase().includes(search) ||
-        emp.business_unit.toLowerCase().includes(search)
-      );
-    });
-  }, [activeFilters, employees, tableState.debouncedSearch]);
-
   const uniqueBusinessUnits = React.useMemo(
-    () => Array.from(new Set(employees.map((e) => e.business_unit).filter(Boolean))),
-    [employees],
+    () => Array.from(new Set(tableData.map((employee) => employee.business_unit).filter(Boolean))),
+    [tableData],
   );
 
   const selectedEmployeeId = searchParams.get("detail");
@@ -354,22 +256,6 @@ export default function DirectoryEmployeesPage(): ReactElement {
 
   const tabs = getDirectoryTabs(pathname);
   const tableColumns = React.useMemo(() => buildEmployeeTableColumns(), []);
-  const isFiltered =
-    Boolean(tableState.searchInput) ||
-    Boolean(activeFilters.status) ||
-    Boolean(activeFilters.business_unit);
-  const totalPages = Math.max(1, Math.ceil(tableData.length / tableState.perPage));
-  const currentPage = Math.min(tableState.page, totalPages);
-
-  const handleFilterChange = (nextFilters: EmployeeFilterState) => {
-    tableState.setActiveFilters(nextFilters);
-    tableState.setSearchParams({
-      status: typeof nextFilters.status === "string" ? nextFilters.status : null,
-      business_unit: typeof nextFilters.business_unit === "string" ? nextFilters.business_unit : null,
-      page: "1",
-    });
-    tableState.setPage(1);
-  };
 
   const handleSelectAll = (checked: boolean) => {
     tableState.setSelectedIds(checked ? tableData.map((e) => e.id) : []);
@@ -397,18 +283,15 @@ export default function DirectoryEmployeesPage(): ReactElement {
       }}
       tabs={tabs}
       toolbar={{
-        totalItems: employees.length,
+        totalItems,
         filteredItems: tableData.length,
         selectedCount: tableState.selectedIds.length,
         searchValue: tableState.searchInput,
         onSearchChange: tableState.setSearchInput,
-        searchPlaceholder: "Search employees...",
+        searchPlaceholder: employeesTableDefinition.searchPlaceholder,
         currentView: tableState.currentView,
-        onViewChange: (view) => {
-          tableState.setCurrentView(view);
-          tableState.setSearchParams({ view });
-        },
-        enabledViews: ["table", "card", "list"],
+        onViewChange: handleViewChange,
+        enabledViews: employeesTableDefinition.allowedViews,
         filters: [
           {
             id: "status",
@@ -431,16 +314,25 @@ export default function DirectoryEmployeesPage(): ReactElement {
             : []),
         ],
         activeFilters,
-        onFilterChange: handleFilterChange,
-        onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
+        onFilterChange: (filters) => handleFilterChange(filters as EmployeeFilterState),
+        onClearFilters: () => handleFilterChange(EMPTY_EMPLOYEE_FILTERS),
         columns: employeeColumns,
         visibleColumns: tableState.visibleColumns,
         onColumnVisibilityChange: tableState.setVisibleColumns,
+        savedViewsScope: employeesTableDefinition.entityKey,
+        savedViewsDefaults: {
+          visibleColumns: employeesTableDefinition.defaultVisibleColumns,
+          columnOrder: employeeColumns.map((column) => column.id),
+          columnWidths: {},
+          sortBy: employeesTableDefinition.defaultSortBy,
+          sortDirection: employeesTableDefinition.defaultSortDirection,
+          filters: employeesTableDefinition.defaultFilters,
+        },
       }}
       data={{
         items: tableData,
         isLoading,
-        isFetching: false,
+        isFetching,
         error: error ?? undefined,
       }}
       table={{
@@ -462,11 +354,7 @@ export default function DirectoryEmployeesPage(): ReactElement {
       sorting={{
         sortBy: tableState.sortBy,
         sortDirection: tableState.sortDirection,
-        onSortChange: (sortBy, direction) => {
-          tableState.setSortBy(sortBy);
-          tableState.setSortDirection(direction);
-          tableState.setSearchParams({ sort: sortBy, sort_dir: direction });
-        },
+        onSortChange: handleSortChange,
       }}
       selection={{
         selectedIds: tableState.selectedIds,
@@ -480,21 +368,12 @@ export default function DirectoryEmployeesPage(): ReactElement {
         isFiltered,
       }}
       pagination={{
-        page: currentPage,
+        page: tableState.page,
         totalPages,
         perPage: tableState.perPage,
-        clientSide: true,
-        onPageChange: (nextPage) => {
-          tableState.setPage(nextPage);
-          tableState.setSearchParams({ page: String(nextPage) });
-        },
-        onPerPageChange: (nextPerPage) => {
-          const parsed = Number(nextPerPage);
-          if (!Number.isFinite(parsed) || parsed <= 0) return;
-          tableState.setPerPage(parsed);
-          tableState.setSearchParams({ per_page: String(parsed), page: "1" });
-          tableState.setPage(1);
-        },
+        clientSide: false,
+        onPageChange: handlePageChange,
+        onPerPageChange: handlePerPageChange,
       }}
       features={{
         enableExport: false,

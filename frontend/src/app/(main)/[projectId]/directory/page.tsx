@@ -735,7 +735,8 @@ function ProjectTeamSection({
     ? rows.filter(
         (r) =>
           r.role.role_name.toLowerCase().includes(search.toLowerCase()) ||
-          (r.member?.person?.full_name ?? "").toLowerCase().includes(search.toLowerCase()),
+          (r.member?.person?.full_name ?? "").toLowerCase().includes(search.toLowerCase()) ||
+          (r.member?.person?.company_name ?? "").toLowerCase().includes(search.toLowerCase()),
       )
     : rows;
 
@@ -792,6 +793,15 @@ function ProjectTeamSection({
           </div>
         );
       },
+    },
+    {
+      id: "company",
+      header: "Company",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">
+          {row.original.member?.person?.company_name ?? "—"}
+        </span>
+      ),
     },
     {
       id: "email",

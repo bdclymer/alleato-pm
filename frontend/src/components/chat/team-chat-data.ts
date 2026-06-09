@@ -3,12 +3,15 @@ export interface TeamChannel {
   name: string;
   topic: string;
   team: string;
-  section: "channels";
+  section: "channels" | "dm";
   unread: number;
   memberCount: number;
   preview: string;
   lastMessageAt: string | null;
   deletable: boolean;
+  isDm?: boolean;
+  dmPartnerId?: string;
+  dmPartnerName?: string;
 }
 
 export interface TeamChatAdminUser {

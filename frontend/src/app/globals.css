@@ -203,17 +203,6 @@
     --sidebar-border: hsl(240 5% 91%);
     --sidebar-ring: hsl(var(--brand-orange-500));
 
-    /* Chat UI */
-    --chat-bg: 240 6% 7%;
-    --chat-panel: 240 5% 10%;
-    --chat-panel-2: 240 5% 13%;
-    --chat-border: 240 5% 20%;
-    --chat-text: 0 0% 95%;
-    --chat-muted: 0 0% 60%;
-    --chat-accent: var(--brand-orange-500);
-    --chat-accent-2: 29 92% 53%;
-    --chat-hover: 240 5% 15%;
-
     /* Premium Shadows */
     --shadow-subtle: 0 1px 2px 0 rgb(0 0 0 / 0.03);
     --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);

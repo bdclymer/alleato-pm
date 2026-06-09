@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { CheckCircle2, AlertTriangle, XCircle, Clock, Eye, Target, TrendingUp } from "lucide-react";
 import { AppCapabilityAccessDenied } from "@/components/guards/app-capability-access-denied";
-import { PageShell, SectionRuleHeading } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { canCurrentUserAccessAppCapability } from "@/lib/app-capabilities";
 import {
   DEFAULT_EXECUTIVE_WINDOW_DAYS,
@@ -10,65 +9,29 @@ import {
 import { getExecutiveBriefingDashboard } from "@/lib/executive/executive-briefing-workflow";
 import {
   generateExecutiveIntelligenceBrief,
-  type BriefHealthStatus,
   type MorningIntelligenceBrief,
   type EveningIntelligenceBrief,
-  type ExecutiveIntelligenceBrief,
 } from "@/lib/executive/intelligence-brief";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 // ---------------------------------------------------------------------------
-// Health badge
-// ---------------------------------------------------------------------------
-
-function HealthBadge({ status }: { status: BriefHealthStatus }) {
-  if (status === "on_track") {
-    return (
-      <span className="inline-flex items-center gap-1.5 text-sm font-medium text-green-700 dark:text-green-400">
-        <CheckCircle2 className="h-4 w-4" />
-        On Track
-      </span>
-    );
-  }
-  if (status === "watch") {
-    return (
-      <span className="inline-flex items-center gap-1.5 text-sm font-medium text-status-warning">
-        <AlertTriangle className="h-4 w-4" />
-        Watch Items
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1.5 text-sm font-medium text-destructive">
-      <XCircle className="h-4 w-4" />
-      Critical Attention Required
-    </span>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Section block
 // ---------------------------------------------------------------------------
 
 function BriefSection({
-  icon,
   label,
   children,
 }: {
-  icon: React.ReactNode;
   label: string;
   children: React.ReactNode;
 }) {
   return (
     <section className="space-y-3">
-      <div className="flex items-center gap-2">
-        <span className="text-muted-foreground">{icon}</span>
-        <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          {label}
-        </span>
-      </div>
+      <span className="text-xs font-semibold uppercase tracking-widest text-primary">
+        {label}
+      </span>
       {children}
     </section>
   );
@@ -103,25 +66,11 @@ function BulletList({ items, empty }: { items: string[]; empty?: string }) {
 function MorningBriefCard({ brief }: { brief: MorningIntelligenceBrief }) {
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="space-y-2">
-        <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          Morning Brief · Forward Looking
-        </div>
-        <div className="flex items-center justify-end gap-4">
-          <HealthBadge status={brief.healthStatus} />
-        </div>
-      </div>
-
-      <SectionRuleHeading label="" />
-
-      {/* Executive Snapshot */}
-      <BriefSection icon={<Eye className="h-4 w-4" />} label="Executive Snapshot">
+      <BriefSection label="Executive Snapshot">
         <BulletList items={brief.executiveSnapshot} empty="No items surfaced." />
       </BriefSection>
 
-      {/* Today's Priorities */}
-      <BriefSection icon={<Target className="h-4 w-4" />} label="Today's Focus">
+      <BriefSection label="Today's Focus">
         {brief.todaysPriorities.length === 0 ? (
           <p className="text-sm text-muted-foreground">No priorities surfaced.</p>
         ) : (
@@ -138,14 +87,12 @@ function MorningBriefCard({ brief }: { brief: MorningIntelligenceBrief }) {
         )}
       </BriefSection>
 
-      {/* Watch Items */}
-      <BriefSection icon={<AlertTriangle className="h-4 w-4" />} label="Watch Items">
+      <BriefSection label="Watch Items">
         <BulletList items={brief.watchItems} empty="Nothing to watch." />
       </BriefSection>
 
-      {/* Decisions Approaching */}
       {brief.decisionsApproaching.length > 0 && (
-        <BriefSection icon={<Clock className="h-4 w-4" />} label="Upcoming Decisions">
+        <BriefSection label="Upcoming Decisions">
           <div className="space-y-4">
             {brief.decisionsApproaching.map((decision) => (
               <div key={decision.title} className="space-y-1">
@@ -167,8 +114,7 @@ function MorningBriefCard({ brief }: { brief: MorningIntelligenceBrief }) {
         </BriefSection>
       )}
 
-      {/* Forecast */}
-      <BriefSection icon={<TrendingUp className="h-4 w-4" />} label="Project Forecast">
+      <BriefSection label="Project Forecast">
         <p className="text-sm leading-7 text-foreground">{brief.forecast}</p>
       </BriefSection>
     </div>
@@ -185,25 +131,11 @@ function EveningBriefCard({ brief }: { brief: EveningIntelligenceBrief }) {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="space-y-2">
-        <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-          Evening Brief · Intelligence Report
-        </div>
-        <div className="flex items-center justify-end gap-4">
-          <HealthBadge status={brief.healthStatus} />
-        </div>
-      </div>
-
-      <SectionRuleHeading label="" />
-
-      {/* What Changed Today */}
-      <BriefSection icon={<TrendingUp className="h-4 w-4" />} label="Today's Developments">
+      <BriefSection label="Today's Developments">
         <BulletList items={brief.whatChangedToday} empty="No changes recorded today." />
       </BriefSection>
 
-      {/* Decisions Made */}
-      <BriefSection icon={<CheckCircle2 className="h-4 w-4" />} label="Decisions Made">
+      <BriefSection label="Decisions Made">
         {brief.decisionsMade.length === 0 ? (
           <p className="text-sm text-muted-foreground">No decisions recorded today.</p>
         ) : (
@@ -218,8 +150,7 @@ function EveningBriefCard({ brief }: { brief: EveningIntelligenceBrief }) {
         )}
       </BriefSection>
 
-      {/* Risk Update */}
-      <BriefSection icon={<AlertTriangle className="h-4 w-4" />} label="Risk Update">
+      <BriefSection label="Risk Update">
         <p
           className={`text-sm leading-6 ${
             noRiskChange ? "text-muted-foreground" : "text-foreground"
@@ -232,8 +163,7 @@ function EveningBriefCard({ brief }: { brief: EveningIntelligenceBrief }) {
         </p>
       </BriefSection>
 
-      {/* Owner Attention Required */}
-      <BriefSection icon={<Target className="h-4 w-4" />} label="Owner Attention">
+      <BriefSection label="Owner Attention">
         <div
           className={`rounded-md px-4 py-3 text-sm leading-6 ${
             ownerAttentionIsNone
@@ -245,42 +175,11 @@ function EveningBriefCard({ brief }: { brief: EveningIntelligenceBrief }) {
         </div>
       </BriefSection>
 
-      {/* Strategic Insight */}
-      <BriefSection icon={<Eye className="h-4 w-4" />} label="Strategic Insight">
+      <BriefSection label="Strategic Insight">
         <p className="text-sm italic leading-7 text-foreground">
           {brief.strategicInsight}
         </p>
       </BriefSection>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Meta bar
-// ---------------------------------------------------------------------------
-
-function BriefMeta({ brief }: { brief: ExecutiveIntelligenceBrief }) {
-  const briefDate = new Intl.DateTimeFormat("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(brief.generatedAt));
-  const generatedAt = new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(brief.generatedAt));
-
-  return (
-    <div className="space-y-1">
-      <p className="text-sm text-muted-foreground">{briefDate}</p>
-      <p className="text-xs text-muted-foreground">
-        {brief.briefType === "morning" ? "Morning brief" : "Evening brief"} ·{" "}
-        Generated {generatedAt} · {brief.windowDays}-day window
-      </p>
     </div>
   );
 }
@@ -339,9 +238,7 @@ export default async function IntelligenceBriefPage({
       title="Executive Daily Brief"
       contentClassName="pb-16"
     >
-      <div className="mx-auto max-w-2xl space-y-10">
-        <BriefMeta brief={brief} />
-
+      <div className="space-y-10">
         {brief.morning && <MorningBriefCard brief={brief.morning} />}
         {brief.evening && <EveningBriefCard brief={brief.evening} />}
 

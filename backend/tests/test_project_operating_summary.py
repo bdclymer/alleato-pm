@@ -117,6 +117,25 @@ def test_card_defs_do_not_duplicate_one_next_action_across_every_section():
             "currentExecutiveRead": "Design is active and decisions need to close.",
             "context": "Permit drawings and budget reconciliation are the current pressure points.",
             "sourceIds": ["document_metadata:meeting-1"],
+            "immediateAttention": [
+                {
+                    "title": "Approve revised site plan",
+                    "detail": "Owner sign-off is needed before civil coordination can settle.",
+                    "priority": "high",
+                    "sourceIds": ["document_metadata:meeting-1"],
+                }
+            ],
+            "currentFocus": [
+                {
+                    "title": "Site design revision",
+                    "status": "Revision Required",
+                    "owner": "Andrew",
+                    "summary": "Parking redesign is underway after ownership rejected the prior layout.",
+                    "nextDecision": "Approve revised layout",
+                    "riskSeverity": "high",
+                    "sourceIds": ["document_metadata:meeting-1"],
+                }
+            ],
             "whatChanged": [
                 {
                     "title": "Permit package deadline tightened",
@@ -175,10 +194,14 @@ def test_card_defs_do_not_duplicate_one_next_action_across_every_section():
     )
 
     next_actions = [card.get("nextAction") for card in cards if card.get("nextAction")]
+    immediate_attention_card = next(card for card in cards if card["key"] == "operating-immediate-attention")
+    recommended_actions_card = next(card for card in cards if card["key"] == "operating-recommended-actions")
 
     assert len(set(next_actions)) > 3
     assert "Escalate unresolved permit-blocking decisions." in next_actions
     assert "Resolve: Finalize second-floor private room configuration" in next_actions
+    assert immediate_attention_card["nextAction"] == "Approve revised site plan"
+    assert "Site design revision" in recommended_actions_card["summary"]
 
 
 def test_source_aliases_accept_common_model_citation_formats():

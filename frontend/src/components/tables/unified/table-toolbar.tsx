@@ -139,6 +139,10 @@ export interface TableToolbarProps {
   columns?: ColumnConfig[];
   visibleColumns: string[];
   onColumnVisibilityChange: (columns: string[]) => void;
+  columnOrder?: string[];
+  onColumnOrderChange?: (columns: string[]) => void;
+  columnWidths?: Record<string, number>;
+  onColumnWidthsChange?: (widths: Record<string, number>) => void;
   sortOptions?: ColumnConfig[];
   sortBy?: string | null;
   sortDirection?: SortDirection;
@@ -162,6 +166,8 @@ export interface TableToolbarProps {
   /** Defaults the toolbar will fall back to when "Reset to defaults" is picked. */
   savedViewsDefaults?: {
     visibleColumns: string[];
+    columnOrder?: string[];
+    columnWidths?: Record<string, number>;
     sortBy: string | null;
     sortDirection: SortDirection;
     filters: Record<string, FilterValue>;
@@ -796,6 +802,10 @@ export function TableToolbar({
   columns = [],
   visibleColumns,
   onColumnVisibilityChange,
+  columnOrder,
+  onColumnOrderChange,
+  columnWidths,
+  onColumnWidthsChange,
   sortOptions = [],
   sortBy,
   sortDirection = "asc",
@@ -824,7 +834,8 @@ export function TableToolbar({
 
   const savedViewsCurrentState: TableViewsMenuCurrentState = {
     visible_columns: visibleColumns,
-    column_order: visibleColumns,
+    column_order: columnOrder ?? visibleColumns,
+    column_widths: columnWidths ?? null,
     sort_by: sortBy ?? null,
     sort_direction: sortDirection,
     filters: activeFilters as Record<
@@ -836,6 +847,12 @@ export function TableToolbar({
   const applySavedView = (view: SavedTableView) => {
     if (view.visible_columns && view.visible_columns.length > 0) {
       onColumnVisibilityChange(view.visible_columns);
+    }
+    if (view.column_order && onColumnOrderChange) {
+      onColumnOrderChange(view.column_order);
+    }
+    if (onColumnWidthsChange) {
+      onColumnWidthsChange(view.column_widths ?? {});
     }
     if (view.sort_by && onSortChange) {
       onSortChange(view.sort_by, view.sort_direction ?? "asc");
@@ -851,6 +868,14 @@ export function TableToolbar({
   const resetSavedViewToDefaults = () => {
     if (savedViewsDefaults) {
       onColumnVisibilityChange(savedViewsDefaults.visibleColumns);
+      if (onColumnOrderChange) {
+        onColumnOrderChange(
+          savedViewsDefaults.columnOrder ?? savedViewsDefaults.visibleColumns,
+        );
+      }
+      if (onColumnWidthsChange) {
+        onColumnWidthsChange(savedViewsDefaults.columnWidths ?? {});
+      }
       if (savedViewsDefaults.sortBy && onSortChange) {
         onSortChange(
           savedViewsDefaults.sortBy,

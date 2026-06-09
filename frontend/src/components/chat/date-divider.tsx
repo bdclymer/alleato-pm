@@ -4,15 +4,12 @@ interface DateDividerProps {
 
 export function DateDivider({ label }: DateDividerProps) {
   return (
-    <div className="relative flex items-center justify-center my-4">
-      <div className="absolute inset-0 flex items-center">
-        <div className="w-full border-t border-[hsl(var(--chat-border))]" />
-      </div>
-      <div className="relative px-4 bg-[hsl(var(--chat-bg))]">
-        <span className="text-xs font-semibold text-[hsl(var(--chat-muted))] uppercase tracking-wider">
-          {label}
-        </span>
-      </div>
+    <div className="flex items-center gap-3 my-6 px-4">
+      <div className="h-px flex-1 bg-border/50" />
+      <span className="shrink-0 text-[11px] font-medium tracking-wide text-muted-foreground/60">
+        {label}
+      </span>
+      <div className="h-px flex-1 bg-border/50" />
     </div>
   );
 }

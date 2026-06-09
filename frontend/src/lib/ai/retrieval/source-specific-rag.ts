@@ -65,13 +65,43 @@ function formatSourceSpecificDate(row: SourceSpecificRagRow): string {
 }
 
 function sourceSpecificSnippet(row: SourceSpecificRagRow, maxLength = 260): string {
-  const content = (row.content ?? row.summary ?? row.overview ?? row.raw_text ?? "").replace(/\s+/g, " ").trim();
+  const content = preferredSourceSpecificContent(row).replace(/\s+/g, " ").trim();
   if (!content) return "No text excerpt stored.";
   return content.length > maxLength ? `${content.slice(0, maxLength).trim()}...` : content;
 }
 
 function sourceSpecificTitle(row: SourceSpecificRagRow): string {
   return row.title?.trim() || row.id;
+}
+
+function isCanonicalTeamsConversation(row: SourceSpecificRagRow): boolean {
+  return row.category === "teams_message" && row.type === "teams_dm_conversation";
+}
+
+function isLiveTeamsMessage(row: SourceSpecificRagRow): boolean {
+  return row.type === "teams_live_message";
+}
+
+function preferredSourceSpecificContent(row: SourceSpecificRagRow): string {
+  if (isCanonicalTeamsConversation(row)) {
+    return row.overview ?? row.summary ?? row.content ?? row.raw_text ?? "";
+  }
+  return row.content ?? row.summary ?? row.overview ?? row.raw_text ?? "";
+}
+
+function compareTeamsRows(a: SourceSpecificRagRow, b: SourceSpecificRagRow): number {
+  const rank = (row: SourceSpecificRagRow): number => {
+    if (isLiveTeamsMessage(row)) return 0;
+    if (isCanonicalTeamsConversation(row)) return 1;
+    return 2;
+  };
+
+  const rankDiff = rank(a) - rank(b);
+  if (rankDiff !== 0) return rankDiff;
+
+  const dateA = a.date ?? a.created_at ?? "";
+  const dateB = b.date ?? b.created_at ?? "";
+  return dateB.localeCompare(dateA);
 }
 
 function groupTeamsRows(rows: SourceSpecificRagRow[]): Array<{
@@ -94,7 +124,17 @@ function groupTeamsRows(rows: SourceSpecificRagRow[]): Array<{
     }
   }
 
-  return [...groups.values()].sort((a, b) => b.date.localeCompare(a.date));
+  return [...groups.values()].sort((a, b) => {
+    const liveA = a.rows.some(isLiveTeamsMessage);
+    const liveB = b.rows.some(isLiveTeamsMessage);
+    if (liveA !== liveB) return liveA ? -1 : 1;
+
+    const canonicalA = a.rows.some(isCanonicalTeamsConversation);
+    const canonicalB = b.rows.some(isCanonicalTeamsConversation);
+    if (canonicalA !== canonicalB) return canonicalA ? -1 : 1;
+
+    return b.date.localeCompare(a.date);
+  });
 }
 
 function formatSourceSpecificRagContent(
@@ -464,7 +504,7 @@ export async function buildSourceSpecificRagAnswer(params: {
         .limit(request.limit),
     );
     if (error) throw new Error(error.message);
-    const storedRows = (data ?? []) as SourceSpecificRagRow[];
+    const storedRows = ((data ?? []) as SourceSpecificRagRow[]).sort(compareTeamsRows);
     const liveRows: SourceSpecificRagRow[] = (liveTeams.rows ?? []).map((message) => ({
       id: `live-teams:${message.mailbox}:${message.id}`,
       title: `Live Teams: ${message.chatLabel}`,
@@ -483,7 +523,7 @@ export async function buildSourceSpecificRagAnswer(params: {
       project_id: null,
     }));
     const seen = new Set<string>();
-    rows = [...liveRows, ...storedRows].filter((row) => {
+    rows = [...liveRows, ...storedRows].sort(compareTeamsRows).filter((row) => {
       const key = `${row.title ?? ""}:${row.date ?? ""}:${row.content?.slice(0, 180) ?? ""}`;
       if (seen.has(key)) return false;
       seen.add(key);

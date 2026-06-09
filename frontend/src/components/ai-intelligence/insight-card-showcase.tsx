@@ -3,12 +3,15 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  CalendarDays,
   Check,
   Clock,
-  ExternalLink,
+  FileText,
   MailOpen,
+  MessageSquare,
   ThumbsDown,
   ThumbsUp,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -170,6 +173,20 @@ function buildEvidenceSourceHref(
 ): string | null {
   if (!evidence.sourceDocumentId) return null;
   return `/${projectId}/intelligence/sources/${encodeURIComponent(evidence.sourceDocumentId)}`;
+}
+
+function getSourceTypeIcon(
+  evidence: InsightCard["evidence"][number],
+): typeof CalendarDays {
+  const sourceType = evidence.sourceType.toLowerCase();
+  const sourceCategory = evidence.sourceCategory?.toLowerCase() ?? "";
+
+  if (sourceType === "meeting" || sourceCategory === "meeting") return CalendarDays;
+  if (sourceType === "email" || sourceType === "email_attachment" || sourceCategory === "email") return MailOpen;
+  if (sourceType.includes("teams") || sourceCategory.includes("teams") || sourceType.includes("message")) return MessageSquare;
+  if (sourceType.includes("task") || sourceCategory.includes("task")) return Check;
+  if (sourceType.includes("contact") || sourceCategory.includes("contact")) return Users;
+  return FileText;
 }
 
 function getLatestSourceDate(card: InsightCard): string | null {
@@ -438,25 +455,25 @@ function EvidenceList({
   if (evidence.length === 0) return null;
 
   return (
-    <div className="space-y-2">
-      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+    <div className="space-y-1.5">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         Sources
       </p>
-      <div className="space-y-4">
+      <div className="space-y-2">
         {evidence.map((item) => {
           const sourceHref = buildEvidenceSourceHref(projectId, item);
-          const sourceType = formatLabel(item.sourceType);
+          const SourceIcon = getSourceTypeIcon(item);
 
           return (
-            <div key={item.id} className="space-y-2 border-t border-border pt-3 first:border-t-0 first:pt-0">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            <div key={item.id} className="space-y-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+                <SourceIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 {sourceHref ? (
                   <Link
                     href={sourceHref}
-                    className="inline-flex min-w-0 items-center gap-1 font-medium text-foreground underline-offset-4 hover:underline"
+                    className="min-w-0 font-medium text-foreground underline-offset-4 hover:underline"
                   >
                     <span className="truncate">{item.sourceTitle ?? "Untitled source"}</span>
-                    <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
                   </Link>
                 ) : (
                   <span className="font-medium text-foreground">{item.sourceTitle ?? "Untitled source"}</span>
@@ -464,7 +481,6 @@ function EvidenceList({
                 {item.sourceOccurredAt ? (
                   <span>{formatDate(item.sourceOccurredAt)}</span>
                 ) : null}
-                <span>{sourceType}</span>
               </div>
               <EmailThread evidence={item} />
             </div>
@@ -673,13 +689,13 @@ function InsightAccordionItem({
             </section>
           ) : null}
           {(usefulWhyItMatters || usefulNextAction) ? (
-            <section className="grid gap-4 md:grid-cols-2">
+            <section className="space-y-3">
               {usefulWhyItMatters ? (
                 <div className="space-y-1">
                   <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                     Why it matters
                   </p>
-                  <p className="text-sm leading-7 text-foreground">{usefulWhyItMatters}</p>
+                  <p className="text-sm leading-6 text-foreground">{usefulWhyItMatters}</p>
                 </div>
               ) : null}
               {usefulNextAction ? (
@@ -688,7 +704,7 @@ function InsightAccordionItem({
                     <Check className="h-3.5 w-3.5" />
                     Next action
                   </p>
-                  <p className="text-sm leading-7 text-foreground">{usefulNextAction}</p>
+                  <p className="text-sm leading-6 text-foreground">{usefulNextAction}</p>
                 </div>
               ) : null}
             </section>

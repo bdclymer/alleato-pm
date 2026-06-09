@@ -1,28 +1,16 @@
 import {
   Home,
-  BarChart3,
   FolderOpen,
   Users,
-  Table,
   Mail,
-  HelpCircle,
-  Send,
-  FileText,
-  ClipboardList,
   Calendar,
-  Book,
-  Image,
-  Pencil,
-  FileCheck,
   FileSpreadsheet,
-  Wallet,
-  Briefcase,
   FileBox,
-  Coins,
-  Building,
-  Receipt,
-  Shield,
-  LucideIcon
+  Camera,
+  FileImage,
+  LucideIcon,
+  TrendingUp,
+  BookOpen,
 } from "lucide-react";
 
 type Submenu = {
@@ -45,144 +33,115 @@ type Group = {
 };
 
 export function getMenuList(pathname: string, projectId?: string): Group[] {
-  // Helper to build project-scoped URLs
   const projectUrl = (path: string) => projectId ? `/${projectId}/${path}` : `/${path}`;
 
   return [
     {
-      groupLabel: "Core Tools",
+      groupLabel: "",
       menus: [
         {
           href: projectId ? projectUrl("home") : "/",
           label: "Home",
           icon: Home,
         },
+      ],
+    },
+    {
+      groupLabel: "Financial",
+      menus: [
         {
-          href: projectUrl("reporting"),
-          label: "360 Reporting",
-          icon: BarChart3,
+          href: "#",
+          label: "Budgeting",
+          icon: TrendingUp,
+          submenus: [
+            { href: projectUrl("estimates"), label: "Estimates" },
+            { href: projectUrl("budget"), label: "Budget" },
+            { href: projectUrl("direct-costs"), label: "Direct Costs" },
+          ],
+        },
+        {
+          href: "#",
+          label: "Contracts",
+          icon: FileSpreadsheet,
+          submenus: [
+            { href: projectUrl("prime-contracts"), label: "Prime Contracts" },
+            { href: projectUrl("commitments"), label: "Commitments" },
+            { href: projectUrl("invoices"), label: "Invoicing" },
+          ],
+        },
+        {
+          href: "#",
+          label: "Changes",
+          icon: FileBox,
+          submenus: [
+            { href: projectUrl("change-orders"), label: "Change Orders" },
+            { href: projectUrl("change-events"), label: "Change Events" },
+          ],
+        },
+      ],
+    },
+    {
+      groupLabel: "Operations",
+      menus: [
+        {
+          href: "#",
+          label: "Field",
+          icon: Calendar,
+          submenus: [
+            { href: projectUrl("schedule"), label: "Schedule" },
+            { href: projectUrl("meetings"), label: "Meetings" },
+            { href: projectUrl("daily-log"), label: "Daily Log" },
+            { href: projectUrl("punch-list"), label: "Punch List" },
+            { href: projectUrl("tasks"), label: "Project Tasks" },
+          ],
+        },
+        {
+          href: "#",
+          label: "Correspondence",
+          icon: Mail,
+          submenus: [
+            { href: projectUrl("rfis"), label: "RFIs" },
+            { href: projectUrl("submittals"), label: "Submittals" },
+            { href: projectUrl("transmittals"), label: "Transmittals" },
+            { href: projectUrl("emails"), label: "Emails" },
+          ],
+        },
+      ],
+    },
+    {
+      groupLabel: "Documents",
+      menus: [
+        {
+          href: projectUrl("photos"),
+          label: "Photos",
+          icon: Camera,
+        },
+        {
+          href: projectUrl("drawings"),
+          label: "Drawings",
+          icon: FileImage,
+        },
+        {
+          href: projectUrl("specifications"),
+          label: "Specifications",
+          icon: BookOpen,
         },
         {
           href: projectUrl("documents"),
           label: "Documents",
           icon: FolderOpen,
         },
+      ],
+    },
+    {
+      groupLabel: "Project",
+      menus: [
         {
           href: projectUrl("directory"),
-          label: "Directory",
+          label: "Project Directory",
           icon: Users,
         },
-      ]
+      ],
     },
-    {
-      groupLabel: "Project Management",
-      menus: [
-        {
-          href: projectUrl("emails"),
-          label: "Emails",
-          icon: Mail,
-        },
-        {
-          href: projectUrl("rfis"),
-          label: "RFIs",
-          icon: HelpCircle,
-        },
-        {
-          href: projectUrl("submittals"),
-          label: "Submittals",
-          icon: Send,
-        },
-        {
-          href: projectUrl("transmittals"),
-          label: "Transmittals",
-          icon: FileText,
-        },
-        {
-          href: projectUrl("punch-list"),
-          label: "Punch List",
-          icon: ClipboardList,
-        },
-        {
-          href: projectUrl("meetings"),
-          label: "Meetings",
-          icon: Calendar,
-        },
-        {
-          href: projectUrl("schedule"),
-          label: "Schedule",
-          icon: Calendar,
-        },
-        {
-          href: projectUrl("daily-log"),
-          label: "Daily Log",
-          icon: Book,
-        },
-        {
-          href: projectUrl("photos"),
-          label: "Photos",
-          icon: Image,
-        },
-        {
-          href: projectUrl("drawings"),
-          label: "Drawings",
-          icon: Pencil,
-        },
-        {
-          href: projectUrl("specifications"),
-          label: "Specifications",
-          icon: FileCheck,
-        },
-      ]
-    },
-    {
-      groupLabel: "Financial Management",
-      menus: [
-        {
-          href: projectUrl("prime-contracts"),
-          label: "Prime Contracts",
-          icon: FileSpreadsheet,
-        },
-        {
-          href: projectUrl("budget"),
-          label: "Budget",
-          icon: Wallet,
-        },
-        {
-          href: projectUrl("commitments"),
-          label: "Commitments",
-          icon: Briefcase,
-        },
-        {
-          href: projectUrl("change-orders"),
-          label: "Change Orders",
-          icon: FileBox,
-        },
-        {
-          href: projectUrl("change-events"),
-          label: "Change Events",
-          icon: Coins,
-        },
-        {
-          href: projectUrl("direct-costs"),
-          label: "Direct Costs",
-          icon: Building,
-        },
-        {
-          href: projectUrl("invoices"),
-          label: "Invoicing",
-          icon: Receipt,
-        },
-      ]
-    },
-    {
-      groupLabel: "Admin Tools",
-      menus: [
-        {
-          href: "/tables-directory",
-          label: "Tables Directory",
-          icon: Table,
-        },
-      ]
-    }
   ];
 }

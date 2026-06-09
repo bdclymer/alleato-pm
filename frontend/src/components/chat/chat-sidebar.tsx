@@ -1,24 +1,34 @@
 "use client";
 /* eslint-disable design-system/no-raw-heading */
 
-import { useMemo, useState } from "react";
-import { Plus, Search, Shield, Trash2 } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { ChevronRight, MessageSquarePlus, Plus, Search, Trash2, X } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import type { NavView } from "./chat-layout";
 import type { TeamChannel, TeamChatAdminUser } from "./team-chat-data";
 
 interface ChatSidebarProps {
   channels: TeamChannel[];
+  dms: TeamChannel[];
   adminUsers: TeamChatAdminUser[];
+  allUsers: TeamChatAdminUser[];
   activeChannel: string;
   activeView: NavView;
   canManageChannels: boolean;
   onChannelSelect: (channelId: string) => void;
   onCreateChannel: (name: string, topic: string) => Promise<void>;
   onDeleteChannel: (channelId: string) => Promise<void>;
+  onOpenDm: (targetUserId: string) => Promise<void>;
 }
 
 const AVATAR_COLORS = [
@@ -111,20 +121,86 @@ function ChannelRow({
   );
 }
 
+// User picker for new DM
+interface DmPickerProps {
+  users: TeamChatAdminUser[];
+  onSelect: (userId: string) => void;
+  onCancel: () => void;
+  loading: boolean;
+}
+
+function DmPicker({ users, onSelect, onCancel, loading }: DmPickerProps) {
+  const [query, setQuery] = useState("");
+  const filtered = useMemo(
+    () =>
+      query.trim()
+        ? users.filter((u) => u.name.toLowerCase().includes(query.toLowerCase()))
+        : users,
+    [users, query],
+  );
+
+  return (
+    <div className="space-y-2 px-4 pb-4">
+      <Input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Find someone…"
+        autoFocus
+        className="h-8 text-sm"
+      />
+      <div className="max-h-48 overflow-y-auto rounded-md border border-border/60 bg-background">
+        {filtered.length === 0 ? (
+          <p className="px-3 py-2 text-sm text-muted-foreground">No users found.</p>
+        ) : (
+          filtered.map((user) => (
+            <Button
+              key={user.id}
+              type="button"
+              variant="ghost"
+              disabled={loading}
+              onClick={() => onSelect(user.id)}
+              className="h-auto w-full justify-start gap-2.5 rounded-none px-3 py-2 text-left text-sm font-normal"
+            >
+              <Avatar className="h-6 w-6 shrink-0">
+                <AvatarFallback className="bg-muted text-[10px] font-semibold text-foreground">
+                  {getInitials(user.name)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="truncate">{user.name}</span>
+            </Button>
+          ))
+        )}
+      </div>
+      <div className="flex justify-end">
+        <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+type SidebarMode = "idle" | "creating-channel" | "creating-dm";
+
 export function ChatSidebar({
   channels,
+  dms,
   adminUsers,
+  allUsers,
   activeChannel,
-  activeView,
   canManageChannels,
   onChannelSelect,
   onCreateChannel,
   onDeleteChannel,
+  onOpenDm,
 }: ChatSidebarProps) {
+  const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [newChannelName, setNewChannelName] = useState("");
   const [newChannelTopic, setNewChannelTopic] = useState("");
-  const [isCreatingChannel, setIsCreatingChannel] = useState(false);
+  const [mode, setMode] = useState<SidebarMode>("idle");
+  const [dmLoading, setDmLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const filteredChannels = useMemo(() => {
@@ -138,32 +214,36 @@ export function ChatSidebar({
     );
   }, [channels, searchQuery]);
 
+  const filteredDms = useMemo(() => {
+    if (!searchQuery.trim()) return dms;
+    const q = searchQuery.toLowerCase();
+    return dms.filter(
+      (dm) => dm.name.toLowerCase().includes(q) || dm.preview.toLowerCase().includes(q),
+    );
+  }, [dms, searchQuery]);
+
   const handleCreateChannel = async () => {
-    // Submit a new channel then clear form state on success.
     const normalizedName = newChannelName.trim();
     if (!normalizedName) {
       setErrorMessage("Enter a channel name.");
       return;
     }
-
     try {
       setErrorMessage(null);
       await onCreateChannel(normalizedName, newChannelTopic.trim());
       setNewChannelName("");
       setNewChannelTopic("");
-      setIsCreatingChannel(false);
+      setMode("idle");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Unable to create channel.");
     }
   };
 
   const handleDeleteChannel = async (channel: TeamChannel) => {
-    // Guard deletion with explicit confirmation to avoid accidental data loss.
-    const confirmed = window.confirm(`Delete channel "${channel.name}"? This removes all messages in it.`);
-    if (!confirmed) {
-      return;
-    }
-
+    const confirmed = window.confirm(
+      `Delete channel "${channel.name}"? This removes all messages in it.`,
+    );
+    if (!confirmed) return;
     try {
       setErrorMessage(null);
       await onDeleteChannel(channel.id);
@@ -172,105 +252,232 @@ export function ChatSidebar({
     }
   };
 
+  const handleOpenDm = async (userId: string) => {
+    setDmLoading(true);
+    setErrorMessage(null);
+    try {
+      await onOpenDm(userId);
+      setMode("idle");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Unable to open conversation.");
+    } finally {
+      setDmLoading(false);
+    }
+  };
+
+  const resetMode = () => {
+    setMode("idle");
+    setErrorMessage(null);
+    setNewChannelName("");
+    setNewChannelTopic("");
+  };
+
   return (
-    <div className="flex h-full w-95 shrink-0 flex-col overflow-hidden border-r border-border bg-muted/60">
-      <div className="flex items-center justify-between px-4 pb-4 pt-5">
-        <h2 className="text-base font-semibold text-foreground">Team Chat</h2>
-        {canManageChannels && (
-          <button
-            type="button"
-            title="Create channel"
-            onClick={() => {
-              setErrorMessage(null);
-              setIsCreatingChannel((current) => !current);
-            }}
-            className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-black/6 hover:text-foreground"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
+    <div className="flex h-full w-72 shrink-0 flex-col overflow-hidden border-r border-border bg-muted/30">
+      {/* Header */}
+      <div className="flex items-center gap-1 px-4 pb-3 pt-5">
+        {searchOpen ? (
+          <>
+            <Input
+              ref={searchInputRef}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search"
+              autoFocus
+              className="h-7 flex-1 border-0 bg-transparent px-1 text-sm shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/60"
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setSearchOpen(false);
+                  setSearchQuery("");
+                }
+              }}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              title="Close search"
+              onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
+              className="h-7 w-7 rounded-full text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </>
+        ) : (
+          <>
+            <h2 className="flex-1 text-sm font-semibold text-foreground">Team Chat</h2>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              title="Search"
+              onClick={() => setSearchOpen(true)}
+              className="h-7 w-7 rounded-full text-muted-foreground hover:text-foreground"
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+            {canManageChannels && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    title="New"
+                    className="h-7 w-7 rounded-full text-muted-foreground hover:text-foreground"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => { resetMode(); setMode("creating-channel"); }}>
+                    <ChevronRight className="mr-2 h-4 w-4" />
+                    New channel
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => { resetMode(); setMode("creating-dm"); }}>
+                    <MessageSquarePlus className="mr-2 h-4 w-4" />
+                    Direct message
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </>
         )}
       </div>
 
-      <div className="px-4 pb-4">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search channels"
-            className="h-9 rounded-full border-0 bg-transparent pl-9 text-sm shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/60"
-          />
-        </div>
-      </div>
-
-      {canManageChannels && isCreatingChannel && (
+      {/* Inline forms */}
+      {mode === "creating-channel" && (
         <div className="space-y-2 px-4 pb-4">
           <Input
             value={newChannelName}
-            onChange={(event) => setNewChannelName(event.target.value)}
+            onChange={(e) => setNewChannelName(e.target.value)}
             placeholder="Channel name"
+            autoFocus
+            onKeyDown={(e) => { if (e.key === "Enter") handleCreateChannel(); if (e.key === "Escape") resetMode(); }}
           />
           <Input
             value={newChannelTopic}
-            onChange={(event) => setNewChannelTopic(event.target.value)}
+            onChange={(e) => setNewChannelTopic(e.target.value)}
             placeholder="Topic (optional)"
+            onKeyDown={(e) => { if (e.key === "Enter") handleCreateChannel(); if (e.key === "Escape") resetMode(); }}
           />
-          <div className="flex justify-end">
-            <Button size="sm" onClick={handleCreateChannel}>
-              Create Channel
-            </Button>
+          <div className="flex items-center justify-end gap-2">
+            <Button type="button" variant="ghost" size="sm" onClick={resetMode}>Cancel</Button>
+            <Button size="sm" onClick={handleCreateChannel}>Create</Button>
           </div>
         </div>
       )}
 
+      {mode === "creating-dm" && (
+        <DmPicker
+          users={allUsers}
+          onSelect={handleOpenDm}
+          onCancel={resetMode}
+          loading={dmLoading}
+        />
+      )}
+
       {errorMessage && <p className="px-4 pb-3 text-xs text-destructive">{errorMessage}</p>}
 
-      {adminUsers.length > 0 && (
-        <div className="px-4 pb-5">
-          <p className="mb-2 text-[13px] font-semibold text-muted-foreground/70">Admins</p>
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide">
+      {/* Admins row — clickable avatars open a DM */}
+      {adminUsers.length > 0 && mode === "idle" && (
+        <div className="px-4 pb-4">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/50">
+            Admins
+          </p>
+          <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-hide">
             {adminUsers.map((admin, idx) => (
-              <div key={admin.id} className="flex shrink-0 flex-col items-center gap-1.5" title={admin.name}>
-                <div className="relative">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback className={cn("text-[11px] font-semibold", AVATAR_COLORS[idx % AVATAR_COLORS.length])}>
-                      {getInitials(admin.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="absolute bottom-0 right-0 flex h-3 w-3 items-center justify-center rounded-full border-2 border-background bg-emerald-500">
-                    <Shield className="h-1.5 w-1.5 text-white" />
-                  </span>
-                </div>
-                <span className="max-w-14 truncate text-[11px] text-muted-foreground">{admin.name.split(" ")[0]}</span>
-              </div>
+              <Button
+                key={admin.id}
+                type="button"
+                variant="ghost"
+                title={`Message ${admin.name}`}
+                onClick={() => handleOpenDm(admin.id)}
+                className="group h-auto shrink-0 flex-col items-center gap-1.5 rounded-lg px-2 py-1.5 font-normal"
+              >
+                <Avatar className="h-9 w-9">
+                  <AvatarFallback
+                    className={cn(
+                      "text-[11px] font-semibold transition-opacity group-hover:opacity-80",
+                      AVATAR_COLORS[idx % AVATAR_COLORS.length],
+                    )}
+                  >
+                    {getInitials(admin.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="max-w-14 truncate text-[11px] text-muted-foreground">
+                  {admin.name.split(" ")[0]}
+                </span>
+              </Button>
             ))}
           </div>
         </div>
       )}
 
+      {/* Channel + DM lists */}
       <div className="flex-1 overflow-y-auto scrollbar-hide">
-        <div className="w-95 pb-4">
-          <div>
-            <p className="mb-1 px-4 text-[13px] font-semibold text-muted-foreground/60">
-              {activeView === "channels" ? "Channels" : "Recent"}
+        {/* Channels */}
+        {filteredChannels.length > 0 && (
+          <div className="pb-2">
+            <p className="mb-1 px-5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/50">
+              Channels
             </p>
-            {filteredChannels.length === 0 ? (
-              <p className="px-4 py-2 text-sm text-muted-foreground">No channels found.</p>
-            ) : (
-              filteredChannels.map((channel, idx) => (
-                <ChannelRow
-                  key={channel.id}
-                  channel={channel}
-                  canManageChannels={canManageChannels}
-                  isActive={activeChannel === channel.id}
-                  colorClass={AVATAR_COLORS[idx % AVATAR_COLORS.length]}
-                  onClick={() => onChannelSelect(channel.id)}
-                  onDelete={() => handleDeleteChannel(channel)}
-                />
-              ))
-            )}
+            {filteredChannels.map((channel, idx) => (
+              <ChannelRow
+                key={channel.id}
+                channel={channel}
+                canManageChannels={canManageChannels}
+                isActive={activeChannel === channel.id}
+                colorClass={AVATAR_COLORS[idx % AVATAR_COLORS.length]}
+                onClick={() => onChannelSelect(channel.id)}
+                onDelete={() => handleDeleteChannel(channel)}
+              />
+            ))}
           </div>
-        </div>
+        )}
+
+        {/* Direct Messages */}
+        {filteredDms.length > 0 && (
+          <div className="pb-2">
+            <p className="mb-1 px-5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/50">
+              Direct Messages
+            </p>
+            {filteredDms.map((dm) => (
+              <div
+                key={dm.id}
+                role="button"
+                tabIndex={0}
+                className={cn(
+                  "flex w-full cursor-pointer items-center gap-3 px-5 py-3 transition-colors",
+                  activeChannel === dm.id ? "bg-primary/5" : "hover:bg-black/3",
+                )}
+                onClick={() => onChannelSelect(dm.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") onChannelSelect(dm.id);
+                }}
+              >
+                <Avatar className="h-7 w-7 shrink-0">
+                  <AvatarFallback className="bg-muted text-[10px] font-semibold text-foreground">
+                    {getInitials(dm.dmPartnerName ?? dm.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[14px] font-medium text-foreground/80">
+                    {dm.dmPartnerName ?? dm.name}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">{dm.preview}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {filteredChannels.length === 0 && filteredDms.length === 0 && searchQuery && (
+          <p className="px-5 py-3 text-sm text-muted-foreground">
+            No results for &ldquo;{searchQuery}&rdquo;.
+          </p>
+        )}
       </div>
     </div>
   );

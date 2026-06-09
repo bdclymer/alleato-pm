@@ -5,6 +5,18 @@ import { type NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { createClient } from "@/lib/supabase/server";
 
+const SORT_FIELD_MAP: Record<string, string> = {
+  company_name: "name",
+  company_type: "type",
+  status: "status",
+  business_phone: "contact_phone",
+  website: "website",
+  email_address: "contact_email",
+  erp_vendor_id: "acumatica_vendor_id",
+  created_at: "created_at",
+  updated_at: "updated_at",
+};
+
 export const GET = withApiGuardrails(
   "directory/project-companies#GET",
   async ({ request }) => {
@@ -51,16 +63,7 @@ export const GET = withApiGuardrails(
     }
 
     const [sortField, sortDirection] = sort.split(":");
-    const allowedSortFields = new Set([
-      "name",
-      "type",
-      "status",
-      "business_phone",
-      "email_address",
-      "created_at",
-      "updated_at",
-    ]);
-    const normalizedSortField = allowedSortFields.has(sortField) ? sortField : "updated_at";
+    const normalizedSortField = SORT_FIELD_MAP[sortField] ?? "updated_at";
 
     query = query.order(normalizedSortField, {
       ascending: sortDirection !== "desc",

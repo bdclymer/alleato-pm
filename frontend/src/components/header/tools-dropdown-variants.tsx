@@ -119,6 +119,7 @@ const OPERATIONS_TOOLS = [
   "Meetings",
   "Daily Log",
   "Punch List",
+  "Project Tasks",
   "RFIs",
   "Submittals",
   "Transmittals",
@@ -127,7 +128,7 @@ const OPERATIONS_TOOLS = [
 
 const FILES_TOOLS = ["Photos", "Drawings", "Specifications", "Documents", "Progress Reports"];
 
-const COMPANY_TOOLS = ["Project Directory", "Project Tasks"];
+const COMPANY_TOOLS = ["Project Directory"];
 
 export function ToolsDropdownContent(props: ToolsDropdownProps) {
   // Collect all tools from all groups into a flat lookup

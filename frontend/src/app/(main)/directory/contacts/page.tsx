@@ -23,17 +23,14 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { useConfirm } from "@/hooks/use-confirm";
 import { getDirectoryTabs } from "@/config/directory-tabs";
-import type { Database } from "@/types/database.types";
 import { ContactFormSheet } from "@/components/domain/contacts/ContactFormSheet";
 import {
   UnifiedTablePage,
-  useUnifiedTableState,
   CellBadge,
   CellEmail,
   CellLink,
   CellText,
   TableDateValue,
-  type FilterValue,
   type CellColorMap,
 } from "@/components/tables/unified";
 import type { ColumnConfig, TableColumn } from "@/components/tables/unified";
@@ -46,56 +43,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useServerTableDefinition } from "@/features/tables/server-table";
+import {
+  contactColumns,
+  contactsTableDefinition,
+  EMPTY_CONTACT_FILTERS,
+  type ContactFilterState,
+  type ContactTableRow,
+} from "@/features/contacts/directory-contacts-table-definition";
 
-type Contact = Database["public"]["Tables"]["people"]["Row"];
-type Company = Database["public"]["Tables"]["companies"]["Row"];
-
-interface ContactWithCompany extends Omit<Contact, "company"> {
-  company?: Company | null;
-  is_admin?: boolean | null;
-}
-
-interface ContactTableRow {
-  id: string;
-  first_name: string;
-  last_name: string;
-  full_name: string;
-  email: string;
-  type: string;
-  company: string;
-  company_id: string | null;
-  phone: string;
-  is_admin: boolean;
-  created_at: string | null;
-}
-
-type ContactFilterState = Record<string, FilterValue>;
 type InlineEditDraft = Pick<ContactTableRow, "first_name" | "last_name" | "email" | "type" | "phone">;
-
-const EMPTY_FILTERS: ContactFilterState = {
-  type: undefined,
-  is_admin: undefined,
-};
 
 const CONTACT_TYPE_COLORS: CellColorMap = {
   user: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
   employee: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
   contact: "bg-muted text-muted-foreground",
 };
-
-const contactColumns: ColumnConfig[] = [
-  { id: "full_name", label: "Name", alwaysVisible: true },
-  { id: "email", label: "Email", defaultVisible: true },
-  { id: "type", label: "Type", defaultVisible: true },
-  { id: "company", label: "Company", defaultVisible: true },
-  { id: "phone", label: "Phone", defaultVisible: true },
-  { id: "is_admin", label: "Admin Access", defaultVisible: true },
-  { id: "created_at", label: "Created", defaultVisible: true },
-];
-
-const contactDefaultVisibleColumns = contactColumns
-  .filter((column) => column.defaultVisible !== false)
-  .map((column) => column.id);
 
 function escapeCsvValue(value: string): string {
   if (value.includes(",") || value.includes("\"") || value.includes("\n")) {
@@ -129,7 +92,11 @@ function buildContactTableColumns(
             />
           </div>
         ) : (
-          <span className="font-medium">{item.full_name}</span>
+          <CellLink
+            value={item.full_name}
+            href={`/directory/contacts/${item.id}`}
+            className="font-medium"
+          />
         ),
       sortValue: (item) => item.full_name,
       csvValue: (item) => item.full_name,
@@ -385,51 +352,6 @@ export default function DirectoryContactsPage(): ReactElement {
   const router = useRouter();
   const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
   const { confirm, ConfirmDialog } = useConfirm();
-
-  const initialType = searchParams.get("type") ?? "";
-  const initialAdmin = searchParams.get("is_admin") ?? "";
-  const initialFilters: ContactFilterState = {
-    type: initialType || undefined,
-    is_admin: initialAdmin || undefined,
-  };
-
-  const tableState = useUnifiedTableState({
-    entityKey: "global-directory-contacts",
-    searchParams,
-    pathname,
-    router,
-    defaults: {
-      view: "table",
-      allowedViews: ["table", "card", "list"],
-      page: 1,
-      perPage: 50,
-      search: "",
-      sortBy: "full_name",
-      sortDirection: "asc",
-      visibleColumns: contactDefaultVisibleColumns,
-      filters: initialFilters,
-    },
-  });
-
-  React.useEffect(() => {
-    const nextType = searchParams.get("type") ?? "";
-    const nextAdmin = searchParams.get("is_admin") ?? "";
-    tableState.setActiveFilters((prev) => {
-      const normalizedType = nextType || undefined;
-      const normalizedAdmin = nextAdmin || undefined;
-      if (prev.type === normalizedType && prev.is_admin === normalizedAdmin) {
-        return prev;
-      }
-      return {
-        type: normalizedType,
-        is_admin: normalizedAdmin,
-      };
-    });
-  }, [searchParams, tableState.setActiveFilters]);
-
-  const [contacts, setContacts] = React.useState<ContactWithCompany[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState<Error | null>(null);
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editingContactId, setEditingContactId] = React.useState<string | null>(null);
   const [inlineDraft, setInlineDraft] = React.useState<InlineEditDraft>({
@@ -440,105 +362,28 @@ export default function DirectoryContactsPage(): ReactElement {
     phone: "",
   });
 
-  const fetchContacts = React.useCallback(async () => {
-    try {
-      setError(null);
-      const supabase = createClient();
-      const [peopleResult, companiesResult] = await Promise.all([
-        supabase.from("people").select("*").order("last_name", { ascending: true }),
-        supabase.from("companies").select("*"),
-      ]);
-
-      if (peopleResult.error) throw peopleResult.error;
-      if (companiesResult.error) throw companiesResult.error;
-
-      const companiesMap = new Map((companiesResult.data || []).map((company) => [company.id, company]));
-      const peopleData = (peopleResult.data || []).map((person) => ({
-        ...person,
-        company: person.company_id ? companiesMap.get(person.company_id) || null : null,
-      }));
-
-      const contactsWithAuth = await Promise.all(
-        peopleData.map(async (person) => {
-          const { data: authLink } = await supabase
-            .from("users_auth")
-            .select("auth_user_id")
-            .eq("person_id", person.id)
-            .maybeSingle();
-
-          let isAdmin: boolean | null = null;
-          if (authLink?.auth_user_id) {
-            const { data: profile } = await supabase
-              .from("user_profiles")
-              .select("is_admin")
-              .eq("id", authLink.auth_user_id)
-              .maybeSingle();
-            isAdmin = profile?.is_admin || false;
-          }
-
-          return {
-            ...person,
-            auth_user_id: authLink?.auth_user_id || null,
-            is_admin: isAdmin,
-          };
-        }),
-      );
-
-      setContacts(contactsWithAuth);
-    } catch (fetchError) {
-      setError(fetchError as Error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  React.useEffect(() => {
-    fetchContacts();
-  }, [fetchContacts]);
-
-  const activeFilters = tableState.activeFilters as ContactFilterState;
-  const tableData = React.useMemo<ContactTableRow[]>(() => {
-    const search = tableState.debouncedSearch.trim().toLowerCase();
-    const typeFilter = typeof activeFilters.type === "string" ? activeFilters.type : "";
-    const isAdminFilter =
-      typeof activeFilters.is_admin === "string" ? activeFilters.is_admin : "";
-
-    return contacts
-      .map((contact) => ({
-        id: contact.id,
-        first_name: contact.first_name || "",
-        last_name: contact.last_name || "",
-        full_name:
-          `${contact.first_name || ""} ${contact.last_name || ""}`.trim() || "Unnamed Contact",
-        email: contact.email || "",
-        type: contact.person_type || "",
-        company: contact.company?.name || "",
-        company_id: contact.company_id ?? null,
-        phone: contact.phone_business || contact.phone_mobile || "",
-        is_admin: Boolean(contact.is_admin),
-        created_at: contact.created_at,
-      }))
-      .filter((contact) => {
-        if (typeFilter && contact.type.toLowerCase() !== typeFilter.toLowerCase()) {
-          return false;
-        }
-        if (isAdminFilter) {
-          const expected = isAdminFilter === "true";
-          if (contact.is_admin !== expected) {
-            return false;
-          }
-        }
-        if (!search) {
-          return true;
-        }
-        return (
-          contact.full_name.toLowerCase().includes(search) ||
-          contact.email.toLowerCase().includes(search) ||
-          contact.phone.toLowerCase().includes(search) ||
-          contact.company.toLowerCase().includes(search)
-        );
-      });
-  }, [activeFilters.is_admin, activeFilters.type, contacts, tableState.debouncedSearch]);
+  const {
+    tableState,
+    items: tableData,
+    totalItems,
+    totalPages,
+    isLoading,
+    isFetching,
+    error,
+    activeFilters,
+    isFiltered,
+    refresh,
+    handleViewChange,
+    handleFilterChange,
+    handleSortChange,
+    handlePageChange,
+    handlePerPageChange,
+  } = useServerTableDefinition<ContactTableRow, ContactFilterState>({
+    definition: contactsTableDefinition,
+    searchParams,
+    pathname,
+    router,
+  });
 
   const uniqueTypes = React.useMemo(
     () => Array.from(new Set(tableData.map((contact) => contact.type).filter(Boolean))),
@@ -558,48 +403,6 @@ export default function DirectoryContactsPage(): ReactElement {
   const tableColumns = React.useMemo(
     () => buildContactTableColumns(editingContactId, inlineDraft, onInlineDraftChange),
     [editingContactId, inlineDraft, onInlineDraftChange],
-  );
-  const isFiltered =
-    Boolean(tableState.searchInput) ||
-    Boolean(activeFilters.type) ||
-    Boolean(activeFilters.is_admin);
-  const totalPages = Math.max(1, Math.ceil(tableData.length / tableState.perPage));
-  const currentPage = Math.min(tableState.page, totalPages);
-
-  const handleFilterChange = (nextFilters: ContactFilterState) => {
-    tableState.setActiveFilters(nextFilters);
-    tableState.setSearchParams({
-      type: typeof nextFilters.type === "string" ? nextFilters.type : null,
-      is_admin: typeof nextFilters.is_admin === "string" ? nextFilters.is_admin : null,
-      page: "1",
-    });
-    tableState.setPage(1);
-  };
-
-  const sortRows = React.useCallback(
-    (rows: ContactTableRow[]) => {
-      if (!tableState.sortBy) {
-        return rows;
-      }
-      const sortColumn = tableColumns.find((column) => column.id === tableState.sortBy);
-      if (!sortColumn?.sortValue) {
-        return rows;
-      }
-      return [...rows].sort((a, b) => {
-        const valueA = sortColumn.sortValue?.(a);
-        const valueB = sortColumn.sortValue?.(b);
-
-        if (valueA == null && valueB == null) return 0;
-        if (valueA == null) return tableState.sortDirection === "asc" ? -1 : 1;
-        if (valueB == null) return tableState.sortDirection === "asc" ? 1 : -1;
-        if (typeof valueA === "number" && typeof valueB === "number") {
-          return tableState.sortDirection === "asc" ? valueA - valueB : valueB - valueA;
-        }
-        const comparison = String(valueA).localeCompare(String(valueB));
-        return tableState.sortDirection === "asc" ? comparison : -comparison;
-      });
-    },
-    [tableColumns, tableState.sortBy, tableState.sortDirection],
   );
 
   const handleStartInlineEdit = (contact: ContactTableRow) => {
@@ -656,7 +459,7 @@ export default function DirectoryContactsPage(): ReactElement {
 
     toast.success("Contact updated.");
     handleCancelInlineEdit();
-    await fetchContacts();
+    await refresh();
   };
 
   const deleteContacts = React.useCallback(async (ids: string[]): Promise<boolean> => {
@@ -697,7 +500,7 @@ export default function DirectoryContactsPage(): ReactElement {
       handleCancelInlineEdit();
     }
     tableState.setSelectedIds((prev) => prev.filter((id) => id !== contact.id));
-    await fetchContacts();
+    await refresh();
   };
 
   const handleBulkDelete = async () => {
@@ -718,12 +521,12 @@ export default function DirectoryContactsPage(): ReactElement {
       handleCancelInlineEdit();
     }
     tableState.setSelectedIds([]);
-    await fetchContacts();
+    await refresh();
   };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      tableState.setSelectedIds(sortRows(tableData).map((contact) => contact.id));
+      tableState.setSelectedIds(tableData.map((contact) => contact.id));
       return;
     }
     tableState.setSelectedIds([]);
@@ -738,7 +541,7 @@ export default function DirectoryContactsPage(): ReactElement {
   };
 
   const handleExport = () => {
-    const rowsToExport = sortRows(tableData);
+    const rowsToExport = tableData;
     if (rowsToExport.length === 0) {
       toast.info("No contacts to export.");
       return;
@@ -824,18 +627,15 @@ export default function DirectoryContactsPage(): ReactElement {
         }}
         tabs={tabs}
         toolbar={{
-          totalItems: contacts.length,
+          totalItems,
           filteredItems: tableData.length,
           selectedCount: tableState.selectedIds.length,
           searchValue: tableState.searchInput,
           onSearchChange: tableState.setSearchInput,
-          searchPlaceholder: "Search contacts...",
+          searchPlaceholder: contactsTableDefinition.searchPlaceholder,
           currentView: tableState.currentView,
-          onViewChange: (view) => {
-            tableState.setCurrentView(view);
-            tableState.setSearchParams({ view });
-          },
-          enabledViews: ["table", "card", "list"],
+          onViewChange: handleViewChange,
+          enabledViews: contactsTableDefinition.allowedViews,
           filters: [
             {
               id: "type",
@@ -854,18 +654,27 @@ export default function DirectoryContactsPage(): ReactElement {
             },
           ],
           activeFilters,
-          onFilterChange: handleFilterChange,
-          onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
+          onFilterChange: (filters) => handleFilterChange(filters as ContactFilterState),
+          onClearFilters: () => handleFilterChange(EMPTY_CONTACT_FILTERS),
           columns: contactColumns,
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
+          savedViewsScope: contactsTableDefinition.entityKey,
+          savedViewsDefaults: {
+            visibleColumns: contactsTableDefinition.defaultVisibleColumns,
+            columnOrder: contactColumns.map((column) => column.id),
+            columnWidths: {},
+            sortBy: contactsTableDefinition.defaultSortBy,
+            sortDirection: contactsTableDefinition.defaultSortDirection,
+            filters: contactsTableDefinition.defaultFilters,
+          },
           onExport: handleExport,
           onBulkDelete: handleBulkDelete,
         }}
         data={{
           items: tableData,
           isLoading,
-          isFetching: false,
+          isFetching,
           error: error ?? undefined,
         }}
         table={{
@@ -888,14 +697,7 @@ export default function DirectoryContactsPage(): ReactElement {
         sorting={{
           sortBy: tableState.sortBy,
           sortDirection: tableState.sortDirection,
-          onSortChange: (sortBy, direction) => {
-            tableState.setSortBy(sortBy);
-            tableState.setSortDirection(direction);
-            tableState.setSearchParams({
-              sort: sortBy,
-              sort_dir: direction,
-            });
-          },
+          onSortChange: handleSortChange,
         }}
         selection={{
           selectedIds: tableState.selectedIds,
@@ -915,21 +717,12 @@ export default function DirectoryContactsPage(): ReactElement {
           ),
         }}
         pagination={{
-          page: currentPage,
+          page: tableState.page,
           totalPages,
           perPage: tableState.perPage,
-          clientSide: true,
-          onPageChange: (nextPage) => {
-            tableState.setPage(nextPage);
-            tableState.setSearchParams({ page: String(nextPage) });
-          },
-          onPerPageChange: (nextPerPage) => {
-            const parsed = Number(nextPerPage);
-            if (!Number.isFinite(parsed) || parsed <= 0) return;
-            tableState.setPerPage(parsed);
-            tableState.setSearchParams({ per_page: String(parsed), page: "1" });
-            tableState.setPage(1);
-          },
+          clientSide: false,
+          onPageChange: handlePageChange,
+          onPerPageChange: handlePerPageChange,
         }}
         features={{
           enableExport: true,
@@ -943,7 +736,13 @@ export default function DirectoryContactsPage(): ReactElement {
         }}
       />
 
-      <ContactFormSheet open={dialogOpen} onOpenChange={setDialogOpen} onSuccess={fetchContacts} />
+      <ContactFormSheet
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSuccess={() => {
+          void refresh();
+        }}
+      />
       {ConfirmDialog}
     </>
   );

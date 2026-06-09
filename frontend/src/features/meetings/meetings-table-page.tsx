@@ -59,6 +59,7 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
     handleSelectRow,
     handleOpenSource,
     handleOpenRecording,
+    handleDownloadTranscriptPdf,
     handleExport,
   } = useMeetingsTable(initialMeetings, projectId);
 
@@ -117,6 +118,7 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
               },
               handleOpenSource,
               handleOpenRecording,
+              handleDownloadTranscriptPdf,
             ),
         }}
         sorting={{

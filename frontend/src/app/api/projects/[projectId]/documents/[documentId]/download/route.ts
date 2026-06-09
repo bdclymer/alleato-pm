@@ -5,6 +5,27 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 
+interface ProjectDocumentDownloadRow {
+  id: number;
+  file_name: string;
+  file_url: string | null;
+  storage_bucket: string | null;
+  storage_path: string | null;
+  source_system: string | null;
+  source_web_url: string | null;
+  source_metadata: {
+    outlook_intake_attachment_id?: number | null;
+  } | null;
+}
+
+interface OutlookIntakeAttachmentRow {
+  id: number;
+  file_name: string;
+  content: string | number[] | null;
+  content_type: string | null;
+  project_id: number | null;
+}
+
 function isReachableUrl(url: string | null | undefined): url is string {
   if (!url) return false;
   try {
@@ -19,6 +40,26 @@ function redirectTo(url: string, headers?: HeadersInit): NextResponse {
   return NextResponse.redirect(new URL(url), { headers });
 }
 
+function decodeBytea(value: string | number[] | null): Buffer {
+  if (!value) {
+    return Buffer.alloc(0);
+  }
+
+  if (Array.isArray(value)) {
+    return Buffer.from(value);
+  }
+
+  if (value.startsWith("\\x")) {
+    return Buffer.from(value.slice(2), "hex");
+  }
+
+  return Buffer.from(value, "base64");
+}
+
+function attachmentFilename(fileName: string): string {
+  return fileName.replace(/["\r\n]/g, "_");
+}
+
 /**
  * GET /api/projects/[projectId]/documents/[documentId]/download
  * Opens the durable Supabase Storage copy when available, then falls back to the
@@ -26,9 +67,13 @@ function redirectTo(url: string, headers?: HeadersInit): NextResponse {
  */
 export const GET = withApiGuardrails<{ projectId: string; documentId: string }>(
   "projects/[projectId]/documents/[documentId]/download#GET",
-  async ({ params }) => {
+  async ({ request, params }) => {
     const { projectId, documentId } = await params;
     const supabase = await createClient();
+    const disposition =
+      request.nextUrl.searchParams.get("disposition") === "inline"
+        ? "inline"
+        : "attachment";
 
     const {
       data: { user },
@@ -45,11 +90,13 @@ export const GET = withApiGuardrails<{ projectId: string; documentId: string }>(
 
     const { data: document, error } = await supabase
       .from("project_documents")
-      .select("id, file_name, file_url, storage_bucket, storage_path, source_web_url")
+      .select(
+        "id, file_name, file_url, storage_bucket, storage_path, source_system, source_web_url, source_metadata",
+      )
       .eq("id", Number(documentId))
       .eq("project_id", Number(projectId))
       .is("deleted_at", null)
-      .single();
+      .single<ProjectDocumentDownloadRow>();
 
     if (error) {
       if (error.code === "PGRST116") {
@@ -69,9 +116,15 @@ export const GET = withApiGuardrails<{ projectId: string; documentId: string }>(
       const { data: signedUrlData, error: signedUrlError } =
         await serviceClient.storage
           .from(document.storage_bucket)
-          .createSignedUrl(document.storage_path, 3600, {
-            download: document.file_name,
-          });
+          .createSignedUrl(
+            document.storage_path,
+            3600,
+            disposition === "attachment"
+              ? {
+                  download: document.file_name,
+                }
+              : undefined,
+          );
 
       if (signedUrlData?.signedUrl && !signedUrlError) {
         return redirectTo(signedUrlData.signedUrl, {
@@ -91,19 +144,66 @@ export const GET = withApiGuardrails<{ projectId: string; documentId: string }>(
       );
     }
 
-    // Fall back to source_web_url (OneDrive/SharePoint direct link) if reachable
-    if (isReachableUrl(document.source_web_url)) {
-      return redirectTo(document.source_web_url, {
-        "x-document-source": "source-web-url",
-      });
+    const outlookIntakeAttachmentId =
+      document.source_system === "outlook_attachment"
+        ? document.source_metadata?.outlook_intake_attachment_id
+        : null;
+
+    if (outlookIntakeAttachmentId) {
+      const serviceClient = createServiceClient();
+      const { data: attachment, error: attachmentError } = await serviceClient
+        .from("outlook_email_intake_attachments")
+        .select("id, file_name, content, content_type, project_id")
+        .eq("id", outlookIntakeAttachmentId)
+        .eq("project_id", Number(projectId))
+        .single<OutlookIntakeAttachmentRow>();
+
+      if (!attachmentError && attachment) {
+        const fileBuffer = decodeBytea(attachment.content);
+
+        if (fileBuffer.byteLength > 0) {
+          return new NextResponse(new Uint8Array(fileBuffer), {
+            headers: {
+              "Content-Type":
+                attachment.content_type || "application/octet-stream",
+              "Content-Length": String(fileBuffer.byteLength),
+              "Content-Disposition": `${disposition}; filename="${attachmentFilename(
+                attachment.file_name || document.file_name,
+              )}"`,
+              "x-document-source": "outlook-intake-attachment",
+            },
+          });
+        }
+      } else {
+        console.error(
+          JSON.stringify({
+            event: "project_document_outlook_attachment_lookup_failed",
+            project_id: Number(projectId),
+            document_id: Number(documentId),
+            outlook_intake_attachment_id: outlookIntakeAttachmentId,
+            error:
+              attachmentError?.message ??
+              "Attachment bytes were not returned for promoted Outlook document.",
+          }),
+        );
+      }
     }
 
-    // Fall back to file_url — only redirect if it is an absolute http(s) URL.
+    // Fall back to file_url first. This is the durable per-file URL for legacy
+    // records and Outlook attachment promotions, while source_web_url can point
+    // at the parent container (for example the email thread or OneDrive page).
     // Relative paths and non-http schemes (e.g. onedrive://) would produce a
-    // "This site can't be reached" browser error, so we reject them explicitly.
+    // browser error, so we reject them explicitly.
     if (isReachableUrl(document.file_url)) {
       return redirectTo(document.file_url, {
         "x-document-source": "file-url",
+      });
+    }
+
+    // Last resort: use the source page link when no direct file URL exists.
+    if (isReachableUrl(document.source_web_url)) {
+      return redirectTo(document.source_web_url, {
+        "x-document-source": "source-web-url",
       });
     }
 

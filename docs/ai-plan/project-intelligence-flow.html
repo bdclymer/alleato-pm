@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Project Intelligence Flow</title>
+    <style>
+      :root {
+        --bg: #f6f7f9;
+        --surface: #ffffff;
+        --surface-alt: #f1f5f9;
+        --border: #d8dee8;
+        --text: #111827;
+        --muted: #5b6472;
+        --accent: #0f766e;
+        --accent-soft: #dff7f4;
+        --warn: #92400e;
+        --warn-soft: #fff2d8;
+        --danger: #991b1b;
+        --danger-soft: #fee2e2;
+        --shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.45;
+      }
+
+      .page {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 32px 24px 80px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        letter-spacing: 0;
+      }
+
+      p {
+        margin: 0;
+      }
+
+      .hero {
+        display: grid;
+        gap: 20px;
+        padding: 28px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+      }
+
+      .eyebrow {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
+      .hero h1 {
+        font-size: clamp(28px, 4vw, 40px);
+        font-weight: 700;
+      }
+
+      .hero-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+
+      .metric {
+        padding: 16px;
+        background: var(--surface-alt);
+        border: 1px solid var(--border);
+      }
+
+      .metric-label {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .metric-value {
+        margin-top: 6px;
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .section {
+        margin-top: 28px;
+        display: grid;
+        gap: 16px;
+      }
+
+      .section-header {
+        display: grid;
+        gap: 6px;
+      }
+
+      .section-header h2 {
+        font-size: 22px;
+        font-weight: 700;
+      }
+
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        padding: 20px;
+      }
+
+      .flow-columns {
+        display: grid;
+        gap: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      }
+
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .toolbar button,
+      .segmented button,
+      .example-switch button {
+        appearance: none;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        padding: 9px 12px;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .toolbar button.is-active,
+      .segmented button.is-active,
+      .example-switch button.is-active {
+        border-color: var(--accent);
+        background: var(--accent-soft);
+        color: #115e59;
+      }
+
+      .interactive-grid {
+        display: grid;
+        gap: 20px;
+        grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr);
+      }
+
+      .interactive-chart {
+        display: grid;
+        gap: 18px;
+      }
+
+      .flow-lane-grid {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .flow-lane {
+        display: grid;
+        gap: 12px;
+        align-content: start;
+      }
+
+      .flow-node {
+        position: relative;
+        width: 100%;
+        text-align: left;
+        padding: 14px 14px 14px 16px;
+        border: 1px solid var(--border);
+        background: var(--surface-alt);
+        cursor: pointer;
+        transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
+      }
+
+      .flow-node:hover {
+        border-color: #94a3b8;
+        transform: translateY(-1px);
+      }
+
+      .flow-node + .flow-node::before {
+        content: "";
+        position: absolute;
+        left: 24px;
+        top: -13px;
+        width: 2px;
+        height: 12px;
+        background: #94a3b8;
+      }
+
+      .flow-node .flow-step {
+        pointer-events: none;
+      }
+
+      .flow-node-title {
+        margin-top: 6px;
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .flow-node-copy {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .flow-node.is-selected {
+        border-color: var(--accent);
+        background: #ecfdfa;
+      }
+
+      .flow-node.is-dimmed {
+        opacity: 0.42;
+      }
+
+      .flow-detail {
+        display: grid;
+        gap: 16px;
+        align-content: start;
+      }
+
+      .detail-kicker {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
+      .detail-list {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--muted);
+      }
+
+      .detail-list li + li {
+        margin-top: 8px;
+      }
+
+      .detail-box {
+        padding: 14px;
+        border: 1px solid var(--border);
+        background: var(--surface-alt);
+      }
+
+      .segmented {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .example-switch {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .example-view[hidden] {
+        display: none;
+      }
+
+      .lane-title {
+        margin-bottom: 14px;
+        font-size: 14px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .flow-stack {
+        display: grid;
+        gap: 12px;
+      }
+
+      .flow-card {
+        position: relative;
+        padding: 16px;
+        border: 1px solid var(--border);
+        background: var(--surface-alt);
+      }
+
+      .flow-card + .flow-card::before {
+        content: "";
+        position: absolute;
+        left: 24px;
+        top: -13px;
+        width: 2px;
+        height: 12px;
+        background: #94a3b8;
+      }
+
+      .flow-step {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
+      .flow-card h3 {
+        margin-top: 6px;
+        font-size: 18px;
+      }
+
+      .flow-card p {
+        margin-top: 8px;
+        color: var(--muted);
+      }
+
+      .mini-list {
+        margin-top: 10px;
+        padding-left: 18px;
+        color: var(--muted);
+      }
+
+      .mini-list li + li {
+        margin-top: 6px;
+      }
+
+      .chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 10px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .status-good {
+        background: var(--accent-soft);
+        border-color: #99f6e4;
+        color: #115e59;
+      }
+
+      .status-warn {
+        background: var(--warn-soft);
+        border-color: #fcd34d;
+        color: var(--warn);
+      }
+
+      .status-bad {
+        background: var(--danger-soft);
+        border-color: #fecaca;
+        color: var(--danger);
+      }
+
+      .example-grid {
+        display: grid;
+        gap: 20px;
+        grid-template-columns: 1.05fr 0.95fr;
+      }
+
+      .timeline {
+        display: grid;
+        gap: 12px;
+      }
+
+      .timeline-row {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        gap: 14px;
+        padding: 14px 0;
+        border-top: 1px solid var(--border);
+      }
+
+      .timeline-row:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .timeline-date {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .timeline-copy {
+        display: grid;
+        gap: 6px;
+      }
+
+      .timeline-copy strong {
+        font-size: 16px;
+      }
+
+      .card-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .insight-card {
+        padding: 14px;
+        background: var(--surface-alt);
+        border: 1px solid var(--border);
+      }
+
+      .insight-card h3 {
+        font-size: 16px;
+      }
+
+      .insight-meta {
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .insight-card p {
+        margin-top: 8px;
+        color: var(--muted);
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--surface);
+      }
+
+      th,
+      td {
+        text-align: left;
+        vertical-align: top;
+        padding: 12px 10px;
+        border-top: 1px solid var(--border);
+        font-size: 14px;
+      }
+
+      th {
+        border-top: 0;
+        font-size: 12px;
+        text-transform: uppercase;
+        color: var(--muted);
+        background: var(--surface-alt);
+      }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: 12px;
+        padding: 2px 5px;
+        background: #eef2f7;
+        border: 1px solid #d9e0ea;
+      }
+
+      .footer-note {
+        margin-top: 18px;
+        padding: 16px;
+        background: var(--surface-alt);
+        border: 1px solid var(--border);
+        color: var(--muted);
+      }
+
+      @media (max-width: 980px) {
+        .example-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .interactive-grid,
+        .flow-lane-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .timeline-row {
+          grid-template-columns: 1fr;
+          gap: 8px;
+        }
+
+        .page {
+          padding: 20px 16px 48px;
+        }
+
+        .hero,
+        .panel {
+          padding: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <div class="eyebrow">Project Intelligence</div>
+        <div>
+          <h1>What the compiler is compiling, what gets stored, and what the assistant loads later</h1>
+          <p style="margin-top: 10px; max-width: 980px; color: var(--muted)">
+            The compiler is not compiling code. It is compiling raw project signals into durable, project-level intelligence.
+            The durable output is a set of <code>insight_cards</code> plus one current <code>intelligence_packet</code> per project target.
+            Then, when the assistant is asked about a project, it loads that packet first and layers live tools on top.
+          </p>
+        </div>
+        <div class="hero-grid">
+          <div class="metric">
+            <div class="metric-label">Stored ahead of time</div>
+            <div class="metric-value">Targets, candidates, cards, evidence, packets</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Built on demand</div>
+            <div class="metric-value">Project snapshot, timeline, warnings, RAG lookups</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Current truth from live data</div>
+            <div class="metric-value">Today’s meetings exist, but June 8 items are not yet in current packets</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-header">
+          <h2>Interactive Flow Chart</h2>
+          <p style="color: var(--muted)">
+            Click any stage. The right panel explains what is created there, which tables are involved, and what the assistant uses later.
+          </p>
+        </div>
+        <div class="panel interactive-grid">
+          <div class="interactive-chart">
+            <div class="toolbar">
+              <button type="button" class="is-active" data-flow-filter="all">Full flow</button>
+              <button type="button" data-flow-filter="ahead">Created ahead of time</button>
+              <button type="button" data-flow-filter="answer">Used at answer time</button>
+            </div>
+            <div class="flow-lane-grid" id="flowChart">
+              <div class="flow-lane">
+                <div class="lane-title">Ahead Of Time</div>
+                <button
+                  type="button"
+                  class="flow-node is-selected"
+                  data-step-id="source-lands"
+                  data-flow-group="ahead"
+                >
+                  <div class="flow-step">1. Source lands</div>
+                  <div class="flow-node-title"><code>document_metadata</code> and raw project signals</div>
+                  <div class="flow-node-copy">Meetings, emails, Teams, documents, tasks, and structured project facts arrive first.</div>
+                </button>
+                <button type="button" class="flow-node" data-step-id="target-exists" data-flow-group="ahead">
+                  <div class="flow-step">2. Target exists</div>
+                  <div class="flow-node-title"><code>intelligence_targets</code></div>
+                  <div class="flow-node-copy">One durable target row anchors project-level intelligence.</div>
+                </button>
+                <button type="button" class="flow-node" data-step-id="candidate-staged" data-flow-group="ahead">
+                  <div class="flow-step">3. Signal staged</div>
+                  <div class="flow-node-title"><code>source_signal_candidates</code></div>
+                  <div class="flow-node-copy">Weak extracted signals are staged before they become durable project conclusions.</div>
+                </button>
+                <button type="button" class="flow-node" data-step-id="candidate-promoted" data-flow-group="ahead">
+                  <div class="flow-step">4. Candidate promoted</div>
+                  <div class="flow-node-title"><code>insight_cards</code>, <code>insight_card_targets</code>, <code>insight_card_evidence</code></div>
+                  <div class="flow-node-copy">The compiler writes the conclusion, its project link, and its supporting proof.</div>
+                </button>
+                <button type="button" class="flow-node" data-step-id="refresh-queued" data-flow-group="ahead">
+                  <div class="flow-step">5. Refresh queued</div>
+                  <div class="flow-node-title"><code>packet_refresh_jobs</code></div>
+                  <div class="flow-node-copy">Promotion queues a packet rebuild for that project target.</div>
+                </button>
+                <button type="button" class="flow-node" data-step-id="packet-built" data-flow-group="ahead">
+                  <div class="flow-step">6. Packet rebuilt</div>
+                  <div class="flow-node-title"><code>intelligence_packets</code> and <code>intelligence_packet_cards</code></div>
+                  <div class="flow-node-copy">The assistant-readable project briefing packet is regenerated.</div>
+                </button>
+              </div>
+              <div class="flow-lane">
+                <div class="lane-title">At Answer Time</div>
+                <button type="button" class="flow-node" data-step-id="project-resolved" data-flow-group="answer">
+                  <div class="flow-step">A. Project resolved</div>
+                  <div class="flow-node-title">Resolve selected project and target</div>
+                  <div class="flow-node-copy">The assistant determines which project the user means.</div>
+                </button>
+                <button type="button" class="flow-node" data-step-id="packet-loaded" data-flow-group="answer">
+                  <div class="flow-step">B. Packet preload</div>
+                  <div class="flow-node-title"><code>loadIntelligencePacket(projectId)</code></div>
+                  <div class="flow-node-copy">The project’s current packet is loaded first as expert starting context.</div>
+                </button>
+                <button type="button" class="flow-node" data-step-id="snapshot-loaded" data-flow-group="answer">
+                  <div class="flow-step">C. Live snapshot</div>
+                  <div class="flow-node-title"><code>getProjectBriefingSnapshot(projectId)</code></div>
+                  <div class="flow-node-copy">Budget, RFIs, submittals, schedule, commitments, and recent docs are pulled live.</div>
+                </button>
+                <button type="button" class="flow-node" data-step-id="rag-search" data-flow-group="answer">
+                  <div class="flow-step">D. Deep retrieval</div>
+                  <div class="flow-node-title">RAG and source-specific search</div>
+                  <div class="flow-node-copy">Exact proof and latest details come from semantic and source-specific retrieval.</div>
+                </button>
+                <button type="button" class="flow-node" data-step-id="warnings-built" data-flow-group="answer">
+                  <div class="flow-step">E. Warnings and timeline</div>
+                  <div class="flow-node-title">Live timeline and packet health</div>
+                  <div class="flow-node-copy">The assistant computes missing, stale, and thin-intelligence warnings at answer time.</div>
+                </button>
+                <button type="button" class="flow-node" data-step-id="final-answer" data-flow-group="answer">
+                  <div class="flow-step">F. Final answer</div>
+                  <div class="flow-node-title">Packet first, live verification second</div>
+                  <div class="flow-node-copy">The assistant answers with broad context first, then verifies specifics before stating exact claims.</div>
+                </button>
+              </div>
+            </div>
+          </div>
+          <aside class="flow-detail panel" id="flowDetailPanel">
+            <div>
+              <div class="detail-kicker" id="detailStep">1. Source lands</div>
+              <h3 id="detailTitle">Raw project signals arrive</h3>
+              <p id="detailSummary" style="margin-top: 8px; color: var(--muted)">
+                This is the ingestion layer. Meetings, emails, Teams, files, tasks, and structured project facts land before the intelligence compiler does anything.
+              </p>
+            </div>
+            <div class="detail-box">
+              <div class="metric-label">Tables</div>
+              <div class="chip-row" id="detailTables"></div>
+            </div>
+            <div class="detail-box">
+              <div class="metric-label">Why it exists</div>
+              <p id="detailWhy" style="margin-top: 8px; color: var(--muted)"></p>
+            </div>
+            <div class="detail-box">
+              <div class="metric-label">What happens here</div>
+              <ul class="detail-list" id="detailBullets"></ul>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-header">
+          <h2>Clean Flow</h2>
+          <p style="color: var(--muted)">
+            Left side is created ahead of time by ingestion and compiler jobs. Right side is assembled when the assistant answers a project question.
+          </p>
+        </div>
+        <div class="flow-columns">
+          <div class="panel">
+            <div class="lane-title">Ahead Of Time</div>
+            <div class="flow-stack">
+              <article class="flow-card">
+                <div class="flow-step">1. Source lands</div>
+                <h3><code>document_metadata</code> and other raw sources</h3>
+                <p>
+                  Fireflies meetings, emails, Teams, files, extracted tasks, and structured project facts arrive first.
+                </p>
+                <div class="chip-row">
+                  <span class="chip">meeting transcript</span>
+                  <span class="chip">email</span>
+                  <span class="chip">Teams</span>
+                  <span class="chip">document</span>
+                  <span class="chip">task</span>
+                </div>
+              </article>
+
+              <article class="flow-card">
+                <div class="flow-step">2. Project target exists</div>
+                <h3><code>intelligence_targets</code></h3>
+                <p>
+                  One target row represents the thing we are compiling intelligence for. For project briefings, this is the
+                  <code>client_project</code> target tied to a <code>project_id</code>.
+                </p>
+              </article>
+
+              <article class="flow-card">
+                <div class="flow-step">3. Weak extracted signal is staged</div>
+                <h3><code>source_signal_candidates</code></h3>
+                <p>
+                  The compiler writes candidate signals first. This is the “maybe this matters” layer before durable project intelligence is created.
+                </p>
+              </article>
+
+              <article class="flow-card">
+                <div class="flow-step">4. Candidate is promoted</div>
+                <h3><code>insight_cards</code> + <code>insight_card_targets</code> + <code>insight_card_evidence</code></h3>
+                <p>
+                  Promotion turns a candidate into a durable insight, links it to the project target, and stores the exact supporting evidence rows.
+                </p>
+                <ul class="mini-list">
+                  <li><code>insight_cards</code>: the durable conclusion</li>
+                  <li><code>insight_card_targets</code>: which project it belongs to</li>
+                  <li><code>insight_card_evidence</code>: which meeting/email/task/doc supports it</li>
+                </ul>
+              </article>
+
+              <article class="flow-card">
+                <div class="flow-step">5. Refresh is queued</div>
+                <h3><code>packet_refresh_jobs</code></h3>
+                <p>
+                  Every successful promotion queues a project packet refresh so the assistant has a current summary packet to load later.
+                </p>
+              </article>
+
+              <article class="flow-card">
+                <div class="flow-step">6. Current packet is rebuilt</div>
+                <h3><code>intelligence_packets</code> + <code>intelligence_packet_cards</code></h3>
+                <p>
+                  The packet compiler assembles the selected project’s active cards into a current reusable packet with executive summary,
+                  recommended next moves, source coverage, and ordered packet sections.
+                </p>
+              </article>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="lane-title">At Answer Time</div>
+            <div class="flow-stack">
+              <article class="flow-card">
+                <div class="flow-step">A. User asks about a project</div>
+                <h3>Resolve selected project</h3>
+                <p>
+                  The assistant determines which project the user means, then resolves that project’s
+                  <code>intelligence_target</code>.
+                </p>
+              </article>
+
+              <article class="flow-card">
+                <div class="flow-step">B. Preload project intelligence</div>
+                <h3><code>loadIntelligencePacket(projectId)</code></h3>
+                <p>
+                  The assistant loads the current packet first. This is the “expert starting context” layer you were asking for.
+                </p>
+              </article>
+
+              <article class="flow-card">
+                <div class="flow-step">C. Pull live project facts</div>
+                <h3><code>getProjectBriefingSnapshot(projectId)</code></h3>
+                <p>
+                  This is a separate live snapshot tool. It pulls budget, commitments, change orders, RFIs, submittals, schedule,
+                  notifications, and recent docs directly from operational tables.
+                </p>
+              </article>
+
+              <article class="flow-card">
+                <div class="flow-step">D. Fill in what the packet does not cover</div>
+                <h3>RAG and source-specific search</h3>
+                <p>
+                  If the user asks for exact proof, exact spec text, the latest meeting detail, or something stale/missing, the assistant
+                  still calls semantic search and source-specific tools instead of trusting the packet alone.
+                </p>
+              </article>
+
+              <article class="flow-card">
+                <div class="flow-step">E. Build live timeline and warnings</div>
+                <h3>Timeline + stale/missing warnings</h3>
+                <p>
+                  Recent timeline entries and warning banners are assembled on demand. This is where the assistant can say
+                  “packet loaded,” “packet missing,” “snapshot missing,” or “document intelligence is thin.”
+                </p>
+              </article>
+
+              <article class="flow-card">
+                <div class="flow-step">F. Final answer</div>
+                <h3>Packet first, live verification second</h3>
+                <p>
+                  Best-case answer path: start from the packet for broad context, then confirm specifics with live tools before stating exact dates,
+                  numbers, obligations, or quotes.
+                </p>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-header">
+          <h2>What The End Result Is Supposed To Be</h2>
+          <p style="color: var(--muted)">
+            For a selected project, the assistant should already have a compact expert briefing packet before it starts searching.
+          </p>
+        </div>
+        <div class="panel">
+          <div class="chip-row">
+            <span class="chip status-good">Start with current packet</span>
+            <span class="chip status-good">Know the latest major shifts</span>
+            <span class="chip status-good">Know the open risks and next moves</span>
+            <span class="chip status-good">Know what evidence supports each claim</span>
+            <span class="chip status-good">Call RAG only when deeper proof is needed</span>
+          </div>
+          <div class="footer-note">
+            In other words: the assistant should not begin from zero. It should begin with a durable project briefing, then verify and deepen from live sources.
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-header">
+          <h2>Real Example From Live Data</h2>
+          <p style="color: var(--muted)">
+            Switch between the real success case and the real stale case.
+          </p>
+        </div>
+        <div class="example-switch">
+          <button type="button" class="is-active" data-example-target="union-example">Union Collective: same-day success</button>
+          <button type="button" data-example-target="allisonville-example">GW Allisonville: stale packet gap</button>
+        </div>
+        <div class="example-view" id="union-example">
+        <div class="example-grid">
+          <div class="panel">
+            <div class="lane-title">What happened in order</div>
+            <div class="timeline">
+              <div class="timeline-row">
+                <div class="timeline-date">Today’s sources</div>
+                <div class="timeline-copy">
+                  <strong>Two meeting rows landed today</strong>
+                  <p><code>01KSQRCSAR8605YMY00JE7FRM7</code> — “Union Collective: OAC”</p>
+                  <p><code>01KTA35T41AVBZA4DX6BJG33E9</code> — “Union Collective: Solaroof Discussion”</p>
+                  <p>Both rows were created on <strong>2026-06-08</strong> in <code>document_metadata</code>.</p>
+                </div>
+              </div>
+
+              <div class="timeline-row">
+                <div class="timeline-date">Project target</div>
+                <div class="timeline-copy">
+                  <strong>Project target exists</strong>
+                  <p><code>intelligence_targets.id = 93dc271e-dc59-4f51-9b3e-db402c67bf97</code></p>
+                  <p>This is the durable anchor for all Union Collective insight cards and packets.</p>
+                </div>
+              </div>
+
+              <div class="timeline-row">
+                <div class="timeline-date">Promotion result</div>
+                <div class="timeline-copy">
+                  <strong>The meetings were turned into durable insight evidence</strong>
+                  <p>
+                    I found <strong>7 evidence links</strong> pointing from June 8-created meetings into project insight cards.
+                  </p>
+                  <div class="chip-row">
+                    <span class="chip status-good">same-day meetings linked</span>
+                    <span class="chip status-good">insight cards created</span>
+                    <span class="chip status-good">current packet rebuilt</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="timeline-row">
+                <div class="timeline-date">Current packet</div>
+                <div class="timeline-copy">
+                  <strong>Latest packet reflects those meetings</strong>
+                  <p><code>intelligence_packets.id = 6e6558f3-b8b9-42fa-931a-c4cfafee4036</code></p>
+                  <p>Generated at <strong>2026-06-09 02:38 UTC</strong>.</p>
+                  <p>Its source coverage says the latest source inside the packet is <strong>2026-06-08</strong>.</p>
+                </div>
+              </div>
+
+              <div class="timeline-row">
+                <div class="timeline-date">What the assistant gets</div>
+                <div class="timeline-copy">
+                  <strong>Packet-first project briefing</strong>
+                  <p>
+                    When the assistant is asked about Union Collective, it can load a packet that already incorporates the June 8 meeting activity instead of starting cold.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="lane-title">Current packet output</div>
+            <div class="card-list">
+              <article class="insight-card">
+                <h3>Executive summary</h3>
+                <p>
+                  “Union Collective is progressing through active design coordination with major layout, civil, structural, and solar decisions mostly aligned, but permitting, financing, and utility/solar coordination still create schedule risk.”
+                </p>
+                <div class="insight-meta">Packet generated 2026-06-09 | Review queue count: 5 | Linked evidence count: 93</div>
+              </article>
+
+              <article class="insight-card">
+                <h3>Recommended next moves</h3>
+                <p>1. Freeze the highest-impact layout items and issue a controlled drawing set.</p>
+                <p>2. Resolve solar certification, sizing, battery, and interconnection questions.</p>
+                <p>3. Close the hood exhaust and make-up air coordination thread.</p>
+                <p>4. Protect the permit path by tracking financing and approval dependencies weekly.</p>
+              </article>
+
+              <article class="insight-card">
+                <h3>Example same-day cards produced from those meetings</h3>
+                <div class="insight-meta"><code>insight_cards</code> rows created 2026-06-09</div>
+                <p><strong>Project update</strong>: overall project direction, schedule risk, permitting, financing, and technical coordination.</p>
+                <p><strong>Risks and exposure</strong>: permit compression, financing dependency, solar interconnection, hood/MUA coordination, and civil approvals.</p>
+                <p><strong>Open decisions</strong>: final solar configuration, mechanical path, second-floor/private-room program, and traffic/encroachment path.</p>
+              </article>
+
+              <article class="insight-card">
+                <h3>Example evidence links</h3>
+                <p>
+                  Meeting <code>01KTA35T41AVBZA4DX6BJG33E9</code> (“Union Collective: Solaroof Discussion”) is directly linked to cards including
+                  <strong>project update</strong>, <strong>recommended actions</strong>, <strong>open decisions</strong>, and <strong>risks and exposure</strong>.
+                </p>
+                <p>
+                  Meeting <code>01KSQRCSAR8605YMY00JE7FRM7</code> (“Union Collective: OAC”) is directly linked to the
+                  <strong>project update</strong> and <strong>money impact</strong> cards.
+                </p>
+              </article>
+            </div>
+          </div>
+        </div>
+        </div>
+        <div class="example-view" id="allisonville-example" hidden>
+          <div class="example-grid">
+            <div class="panel">
+              <div class="lane-title">What happened in order</div>
+              <div class="timeline">
+                <div class="timeline-row">
+                  <div class="timeline-date">Today’s source</div>
+                  <div class="timeline-copy">
+                    <strong>Meeting landed in <code>document_metadata</code></strong>
+                    <p><code>01KT225CXJAMK6DFZ29K56JBDW</code> — “Weekly Schedule Review Goodwill Allisonville Road Teams Meeting”</p>
+                    <p>Created on <strong>2026-06-08</strong>. The raw source exists and can be searched.</p>
+                  </div>
+                </div>
+                <div class="timeline-row">
+                  <div class="timeline-date">Project target</div>
+                  <div class="timeline-copy">
+                    <strong>Project target already exists</strong>
+                    <p><code>intelligence_targets.id = 6dc121c9-dac7-455e-971d-8d46c9703c62</code></p>
+                    <p>The project has the correct durable anchor, so the issue is not target creation.</p>
+                  </div>
+                </div>
+                <div class="timeline-row">
+                  <div class="timeline-date">Current packet</div>
+                  <div class="timeline-copy">
+                    <strong>Packet is older than the new meeting</strong>
+                    <p><code>intelligence_packets.id = 0fd916f7-0726-46fe-82b8-a52c666cbd3a</code></p>
+                    <p>Generated on <strong>2026-05-19</strong>. Latest source inside that packet is only <strong>2026-05-18</strong>.</p>
+                  </div>
+                </div>
+                <div class="timeline-row">
+                  <div class="timeline-date">Break point</div>
+                  <div class="timeline-copy">
+                    <strong>No evidence link for the June 8 meeting yet</strong>
+                    <p>The meeting exists, but it is not yet represented in the current project packet/card set.</p>
+                    <div class="chip-row">
+                      <span class="chip status-bad">raw source landed</span>
+                      <span class="chip status-bad">packet not refreshed from it</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="timeline-row">
+                  <div class="timeline-date">Assistant impact</div>
+                  <div class="timeline-copy">
+                    <strong>The packet is still useful but behind</strong>
+                    <p>The assistant has to rely on live meeting search or RAG for today-specific answers instead of trusting packet freshness.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="lane-title">What the packet still says</div>
+              <div class="card-list">
+                <article class="insight-card">
+                  <h3>Executive summary</h3>
+                  <p>
+                    “GW Allisonville Rd IN is moving from design/procurement into active site execution, with permitting and scope definitions largely in place but several field and subcontractor coordination items still open.”
+                  </p>
+                  <div class="insight-meta">Packet generated 2026-05-19 | Review queue count: 4 | Linked evidence count: 109</div>
+                </article>
+                <article class="insight-card">
+                  <h3>What is correct</h3>
+                  <p>The packet structure works: it has cards, evidence, and next moves tied to actual project sources.</p>
+                </article>
+                <article class="insight-card">
+                  <h3>What is broken</h3>
+                  <p>The freshness signal is misleading because newer source activity exists but was not incorporated into the current packet.</p>
+                </article>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-header">
+          <h2>Table View Of The Same Example</h2>
+          <p style="color: var(--muted)">
+            This is the same Union Collective example, reduced to the minimum rows that matter for understanding the workflow.
+          </p>
+        </div>
+        <div class="panel table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Layer</th>
+                <th>Table</th>
+                <th>Live example row</th>
+                <th>Meaning</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Raw source</td>
+                <td><code>document_metadata</code></td>
+                <td><code>01KTA35T41AVBZA4DX6BJG33E9</code></td>
+                <td>Today-created meeting row that was ingested and used as packet evidence.</td>
+              </tr>
+              <tr>
+                <td>Target</td>
+                <td><code>intelligence_targets</code></td>
+                <td><code>93dc271e-dc59-4f51-9b3e-db402c67bf97</code></td>
+                <td>Durable project-level anchor for Union Collective intelligence.</td>
+              </tr>
+              <tr>
+                <td>Current summary</td>
+                <td><code>intelligence_packets</code></td>
+                <td><code>6e6558f3-b8b9-42fa-931a-c4cfafee4036</code></td>
+                <td>Reusable packet the assistant loads first for broad project context.</td>
+              </tr>
+              <tr>
+                <td>Current insight</td>
+                <td><code>insight_cards</code></td>
+                <td><code>60c4efff-6c65-4a03-9d15-ec556da7da44</code></td>
+                <td>Example project-update card currently inside the packet.</td>
+              </tr>
+              <tr>
+                <td>Proof for that insight</td>
+                <td><code>insight_card_evidence</code></td>
+                <td>linked to meetings <code>01KTA35T41AVBZA4DX6BJG33E9</code> and <code>01KSQRCSAR8605YMY00JE7FRM7</code></td>
+                <td>Shows which meetings actually support the durable project insight.</td>
+              </tr>
+              <tr>
+                <td>Packet freshness</td>
+                <td><code>intelligence_packets.source_coverage</code></td>
+                <td><code>latestSourceAt = 2026-06-08</code></td>
+                <td>Confirms the current packet already includes June 8 source activity.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-header">
+          <h2>Contrast Case: Where It Is Still Breaking</h2>
+          <p style="color: var(--muted)">
+            Not every project is fresh. This is why packet freshness logic still needs work even though the mechanism itself is valid.
+          </p>
+        </div>
+        <div class="panel">
+          <div class="timeline">
+            <div class="timeline-row">
+              <div class="timeline-date">Project</div>
+              <div class="timeline-copy">
+                <strong>GW Allisonville Rd IN</strong>
+                <p>June 8 meeting exists: <code>01KT225CXJAMK6DFZ29K56JBDW</code></p>
+              </div>
+            </div>
+            <div class="timeline-row">
+              <div class="timeline-date">Packet state</div>
+              <div class="timeline-copy">
+                <strong>Current packet is older</strong>
+                <p>Packet <code>0fd916f7-0726-46fe-82b8-a52c666cbd3a</code> was generated on <strong>2026-05-19</strong>.</p>
+                <p>Its latest source inside the packet is only <strong>2026-05-18</strong>.</p>
+              </div>
+            </div>
+            <div class="timeline-row">
+              <div class="timeline-date">Gap</div>
+              <div class="timeline-copy">
+                <strong>No June 8 evidence link yet</strong>
+                <p>
+                  The June 8 Allisonville meeting has not yet shown up in <code>insight_card_evidence</code> for the current project packet.
+                </p>
+                <div class="chip-row">
+                  <span class="chip status-warn">pipeline mechanism works</span>
+                  <span class="chip status-bad">freshness consistency does not</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-header">
+          <h2>Best Operating Model</h2>
+          <p style="color: var(--muted)">
+            This is the simplest durable behavior if you want the assistant to start with expert project context.
+          </p>
+        </div>
+        <div class="panel">
+          <div class="flow-stack">
+            <article class="flow-card">
+              <div class="flow-step">Recommended</div>
+              <h3>Keep one durable current packet per project</h3>
+              <p>
+                This is effectively the machine-readable version of the running project intelligence document you described.
+              </p>
+            </article>
+            <article class="flow-card">
+              <div class="flow-step">Recommended</div>
+              <h3>Load that packet automatically when the assistant is clearly project-scoped</h3>
+              <p>
+                That gives the assistant a strong starting context instead of forcing it to rediscover the whole project every time.
+              </p>
+            </article>
+            <article class="flow-card">
+              <div class="flow-step">Required</div>
+              <h3>Do not trust the packet alone for “today,” exact numbers, or exact proof</h3>
+              <p>
+                The packet is a briefing layer. Live source tools and RAG still need to verify the latest meeting details, current obligations, and exact citations.
+              </p>
+            </article>
+            <article class="flow-card">
+              <div class="flow-step">Required</div>
+              <h3>Freshness has to be truthful</h3>
+              <p>
+                Right now the packet freshness flag can say “fresh” even when a newer meeting has landed and has not been packetized yet.
+                That needs to be fixed if you want reliable high-quality answers.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script>
+      const flowStepData = {
+        "source-lands": {
+          step: "1. Source lands",
+          title: "Raw project signals arrive",
+          summary:
+            "This is the ingestion layer. Meetings, emails, Teams, files, tasks, and structured project facts land before the intelligence compiler does anything.",
+          tables: ["document_metadata", "team_chat_messages", "project_emails", "scheduled_tasks"],
+          why: "Without this layer, the compiler has nothing real to synthesize. This is the factual project memory surface.",
+          bullets: [
+            "Fireflies and other source pipelines create the raw source records first.",
+            "These rows are searchable even before any project insight exists.",
+            "This layer is source truth, not project interpretation."
+          ]
+        },
+        "target-exists": {
+          step: "2. Target exists",
+          title: "A durable project target is created",
+          summary:
+            "The compiler needs one stable row representing the thing it is compiling intelligence for. For project briefing, that is a client_project target.",
+          tables: ["intelligence_targets"],
+          why: "Cards and packets need one consistent project anchor instead of guessing the project relationship every time.",
+          bullets: [
+            "The target ties intelligence to a project_id.",
+            "It becomes the join point for cards, packet refresh jobs, and packets.",
+            "If the target is missing, promotion cannot complete cleanly."
+          ]
+        },
+        "candidate-staged": {
+          step: "3. Signal staged",
+          title: "Weak extracted signals are staged first",
+          summary:
+            "Before the system writes durable project insight, it writes a candidate signal. This is the compiler's intermediate maybe-state.",
+          tables: ["source_signal_candidates"],
+          why: "This separates raw extraction from durable project conclusions and gives the system a reviewable transition point.",
+          bullets: [
+            "Candidate rows hold provisional extracted meaning.",
+            "Weak or malformed attribution can be kept in review instead of polluting project intelligence.",
+            "Promotion is the hard boundary between weak extraction and durable insight."
+          ]
+        },
+        "candidate-promoted": {
+          step: "4. Candidate promoted",
+          title: "Durable project insight is created",
+          summary:
+            "Promotion writes the actual reusable intelligence record, attaches it to the project, and stores the supporting evidence rows.",
+          tables: ["insight_cards", "insight_card_targets", "insight_card_evidence"],
+          why: "This is the first layer the assistant can meaningfully trust as project-level synthesized understanding.",
+          bullets: [
+            "insight_cards stores the conclusion itself.",
+            "insight_card_targets records which project target that conclusion belongs to.",
+            "insight_card_evidence records the meeting, email, task, or document proving it."
+          ]
+        },
+        "refresh-queued": {
+          step: "5. Refresh queued",
+          title: "Packet rebuild is requested",
+          summary:
+            "Once a new card exists, the system queues a refresh so the reusable project briefing packet can be updated.",
+          tables: ["packet_refresh_jobs"],
+          why: "Without a refresh queue, cards would exist but the assistant's preload packet would lag behind them.",
+          bullets: [
+            "Promotion should enqueue refresh automatically.",
+            "The job is the handoff from new insight to assistant-readable packet.",
+            "This is where freshness consistency can break if jobs are delayed or missed."
+          ]
+        },
+        "packet-built": {
+          step: "6. Packet rebuilt",
+          title: "The project briefing packet is regenerated",
+          summary:
+            "The compiler builds a current packet row and ordered packet-card links for assistant preload.",
+          tables: ["intelligence_packets", "intelligence_packet_cards"],
+          why: "This gives the assistant one compact project briefing artifact instead of forcing it to rediscover the whole project every time.",
+          bullets: [
+            "The packet stores executive summary, source coverage, next moves, and current status.",
+            "Packet-card rows define which cards are in the packet and in what order.",
+            "This is the core artifact you want auto-loaded into assistant context."
+          ]
+        },
+        "project-resolved": {
+          step: "A. Project resolved",
+          title: "The assistant figures out which project the user means",
+          summary:
+            "The answer flow becomes project-scoped before the assistant loads intelligence or runs source-specific tools.",
+          tables: ["intelligence_targets", "projects"],
+          why: "The assistant should not preload the wrong packet or run broad retrieval against the wrong project.",
+          bullets: [
+            "Project selection happens first.",
+            "The selected project resolves to its intelligence target.",
+            "Everything after this is scoped to that project."
+          ]
+        },
+        "packet-loaded": {
+          step: "B. Packet preload",
+          title: "The assistant starts with the current project packet",
+          summary:
+            "This is the expert-starting-context behavior you asked for: load the durable project briefing first.",
+          tables: ["intelligence_packets", "intelligence_packet_cards", "insight_cards", "insight_card_evidence"],
+          why: "The assistant should begin with a synthesized project understanding rather than raw search alone.",
+          bullets: [
+            "The current packet is loaded by target id.",
+            "Cards and evidence behind that packet become reusable project context.",
+            "This is broad-context preload, not exact-proof retrieval."
+          ]
+        },
+        "snapshot-loaded": {
+          step: "C. Live snapshot",
+          title: "Operational project facts are pulled live",
+          summary:
+            "The assistant also loads live operational data such as budget, commitments, schedule, RFIs, submittals, and recent docs.",
+          tables: ["projects", "budgets", "commitments_unified", "rfis", "submittals", "schedule_tasks", "document_metadata"],
+          why: "Packets are for synthesized context. Live project snapshot is for current structured facts.",
+          bullets: [
+            "This keeps dates, numbers, and live status grounded in current operational tables.",
+            "It is separate from the packet and should not be replaced by it.",
+            "This is the main broad-facts tool for project briefings."
+          ]
+        },
+        "rag-search": {
+          step: "D. Deep retrieval",
+          title: "RAG and source-specific tools fill in exact proof",
+          summary:
+            "When the user asks for exact wording, latest meeting details, or proof, the assistant has to retrieve from the underlying sources.",
+          tables: ["document_metadata", "vector search / semantic search surfaces"],
+          why: "The packet should provide understanding, but exact proof and exact latest detail still require retrieval.",
+          bullets: [
+            "Use this for exact spec lookup and latest meeting detail.",
+            "This is how the assistant escapes packet staleness safely.",
+            "Packet first does not mean packet only."
+          ]
+        },
+        "warnings-built": {
+          step: "E. Warnings and timeline",
+          title: "Freshness and missing-data warnings are assembled live",
+          summary:
+            "The assistant computes packet health, thin-intelligence warnings, and recent activity views at answer time.",
+          tables: ["intelligence_packets", "document_metadata", "project_emails", "team_chat_messages", "insight_cards"],
+          why: "Users need to know whether they are reading a current packet or a stale one.",
+          bullets: [
+            "This is where the app should warn if newer meeting activity exists than what the packet covers.",
+            "The timeline is largely assembled on demand.",
+            "This is the main guardrail against false confidence."
+          ]
+        },
+        "final-answer": {
+          step: "F. Final answer",
+          title: "The assistant answers from packet context plus live verification",
+          summary:
+            "The answer should start from expert project context, then verify specifics using live tools before making exact claims.",
+          tables: ["all of the above"],
+          why: "This gives fast broad understanding without sacrificing truth on current details.",
+          bullets: [
+            "Broad briefing should start from the packet.",
+            "Exact numbers, dates, and obligations should be confirmed live.",
+            "This is the best balance between speed and reliability."
+          ]
+        }
+      };
+
+      const flowNodes = Array.from(document.querySelectorAll(".flow-node"));
+      const filterButtons = Array.from(document.querySelectorAll("[data-flow-filter]"));
+      const detailStep = document.getElementById("detailStep");
+      const detailTitle = document.getElementById("detailTitle");
+      const detailSummary = document.getElementById("detailSummary");
+      const detailTables = document.getElementById("detailTables");
+      const detailWhy = document.getElementById("detailWhy");
+      const detailBullets = document.getElementById("detailBullets");
+
+      function renderFlowDetail(stepId) {
+        const item = flowStepData[stepId];
+        if (!item) return;
+
+        detailStep.textContent = item.step;
+        detailTitle.textContent = item.title;
+        detailSummary.textContent = item.summary;
+        detailWhy.textContent = item.why;
+        detailTables.innerHTML = item.tables.map((table) => `<span class="chip"><code>${table}</code></span>`).join("");
+        detailBullets.innerHTML = item.bullets.map((bullet) => `<li>${bullet}</li>`).join("");
+
+        flowNodes.forEach((node) => {
+          node.classList.toggle("is-selected", node.dataset.stepId === stepId);
+        });
+      }
+
+      function applyFlowFilter(filter) {
+        filterButtons.forEach((button) => {
+          button.classList.toggle("is-active", button.dataset.flowFilter === filter);
+        });
+
+        flowNodes.forEach((node) => {
+          const visible = filter === "all" || node.dataset.flowGroup === filter;
+          node.classList.toggle("is-dimmed", !visible);
+        });
+      }
+
+      flowNodes.forEach((node) => {
+        node.addEventListener("click", () => {
+          renderFlowDetail(node.dataset.stepId);
+        });
+      });
+
+      filterButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          applyFlowFilter(button.dataset.flowFilter);
+        });
+      });
+
+      const exampleButtons = Array.from(document.querySelectorAll("[data-example-target]"));
+      const exampleViews = Array.from(document.querySelectorAll(".example-view"));
+
+      function showExample(targetId) {
+        exampleButtons.forEach((button) => {
+          button.classList.toggle("is-active", button.dataset.exampleTarget === targetId);
+        });
+        exampleViews.forEach((view) => {
+          view.hidden = view.id !== targetId;
+        });
+      }
+
+      exampleButtons.forEach((button) => {
+        button.addEventListener("click", () => showExample(button.dataset.exampleTarget));
+      });
+
+      renderFlowDetail("source-lands");
+      applyFlowFilter("all");
+      showExample("union-example");
+    </script>
+  </body>
+</html>

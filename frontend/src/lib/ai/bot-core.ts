@@ -62,6 +62,10 @@ export interface BotCoreOptions {
   onTrace?: (trace: Record<string, unknown>) => void;
   /** Callback for learnings injected into the prompt */
   onLearningUsage?: (usage: BotLearningUsageSummary) => void;
+  /** Channel this response will be posted to — used to inject platform-specific formatting rules */
+  platform?: "teams" | "web";
+  /** Arbitrary metadata passed through from the adapter (logged, not used in generation) */
+  metadata?: Record<string, unknown>;
 }
 
 export interface MemoryUsageSummary {
@@ -106,6 +110,21 @@ export interface BotCoreResult {
 // System prompt assembly (shared between web UI and bot channels)
 // ---------------------------------------------------------------------------
 
+// Teams collapses single \n to a space. Double newlines (blank lines) are
+// required for any visual break. This block is injected at the end of the
+// system prompt so it overrides any earlier prose-style instructions.
+const TEAMS_FORMATTING_BLOCK = `
+## Teams Formatting Rules (MANDATORY — you are in Microsoft Teams)
+Teams collapses single newlines into spaces. A wall of text is unreadable. ALWAYS:
+- Use a blank line (double newline) between every bullet point.
+- Use a blank line before the first bullet in any list.
+- Keep responses to 5 items or fewer — ruthlessly prioritise.
+- Never write paragraphs longer than 2 sentences. Break them into bullets.
+- Structure every multi-point response as: one-line intro → bulleted list → one-line close.
+- Do NOT use headers (#, ##). Bold section labels (**Label:**) instead.
+- Bold the project name or key term at the start of each bullet.
+`;
+
 export async function assembleSystemPrompt(options: {
   userId: string;
   messageText: string;
@@ -113,6 +132,7 @@ export async function assembleSystemPrompt(options: {
   councilMode?: boolean;
   sessionId?: string;
   isFirstTurn?: boolean;
+  platform?: "teams" | "web";
   onMemoryUsage?: (usage: MemoryUsageSummary) => void;
   onLearningUsage?: (usage: BotLearningUsageSummary) => void;
 }): Promise<string> {
@@ -123,6 +143,7 @@ export async function assembleSystemPrompt(options: {
     councilMode,
     sessionId,
     isFirstTurn = true,
+    platform,
     onMemoryUsage,
     onLearningUsage,
   } = options;
@@ -316,6 +337,11 @@ export async function assembleSystemPrompt(options: {
       "If the missing context affects the answer, say what could not be checked, " +
       "what you can still answer from available sources, and what would make the next answer stronger.\n" +
       contextHealth.map((item) => `- ${item}`).join("\n");
+  }
+
+  // Teams-specific formatting rules injected LAST so they take highest priority.
+  if (platform === "teams") {
+    systemPrompt += TEAMS_FORMATTING_BLOCK;
   }
 
   return systemPrompt;
@@ -514,6 +540,7 @@ export async function generateBotResponse(
     councilMode: options.councilMode,
     sessionId: options.sessionId,
     isFirstTurn: !options.conversationHistory?.length,
+    platform: options.platform,
     onLearningUsage: options.onLearningUsage,
   });
 

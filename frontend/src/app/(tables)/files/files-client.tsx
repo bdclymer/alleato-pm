@@ -5,10 +5,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Check, ChevronsUpDown, ExternalLink, File, Tag } from "lucide-react";
 import {
   UnifiedTablePage,
-  useUnifiedTableState,
   type ColumnConfig,
   type FilterConfig,
-  type FilterValue,
   type TableColumn,
 } from "@/components/tables/unified";
 import { CellText, TableDateValue } from "@/components/tables/unified";
@@ -46,80 +44,18 @@ import { apiFetch } from "@/lib/api-client";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { appToast as toast } from "@/lib/toast/app-toast";
 import { cn } from "@/lib/utils";
-
-// Types
-
-interface FileItem {
-  id: string;
-  title: string | null;
-  file_name: string | null;
-  file_path: string | null;
-  source_path: string | null;
-  source_web_url: string | null;
-  url: string | null;
-  source_system: string | null;
-  source: string | null;
-  category: string | null;
-  type: string | null;
-  document_type: string | null;
-  project_id: number | null;
-  project: string | null;
-  date: string | null;
-  created_at: string | null;
-  source_last_modified_at: string | null;
-  source_size: number | null;
-  status: string | null;
-  tags: string | null;
-  division: string | null;
-  overview: string | null;
-  participants: string | null;
-  access_level: string | null;
-}
-
-interface Project {
-  id: number;
-  name: string;
-}
-
-interface FilesClientProps {
-  items: FileItem[];
-  projects: Project[];
-  errorMessage: string | null;
-}
-
-// File type detection
-
-type FileGroup =
-  | "pdf"
-  | "word"
-  | "spreadsheet"
-  | "presentation"
-  | "image"
-  | "text"
-  | "other";
-
-function getFileGroup(item: FileItem): FileGroup {
-  const name = (item.file_name ?? item.title ?? "").toLowerCase();
-  const ext = name.split(".").pop() ?? "";
-  if (ext === "pdf") return "pdf";
-  if (["doc", "docx"].includes(ext)) return "word";
-  if (["xls", "xlsx", "csv"].includes(ext)) return "spreadsheet";
-  if (["ppt", "pptx"].includes(ext)) return "presentation";
-  if (["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "tiff"].includes(ext))
-    return "image";
-  if (["txt", "md", "rtf"].includes(ext)) return "text";
-  return "other";
-}
-
-const FILE_GROUP_META: Record<FileGroup, { label: string }> = {
-  pdf: { label: "PDF" },
-  word: { label: "Word" },
-  spreadsheet: { label: "Spreadsheets" },
-  presentation: { label: "Slides" },
-  image: { label: "Images" },
-  text: { label: "Text" },
-  other: { label: "Other" },
-};
+import {
+  ACTIVE_FILE_GROUPS,
+  EMPTY_FILE_FILTERS,
+  FILE_GROUP_META,
+  type FileFilterState,
+  type FileGroup,
+  type FileItem,
+  type Project,
+  fileColumnsConfig as columns,
+  filesTableDefinition,
+} from "@/features/files/files-table-definition";
+import { useServerTableDefinition } from "@/features/tables/server-table";
 
 function FileTypeIcon({ className }: { item: FileItem; className?: string }) {
   return (
@@ -698,31 +634,6 @@ function IndexedBadge({ status }: { status: string | null }) {
   return <span className="text-xs text-muted-foreground">{status ?? "—"}</span>;
 }
 
-// ── Columns ───────────────────────────────────────────────────────────────────
-
-const columns: ColumnConfig[] = [
-  { id: "name", label: "Name", alwaysVisible: true },
-  { id: "project", label: "Project", defaultVisible: true },
-  { id: "document_type", label: "Type", defaultVisible: true },
-  { id: "category", label: "Category", defaultVisible: true },
-  { id: "date", label: "Date", defaultVisible: true },
-  { id: "overview", label: "Overview", defaultVisible: true },
-  { id: "status", label: "Status", defaultVisible: true },
-  { id: "access_level", label: "Access", defaultVisible: true },
-  { id: "source", label: "Source", defaultVisible: true },
-  { id: "modified", label: "Last Modified", defaultVisible: false },
-  { id: "size", label: "Size", defaultVisible: false },
-  { id: "participants", label: "Participants", defaultVisible: false },
-  { id: "folder", label: "Folder", defaultVisible: false },
-  { id: "full_path", label: "Full Path", defaultVisible: false },
-  { id: "division", label: "Division", defaultVisible: false },
-  { id: "tags", label: "Tags", defaultVisible: false },
-];
-
-const defaultVisibleColumns = columns
-  .filter((c) => c.alwaysVisible || c.defaultVisible)
-  .map((c) => c.id);
-
 function col(id: string): ColumnConfig {
   const found = columns.find((c) => c.id === id);
   if (!found) throw new Error(`Column config not found: ${id}`);
@@ -989,26 +900,67 @@ function renderRowActions(item: FileItem) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-const ACTIVE_GROUPS: FileGroup[] = [
-  "pdf",
-  "word",
-  "spreadsheet",
-  "presentation",
-  "image",
-  "text",
-  "other",
-];
-
-export function FilesClient({
-  items,
-  projects,
-  errorMessage,
-}: FilesClientProps) {
+export function FilesClient() {
   const searchParams = useSearchParams();
   const pathname = usePathname() ?? "";
   const router = useRouter();
-
   const activeGroup = (searchParams?.get("group") ?? "") as FileGroup | "";
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [lastErrorMessage, setLastErrorMessage] = useState<string | null>(null);
+
+  const {
+    tableState,
+    items,
+    totalItems: totalCount,
+    totalPages,
+    isLoading,
+    error,
+    activeFilters: af,
+    handleViewChange,
+    handleFilterChange,
+    handleSortChange,
+    handlePageChange,
+    handlePerPageChange,
+  } = useServerTableDefinition<FileItem, FileFilterState>({
+    definition: filesTableDefinition,
+    searchParams,
+    pathname,
+    router,
+  });
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const result = await apiFetch<
+          { data?: Project[]; projects?: Project[] } | Project[]
+        >("/api/projects?fields=id,name", { cache: "no-store" });
+        const list = Array.isArray(result)
+          ? result
+          : (result.data ?? result.projects ?? []);
+        setProjects(list as Project[]);
+      } catch (fetchError) {
+        reportNonCriticalFailure({
+          area: "files-table",
+          operation: "load-project-options",
+          error: fetchError,
+          userVisibleFallback: "Project options could not be loaded.",
+        });
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!error) return;
+    if (lastErrorMessage === error.message) return;
+    setLastErrorMessage(error.message);
+    reportNonCriticalFailure({
+      area: "files-table",
+      operation: "load-files-page",
+      error,
+      userVisibleFallback: "Files could not be loaded.",
+    });
+    toast.error(error.message);
+  }, [error, lastErrorMessage]);
 
   // Optimistic overrides for inline edits
   const [projectOverrides, setProjectOverrides] = useState<
@@ -1160,173 +1112,44 @@ export function FilesClient({
     [projects],
   );
 
-  const itemsWithGroup = useMemo(
-    () =>
-      itemsWithOverrides.map((item) => ({ item, group: getFileGroup(item) })),
-    [itemsWithOverrides],
-  );
-
-  const groupCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const { group } of itemsWithGroup) {
-      counts[group] = (counts[group] ?? 0) + 1;
-    }
-    return counts;
-  }, [itemsWithGroup]);
-
   const tabs = [
     {
-      label: `All (${itemsWithOverrides.length.toLocaleString()})`,
+      label: "All",
       href: pathname,
       isActive: !activeGroup,
     },
-    ...ACTIVE_GROUPS.filter((g) => (groupCounts[g] ?? 0) > 0).map((g) => ({
-      label: `${FILE_GROUP_META[g].label} (${(groupCounts[g] ?? 0).toLocaleString()})`,
+    ...ACTIVE_FILE_GROUPS.map((g) => ({
+      label: FILE_GROUP_META[g].label,
       href: `${pathname}?group=${g}`,
       isActive: activeGroup === g,
     })),
   ];
 
-  const tableState = useUnifiedTableState({
-    entityKey: "files",
-    searchParams: searchParams,
-    pathname,
-    router,
-    defaults: {
-      view: "table",
-      allowedViews: ["table"],
-      page: 1,
-      perPage: 50,
-      search: "",
-      sortBy: "modified",
-      sortDirection: "desc",
-      visibleColumns: defaultVisibleColumns,
-      filters: (() => {
-        const f: Record<string, FilterValue> = {};
-        const pid = searchParams?.get("project_id");
-        if (pid) f.project_id = pid;
-        const ft = searchParams?.get("file_type");
-        if (ft) f.file_type = ft.split(",");
-        const src = searchParams?.get("source");
-        if (src) f.source = src;
-        const asgn = searchParams?.get("assigned");
-        if (asgn) f.assigned = asgn;
-        const idx = searchParams?.get("indexed");
-        if (idx) f.indexed = idx.split(",");
-        const mAfter = searchParams?.get("modified_after");
-        if (mAfter) f.modified_after = mAfter;
-        const mBefore = searchParams?.get("modified_before");
-        if (mBefore) f.modified_before = mBefore;
-        return f;
-      })(),
-    },
-  });
+  const customIsFiltered =
+    Boolean(tableState.debouncedSearch.trim()) ||
+    Object.entries(af).some(([key, value]) => {
+      if (key === "group") return false;
+      return Array.isArray(value) ? value.length > 0 : Boolean(value);
+    });
 
-  const af = tableState.activeFilters;
-
-  const filteredItems = useMemo(() => {
-    let result = activeGroup
-      ? itemsWithGroup
-          .filter(({ group }) => group === activeGroup)
-          .map(({ item }) => item)
-      : itemsWithOverrides;
-
-    const q = tableState.debouncedSearch.trim().toLowerCase();
-    if (q) {
-      result = result.filter(
-        (item) =>
-          (item.file_name ?? item.title ?? "").toLowerCase().includes(q) ||
-          (item.project ?? "").toLowerCase().includes(q) ||
-          (item.division ?? "").toLowerCase().includes(q) ||
-          friendlySource(item).toLowerCase().includes(q) ||
-          parentFolderName(item).toLowerCase().includes(q) ||
-          fullFolderPath(item).toLowerCase().includes(q),
-      );
-    }
-
-    // File type filter
-    const fileTypeFilter = af.file_type;
-    if (Array.isArray(fileTypeFilter) && fileTypeFilter.length > 0) {
-      result = result.filter((item) =>
-        fileTypeFilter.includes(getFileGroup(item)),
-      );
-    }
-
-    // Project filter
-    if (typeof af.project_id === "string" && af.project_id) {
-      if (af.project_id === "__unassigned__") {
-        result = result.filter((item) => item.project_id == null);
-      } else {
-        result = result.filter(
-          (item) =>
-            item.project_id != null &&
-            String(item.project_id) === af.project_id,
-        );
-      }
-    }
-
-    // Source filter
-    if (typeof af.source === "string" && af.source) {
-      result = result.filter((item) => friendlySource(item) === af.source);
-    }
-
-    // Assignment filter
-    if (af.assigned === "assigned") {
-      result = result.filter((item) => item.project_id != null);
-    } else if (af.assigned === "unassigned") {
-      result = result.filter((item) => item.project_id == null);
-    }
-
-    // RAG status filter
-    const indexedFilter = af.indexed;
-    if (Array.isArray(indexedFilter) && indexedFilter.length > 0) {
-      result = result.filter((item) =>
-        indexedFilter.includes(item.status ?? ""),
-      );
-    }
-
-    // Modified after
-    if (typeof af.modified_after === "string" && af.modified_after) {
-      const from = new Date(af.modified_after);
-      result = result.filter((item) => {
-        const d = item.source_last_modified_at ?? item.date ?? item.created_at;
-        return d ? new Date(d) >= from : false;
+  const handleToolbarFilterChange = useCallback(
+    (filters: FileFilterState) => {
+      handleFilterChange({
+        ...filters,
+        group: activeGroup || undefined,
       });
-    }
-
-    // Modified before
-    if (typeof af.modified_before === "string" && af.modified_before) {
-      const to = new Date(af.modified_before);
-      result = result.filter((item) => {
-        const d = item.source_last_modified_at ?? item.date ?? item.created_at;
-        return d ? new Date(d) <= to : false;
-      });
-    }
-
-    return result;
-  }, [
-    activeGroup,
-    itemsWithGroup,
-    itemsWithOverrides,
-    tableState.debouncedSearch,
-    af,
-  ]);
-
-  const handleFilterChange = useCallback(
-    (next: Record<string, unknown>) => {
-      tableState.setActiveFilters(next as Record<string, FilterValue>);
-      tableState.setSearchParams(
-        Object.fromEntries(
-          Object.entries(next).map(([k, v]) => [
-            k,
-            Array.isArray(v) ? v.join(",") : v == null ? null : String(v),
-          ]),
-        ),
-      );
-      tableState.setPage(1);
     },
-    [tableState],
+    [activeGroup, handleFilterChange],
   );
+
+  const handleClearToolbarFilters = useCallback(() => {
+    handleFilterChange({
+      ...EMPTY_FILE_FILTERS,
+      group: activeGroup || undefined,
+    });
+  }, [activeGroup, handleFilterChange]);
+
+  const filteredItems = itemsWithOverrides;
 
   const tableColumns = useMemo(
     () =>
@@ -1350,7 +1173,23 @@ export function FilesClient({
     ],
   );
 
+  const serverSortedColumns = new Set([
+    "modified",
+    "name",
+    "project",
+    "document_type",
+    "category",
+    "date",
+    "status",
+    "access_level",
+    "size",
+    "division",
+  ]);
+
   const sortedItems = useMemo(() => {
+    if (tableState.sortBy && serverSortedColumns.has(tableState.sortBy)) {
+      return filteredItems;
+    }
     const col = tableColumns.find((c) => c.id === tableState.sortBy);
     if (!col?.sortValue) return filteredItems;
     const sortValue = col.sortValue;
@@ -1372,15 +1211,6 @@ export function FilesClient({
     tableState.sortDirection,
   ]);
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(sortedItems.length / tableState.perPage),
-  );
-  const paginatedItems = useMemo(() => {
-    const start = (tableState.page - 1) * tableState.perPage;
-    return sortedItems.slice(start, start + tableState.perPage);
-  }, [sortedItems, tableState.page, tableState.perPage]);
-
   const activeTabLabel =
     tabs
       .find((t) => t.isActive)
@@ -1390,7 +1220,7 @@ export function FilesClient({
   // Selection handlers: onSelectAll operates on the current page's visible items.
   const handleSelectAll = useCallback(
     (checked: boolean) => {
-      const pageIds = paginatedItems.map((i) => i.id);
+      const pageIds = sortedItems.map((i) => i.id);
       if (checked) {
         setSelectedIds((prev) => Array.from(new Set([...prev, ...pageIds])));
       } else {
@@ -1398,7 +1228,7 @@ export function FilesClient({
         setSelectedIds((prev) => prev.filter((id) => !pageSet.has(id)));
       }
     },
-    [paginatedItems],
+    [sortedItems],
   );
 
   const handleSelectRow = useCallback((id: string, checked: boolean) => {
@@ -1439,29 +1269,36 @@ export function FilesClient({
       <UnifiedTablePage<FileItem>
         header={{
           title: "Files",
-          description: `${filteredItems.length.toLocaleString()} ${activeGroup ? FILE_GROUP_META[activeGroup].label : "file"}${filteredItems.length === 1 ? "" : "s"} from OneDrive, SharePoint, and uploads`,
+          description: `${totalCount.toLocaleString()} ${activeGroup ? FILE_GROUP_META[activeGroup].label : "file"}${totalCount === 1 ? "" : "s"} from OneDrive, SharePoint, and uploads`,
         }}
         tabs={tabs}
         layout={{ fullBleedTable: true }}
         toolbar={{
-          totalItems: itemsWithOverrides.length,
-          filteredItems: filteredItems.length,
+          totalItems: totalCount,
+          filteredItems: totalCount,
           selectedCount: selectedIds.length,
           searchValue: tableState.searchInput,
           onSearchChange: tableState.setSearchInput,
-          searchPlaceholder: "Search by name, project, source…",
+          searchPlaceholder: filesTableDefinition.searchPlaceholder,
           currentView: tableState.currentView,
-          onViewChange: (view) => {
-            tableState.setCurrentView(view);
-            tableState.setSearchParams({ view });
-          },
+          onViewChange: handleViewChange,
           filters: fileFilters,
           activeFilters: af,
-          onFilterChange: handleFilterChange,
-          onClearFilters: () => handleFilterChange({}),
+          onFilterChange: (filters) =>
+            handleToolbarFilterChange(filters as FileFilterState),
+          onClearFilters: handleClearToolbarFilters,
           columns,
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
+          savedViewsScope: filesTableDefinition.entityKey,
+          savedViewsDefaults: {
+            visibleColumns: filesTableDefinition.defaultVisibleColumns,
+            columnOrder: columns.map((column) => column.id),
+            columnWidths: {},
+            sortBy: filesTableDefinition.defaultSortBy,
+            sortDirection: filesTableDefinition.defaultSortDirection,
+            filters: filesTableDefinition.defaultFilters,
+          },
           customActions:
             selectedIds.length > 0 ? (
               <Button
@@ -1476,10 +1313,10 @@ export function FilesClient({
             ) : null,
         }}
         data={{
-          items: paginatedItems,
-          isLoading: false,
+          items: sortedItems,
+          isLoading,
           isFetching: false,
-          error: errorMessage ? new Error(errorMessage) : null,
+          error,
         }}
         table={{
           columns: tableColumns,
@@ -1489,11 +1326,7 @@ export function FilesClient({
         sorting={{
           sortBy: tableState.sortBy,
           sortDirection: tableState.sortDirection,
-          onSortChange: (col, dir) => {
-            tableState.setSortBy(col);
-            tableState.setSortDirection(dir);
-            tableState.setPage(1);
-          },
+          onSortChange: handleSortChange,
         }}
         selection={{
           selectedIds,
@@ -1506,20 +1339,14 @@ export function FilesClient({
             ? `No ${FILE_GROUP_META[activeGroup].label.toLowerCase()} files have been synced yet.`
             : "No files have been synced from OneDrive or SharePoint yet.",
           filteredDescription: "Try adjusting your search.",
-          isFiltered: !!tableState.debouncedSearch,
+          isFiltered: customIsFiltered,
         }}
         pagination={{
           page: tableState.page,
           totalPages,
           perPage: tableState.perPage,
-          onPageChange: (p) => {
-            tableState.setPage(p);
-            tableState.setSearchParams({ page: String(p) });
-          },
-          onPerPageChange: (pp) => {
-            tableState.setPerPage(Number(pp));
-            tableState.setPage(1);
-          },
+          onPageChange: handlePageChange,
+          onPerPageChange: handlePerPageChange,
         }}
       />
       <BulkCategoryDialog

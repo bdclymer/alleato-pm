@@ -346,7 +346,7 @@ def deep_agents_runtime_inventory() -> dict[str, Any]:
         if flags["projectIntelligenceEnabled"] and runtime == DEEP_AGENT_RUNTIME_MODE
         else "configured_but_not_runtime_active",
         "runtime": runtime,
-        "model": os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL", "openai:gpt-5.4-mini"),
+        "model": os.getenv("DEEP_AGENTS_PROJECT_INTELLIGENCE_MODEL", "openai:gpt-5.5"),
         "flags": flags,
         "toolCount": len(active_tools),
         "tools": active_tools,
@@ -1180,6 +1180,7 @@ def _deep_agent_executive_prompt(
             "Do not claim checked sources are available when source coverage says missing or failed.",
             "Do not send emails, create invites, mutate tasks, or imply write actions were completed.",
             "Do not mention RAG, embeddings, or implementation internals.",
+            *question_directives,
         ]
     )
 
@@ -1247,7 +1248,7 @@ def _run_deep_agents_runtime(
     store: Any,
     memory_candidates: list[MemoryCandidate],
     create_agent: Optional[Callable[..., Any]] = None,
-    model: str = "openai:gpt-5.4-mini",
+    model: str = "openai:gpt-5.5",
 ) -> tuple[Optional[str], ToolTraceItem]:
     started = time.perf_counter()
     try:
@@ -1359,7 +1360,7 @@ def _run_deep_agents_executive_runtime(
     store: Any,
     memory_candidates: list[MemoryCandidate],
     create_agent: Optional[Callable[..., Any]] = None,
-    model: str = "openai:gpt-5.4-mini",
+    model: str = "openai:gpt-5.5",
 ) -> tuple[Optional[str], ToolTraceItem]:
     started = time.perf_counter()
     try:
@@ -1447,7 +1448,7 @@ def build_project_status_contract_spike(
     *,
     runtime: str = CONTRACT_SPIKE_MODE,
     create_agent: Optional[Callable[..., Any]] = None,
-    model: str = "openai:gpt-5.4-mini",
+    model: str = "openai:gpt-5.5",
 ) -> DeepProjectIntelligenceResponse:
     """Return a typed project-status packet with explicit source gaps."""
 
@@ -1566,7 +1567,7 @@ def build_executive_briefing_contract_spike(
     *,
     runtime: str = CONTRACT_SPIKE_MODE,
     create_agent: Optional[Callable[..., Any]] = None,
-    model: str = "openai:gpt-5.4-mini",
+    model: str = "openai:gpt-5.5",
 ) -> DeepExecutiveIntelligenceResponse:
     """Return a typed business-wide packet with explicit source coverage."""
 

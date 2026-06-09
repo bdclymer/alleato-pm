@@ -331,7 +331,6 @@ export default function CompanyDetailsPage() {
     const { data: people, error: peopleError } = await supabase
       .from("people")
       .select("id, first_name, last_name, email, company_id")
-      .eq("person_type", "contact")
       .order("last_name", { ascending: true })
       .limit(200);
 
@@ -675,25 +674,33 @@ export default function CompanyDetailsPage() {
                             </AvatarFallback>
                           </Avatar>
                           <div className="min-w-0 flex-1">
-                            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
-                              <Link
-                                href={`/directory/contacts/${contact.id}`}
-                                className="truncate text-sm font-medium text-foreground underline-offset-4 hover:underline"
-                              >
-                                {contact.first_name} {contact.last_name}
-                              </Link>
-                              {contact.email ? (
-                                <p className="truncate text-xs text-muted-foreground">
-                                  {contact.email}
-                                </p>
-                              ) : null}
-                              {isPrimary && (
-                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">Primary</Badge>
-                              )}
-                            </div>
-                            <p className="truncate text-xs text-muted-foreground">
-                              {contact.job_title || "No title"}
-                            </p>
+                            {(() => {
+                              const displayName = [contact.first_name, contact.last_name].filter(Boolean).join(" ") || contact.email || "Unknown";
+                              const showEmail = contact.email && displayName !== contact.email;
+                              return (
+                                <>
+                                  <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+                                    <Link
+                                      href={`/directory/contacts/${contact.id}`}
+                                      className="truncate text-sm font-medium text-foreground underline-offset-4 hover:underline"
+                                    >
+                                      {displayName}
+                                    </Link>
+                                    {showEmail ? (
+                                      <p className="truncate text-xs text-muted-foreground">
+                                        {contact.email}
+                                      </p>
+                                    ) : null}
+                                    {isPrimary && (
+                                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">Primary</Badge>
+                                    )}
+                                  </div>
+                                  <p className="truncate text-xs text-muted-foreground">
+                                    {contact.job_title || "No title"}
+                                  </p>
+                                </>
+                              );
+                            })()}
                           </div>
                           <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                             {!isPrimary && (
@@ -750,53 +757,37 @@ export default function CompanyDetailsPage() {
                   }}
                 />
                 {associatedProjects.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-8">
-                    <DsEmptyState title="No projects associated with this company" description="Projects will appear here once this company is added to a project." />
-                  </div>
+                  <DsEmptyState title="No projects associated with this company" description="Projects will appear here once this company is added to a project." />
                 ) : (
-                  <DsDataTable<CompanyProjectItem>
-                    rows={associatedProjects}
-                    columns={[
-                      {
-                        key: "project",
-                        header: "Project",
-                        primary: true,
-                        render: (project) => (
-                          <Link
-                            href={`/${project.id}/home`}
-                            className="font-medium text-foreground underline-offset-4 hover:underline"
-                          >
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {associatedProjects.map((project) => (
+                      <Link
+                        key={project.id}
+                        href={`/${project.id}/home`}
+                        className="group rounded-xl bg-muted/40 p-4 transition-colors hover:bg-muted/70"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-medium text-foreground leading-snug group-hover:underline underline-offset-4">
                             {project.name || `Project ${project.id}`}
-                          </Link>
-                        ),
-                      },
-                      {
-                        key: "status",
-                        header: "Status",
-                        render: (project) => (
-                          <div className="flex items-center gap-2">
-                            <Badge variant={statusVariant(project.company_status)}>
-                              {project.company_status || "Unknown"}
-                            </Badge>
-                            {project.archived ? <Badge variant="outline">Archived</Badge> : null}
-                          </div>
-                        ),
-                      },
-                      {
-                        key: "number",
-                        header: "Number",
-                        render: (project) => (
-                          <span className="font-mono">#{project.project_number || "-"}</span>
-                        ),
-                      },
-                      {
-                        key: "state",
-                        header: "State",
-                        align: "right",
-                        render: (project) => project.state || "No status",
-                      },
-                    ]}
-                  />
+                          </p>
+                          {project.archived && (
+                            <Badge variant="outline" className="shrink-0">Archived</Badge>
+                          )}
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <Badge variant={statusVariant(project.company_status)}>
+                            {project.company_status || "Unknown"}
+                          </Badge>
+                          {project.project_number && (
+                            <span className="font-mono text-xs text-muted-foreground">#{project.project_number}</span>
+                          )}
+                          {project.state && (
+                            <span className="text-xs text-muted-foreground">{project.state}</span>
+                          )}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 )}
               </section>
 
@@ -812,16 +803,14 @@ export default function CompanyDetailsPage() {
                   </div>
                 </div>
                 {filteredCommitments.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-8">
-                    <DsEmptyState
-                      title={commitmentQuery.trim() ? "No matching commitments found" : "No commitments found"}
-                      description={
-                        commitmentQuery.trim()
-                          ? "Try a different trade, scope term, or project."
-                          : "Commitments tied to this company will appear here."
-                      }
-                    />
-                  </div>
+                  <DsEmptyState
+                    title={commitmentQuery.trim() ? "No matching commitments found" : "No commitments found"}
+                    description={
+                      commitmentQuery.trim()
+                        ? "Try a different trade, scope term, or project."
+                        : "Commitments tied to this company will appear here."
+                    }
+                  />
                 ) : (
                   <DsDataTable<CommitmentItem>
                     rows={filteredCommitments}
@@ -888,12 +877,10 @@ export default function CompanyDetailsPage() {
                   </Tabs>
                 </div>
                 {filteredInvoices.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-8">
-                    <DsEmptyState
-                      title={invoiceFilter === "open" ? "No open invoices found" : "No invoices found"}
-                      description="Invoices from associated projects will appear here."
-                    />
-                  </div>
+                  <DsEmptyState
+                    title={invoiceFilter === "open" ? "No open invoices found" : "No invoices found"}
+                    description="Invoices from associated projects will appear here."
+                  />
                 ) : (
                   <DsDataTable<InvoiceItem>
                     rows={filteredInvoices}
@@ -938,9 +925,7 @@ export default function CompanyDetailsPage() {
               <section className="space-y-4">
                 <DsSectionHeader title="Meetings" />
                 {meetingsByProject.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-8">
-                    <DsEmptyState title="No meetings found" description="No meetings have been recorded for this company's projects." />
-                  </div>
+                  <DsEmptyState title="No meetings found" description="No meetings have been recorded for this company's projects." />
                 ) : (
                   <DsDataTable<(MeetingItem & { display_project_name: string })>
                     rows={meetingRows}
@@ -991,48 +976,48 @@ export default function CompanyDetailsPage() {
               <section className="rounded-2xl border border-border bg-background p-5">
 	                <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Company file</p>
 	                <div className="mt-5 space-y-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Status</p>
-                    <p className="mt-1 font-medium text-foreground">{company.status || "No status on file"}</p>
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="shrink-0 text-muted-foreground">Status</p>
+                    <p className="text-right font-medium text-foreground">{company.status || "—"}</p>
                   </div>
-                  <div>
-                    <p className="text-muted-foreground">Type</p>
-                    <p className="mt-1 font-medium text-foreground">{company.type || "No type on file"}</p>
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="shrink-0 text-muted-foreground">Type</p>
+                    <p className="text-right font-medium text-foreground">{company.type || "—"}</p>
                   </div>
-                  <div>
-                    <p className="text-muted-foreground">ERP Vendor ID</p>
-                    <p className="mt-1 font-medium text-foreground">{company.acumatica_vendor_id || "No ERP vendor ID on file"}</p>
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="shrink-0 text-muted-foreground">ERP Vendor ID</p>
+                    <p className="text-right font-medium text-foreground">{company.acumatica_vendor_id || "—"}</p>
                   </div>
-                  <div>
-                    <p className="text-muted-foreground">Email</p>
-                    <p className="mt-1 font-medium text-foreground">{company.contact_email || "No email on file"}</p>
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="shrink-0 text-muted-foreground">Email</p>
+                    <p className="text-right font-medium text-foreground">{company.contact_email || "—"}</p>
                   </div>
-                  <div>
-                    <p className="text-muted-foreground">Phone</p>
-                    <p className="mt-1 font-medium text-foreground">{company.contact_phone || "No phone on file"}</p>
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="shrink-0 text-muted-foreground">Phone</p>
+                    <p className="text-right font-medium text-foreground">{company.contact_phone || "—"}</p>
                   </div>
-	                  <div>
-	                    <p className="text-muted-foreground">Address</p>
-	                    <p className="mt-1 font-medium text-foreground">{company.address || "No address on file"}</p>
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="shrink-0 text-muted-foreground">Address</p>
+                    <p className="text-right font-medium text-foreground">{company.address || "—"}</p>
                   </div>
-                  <div>
-                    <p className="text-muted-foreground">Location</p>
-                    <p className="mt-1 font-medium text-foreground">{companyLocation || "No location on file"}</p>
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="shrink-0 text-muted-foreground">Location</p>
+                    <p className="text-right font-medium text-foreground">{companyLocation || "—"}</p>
                   </div>
-                  <div>
-                    <p className="text-muted-foreground">Website</p>
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="shrink-0 text-muted-foreground">Website</p>
                     {websiteUrl ? (
                       <a
                         href={websiteUrl}
                         rel="noreferrer"
                         target="_blank"
-                        className="mt-1 flex min-w-0 items-center gap-2 font-medium text-foreground underline-offset-4 hover:underline"
+                        className="flex min-w-0 items-center gap-1.5 text-right font-medium text-foreground underline-offset-4 hover:underline"
                       >
                         <span className="truncate">{company.website}</span>
                         <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                       </a>
                     ) : (
-                      <p className="mt-1 font-medium text-foreground">No website on file</p>
+                      <p className="text-right font-medium text-foreground">—</p>
                     )}
                   </div>
                 </div>
@@ -1060,7 +1045,7 @@ export default function CompanyDetailsPage() {
                     </div>
                   </div>
                 ) : (
-                  <p className="mt-3 text-sm text-muted-foreground">No primary contact set.</p>
+                  <DsEmptyState title="No primary contact set" description="Add a contact to this company to set one as primary." className="py-3" />
                 )}
               </section>
 
@@ -1094,32 +1079,6 @@ export default function CompanyDetailsPage() {
                 </div>
               </section>
 
-              <section className="rounded-2xl border border-border bg-background p-5">
-                <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Quick actions</p>
-                <div className="mt-4 grid gap-2">
-                  <Button variant="outline" className="justify-start gap-2 active:scale-[0.98]" onClick={() => setEditOpen(true)}>
-                    <Building2 className="h-4 w-4" />
-                    Edit company
-                  </Button>
-                  <Button variant="outline" className="justify-start gap-2 active:scale-[0.98]" onClick={() => void openAddContactModal()}>
-                    <Plus className="h-4 w-4" />
-                    Add contact
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="justify-start gap-2 active:scale-[0.98]"
-                    onClick={() => {
-                      setAddToProjectOpen(true);
-                      setProjectQuery("");
-                      setProjectComboboxOpen(false);
-                      void loadProjects();
-                    }}
-                  >
-                    <Building2 className="h-4 w-4" />
-                    Add to project
-                  </Button>
-                </div>
-              </section>
             </div>
           </aside>
       </div>

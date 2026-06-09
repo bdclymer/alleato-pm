@@ -385,6 +385,30 @@ def _task_extraction_state(doc: dict[str, Any]) -> dict[str, Any]:
     return task_extraction if isinstance(task_extraction, dict) else {}
 
 
+def _compiler_state(doc: dict[str, Any], key: str) -> dict[str, Any]:
+    source_metadata = doc.get("source_metadata")
+    if not isinstance(source_metadata, dict):
+        return {}
+    compiler_state = source_metadata.get(key)
+    return compiler_state if isinstance(compiler_state, dict) else {}
+
+
+def _compiler_owned_task_extraction_skip_reason(doc: dict[str, Any]) -> str | None:
+    doc_type = str(doc.get("type") or "").lower()
+
+    if doc_type == "teams_dm_conversation":
+        status = str(_compiler_state(doc, "teams_compiler").get("status") or "").lower()
+        if status == "compiled":
+            return "teams_compiler_compiled"
+
+    if doc_type == "email":
+        status = str(_compiler_state(doc, "email_compiler").get("status") or "").lower()
+        if status == "compiled":
+            return "email_compiler_compiled"
+
+    return None
+
+
 def _already_processed_for_window(doc: dict[str, Any], since_dt: datetime) -> bool:
     state = _task_extraction_state(doc)
     if state.get("prompt_version") != TASK_EXTRACTION_PROMPT_VERSION:
@@ -539,6 +563,24 @@ def run_task_extraction(
                 since,
             )
             _mark_task_extraction_state(client_db, doc, "skipped_stale_source", source_occurred_at, window_days)
+            continue
+
+        compiler_owned_reason = _compiler_owned_task_extraction_skip_reason(doc)
+        if compiler_owned_reason:
+            skipped += 1
+            logger.info(
+                "[TaskExtraction] Skipping compiler-owned doc %s: reason=%s",
+                doc_id,
+                compiler_owned_reason,
+            )
+            _mark_task_extraction_state(
+                client_db,
+                doc,
+                "skipped_compiler_owned",
+                source_occurred_at,
+                window_days,
+                error_message=compiler_owned_reason,
+            )
             continue
 
         # Skip docs we've already extracted tasks from.

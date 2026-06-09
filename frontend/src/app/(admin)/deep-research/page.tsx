@@ -2,10 +2,16 @@
 
 import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { BookOpen, FileText, RefreshCw, Search } from "lucide-react";
+import { BookOpen, FileText, RefreshCw } from "lucide-react";
 
-import { Button, EmptyState, Input, StatusBadge } from "@/components/ds";
+import {
+  Button,
+  EmptyState,
+  ErrorState,
+  StatusBadge,
+} from "@/components/ds";
 import { PageShell } from "@/components/layout";
+import { ExpandableSearch } from "@/components/tables/unified/table-toolbar";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
@@ -165,30 +171,20 @@ export default function DeepResearchArchivePage() {
     >
       <div className="grid gap-8 xl:grid-cols-[minmax(320px,420px)_1fr]">
         <section className="space-y-4">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-semibold text-foreground">Research projects</h2>
-              <p className="text-sm text-muted-foreground">{projects.length} archived wiki workspaces</p>
-            </div>
-          </div>
-
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
+          <div className="flex justify-end">
+            <ExpandableSearch
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search topics, sessions, and summaries"
-              className="pl-9"
+              onChange={setQuery}
+              placeholder="Search workspaces..."
+              ariaLabel="Search archived research workspaces"
             />
           </div>
 
           {error ? (
-            <div className="rounded-md border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-              {error}
-            </div>
+            <ErrorState title="Couldn't load the archive" description={error} />
           ) : null}
 
-          <div className="divide-y divide-border/60 overflow-hidden rounded-md border border-border/70">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-1">
             {filteredProjects.map((project) => {
               const isSelected = selectedProject?.topicSlug === project.topicSlug && selectedProject?.sessionId === project.sessionId;
               return (
@@ -198,25 +194,29 @@ export default function DeepResearchArchivePage() {
                   variant="ghost"
                   onClick={() => selectProject(project)}
                   className={cn(
-                    "h-auto w-full flex-col items-stretch gap-2 rounded-none px-4 py-3 text-left whitespace-normal hover:bg-muted/40",
-                    isSelected && "bg-muted/60",
+                    "h-auto justify-start whitespace-normal rounded-md border border-border/70 bg-background p-0 text-left transition-colors hover:border-foreground/20 hover:bg-muted/20",
+                    isSelected && "border-foreground/25 bg-muted/30",
                   )}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-foreground">{project.topic}</p>
-                      <p className="text-xs text-muted-foreground">Updated {formatDateTime(project.updatedAt)}</p>
-                    </div>
-                    <StatusBadge status={project.sourceCount > 0 ? "active" : "draft"} />
-                  </div>
-                  <p className="line-clamp-2 text-xs text-muted-foreground">
-                    {project.logSummary ?? "No change-log summary has been recorded yet."}
-                  </p>
-                  <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                    <span>{project.markdownCount} wiki pages</span>
-                    <span>{project.sourceCount} sources</span>
-                    <span>{project.sessionId}</span>
-                  </div>
+                  <span className="flex h-full w-full flex-col gap-4 p-4">
+                    <span className="flex items-start justify-between gap-3">
+                      <span className="min-w-0 space-y-1">
+                        <span className="block truncate text-sm font-medium text-foreground">{project.topic}</span>
+                        <span className="text-xs text-muted-foreground">Updated {formatDateTime(project.updatedAt)}</span>
+                      </span>
+                      <span className="shrink-0">
+                        <StatusBadge status={project.sourceCount > 0 ? "active" : "draft"} />
+                      </span>
+                    </span>
+                    <span className="line-clamp-3 text-xs text-muted-foreground">
+                      {project.logSummary ?? "No change-log summary has been recorded yet."}
+                    </span>
+                    <span className="mt-auto flex flex-wrap gap-3 text-xs text-muted-foreground">
+                      <span>{project.markdownCount} wiki pages</span>
+                      <span>{project.sourceCount} sources</span>
+                      <span className="truncate">{project.sessionId}</span>
+                    </span>
+                  </span>
                 </Button>
               );
             })}
@@ -269,9 +269,7 @@ export default function DeepResearchArchivePage() {
                     );
                   })}
                   {!isLoading && artifacts.length === 0 ? (
-                    <div className="p-4 text-sm text-muted-foreground">
-                      Select a research project to load its saved files.
-                    </div>
+                    <div className="p-4 text-sm text-muted-foreground">No saved files in this workspace.</div>
                   ) : null}
                 </div>
 
@@ -293,8 +291,8 @@ export default function DeepResearchArchivePage() {
           ) : (
             <EmptyState
               icon={<BookOpen />}
-              title="Select a research project"
-              description="Choose an archived Deep Agents wiki workspace to inspect its saved sources, wiki pages, and durable query answers."
+              title="No workspace selected"
+              description="Choose a workspace card to inspect its saved sources, wiki pages, and durable answers."
             />
           )}
         </section>

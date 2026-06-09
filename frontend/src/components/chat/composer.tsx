@@ -45,7 +45,7 @@ export function Composer({
   };
 
   return (
-    <div className="border-t border-border bg-background px-4 py-3">
+    <div className="bg-background px-4 py-3">
       <div className="flex items-end gap-2 rounded-2xl border border-border bg-muted/30 px-3 py-2 transition-colors focus-within:border-primary/40 focus-within:bg-background">
         {/* Toolbar icons */}
         <div className="flex shrink-0 items-center gap-0.5 pb-1">

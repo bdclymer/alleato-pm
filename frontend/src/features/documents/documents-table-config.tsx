@@ -47,12 +47,20 @@ export type PipelineDoc = {
   type: string | null;
   category: string | null;
   source: string | null;
+  source_system: string | null;
+  source_web_url: string | null;
   date: string | null;
   created_at: string | null;
+  captured_at: string | null;
   file_path: string | null;
   storage_bucket: string | null;
   url: string | null;
   project_id: number | null;
+  project_name?: string | null;
+  summary: string | null;
+  overview: string | null;
+  participants: string | null;
+  participants_array: string[] | null;
   pipeline_stage: string;
   attempt_count: number;
   last_attempt_at: string | null;
@@ -60,24 +68,56 @@ export type PipelineDoc = {
 };
 
 const SOURCE_FILTER_OPTIONS = [
+  { value: "microsoft_graph", label: "Microsoft (OneDrive/Email)" },
+  { value: "local_filesystem", label: "Local Filesystem" },
+  { value: "manual_upload", label: "Manual Upload" },
   { value: "fireflies", label: "Fireflies" },
-  { value: "upload", label: "Upload" },
-  { value: "local", label: "Local" },
+  { value: "knowledge_upload", label: "Knowledge Upload" },
+  { value: "Zapier", label: "Zapier" },
 ];
 
 const TYPE_FILTER_OPTIONS = [
-  { value: "transcript", label: "Transcript" },
-  { value: "report", label: "Report" },
   { value: "document", label: "Document" },
-  { value: "specification", label: "Specification" },
-  { value: "contract", label: "Contract" },
+  { value: "email_attachment", label: "Email Attachment" },
+  { value: "knowledge-base", label: "Knowledge Base" },
+  { value: "rfi_question", label: "RFI Question" },
+  { value: "rfi_response", label: "RFI Response" },
+  { value: "estimate", label: "Estimate" },
+  { value: "invoice", label: "Invoice" },
+  { value: "change order", label: "Change Order" },
+  { value: "progress report", label: "Progress Report" },
+  { value: "daily report", label: "Daily Report" },
+  { value: "weekly report", label: "Weekly Report" },
+  { value: "procurement log", label: "Procurement Log" },
+  { value: "clarifications", label: "Clarifications" },
+  // Communications types (accessible via explicit filter)
+  { value: "teams_dm", label: "Teams DM" },
+  { value: "teams_dm_conversation", label: "Teams Conversation" },
+  { value: "teams_message", label: "Teams Message" },
+  { value: "email", label: "Email" },
+  { value: "meeting", label: "Meeting" },
 ];
 
 const CATEGORY_FILTER_OPTIONS = [
-  { value: "financial", label: "Financial" },
-  { value: "legal", label: "Legal" },
-  { value: "technical", label: "Technical" },
-  { value: "administrative", label: "Administrative" },
+  { value: "document", label: "Document" },
+  { value: "contract", label: "Contract" },
+  { value: "financial_document", label: "Financial Document" },
+  { value: "knowledge", label: "Knowledge" },
+  { value: "drawing", label: "Drawing" },
+  { value: "specification", label: "Specification" },
+  { value: "budget", label: "Budget" },
+  { value: "commitment", label: "Commitment" },
+  { value: "rfi", label: "RFI" },
+  { value: "submittal", label: "Submittal" },
+  { value: "lein-waiver", label: "Lien Waiver" },
+  { value: "psr", label: "PSR" },
+  { value: "attachment", label: "Attachment" },
+  { value: "change-order", label: "Change Order" },
+  { value: "permit", label: "Permit" },
+  { value: "email", label: "Email" },
+  { value: "teams_message", label: "Teams Message" },
+  { value: "Internal", label: "Internal" },
+  { value: "Interview", label: "Interview" },
 ];
 
 // Column order: View icon | Title | Project | Type | Category | Source | Stage | Created | Error
@@ -112,6 +152,24 @@ export const documentFilters: FilterConfig[] = [
     type: "select",
     options: CATEGORY_FILTER_OPTIONS,
   },
+  {
+    id: "pipeline_stage",
+    label: "Pipeline Stage",
+    type: "select",
+    options: [
+      { value: "done", label: "Complete" },
+      { value: "raw_ingested", label: "Raw Ingested" },
+      { value: "pending", label: "Pending" },
+      { value: "processing", label: "Processing" },
+      { value: "failed", label: "Failed" },
+      { value: "unknown", label: "Unknown" },
+    ],
+  },
+  {
+    id: "date",
+    label: "Date Added",
+    type: "dateRange",
+  },
 ];
 
 export const documentDefaultVisibleColumns = documentColumns
@@ -122,6 +180,8 @@ function stageLabel(stage: string): string {
   switch (stage) {
     case "done":
       return "Complete";
+    case "raw_ingested":
+      return "Raw Ingested";
     case "pending":
       return "Pending";
     case "processing":
@@ -140,6 +200,7 @@ function stageLabel(stage: string): string {
  */
 export function getDocumentViewUrl(doc: PipelineDoc): string | null {
   if (doc.url) return doc.url;
+  if (doc.source_web_url) return doc.source_web_url;
   if (doc.file_path && doc.storage_bucket) {
     return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${doc.storage_bucket}/${doc.file_path}`;
   }
@@ -153,8 +214,10 @@ export function buildDocumentTableColumns(opts?: {
   projectNames?: Map<number, string>;
   projects?: Array<{ id: number; name: string | null }>;
   onEditField?: (docId: string, field: string, value: string) => void;
+  getTitleHref?: (item: PipelineDoc) => string | null;
+  isTitleExternal?: (item: PipelineDoc) => boolean;
 }): TableColumn<PipelineDoc>[] {
-  const { projectNames, projects, onEditField } = opts ?? {};
+  const { projectNames, projects, onEditField, getTitleHref, isTitleExternal } = opts ?? {};
   const handleEdit = (field: string) =>
     onEditField
       ? (item: PipelineDoc, value: string) => onEditField(item.id, field, value)
@@ -184,11 +247,26 @@ export function buildDocumentTableColumns(opts?: {
     // Title
     {
       ...documentColumns[1],
-      render: (item) => (
-        <span className="font-medium">
-          {item.title || "Untitled Document"}
-        </span>
-      ),
+      render: (item) => {
+        const href = getTitleHref?.(item) ?? null;
+        const external = isTitleExternal?.(item) ?? false;
+
+        if (!href) {
+          return <span className="font-medium">{item.title || "Untitled Document"}</span>;
+        }
+
+        return (
+          <a
+            href={href}
+            target={external ? "_blank" : undefined}
+            rel={external ? "noopener noreferrer" : undefined}
+            onClick={(event) => event.stopPropagation()}
+            className="font-medium hover:underline underline-offset-2"
+          >
+            {item.title || "Untitled Document"}
+          </a>
+        );
+      },
       sortValue: (item) => item.title ?? "Untitled",
       sortable: true,
       editable: Boolean(onEditField),
@@ -206,7 +284,7 @@ export function buildDocumentTableColumns(opts?: {
             </span>
           );
         }
-        const name = projectNames?.get(item.project_id);
+        const name = item.project_name ?? projectNames?.get(item.project_id);
         return (
           <span className="text-sm text-muted-foreground">
             {name || `Project #${item.project_id}`}
@@ -236,7 +314,7 @@ export function buildDocumentTableColumns(opts?: {
                 onClick={(e) => e.stopPropagation()}
               >
                 {item.project_id
-                  ? (projectNames?.get(item.project_id) ??
+                  ? (item.project_name ?? projectNames?.get(item.project_id) ??
                     `Project #${item.project_id}`)
                   : "Select project..."}
               </Button>

@@ -7,7 +7,66 @@
 
 ## Current focus
 
-**Status:** Project Assignment Inbox + AI learning loop shipped (branch `claude/project-assignment-dashboard-ai-CjU3F`).
+**Status:** Executive daily brief dramatically improved — financial ground truth layer added, synthesis quality overhauled.
+**Last updated:** 2026-06-09
+**Last worked on by:** Claude Code (executive daily brief — financial pulse + synthesis improvements)
+
+## Executive Daily Brief overhaul (2026-06-09)
+
+### Problem
+The generated brief was "horrible" — no financial numbers, generic communication summaries, mechanical "Start Here" text. The brief had been timing out on synthesis (20s limit for gpt-5.5 reasoning model).
+
+### What was implemented
+Three phases of improvement, all shipped in commit `b6fca56bf`:
+
+**Phase 1 — Financial ground truth layer (highest impact)**
+- New file: `frontend/src/lib/executive/financial-pulse.ts`
+- Queries `acumatica_ar_invoices` (open AR, overdue AR by project) and `acumatica_change_orders` (On Hold COs, 2026 only) from PM APP DB
+- Deterministically builds `BrandonBriefItem` entries for overdue AR and pending COs — these are ALWAYS in the brief regardless of LLM behavior
+- Financial items feed into `needsBrandon` (overdue AR = collections risk) and `importantUpdates` (pending COs)
+- Current data: $4.25M outstanding AR, $2.45M overdue across 9 projects; $260K pending CO revenue across 8 projects
+
+**Phase 2 — Synthesis quality**
+- Inject financial context into both `synthesizeSections` and `enrichBriefSections` prompts so communication items are cross-referenced with real dollar figures
+- Raise RAG similarity threshold 0.25 → 0.35 (reduces low-signal noise)
+- Add today's date to synthesis prompt (anchors relative date references)
+- Raise synthesis timeout 20s → 180s, enrichment 20s → 120s (gpt-5.5 reasoning model needs 2-3 min)
+
+**Phase 3 — Before/after comparison**
+Before: "Start with 1016 GW Kokomo: Goodwill Kokomo zoning path..."
+After: "Start with 760 Exol Wilmer: permitting gates remain open while **$413K is overdue**"
+Top 3 items now: Exol Wilmer ($413K overdue + comms), "$2.45M overdue AR across 9 projects", Uniqlo ($1.03M overdue + field quality risk)
+
+### Key files
+- `frontend/src/lib/executive/financial-pulse.ts` — NEW: AR/CO data layer
+- `frontend/src/lib/executive/brandon-daily-update.ts` — synthesis integration + timeout fixes + similarity threshold
+- `scripts/generate-daily-brief.mts` — updated to display financial pulse in console output
+
+### To re-generate the brief locally (no Teams delivery)
+```bash
+cd frontend && npx tsx --tsconfig tsconfig.json ../scripts/generate-daily-brief.mts
+```
+
+### Production env vars (Vercel)
+`AI_PROVIDER_PATH=openai` — set in Vercel production 29 days ago. This bypasses Vercel AI Gateway (which requires separate credit balance even with BYOK) and routes directly to OpenAI.
+
+## Documents page fixes (2026-06-09)
+
+Three bugs fixed on `http://localhost:3001/documents`:
+
+1. **Load failure** (`/api/documents/status` was fetching all 38k rows with no pagination) → Added server-side filtering + `.range()` pagination (max 500/request). Communications types (teams_dm, teams_message, email, meeting) are now excluded by default.
+2. **Wrong filter options** → Corrected Source, Type, Category options to match actual DB values queried via Supabase. Added Pipeline Stage filter (`done`, `raw_ingested`, `pending`, `processing`, `failed`) and Date Added (dateRange) filter.
+3. **No Teams filter** → Added Teams DM, Teams Conversation, Teams Message to Type filter. When any comms type is explicitly selected the API returns it (bypasses the default exclusion).
+4. **`raw_ingested` not labeled** → Added to `stageLabel()` and Pipeline Stage filter options (was the most common actual value in DB but was unmapped).
+
+Files changed:
+- `frontend/src/app/api/documents/status/route.ts` — server-side filtering + pagination
+- `frontend/src/features/documents/documents-table-config.tsx` — corrected filter options + stageLabel
+- `frontend/src/app/(tables)/documents/page.tsx` — server-side filter wiring + totalDocuments state
+
+---
+
+## Prior focus — Project Assignment Inbox + AI learning loop shipped (branch `claude/project-assignment-dashboard-ai-CjU3F`).
 **Last updated:** 2026-06-08
 **Last worked on by:** Claude Code (assignment inbox + attribution learning loop)
 

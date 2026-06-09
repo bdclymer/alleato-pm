@@ -29,6 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { toast } from "sonner";
 import {
   contactSchema,
@@ -40,7 +42,8 @@ import {
 } from "@/app/(main)/actions/table-actions";
 import { createClient } from "@/lib/supabase/client";
 import { CompanyFormDialog } from "@/components/domain/companies/CompanyFormDialog";
-import { Building2, Plus } from "lucide-react";
+import { Building2, Check, ChevronsUpDown, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Contact {
   id: string | number;
@@ -101,6 +104,7 @@ export function ContactFormSheet({
   const [companies, setCompanies] = React.useState<Company[]>([]);
   const [isLoadingCompanies, setIsLoadingCompanies] = React.useState(false);
   const [companyDialogOpen, setCompanyDialogOpen] = React.useState(false);
+  const [companyPopoverOpen, setCompanyPopoverOpen] = React.useState(false);
 
   const form = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
@@ -331,58 +335,78 @@ export function ContactFormSheet({
                 <FormField
                   control={form.control}
                   name="company_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Company</FormLabel>
-                      <Select
-                        onValueChange={(value) =>
-                          field.onChange(value === "__none" ? "" : value)
-                        }
-                        value={field.value || "__none"}
-                        disabled={isLoadingCompanies}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue
-                              placeholder={
-                                isLoadingCompanies
+                  render={({ field }) => {
+                    const selectedCompany = companies.find((c) => c.id === field.value);
+                    return (
+                      <FormItem>
+                        <FormLabel>Company</FormLabel>
+                        <Popover open={companyPopoverOpen} onOpenChange={setCompanyPopoverOpen}>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                disabled={isLoadingCompanies}
+                                className={cn(
+                                  "w-full justify-between font-normal",
+                                  !field.value && "text-muted-foreground",
+                                )}
+                              >
+                                {isLoadingCompanies
                                   ? "Loading companies..."
-                                  : "Select company"
-                              }
-                            />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="__none">No Company</SelectItem>
-                          <div className="p-2 border-b">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="w-full justify-start text-primary hover:text-primary"
-                              onClick={() => setCompanyDialogOpen(true)}
-                            >
-                              <Plus />
-                              Add New Company
-                            </Button>
-                          </div>
-                          {companies.length === 0 && !isLoadingCompanies ? (
-                            <div className="p-4 text-center text-sm text-muted-foreground">
-                              <Building2 className="mx-auto h-8 w-8 mb-2 opacity-50" />
-                              No companies yet. Create one above.
-                            </div>
-                          ) : (
-                            companies.map((company) => (
-                              <SelectItem key={company.id} value={company.id}>
-                                {company.name}
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                                  : selectedCompany?.name ?? "Select company"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            className="p-0"
+                            align="start"
+                            style={{ width: "var(--radix-popover-trigger-width)" }}
+                          >
+                            <Command>
+                              <CommandInput placeholder="Search companies..." />
+                              <CommandList>
+                                <CommandEmpty>No companies found.</CommandEmpty>
+                                <CommandGroup>
+                                  <CommandItem
+                                    value="__none"
+                                    onSelect={() => { field.onChange(""); setCompanyPopoverOpen(false); }}
+                                  >
+                                    <Check className={cn("mr-2 h-4 w-4", !field.value ? "opacity-100" : "opacity-0")} />
+                                    No Company
+                                  </CommandItem>
+                                  {companies.map((company) => (
+                                    <CommandItem
+                                      key={company.id}
+                                      value={company.name}
+                                      onSelect={() => { field.onChange(company.id); setCompanyPopoverOpen(false); }}
+                                    >
+                                      <Check className={cn("mr-2 h-4 w-4", field.value === company.id ? "opacity-100" : "opacity-0")} />
+                                      {company.name}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                                <div className="border-t p-1">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full justify-start text-primary hover:text-primary"
+                                    onClick={() => { setOpen(false); setCompanyDialogOpen(true); }}
+                                  >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Add New Company
+                                  </Button>
+                                </div>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
                 <div className="grid grid-cols-2 gap-4">

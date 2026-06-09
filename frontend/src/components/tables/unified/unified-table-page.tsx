@@ -2,6 +2,24 @@
 
 import * as React from "react";
 import type { ReactElement, ReactNode } from "react";
+import {
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
+import {
+  SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
 import { cn } from "@/lib/utils";
@@ -72,6 +90,7 @@ import {
   MoreVertical,
   PanelRightClose,
   PanelRightOpen,
+  Pencil,
   Pin,
   PinOff,
   Trash2,
@@ -142,6 +161,60 @@ function areStringArraysEqual(left: string[], right: string[]): boolean {
     if (left[index] !== right[index]) return false;
   }
   return true;
+}
+
+type SortableHandleProps = {
+  attributes: ReturnType<typeof useSortable>["attributes"];
+  listeners: ReturnType<typeof useSortable>["listeners"];
+  isDragging: boolean;
+};
+
+function SortableColumnHead({
+  id,
+  disabled,
+  className,
+  style,
+  ariaSort,
+  onClick,
+  onContextMenu,
+  children,
+}: {
+  id: string;
+  disabled: boolean;
+  className?: string;
+  style?: React.CSSProperties;
+  ariaSort?: React.AriaAttributes["aria-sort"];
+  onClick?: () => void;
+  onContextMenu?: React.MouseEventHandler<HTMLTableCellElement>;
+  children: (handleProps: SortableHandleProps) => React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({
+      id,
+      disabled,
+    });
+
+  const resolvedStyle: React.CSSProperties = {
+    ...style,
+    transform: CSS.Translate.toString(transform),
+    transition,
+    zIndex: isDragging ? 3 : style?.zIndex,
+    opacity: isDragging ? 0.92 : style?.opacity,
+  };
+
+  return (
+    <TableHead
+      ref={setNodeRef}
+      className={className}
+      style={resolvedStyle}
+      aria-sort={ariaSort}
+      onClick={onClick}
+      onContextMenu={onContextMenu}
+      data-dragging={isDragging ? "true" : "false"}
+    >
+      {children({ attributes, listeners, isDragging })}
+    </TableHead>
+  );
 }
 
 interface TabItem {
@@ -228,6 +301,17 @@ export interface UnifiedTablePageProps<T> {
     columns?: ColumnConfig[];
     visibleColumns?: string[];
     onColumnVisibilityChange?: (columns: string[]) => void;
+    savedViewsDefaults?: {
+      visibleColumns: string[];
+      columnOrder?: string[];
+      columnWidths?: Record<string, number>;
+      sortBy: string | null;
+      sortDirection: SortDirection;
+      filters: Record<
+        string,
+        string | number | boolean | string[] | null | undefined
+      >;
+    };
     onExport?: () => void;
     onBulkDelete?: () => void;
     mobilePanelActions?: ReactNode;
@@ -798,10 +882,6 @@ export function UnifiedTablePage<T>({
     left: table.defaultPinnedLeftColumns ?? [],
     right: table.defaultPinnedRightColumns ?? [],
   }));
-  const [draggedColumnId, setDraggedColumnId] = React.useState<string | null>(
-    null,
-  );
-  const draggedColumnIdRef = React.useRef<string | null>(null);
   const [rowOrderIds, setRowOrderIds] = React.useState<string[]>([]);
   const [draggedRowId, setDraggedRowId] = React.useState<string | null>(null);
   const [editingCell, setEditingCell] = React.useState<{
@@ -1332,14 +1412,14 @@ export function UnifiedTablePage<T>({
   const renderSortIcon = (columnId: string) => {
     if (!effectiveSorting || effectiveSorting.sortBy !== columnId) {
       return (
-        <ChevronDown className="ml-1 h-3 w-3 text-muted-foreground/0 group-hover/th:text-muted-foreground transition-colors" />
+        <ChevronDown className="ml-1 h-3 w-3 text-muted-foreground/0 group-hover/th:text-muted-foreground/55 transition-colors" />
       );
     }
 
     return effectiveSorting.sortDirection === "asc" ? (
-      <ChevronUp className="ml-1 h-3 w-3" />
+      <ChevronUp className="ml-1 h-3 w-3 text-muted-foreground/65" />
     ) : (
-      <ChevronDown className="ml-1 h-3 w-3" />
+      <ChevronDown className="ml-1 h-3 w-3 text-muted-foreground/65" />
     );
   };
 
@@ -1412,23 +1492,21 @@ export function UnifiedTablePage<T>({
     });
   }, []);
 
-  const handleColumnDrop = React.useCallback(
-    (targetColumnId: string) => {
-      const sourceColumnId = draggedColumnIdRef.current ?? draggedColumnId;
-      if (!sourceColumnId || sourceColumnId === targetColumnId) return;
+  const handleColumnDragEnd = React.useCallback(
+    ({ active, over }: DragEndEvent) => {
+      if (!over || active.id === over.id) return;
+
       const currentOrder = orderedVisibleColumns.map((column) => column.id);
-      const oldIndex = currentOrder.indexOf(sourceColumnId);
-      const newIndex = currentOrder.indexOf(targetColumnId);
+      const oldIndex = currentOrder.indexOf(String(active.id));
+      const newIndex = currentOrder.indexOf(String(over.id));
       if (oldIndex < 0 || newIndex < 0) return;
 
-      const reordered = [...currentOrder];
-      const [moved] = reordered.splice(oldIndex, 1);
-      reordered.splice(newIndex, 0, moved);
+      const reordered = arrayMove(currentOrder, oldIndex, newIndex);
       hasUserManagedColumnOrderRef.current = true;
       setColumnOrder(reordered);
       handleColumnVisibilityChange(reordered);
     },
-    [draggedColumnId, handleColumnVisibilityChange, orderedVisibleColumns],
+    [handleColumnVisibilityChange, orderedVisibleColumns],
   );
 
   const handleRowDrop = React.useCallback(
@@ -1464,6 +1542,19 @@ export function UnifiedTablePage<T>({
   );
   const lastLeftPinnedColumnId = visibleLeftPinnedColumnIds.at(-1);
   const firstRightPinnedColumnId = visibleRightPinnedColumnIds[0];
+  const columnDndSensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: { distance: 6 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 120, tolerance: 8 },
+    }),
+    useSensor(KeyboardSensor),
+  );
+  const columnSortableIds = React.useMemo(
+    () => orderedVisibleColumns.map((column) => column.id),
+    [orderedVisibleColumns],
+  );
   const getPinnedStyle = React.useCallback(
     (columnId: string): React.CSSProperties | undefined => {
       if (!resolvedFeatures.enableColumnPinning) return undefined;
@@ -1534,6 +1625,19 @@ export function UnifiedTablePage<T>({
       }
     },
     [inlineEdits],
+  );
+
+  const startInlineEdit = React.useCallback(
+    (item: T, column: TableColumn<T>) => {
+      if (!resolvedFeatures.enableInlineEditing) return;
+      if (!column.editable || !column.editValue) return;
+
+      const rowId = table.getRowId(item);
+      const cellKey = `${rowId}::${column.id}`;
+      setEditingCell({ rowId, columnId: column.id });
+      setEditingValue(inlineEdits[cellKey] ?? column.editValue(item));
+    },
+    [inlineEdits, resolvedFeatures.enableInlineEditing, table],
   );
 
   const rowVirtualizer = useVirtualizer({
@@ -1672,6 +1776,10 @@ export function UnifiedTablePage<T>({
       columns={toolbarColumns}
       visibleColumns={visibleColumns}
       onColumnVisibilityChange={handleColumnVisibilityChange}
+      columnOrder={columnOrder}
+      onColumnOrderChange={setColumnOrder}
+      columnWidths={columnWidths}
+      onColumnWidthsChange={setColumnWidths}
       sortOptions={table.columns.filter((column) => column.sortable !== false)}
       sortBy={effectiveSorting?.sortBy}
       sortDirection={effectiveSorting?.sortDirection}
@@ -1691,17 +1799,19 @@ export function UnifiedTablePage<T>({
       savedViewsScope={toolbar.savedViewsScope}
       savedViewsDefaults={
         toolbar.savedViewsScope
-          ? {
+          ? (toolbar.savedViewsDefaults ?? {
               visibleColumns: toolbarColumns
                 .filter(
                   (column) =>
                     column.defaultVisible !== false || column.alwaysVisible,
                 )
                 .map((column) => column.id),
+              columnOrder: toolbarColumns.map((column) => column.id),
+              columnWidths: {},
               sortBy: effectiveSorting?.sortBy ?? null,
               sortDirection: effectiveSorting?.sortDirection ?? "asc",
               filters: {},
-            }
+            })
           : undefined
       }
     />
@@ -1951,143 +2061,128 @@ export function UnifiedTablePage<T>({
                       </div>
                     </TableHead>
                   )}
-                  {orderedVisibleColumns.map((column) => {
-                    const isSortable =
-                      column.sortable !== false && Boolean(effectiveSorting);
-                    const isHideable = !column.alwaysVisible;
-                    const columnAlignment = column.align ?? headerAlignment;
-                    const width = columnWidths[column.id] ?? column.width;
-                    const isPinnedLeft = columnPinning.left.includes(column.id);
-                    const pinnedStyle = getPinnedStyle(column.id);
-                    const headerPinnedStyle = pinnedStyle ?? undefined;
-                    const columnStyle =
-                      width || headerPinnedStyle
-                        ? ({
-                            width,
-                            minWidth: columnWidths[column.id] ?? undefined,
-                            maxWidth:
-                              column.width && !columnWidths[column.id]
-                                ? column.width
-                                : undefined,
-                            ...headerPinnedStyle,
-                          } as React.CSSProperties)
-                        : undefined;
-                    const hasContextActions =
-                      isSortable ||
-                      isHideable ||
-                      resolvedFeatures.enableColumnPinning;
-                    const dragHandle = resolvedFeatures.enableColumnReorder ? (
-                      <span
-                        draggable
-                        aria-label={`Drag ${column.label} column`}
-                        title="Drag to reorder column"
-                        className="inline-flex h-4 w-3 shrink-0 cursor-grab items-center justify-center text-muted-foreground/45 opacity-0 transition-[color,opacity] hover:text-muted-foreground group-hover/th:opacity-100 group-focus-within/th:opacity-100 active:cursor-grabbing"
-                        onClick={(event) => event.stopPropagation()}
-                        onMouseDown={(event) => event.stopPropagation()}
-                        onDragStart={(event) => {
-                          event.stopPropagation();
-                          event.dataTransfer.effectAllowed = "move";
-                          event.dataTransfer.setData("text/plain", column.id);
-                          draggedColumnIdRef.current = column.id;
-                          setDraggedColumnId(column.id);
-                        }}
-                        onDragEnd={(event) => {
-                          event.stopPropagation();
-                          draggedColumnIdRef.current = null;
-                          setDraggedColumnId(null);
-                        }}
-                      >
-                        <GripVertical
-                          className="h-3.5 w-3.5"
-                          aria-hidden="true"
-                        />
-                      </span>
-                    ) : null;
-                    return (
-                      <TableHead
-                        key={column.id}
-                        className={cn(
-                          "relative align-middle",
-                          columnAlignment === "right"
-                            ? "text-right"
-                            : columnAlignment === "center"
-                              ? "text-center"
-                              : "text-left",
-                          isSortable && "cursor-pointer select-none group/th",
-                        )}
-                        aria-sort={
-                          isSortable
-                            ? effectiveSorting?.sortBy === column.id
-                              ? effectiveSorting.sortDirection === "asc"
-                                ? "ascending"
-                                : "descending"
-                              : "none"
-                            : undefined
-                        }
-                        style={columnStyle}
-                        onDragOver={(event) => {
-                          if (!resolvedFeatures.enableColumnReorder) return;
-                          if (!draggedColumnIdRef.current && !draggedColumnId)
-                            return;
-                          event.preventDefault();
-                        }}
-                        onDrop={() => {
-                          if (!resolvedFeatures.enableColumnReorder) return;
-                          if (!draggedColumnIdRef.current && !draggedColumnId)
-                            return;
-                          handleColumnDrop(column.id);
-                          draggedColumnIdRef.current = null;
-                          setDraggedColumnId(null);
-                        }}
-                        onClick={() => {
-                          if (isSortable) {
-                            handleSortClick(column.id);
-                          }
-                        }}
-                        onContextMenu={(e) => {
-                          if (!isHideable) return;
-                          e.preventDefault();
-                          const btn =
-                            e.currentTarget.querySelector<HTMLButtonElement>(
-                              "button[type='button']",
-                            );
-                          btn?.click();
-                        }}
-                      >
-                        {hasContextActions ? (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                className={cn(
-                                  "h-auto gap-1.5 p-0 has-[>svg]:px-0 font-medium uppercase tracking-wide",
-                                  "text-xs",
-                                  "w-full",
-                                  "text-muted-foreground hover:bg-transparent hover:text-foreground focus-visible:ring-0 data-[state=open]:bg-transparent data-[state=open]:text-foreground",
-                                  columnAlignment === "right"
-                                    ? "justify-end"
-                                    : columnAlignment === "center"
-                                      ? "justify-center"
-                                      : "justify-start",
-                                )}
-                                onContextMenu={(event) => {
-                                  event.preventDefault();
-                                  event.currentTarget.click();
-                                }}
-                              >
-                                {columnAlignment !== "right" && dragHandle}
-                                {isSortable &&
-                                  columnAlignment === "right" &&
-                                  renderSortIcon(column.id)}
-                                <span>{column.label}</span>
-                                {isSortable &&
-                                  columnAlignment !== "right" &&
-                                  renderSortIcon(column.id)}
-                                {columnAlignment === "right" && dragHandle}
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start">
+                  <DndContext
+                    sensors={columnDndSensors}
+                    collisionDetection={closestCenter}
+                    modifiers={[restrictToHorizontalAxis]}
+                    onDragEnd={handleColumnDragEnd}
+                  >
+                    <SortableContext
+                      items={columnSortableIds}
+                      strategy={horizontalListSortingStrategy}
+                    >
+                      {orderedVisibleColumns.map((column) => {
+                        const isSortable =
+                          column.sortable !== false && Boolean(effectiveSorting);
+                        const isHideable = !column.alwaysVisible;
+                        const columnAlignment = column.align ?? headerAlignment;
+                        const width = columnWidths[column.id] ?? column.width;
+                        const headerPinnedStyle = getPinnedStyle(column.id) ?? undefined;
+                        const columnStyle =
+                          width || headerPinnedStyle
+                            ? ({
+                                width,
+                                minWidth: columnWidths[column.id] ?? undefined,
+                                maxWidth:
+                                  column.width && !columnWidths[column.id]
+                                    ? column.width
+                                    : undefined,
+                                ...headerPinnedStyle,
+                              } as React.CSSProperties)
+                            : undefined;
+                        const hasContextActions =
+                          isSortable ||
+                          isHideable ||
+                          resolvedFeatures.enableColumnPinning;
+
+                        return (
+                          <SortableColumnHead
+                            key={column.id}
+                            id={column.id}
+                            disabled={!resolvedFeatures.enableColumnReorder}
+                            className={cn(
+                              "relative align-middle data-[dragging=true]:shadow-sm",
+                              columnAlignment === "right"
+                                ? "text-right"
+                                : columnAlignment === "center"
+                                  ? "text-center"
+                                  : "text-left",
+                              isSortable && "cursor-pointer select-none group/th",
+                            )}
+                            ariaSort={
+                              isSortable
+                                ? effectiveSorting?.sortBy === column.id
+                                  ? effectiveSorting.sortDirection === "asc"
+                                    ? "ascending"
+                                    : "descending"
+                                  : "none"
+                                : undefined
+                            }
+                            style={columnStyle}
+                            onClick={() => {
+                              if (isSortable) {
+                                handleSortClick(column.id);
+                              }
+                            }}
+                            onContextMenu={(e) => {
+                              if (!isHideable) return;
+                              e.preventDefault();
+                              const btn =
+                                e.currentTarget.querySelector<HTMLButtonElement>(
+                                  "button[type='button']",
+                                );
+                              btn?.click();
+                            }}
+                          >
+                            {({ attributes, listeners }) => {
+                              const dragHandle = resolvedFeatures.enableColumnReorder ? (
+                                <span
+                                  {...attributes}
+                                  {...listeners}
+                                  aria-label={`Drag ${column.label} column`}
+                                  title="Drag to reorder column"
+                                  className="ml-1 inline-flex h-4 w-4 shrink-0 cursor-grab items-center justify-center rounded-sm text-muted-foreground/40 opacity-0 transition-[color,opacity] hover:text-muted-foreground group-hover/th:opacity-100 group-focus-within/th:opacity-100 active:cursor-grabbing"
+                                  onClick={(event) => event.stopPropagation()}
+                                >
+                                  <GripVertical
+                                    className="h-3.5 w-3.5"
+                                    aria-hidden="true"
+                                  />
+                                </span>
+                              ) : null;
+
+                              return (
+                                <>
+                                  {hasContextActions ? (
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button
+                                          type="button"
+                                          variant="ghost"
+                                          className={cn(
+                                            "h-auto gap-1.5 p-0 has-[>svg]:px-0 font-medium uppercase tracking-wide",
+                                            "text-xs",
+                                            "w-full",
+                                            "text-muted-foreground hover:bg-transparent hover:text-foreground focus-visible:ring-0 data-[state=open]:bg-transparent data-[state=open]:text-foreground",
+                                            columnAlignment === "right"
+                                              ? "justify-end"
+                                              : columnAlignment === "center"
+                                                ? "justify-center"
+                                                : "justify-start",
+                                          )}
+                                          onContextMenu={(event) => {
+                                            event.preventDefault();
+                                            event.currentTarget.click();
+                                          }}
+                                        >
+                                          <span className="min-w-0 truncate">
+                                            {column.label}
+                                          </span>
+                                          {isSortable && renderSortIcon(column.id)}
+                                          {dragHandle}
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="start">
                               {isSortable && (
                                 <>
                                   <DropdownMenuItem
@@ -2156,35 +2251,41 @@ export function UnifiedTablePage<T>({
                                   </DropdownMenuItem>
                                 </>
                               )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        ) : (
-                          <div
-                            className={cn(
-                              "flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground",
-                              "w-full",
-                              columnAlignment === "right"
-                                ? "justify-end"
-                                : columnAlignment === "center"
-                                  ? "justify-center"
-                                  : "justify-start",
-                            )}
-                          >
-                            {columnAlignment !== "right" && dragHandle}
-                            <span>{column.label}</span>
-                            {columnAlignment === "right" && dragHandle}
-                          </div>
-                        )}
-                        <div
-                          className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none hover:bg-border active:bg-primary/40 transition-colors"
-                          onMouseDown={(event) =>
-                            handleColumnResizeStart(event, column.id)
-                          }
-                          aria-hidden="true"
-                        />
-                      </TableHead>
-                    );
-                  })}
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
+                                  ) : (
+                                    <div
+                                      className={cn(
+                                        "flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground",
+                                        "w-full",
+                                        columnAlignment === "right"
+                                          ? "justify-end"
+                                          : columnAlignment === "center"
+                                            ? "justify-center"
+                                            : "justify-start",
+                                      )}
+                                    >
+                                      <span className="min-w-0 truncate">
+                                        {column.label}
+                                      </span>
+                                      {dragHandle}
+                                    </div>
+                                  )}
+                                  <div
+                                    className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none hover:bg-border active:bg-primary/40 transition-colors"
+                                    onMouseDown={(event) =>
+                                      handleColumnResizeStart(event, column.id)
+                                    }
+                                    aria-hidden="true"
+                                  />
+                                </>
+                              );
+                            }}
+                          </SortableColumnHead>
+                        );
+                      })}
+                    </SortableContext>
+                  </DndContext>
                   {hasRowActions && (
                     <TableHead
                       className={cn(
@@ -2333,22 +2434,12 @@ export function UnifiedTablePage<T>({
                                 } as React.CSSProperties)
                               : undefined
                           }
-                          onClick={(event) => {
-                            if (!resolvedFeatures.enableInlineEditing) return;
-                            if (!column.editable || !column.editValue) return;
-                            event.stopPropagation();
-                            const rowId = table.getRowId(item);
-                            const cellKey = `${rowId}::${column.id}`;
-                            setEditingCell({ rowId, columnId: column.id });
-                            setEditingValue(
-                              inlineEdits[cellKey] ?? column.editValue(item),
-                            );
-                          }}
                           className={cn(
+                            "group/cell relative",
                             resolvedFeatures.enableInlineEditing &&
                               column.editable &&
                               column.editValue
-                              ? "cursor-text hover:bg-muted/60 transition-colors"
+                              ? "hover:bg-muted/60 transition-colors"
                               : "",
                           )}
                         >
@@ -2417,6 +2508,27 @@ export function UnifiedTablePage<T>({
                                 }}
                               />
                             )
+                          ) : resolvedFeatures.enableInlineEditing &&
+                            column.editable &&
+                            column.editValue ? (
+                            <>
+                              <div className="pr-7">{column.render(item)}</div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 rounded-sm text-muted-foreground/55 opacity-0 transition-opacity hover:text-foreground group-hover/cell:opacity-100 focus-visible:opacity-100"
+                                aria-label={`Edit ${column.label}`}
+                                title={`Edit ${column.label}`}
+                                data-row-interactive="true"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  startInlineEdit(item, column);
+                                }}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                            </>
                           ) : (
                             column.render(item)
                           )}

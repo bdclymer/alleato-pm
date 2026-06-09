@@ -220,6 +220,7 @@ export interface UseMeetingsTableResult {
   handleSelectRow: (id: string, checked: boolean) => void;
   handleOpenSource: (meeting: Meeting) => void;
   handleOpenRecording: (meeting: Meeting) => void;
+  handleDownloadTranscriptPdf: (meeting: Meeting) => void;
   handleExport: () => void;
 }
 
@@ -804,6 +805,72 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     }
   };
 
+  const handleDownloadTranscriptPdf = (meeting: Meeting) => {
+    const markdown = meeting.content?.trim() ?? meeting.summary?.trim() ?? "";
+    if (!markdown) {
+      toast.info("No transcript available for this meeting");
+      return;
+    }
+
+    const dateLabel = meeting.date
+      ? new Date(meeting.date).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+      : "";
+    const title = meeting.title ?? "Meeting Transcript";
+
+    // Escape for use inside <title> tag only
+    const safeTitle = title.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    // Convert markdown to HTML using the marked library loaded via dynamic import
+    import("marked").then(({ marked }) => {
+      const bodyHtml = marked(markdown) as string;
+
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>${safeTitle}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.6; color: #111; padding: 48px 56px; max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .meta { font-size: 12px; color: #666; margin-bottom: 32px; }
+    h2 { font-size: 15px; font-weight: 600; margin: 24px 0 8px; }
+    h3 { font-size: 13px; font-weight: 600; margin: 16px 0 6px; }
+    p { margin: 0 0 10px; }
+    ul, ol { margin: 0 0 10px 20px; }
+    li { margin-bottom: 3px; }
+    pre { background: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto; font-size: 12px; margin: 0 0 10px; }
+    code { background: #f5f5f5; padding: 1px 4px; border-radius: 3px; font-size: 12px; }
+    pre code { background: none; padding: 0; }
+    blockquote { border-left: 3px solid #ddd; padding-left: 12px; color: #555; margin: 0 0 10px; }
+    hr { border: none; border-top: 1px solid #eee; margin: 20px 0; }
+    @media print { body { padding: 0; } }
+  </style>
+</head>
+<body>
+  <h1>${safeTitle}</h1>
+  ${dateLabel ? `<p class="meta">${dateLabel}</p>` : ""}
+  ${bodyHtml}
+  <script>window.onload = () => { window.print(); };<\/script>
+</body>
+</html>`;
+
+      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const printWindow = window.open(url, "_blank");
+      if (!printWindow) {
+        toast.error("Could not open print window. Please allow pop-ups for this site.");
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    }).catch(() => {
+      toast.error("Failed to generate PDF");
+    });
+  };
+
   const handleExport = () => {
     if (sortedMeetings.length === 0) {
       toast.info("No meetings to export");
@@ -876,6 +943,7 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     handleSelectRow,
     handleOpenSource,
     handleOpenRecording,
+    handleDownloadTranscriptPdf,
     handleExport,
   };
 }

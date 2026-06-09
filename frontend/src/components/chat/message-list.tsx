@@ -125,7 +125,7 @@ export function MessageList({
 
   return (
     <ScrollArea ref={scrollRef} className="h-full">
-      <div className="space-y-0.5 px-3 py-4">
+      <div className="space-y-0.5 px-3 pb-4 pt-2">
         {groupedMessages.map((message) => (
           <div key={message.id}>
             {message.showDate ? <DateDivider label={message.dateLabel ?? ""} /> : null}

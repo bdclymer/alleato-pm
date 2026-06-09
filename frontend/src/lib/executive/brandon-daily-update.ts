@@ -13,7 +13,6 @@ import {
 import { getExecutiveBriefBullets } from "@/lib/executive/executive-brief-bullets";
 import {
   type FinancialPulseData,
-  financialPulseToSynthesisContext,
   loadFinancialPulse,
 } from "@/lib/executive/financial-pulse";
 
@@ -71,7 +70,9 @@ export type ExecutiveOperatingBrief = {
   lowerPriorityMomentum: ExecutiveOperatingBriefShortItem[];
 };
 
-export const DEFAULT_EXECUTIVE_WINDOW_DAYS = 1;
+// The Daily Brief looks back 3 business days (weekends skipped). This keeps a
+// Monday brief anchored to the prior Thu/Fri without pulling in week-old noise.
+export const DEFAULT_EXECUTIVE_WINDOW_DAYS = 3;
 export const DEFAULT_EXECUTIVE_BRIEFING_SYNTHESIS_MODEL = "gpt-5.5";
 
 export type BriefCitation = {
@@ -508,11 +509,42 @@ function getEasternDateKey(value: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+const EASTERN_WEEKDAY_INDEX: Record<string, number> = {
+  Sun: 0,
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6,
+};
+
+function easternWeekdayIndex(date: Date): number {
+  const label = new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    timeZone: "America/New_York",
+  }).format(date);
+  return EASTERN_WEEKDAY_INDEX[label] ?? 1;
+}
+
+// Returns the start-of-window date key, counting back `windowDays` BUSINESS days
+// (Mon–Fri) from today in Eastern time and skipping weekends. The window covers
+// the last N business days so a Monday brief still includes the prior Thursday
+// and Friday instead of dragging in week-old, no-longer-relevant noise.
 function getWindowStartDateKey(windowDays: number): string {
-  const end = new Date();
-  const start = new Date(end);
-  start.setDate(end.getDate() - Math.max(windowDays - 1, 0));
-  return getEasternDateKey(start);
+  const target = Math.max(windowDays, 1);
+  const cursor = new Date();
+  let counted = 0;
+  for (let guard = 0; guard < 31; guard += 1) {
+    const day = easternWeekdayIndex(cursor);
+    const isBusinessDay = day !== 0 && day !== 6;
+    if (isBusinessDay) {
+      counted += 1;
+      if (counted >= target) break;
+    }
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return getEasternDateKey(cursor);
 }
 
 export function getRecencyAnchor(row: RecentSourceRow): string | null {
@@ -1645,6 +1677,60 @@ function buildFinancialBriefItems(
   return sections;
 }
 
+// Accounting money-owed language is excluded from the Daily Brief until the
+// Acumatica feed is trusted again (product decision, 2026-06). The synthesis
+// prompt forbids it, but we also strip it here so it can never leak into a
+// shipped brief even if the model ignores the instruction.
+const ACCOUNTING_SENTENCE_PATTERN =
+  /\b(accounts?\s+receivable|accounts?\s+payable|a\/?r\b|a\/?p\b|days?\s+past\s+due|past\s+due|overdue|outstanding\s+(?:ar|a\/r|balance|invoice|invoices)|invoice\s+aging|\baging\b|collections?|amount[s]?\s+owed|\bowed\b)\b/i;
+
+function dropAccountingClauses(value: string | undefined): string | undefined {
+  if (!value) return value;
+  const clauses = value
+    .split(/;\s*/)
+    .map((clause) => clause.trim())
+    .filter((clause) => clause && !ACCOUNTING_SENTENCE_PATTERN.test(clause));
+  let rejoined = clauses.join("; ").trim();
+  // A leftover that is too short to be a real fact (e.g. an orphaned "blocker
+  // is the water leak.") is not worth keeping on its own.
+  if (rejoined.replace(/[.;,\s]+$/, "").length < 15) return undefined;
+  // Re-capitalize if stripping a leading clause left a lowercase fragment.
+  rejoined = rejoined.charAt(0).toUpperCase() + rejoined.slice(1);
+  return rejoined;
+}
+
+function stripAccountingFromItem(
+  item: BrandonBriefItem | null,
+): BrandonBriefItem | null {
+  if (!item) return null;
+  const bullets = (item.bullets ?? [])
+    .map((bullet) => dropAccountingClauses(bullet))
+    .filter((bullet): bullet is string => Boolean(bullet));
+  const evidenceFacts = (item.evidenceFacts ?? []).filter(
+    (fact) => !ACCOUNTING_SENTENCE_PATTERN.test(fact),
+  );
+  const whyItMatters = dropAccountingClauses(item.whyItMatters);
+  // A brief item with no surviving bullets is not worth showing. Pure
+  // accounts-receivable/overdue items collapse to zero bullets here and are
+  // dropped entirely; mixed items keep their non-accounting substance.
+  if (bullets.length === 0) return null;
+  return { ...item, bullets, evidenceFacts, whyItMatters };
+}
+
+function sanitizeAccountingSections(
+  sections: BrandonDailyUpdatePacket["sections"],
+): BrandonDailyUpdatePacket["sections"] {
+  const clean = (items: BrandonBriefItem[]) =>
+    items
+      .map(stripAccountingFromItem)
+      .filter((item): item is BrandonBriefItem => item !== null);
+  return {
+    needsBrandon: clean(sections.needsBrandon),
+    waitingOnOthers: clean(sections.waitingOnOthers),
+    importantUpdates: clean(sections.importantUpdates),
+  };
+}
+
 async function synthesizeSections(
   sections: BrandonDailyUpdatePacket["sections"],
   financialPulse: FinancialPulseData | null,
@@ -1687,35 +1773,51 @@ async function synthesizeSections(
     sourceDate: item.date,
     status: item.status,
     owner: item.owner,
-    evidence: item.evidence ?? item.summary,
+    evidence: compactCompleteText(
+      [item.summary, item.evidence]
+        .map((value) => normalizeText(value))
+        .filter((value, idx, arr) => value && arr.indexOf(value) === idx)
+        .join(" "),
+      900,
+    ),
     existingCitationCount: item.citations.length,
   }));
 
   const system =
-    "You write a daily executive business brief from an AI business strategist to Brandon, owner of Alleato Group, a commercial construction company. " +
-    "Today is " + todayLabel + ". Use this date whenever you write 'today', 'this week', or other relative references. " +
-    "Do not refer to Brandon in the third person. Prefer direct facts and, only when needed, 'you'. " +
-    "Turn raw communication excerpts and financial data into clear business intelligence. Do not copy truncated excerpts verbatim. " +
-    "Use concrete names, dates, quantities, blockers, and commitments. " +
-    "When using relative dates such as next Wednesday, include the exact calendar date in the same sentence. " +
-    "Do not inject Acumatica AR/AP aging, money-due, cash-flow, or collections figures into this brief. Those accounting signals are temporarily excluded from the Daily Brief until the accounting feed is trusted again. " +
-    "If a communication source is too vague or generic to be useful, exclude it. " +
-    "CRITICAL - cross-source synthesis: when multiple candidates describe the same underlying issue (same project + same vendor/contract/topic, even from different sources like an email + a meeting + a Teams thread), MERGE them into a single item and list ALL relevant candidate indexes in sourceIndexes. Each candidate index may appear in only one item across the whole output, but each item may cite multiple indexes. Prefer corroborated multi-source items over single-source items. " +
-    "Use needsBrandon only when the evidence shows a decision, confirmation, commitment, money/risk issue, or escalation that belongs at owner level. " +
-    "Use waitingOnOthers for project-team, client, vendor, estimating, finance, or design inputs that are pending. " +
-    "Return ONLY valid JSON with keys needsBrandon, waitingOnOthers, importantUpdates. " +
-    "Each item must include: title, summary, evidenceFacts, bullets, recommendedAction, whyItMatters, sourceIndexes (array of integers, ordered most-relevant first — use [] for financial-only items), status, tone. " +
-    "Owner-facing summaries are NOT paragraphs: bullets must contain 3 to 5 concise executive bullets. Each bullet must include the key business impact, deadline/date when present, and blocker or decision needed when present. " +
-    "evidenceFacts must be a concise bulleted fact list synthesized from all selected sources. Use direct facts with names, dates, dollars, blockers, and commitments. Do not include unsupported facts. " +
-    "Titles should be specific, not bucket names. Bullets should be short facts, not paragraphs or run-on prose. " +
-    "Tone must be one of risk, watch, good, neutral.";
+    "You are Brandon's trusted operating partner. Brandon owns Alleato Group, a commercial construction company. You write his daily brief. He is busy and practical. He wants to know what is going on, what it means, what needs his decision, and who owns the next step. " +
+    "Today is " + todayLabel + ". Use this exact date whenever you write 'today', 'this week', or 'Friday'. Write the exact calendar date next to any day name, for example 'Friday, June 12'. " +
+    "\n\nHOW TO WRITE (this matters more than anything):\n" +
+    "- Write in plain, everyday English. Short, complete sentences. Imagine explaining it out loud to a smart person who is not in the meeting.\n" +
+    "- NO jargon, buzzwords, or metaphors. Never write words like 'operationally steady', 'cadence', 'bandwidth', 'margin exposure', 'nudge', 'leverage', 'optionality'. Just say the plain thing.\n" +
+    "- The FIRST time you use any construction or business acronym (BZA, RFI, COI, UCC, PCO, CO, GC, TI, AHU), spell it out in parentheses right after it. Example: 'BZA (Board of Zoning Appeals)'.\n" +
+    "- Every sentence must be complete and make sense on its own. Never split a number across two sentences. Write '7.7 feet', never '7.' then '7 feet'.\n" +
+    "- NEVER paste raw text from the source. The evidence you are given may be cut off mid-word or mid-number. If a fact looks incomplete or you are not sure of it, leave it out. Only state things you are confident are complete and correct.\n" +
+    "- Do not repeat the same fact twice. Every bullet must add something new.\n" +
+    "\n\nWHAT EACH ITEM NEEDS:\n" +
+    "- title: a short, plain headline that describes the actual situation in everyday words (not a category name). Example: 'A city permit deadline this Friday could slip'.\n" +
+    "- bullets: 2 to 4 bullets. Each one is a single plain, complete sentence stating one concrete fact — who, what, the number or date, and the blocker or decision if there is one. KEEP THE EXACT SPECIFICS from the evidence: real measurements (e.g. '7.7 feet from the power lines'), distances, quantities, named deadlines, calendar dates, and dollar amounts that are NOT accounts-receivable. Never blur a specific number into vague wording — write '7.7 feet from the power lines', not 'near the power lines'; write 'the July 7 BZA hearing', not 'an upcoming hearing'. Keep each bullet under 35 words. Do NOT use scaffolding phrases like 'business impact is', 'decision needed is', 'blocker is', or 'status is' — just say the fact plainly. Do not write more than 4 bullets. Do not pad or repeat.\n" +
+    "- whyItMatters: exactly ONE plain sentence that names the specific risk, deadline, or decision and its concrete consequence. Use the real names, numbers, and dates — e.g. 'If Duke Energy does not confirm the setback before the June 12 filing, the July 7 BZA hearing slips.' NEVER write vague filler like 'staying on schedule matters', 'a clear list will help', or 'this needs coordination'. If the evidence is thin, name what is confirmed and the one specific thing to check. This is the one place you add judgment — make it concrete and useful.\n" +
+    "- recommendedAction: one plain sentence naming who should do what next.\n" +
+    "- summary: one plain sentence describing the item.\n" +
+    "- evidenceFacts: 2 to 4 plain factual sentences pulled only from the given evidence. No invented facts.\n" +
+    "- sourceIndexes: array of the candidate index numbers this item is built from, most relevant first.\n" +
+    "- status: a short plain status phrase. tone: one of risk, watch, good, neutral.\n" +
+    "\n\nJUDGMENT:\n" +
+    "- needsBrandon: only things Brandon personally has to decide, approve, confirm, or escalate. Keep this short and real.\n" +
+    "- waitingOnOthers: work that is pending on the project team, a client, a vendor, estimating, finance, or design.\n" +
+    "- importantUpdates: material context worth knowing that needs no action from Brandon today.\n" +
+    "- When several candidates are about the same project and same issue (even from a different email, meeting, or Teams thread), MERGE them into one item and list every candidate index in sourceIndexes. Each candidate index may be used in only one item.\n" +
+    "- Think like an owner: connect the dots. If a budget problem is really a missing-decision problem, or a late drawing is becoming a trust problem, say so plainly in whyItMatters.\n" +
+    "- HARD RULE — leave out all accounting money figures: do NOT mention accounts receivable (AR), accounts payable (AP), overdue balances, amounts owed, days past due, invoice aging, cash flow, or collections ANYWHERE — not in a title, bullet, summary, evidence fact, or the 'what this means' line. If a source's only substance is money owed or overdue, drop it entirely. (Pending change-order scope is fine; dollar balances owed are not.)\n" +
+    "- If a source is too vague to be useful, leave it out entirely.\n" +
+    "\nReturn ONLY valid JSON with keys needsBrandon, waitingOnOthers, importantUpdates, each an array of item objects.";
 
   const user =
-    "Create the Daily Brief using the Brandon audience preset. " +
-    "Include every material Brandon-specific decision, blocker, schedule risk, customer issue, vendor issue, accountability gap, or executive move that the owner must personally understand or handle today. " +
-    "Start with Brandon's top priorities. needsBrandon is the short list of things Brandon specifically has to handle, approve, decide, confirm, or escalate. " +
-    "Do not include accounting-aging or money-due items sourced from Acumatica in this brief.\n" +
-    "\n\nCOMMUNICATION SOURCE CANDIDATES:\n" +
+    "Write today's brief for Brandon from the source candidates below. " +
+    "Lead with what genuinely needs his decision today, then what is waiting on other people, then context worth knowing. " +
+    "Be honest about how much needs his attention — if it is a quiet day, a short brief is correct. Do not manufacture urgency. " +
+    "Remember: plain language, complete sentences, spell out acronyms, one useful insight sentence per item in whyItMatters, and never paste cut-off source text.\n" +
+    "\n\nSOURCE CANDIDATES:\n" +
     JSON.stringify(candidatePayload, null, 2);
 
   try {
@@ -1742,16 +1844,19 @@ async function synthesizeSections(
           .map((item) =>
             normalizeSynthesizedItem(item, candidates, usedSourceIndexes),
           )
+          .map(stripAccountingFromItem)
           .filter((item): item is BrandonBriefItem => item !== null),
         waitingOnOthers: (parsed.waitingOnOthers ?? [])
           .map((item) =>
             normalizeSynthesizedItem(item, candidates, usedSourceIndexes),
           )
+          .map(stripAccountingFromItem)
           .filter((item): item is BrandonBriefItem => item !== null),
         importantUpdates: (parsed.importantUpdates ?? [])
           .map((item) =>
             normalizeSynthesizedItem(item, candidates, usedSourceIndexes),
           )
+          .map(stripAccountingFromItem)
           .filter((item): item is BrandonBriefItem => item !== null),
       },
       modelUsed: synthesisModel,
@@ -2343,25 +2448,25 @@ async function enrichBriefSections(
     timeZone: "America/New_York",
   }).format(new Date());
 
-  const financialContext = financialPulse
-    ? "\n\n" + financialPulseToSynthesisContext(financialPulse) + "\n"
-    : "";
-
   const system =
-    "You turn executive briefing source evidence into usable operating intelligence. " +
-    "Today is " + todayLabel + ". " +
-    "Use only the supplied citation evidence and financial ground truth data. Do not invent, infer beyond the evidence, or add placeholder facts. " +
-    "For each item, write one tighter summary, 3 to 5 owner-facing bullets, 3 to 6 evidenceFacts, one recommendedAction, and whyItMatters. " +
-    "When an item relates to a project that appears in the financial ground truth, include the exact dollar figures (AR balance, overdue amount, CO value) in the evidenceFacts and bullets. " +
-    "Owner-facing bullets are the product contract: no paragraph summaries, no run-on prose, and each bullet must carry business impact plus deadline/date and blocker/decision when present. " +
-    "Evidence facts must synthesize across all citations for the same item and remove repeated wording. " +
-    "Prefer concrete names, dates, dollar amounts, projects, blockers, commitments, and owner/action state. " +
+    "You refine executive briefing items for Brandon, owner of Alleato Group, a commercial construction company. " +
+    "Today is " + todayLabel + ". Use only the supplied citation evidence. Do not invent or infer beyond it.\n" +
+    "For each item, return a tighter summary, 2 to 4 bullets, 2 to 4 evidenceFacts, one recommendedAction, and one whyItMatters.\n" +
+    "WRITE IN PLAIN ENGLISH — the same rules as the brief itself:\n" +
+    "- Short, complete, everyday sentences. No jargon, buzzwords, or metaphors.\n" +
+    "- Each bullet is one plain statement of a concrete fact (who, what, the number or date, the blocker or decision). Keep each under 35 words.\n" +
+    "- KEEP THE EXACT SPECIFICS from the evidence: measurements (e.g. '7.7 feet from the power lines'), distances, quantities, named deadlines, and calendar dates. Never blur a specific number into vague wording (write '7.7 feet from the power lines', not 'near the power lines'; write 'the July 7 BZA hearing', not 'an upcoming hearing').\n" +
+    "- Do NOT use scaffolding phrases like 'business impact is', 'decision needed is', 'blocker is', or 'status is'. Just state the fact; let the date or blocker sit naturally in the sentence.\n" +
+    "- Spell out any construction or business acronym the first time (e.g. 'BZA (Board of Zoning Appeals)').\n" +
+    "- whyItMatters is exactly ONE plain sentence that names the specific risk, deadline, or decision and its concrete consequence, using the real names/numbers/dates. Never write vague filler like 'staying on schedule matters' or 'a clear list will help'.\n" +
+    "- Never split a number across sentences (write '7.7 feet'). If a detail looks cut off, leave it out.\n" +
+    "- Do NOT mention accounts receivable, accounts payable, overdue balances, amounts owed, days past due, invoice aging, cash flow, or collections anywhere.\n" +
     "If the evidence does not support a fact, omit it. Return ONLY valid JSON.";
   const user =
-    'Enrich these executive briefing items. Return JSON as {"items":[{"section":"needsBrandon|waitingOnOthers|importantUpdates","index":0,"summary":"...","bullets":["..."],"evidenceFacts":["..."],"recommendedAction":"...","whyItMatters":"..."}]}.' +
-    financialContext +
+    'Refine these executive briefing items. Return JSON as {"items":[{"section":"needsBrandon|waitingOnOthers|importantUpdates","index":0,"summary":"...","bullets":["..."],"evidenceFacts":["..."],"recommendedAction":"...","whyItMatters":"..."}]}.' +
     "\n\n" +
     JSON.stringify(payload, null, 2);
+  void financialPulse;
 
   try {
     const result = await withBriefingTimeout(
@@ -2688,7 +2793,13 @@ export async function generateBrandonDailyUpdate(
     : await enrichBriefSections(supportedResult.sections, financialPulse);
   const projectNumberMap = await loadProjectNumberMap();
   const numberedSections = applyProjectNumbers(enrichedResult.sections, projectNumberMap);
-  const sections = enforceExecutiveBriefBullets(numberedSections);
+  // Final guardrail: strip accounts-receivable/overdue/collections language from
+  // the fully-merged, enriched brief — no matter whether it entered via the LLM,
+  // the deterministic financial items, or the merge. AR stays out of the brief
+  // until the Acumatica feed is trusted again (product decision, 2026-06).
+  const sections = sanitizeAccountingSections(
+    enforceExecutiveBriefBullets(numberedSections),
+  );
   const operatingBrief = buildExecutiveOperatingBrief(sections);
   const sourceCoverage = await loadRecentSourceCoverage(cutoffIso);
   const sourceCoverageWarnings = sourceCoverage
@@ -2725,7 +2836,7 @@ export async function generateBrandonDailyUpdate(
       `Executive briefing source of truth: recap_kind=executive_briefing. Backend recap_kind=meeting_digest is the legacy meeting digest and must not be treated as the CEO operating brief.`,
       `Executive synthesis model: ${synthesizedResult.modelUsed}. Override with EXECUTIVE_BRIEFING_SYNTHESIS_MODEL only when the CEO brief intentionally needs a different model.`,
       `Financial pulse: ${financialPulse.totalOutstandingAR > 0 ? `$${Math.round(financialPulse.totalOutstandingAR / 1000)}K total outstanding AR, $${Math.round(financialPulse.totalOverdueAR / 1000)}K overdue across ${financialPulse.arByProject.length} projects; ${financialPulse.pendingCOsByProject.length} projects with pending COs ($${Math.round(financialPulse.totalPendingCORevenue / 1000)}K revenue)` : "No financial data available"}.`,
-      "The briefing window now follows calendar days in Eastern time so day-stamped email and Teams activity is not dropped mid-morning.",
+      "The briefing window covers the last 3 business days in Eastern time (weekends skipped) so a Monday brief still includes the prior Thursday and Friday without dragging in week-old noise.",
       "Financial data from Acumatica ERP (AR invoices, change orders) is treated as authoritative ground truth in the synthesis — these figures cannot be hallucinated.",
       "RAG similarity threshold is 0.35 (raised from 0.25) to reduce low-signal noise.",
       "Low-confidence items are excluded unless they have recent source evidence.",

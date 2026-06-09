@@ -20,6 +20,7 @@ const updateSchema = z.object({
   is_default: z.boolean().optional(),
   visible_columns: z.array(z.string()).max(200).optional().nullable(),
   column_order: z.array(z.string()).max(200).optional().nullable(),
+  column_widths: z.record(z.string(), z.number().min(80).max(1200)).optional().nullable(),
   sort_by: z.string().trim().max(120).optional().nullable(),
   sort_direction: z.enum(["asc", "desc"]).optional().nullable(),
   filters: z.record(z.string(), FILTER_VALUE).optional().nullable(),
@@ -102,7 +103,7 @@ export const PATCH = withApiGuardrails<Promise<{ viewId: string }>>(
       .eq("id", viewId)
       .eq("user_id", userId)
       .select(
-        "id, scope_key, name, is_default, visible_columns, column_order, sort_by, sort_direction, filters, created_at, updated_at",
+        "id, scope_key, name, is_default, visible_columns, column_order, column_widths, sort_by, sort_direction, filters, created_at, updated_at",
       )
       .maybeSingle();
 

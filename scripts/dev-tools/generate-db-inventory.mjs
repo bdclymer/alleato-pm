@@ -54,9 +54,17 @@ dotenv.config({ path: envPath });
 
 const MAIN_DB_URL = process.env.DATABASE_URL;
 const RAG_DB_URL = process.env.RAG_DATABASE_URL;
+const MAIN_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+const RAG_SUPABASE_URL = process.env.RAG_SUPABASE_URL;
+const SUPABASE_ACCESS_TOKEN =
+  process.env.SUPABASE_ACCESS_TOKEN || process.env.SUPABASE_MANAGEMENT_API_TOKEN;
 
-if (!MAIN_DB_URL) fail("DATABASE_URL is not set in .env");
-if (!RAG_DB_URL) fail("RAG_DATABASE_URL is not set in .env");
+if (!MAIN_DB_URL && !MAIN_SUPABASE_URL) {
+  fail("Neither DATABASE_URL nor NEXT_PUBLIC_SUPABASE_URL/SUPABASE_URL is set in .env");
+}
+if (!RAG_DB_URL && !RAG_SUPABASE_URL) {
+  fail("Neither RAG_DATABASE_URL nor RAG_SUPABASE_URL is set in .env");
+}
 
 // ─── Load YAML ───────────────────────────────────────────────────────────────
 
@@ -93,46 +101,144 @@ log(`Loaded ${yamlByName.size} entries from tables.yaml`);
 
 // ─── DB connections ───────────────────────────────────────────────────────────
 
-async function createPool(url, label) {
+function projectRefFromUrl(rawUrl) {
+  if (!rawUrl) return null;
+  try {
+    const url = new URL(rawUrl);
+    const match = url.hostname.match(/^([^.]+)\.supabase\.co$/);
+    return match?.[1] || null;
+  } catch {
+    return null;
+  }
+}
+
+function quoteLiteral(value) {
+  return `'${String(value).replace(/'/g, "''")}'`;
+}
+
+function quoteIdentifier(value) {
+  return `"${String(value).replace(/"/g, '""')}"`;
+}
+
+function normalizeTimestamp(value) {
+  if (!value) return null;
+  if (typeof value === "string") return value;
+  if (value instanceof Date) return value.toISOString();
+  return null;
+}
+
+function statsQuery(tableName) {
+  return `
+    SELECT
+      c.relname AS name,
+      GREATEST(c.reltuples::bigint, 0) AS approx_rows,
+      pg_size_pretty(pg_total_relation_size(c.oid)) AS total_size,
+      pg_total_relation_size(c.oid) AS total_size_bytes,
+      ps.last_autoanalyze,
+      ps.last_autovacuum,
+      COALESCE(ps.n_live_tup, 0) AS n_live_tup,
+      COALESCE(ps.n_dead_tup, 0) AS n_dead_tup
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    LEFT JOIN pg_stat_user_tables ps ON ps.relid = c.oid
+    WHERE n.nspname = 'public' AND c.relkind = 'r' AND c.relname = ${quoteLiteral(tableName)}
+  `;
+}
+
+function columnsQuery(tableName) {
+  return `
+    SELECT column_name, data_type, is_nullable
+    FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = ${quoteLiteral(tableName)}
+    ORDER BY ordinal_position
+  `;
+}
+
+function countQuery(tableName) {
+  return `SELECT COUNT(*)::bigint AS n FROM public.${quoteIdentifier(tableName)}`;
+}
+
+async function createDatabaseClient({ databaseUrl, supabaseUrl, label }) {
+  const managementProjectRef = projectRefFromUrl(supabaseUrl);
+
+  const managementQuery = async (sql) => {
+    if (!SUPABASE_ACCESS_TOKEN || !managementProjectRef) {
+      fail(`Cannot query ${label} database: direct Postgres auth failed and Management API fallback is unavailable.`);
+    }
+
+    const response = await fetch(
+      `https://api.supabase.com/v1/projects/${managementProjectRef}/database/query`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${SUPABASE_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: sql,
+          read_only: true,
+        }),
+      },
+    );
+
+    const text = await response.text();
+    if (!response.ok) {
+      throw new Error(`Management API query failed (${response.status}): ${text}`);
+    }
+    return { rows: text ? JSON.parse(text) : [] };
+  };
+
+  if (!databaseUrl) {
+    log(`Connected to ${label} database via Supabase Management API`);
+    return {
+      label,
+      mode: "management",
+      query: managementQuery,
+      connect: async () => ({
+        query: managementQuery,
+        release() {},
+      }),
+      async end() {},
+    };
+  }
+
   // Strip sslmode from the URL so the programmatic ssl config takes effect.
   // pg treats sslmode=require as verify-full which fails against Supabase pooler certs.
-  const cleanUrl = url.replace(/[?&]sslmode=[^&]+/, (m) => (m.startsWith("?") ? "?" : "")).replace(/\?$/, "");
-  const useSSL = url.includes("sslmode=require") || url.includes("sslmode=verify");
+  const cleanUrl = databaseUrl.replace(/[?&]sslmode=[^&]+/, (m) => (m.startsWith("?") ? "?" : "")).replace(/\?$/, "");
+  const useSSL = databaseUrl.includes("sslmode=require") || databaseUrl.includes("sslmode=verify");
   const pool = new pg.Pool({ connectionString: cleanUrl, max: 5, ssl: useSSL ? { rejectUnauthorized: false } : undefined });
   try {
     const client = await pool.connect();
     client.release();
     log(`Connected to ${label} database`);
+    return {
+      label,
+      mode: "pg",
+      query: (sql) => pool.query(sql),
+      connect: () => pool.connect(),
+      end: () => pool.end(),
+    };
   } catch (err) {
-    fail(`Cannot connect to ${label} database: ${err.message}`);
+    await pool.end().catch(() => {});
+    if (!SUPABASE_ACCESS_TOKEN || !managementProjectRef) {
+      fail(`Cannot connect to ${label} database: ${err.message}`);
+    }
+    warn(`Direct ${label} Postgres auth failed (${err.message}); falling back to Supabase Management API query endpoint.`);
+    log(`Connected to ${label} database via Supabase Management API`);
+    return {
+      label,
+      mode: "management",
+      query: managementQuery,
+      connect: async () => ({
+        query: managementQuery,
+        release() {},
+      }),
+      async end() {},
+    };
   }
-  return pool;
 }
 
 // ─── SQL queries ──────────────────────────────────────────────────────────────
-
-const STATS_QUERY = `
-  SELECT
-    c.relname AS name,
-    GREATEST(c.reltuples::bigint, 0) AS approx_rows,
-    pg_size_pretty(pg_total_relation_size(c.oid)) AS total_size,
-    pg_total_relation_size(c.oid) AS total_size_bytes,
-    ps.last_autoanalyze,
-    ps.last_autovacuum,
-    COALESCE(ps.n_live_tup, 0) AS n_live_tup,
-    COALESCE(ps.n_dead_tup, 0) AS n_dead_tup
-  FROM pg_class c
-  JOIN pg_namespace n ON n.oid = c.relnamespace
-  LEFT JOIN pg_stat_user_tables ps ON ps.relid = c.oid
-  WHERE n.nspname = 'public' AND c.relkind = 'r' AND c.relname = $1
-`;
-
-const COLUMNS_QUERY = `
-  SELECT column_name, data_type, is_nullable
-  FROM information_schema.columns
-  WHERE table_schema = 'public' AND table_name = $1
-  ORDER BY ordinal_position
-`;
 
 const ALL_TABLES_QUERY = `
   SELECT relname
@@ -274,9 +380,9 @@ function grepTable(tableName) {
 
 // ─── Schema drift check ───────────────────────────────────────────────────────
 
-async function checkSchemaDrift(mainPool, ragPool) {
-  const mainResult = await mainPool.query(ALL_TABLES_QUERY);
-  const ragResult = await ragPool.query(ALL_TABLES_QUERY);
+async function checkSchemaDrift(mainDb, ragDb) {
+  const mainResult = await mainDb.query(ALL_TABLES_QUERY);
+  const ragResult = await ragDb.query(ALL_TABLES_QUERY);
 
   const mainTables = new Set(mainResult.rows.map((r) => r.relname));
   const ragTables = new Set(ragResult.rows.map((r) => r.relname));
@@ -341,21 +447,6 @@ async function checkSchemaDrift(mainPool, ragPool) {
 
   log("Schema drift check passed ✓");
   return { mainTables, ragTables };
-}
-
-// ─── Snippet serializer ───────────────────────────────────────────────────────
-
-function serializeRef(ref) {
-  return `{ filePath: ${JSON.stringify(ref.filePath)}, lineNumber: ${ref.lineNumber}, kind: ${JSON.stringify(ref.kind)}, snippet: ${JSON.stringify(ref.snippet)} }`;
-}
-
-function serializeRefs(refs) {
-  if (refs.length === 0) return "[]";
-  return `[\n${refs.map((r) => `          ${serializeRef(r)},`).join("\n")}\n        ]`;
-}
-
-function escapeTemplateLiteralContent(value) {
-  return value.replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
 }
 
 // ─── Markdown table list (agent-facing) ───────────────────────────────────────
@@ -450,12 +541,20 @@ ${renderSection("RAG", rag)}
 async function main() {
   log(`Mode: ${CHECK_ONLY ? "check-only" : "full regenerate"}`);
 
-  const mainPool = await createPool(MAIN_DB_URL, "MAIN");
-  const ragPool = await createPool(RAG_DB_URL, "RAG");
+  const mainDb = await createDatabaseClient({
+    databaseUrl: MAIN_DB_URL,
+    supabaseUrl: MAIN_SUPABASE_URL,
+    label: "MAIN",
+  });
+  const ragDb = await createDatabaseClient({
+    databaseUrl: RAG_DB_URL,
+    supabaseUrl: RAG_SUPABASE_URL,
+    label: "RAG",
+  });
 
   try {
     // Phase 1: Schema drift check
-    const { mainTables, ragTables } = await checkSchemaDrift(mainPool, ragPool);
+    await checkSchemaDrift(mainDb, ragDb);
 
     if (CHECK_ONLY) {
       log("Check-only mode: no output file written.");
@@ -472,7 +571,7 @@ async function main() {
       const entry = allEntries[i];
       if (i > 0 && i % 50 === 0) log(`  ${i}/${allEntries.length} processed...`);
 
-      const pool = entry.db === "MAIN" ? mainPool : ragPool;
+      const db = entry.db === "MAIN" ? mainDb : ragDb;
       const refreshedAt = new Date().toISOString();
 
       // Stats
@@ -485,13 +584,13 @@ async function main() {
         refreshedAt,
       };
       try {
-        const statsResult = await pool.query(STATS_QUERY, [entry.name]);
+        const statsResult = await db.query(statsQuery(entry.name));
         if (statsResult.rows.length > 0) {
           const row = statsResult.rows[0];
           liveStats = {
             approxRows: Number(row.approx_rows) || 0,
             totalSize: row.total_size || "0 bytes",
-            lastAutoanalyze: row.last_autoanalyze?.toISOString() ?? null,
+            lastAutoanalyze: normalizeTimestamp(row.last_autoanalyze),
             nLiveTup: Number(row.n_live_tup) || 0,
             nDeadTup: Number(row.n_dead_tup) || 0,
             refreshedAt,
@@ -509,9 +608,11 @@ async function main() {
       {
         let client;
         try {
-          client = await pool.connect();
-          await client.query("SET LOCAL statement_timeout = '5s'");
-          const cnt = await client.query(`SELECT COUNT(*)::bigint AS n FROM public."${entry.name.replace(/"/g, '""')}"`);
+          client = await db.connect();
+          if (db.mode === "pg") {
+            await client.query("SET LOCAL statement_timeout = '5s'");
+          }
+          const cnt = await client.query(countQuery(entry.name));
           const real = Number(cnt.rows[0].n) || 0;
           liveStats.approxRows = real;
           liveStats.nLiveTup = real;
@@ -531,7 +632,7 @@ async function main() {
       // Columns
       let columns = [];
       try {
-        const colResult = await pool.query(COLUMNS_QUERY, [entry.name]);
+        const colResult = await db.query(columnsQuery(entry.name));
         columns = colResult.rows.map((r) => ({
           name: r.column_name,
           dataType: r.data_type,
@@ -556,44 +657,10 @@ async function main() {
       "frontend",
       "src",
       "components",
-      "dev-tools",
-      "db-inventory.generated.ts"
+      "dev-tools"
     );
-
-    const tableLines = tableEntries.map(({ entry, liveStats, columns, refs }) => {
-      const clean = (s) => (s ? JSON.stringify(String(s).trim()) : "null");
-      const relatedTables = Array.isArray(entry.related_tables) && entry.related_tables.length > 0
-        ? `[${entry.related_tables.map((t) => JSON.stringify(t)).join(", ")}]`
-        : "[]";
-
-      return `    {
-      name: ${JSON.stringify(entry.name)},
-      db: ${JSON.stringify(entry.db)},
-      domain: ${JSON.stringify(entry.domain)},
-      status: ${JSON.stringify(entry.status)},
-      purpose: ${clean(entry.purpose)},
-      gotchas: ${entry.gotchas ? clean(entry.gotchas) : "null"},
-      cleanupPriority: ${entry.cleanup_priority ? JSON.stringify(entry.cleanup_priority) : "null"},
-      owner: ${JSON.stringify(entry.owner || "unknown")},
-      relatedTables: ${relatedTables},
-      notesForAi: ${entry.notes_for_ai ? clean(entry.notes_for_ai) : "null"},
-      liveStats: {
-        approxRows: ${liveStats.approxRows},
-        totalSize: ${JSON.stringify(liveStats.totalSize)},
-        lastAutoanalyze: ${liveStats.lastAutoanalyze ? JSON.stringify(liveStats.lastAutoanalyze) : "null"},
-        nLiveTup: ${liveStats.nLiveTup},
-        nDeadTup: ${liveStats.nDeadTup},
-        refreshedAt: ${JSON.stringify(liveStats.refreshedAt)},
-      },
-      columns: [${columns.map((c) => `{ name: ${JSON.stringify(c.name)}, dataType: ${JSON.stringify(c.dataType)}, isNullable: ${c.isNullable} }`).join(", ")}],
-      references: {
-        writes: ${serializeRefs(refs.writes)},
-        reads: ${serializeRefs(refs.reads)},
-        migrations: ${serializeRefs(refs.migrations)},
-        unknown: ${serializeRefs(refs.unknown)},
-      },
-    }`;
-    });
+    const outputTsPath = path.join(outputPath, "db-inventory.generated.ts");
+    const outputJsonPath = path.join(outputPath, "db-inventory.generated.json");
 
     const inventoryPayload = {
       generatedAt,
@@ -614,22 +681,17 @@ async function main() {
         references: refs,
       })),
     };
-    const serializedInventoryJson = escapeTemplateLiteralContent(
-      JSON.stringify(inventoryPayload),
-    );
+    const serializedInventoryJson = JSON.stringify(inventoryPayload, null, 2);
 
     const output = `// AUTO-GENERATED — DO NOT EDIT BY HAND.
 // Regenerate with: npm run db:inventory
 // Source: docs/architecture/tables.yaml + live Supabase (MAIN + RAG) + codebase grep.
 // Generated: ${generatedAt}
 
+import inventoryJson from "./db-inventory.generated.json";
+
 export type DbInventoryStatus =
-  | "live"
-  | "live-empty"
-  | "dormant"
-  | "dead"
-  | "legacy"
-  | "orphan-mirror";
+${[...new Set([...yamlByName.values()].map((e) => e.status))].sort().map((status) => `  | ${JSON.stringify(status)}`).join("\n")};
 
 export type DbInventoryDomain =
 ${[...new Set([...yamlByName.values()].map((e) => e.domain))].sort().map((d) => `  | ${JSON.stringify(d)}`).join("\n")};
@@ -679,17 +741,18 @@ export type DbInventory = {
   tables: DbInventoryTable[];
 };
 
-const DB_INVENTORY_JSON = String.raw\`${serializedInventoryJson}\`;
-
-export const DB_INVENTORY: DbInventory = JSON.parse(DB_INVENTORY_JSON) as DbInventory;
+export const DB_INVENTORY: DbInventory = inventoryJson as DbInventory;
 `;
 
-    fs.writeFileSync(outputPath, output, "utf8");
+    fs.writeFileSync(outputTsPath, output, "utf8");
+    fs.writeFileSync(outputJsonPath, `${serializedInventoryJson}\n`, "utf8");
     const sizeKB = Math.round(Buffer.byteLength(output, "utf8") / 1024);
-    log(`✅ Written: ${outputPath} (${sizeKB} KB, ${tableEntries.length} tables)`);
+    const jsonSizeKB = Math.round(Buffer.byteLength(serializedInventoryJson, "utf8") / 1024);
+    log(`✅ Written: ${outputTsPath} (${sizeKB} KB, ${tableEntries.length} tables)`);
+    log(`✅ Written: ${outputJsonPath} (${jsonSizeKB} KB JSON payload)`);
 
-    if (sizeKB > 500) {
-      warn(`Output file is ${sizeKB} KB — consider reducing snippet length if this causes issues.`);
+    if (jsonSizeKB > 500) {
+      warn(`JSON payload is ${jsonSizeKB} KB — consider reducing snippet length if this causes issues.`);
     }
 
     // ─── Emit TABLE-LIST.md (agent-facing, two tables per DB) ──────────────
@@ -697,8 +760,8 @@ export const DB_INVENTORY: DbInventory = JSON.parse(DB_INVENTORY_JSON) as DbInve
     fs.writeFileSync(tableListPath, renderTableListMarkdown(tableEntries, generatedAt), "utf8");
     log(`✅ Written: ${tableListPath}`);
   } finally {
-    await mainPool.end();
-    await ragPool.end();
+    await mainDb.end();
+    await ragDb.end();
   }
 }
 

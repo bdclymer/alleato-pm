@@ -8,6 +8,24 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 export const dynamic = "force-dynamic";
 
 const WHERE = "api.admin.deep-research.archive#GET";
+const ARCHIVE_DEPENDENCY = "backend.deep-agent-llm-wiki.archive";
+
+function isMissingArchiveEndpoint(error: unknown): error is GuardrailError {
+  if (!(error instanceof GuardrailError)) {
+    return false;
+  }
+
+  if (error.code !== "UPSTREAM_FAILURE") {
+    return false;
+  }
+
+  const details =
+    error.details && typeof error.details === "object"
+      ? (error.details as Record<string, unknown>)
+      : null;
+
+  return details?.dependency === ARCHIVE_DEPENDENCY && details?.status === 404;
+}
 
 function getBackendUrl(): string {
   const rawUrl = (
@@ -59,25 +77,37 @@ export const GET = withApiGuardrails(WHERE, async ({ request, requestId }) => {
     if (value) backendUrl.searchParams.set(key, value);
   }
 
-  const response = await fetchWithPolicy(
-    requestId,
-    WHERE,
-    "backend.deep-agent-llm-wiki.archive",
-    backendUrl.toString(),
-    {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "X-Admin-Api-Key": getBackendAdminApiKey(),
+  let response: Response;
+  try {
+    response = await fetchWithPolicy(
+      requestId,
+      WHERE,
+      ARCHIVE_DEPENDENCY,
+      backendUrl.toString(),
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "X-Admin-Api-Key": getBackendAdminApiKey(),
+        },
+        cache: "no-store",
       },
-      cache: "no-store",
-    },
-    {
-      timeoutMs: 25_000,
-      maxRetries: 1,
-      backoffMs: 250,
-    },
-  );
+      {
+        timeoutMs: 25_000,
+        maxRetries: 1,
+        backoffMs: 250,
+      },
+    );
+  } catch (error) {
+    if (isMissingArchiveEndpoint(error)) {
+      return NextResponse.json({
+        projects: [],
+        selectedProject: null,
+        artifacts: [],
+      });
+    }
+    throw error;
+  }
 
   const payload = await response.json();
   return NextResponse.json(payload, { status: response.status });

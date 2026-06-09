@@ -64,6 +64,8 @@ const CATEGORY_OPTIONS = [
   { value: "Design", label: "Design" },
 ];
 
+const EMPTY_CATEGORY_VALUE = "__none__";
+
 // =============================================================================
 // Component
 // =============================================================================
@@ -226,9 +228,13 @@ export function DocumentEditDialog({
           <div className="space-y-1.5">
             <Label>Category</Label>
             <Select
-              value={category ?? ""}
+              value={category ?? EMPTY_CATEGORY_VALUE}
               onValueChange={(v) =>
-                setValue("category", v || null, { shouldDirty: true })
+                setValue(
+                  "category",
+                  v === EMPTY_CATEGORY_VALUE ? null : v,
+                  { shouldDirty: true },
+                )
               }
               disabled={updateDocument.isPending}
             >
@@ -236,7 +242,7 @@ export function DocumentEditDialog({
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
+                <SelectItem value={EMPTY_CATEGORY_VALUE}>None</SelectItem>
                 {CATEGORY_OPTIONS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}

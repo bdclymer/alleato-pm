@@ -70,6 +70,7 @@ tests/.auth/
 backend/venv/
 backend/.venv/
 frontend/.next/
+frontend/.ts-trace/
 frontend/tests/test-results/
 frontend/tests/playwright-report/
 test-results/

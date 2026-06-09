@@ -150,6 +150,8 @@ export function ChatMain({
         topic={channel.topic}
         teamName={channel.team}
         memberCount={channel.memberCount}
+        isDm={channel.isDm}
+        dmPartnerName={channel.dmPartnerName}
         onToggleSidebar={onToggleSidebar}
         onToggleRightPanel={onToggleRightPanel}
         isConnected={isConnected}

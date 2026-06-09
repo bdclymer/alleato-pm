@@ -446,6 +446,7 @@ async function handleMessage(
       userId: supabaseUserId,
       messageText,
       sessionId,
+      platform: "teams",
     });
 
     await logCheckpoint("after_generate", {

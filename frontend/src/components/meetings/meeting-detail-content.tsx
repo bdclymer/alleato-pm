@@ -539,23 +539,17 @@ export function MeetingDetailContent({
             View in Fireflies
           </a>
         ) : null}
-        {meeting.date && meeting.title ? (() => {
-          const dateStr = new Date(meeting.date).toISOString().slice(0, 10);
-          const filename = `${dateStr} - ${meeting.title}.md`;
-          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://lgveqfnpkxvzbnnwuled.supabase.co";
-          const href = `${supabaseUrl}/storage/v1/object/public/transcripts/${encodeURIComponent(filename)}`;
-          return (
-            <a
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <FileText className="h-3.5 w-3.5" />
-              View file
-            </a>
-          );
-        })() : null}
+        {(meeting.url || meeting.source) ? (
+          <a
+            href={(meeting.url || meeting.source) ?? ""}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <FileText className="h-3.5 w-3.5" />
+            View file
+          </a>
+        ) : null}
       </div>
 
       <div className="grid gap-20 lg:grid-cols-[minmax(0,1fr)_280px]">
