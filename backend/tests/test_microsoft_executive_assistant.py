@@ -8,7 +8,7 @@ from src.services.agents.microsoft_executive_assistant import (
     MicrosoftExecutiveAssistantRequest,
     run_microsoft_executive_assistant,
 )
-from src.services.agents.microsoft_executive_assistant.agent import _microsoft_prompt
+from src.services.agents.microsoft_executive_assistant.agent import _inbox_request_kind, _microsoft_prompt
 from src.services.agents.microsoft_executive_assistant.tools import read_live_outlook_inbox
 from src.services.agents.microsoft_executive_assistant.triggers import (
     run_outlook_event_microsoft_executive_assistant,
@@ -140,6 +140,11 @@ def test_microsoft_prompt_adds_triage_guardrails_for_urgent_inbox_questions():
     assert "important but not urgent" in prompt
     assert "Treat security notices, payment reminders, and admin notifications conservatively" in prompt
     assert "Do not propose a draft email or Teams escalation unless the user asked" in prompt
+
+
+def test_inbox_request_kind_matches_eval_phrasing():
+    assert _inbox_request_kind("What came in through Outlook today that needs my attention?") == "arrived_today"
+    assert _inbox_request_kind("Show me any emails from today that need a reply.") == "reply_triage"
 
 
 def test_run_microsoft_assistant_formats_last_five_deterministically():

@@ -271,7 +271,13 @@ def _inbox_request_kind(prompt: str) -> Optional[str]:
     normalized = " ".join(prompt.lower().split())
     if "last five email" in normalized or "last 5 email" in normalized:
         return "last_five"
-    if "reply triage" in normalized or "need a reply" in normalized or "needs a reply" in normalized:
+    if (
+        "reply triage" in normalized
+        or "need a reply" in normalized
+        or "needs a reply" in normalized
+        or "need reply" in normalized
+        or "needs reply" in normalized
+    ):
         return "reply_triage"
     if "important emails this morning" in normalized or (
         "important" in normalized and "this morning" in normalized and "email" in normalized
@@ -281,6 +287,8 @@ def _inbox_request_kind(prompt: str) -> Optional[str]:
         "arrived today" in normalized
         or "mail arrived today" in normalized
         or "today's inbox" in normalized
+        or "came in through outlook today" in normalized
+        or "came in today through outlook" in normalized
         or ("came in" in normalized and "today" in normalized and "outlook" in normalized)
     ):
         return "arrived_today"
