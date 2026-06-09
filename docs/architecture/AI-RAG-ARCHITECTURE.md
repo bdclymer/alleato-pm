@@ -46,7 +46,9 @@ Chat Handler v2 — frontend/src/app/api/ai-assistant/chat/handler-v2.ts
     │
     ├──[Outlook / Teams / Microsoft operator work]───────────► Render backend
     │                                                          /api/intelligence/microsoft-executive-assistant
-    │                                                          (specialist owns live Graph reads and review-only drafts)
+    │                                                          (specialist owns live Graph reads and review-only drafts;
+    │                                                          prompt contract must answer exact inbox lookups with
+    │                                                          evidence-only scope, conservative urgency, and mailbox-owner-specific wording)
     │
     ├──[app help / feature status / route questions]─────────► Render backend
     │                                                          /api/intelligence/app-expert

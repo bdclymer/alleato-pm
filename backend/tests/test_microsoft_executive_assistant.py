@@ -8,6 +8,7 @@ from src.services.agents.microsoft_executive_assistant import (
     MicrosoftExecutiveAssistantRequest,
     run_microsoft_executive_assistant,
 )
+from src.services.agents.microsoft_executive_assistant.agent import _microsoft_prompt
 from src.services.agents.microsoft_executive_assistant.tools import read_live_outlook_inbox
 from src.services.agents.microsoft_executive_assistant.triggers import (
     run_outlook_event_microsoft_executive_assistant,
@@ -109,6 +110,36 @@ def test_run_microsoft_assistant_uses_deep_agents_tools_memory_and_skills():
     assert "Microsoft operator request" in prompt
     assert "Draft email or Teams payloads for review only" in prompt
     assert "Project ID supplied by caller: 983" in prompt
+
+
+def test_microsoft_prompt_uses_mailbox_owner_not_megan_for_brandon_inbox():
+    prompt = _microsoft_prompt(
+        MicrosoftExecutiveAssistantRequest(
+            userId="user-1",
+            mailboxUserId="bclymer@alleatogroup.com",
+            prompt="Can you tell me my last five emails?",
+        )
+    )
+
+    assert "work for Brandon" in prompt
+    assert "recommended next steps for Brandon" in prompt
+    assert "Do not introduce Megan unless the prompt explicitly asks about Megan" in prompt
+    assert "return exactly five emails in newest-first order" in prompt
+
+
+def test_microsoft_prompt_adds_triage_guardrails_for_urgent_inbox_questions():
+    prompt = _microsoft_prompt(
+        MicrosoftExecutiveAssistantRequest(
+            userId="user-1",
+            mailboxUserId="bclymer@alleatogroup.com",
+            prompt="Anything urgent in my inbox?",
+        )
+    )
+
+    assert "confirmed urgent/action-needed" in prompt
+    assert "important but not urgent" in prompt
+    assert "Treat security notices, payment reminders, and admin notifications conservatively" in prompt
+    assert "Do not propose a draft email or Teams escalation unless the user asked" in prompt
 
 
 def test_run_microsoft_assistant_fails_loudly_without_provider(monkeypatch):

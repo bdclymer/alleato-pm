@@ -96,6 +96,60 @@ def _agent_config(request: MicrosoftExecutiveAssistantRequest) -> dict[str, Any]
     return {"configurable": configurable}
 
 
+def _mailbox_owner_label(request: MicrosoftExecutiveAssistantRequest) -> str:
+    mailbox = (request.mailbox_user_id or "").strip().lower()
+    if mailbox == "bclymer@alleatogroup.com":
+        return "Brandon"
+    if mailbox == "megan@alleatogroup.com":
+        return "Megan"
+    if mailbox:
+        local = mailbox.split("@", 1)[0].strip()
+        return local or "the mailbox owner"
+    return "the mailbox owner"
+
+
+def _microsoft_question_directives(request: MicrosoftExecutiveAssistantRequest) -> list[str]:
+    normalized = " ".join(request.prompt.lower().split())
+    directives: list[str] = [
+        "Only state facts you can support from the live Microsoft tool output. If you infer something, label it clearly as likely or possible.",
+        "Do not introduce Megan unless the prompt explicitly asks about Megan or the mailbox owner is Megan.",
+        "Do not propose a draft email or Teams escalation unless the user asked for drafting/escalation or the evidence shows a true urgent/security/legal emergency.",
+    ]
+
+    if "last five email" in normalized or "last 5 email" in normalized:
+        directives.extend(
+            [
+                "For 'last five emails' requests, return exactly five emails in newest-first order when five exist. Do not add a sixth item or an extra inbox section.",
+                "For each email, include only sender, subject, received time, and one short evidence-backed action label.",
+                "Do not add urgency rankings, extra triage, or escalation advice unless the user separately asked for triage.",
+            ]
+        )
+
+    if "arrived today" in normalized or "mail arrived today" in normalized:
+        directives.extend(
+            [
+                "For 'arrived today' requests, report only messages from today in the mailbox timezone/context returned by the tool.",
+                "Separate confirmed attention-needed items from clearly informational items. Do not claim something needs action unless the email content supports that.",
+            ]
+        )
+
+    if (
+        "urgent inbox" in normalized
+        or ("urgent" in normalized and "inbox" in normalized)
+        or "important emails this morning" in normalized
+        or "reply triage" in normalized
+    ):
+        directives.extend(
+            [
+                "For inbox triage, separate 'confirmed urgent/action-needed' from 'important but not urgent'.",
+                "Treat security notices, payment reminders, and admin notifications conservatively unless the content clearly shows immediate business risk.",
+                "When an item likely needs a reply, say why in one sentence and avoid inventing deadlines, owners, or consequences not shown in the email evidence.",
+            ]
+        )
+
+    return directives
+
+
 def _microsoft_prompt(request: MicrosoftExecutiveAssistantRequest) -> str:
     mailbox = (
         f"Primary mailbox supplied by caller: {request.mailbox_user_id}."
@@ -107,6 +161,8 @@ def _microsoft_prompt(request: MicrosoftExecutiveAssistantRequest) -> str:
         if request.project_id
         else "No project ID was supplied."
     )
+    owner = _mailbox_owner_label(request)
+    question_directives = _microsoft_question_directives(request)
     return (
         f"Microsoft operator request:\n{request.prompt}\n\n"
         f"Trigger: {request.trigger}.\n"
@@ -114,13 +170,15 @@ def _microsoft_prompt(request: MicrosoftExecutiveAssistantRequest) -> str:
         f"{project}\n"
         f"Maximum messages to inspect: {request.max_messages}.\n\n"
         "Required workflow:\n"
-        "1. Treat this as Microsoft executive-assistant work for Megan, not as generic Alleato strategist work.\n"
+        f"1. Treat this as Microsoft executive-assistant work for {owner}, not as generic Alleato strategist work.\n"
         "2. Use live Outlook inbox reads for date-based inbox questions when a mailbox is available.\n"
         "3. Use Outlook email search, Teams search, calendar reads, and Microsoft file search when they materially improve the answer.\n"
         "4. Draft email or Teams payloads for review only. Never claim an email was sent, a calendar event was changed, or a Teams message was posted.\n"
         "5. Escalate urgent client, prospect, legal, security, or true emergency items with a concise Teams-message draft.\n"
         "6. If a required Microsoft capability is missing, stale, blocked, or failed, include the exact failed capability and what evidence is missing.\n"
-        "7. End with recommended next steps for Megan and any approvals needed."
+        f"7. End with recommended next steps for {owner} and any approvals needed.\n\n"
+        "Answer-shaping rules:\n- "
+        + "\n- ".join(question_directives)
     )
 
 
