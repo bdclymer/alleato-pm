@@ -279,11 +279,14 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
             raw_tasks.extend(row["tasks"])
 
     # Also include action_items stored in metadata (meeting-only).
+    # Guard: Fireflies sometimes writes "{}" (empty-dict stringified) — skip that garbage.
     if is_meeting:
         action_items_raw = metadata.get("action_items") or ""
-        if action_items_raw:
+        _JUNK_ACTION_ITEMS = frozenset(("{}", "[]", "null", "none", "{}"))
+        if action_items_raw and action_items_raw.strip() not in _JUNK_ACTION_ITEMS:
             raw_tasks.extend(
-                t.strip() for t in action_items_raw.split("\n") if t.strip()
+                t.strip() for t in action_items_raw.split("\n")
+                if t.strip() and t.strip() not in _JUNK_ACTION_ITEMS
             )
 
     # 2b. Extract rich section context for enhanced task extraction
@@ -300,7 +303,12 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
             notes_parts: List[str] = []
             for topic_name, topic_content in (parsed.notes_topics or {}).items():
                 notes_parts.append(f"### {topic_name}\n{topic_content}")
-            action_items_section = (parsed.rich_sections or {}).get("Action Items", "")
+            rich = parsed.rich_sections or {}
+            action_items_section = (
+                rich.get("Action Items", "")
+                or rich.get("Major Action Items", "")
+                or rich.get("Outstanding Tasks", "")
+            )
             if action_items_section:
                 notes_parts.append(f"### Action Items\n{action_items_section}")
             notes_context = "\n\n".join(notes_parts)

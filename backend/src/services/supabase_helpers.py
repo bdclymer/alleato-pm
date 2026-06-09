@@ -252,7 +252,7 @@ class SupabaseRagStore:
 
     def _app_document_catalog_payload(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
         catalog = dict(metadata)
-        for field in ("content", "raw_text", "summary_embedding"):
+        for field in ("content", "raw_text", "summary_embedding", "embedding_status", "processing_metadata"):
             catalog.pop(field, None)
         return catalog
 

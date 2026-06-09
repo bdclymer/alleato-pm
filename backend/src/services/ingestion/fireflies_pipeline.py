@@ -569,7 +569,7 @@ class FirefliesIngestionPipeline:
             )
             raise RuntimeError("FIREFLIES_API_KEY is required for Fireflies sync")
 
-        target_limit = max(1, min(limit, 100))
+        target_limit = max(1, min(limit, 500))
         summaries = self._fetch_recent_transcript_summaries(target_limit)
         results: List[Dict[str, Any]] = []
 
@@ -813,6 +813,8 @@ class FirefliesIngestionPipeline:
             raise RuntimeError(f"Fireflies GraphQL error: {errors}")
         return payload.get("data") or {}
 
+    _FIREFLIES_PAGE_SIZE = 50  # Fireflies API hard cap per request
+
     def _fetch_recent_transcript_summaries(self, limit: int) -> List[Dict[str, Any]]:
         query = """
         query RecentTranscripts($limit: Int, $skip: Int) {
@@ -824,8 +826,18 @@ class FirefliesIngestionPipeline:
           }
         }
         """
-        data = self._fireflies_query(query, {"limit": limit, "skip": 0})
-        return data.get("transcripts") or []
+        results: List[Dict[str, Any]] = []
+        skip = 0
+        page_size = self._FIREFLIES_PAGE_SIZE
+        while len(results) < limit:
+            fetch_count = min(page_size, limit - len(results))
+            data = self._fireflies_query(query, {"limit": fetch_count, "skip": skip})
+            page = data.get("transcripts") or []
+            results.extend(page)
+            if len(page) < fetch_count:
+                break
+            skip += fetch_count
+        return results
 
     def _fetch_transcript(self, transcript_id: str) -> Dict[str, Any]:
         query = """
@@ -1156,11 +1168,18 @@ class FirefliesIngestionPipeline:
         return [v for v in values if v]
 
     def _parse_action_items(self, sections: Dict[str, str]) -> List[str]:
-        block = sections.get("Action Items", "")
-        items = self._parse_bullets(block)
-        if items:
-            return items
-        return self._normalize_action_items(block)
+        # Try canonical section first, then alternative names used by Fireflies Apps.
+        for section_name in ("Action Items", "Major Action Items", "Outstanding Tasks"):
+            block = sections.get(section_name, "")
+            if not block:
+                continue
+            items = self._parse_bullets(block)
+            if items:
+                return items
+            normalized = self._normalize_action_items(block)
+            if normalized:
+                return normalized
+        return []
 
     @staticmethod
     def _parse_bullets(block: str) -> List[str]:
@@ -1475,6 +1494,9 @@ class FirefliesIngestionPipeline:
     @staticmethod
     def _normalize_action_items(value: Any) -> List[str]:
         if value is None:
+            return []
+        # Fireflies sometimes returns {} (empty dict) instead of [] — treat as empty.
+        if isinstance(value, dict):
             return []
         if isinstance(value, list):
             items = [str(v).strip() for v in value if str(v).strip()]

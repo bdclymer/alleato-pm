@@ -235,6 +235,7 @@ def rewrite_action_items(
     )
 
     response = None
+    last_error: Optional[str] = None
     try:
         response = retry_ai_call(
             lambda: get_openai_client().chat.completions.create(
@@ -251,12 +252,13 @@ def rewrite_action_items(
             operation="fireflies task rewrite",
         )
     except Exception as exc:
+        last_error = str(exc)
         logger.error("[FirefliesTaskRewriter] OpenAI call failed: %s", exc)
 
     if response is None:
         logger.error(
             "[FirefliesTaskRewriter] All providers failed — dropping action items: %s",
-            " | ".join(errors),
+            last_error or "unknown error",
         )
         return []
 
