@@ -298,11 +298,15 @@ export function detectSourceSpecificRagRequest(message: string): SourceSpecificR
   const asksForRecentTeams =
     normalized.includes("teams") &&
     (normalized.includes("teams rag") ||
+      normalized.includes("look through teams") ||
       normalized.includes("using only teams") ||
       normalized.includes("past week") ||
       normalized.includes("this past week") ||
       normalized.includes("main discussion") ||
       normalized.includes("main discussions") ||
+      normalized.includes("latest real signal") ||
+      normalized.includes("chatter") ||
+      normalized.includes("worried about") ||
       normalized.includes("teams discussion") ||
       normalized.includes("teams discussions") ||
       normalized.includes("chat/thread") ||

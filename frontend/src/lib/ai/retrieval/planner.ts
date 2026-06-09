@@ -8,6 +8,7 @@ import {
   detectRecentEmailInboxRequest,
   detectSourceSpecificRagRequest,
 } from "@/lib/ai/detect-rag-request";
+import { shouldAttachAssistantSourceHealth } from "@/lib/ai/source-health";
 import type { RetrievalPlan, SubAgent } from "./types";
 
 type PlanInput = {
@@ -100,11 +101,10 @@ function isBrandonDaily(message: string): boolean {
   return /brandon.{0,12}(daily|update|brief)/i.test(message);
 }
 
-function isSelectedProjectSourceHealthRequest(
+function isSourceHealthRequest(
   message: string,
   selectedProjectId?: number,
 ): boolean {
-  if (typeof selectedProjectId !== "number") return false;
   if (
     /\b(find|exact|evidence|clause|excerpt|drill|answer from|best available document read)\b/i.test(
       message,
@@ -112,9 +112,19 @@ function isSelectedProjectSourceHealthRequest(
   ) {
     return false;
   }
-  return (
+  const hasFreshnessLanguage =
     /\b(packet|snapshot|source|sources|coverage|context|document intelligence)\b/i.test(message) &&
-    /\b(stale|missing|thin|fresh|current|trust|available|loaded|health)\b/i.test(message)
+    /\b(stale|missing|thin|fresh|current|trust|available|loaded|health)\b/i.test(message);
+
+  if (typeof selectedProjectId === "number" && hasFreshnessLanguage) {
+    return true;
+  }
+
+  return (
+    shouldAttachAssistantSourceHealth(message) &&
+    /\b(stale|missing|fresh|freshness|current|trust|health|status|up to date|reliable|reliability|safe to use)\b/i.test(
+      message,
+    )
   );
 }
 
@@ -135,7 +145,7 @@ export function planRetrieval(input: PlanInput): RetrievalPlan {
   const recentEmailInbox = detectRecentEmailInboxRequest(message);
   const sourceSpecific = detectSourceSpecificRagRequest(message);
 
-  if (isSelectedProjectSourceHealthRequest(message, selectedProjectId)) {
+  if (isSourceHealthRequest(message, selectedProjectId)) {
     return {
       intent: "source_health",
       responseFormat: "briefing_template",

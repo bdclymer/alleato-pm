@@ -1199,6 +1199,16 @@ function formatAssistantSourceHealthAnswer(metadata: {
   ].join("\n");
 }
 
+function sanitizeDirectSourceSpecificAnswer(content: string): string {
+  return content
+    .replace(/\b[Rr]etrieval\b/g, (match) =>
+      match[0] === "R" ? "Check" : "check",
+    )
+    .replace(/\b[Rr]etrieved\b/g, (match) =>
+      match[0] === "R" ? "Pulled" : "pulled",
+    );
+}
+
 function writeTextResponse(
   writer: Parameters<
     Parameters<typeof createUIMessageStream>[0]["execute"]
@@ -1303,6 +1313,18 @@ function buildAnswerDebugMetadata(params: {
     },
     outputPolicy: params.outputPolicy ?? null,
   };
+}
+
+function shouldUseDirectRecentTeamsFastPath(params: {
+  plan: ReturnType<typeof planRetrieval>;
+  retrievalCtx: Awaited<ReturnType<typeof executeRetrievalPlan>>;
+}): boolean {
+  return (
+    params.plan.responseFormat === "source_specific_rag" &&
+    params.plan.sources.sourceSpecificRag?.kind === "recent_teams_discussions" &&
+    typeof params.retrievalCtx.sourceSpecificRagAnswer?.content === "string" &&
+    params.retrievalCtx.sourceSpecificRagAnswer.content.trim().length > 0
+  );
 }
 
 async function persistDirectDeepAgentResponse(params: {
@@ -2113,94 +2135,175 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           },
         } as never);
 
-        const microsoftBridgeStarted = Date.now();
-        const response = await withKeepAlive(
-          writer,
-          {
-            statusId: "strategist-status",
-            stage: "microsoft-specialist",
-            message: "Still delegating to Microsoft operator…",
-          },
-          () =>
-            fetchMicrosoftExecutiveAssistant({
-              userId: args.user.id,
-              sessionId: args.sessionId,
-              question: lastUserContent,
-              selectedProjectId: args.selectedProjectId,
-            }),
-        );
-        const microsoftBridgeDurationMs =
-          Date.now() - microsoftBridgeStarted;
-        const content =
-          typeof response.answer === "string"
-            ? response.answer
-            : "The Microsoft Executive Assistant returned no answer.";
-        const trace = buildLiveToolTrace(
-          {
-            tool: "consultMicrosoftExecutiveAssistant",
-            input: {
-              question: lastUserContent,
-              projectId: args.selectedProjectId ?? null,
-              mailboxUserId: defaultMicrosoftMailbox() ?? null,
+        try {
+          const microsoftBridgeStarted = Date.now();
+          const response = await withKeepAlive(
+            writer,
+            {
+              statusId: "strategist-status",
+              stage: "microsoft-specialist",
+              message: "Still delegating to Microsoft operator…",
             },
-            response,
-            output: {
-              summary: content.slice(0, 500),
+            () =>
+              fetchMicrosoftExecutiveAssistant({
+                userId: args.user.id,
+                sessionId: args.sessionId,
+                question: lastUserContent,
+                selectedProjectId: args.selectedProjectId,
+              }),
+          );
+          const microsoftBridgeDurationMs =
+            Date.now() - microsoftBridgeStarted;
+          const content =
+            typeof response.answer === "string"
+              ? response.answer
+              : "The Microsoft Executive Assistant returned no answer.";
+          const trace = buildLiveToolTrace(
+            {
+              tool: "consultMicrosoftExecutiveAssistant",
+              input: {
+                question: lastUserContent,
+                projectId: args.selectedProjectId ?? null,
+                mailboxUserId: defaultMicrosoftMailbox() ?? null,
+              },
+              response,
+              output: {
+                summary: content.slice(0, 500),
+              },
             },
-          },
-          lastUserContent,
-        );
-        const toolTrace = trace
-          ? [{ ...trace, durationMs: microsoftBridgeDurationMs }]
-          : [];
-        const sourceDebug = buildAnswerDebugMetadata({
-          orchestrator: "microsoft-executive-assistant",
-          plan,
-          toolTrace,
-        });
+            lastUserContent,
+          );
+          const toolTrace = trace
+            ? [{ ...trace, durationMs: microsoftBridgeDurationMs }]
+            : [];
+          const sourceDebug = buildAnswerDebugMetadata({
+            orchestrator: "microsoft-executive-assistant",
+            plan,
+            toolTrace,
+          });
 
-        writeTextResponse(writer, "strategist-microsoft-executive-assistant", content);
+          writeTextResponse(writer, "strategist-microsoft-executive-assistant", content);
 
-        await args.supabase.from("chat_history").insert({
-          session_id: args.sessionId,
-          user_id: args.user.id,
-          role: "assistant",
-          content,
-          metadata: {
-            architecture: "retrieval-planner-v2",
-            delegated_orchestrator: "microsoft-executive-assistant",
-            tool_trace: toolTrace,
-            response_quality: buildResponseQualityMetadata({
-              toolTrace,
-              content,
-            }),
-            source_debug: sourceDebug,
-            retrieval_plan: {
-              intent: plan.intent,
-              reason: plan.reason,
-              responseFormat: plan.responseFormat,
-              sources: Object.keys(plan.sources),
+          await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "assistant",
+            content,
+            metadata: {
+              architecture: "retrieval-planner-v2",
+              delegated_orchestrator: "microsoft-executive-assistant",
+              tool_trace: toolTrace,
+              response_quality: buildResponseQualityMetadata({
+                toolTrace,
+                content,
+              }),
+              source_debug: sourceDebug,
+              retrieval_plan: {
+                intent: plan.intent,
+                reason: plan.reason,
+                responseFormat: plan.responseFormat,
+                sources: Object.keys(plan.sources),
+              },
+            } as Json,
+          });
+
+          await args.supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", args.sessionId)
+            .eq("user_id", args.user.id);
+
+          responseAlreadyPersisted = true;
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "complete",
+              message: "Microsoft Executive Assistant answer returned",
+              status: "success",
+              timestamp: new Date().toISOString(),
             },
-          } as Json,
-        });
+          } as never);
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error);
+          const content = [
+            "I could not complete the live Microsoft inbox check.",
+            `Failed capability: consultMicrosoftExecutiveAssistant.`,
+            `Cause: ${detail}`,
+            "Detection gap: this request reached the Microsoft delegation path, but the specialist failure was previously collapsing into a generic provider fallback with no tool evidence.",
+            "Prevention step: persist the Microsoft tool failure explicitly so Outlook/Brandon assistant regressions fail loudly and stay diagnosable.",
+          ].join(" ");
+          const toolTrace = [
+            {
+              tool: "consultMicrosoftExecutiveAssistant",
+              toolName: "consultMicrosoftExecutiveAssistant",
+              status: "failed",
+              input: {
+                message: lastUserContent.slice(0, 240),
+                selectedProjectId: args.selectedProjectId ?? null,
+                mailboxUserId: defaultMicrosoftMailbox() ?? null,
+              },
+              output: {
+                source: "microsoft_graph_live",
+                error: detail,
+              },
+              error: detail,
+              timestamp: new Date().toISOString(),
+            },
+          ];
+          const sourceDebug = buildAnswerDebugMetadata({
+            orchestrator: "microsoft-executive-assistant",
+            plan,
+            toolTrace,
+          });
 
-        await args.supabase
-          .from("conversations")
-          .update({ last_message_at: new Date().toISOString() })
-          .eq("session_id", args.sessionId)
-          .eq("user_id", args.user.id);
+          writeTextResponse(
+            writer,
+            "strategist-microsoft-executive-assistant-error",
+            content,
+          );
+          writer.write({
+            type: "data-status",
+            id: "strategist-status",
+            data: {
+              stage: "error",
+              message: "Microsoft Executive Assistant failed",
+              status: "error",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
 
-        responseAlreadyPersisted = true;
-        writer.write({
-          type: "data-status",
-          id: "strategist-status",
-          data: {
-            stage: "complete",
-            message: "Microsoft Executive Assistant answer returned",
-            status: "success",
-            timestamp: new Date().toISOString(),
-          },
-        } as never);
+          await args.supabase.from("chat_history").insert({
+            session_id: args.sessionId,
+            user_id: args.user.id,
+            role: "assistant",
+            content,
+            metadata: {
+              architecture: "retrieval-planner-v2",
+              delegated_orchestrator: "microsoft-executive-assistant",
+              tool_trace: toolTrace,
+              response_quality: buildResponseQualityMetadata({
+                toolTrace,
+                content,
+              }),
+              source_debug: sourceDebug,
+              retrieval_plan: {
+                intent: plan.intent,
+                reason: `${plan.reason}_error`,
+                responseFormat: plan.responseFormat,
+                sources: Object.keys(plan.sources),
+              },
+            } as Json,
+          });
+
+          await args.supabase
+            .from("conversations")
+            .update({ last_message_at: new Date().toISOString() })
+            .eq("session_id", args.sessionId)
+            .eq("user_id", args.user.id);
+
+          responseAlreadyPersisted = true;
+        }
         return;
       }
 
@@ -3050,6 +3153,79 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           data: {
             stage: "complete",
             message: "Document intelligence eval response returned",
+            status: "success",
+            timestamp: new Date().toISOString(),
+          },
+        } as never);
+        return;
+      }
+
+      if (shouldUseDirectRecentTeamsFastPath({ plan, retrievalCtx })) {
+        const content = sanitizeDirectSourceSpecificAnswer(
+          retrievalCtx.sourceSpecificRagAnswer?.content ?? "",
+        );
+        const toolTrace = [
+          ...bridgeToolTrace,
+          ...buildPrefetchRetrievalTraces({
+            ctx: retrievalCtx,
+            plan,
+            message: lastUserContent,
+            selectedProjectId: args.selectedProjectId ?? null,
+          }),
+        ];
+        const sourceDebug = buildAnswerDebugMetadata({
+          orchestrator: "retrieval-planner-v2-direct-recent-teams",
+          plan,
+          toolTrace,
+          memoryUsage,
+        });
+
+        await persistDirectDeepAgentResponse({
+          supabase: args.supabase,
+          sessionId: args.sessionId,
+          userId: args.user.id,
+          content,
+          responseLabel: "source-specific-recent-teams",
+          sourceDebug,
+          trace: {
+            input: lastUserContent,
+            intent: plan.intent,
+            modelId: "retrieval-planner-v2-direct-recent-teams",
+            selectedProjectId: args.selectedProjectId ?? null,
+            toolTrace,
+          },
+          metadata: {
+            architecture: "retrieval-planner-v2",
+            provider_path: "direct-source-specific-rag",
+            model: args.activeModel,
+            synthesis_model: synthesisModel,
+            retrieval_plan: {
+              intent: plan.intent,
+              reason: plan.reason,
+              responseFormat: plan.responseFormat,
+              sources: Object.keys(plan.sources),
+            },
+            tool_trace: toolTrace,
+            response_quality: buildResponseQualityMetadata({
+              toolTrace,
+              content,
+            }),
+            source_debug: sourceDebug,
+          } as Json,
+        });
+
+        responseAlreadyPersisted = true;
+        writeTextResponse(
+          writer,
+          "strategist-direct-recent-teams",
+          content,
+        );
+        writer.write({
+          type: "data-status",
+          id: "strategist-status",
+          data: {
+            stage: "complete",
+            message: "Recent Teams source answer returned",
             status: "success",
             timestamp: new Date().toISOString(),
           },
