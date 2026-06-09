@@ -458,6 +458,43 @@ def _message_reason(message: dict[str, Any], bucket: str) -> str:
     return "Present in the inbox, but the email evidence does not prove an immediate action."
 
 
+def _message_evidence(message: dict[str, Any]) -> str:
+    body = str(message.get("body_text") or "").replace("\r", " ").replace("\n", " ").strip()
+    if not body:
+        return "No body preview available."
+    body = re.sub(r"\s+", " ", body)
+    for splitter in (". ", "? ", "! "):
+        if splitter in body:
+            body = body.split(splitter, 1)[0] + splitter.strip()
+            break
+    return body[:160].strip()
+
+
+def _dedupe_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    groups: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for message in messages:
+        subject = str(message.get("subject") or "").strip().lower()
+        sender = str(message.get("from_email") or message.get("from_name") or "").strip().lower()
+        groups.setdefault((subject, sender), []).append(message)
+
+    deduped: list[dict[str, Any]] = []
+    for rows in groups.values():
+        ordered = sorted(
+            rows,
+            key=lambda row: _parse_received_at(row.get("received_at")) or datetime.min.replace(tzinfo=timezone.utc),
+            reverse=True,
+        )
+        latest = dict(ordered[0])
+        latest["_message_count"] = len(rows)
+        deduped.append(latest)
+
+    deduped.sort(
+        key=lambda row: _parse_received_at(row.get("received_at")) or datetime.min.replace(tzinfo=timezone.utc),
+        reverse=True,
+    )
+    return deduped
+
+
 def _trimmed_messages_for_today(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
     today = datetime.now(timezone.utc).date()
     today_messages = [message for message in messages if _received_on_utc_day(message, today)]
@@ -484,6 +521,7 @@ def _render_last_five_answer(messages: list[dict[str, Any]], mailbox: str) -> st
             f"{index}. {subject} — {sender} — {_format_received_at(message.get('received_at'))}"
         )
         lines.append(f"   Response path: {_short_action_label(message)}.")
+        lines.append(f"   Evidence: {_message_evidence(message)}")
         lines.append("")
     return "\n".join(lines).strip()
 
@@ -502,9 +540,13 @@ def _render_action_lists(
             sender = str(message.get("from_name") or message.get("from_email") or "Unknown sender")
             subject = str(message.get("subject") or "(no subject)")
             bucket = _action_bucket(message)
+            count = int(message.get("_message_count") or 1)
             lines.append(f"- {subject} — {sender} — {_format_received_at(message.get('received_at'))}")
+            if count > 1:
+                lines.append(f"  Thread activity: {count} messages in this subject thread.")
             lines.append(f"  Response path: {_short_action_label(message)}")
             lines.append(f"  Why: {_message_reason(message, bucket)}")
+            lines.append(f"  Evidence: {_message_evidence(message)}")
         lines.append("")
 
     if informational:
@@ -513,9 +555,13 @@ def _render_action_lists(
             sender = str(message.get("from_name") or message.get("from_email") or "Unknown sender")
             subject = str(message.get("subject") or "(no subject)")
             bucket = _action_bucket(message)
+            count = int(message.get("_message_count") or 1)
             lines.append(f"- {subject} — {sender} — {_format_received_at(message.get('received_at'))}")
+            if count > 1:
+                lines.append(f"  Thread activity: {count} messages in this subject thread.")
             lines.append(f"  Response path: {_short_action_label(message)}")
             lines.append(f"  Why: {_message_reason(message, bucket)}")
+            lines.append(f"  Evidence: {_message_evidence(message)}")
         lines.append("")
 
     if not action_needed and not informational:
@@ -533,6 +579,7 @@ def _render_bucketed_triage_answer(
     same_day_only: bool = False,
 ) -> str:
     candidates = _trimmed_messages_for_today(messages) if same_day_only else messages
+    candidates = _dedupe_messages(candidates)
     if include_only_reply_needed:
         candidates = [message for message in candidates if _likely_reply_needed(message)]
 
@@ -553,8 +600,12 @@ def _render_bucketed_triage_answer(
         for message in rows[:4]:
             sender = str(message.get("from_name") or message.get("from_email") or "Unknown sender")
             subject = str(message.get("subject") or "(no subject)")
+            count = int(message.get("_message_count") or 1)
             lines.append(f"- {subject} — {sender} — {_format_received_at(message.get('received_at'))}")
+            if count > 1:
+                lines.append(f"  Thread activity: {count} messages in this subject thread.")
             lines.append(f"  Action: {bucket}. Reason: {_message_reason(message, bucket)}")
+            lines.append(f"  Evidence: {_message_evidence(message)}")
         lines.append("")
 
     if not any(buckets[bucket] for bucket in ordered_buckets):
@@ -573,7 +624,7 @@ def _render_bucketed_triage_answer(
 
 
 def _render_morning_answer(messages: list[dict[str, Any]], mailbox: str) -> str:
-    rows = _messages_for_this_morning(messages)
+    rows = _dedupe_messages(_messages_for_this_morning(messages))
     if not rows:
         return (
             f"Important emails this morning for {mailbox}:\n\n"
@@ -590,7 +641,7 @@ def _render_morning_answer(messages: list[dict[str, Any]], mailbox: str) -> str:
 
 
 def _render_arrived_today_answer(messages: list[dict[str, Any]], mailbox: str) -> str:
-    rows = _trimmed_messages_for_today(messages)
+    rows = _dedupe_messages(_trimmed_messages_for_today(messages))
     action_needed = [message for message in rows if _action_bucket(message) in {"Alert now", "Reply", "Delegate"}][:6]
     informational = [message for message in rows if _action_bucket(message) not in {"Alert now", "Reply", "Delegate"}][:6]
     return _render_action_lists(

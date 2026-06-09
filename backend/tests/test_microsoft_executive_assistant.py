@@ -187,6 +187,8 @@ def test_run_microsoft_assistant_formats_last_five_deterministically():
     assert response.answer.count("Response path:") == 5
     assert "ERP Integrations Daily Summary" in response.answer
     assert "Response path: Ignore." in response.answer
+    assert response.answer.count("Evidence:") == 5
+    assert "Evidence: Can you confirm by Thursday afternoon?" in response.answer
     assert "Why:" not in response.answer
 
 
@@ -343,6 +345,42 @@ def test_run_microsoft_assistant_reply_triage_excludes_automated_summary_mail():
     assert "RE: Exol Morrisville PA" in response.answer
     assert "Action: Reply." in response.answer
     assert "Action: Alert now." in response.answer
+
+
+def test_run_microsoft_assistant_dedupes_same_thread_and_reports_thread_activity():
+    class ReplyInboxAgent:
+        def invoke(self, *_args, **_kwargs):
+            return {
+                "messages": [
+                    {
+                        "type": "tool",
+                        "name": "read_live_outlook_inbox",
+                        "content": (
+                            '{"ok":true,"source":"microsoft_graph_live","mailbox_user_id":"bclymer@alleatogroup.com","count":4,'
+                            '"messages":['
+                            '{"subject":"RE: Exol Morrisville PA","from_name":"Steve Fischer","from_email":"steve.fischer@exol.com","received_at":"2026-06-09T02:59:12Z","body_text":"Please review the comments and reply with your approval today.","has_attachments":false},'
+                            '{"subject":"RE: Exol Morrisville PA","from_name":"Steve Fischer","from_email":"steve.fischer@exol.com","received_at":"2026-06-09T02:20:00Z","body_text":"Will review asap and provide feedback.","has_attachments":false},'
+                            '{"subject":"RE: ULTA update needed.","from_name":"Walter Allen","from_email":"wallen@ulta.com","received_at":"2026-06-09T09:59:34Z","body_text":"Can you confirm by Thursday afternoon?","has_attachments":false},'
+                            '{"subject":"Alleato Group: ERP Integrations Daily Summary","from_name":"Alleato Group","from_email":"alleato_group_notifications@us02.procoretech.com","received_at":"2026-06-09T06:15:56Z","body_text":"Do not reply to this email. 2 vendors available to sync.","has_attachments":false}'
+                            ']}'
+                        ),
+                    },
+                    {"content": "freeform assistant output that should be ignored"},
+                ]
+            }
+
+    response = run_microsoft_executive_assistant(
+        MicrosoftExecutiveAssistantRequest(
+            userId="user-1",
+            mailboxUserId="bclymer@alleatogroup.com",
+            prompt="Show me any emails from today that need a reply.",
+        ),
+        create_agent=lambda **_kwargs: ReplyInboxAgent(),
+    )
+
+    assert response.answer.count("RE: Exol Morrisville PA") == 1
+    assert "Thread activity: 2 messages in this subject thread." in response.answer
+    assert "Evidence: Please review the comments and reply with your approval today." in response.answer
 
 
 def test_run_microsoft_assistant_fails_loudly_without_provider(monkeypatch):
