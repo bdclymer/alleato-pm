@@ -213,16 +213,6 @@ tables:
     relatedTables:
       - project_roles
 
-  - name: project_risk_snapshots
-    db: MAIN
-    domain: intelligence
-    owner: pipeline
-    status: deleted
-    purpose: "Legacy CRO risk roll-up table removed on 2026-06-09. Live risk reads now compute from current PM tables instead of reading a stored summary."
-    gotchas: "Historical documentation only. The live PM risk tool does not read this deleted table."
-    relatedTables:
-      - projects
-
   - name: project_vendors
     db: MAIN
     domain: projects
@@ -1972,9 +1962,10 @@ tables:
   - name: memories
     db: MAIN
     domain: ai
-    owner: unknown
-    status: legacy
-    purpose: "Older separate memory table. 8 rows. Likely superseded by ai_memories."
+    owner: core
+    status: live
+    purpose: "Per-session AI conversation summaries with 3072-dim embeddings, used for cross-session recall. Written by conversation-memory.ts (embedAndStoreMemory, memory_type='conversation_summary') from runPostResponseTasks in bot-core.ts; read by the recallPastConversations tool via the search_conversation_memories RPC."
+    notesForAi: "Do not confuse with ai_memories: this table holds session conversation summaries for cross-session recall; ai_memories holds typed durable memory (facts, preferences, lessons, commitments)."
     relatedTables:
       - ai_memories
 
@@ -2052,6 +2043,17 @@ tables:
     status: live-empty
     purpose: "Link table between daily logs and project photos. Feature shipped, never adopted."
     relatedTables: []
+
+  - name: daily_log_photos
+    db: MAIN
+    domain: documents
+    owner: core
+    status: live
+    purpose: "Photo metadata written by the Site Scribe daily-log flow. Stores uploaded image records plus pairing back to the generated daily log and note context."
+    gotchas: "This is not the old project photos feature. The active writer is /api/projects/[projectId]/daily-log/site-scribe, which replaces rows for a daily log on regeneration."
+    relatedTables:
+      - daily_logs
+      - projects
 
   # ─────────────────────────────────────────────────────────
   # DOMAIN: INTELLIGENCE, AI, SYNC, WORKFLOW
@@ -2133,38 +2135,6 @@ tables:
     cleanupPriority: medium
     relatedTables:
       - insight_cards
-
-  - name: source_signal_candidates_archive_20260609
-    db: MAIN
-    domain: intelligence
-    owner: pipeline
-    status: deleted
-    purpose: "Former MAIN copy of RAG pre-promotion candidates. It was briefly archived during cutover and then dropped on 2026-06-09 after dependency audit."
-    gotchas: "Historical documentation only. The live runtime must use the RAG database table, not this deleted MAIN mirror."
-    cleanupPriority: high
-    relatedTables:
-      - insight_cards
-
-  - name: source_intelligence_jobs_archive_20260609
-    db: MAIN
-    domain: intelligence
-    owner: pipeline
-    status: deleted
-    purpose: "Former MAIN compiler job queue. It was briefly archived during cutover and then dropped on 2026-06-09 after dependency audit."
-    gotchas: "Historical documentation only. Any live read or write path must use the RAG database instead."
-    cleanupPriority: high
-    relatedTables: []
-
-  - name: packet_refresh_jobs_archive_20260609
-    db: MAIN
-    domain: intelligence
-    owner: pipeline
-    status: deleted
-    purpose: "Former MAIN packet refresh queue. It was briefly archived during cutover and then dropped on 2026-06-09 after dependency audit."
-    gotchas: "Historical documentation only. Application code should never depend on this deleted MAIN mirror."
-    cleanupPriority: high
-    relatedTables:
-      - intelligence_packets
 
   - name: project_attribution_rules
     db: MAIN
@@ -2316,6 +2286,30 @@ tables:
     status: live-empty
     purpose: "AI learning promotion records. Writer wired but never triggered."
     relatedTables: []
+
+  - name: agent_learnings
+    db: MAIN
+    domain: ai
+    owner: core
+    status: live
+    purpose: "Durable AI failure-pattern and prevention-prompt memory. Read and upserted by agent-learning-service.ts from thumbs-down feedback, eval failures, and admin feedback flows."
+    gotchas: "PM APP stores the structured learning record only. Embeddings for retrieval are synced separately into the RAG database and must not be written into this table."
+    relatedTables:
+      - ai_feedback_events
+      - agent_learning_usages
+      - ai_learning_promotions
+    notesForAi: "Use this for verified behavioral guardrails and repeated failure patterns, not for transient chat history."
+
+  - name: agent_learning_usages
+    db: MAIN
+    domain: ai
+    owner: core
+    status: live
+    purpose: "Session-level usage/outcome log for injected agent learnings. Proves whether a retrieved learning was used and whether later feedback marked that session positive or negative."
+    gotchas: "Rows are written opportunistically when learnings are injected into assistant context. Treat it as effectiveness telemetry, not the source of the learning itself."
+    relatedTables:
+      - agent_learnings
+      - ai_feedback_events
 
   - name: ai_retrieval_weights
     db: MAIN
