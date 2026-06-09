@@ -343,6 +343,35 @@ def _is_internal_sender(message: dict[str, Any]) -> bool:
     return from_email.endswith("@alleatogroup.com")
 
 
+def _is_automated_sender(message: dict[str, Any]) -> bool:
+    from_email = str(message.get("from_email") or "").strip().lower()
+    subject = str(message.get("subject") or "").strip().lower()
+    return (
+        from_email.startswith("no-reply@")
+        or from_email.startswith("noreply@")
+        or from_email.startswith("notifications@")
+        or "notification" in from_email
+        or "do not reply" in subject
+        or "daily summary" in subject
+        or "sign in to " in subject
+    )
+
+
+def _has_explicit_deadline(text: str) -> bool:
+    deadline_tokens = (
+        "by thursday",
+        "by friday",
+        "by tomorrow",
+        "by end of day",
+        "by eod",
+        "this afternoon",
+        "before noon",
+        "deadline",
+        "confirm by",
+    )
+    return any(token in text for token in deadline_tokens)
+
+
 def _short_action_label(message: dict[str, Any]) -> str:
     bucket = _action_bucket(message)
     if bucket == "Alert now":
@@ -373,6 +402,8 @@ def _short_action_label(message: dict[str, Any]) -> str:
 
 def _likely_reply_needed(message: dict[str, Any]) -> bool:
     text = _message_text(message)
+    if _is_automated_sender(message):
+        return False
     if any(token in text for token in ("sign in", "verification code", "quarantine", "approaching spend limit", "payment is due")):
         return False
     if any(token in text for token in ("can you", "please", "confirm", "reply", "follow up", "review/sign", "review and sign", "?")):
@@ -385,13 +416,17 @@ def _likely_reply_needed(message: dict[str, Any]) -> bool:
 def _action_bucket(message: dict[str, Any]) -> str:
     text = _message_text(message)
     subject = str(message.get("subject") or "")
+    if _is_automated_sender(message):
+        if "payment is due" in text or "approaching spend limit" in text:
+            return "Watch"
+        return "Ignore/noise"
     if any(token in text for token in ("sign in", "verification code")):
         return "Ignore/noise"
     if "quarantine" in text or "security" in text:
         return "Watch"
     if "approaching spend limit" in text or "payment is due" in text:
         return "Watch"
-    if any(token in text for token in ("thursday", "today", "asap", "urgent")) and not _is_internal_sender(message):
+    if _has_explicit_deadline(text) and not _is_internal_sender(message):
         return "Alert now"
     if _likely_reply_needed(message) and not _is_internal_sender(message):
         return "Reply"
@@ -445,12 +480,10 @@ def _render_last_five_answer(messages: list[dict[str, Any]], mailbox: str) -> st
     for index, message in enumerate(rows, start=1):
         sender = str(message.get("from_name") or message.get("from_email") or "Unknown sender")
         subject = str(message.get("subject") or "(no subject)")
-        bucket = _action_bucket(message)
         lines.append(
             f"{index}. {subject} — {sender} — {_format_received_at(message.get('received_at'))}"
         )
         lines.append(f"   Response path: {_short_action_label(message)}.")
-        lines.append(f"   Why: {_message_reason(message, bucket)}")
         lines.append("")
     return "\n".join(lines).strip()
 
