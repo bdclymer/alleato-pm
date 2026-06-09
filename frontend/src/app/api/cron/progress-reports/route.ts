@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { createProgressReportDraft } from "@/lib/progress-reports/server";
+import { createProgressReportDraft, PROGRESS_REPORT_CRON_USER_ID } from "@/lib/progress-reports/server";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { logEvent } from "@/lib/guardrails/observability";
@@ -20,7 +20,7 @@ import { logger } from "@/lib/logger";
 
 export const maxDuration = 120;
 
-const CRON_USER_ID = "00000000-0000-0000-0000-000000000001";
+const CRON_USER_ID = PROGRESS_REPORT_CRON_USER_ID;
 const CRON_USER_EMAIL = "cron@alleato.internal";
 
 export const POST = withApiGuardrails("/api/cron/progress-reports#POST", async ({ request, requestId }) => {
@@ -57,6 +57,7 @@ export const POST = withApiGuardrails("/api/cron/progress-reports#POST", async (
   }
 
   let created = 0;
+  let refreshed = 0;
   let skipped = 0;
   const errors: Array<{ projectId: number; reason: string }> = [];
 
@@ -68,8 +69,10 @@ export const POST = withApiGuardrails("/api/cron/progress-reports#POST", async (
         userEmail: CRON_USER_EMAIL,
       });
 
-      if (result.reportId) {
+      if (result.action === "created") {
         created++;
+      } else if (result.action === "refreshed") {
+        refreshed++;
       } else {
         skipped++;
       }
@@ -87,6 +90,7 @@ export const POST = withApiGuardrails("/api/cron/progress-reports#POST", async (
     details: {
       projects_checked: projects.length,
       reports_created: created,
+      reports_refreshed: refreshed,
       skipped,
       errors: errors.length,
     },
@@ -96,6 +100,7 @@ export const POST = withApiGuardrails("/api/cron/progress-reports#POST", async (
     success: true,
     projectsChecked: projects.length,
     reportsCreated: created,
+    reportsRefreshed: refreshed,
     skipped,
     errors,
     runAt: new Date().toISOString(),

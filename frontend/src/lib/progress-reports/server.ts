@@ -29,6 +29,11 @@ import type {
  * this service keeps draft creation deterministic and retry-safe.
  */
 
+// Sentinel user ID used by cron jobs. When `updated_by` matches this value the
+// draft has never been touched by a human and is safe to auto-refresh with
+// fresh source data on each daily cron run.
+export const PROGRESS_REPORT_CRON_USER_ID = "00000000-0000-0000-0000-000000000001";
+
 // Raw Supabase row shapes used before coercing JSON/unknown columns into the
 // stricter progress-report API types consumed by pages and route handlers.
 interface ProgressReportRow {
@@ -564,18 +569,27 @@ export async function createProgressReportDraft({
   const db = createServiceClient();
   const range = weekStart && weekEnd ? { weekStart, weekEnd } : defaultWeeklyReportRange();
 
-  // This lookup is the idempotency gate. It prevents cron retries and repeated
-  // button clicks from creating duplicate weekly progress reports.
+  // Idempotency gate: prevent duplicate weekly reports. When a report already
+  // exists in `draft` status and hasn't been touched by a human (updated_by
+  // still matches the cron sentinel), refresh its content with the latest
+  // source data from the week so the report builds up day by day. Reports
+  // edited by a real user or promoted to ready/sent are never auto-overwritten.
   const { data: existing } = await db
     .from("project_progress_reports")
-    .select("id")
+    .select("id, status, updated_by")
     .eq("project_id", projectId)
     .eq("week_start", range.weekStart)
     .eq("week_end", range.weekEnd)
     .maybeSingle();
 
-  if (existing?.id) {
-    return { reportId: existing.id as string };
+  const shouldRefresh =
+    !!existing?.id &&
+    existing.status === "draft" &&
+    existing.updated_by === PROGRESS_REPORT_CRON_USER_ID &&
+    userId === PROGRESS_REPORT_CRON_USER_ID;
+
+  if (existing?.id && !shouldRefresh) {
+    return { reportId: existing.id as string, action: "skipped" as const };
   }
 
   // Pull all source inputs in parallel. The builder receives already-loaded data
@@ -669,8 +683,29 @@ export async function createProgressReportDraft({
     projectContacts,
   });
 
-  // Persist the report body first. Photo selections are stored in a separate
-  // link table so editors can reorder/caption images without mutating photo rows.
+  // Daily refresh path: update text sections and source snapshot with the
+  // latest week's source material. Photo selections are left untouched because
+  // the PM may have already picked specific images on a prior visit.
+  if (shouldRefresh && existing?.id) {
+    const { error: updateError } = await db
+      .from("project_progress_reports")
+      .update({
+        past_week_highlights: draft.pastWeekHighlights,
+        upcoming_week_activities: draft.upcomingWeekActivities,
+        open_items: draft.openItems,
+        source_snapshot: sourceSnapshotToJson(draft.sourceSnapshot),
+        updated_by: PROGRESS_REPORT_CRON_USER_ID,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", existing.id)
+      .eq("project_id", projectId);
+
+    if (updateError) throw new Error(updateError.message);
+
+    return { reportId: existing.id as string, action: "refreshed" as const };
+  }
+
+  // First-creation path: persist the full report and initial photo selections.
   const { data: created, error: createError } = await db
     .from("project_progress_reports")
     .insert({
@@ -699,8 +734,6 @@ export async function createProgressReportDraft({
     throw new Error(createError?.message ?? "Could not create progress report");
   }
 
-  // Initial photo picks come from the builder's deterministic top-photo choice.
-  // Later editor saves replace these links in `saveProgressReport()`.
   if (draft.selectedPhotos.length > 0) {
     const { error: photosInsertError } = await db
       .from("project_progress_report_photos")
@@ -720,7 +753,7 @@ export async function createProgressReportDraft({
     }
   }
 
-  return { reportId: created.id as string };
+  return { reportId: created.id as string, action: "created" as const };
 }
 
 /**
