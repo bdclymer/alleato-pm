@@ -3,8 +3,8 @@
 Last updated: 2026-06-09
 
 Current state: the MAIN mirror tables for `source_intelligence_jobs`,
-`source_signal_candidates`, and `packet_refresh_jobs` were archived on
-2026-06-09. Their live MAIN names no longer exist.
+`source_signal_candidates`, and `packet_refresh_jobs` were archived and then
+dropped on 2026-06-09. Their live MAIN names no longer exist in PM APP.
 
 ## Executive Summary
 
@@ -34,11 +34,11 @@ The cleanup direction is:
 | `intelligence_reviews` | MAIN / PM APP (`lgveqfnpkxvzbnnwuled`) | Feedback / review | Human review queue for packet/card/evidence issues. There are insert/read paths, but the table is effectively empty/underused and no complete UI is shipped. | Archive unless review UI is built now |
 | `project_risk_snapshots` | MAIN / PM APP (`lgveqfnpkxvzbnnwuled`) | Legacy risk rollup | Per-project risk roll-up snapshots. Existing docs say no clear app-level writer was found. This overlaps with packet/card risk intelligence. | Audit, then likely archive/delete |
 | `source_intelligence_jobs` | RAG / AI Database (`fqcvmfqldlewvbsuxdvz`) | Compiler queue | Canonical durable job queue for source-level attribution, signal extraction, card upsert, and packet refresh work. Drained by the Render intelligence compiler cron. | Keep in RAG |
-| `source_intelligence_jobs_archive_20260609` | MAIN / PM APP (`lgveqfnpkxvzbnnwuled`) | Archived mirror | Archived former MAIN job queue. The live table name was removed so hidden dependencies fail loudly instead of reading stale data. | Archived |
+| `source_intelligence_jobs_archive_20260609` | MAIN / PM APP (`lgveqfnpkxvzbnnwuled`) | Former mirror | Former MAIN job queue kept briefly during the cutover audit, then dropped once no active dependency remained. | Deleted |
 | `source_signal_candidates` | RAG / AI Database (`fqcvmfqldlewvbsuxdvz`) | Compiler staging | Canonical staging table for extracted signals before promotion to `insight_cards`. | Keep in RAG |
-| `source_signal_candidates_archive_20260609` | MAIN / PM APP (`lgveqfnpkxvzbnnwuled`) | Archived mirror | Archived former MAIN candidate table. The live table name was removed so hidden dependencies fail loudly instead of reading stale data. | Archived |
+| `source_signal_candidates_archive_20260609` | MAIN / PM APP (`lgveqfnpkxvzbnnwuled`) | Former mirror | Former MAIN candidate table kept briefly during the cutover audit, then dropped once no active dependency remained. | Deleted |
 | `packet_refresh_jobs` | RAG / AI Database (`fqcvmfqldlewvbsuxdvz`) | Compiler queue | Canonical queue for regenerating `intelligence_packets`. Written by source promotion and periodic refresh jobs; drained by the compiler cron. | Keep in RAG |
-| `packet_refresh_jobs_archive_20260609` | MAIN / PM APP (`lgveqfnpkxvzbnnwuled`) | Archived mirror | Archived former MAIN packet-refresh queue. The live table name was removed so hidden dependencies fail loudly instead of reading stale data. | Archived |
+| `packet_refresh_jobs_archive_20260609` | MAIN / PM APP (`lgveqfnpkxvzbnnwuled`) | Former mirror | Former MAIN packet-refresh queue kept briefly during the cutover audit, then dropped once no active dependency remained. | Deleted |
 | `source_sync_health_snapshots` | RAG / AI Database (`fqcvmfqldlewvbsuxdvz`) | Observability | Canonical source-sync and compiler-health snapshots. Used for source health, readiness, and pipeline diagnostics. | Keep in RAG |
 | `source_sync_health_snapshots` | MAIN / PM APP (`lgveqfnpkxvzbnnwuled`) | Observability summary / duplicate | App-side copy or summary of source health. Keep only if the admin UI truly needs local low-latency reads; otherwise replace reads with a RAG-backed API and delete this copy. | Keep temporarily; replace or delete |
 
@@ -81,15 +81,15 @@ flowchart TD
 
 ## Deletion / Archive Candidates
 
-### Archived On 2026-06-09
+### Deleted On 2026-06-09
 
 - MAIN `source_intelligence_jobs_archive_20260609`
 - MAIN `source_signal_candidates_archive_20260609`
 - MAIN `packet_refresh_jobs_archive_20260609`
 
-Reason: the stale live MAIN names were removed and replaced with archive names.
-That gets them out of the active runtime surface immediately while preserving
-recoverability.
+Reason: the stale live MAIN names were removed first so hidden dependencies
+would fail loudly during audit. After the audit confirmed the app/runtime no
+longer depended on the PM APP copies, the archive tables were dropped.
 
 ### Archive Or Delete After Product Decision
 
@@ -119,12 +119,14 @@ single RAG-backed health API that returns a compact summary to the app.
 3. Confirm Render compiler cron reads/writes only RAG copies.
 4. Export a final backup of each table to storage or local archive.
 5. Add a migration that renames tables to `*_archive_YYYYMMDD` first, not drops.
-6. Run production smoke checks for:
+6. After archive verification passes, add a follow-up migration to drop the
+   archived tables.
+7. Run production smoke checks for:
    - source-sync health page
    - AI assistant source-health questions
    - intelligence compiler health check
    - selected-project packet load
-7. After one stable release window, drop the archived MAIN mirror tables.
+8. Regenerate types/docs so deleted tables disappear from the active contract.
 
 ## Live Audit Evidence (2026-06-09)
 
@@ -189,8 +191,10 @@ node scripts/verify/verify_rag_client_boundary.mjs
 
 ### Phase 4: Delete
 
-- Drop the archived MAIN mirror tables after no release, cron, or admin UI path
-  needs them.
+- Completed on 2026-06-09:
+  - drop `source_intelligence_jobs_archive_20260609`
+  - drop `source_signal_candidates_archive_20260609`
+  - drop `packet_refresh_jobs_archive_20260609`
 
 ### Phase 5: Simplify Docs And Assistant Policy
 

@@ -2138,9 +2138,9 @@ tables:
     db: MAIN
     domain: intelligence
     owner: pipeline
-    status: archived
-    purpose: "Archived former MAIN copy of RAG pre-promotion candidates. The live MAIN table name was removed on 2026-06-09 so hidden dependencies fail loudly instead of reading stale data."
-    gotchas: "RAG is canonical. This archive exists only for recovery or one-time audit work and should not be read by application code."
+    status: deleted
+    purpose: "Former MAIN copy of RAG pre-promotion candidates. It was briefly archived during cutover and then dropped on 2026-06-09 after dependency audit."
+    gotchas: "Historical documentation only. The live runtime must use the RAG database table, not this deleted MAIN mirror."
     cleanupPriority: high
     relatedTables:
       - insight_cards
@@ -2149,9 +2149,9 @@ tables:
     db: MAIN
     domain: intelligence
     owner: pipeline
-    status: archived
-    purpose: "Archived former MAIN compiler job queue. The live MAIN table name was removed on 2026-06-09 because RAG is the canonical queue."
-    gotchas: "This table is archived state, not active infrastructure. Any live read or write path should use the RAG database instead."
+    status: deleted
+    purpose: "Former MAIN compiler job queue. It was briefly archived during cutover and then dropped on 2026-06-09 after dependency audit."
+    gotchas: "Historical documentation only. Any live read or write path must use the RAG database instead."
     cleanupPriority: high
     relatedTables: []
 
@@ -2159,9 +2159,9 @@ tables:
     db: MAIN
     domain: intelligence
     owner: pipeline
-    status: archived
-    purpose: "Archived former MAIN packet refresh queue. The live MAIN table name was removed on 2026-06-09 because RAG is the canonical queue."
-    gotchas: "Keep only for recovery or audit. Application code should never depend on this archived name."
+    status: deleted
+    purpose: "Former MAIN packet refresh queue. It was briefly archived during cutover and then dropped on 2026-06-09 after dependency audit."
+    gotchas: "Historical documentation only. Application code should never depend on this deleted MAIN mirror."
     cleanupPriority: high
     relatedTables:
       - intelligence_packets
