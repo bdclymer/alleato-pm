@@ -40,6 +40,9 @@ Chat Handler v2 — frontend/src/app/api/ai-assistant/chat/handler-v2.ts
     │
     ├──[executive briefing without selected project]─────────► Render backend
     │                                                          /api/intelligence/deep-agent/executive-briefing
+    │                                                          (executive prompt contract ranks canonical blockers/tasks,
+    │                                                          separates soft watch-list signals, and closes with
+    │                                                          management actions for "waiting on" / priority prompts)
     │
     ├──[Outlook / Teams / Microsoft operator work]───────────► Render backend
     │                                                          /api/intelligence/microsoft-executive-assistant

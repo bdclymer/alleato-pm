@@ -1083,6 +1083,54 @@ def _deep_agent_prompt(
     )
 
 
+def _executive_question_directives(question: str) -> list[str]:
+    normalized = " ".join(question.lower().split())
+    directives: list[str] = []
+
+    if "waiting on" in normalized:
+        directives.extend(
+            [
+                (
+                    "For 'waiting on' questions, lead with a one-sentence executive judgment that names "
+                    "the main bottleneck pattern before any list."
+                ),
+                (
+                    "After that, include a short section titled 'Biggest blockers' with the 3-6 most "
+                    "important items you are waiting on from other people. Rank them by business impact and lateness, not by source order."
+                ),
+                (
+                    "Each blocker should say who owes the follow-through, what concrete deliverable is outstanding, "
+                    "why it matters, and whether it is verified from the canonical task register or only a softer signal from meetings/emails/Teams."
+                ),
+                (
+                    "Keep softer or weakly assigned items in a separate 'Watch list' section instead of mixing them "
+                    "into the main blocker list."
+                ),
+                (
+                    "Close with a 'Management move' section that gives 2-3 specific executive actions to unblock the most important items today."
+                ),
+                "Do not open with a raw task dump or a long unranked bullet list.",
+            ]
+        )
+
+    if "most important task" in normalized or "most important tasks" in normalized:
+        directives.extend(
+            [
+                (
+                    "For 'most important tasks' questions, rank tasks by urgency, business impact, and due-date risk rather than recency."
+                ),
+                (
+                    "Lead with a one-sentence executive point of view about what matters most right now, then list the top priorities."
+                ),
+                (
+                    "For each priority, state the task, why it matters now, and whether it is a verified task-register row or a non-canonical follow-up signal."
+                ),
+            ]
+        )
+
+    return directives
+
+
 def _deep_agent_executive_prompt(
     request: DeepExecutiveIntelligenceRequest,
     organization: DeepOrganization,
@@ -1104,6 +1152,7 @@ def _deep_agent_executive_prompt(
         for item in evidence[:10]
     ]
     today = datetime.utcnow().strftime("%Y-%m-%d")
+    question_directives = _executive_question_directives(request.question)
     return "\n".join(
         [
             f"Question: {request.question}",

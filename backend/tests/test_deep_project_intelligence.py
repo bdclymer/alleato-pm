@@ -5,6 +5,7 @@ import pytest
 from src.services.agents.deep_project_intelligence import (
     REQUIRED_EXECUTIVE_SOURCE_TYPES,
     REQUIRED_SOURCE_TYPES,
+    _deep_agent_executive_prompt,
     build_executive_briefing_contract_spike,
     build_project_status_contract_spike,
     deep_agents_runtime_inventory,
@@ -14,8 +15,11 @@ from src.services.agents.deep_project_intelligence import (
     _resolve_deep_agents_model,
 )
 from src.services.agents.deep_project_intelligence_contracts import (
+    DeepOrganization,
     DeepExecutiveIntelligenceRequest,
+    EvidenceItem,
     DeepProjectIntelligenceRequest,
+    SourceCoverage,
 )
 class _Store:
     def __init__(self, project=None, client=None):
@@ -786,6 +790,58 @@ def test_executive_deep_agents_runtime_can_synthesize_business_packet():
     assert response.answer == "Executive synthesis from Deep Agents."
     assert response.tool_trace[-1].tool == "deepagents_runtime"
     assert response.tool_trace[-1].status == "success"
+
+
+def test_executive_prompt_adds_waiting_on_management_structure():
+    prompt = _deep_agent_executive_prompt(
+        DeepExecutiveIntelligenceRequest(
+            userId="user-1",
+            sessionId="session-1",
+            question="What am I waiting on from my team?",
+        ),
+        DeepOrganization(name="Alleato"),
+        [
+            SourceCoverage(
+                sourceType="tasks",
+                status="checked",
+                recordCount=4,
+                latestSourceAt="2026-06-09T12:00:00Z",
+                notes="Task register rows exist.",
+            )
+        ],
+        [
+            EvidenceItem(
+                sourceType="tasks",
+                sourceId="task-1",
+                title="Send owner decision list",
+                excerpt="Outstanding follow-through assigned to Brandon Griffith.",
+                occurredAt="2026-06-09T11:00:00Z",
+                confidence="high",
+            )
+        ],
+    )
+
+    assert "Biggest blockers" in prompt
+    assert "Watch list" in prompt
+    assert "Management move" in prompt
+    assert "Do not open with a raw task dump" in prompt
+
+
+def test_executive_prompt_adds_priority_ranking_for_most_important_tasks():
+    prompt = _deep_agent_executive_prompt(
+        DeepExecutiveIntelligenceRequest(
+            userId="user-1",
+            sessionId="session-1",
+            question="What are my most important tasks right now?",
+        ),
+        DeepOrganization(name="Alleato"),
+        [],
+        [],
+    )
+
+    assert "rank tasks by urgency, business impact, and due-date risk" in prompt
+    assert "Lead with a one-sentence executive point of view" in prompt
+    assert "verified task-register row or a non-canonical follow-up signal" in prompt
 
 
 def test_deep_agents_runtime_attaches_memory_middleware(monkeypatch):
