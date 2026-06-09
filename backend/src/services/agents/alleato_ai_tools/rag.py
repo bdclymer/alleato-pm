@@ -25,6 +25,7 @@ from langchain_core.tools import tool
 from openai import OpenAI
 
 from src.services.supabase_helpers import get_rag_read_client
+from src.services.ai_transport import get_openai_client
 from ._retry import with_db_retry
 
 _EMBEDDING_MODEL = "text-embedding-3-large"
@@ -54,13 +55,7 @@ MEETING_SOURCE_TYPES = [
 
 @lru_cache(maxsize=1)
 def _openai_client() -> OpenAI:
-    gateway_key = os.environ.get("AI_GATEWAY_API_KEY")
-    if gateway_key:
-        return OpenAI(
-            api_key=gateway_key,
-            base_url="https://ai-gateway.vercel.sh/v1",
-        )
-    return OpenAI()
+    return get_openai_client()
 
 
 def _embed_query(query: str) -> str:

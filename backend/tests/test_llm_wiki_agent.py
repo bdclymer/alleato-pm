@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from src.services.agents.llm_wiki import WikiRequest, run_llm_wiki_agent
+from src.services.agents.llm_wiki import WikiRequest, list_llm_wiki_archive, run_llm_wiki_agent
 
 
 def _override_route_auth(app, path: str):
@@ -114,6 +114,33 @@ def test_llm_wiki_query_files_durable_answer(monkeypatch, tmp_path):
     assert any("query.apply" in (artifact.content or "") for artifact in response.artifacts if artifact.path == "log.md")
 
 
+def test_llm_wiki_archive_lists_past_research_projects(monkeypatch, tmp_path):
+    monkeypatch.setenv("LLM_WIKI_OUTPUT_ROOT", str(tmp_path))
+    monkeypatch.setattr("src.services.agents.llm_wiki.agent.OUTPUT_BASE_DIR", tmp_path)
+
+    run_llm_wiki_agent(WikiRequest(userId="user-1", sessionId="session-1", topic="Ada Lovelace", mode="init"))
+
+    archive = list_llm_wiki_archive(user_id="user-1")
+
+    assert archive.projects[0].user_id == "user-1"
+    assert archive.projects[0].topic_slug == "ada-lovelace"
+    assert archive.projects[0].session_id == "session-1"
+    assert archive.projects[0].artifact_count >= 3
+    assert archive.projects[0].log_summary == "Wiki scaffold initialized."
+
+
+def test_llm_wiki_archive_returns_selected_artifacts(monkeypatch, tmp_path):
+    monkeypatch.setenv("LLM_WIKI_OUTPUT_ROOT", str(tmp_path))
+    monkeypatch.setattr("src.services.agents.llm_wiki.agent.OUTPUT_BASE_DIR", tmp_path)
+
+    run_llm_wiki_agent(WikiRequest(userId="user-1", sessionId="session-1", topic="Ada Lovelace", mode="init"))
+
+    archive = list_llm_wiki_archive(user_id="user-1", topic_slug="ada-lovelace", session_id="session-1")
+
+    assert archive.selected_project is not None
+    assert any(artifact.path == "wiki/index.md" and artifact.content for artifact in archive.artifacts)
+
+
 def test_llm_wiki_route_is_feature_gated(client, monkeypatch):
     path = "/api/intelligence/deep-agent/llm-wiki"
     _override_route_auth(client.app, path)
@@ -159,3 +186,26 @@ def test_llm_wiki_route_returns_payload(client, monkeypatch):
     body = response.json()
     assert body["mode"] == "deep_agents"
     assert body["toolTrace"][0]["status"] == "success"
+
+
+def test_llm_wiki_archive_route_returns_payload(client, monkeypatch, tmp_path):
+    path = "/api/intelligence/deep-agent/llm-wiki/archive"
+    _override_route_auth(client.app, path)
+    monkeypatch.setenv("LLM_WIKI_OUTPUT_ROOT", str(tmp_path))
+    monkeypatch.setattr("src.services.agents.llm_wiki.agent.OUTPUT_BASE_DIR", tmp_path)
+    monkeypatch.setitem(
+        _route_endpoint(client.app, path).__globals__,
+        "list_llm_wiki_archive",
+        list_llm_wiki_archive,
+    )
+    run_llm_wiki_agent(WikiRequest(userId="user-1", sessionId="session-1", topic="Ada Lovelace", mode="init"))
+
+    try:
+        response = client.get(path, params={"userId": "user-1", "topicSlug": "ada-lovelace", "sessionId": "session-1"})
+    finally:
+        _clear_route_auth(client.app, path)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["selectedProject"]["topicSlug"] == "ada-lovelace"
+    assert any(artifact["path"] == "wiki/index.md" for artifact in body["artifacts"])

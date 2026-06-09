@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarGroup, AvatarGroupCount } from "@/components/ui/avatar";
 import {
   Tooltip,
@@ -7,6 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { usePeople } from "@/hooks/use-people";
 
 interface AttendeeAvatarStackProps {
   participants: string[];
@@ -42,6 +44,11 @@ export function AttendeeAvatarStack({
   participants,
   maxVisible = 6,
 }: AttendeeAvatarStackProps) {
+  const { people } = usePeople();
+  const emailToContactId = Object.fromEntries(
+    people.filter((p) => p.email).map((p) => [p.email!.toLowerCase(), p.id])
+  );
+
   const visibleParticipants = participants.slice(0, maxVisible);
   const hiddenParticipants = participants.slice(maxVisible);
 
@@ -85,21 +92,36 @@ export function AttendeeAvatarStack({
 
         <div className="max-h-0 overflow-hidden opacity-0 transition-all duration-200 group-hover/attendees:max-h-80 group-hover/attendees:opacity-100 group-focus-within/attendees:max-h-80 group-focus-within/attendees:opacity-100">
           <ul className="space-y-2 pt-1">
-            {participants.map((participant) => (
-              <li key={`details-${participant}`} className="flex items-center gap-2">
-                <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center shrink-0">
-                  <span className="text-[10px] font-semibold text-muted-foreground">
-                    {getEmailInitials(participant)}
-                  </span>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {formatParticipantName(participant)}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">{participant}</p>
-                </div>
-              </li>
-            ))}
+            {participants.map((participant) => {
+              const contactId = emailToContactId[participant.toLowerCase()];
+              const inner = (
+                <>
+                  <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center shrink-0">
+                    <span className="text-[10px] font-semibold text-muted-foreground">
+                      {getEmailInitials(participant)}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {formatParticipantName(participant)}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">{participant}</p>
+                  </div>
+                </>
+              );
+              return (
+                <li key={`details-${participant}`} className="flex items-center gap-2">
+                  {contactId ? (
+                    <Link
+                      href={`/directory/contacts/${contactId}`}
+                      className="flex items-center gap-2 min-w-0 rounded hover:bg-muted/50 transition-colors -mx-1 px-1"
+                    >
+                      {inner}
+                    </Link>
+                  ) : inner}
+                </li>
+              );
+            })}
           </ul>
         </div>
       </div>

@@ -16,6 +16,8 @@ from src.services.agents.deep_project_intelligence import (
     _resolve_deep_agents_model,
 )
 from src.services.agents.llm_wiki.contracts import (
+    WikiArchiveProject,
+    WikiArchiveResponse,
     WikiArtifact,
     WikiRequest,
     WikiResponse,
@@ -36,7 +38,7 @@ class _TestBackend:
 
 
 def _provider_available() -> bool:
-    return bool(os.getenv("AI_GATEWAY_API_KEY") or os.getenv("OPENAI_API_KEY") or os.getenv("ANTHROPIC_API_KEY"))
+    return bool(os.getenv("OPENAI_API_KEY") or os.getenv("ANTHROPIC_API_KEY"))
 
 
 def _slugify(value: str) -> str:
@@ -311,6 +313,99 @@ def _collect_artifacts(workspace: Path) -> list[WikiArtifact]:
     return artifacts
 
 
+def _first_heading(content: str, fallback: str) -> str:
+    for line in content.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("#"):
+            heading = stripped.lstrip("#").strip()
+            if heading:
+                return heading
+    return fallback
+
+
+def _latest_log_summary(log_content: str) -> Optional[str]:
+    summaries = re.findall(r"^- summary:\s*(.+)$", log_content, flags=re.MULTILINE)
+    return summaries[-1].strip() if summaries else None
+
+
+def _archive_project_from_workspace(workspace: Path) -> Optional[WikiArchiveProject]:
+    try:
+        relative = workspace.relative_to(OUTPUT_BASE_DIR)
+    except ValueError:
+        return None
+
+    if len(relative.parts) != 3 or not (workspace / "wiki").is_dir():
+        return None
+
+    artifacts = _collect_artifacts(workspace)
+    latest_mtime = max((path.stat().st_mtime for path in workspace.rglob("*") if path.is_file()), default=workspace.stat().st_mtime)
+    user_id, topic_slug, session_id = relative.parts
+    index_path = workspace / "wiki" / "index.md"
+    index_content = index_path.read_text(encoding="utf-8", errors="replace") if index_path.exists() else ""
+    log_path = workspace / "log.md"
+    log_content = log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else ""
+    title = _first_heading(index_content, topic_slug.replace("-", " ").title())
+    topic = title[:-5] if title.lower().endswith(" wiki") else title
+
+    return WikiArchiveProject(
+        userId=user_id,
+        topic=topic,
+        topicSlug=topic_slug,
+        sessionId=session_id,
+        wikiPath=str(workspace),
+        title=title,
+        updatedAt=datetime.fromtimestamp(latest_mtime, UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        artifactCount=len(artifacts),
+        markdownCount=sum(1 for artifact in artifacts if artifact.kind == "markdown"),
+        sourceCount=sum(1 for artifact in artifacts if artifact.kind == "source"),
+        logSummary=_latest_log_summary(log_content),
+    )
+
+
+def list_llm_wiki_archive(
+    *,
+    user_id: Optional[str] = None,
+    topic_slug: Optional[str] = None,
+    session_id: Optional[str] = None,
+    limit: int = 50,
+) -> WikiArchiveResponse:
+    """List persisted LLM wiki workspaces and optionally include one workspace's artifacts."""
+    if limit < 1 or limit > 200:
+        raise RuntimeError("Archive limit must be between 1 and 200.")
+
+    root = OUTPUT_BASE_DIR
+    projects: list[WikiArchiveProject] = []
+    if root.exists():
+        workspace_candidates = [path for path in root.glob("*/*/*") if path.is_dir()]
+        for workspace in workspace_candidates:
+            project = _archive_project_from_workspace(workspace)
+            if project is None:
+                continue
+            if user_id and project.user_id != user_id:
+                continue
+            if topic_slug and project.topic_slug != topic_slug:
+                continue
+            if session_id and project.session_id != session_id:
+                continue
+            projects.append(project)
+
+    projects.sort(key=lambda project: project.updated_at, reverse=True)
+    selected_project = projects[0] if topic_slug and session_id and projects else None
+    artifacts: list[WikiArtifact] = []
+    if selected_project:
+        selected_path = Path(selected_project.wiki_path).resolve()
+        root_path = root.resolve()
+        if root_path not in selected_path.parents:
+            raise RuntimeError("Selected archive workspace is outside the configured wiki output root.")
+        artifacts = _collect_artifacts(selected_path)
+
+    return WikiArchiveResponse(
+        projects=projects[:limit],
+        selectedProject=selected_project,
+        artifacts=artifacts,
+    )
+
+
 def run_llm_wiki_agent(
     request: WikiRequest,
     *,
@@ -346,7 +441,7 @@ def run_llm_wiki_agent(
 
         if create_agent is None:
             if not _provider_available():
-                raise RuntimeError("AI_GATEWAY_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY is required for LLM wiki agent modes.")
+                raise RuntimeError("OPENAI_API_KEY or ANTHROPIC_API_KEY is required for LLM wiki agent modes.")
             from deepagents import create_deep_agent as create_agent
 
             model = _resolve_deep_agents_model(model)

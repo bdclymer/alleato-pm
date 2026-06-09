@@ -544,16 +544,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Extract project ID from URL path
   const projectId = React.useMemo(() => extractProjectId(pathname), [pathname])
-  const { permissions, userType, isAppAdmin } = useProjectPermissions(projectId)
+  const { permissions, userType, isAppAdmin, isDeveloper } = useProjectPermissions(projectId)
 
   // Header nav hook for project selector
   const nav = useHeaderNav()
 
   const isSubcontractor = userType === "subcontractor"
-  const isDeveloper =
-    (user?.app_metadata as Record<string, unknown> | undefined)?.is_developer === true ||
-    userType === "developer"
-
   // Filter tools by permission
   const filterTools = React.useCallback(
     (tools: NavigationTool[]): NavigationTool[] => {

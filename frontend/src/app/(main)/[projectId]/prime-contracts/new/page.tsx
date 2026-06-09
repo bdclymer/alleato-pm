@@ -26,7 +26,7 @@ export default function NewContractPage() {
       variant="form"
       title="Create Prime Contract"
       onBack={() => router.push(`/${projectId}/prime-contracts`)}
-      backLabel="Back to Prime Contracts"
+      backLabel="Back"
     >
       <ContractForm
         initialData={INITIAL_DATA}

@@ -40,48 +40,29 @@ BATCH_SIZE = 500
 
 
 def _probe_embedding_provider() -> dict:
-    """Try AI Gateway then direct OpenAI; return which providers are working."""
+    """Probe direct OpenAI embeddings endpoint; return whether it is working."""
     successes: list[str] = []
     warnings: list[str] = []
 
-    gateway_key = os.getenv("AI_GATEWAY_API_KEY")
     openai_key = os.getenv("OPENAI_API_KEY")
 
-    if gateway_key:
-        try:
-            resp = httpx.post(
-                "https://ai-gateway.vercel.sh/v1/embeddings",
-                headers={"Authorization": f"Bearer {gateway_key}", "Content-Type": "application/json"},
-                json={"model": "openai/text-embedding-3-large", "input": "alleato meeting health probe", "dimensions": 3072},
-                timeout=15,
-            )
-            if resp.is_success:
-                successes.append("ai-gateway")
-            else:
-                warnings.append(f"AI Gateway probe returned {resp.status_code}: {resp.text[:200]}")
-        except Exception as exc:
-            warnings.append(f"AI Gateway probe threw: {exc}")
-    else:
-        warnings.append("AI_GATEWAY_API_KEY not set — falling back to direct OpenAI")
+    if not openai_key:
+        warnings.append("OPENAI_API_KEY is not set — embedding probe skipped")
+        return {"ok": False, "providers": successes, "warnings": warnings}
 
-    if openai_key:
-        try:
-            resp = httpx.post(
-                "https://api.openai.com/v1/embeddings",
-                headers={"Authorization": f"Bearer {openai_key}", "Content-Type": "application/json"},
-                json={"model": "text-embedding-3-large", "input": "alleato meeting health probe", "dimensions": 3072},
-                timeout=15,
-            )
-            if resp.is_success:
-                successes.append("openai-direct")
-            else:
-                if successes:
-                    warnings.append(f"Direct OpenAI probe {resp.status_code} — AI Gateway is working fallback")
-                else:
-                    warnings.append(f"Direct OpenAI probe {resp.status_code}: {resp.text[:300]}")
-        except Exception as exc:
-            if not successes:
-                warnings.append(f"Direct OpenAI probe threw: {exc}")
+    try:
+        resp = httpx.post(
+            "https://api.openai.com/v1/embeddings",
+            headers={"Authorization": f"Bearer {openai_key}", "Content-Type": "application/json"},
+            json={"model": "text-embedding-3-large", "input": "alleato meeting health probe", "dimensions": 3072},
+            timeout=15,
+        )
+        if resp.is_success:
+            successes.append("openai-direct")
+        else:
+            warnings.append(f"OpenAI embedding probe returned {resp.status_code}: {resp.text[:300]}")
+    except Exception as exc:
+        warnings.append(f"OpenAI embedding probe threw: {exc}")
 
     return {"ok": len(successes) > 0, "providers": successes, "warnings": warnings}
 
@@ -410,7 +391,7 @@ def run_health_check(
     stats["embedding_provider"] = provider
     warnings.extend(provider.get("warnings", []))
     if not provider["ok"]:
-        failures.append("Neither AI Gateway nor direct OpenAI can produce embeddings — ingestion is dead.")
+        failures.append("OpenAI embedding probe failed — check OPENAI_API_KEY and api.openai.com availability.")
 
     return {
         "passed": len(failures) == 0,

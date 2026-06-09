@@ -26,13 +26,14 @@ from .task_assignees import TaskAssigneeResolver, clean_text
 logger = logging.getLogger(__name__)
 
 TASK_EXTRACTION_MODEL = "gpt-5.5"
-TASK_EXTRACTION_PROMPT_VERSION = "task_extraction.v4.gpt-5.5"
+TASK_EXTRACTION_PROMPT_VERSION = "task_extraction.v5.gpt-5.5"
 TASK_EXTRACTION_DEFAULT_LIMIT = 25
 TASK_EXTRACTION_MAX_RUN_DOCS = 50
 TASK_EXTRACTION_CANDIDATE_MULTIPLIER = 4
 TASK_EXTRACTION_DEFAULT_CANDIDATE_LIMIT = 100
 TASK_EXISTING_DESCRIPTION_LIMIT = 1000
 TASK_FEEDBACK_EXAMPLES_LIMIT = 8
+TASK_POSITIVE_EXAMPLES_LIMIT = 5
 
 # Source types that can contain action items.
 TASK_SOURCE_TYPES = (
@@ -79,6 +80,9 @@ Rules:
 - Write titles/descriptions as imperative action items, not third-person narration. Use "Escalate Katie Conner's overdue payment" instead of "Brandon asked Katie Conner..."
 - If no qualifying tasks exist, return an empty array
 
+Positive examples — match this level of specificity, assignee fit, and outcome quality:
+{positive_examples}
+
 Negative examples — return [] for items like these:
 - "Mark suggested Brandon cancel his own Teams invite and accept the Teams invite Mark forwarded."
 - "Forward the Wednesday 3pm ET first meeting invite to Brandon Clymer and Kebba Mass."
@@ -111,17 +115,8 @@ class TaskExtractionResult:
 
 
 def _openai_client() -> tuple[OpenAI, str, str]:
-    gateway_key = os.getenv("AI_GATEWAY_API_KEY")
-    if gateway_key:
-        return (
-            OpenAI(api_key=gateway_key, base_url="https://ai-gateway.vercel.sh/v1"),
-            f"openai/{TASK_EXTRACTION_MODEL}",
-            "AI Gateway",
-        )
-    openai_key = os.getenv("OPENAI_API_KEY")
-    if openai_key:
-        return OpenAI(api_key=openai_key), TASK_EXTRACTION_MODEL, "OpenAI direct"
-    raise RuntimeError("AI_GATEWAY_API_KEY or OPENAI_API_KEY is required")
+    from .ai_transport import get_openai_client
+    return get_openai_client(), TASK_EXTRACTION_MODEL, "OpenAI"
 
 
 def _type_label(doc_type: str | None) -> str:
@@ -247,6 +242,37 @@ def _format_negative_feedback_examples(rows: list[dict[str, Any]]) -> str:
     return "\nRecent user-rejected task examples — do NOT create tasks like these:\n" + "\n".join(examples)
 
 
+def _format_positive_feedback_examples(rows: list[dict[str, Any]]) -> str:
+    examples: list[str] = []
+    for row in rows[:TASK_POSITIVE_EXAMPLES_LIMIT]:
+        snapshot = row.get("task_snapshot")
+        if not isinstance(snapshot, dict):
+            continue
+        task_name = _prompt_safe_text(snapshot.get("name"))
+        if not task_name:
+            continue
+        details: list[str] = []
+        assignee = _prompt_safe_text(snapshot.get("assignee"), 120)
+        due_date = _prompt_safe_text(snapshot.get("dueDate"), 40)
+        priority = _prompt_safe_text(snapshot.get("priority"), 40)
+        notes = _prompt_safe_text(snapshot.get("notes"), 120)
+        if assignee:
+            details.append(f"assignee: {assignee}")
+        if due_date:
+            details.append(f"due: {due_date}")
+        if priority:
+            details.append(f"priority: {priority}")
+        if notes:
+            details.append(f"notes: {notes}")
+        suffix = f" ({', '.join(details)})" if details else ""
+        examples.append(f'- "{task_name}"{suffix}')
+
+    if not examples:
+        return "No promoted good examples yet."
+
+    return "\n".join(examples)
+
+
 def _load_negative_feedback_examples(client_db: Any) -> str:
     try:
         result = (
@@ -263,11 +289,32 @@ def _load_negative_feedback_examples(client_db: Any) -> str:
     return _format_negative_feedback_examples(result.data or [])
 
 
+def _load_positive_feedback_examples(client_db: Any, project_id: int | None) -> str:
+    try:
+        query = (
+            client_db.table("ai_task_feedback")
+            .select("task_snapshot,created_at")
+            .eq("signal", "good")
+            .eq("promoted", True)
+            .order("created_at", desc=True)
+        )
+        if project_id is not None:
+            query = query.or_(f"project_id.is.null,project_id.eq.{project_id}")
+        else:
+            query = query.is_("project_id", None)
+        result = query.limit(TASK_POSITIVE_EXAMPLES_LIMIT).execute()
+    except Exception as exc:
+        logger.warning("[TaskExtraction] Could not load promoted good task examples: %s", exc)
+        return "No promoted good examples yet."
+    return _format_positive_feedback_examples(result.data or [])
+
+
 def _extract_tasks(
     doc: dict[str, Any],
     client: OpenAI,
     model: str,
     source_occurred_at: datetime | None = None,
+    positive_examples: str = "",
     feedback_examples: str = "",
 ) -> TaskExtractionResult:
     text = _build_text(doc)
@@ -277,6 +324,7 @@ def _extract_tasks(
     prompt = _EXTRACT_PROMPT.format(
         type_label=_type_label(doc.get("type")),
         source_date=source_occurred_at.date().isoformat() if source_occurred_at else "unknown",
+        positive_examples=positive_examples,
         feedback_examples=feedback_examples,
         text=text,
     )
@@ -472,6 +520,7 @@ def run_task_extraction(
     docs_processed = 0
     resolver = TaskAssigneeResolver(client_db)
     feedback_examples = _load_negative_feedback_examples(client_db)
+    positive_examples_cache: dict[int | None, str] = {}
 
     for doc in docs:
         doc_id = doc.get("id")
@@ -497,7 +546,22 @@ def run_task_extraction(
             skipped += 1
             continue
 
-        extraction = _extract_tasks(doc, client_ai, model_id, source_occurred_at, feedback_examples)
+        raw_project_id = doc.get("project_id")
+        project_id = int(raw_project_id) if isinstance(raw_project_id, int) else None
+        if project_id not in positive_examples_cache:
+            positive_examples_cache[project_id] = _load_positive_feedback_examples(
+                client_db,
+                project_id,
+            )
+
+        extraction = _extract_tasks(
+            doc,
+            client_ai,
+            model_id,
+            source_occurred_at,
+            positive_examples_cache[project_id],
+            feedback_examples,
+        )
         docs_processed += 1
 
         if extraction.error_message:

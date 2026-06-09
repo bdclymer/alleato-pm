@@ -65,7 +65,7 @@ from src.services.agents.deep_project_intelligence_contracts import (
 )
 from src.services.agents.content_builder import ContentBuilderRequest, run_content_builder_agent
 from src.services.agents.docs_research_agent import DocsResearchRequest, run_docs_research_agent
-from src.services.agents.llm_wiki import WikiRequest, run_llm_wiki_agent
+from src.services.agents.llm_wiki import WikiRequest, list_llm_wiki_archive, run_llm_wiki_agent
 from src.services.agents.microsoft_executive_assistant import (
     MicrosoftExecutiveAssistantRequest,
     run_microsoft_executive_assistant,
@@ -372,18 +372,15 @@ async def health_check() -> Dict[str, Any]:
         Dict containing health status and AI provider configuration status.
     """
     openai_key = os.getenv("OPENAI_API_KEY")
-    gateway_key = os.getenv("AI_GATEWAY_API_KEY")
     openai_configured = bool(openai_key and len(openai_key) > 0)
-    ai_gateway_configured = bool(gateway_key and len(gateway_key) > 0)
     supabase_service_configured = bool(
         os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_SERVICE_KEY")
     )
-    
+
     return {
         "status": "healthy",
         "openai_configured": openai_configured,
-        "ai_gateway_configured": ai_gateway_configured,
-        "embedding_provider_configured": ai_gateway_configured or openai_configured,
+        "embedding_provider_configured": openai_configured,
         "supabase_service_configured": supabase_service_configured,
         "timestamp": datetime.now().isoformat()
     }
@@ -1507,6 +1504,28 @@ async def run_deep_agent_llm_wiki(
     )
     if response.mode == "unavailable":
         raise HTTPException(status_code=502, detail=response.model_dump(by_alias=True))
+    return response.model_dump(by_alias=True)
+
+
+@app.get(
+    "/api/intelligence/deep-agent/llm-wiki/archive",
+    tags=["Intelligence"],
+    summary="List persisted Deep Agents LLM wiki research projects",
+)
+async def get_deep_agent_llm_wiki_archive(
+    user_id: Optional[str] = Query(default=None, alias="userId"),
+    topic_slug: Optional[str] = Query(default=None, alias="topicSlug"),
+    session_id: Optional[str] = Query(default=None, alias="sessionId"),
+    limit: int = Query(default=50, ge=1, le=200),
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Expose completed LLM wiki workspaces so the frontend can browse prior research."""
+    response = list_llm_wiki_archive(
+        user_id=user_id,
+        topic_slug=topic_slug,
+        session_id=session_id,
+        limit=limit,
+    )
     return response.model_dump(by_alias=True)
 
 

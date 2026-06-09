@@ -159,43 +159,6 @@ def _build_user_prompt(
     )
 
 
-def _openai_provider_configs() -> List[Dict[str, str]]:
-    providers: List[Dict[str, str]] = []
-    gateway_key = os.getenv("AI_GATEWAY_API_KEY")
-    if gateway_key:
-        providers.append(
-            {
-                "name": "AI Gateway",
-                "api_key": gateway_key,
-                "base_url": "https://ai-gateway.vercel.sh/v1",
-                "model_prefix": "openai/",
-            }
-        )
-    openai_key = os.getenv("OPENAI_API_KEY")
-    if openai_key:
-        providers.append(
-            {
-                "name": "OpenAI direct",
-                "api_key": openai_key,
-                "base_url": "",
-                "model_prefix": "",
-            }
-        )
-    return providers
-
-
-def _model_for_provider(model: str, provider: Dict[str, str]) -> str:
-    prefix = provider.get("model_prefix", "")
-    if prefix and not model.startswith(prefix):
-        return f"{prefix}{model}"
-    return model
-
-
-def _client_for_provider(provider: Dict[str, str]) -> OpenAI:
-    kwargs: Dict[str, Any] = {"api_key": provider["api_key"]}
-    if provider.get("base_url"):
-        kwargs["base_url"] = provider["base_url"]
-    return OpenAI(**kwargs)
 
 
 _THIRD_PERSON_NARRATION_PATTERNS = (
@@ -260,14 +223,7 @@ def rewrite_action_items(
     if not cleaned_items:
         return []
 
-    providers = _openai_provider_configs()
-    if not providers:
-        logger.warning(
-            "[FirefliesTaskRewriter] No AI provider configured; dropping %d action items for meeting %r",
-            len(cleaned_items),
-            meeting_title,
-        )
-        return []
+    from ..ai_transport import get_openai_client, retry_ai_call
 
     user_prompt = _build_user_prompt(
         title=meeting_title,
@@ -279,29 +235,23 @@ def rewrite_action_items(
     )
 
     response = None
-    errors: List[str] = []
-    for provider in providers:
-        try:
-            client = _client_for_provider(provider)
-            response = retry_ai_call(
-                lambda: client.chat.completions.create(
-                    model=_model_for_provider(REWRITER_MODEL, provider),
-                    messages=[
-                        {"role": "system", "content": _REWRITER_SYSTEM_PROMPT},
-                        {"role": "user", "content": user_prompt},
-                    ],
-                    temperature=0,
-                    max_completion_tokens=2400,
-                    response_format={"type": "json_object"},
-                ),
-                provider_name=provider["name"],
-                operation="fireflies task rewrite",
-            )
-            break
-        except Exception as exc:
-            message = f"{provider['name']}: {exc}"
-            logger.error("[FirefliesTaskRewriter] Provider failed: %s", message)
-            errors.append(message)
+    try:
+        response = retry_ai_call(
+            lambda: get_openai_client().chat.completions.create(
+                model=REWRITER_MODEL,
+                messages=[
+                    {"role": "system", "content": _REWRITER_SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=0,
+                max_completion_tokens=2400,
+                response_format={"type": "json_object"},
+            ),
+            provider_name="OpenAI",
+            operation="fireflies task rewrite",
+        )
+    except Exception as exc:
+        logger.error("[FirefliesTaskRewriter] OpenAI call failed: %s", exc)
 
     if response is None:
         logger.error(

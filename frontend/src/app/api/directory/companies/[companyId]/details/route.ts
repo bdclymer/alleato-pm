@@ -4,6 +4,13 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
 import { apiErrorResponse } from "@/lib/api-error";
+import {
+  buildCommitmentScopeRecords,
+  costCodeLookupKeys,
+  type CommitmentScopeLine,
+  type CommitmentScopeSource,
+  type CostCodeInsight,
+} from "@/lib/commitments/scope-finder";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 type Contact = Database["public"]["Tables"]["people"]["Row"];
@@ -35,6 +42,8 @@ type CommitmentItem = {
   total_billed_to_date: number | null;
   total_amount_remaining: number | null;
   updated_at: string | null;
+  trade_names: string[];
+  scope_summary: string | null;
 };
 
 type CompanyProjectItem = {
@@ -75,6 +84,17 @@ type MeetingItem = {
   project_number: string | null;
   created_at: string | null;
 };
+
+type PurchaseOrderScopeRow = {
+  id: string | null;
+  inclusions: string | null;
+  exclusions: string | null;
+};
+
+function cleanText(value: string | null | undefined): string | null {
+  const cleaned = value?.replace(/\s+/g, " ").trim();
+  return cleaned ? cleaned : null;
+}
 
 export const GET = withApiGuardrails(
   "directory/companies/[companyId]/details#GET",
@@ -204,6 +224,136 @@ export const GET = withApiGuardrails(
       })
       .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
+    const subcontractIds = subcontracts.map((row) => row.id).filter((id): id is string => Boolean(id));
+    const purchaseOrderIds = purchaseOrders.map((row) => row.id).filter((id): id is string => Boolean(id));
+
+    const [
+      subcontractSovResult,
+      purchaseOrderSovResult,
+      purchaseOrderScopeResult,
+    ] = await Promise.all([
+      subcontractIds.length > 0
+        ? supabase
+            .from("subcontract_sov_items")
+            .select("subcontract_id,budget_code,description,amount,line_number")
+            .in("subcontract_id", subcontractIds)
+        : Promise.resolve({ data: [], error: null }),
+      purchaseOrderIds.length > 0
+        ? supabase
+            .from("purchase_order_sov_items")
+            .select("purchase_order_id,budget_code,description,amount,line_number")
+            .in("purchase_order_id", purchaseOrderIds)
+        : Promise.resolve({ data: [], error: null }),
+      purchaseOrderIds.length > 0
+        ? supabase
+            .from("purchase_orders")
+            .select("id,inclusions,exclusions")
+            .in("id", purchaseOrderIds)
+        : Promise.resolve({ data: [], error: null }),
+    ]);
+
+    if (subcontractSovResult.error) {
+      return apiErrorResponse(subcontractSovResult.error);
+    }
+
+    if (purchaseOrderSovResult.error) {
+      return apiErrorResponse(purchaseOrderSovResult.error);
+    }
+
+    if (purchaseOrderScopeResult.error) {
+      return apiErrorResponse(purchaseOrderScopeResult.error);
+    }
+
+    const scopeLines: CommitmentScopeLine[] = [
+      ...((subcontractSovResult.data || []).map((row) => ({
+        commitmentId: row.subcontract_id,
+        budgetCode: row.budget_code,
+        description: row.description,
+        amount: row.amount,
+        lineNumber: row.line_number,
+      })) as CommitmentScopeLine[]),
+      ...((purchaseOrderSovResult.data || []).map((row) => ({
+        commitmentId: row.purchase_order_id,
+        budgetCode: row.budget_code,
+        description: row.description,
+        amount: row.amount,
+        lineNumber: row.line_number,
+      })) as CommitmentScopeLine[]),
+    ];
+
+    const budgetCodes = Array.from(
+      new Set(scopeLines.flatMap((row) => (row.budgetCode ? costCodeLookupKeys(row.budgetCode) : []))),
+    );
+    const costCodeByBudgetCode = new Map<string, CostCodeInsight>();
+
+    if (budgetCodes.length > 0) {
+      const { data: costCodeRows, error: costCodeError } = await supabase
+        .from("cost_codes")
+        .select("id,title,division_title")
+        .in("id", budgetCodes);
+
+      if (costCodeError) {
+        return apiErrorResponse(costCodeError);
+      }
+
+      for (const row of costCodeRows || []) {
+        const insight = {
+          divisionTitle: cleanText(row.division_title),
+          title: cleanText(row.title),
+        };
+        if (insight.divisionTitle || insight.title) {
+          for (const key of costCodeLookupKeys(row.id)) {
+            costCodeByBudgetCode.set(key, insight);
+          }
+        }
+      }
+    }
+
+    const purchaseOrderScopeById = new Map<string, PurchaseOrderScopeRow>();
+    for (const row of (purchaseOrderScopeResult.data || []) as PurchaseOrderScopeRow[]) {
+      if (row.id) purchaseOrderScopeById.set(row.id, row);
+    }
+
+    const scopeSources: CommitmentScopeSource[] = [
+      ...subcontracts
+        .filter((row): row is SubcontractWithTotals & { id: string } => Boolean(row.id))
+        .map((row) => ({
+          id: row.id,
+          projectId: row.project_id,
+          commitmentType: "subcontract" as const,
+          contractCompanyId: row.contract_company_id,
+          companyName: row.company_name,
+          contractNumber: row.contract_number,
+          title: row.title,
+          description: row.description,
+          inclusions: row.inclusions,
+          exclusions: row.exclusions,
+        })),
+      ...purchaseOrders
+        .filter((row): row is PurchaseOrderWithTotals & { id: string } => Boolean(row.id))
+        .map((row) => {
+          const scopeRow = purchaseOrderScopeById.get(row.id);
+          return {
+            id: row.id,
+            projectId: row.project_id,
+            commitmentType: "purchase_order" as const,
+            contractCompanyId: row.contract_company_id,
+            companyName: row.company_name,
+            contractNumber: row.contract_number,
+            title: row.title,
+            description: row.description,
+            inclusions: scopeRow?.inclusions ?? null,
+            exclusions: scopeRow?.exclusions ?? null,
+          };
+        }),
+    ];
+
+    const scopeRecordsById = buildCommitmentScopeRecords(
+      scopeSources,
+      scopeLines,
+      costCodeByBudgetCode,
+    );
+
     const commitmentsPayload: CommitmentItem[] = [
       ...subcontracts.map((row) => ({
         id: row.id || "",
@@ -223,6 +373,8 @@ export const GET = withApiGuardrails(
         total_billed_to_date: row.total_billed_to_date,
         total_amount_remaining: row.total_amount_remaining,
         updated_at: row.updated_at,
+        trade_names: row.id ? (scopeRecordsById.get(row.id)?.tradeNames ?? []) : [],
+        scope_summary: row.id ? (scopeRecordsById.get(row.id)?.scopeSummary ?? null) : null,
       })),
       ...purchaseOrders.map((row) => ({
         id: row.id || "",
@@ -242,6 +394,8 @@ export const GET = withApiGuardrails(
         total_billed_to_date: row.total_billed_to_date,
         total_amount_remaining: row.total_amount_remaining,
         updated_at: row.updated_at,
+        trade_names: row.id ? (scopeRecordsById.get(row.id)?.tradeNames ?? []) : [],
+        scope_summary: row.id ? (scopeRecordsById.get(row.id)?.scopeSummary ?? null) : null,
       })),
     ].sort((a, b) => {
       const aTime = a.updated_at ? new Date(a.updated_at).getTime() : 0;

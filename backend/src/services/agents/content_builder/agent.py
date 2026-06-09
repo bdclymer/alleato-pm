@@ -67,7 +67,7 @@ def _skills_loaded(workspace: Path) -> list[str]:
 
 
 def _provider_available() -> bool:
-    return bool(os.getenv("AI_GATEWAY_API_KEY") or os.getenv("OPENAI_API_KEY"))
+    return bool(os.getenv("OPENAI_API_KEY"))
 
 
 class _TestBackend:
@@ -193,7 +193,7 @@ def run_content_builder_agent(
 
         if create_agent is None:
             if not _provider_available():
-                raise RuntimeError("AI_GATEWAY_API_KEY or OPENAI_API_KEY is required for Deep Agents content generation.")
+                raise RuntimeError("OPENAI_API_KEY is required for Deep Agents content generation.")
             from deepagents import create_deep_agent as create_agent
 
             model = _resolve_deep_agents_model(model)

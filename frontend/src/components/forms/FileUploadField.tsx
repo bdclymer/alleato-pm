@@ -126,16 +126,10 @@ export function FileUploadField({
 
   const isMinimal = variant === "minimal";
   const isLink = variant === "link";
+  const hasLabel = Boolean(label);
 
-  return (
-    <FormField
-      label={label}
-      error={error}
-      hint={hint}
-      required={required}
-      fullWidth={fullWidth}
-    >
-      <div className={cn(isMinimal ? "space-y-2.5" : isLink ? "space-y-1" : "space-y-4")}>
+  const control = (
+    <div className={cn(isMinimal ? "space-y-2.5" : isLink ? "space-y-1" : "space-y-4")}>
         <div
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -256,7 +250,22 @@ export function FileUploadField({
             ))}
           </ul>
         )}
-      </div>
+    </div>
+  );
+
+  if (!hasLabel) {
+    return control;
+  }
+
+  return (
+    <FormField
+      label={label}
+      error={error}
+      hint={hint}
+      required={required}
+      fullWidth={fullWidth}
+    >
+      {control}
     </FormField>
   );
 }

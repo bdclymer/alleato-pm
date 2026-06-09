@@ -23,12 +23,14 @@ export function CheckboxField({
   disabled = false,
   className,
 }: CheckboxFieldProps) {
+  const inputId = React.useId();
   const hasDetail = Boolean(hint || error);
 
   return (
     <div className={cn("flex gap-3", hasDetail ? "items-start" : "items-center", className)}>
-      <div className={cn("flex h-5 items-center", hasDetail && "pt-0.5")}>
+      <div className={cn("flex items-center", hasDetail ? "h-5 pt-0.5" : "h-4")}>
         <Checkbox
+          id={inputId}
           checked={checked}
           onCheckedChange={(nextChecked) => onCheckedChange?.(nextChecked === true)}
           disabled={disabled}
@@ -37,7 +39,15 @@ export function CheckboxField({
         />
       </div>
       <div className={cn("min-w-0", hasDetail && "space-y-1")}>
-        <label className="text-sm font-medium leading-5 text-foreground">{label}</label>
+        <label
+          htmlFor={inputId}
+          className={cn(
+            "block text-sm font-medium text-foreground",
+            hasDetail ? "leading-5" : "leading-4",
+          )}
+        >
+          {label}
+        </label>
         {hint && !error && <p className="text-sm text-muted-foreground">{hint}</p>}
         {error && <p className="text-sm text-destructive">{error}</p>}
       </div>

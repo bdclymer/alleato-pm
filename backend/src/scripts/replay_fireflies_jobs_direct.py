@@ -88,8 +88,8 @@ def main() -> int:
     from src.services.supabase_helpers import get_rag_read_client
     from src.services.pipeline import run_embedder, run_extractor, run_parser
 
-    if not os.getenv("AI_GATEWAY_API_KEY") and not os.getenv("OPENAI_API_KEY"):
-        print("ERROR: AI_GATEWAY_API_KEY or OPENAI_API_KEY is required")
+    if not os.getenv("OPENAI_API_KEY"):
+        print("ERROR: OPENAI_API_KEY is required")
         return 2
 
     supabase = get_rag_read_client()

@@ -37,7 +37,7 @@ class _TestBackend:
 
 
 def _provider_available() -> bool:
-    return bool(os.getenv("AI_GATEWAY_API_KEY") or os.getenv("OPENAI_API_KEY") or os.getenv("ANTHROPIC_API_KEY"))
+    return bool(os.getenv("OPENAI_API_KEY") or os.getenv("ANTHROPIC_API_KEY"))
 
 
 def _workspace_for(request: DocsResearchRequest) -> Path:
@@ -102,7 +102,7 @@ def run_docs_research_agent(
 
         if create_agent is None:
             if not _provider_available():
-                raise RuntimeError("AI_GATEWAY_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY is required for docs research.")
+                raise RuntimeError("OPENAI_API_KEY or ANTHROPIC_API_KEY is required for docs research.")
             from deepagents import create_deep_agent as create_agent
 
             model = _resolve_deep_agents_model(model)

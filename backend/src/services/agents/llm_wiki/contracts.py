@@ -81,3 +81,27 @@ class WikiResponse(BaseModel):
     orchestrator: str
 
     model_config = {"populate_by_name": True}
+
+
+class WikiArchiveProject(BaseModel):
+    user_id: str = Field(..., alias="userId")
+    topic: str
+    topic_slug: str = Field(..., alias="topicSlug")
+    session_id: str = Field(..., alias="sessionId")
+    wiki_path: str = Field(..., alias="wikiPath")
+    title: str
+    updated_at: str = Field(..., alias="updatedAt")
+    artifact_count: int = Field(..., ge=0, alias="artifactCount")
+    markdown_count: int = Field(..., ge=0, alias="markdownCount")
+    source_count: int = Field(..., ge=0, alias="sourceCount")
+    log_summary: Optional[str] = Field(default=None, alias="logSummary")
+
+    model_config = {"populate_by_name": True}
+
+
+class WikiArchiveResponse(BaseModel):
+    projects: List[WikiArchiveProject]
+    selected_project: Optional[WikiArchiveProject] = Field(default=None, alias="selectedProject")
+    artifacts: List[WikiArtifact] = Field(default_factory=list)
+
+    model_config = {"populate_by_name": True}

@@ -63,7 +63,7 @@ def _skills_loaded() -> list[str]:
 
 
 def _provider_available() -> bool:
-    return bool(os.getenv("AI_GATEWAY_API_KEY") or os.getenv("OPENAI_API_KEY"))
+    return bool(os.getenv("OPENAI_API_KEY"))
 
 
 class _TestBackend:
@@ -270,7 +270,7 @@ def run_microsoft_executive_assistant(
         if create_agent is None:
             if not _provider_available():
                 raise RuntimeError(
-                    "AI_GATEWAY_API_KEY or OPENAI_API_KEY is required for the Microsoft Executive Assistant."
+                    "OPENAI_API_KEY is required for the Microsoft Executive Assistant."
                 )
             from deepagents import create_deep_agent as create_agent
 

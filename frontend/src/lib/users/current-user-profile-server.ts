@@ -12,11 +12,13 @@ export type CurrentUserProfilePayload = {
   phone?: string;
   profileCompleteness: number;
   isAdmin: boolean;
+  isDeveloper: boolean;
   onboardingCompletedAt: string | null;
 };
 
 type CurrentUserProfileRow = {
   is_admin: boolean | null;
+  is_developer: boolean | null;
   full_name: string | null;
   role: string | null;
   onboarding_completed_at: string | null;
@@ -59,7 +61,7 @@ export async function loadCurrentUserProfilePayload({
     profileData === undefined
       ? serviceClient
           .from("user_profiles")
-          .select("is_admin, full_name, role, onboarding_completed_at")
+          .select("is_admin, is_developer, full_name, role, onboarding_completed_at")
           .eq("id", user.id)
           .maybeSingle()
       : Promise.resolve({ data: profileData, error: null });
@@ -98,7 +100,8 @@ export async function loadCurrentUserProfilePayload({
     title: personData?.job_title || undefined,
     role: profileRow?.role || undefined,
     phone: personData?.phone_mobile || personData?.phone_business || undefined,
-    isAdmin: profileRow?.is_admin === true,
+    isAdmin: profileRow?.is_admin === true || profileRow?.is_developer === true,
+    isDeveloper: profileRow?.is_developer === true,
     onboardingCompletedAt: profileRow?.onboarding_completed_at ?? null,
   };
 

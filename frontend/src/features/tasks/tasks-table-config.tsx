@@ -418,11 +418,11 @@ export function buildTasksTableColumns(
   });
 }
 
-function getTaskProjectId(item: TasksRow): number | null {
+export function getTaskProjectId(item: TasksRow): number | null {
   return item.project_id ?? item.project_ids?.[0] ?? null;
 }
 
-function buildTaskFeedbackSnapshot(item: TasksRow): TaskSnapshot {
+export function buildTaskFeedbackSnapshot(item: TasksRow): TaskSnapshot {
   return {
     name: item.description || item.title || "Untitled task",
     assignee: item.assignee_name || item.assignee_email,
@@ -433,6 +433,14 @@ function buildTaskFeedbackSnapshot(item: TasksRow): TaskSnapshot {
     source: getTaskSourceLabel(item),
     generatedBy: item.extraction_model,
   };
+}
+
+export function isAiGeneratedTask(item: TasksRow): boolean {
+  return Boolean(
+    item.extraction_source ||
+      item.extraction_model ||
+      item.extraction_prompt_version,
+  );
 }
 
 function toTasksRecord(item: TasksRow): Record<string, string | null> {

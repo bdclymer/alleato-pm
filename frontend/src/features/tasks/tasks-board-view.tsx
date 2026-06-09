@@ -7,9 +7,13 @@ import {
   type BoardColumnDefinition,
   TableTagBadge,
 } from "@/components/tables/unified";
-import { Button } from "@/components/ui/button";
+import { TaskFeedbackButtons } from "@/components/ai/TaskFeedbackButtons";
 import { cn } from "@/lib/utils";
 import { type TasksRow, getTaskSourceLabel } from "@/features/tasks/task-utils";
+import {
+  buildTaskFeedbackSnapshot,
+  isAiGeneratedTask,
+} from "@/features/tasks/tasks-table-config";
 
 type TaskBoardStatus = "open" | "in_progress" | "done";
 
@@ -93,13 +97,21 @@ function renderTaskBoardCard(item: TasksRow, onOpen: (item: TasksRow) => void) {
     isOverdue(item.due_date) && toBoardStatus(item.status) !== "done";
   const priorityKey = (item.priority ?? "").toLowerCase();
   const priorityDotClassName = PRIORITY_DOT_CLASSNAME[priorityKey];
+  const showFeedback = isAiGeneratedTask(item) && Boolean(item.id);
+  const taskSnapshot = showFeedback ? buildTaskFeedbackSnapshot(item) : null;
 
   return (
-    <Button
+    <div
       data-task-board-card
-      type="button"
+      role="button"
+      tabIndex={0}
       onClick={() => onOpen(item)}
-      variant="ghost"
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen(item);
+        }
+      }}
       className="h-auto w-full justify-start rounded-md border border-border/60 bg-background p-3 text-left font-normal transition-colors hover:bg-muted/30"
     >
       <div className="flex items-start justify-between gap-3">
@@ -115,9 +127,23 @@ function renderTaskBoardCard(item: TasksRow, onOpen: (item: TasksRow) => void) {
           </p>
           {projectLabel && (
             <p className="mt-1 truncate text-xs text-muted-foreground">
-              {projectLabel}
+            {projectLabel}
             </p>
           )}
+          {showFeedback && item.id && taskSnapshot ? (
+            <div
+              className="mt-1 flex items-center"
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}
+            >
+              <TaskFeedbackButtons
+                projectId={taskSnapshot.projectId}
+                taskId={item.id}
+                taskSnapshot={taskSnapshot}
+                className="text-[11px]"
+              />
+            </div>
+          ) : null}
         </div>
         {priorityDotClassName ? (
           <span
@@ -159,7 +185,7 @@ function renderTaskBoardCard(item: TasksRow, onOpen: (item: TasksRow) => void) {
           <TableTagBadge label={sourceLabel} variant="outline" />
         ) : null}
       </div>
-    </Button>
+    </div>
   );
 }
 

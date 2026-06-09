@@ -16,6 +16,7 @@ interface AuthGuardResult {
   serviceClient: ReturnType<typeof createServiceClient>;
   userProfile: {
     is_admin: boolean | null;
+    is_developer: boolean | null;
     full_name: string | null;
     role: string | null;
     onboarding_completed_at: string | null;
@@ -129,7 +130,7 @@ export async function verifyProjectAccess(
   const [profileResult, personId] = await Promise.all([
     serviceClient
       .from("user_profiles")
-      .select("is_admin, full_name, role, onboarding_completed_at")
+      .select("is_admin, is_developer, full_name, role, onboarding_completed_at")
       .eq("id", user.id)
       .maybeSingle(),
     resolvePersonIdFromAuth(serviceClient, {
@@ -149,7 +150,7 @@ export async function verifyProjectAccess(
         authUserId: user.id,
         projectId,
         permissionTemplateId: null,
-        userType: "developer",
+        userType: profile.is_developer === true ? "developer" : "admin",
       },
       serviceClient,
       userProfile: profile,

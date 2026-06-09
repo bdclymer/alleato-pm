@@ -19,6 +19,11 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
+type ProfileAccessClaims = {
+  is_admin: boolean | null;
+  is_developer: boolean | null;
+};
+
 /**
  * Returns the current authenticated user, or null if not logged in.
  * Deduplicated per request via React cache().
@@ -30,6 +35,26 @@ export const getCurrentUser = cache(async () => {
   } = await supabase.auth.getUser();
   return user;
 });
+
+export const getProfileAccessClaims = cache(
+  async (): Promise<ProfileAccessClaims | null> => {
+    const user = await getCurrentUser();
+    if (!user) return null;
+
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("user_profiles")
+      .select("is_admin, is_developer")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to load profile access claims: ${error.message}`);
+    }
+
+    return data ?? null;
+  },
+);
 
 /**
  * Returns true if the current user has is_admin=true in their JWT.
@@ -53,9 +78,12 @@ export const getIsAdmin = cache(async (): Promise<boolean> => {
   // (accessible via user.app_metadata) or directly in the JWT claims.
   // @supabase/ssr surfaces JWT custom claims via user.app_metadata for
   // claims set in the hook's event->claims object.
-  return Boolean(
-    (user.app_metadata as Record<string, unknown> | undefined)?.is_admin
-  );
+  if ((user.app_metadata as Record<string, unknown> | undefined)?.is_admin === true) {
+    return true;
+  }
+
+  const profileClaims = await getProfileAccessClaims();
+  return profileClaims?.is_admin === true || profileClaims?.is_developer === true;
 });
 
 /**
@@ -73,7 +101,12 @@ export const getIsAdmin = cache(async (): Promise<boolean> => {
 export const getIsDeveloper = cache(async (): Promise<boolean> => {
   const user = await getCurrentUser();
   if (!user) return false;
-  return Boolean(
-    (user.app_metadata as Record<string, unknown> | undefined)?.is_developer
-  );
+  if (
+    (user.app_metadata as Record<string, unknown> | undefined)?.is_developer === true
+  ) {
+    return true;
+  }
+
+  const profileClaims = await getProfileAccessClaims();
+  return profileClaims?.is_developer === true;
 });

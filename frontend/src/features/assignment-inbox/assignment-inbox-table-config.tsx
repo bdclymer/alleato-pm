@@ -23,7 +23,7 @@ export const INBOX_COLUMNS: ColumnConfig[] = [
   { id: "title", label: "Item", alwaysVisible: true },
   { id: "from", label: "From", defaultVisible: true },
   { id: "occurredAt", label: "Date", defaultVisible: true },
-  { id: "suggestion", label: "AI suggestion", defaultVisible: true },
+  { id: "suggestion", label: "Assignment review", defaultVisible: true },
   { id: "assign", label: "Assign to project", alwaysVisible: true },
 ];
 
@@ -44,7 +44,7 @@ export function buildInboxFilters(projects: InboxProject[]): FilterConfig[] {
     },
     {
       id: "suggestion",
-      label: "AI suggestion",
+      label: "Review status",
       type: "select",
       options: [
         { value: "has", label: "Has suggestion" },
@@ -59,6 +59,16 @@ export function buildInboxFilters(projects: InboxProject[]): FilterConfig[] {
         value: String(project.id),
         label: project.name,
       })),
+    },
+    {
+      id: "review_status",
+      label: "Review status",
+      type: "select",
+      options: [
+        { value: "suggested", label: "Suggested" },
+        { value: "manual_review", label: "Manual review" },
+        { value: "undefined", label: "Undefined" },
+      ],
     },
   ];
 }

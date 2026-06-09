@@ -25,7 +25,7 @@ import os
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
-from openai import OpenAI
+from ..ai_transport import get_openai_client
 
 logger = logging.getLogger(__name__)
 
@@ -38,21 +38,12 @@ TOTAL_PROMPT_DOC_CHARS = 80_000
 
 
 # ---------------------------------------------------------------------------
-# OpenAI client (gateway-first, mirrors task_extraction.py)
+# OpenAI client
 # ---------------------------------------------------------------------------
 
-def _openai_client() -> Tuple[OpenAI, str, str]:
-    gateway_key = os.getenv("AI_GATEWAY_API_KEY")
-    if gateway_key:
-        return (
-            OpenAI(api_key=gateway_key, base_url="https://ai-gateway.vercel.sh/v1"),
-            f"openai/{DEFAULT_MODEL}",
-            "AI Gateway",
-        )
-    openai_key = os.getenv("OPENAI_API_KEY")
-    if openai_key:
-        return OpenAI(api_key=openai_key), DEFAULT_MODEL, "OpenAI direct"
-    raise RuntimeError("AI_GATEWAY_API_KEY or OPENAI_API_KEY required for domain packet compilation")
+def _openai_client() -> Tuple[Any, str, str]:
+    client = get_openai_client()
+    return client, DEFAULT_MODEL, "OpenAI direct"
 
 
 # ---------------------------------------------------------------------------

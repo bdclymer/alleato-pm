@@ -22,6 +22,7 @@ export type CurrentUserProfile = {
   communicationPreference?: string;
   profileCompleteness: number;
   isAdmin?: boolean;
+  isDeveloper?: boolean;
   onboardingCompletedAt?: string | null;
 };
 

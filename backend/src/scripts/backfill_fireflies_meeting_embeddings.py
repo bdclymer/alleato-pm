@@ -27,7 +27,6 @@ CHUNK_MAX_CHARS = 3000
 CHUNK_OVERLAP_CHARS = 400
 EMBEDDING_MODEL = "text-embedding-3-large"
 EMBEDDING_DIMENSIONS = 3072
-AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh/v1"
 MIN_CONTENT_CHARS = 200
 
 
@@ -65,13 +64,10 @@ def _content_hash(text: str) -> str:
 
 def _get_embedding_client():
     from openai import OpenAI
-    gateway_key = os.getenv("AI_GATEWAY_API_KEY")
-    if gateway_key:
-        return OpenAI(api_key=gateway_key, base_url=AI_GATEWAY_BASE_URL), f"openai/{EMBEDDING_MODEL}"
     openai_key = os.getenv("OPENAI_API_KEY")
-    if openai_key:
-        return OpenAI(api_key=openai_key), EMBEDDING_MODEL
-    raise RuntimeError("No AI_GATEWAY_API_KEY or OPENAI_API_KEY found")
+    if not openai_key:
+        raise RuntimeError("OPENAI_API_KEY is required")
+    return OpenAI(api_key=openai_key), EMBEDDING_MODEL
 
 
 def _embed_batch(texts: List[str]) -> List[List[float]]:

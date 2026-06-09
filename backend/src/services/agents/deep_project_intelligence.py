@@ -69,7 +69,6 @@ REQUIRED_EXECUTIVE_SOURCE_TYPES = (
 
 DEEP_AGENT_RUNTIME_MODE = "deep_agents"
 CONTRACT_SPIKE_MODE = "contract_spike"
-AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh/v1"
 RUNTIME_SKILL_NAMES = (
     "deep-agents-core",
     "deep-agents-memory",
@@ -1169,18 +1168,7 @@ def _resolve_deep_agents_model(model: Any) -> Any:
     if not isinstance(model, str):
         return model
 
-    gateway_key = os.getenv("AI_GATEWAY_API_KEY")
     openai_key = os.getenv("OPENAI_API_KEY")
-    if gateway_key:
-        from langchain_openai import ChatOpenAI
-
-        return ChatOpenAI(
-            model=_openai_model_name(model, gateway=True),
-            api_key=gateway_key,
-            base_url=AI_GATEWAY_BASE_URL,
-            timeout=45,
-            max_retries=1,
-        )
     if openai_key:
         from langchain_openai import ChatOpenAI
 

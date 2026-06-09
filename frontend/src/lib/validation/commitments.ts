@@ -52,5 +52,27 @@ export const commitmentListResponseSchema = z.object({
   }),
 });
 
+export const commitmentScopeLookupItemSchema = z.object({
+  id: z.string(),
+  commitment_type: z.enum(["subcontract", "purchase_order"]),
+  contract_company_id: z.string().nullable(),
+  contract_company_name: z.string().nullable(),
+  contract_number: z.string().nullable(),
+  title: z.string().nullable(),
+  trade_names: z.array(z.string()),
+  scope_summary: z.string().nullable(),
+  inclusion_summary: z.string().nullable(),
+  exclusion_summary: z.string().nullable(),
+  match_reason: z.string().nullable(),
+  matched_text: z.string().nullable(),
+  score: z.number(),
+});
+
+export const commitmentScopeLookupResponseSchema = z.object({
+  data: z.array(commitmentScopeLookupItemSchema),
+});
+
 export type CommitmentListItem = z.infer<typeof commitmentListItemSchema>;
 export type CommitmentListResponse = z.infer<typeof commitmentListResponseSchema>;
+export type CommitmentScopeLookupItem = z.infer<typeof commitmentScopeLookupItemSchema>;
+export type CommitmentScopeLookupResponse = z.infer<typeof commitmentScopeLookupResponseSchema>;

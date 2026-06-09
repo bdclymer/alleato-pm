@@ -622,11 +622,6 @@ export function PrimeContractSovSection({
                 >
                   Add Line Item
                 </Button>
-                {(formData.sovItems || []).length > 1 ? (
-                  <span className="ml-3 text-sm font-normal text-muted-foreground">
-                    {(formData.sovItems || []).length} line items
-                  </span>
-                ) : null}
                 {selectedSovItems.size > 0 ? (
                   <Button
                     type="button"

@@ -127,7 +127,7 @@ export function PrimeContractGeneralInfoSection({
           max={100}
         />
         <div className="flex items-start gap-x-2">
-          <Label className="w-28 shrink-0 pt-2 text-[13px] font-medium text-foreground">
+          <Label className="w-40 shrink-0 pt-2 text-[13px] font-medium text-foreground">
             Executed
           </Label>
           <div className="flex h-10 min-w-0 flex-1 items-center">
@@ -172,7 +172,7 @@ export function PrimeContractDatesSection({
         />
         <DateField
           label="Substantial Completion Date"
-          hint="Date when work is sufficiently complete for its intended use."
+          labelTooltip="Date when work is sufficiently complete for its intended use."
           value={formData.substantialCompletionDate}
           onChange={(date) => onUpdateFormData({ substantialCompletionDate: date })}
           placeholder="mm / dd / yyyy"

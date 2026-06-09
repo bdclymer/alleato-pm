@@ -41,45 +41,9 @@ CHAT_MODEL = "gpt-4o-mini"
 SEGMENT_TRANSCRIPT_MAX_CHARS = int(os.getenv("SEGMENT_TRANSCRIPT_MAX_CHARS", "0"))
 
 
-def _provider_configs() -> List[Dict[str, str]]:
-    providers: List[Dict[str, str]] = []
-    gateway_key = os.getenv("AI_GATEWAY_API_KEY")
-    if gateway_key:
-        providers.append(
-            {
-                "name": "AI Gateway",
-                "api_key": gateway_key,
-                "base_url": "https://ai-gateway.vercel.sh/v1",
-                "model_prefix": "openai/",
-            }
-        )
-    openai_key = os.getenv("OPENAI_API_KEY")
-    if openai_key:
-        providers.append(
-            {
-                "name": "OpenAI direct",
-                "api_key": openai_key,
-                "base_url": "",
-                "model_prefix": "",
-            }
-        )
-    if not providers:
-        raise RuntimeError("AI_GATEWAY_API_KEY or OPENAI_API_KEY is required for LLM calls")
-    return providers
-
-
-def _client(provider: Dict[str, str]) -> OpenAI:
-    kwargs: Dict[str, str] = {"api_key": provider["api_key"]}
-    if provider.get("base_url"):
-        kwargs["base_url"] = provider["base_url"]
-    return OpenAI(**kwargs)
-
-
-def _model_for_provider(model: str, provider: Dict[str, str]) -> str:
-    prefix = provider.get("model_prefix", "")
-    if prefix and not model.startswith(prefix):
-        return f"{prefix}{model}"
-    return model
+def _client() -> OpenAI:
+    from ..ai_transport import get_openai_client
+    return get_openai_client()
 
 
 # ---------------------------------------------------------------------------
@@ -98,28 +62,20 @@ def batch_embed(texts: List[str], model: str = EMBEDDING_MODEL) -> List[List[flo
         )
     truncated = [t[:8000] for t in texts]
     logger.info("[LLM] Embedding %d texts with %s (dimensions=%d)", len(texts), model, dimensions)
-    errors: List[str] = []
-    for provider in _provider_configs():
-        try:
-            response = retry_ai_call(
-                lambda: _client(provider).embeddings.create(
-                    model=_model_for_provider(model, provider),
-                    input=truncated,
-                    dimensions=dimensions,
-                ),
-                provider_name=provider["name"],
-                operation="embedding batch",
-            )
-            embeddings = [item.embedding for item in response.data]
-            if len(embeddings) != len(texts):
-                raise RuntimeError(f"expected {len(texts)} embeddings, got {len(embeddings)}")
-            logger.info("[LLM] Embedded %d texts via %s", len(texts), provider["name"])
-            return embeddings
-        except Exception as exc:
-            message = f"{provider['name']}: {exc}"
-            logger.error("[LLM] Embedding provider failed: %s", message)
-            errors.append(message)
-    raise RuntimeError("Embedding failed across all providers: " + " | ".join(errors))
+    response = retry_ai_call(
+        lambda: _client().embeddings.create(
+            model=model,
+            input=truncated,
+            dimensions=dimensions,
+        ),
+        provider_name="OpenAI",
+        operation="embedding batch",
+    )
+    embeddings = [item.embedding for item in response.data]
+    if len(embeddings) != len(texts):
+        raise RuntimeError(f"expected {len(texts)} embeddings, got {len(embeddings)}")
+    logger.info("[LLM] Embedded %d texts via OpenAI", len(texts))
+    return embeddings
 
 
 # ---------------------------------------------------------------------------
@@ -136,24 +92,14 @@ def _call_llm(prompt: str, json_mode: bool = False, max_tokens: Optional[int] = 
         kwargs["max_tokens"] = max_tokens
 
     logger.info("[LLM] Calling %s (json=%s)", CHAT_MODEL, json_mode)
-    errors: List[str] = []
-    for provider in _provider_configs():
-        try:
-            provider_kwargs = dict(kwargs)
-            provider_kwargs["model"] = _model_for_provider(CHAT_MODEL, provider)
-            if json_mode and provider["name"] != "AI Gateway":
-                provider_kwargs["response_format"] = {"type": "json_object"}
-            response = retry_ai_call(
-                lambda: _client(provider).chat.completions.create(**provider_kwargs),
-                provider_name=provider["name"],
-                operation="chat completion",
-            )
-            return response.choices[0].message.content or ""
-        except Exception as exc:
-            message = f"{provider['name']}: {exc}"
-            logger.error("[LLM] Chat provider failed: %s", message)
-            errors.append(message)
-    raise RuntimeError("Chat completion failed across all providers: " + " | ".join(errors))
+    if json_mode:
+        kwargs["response_format"] = {"type": "json_object"}
+    response = retry_ai_call(
+        lambda: _client().chat.completions.create(**kwargs),
+        provider_name="OpenAI",
+        operation="chat completion",
+    )
+    return response.choices[0].message.content or ""
 
 
 # ---------------------------------------------------------------------------

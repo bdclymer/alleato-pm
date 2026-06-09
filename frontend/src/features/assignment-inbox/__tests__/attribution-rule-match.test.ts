@@ -1,4 +1,5 @@
 import {
+  buildRuleSuggestion,
   extractEmailDomain,
   matchAttributionRule,
   type ActiveAttributionRule,
@@ -87,5 +88,80 @@ describe("matchAttributionRule", () => {
     expect(
       matchAttributionRule({ fromEmail: "pm@acme.com", title: "x" }, []),
     ).toBeNull();
+  });
+});
+
+describe("buildRuleSuggestion", () => {
+  it("uses subject history across a chain to recover the project on a generic reply", () => {
+    const suggestion = buildRuleSuggestion(
+      {
+        fromEmail: "superintendent@elsewhere.com",
+        title: "RE: thanks",
+        relatedTitles: ["25-127 Ulta Beauty Fresno RFI follow-up", "thanks"],
+        bodyText: "Attaching the latest response.",
+        participants: ["pm@alleato.com", "superintendent@elsewhere.com"],
+      },
+      [
+        ...rules,
+        {
+          projectId: 25,
+          ruleType: "title_keyword",
+          patternNormalized: "25 127",
+          confidence: 0.97,
+          priority: 10,
+        },
+      ],
+    );
+
+    expect(suggestion.status).toBe("suggested");
+    expect(suggestion.suggestedProjectId).toBe(25);
+    expect(suggestion.evidence[0]).toContain("Subject history");
+  });
+
+  it("forces manual review when a shared subcontractor domain matches multiple projects", () => {
+    const suggestion = buildRuleSuggestion(
+      {
+        fromEmail: "billing@sharedvendor.com",
+        title: "Invoice follow-up",
+        bodyText: "Can you confirm this pay app?",
+        participants: ["billing@sharedvendor.com", "pm@alleato.com"],
+      },
+      [
+        {
+          projectId: 11,
+          ruleType: "domain",
+          patternNormalized: "sharedvendor.com",
+          confidence: 0.95,
+          priority: 20,
+        },
+        {
+          projectId: 12,
+          ruleType: "domain",
+          patternNormalized: "sharedvendor.com",
+          confidence: 0.95,
+          priority: 21,
+        },
+      ],
+    );
+
+    expect(suggestion.status).toBe("manual_review");
+    expect(suggestion.suggestedProjectId).toBeNull();
+    expect(suggestion.confidenceReasons.join(" ")).toContain("Shared subcontractor/domain");
+    expect(suggestion.topMatches).toHaveLength(2);
+  });
+
+  it("marks the item undefined when nothing matches anywhere in the chain", () => {
+    const suggestion = buildRuleSuggestion(
+      {
+        fromEmail: "unknown@example.com",
+        title: "Weekly update",
+        bodyText: "No project-specific terms here.",
+        participants: ["unknown@example.com"],
+      },
+      rules,
+    );
+
+    expect(suggestion.status).toBe("undefined");
+    expect(suggestion.suggestedProjectId).toBeNull();
   });
 });

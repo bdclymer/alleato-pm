@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Check, Sparkles } from "lucide-react";
+import { AlertTriangle, Check, Sparkles } from "lucide-react";
 
 import {
   UnifiedTablePage,
@@ -221,6 +221,8 @@ export function AssignmentInboxClient({
         if (suggestion) f.suggestion = suggestion;
         const suggestedProject = searchParams?.get("suggested_project");
         if (suggestedProject) f.suggested_project = suggestedProject;
+        const reviewStatus = searchParams?.get("review_status");
+        if (reviewStatus) f.review_status = reviewStatus;
         return f;
       })(),
     },
@@ -249,6 +251,10 @@ export function AssignmentInboxClient({
       result = result.filter((item) => item.suggestedProjectId === target);
     }
 
+    if (typeof af.review_status === "string" && af.review_status) {
+      result = result.filter((item) => item.reviewStatus === af.review_status);
+    }
+
     const q = tableState.debouncedSearch.trim().toLowerCase();
     if (q) {
       result = result.filter(
@@ -256,7 +262,12 @@ export function AssignmentInboxClient({
           item.title.toLowerCase().includes(q) ||
           (item.from ?? "").toLowerCase().includes(q) ||
           (item.preview ?? "").toLowerCase().includes(q) ||
-          (item.suggestedProjectName ?? "").toLowerCase().includes(q),
+          (item.suggestedProjectName ?? "").toLowerCase().includes(q) ||
+          item.evidence.some((entry) => entry.toLowerCase().includes(q)) ||
+          item.confidenceReasons.some((entry) => entry.toLowerCase().includes(q)) ||
+          item.alternativeProjects.some((project) =>
+            (project.projectName ?? "").toLowerCase().includes(q),
+          ),
       );
     }
 
@@ -396,40 +407,99 @@ export function AssignmentInboxClient({
       {
         ...col("suggestion"),
         render: (item) => {
-          if (item.suggestedProjectId == null) {
-            return <span className="text-sm text-muted-foreground/50">—</span>;
-          }
           const confidence = formatConfidence(item.suggestedConfidence);
+          if (item.reviewStatus === "undefined" && item.alternativeProjects.length === 0) {
+            return (
+              <div className="space-y-1 text-sm">
+                <StatusBadge status="Undefined" variant="neutral" />
+                <div className="text-xs text-muted-foreground">
+                  {item.suggestionReason ?? "No project signal found in this chain."}
+                </div>
+              </div>
+            );
+          }
+
+          const badge =
+            item.reviewStatus === "suggested"
+              ? {
+                  label: "Suggested",
+                  variant: confidenceStatus(item.suggestedConfidence),
+                }
+              : item.reviewStatus === "manual_review"
+                ? { label: "Manual review", variant: "warning" as const }
+                : { label: "Undefined", variant: "neutral" as const };
+          const primaryProject =
+            item.suggestedProjectName ??
+            item.alternativeProjects[0]?.projectName ??
+            (item.suggestedProjectId != null
+              ? projectNameById.get(item.suggestedProjectId)
+              : null);
+
           return (
-            <div
-              className="flex items-center gap-2"
-              title={item.suggestionReason ?? undefined}
-            >
-              <Sparkles className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              <span className="truncate text-sm">
-                {item.suggestedProjectName ??
-                  projectNameById.get(item.suggestedProjectId) ??
-                  `Project ${item.suggestedProjectId}`}
-              </span>
-              {confidence ? (
-                <StatusBadge
-                  status={confidence}
-                  variant={confidenceStatus(item.suggestedConfidence)}
-                />
+            <div className="min-w-0 space-y-1.5" title={item.suggestionReason ?? undefined}>
+              <div className="flex flex-wrap items-center gap-2">
+                {item.reviewStatus === "suggested" ? (
+                  <Sparkles className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                ) : (
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-status-warning" />
+                )}
+                <StatusBadge status={badge.label} variant={badge.variant} />
+                {primaryProject ? (
+                  <span className="truncate text-sm font-medium">
+                    {primaryProject}
+                  </span>
+                ) : null}
+                {confidence ? (
+                  <StatusBadge
+                    status={confidence}
+                    variant={confidenceStatus(item.suggestedConfidence)}
+                  />
+                ) : null}
+                {item.reviewStatus === "suggested" ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2"
+                    disabled={savingKeys.has(item.rowKey)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void handleAcceptSuggestion(item);
+                    }}
+                  >
+                    <Check className="mr-1 h-3.5 w-3.5" />
+                    Accept
+                  </Button>
+                ) : null}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {item.chainMessageCount > 1
+                  ? `${item.chainMessageCount}-message chain`
+                  : "Single message"}
+                {item.suggestionReason ? ` • ${item.suggestionReason}` : ""}
+              </div>
+              {item.evidence.length > 0 ? (
+                <div className="space-y-0.5 text-xs text-muted-foreground">
+                  {item.evidence.slice(0, 2).map((entry) => (
+                    <div key={entry} className="truncate">
+                      {entry}
+                    </div>
+                  ))}
+                </div>
               ) : null}
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 px-2"
-                disabled={savingKeys.has(item.rowKey)}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  void handleAcceptSuggestion(item);
-                }}
-              >
-                <Check className="mr-1 h-3.5 w-3.5" />
-                Accept
-              </Button>
+              {item.confidenceReasons.length > 0 ? (
+                <div className="truncate text-xs text-muted-foreground">
+                  {item.confidenceReasons[0]}
+                </div>
+              ) : null}
+              {item.reviewStatus !== "suggested" && item.alternativeProjects.length > 0 ? (
+                <div className="truncate text-xs text-muted-foreground">
+                  Top candidates:{" "}
+                  {item.alternativeProjects
+                    .slice(0, 2)
+                    .map((project) => project.projectName ?? `Project ${project.projectId}`)
+                    .join(", ")}
+                </div>
+              ) : null}
             </div>
           );
         },

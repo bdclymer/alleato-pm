@@ -1,4 +1,6 @@
 import {
+  buildToolUrl,
+  companyWideHeaderTools,
   filterToolsByPermission,
   financialManagementTools,
   headerNavGroups,
@@ -81,5 +83,38 @@ describe("navigation config", () => {
       path: "schedule",
       requiresProject: true,
     });
+  });
+
+  it("keeps company-wide Work tools enabled for non-developer users", () => {
+    const expectedTools = [
+      { name: "Meetings", path: "meetings", href: "/meetings" },
+      { name: "Tasks", path: "tasks", href: "/tasks" },
+      { name: "Knowledge Base", path: "knowledge", href: "/knowledge" },
+    ];
+
+    for (const expectedTool of expectedTools) {
+      const tool = companyWideHeaderTools.find((candidate) => candidate.name === expectedTool.name);
+
+      expect(tool).toMatchObject({
+        name: expectedTool.name,
+        path: expectedTool.path,
+        requiresProject: false,
+      });
+      expect(tool?.developerOnly).toBeUndefined();
+      expect(buildToolUrl(tool?.path ?? "", null, tool?.requiresProject)).toBe(expectedTool.href);
+    }
+
+    const tools = filterToolsByPermission(
+      companyWideHeaderTools,
+      null,
+      {},
+      false,
+      "employee",
+      false,
+    );
+
+    for (const expectedTool of expectedTools) {
+      expect(tools.some((tool) => tool.name === expectedTool.name)).toBe(true);
+    }
   });
 });

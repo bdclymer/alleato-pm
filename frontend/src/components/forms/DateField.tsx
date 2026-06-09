@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { format, isValid, parse } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { FormField } from "./FormField";
 import type { FormFieldBaseProps } from "./FormField";
 
@@ -39,6 +44,7 @@ interface DateFieldProps extends FormFieldBaseProps {
   onChange?: (date: Date | undefined) => void;
   className?: string;
   placeholder?: string;
+  labelTooltip?: string;
 }
 
 export function DateField({
@@ -52,6 +58,7 @@ export function DateField({
   className,
   disabled = false,
   placeholder = "MM/DD/YYYY",
+  labelTooltip,
 }: DateFieldProps) {
   const triggerId = `date-field-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 
@@ -84,7 +91,28 @@ export function DateField({
 
   return (
     <FormField
-      label={label}
+      label={
+        labelTooltip ? (
+          <span className="inline-flex items-center gap-1">
+            {label}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className="inline-flex text-muted-foreground"
+                  aria-label={`${label} help`}
+                >
+                  <HelpCircle className="size-3.5" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{labelTooltip}</p>
+              </TooltipContent>
+            </Tooltip>
+          </span>
+        ) : (
+          label
+        )
+      }
       error={error}
       hint={hint}
       required={required}

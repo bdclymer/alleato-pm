@@ -60,6 +60,7 @@ def get_meetings_needing_chunks(
     """Return document_metadata rows for Fireflies meetings with no transcript chunks."""
     # document_chunks lives in the AI Database (RAG project), not the PM APP
     rag_client = get_rag_read_client()
+    # Meetings that already have transcript chunks
     existing_resp = (
         rag_client.table("document_chunks")
         .select("document_id")

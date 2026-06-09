@@ -124,15 +124,35 @@ interface MeetingItem {
   created_at: string | null;
 }
 
+interface CommitmentItem {
+  id: string;
+  type: "subcontract" | "purchase_order";
+  project_id: number | null;
+  project_name: string | null;
+  project_number: string | null;
+  contract_number: string | null;
+  title: string | null;
+  status: string | null;
+  contract_date: string | null;
+  total_sov_amount: number | null;
+  total_billed_to_date: number | null;
+  total_amount_remaining: number | null;
+  updated_at: string | null;
+  trade_names: string[];
+  scope_summary: string | null;
+}
+
 interface CompanyDetailsResponse {
   company: Company;
   contacts: Contact[];
   projects: CompanyProjectItem[];
+  commitments: CommitmentItem[];
   invoices: InvoiceItem[];
   meetings: MeetingItem[];
   summary: {
     contact_count: number;
     project_count: number;
+    commitment_count: number;
     invoice_count: number;
     meeting_count: number;
   };
@@ -172,6 +192,7 @@ export default function CompanyDetailsPage() {
   const [error, setError] = React.useState<string | null>(null);
 
   const [invoiceFilter, setInvoiceFilter] = React.useState<"all" | "open">("all");
+  const [commitmentQuery, setCommitmentQuery] = React.useState("");
 
   const searchParams = useSearchParams();
   const [editOpen, setEditOpen] = React.useState(false);
@@ -227,9 +248,28 @@ export default function CompanyDetailsPage() {
   const [confirmProjectAccessImpact, setConfirmProjectAccessImpact] = React.useState(false);
   const [isAddingToProject, setIsAddingToProject] = React.useState(false);
   const associatedProjects = data?.projects ?? [];
+  const commitments = data?.commitments ?? [];
   const invoices = data?.invoices ?? [];
   const meetings = data?.meetings ?? [];
   const filteredInvoices = invoiceFilter === "open" ? invoices.filter((item) => isOpenInvoice(item.status)) : invoices;
+  const filteredCommitments = React.useMemo(() => {
+    const query = commitmentQuery.trim().toLowerCase();
+    if (!query) return commitments;
+    return commitments.filter((item) => {
+      const haystack = [
+        item.contract_number,
+        item.title,
+        item.project_name,
+        item.project_number,
+        item.scope_summary,
+        item.trade_names.join(" "),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [commitmentQuery, commitments]);
   const meetingsByProject = React.useMemo(() => {
     const grouped = new Map<number, { project: CompanyProjectItem | null; items: MeetingItem[] }>();
 
@@ -754,6 +794,80 @@ export default function CompanyDetailsPage() {
                         header: "State",
                         align: "right",
                         render: (project) => project.state || "No status",
+                      },
+                    ]}
+                  />
+                )}
+              </section>
+
+              <section className="space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <DsSectionHeader title="Commitments" />
+                  <div className="w-full sm:w-72">
+                    <Input
+                      value={commitmentQuery}
+                      onChange={(event) => setCommitmentQuery(event.target.value)}
+                      placeholder="Search scope or trade..."
+                    />
+                  </div>
+                </div>
+                {filteredCommitments.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-8">
+                    <DsEmptyState
+                      title={commitmentQuery.trim() ? "No matching commitments found" : "No commitments found"}
+                      description={
+                        commitmentQuery.trim()
+                          ? "Try a different trade, scope term, or project."
+                          : "Commitments tied to this company will appear here."
+                      }
+                    />
+                  </div>
+                ) : (
+                  <DsDataTable<CommitmentItem>
+                    rows={filteredCommitments}
+                    columns={[
+                      {
+                        key: "commitment",
+                        header: "Commitment",
+                        primary: true,
+                        render: (item) => (
+                          <div className="min-w-0 space-y-1">
+                            {item.project_id ? (
+                              <Link
+                                href={`/${item.project_id}/commitments/${item.id}`}
+                                className="font-medium text-foreground underline-offset-4 hover:underline"
+                              >
+                                {[item.contract_number, item.title].filter(Boolean).join(" - ") || "Untitled commitment"}
+                              </Link>
+                            ) : (
+                              <span className="font-medium text-foreground">
+                                {[item.contract_number, item.title].filter(Boolean).join(" - ") || "Untitled commitment"}
+                              </span>
+                            )}
+                            {item.scope_summary ? (
+                              <p className="line-clamp-2 text-xs text-muted-foreground">{item.scope_summary}</p>
+                            ) : null}
+                          </div>
+                        ),
+                      },
+                      {
+                        key: "trade",
+                        header: "Trade / Scope",
+                        render: (item) =>
+                          item.trade_names.length > 0 ? item.trade_names.join(", ") : "No trade tagged",
+                      },
+                      {
+                        key: "project",
+                        header: "Project",
+                        render: (item) =>
+                          `${item.project_name || "Unknown project"}${item.project_number ? ` (${item.project_number})` : ""}`,
+                      },
+                      {
+                        key: "status",
+                        header: "Status",
+                        render: (item) => (
+                          <Badge variant={statusVariant(item.status)}>{item.status || "Unknown"}</Badge>
+                        ),
                       },
                     ]}
                   />

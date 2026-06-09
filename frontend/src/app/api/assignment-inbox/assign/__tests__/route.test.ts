@@ -107,6 +107,17 @@ describe("assignment-inbox assign POST route", () => {
   it("assigns an outlook_email_intake item with manual matching metadata and records corrected feedback", async () => {
     const emailUpdateEq = jest.fn().mockResolvedValue({ error: null });
     const emailUpdate = jest.fn().mockReturnValue({ eq: emailUpdateEq });
+    const projectEmailInsertSingle = jest
+      .fn()
+      .mockResolvedValue({ data: { id: 501 }, error: null });
+    const projectEmailInsertSelect = jest.fn().mockReturnValue({
+      single: projectEmailInsertSingle,
+    });
+    const projectEmailInsert = jest.fn().mockReturnValue({
+      select: projectEmailInsertSelect,
+    });
+    const documentUpdateEq = jest.fn().mockResolvedValue({ error: null });
+    const documentUpdate = jest.fn().mockReturnValue({ eq: documentUpdateEq });
 
     const from = jest.fn((table: string) => {
       if (table === "projects") {
@@ -126,13 +137,50 @@ describe("assignment-inbox assign POST route", () => {
             eq: () => ({
               is: () => ({
                 maybeSingle: jest.fn().mockResolvedValue({
-                  data: { id: 99, subject: "RFI response", from_email: "gc@builder.com" },
+                  data: {
+                    id: 99,
+                    subject: "RFI response",
+                    body: "Please route this to the right project.",
+                    body_text: "Please route this to the right project.",
+                    from_name: "GC Team",
+                    from_email: "gc@builder.com",
+                    to_list: ["pm@alleatogroup.com"],
+                    cc_list: [],
+                    status: "Received",
+                    received_at: "2026-06-01T12:00:00Z",
+                    has_attachments: false,
+                    graph_message_id: "graph-99",
+                    mailbox_user_id: "pm@alleatogroup.com",
+                    conversation_id: "thread-1",
+                    document_metadata_id: "doc-99",
+                    project_email_id: null,
+                  },
                   error: null,
                 }),
               }),
             }),
           }),
           update: emailUpdate,
+        };
+      }
+      if (table === "project_emails") {
+        return {
+          select: () => ({
+            eq: () => ({
+              is: () => ({
+                maybeSingle: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: null,
+                }),
+              }),
+            }),
+          }),
+          insert: projectEmailInsert,
+        };
+      }
+      if (table === "document_metadata") {
+        return {
+          update: documentUpdate,
         };
       }
       throw new Error(`Unexpected table ${table}`);
@@ -153,11 +201,34 @@ describe("assignment-inbox assign POST route", () => {
     expect(response.status).toBe(200);
     expect(emailUpdate).toHaveBeenCalledWith({
       project_id: 7,
+      project_email_id: 501,
       match_status: "matched",
       assignment_method: "manual",
       assignment_confidence: 1.0,
     });
     expect(emailUpdateEq).toHaveBeenCalledWith("id", 99);
+    expect(projectEmailInsert).toHaveBeenCalledWith({
+      project_id: 7,
+      subject: "RFI response",
+      body: "Please route this to the right project.",
+      body_text: "Please route this to the right project.",
+      from_name: "GC Team",
+      from_email: "gc@builder.com",
+      to_list: ["pm@alleatogroup.com"],
+      cc_list: [],
+      status: "Received",
+      received_at: "2026-06-01T12:00:00Z",
+      has_attachments: false,
+      graph_message_id: "graph-99",
+      mailbox_user_id: "pm@alleatogroup.com",
+      conversation_id: "thread-1",
+      deleted_at: null,
+    });
+    expect(documentUpdate).toHaveBeenCalledWith({
+      project_id: 7,
+      project: "Acme HQ",
+    });
+    expect(documentUpdateEq).toHaveBeenCalledWith("id", "doc-99");
     expect(recordFeedbackMock).toHaveBeenCalledWith(
       expect.objectContaining({
         sourceTable: "outlook_email_intake",

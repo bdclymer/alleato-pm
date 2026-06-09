@@ -38,7 +38,7 @@ _OPENAI_BATCH = 20  # candidates per OpenAI rerank call
 def _backend() -> str:
     if os.environ.get("COHERE_API_KEY"):
         return "cohere"
-    if os.environ.get("OPENAI_API_KEY") or os.environ.get("AI_GATEWAY_API_KEY"):
+    if os.environ.get("OPENAI_API_KEY"):
         return "openai"
     return "none"
 
@@ -107,12 +107,8 @@ Reply with EXACTLY this JSON shape, nothing else:
 
 @lru_cache(maxsize=1)
 def _openai_client() -> Any:
-    from openai import OpenAI
-
-    gateway_key = os.environ.get("AI_GATEWAY_API_KEY")
-    if gateway_key:
-        return OpenAI(api_key=gateway_key, base_url="https://ai-gateway.vercel.sh/v1")
-    return OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    from src.services.ai_transport import get_openai_client
+    return get_openai_client()
 
 
 def _score_batch_openai(query: str, docs: list[str]) -> list[float]:
@@ -122,9 +118,8 @@ def _score_batch_openai(query: str, docs: list[str]) -> list[float]:
         "model": _OPENAI_RERANK_MODEL,
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.0,
+        "response_format": {"type": "json_object"},
     }
-    if not os.environ.get("AI_GATEWAY_API_KEY"):
-        kwargs["response_format"] = {"type": "json_object"}
     resp = _openai_client().chat.completions.create(**kwargs)
     content = (resp.choices[0].message.content or "").strip()
     try:

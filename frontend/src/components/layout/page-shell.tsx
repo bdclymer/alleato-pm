@@ -142,8 +142,8 @@ export function PageShell({
 
   const backButton =
     onBack ? (
-      <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
-        <ArrowLeft />
+      <Button variant="ghost" size="sm" onClick={onBack} className="gap-1.5 text-xs">
+        <ArrowLeft className="size-3.5" />
         {backLabel}
       </Button>
     ) : null;

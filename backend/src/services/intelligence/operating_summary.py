@@ -13,9 +13,8 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
-from openai import OpenAI
+from ..ai_transport import get_openai_client
 
-AI_GATEWAY_BASE_URL = "https://ai-gateway.vercel.sh/v1"
 COMPILER_VERSION = "project-operating-summary-v1"
 PACKET_VERSION = "project_operating_summary_v1"
 MAX_SOURCES = 96
@@ -848,14 +847,8 @@ def build_project_operating_sources(supabase: Any, project_id: int) -> Dict[str,
     }
 
 
-def _provider_client() -> tuple[OpenAI, str]:
-    gateway_key = os.getenv("AI_GATEWAY_API_KEY")
-    if gateway_key:
-        return OpenAI(api_key=gateway_key, base_url=AI_GATEWAY_BASE_URL), "openai/"
-    openai_key = os.getenv("OPENAI_API_KEY")
-    if openai_key:
-        return OpenAI(api_key=openai_key), ""
-    raise RuntimeError("AI_GATEWAY_API_KEY or OPENAI_API_KEY is required for operating summary refresh")
+def _provider_client() -> tuple:
+    return get_openai_client(), ""
 
 
 def _source_digest(sources: List[Dict[str, Any]]) -> str:

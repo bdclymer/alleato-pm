@@ -76,8 +76,10 @@ import {
   getTaskSourceTarget,
 } from "@/features/tasks/task-utils";
 import {
+  buildTaskFeedbackSnapshot,
   buildTasksFilters,
   buildTasksTableColumns,
+  isAiGeneratedTask,
   renderTasksList,
   renderTasksRowActions,
   tasksColumns,
@@ -758,7 +760,7 @@ function useResizablePanel(
 // TaskListItem
 // ---------------------------------------------------------------------------
 
-function TaskListItem({
+export function TaskListItem({
   item,
   projects,
   isSelected,
@@ -788,6 +790,7 @@ function TaskListItem({
   const sourceDate = formatShortDate(item.source_date);
   const assignedTo = item.assignee_name ?? item.assignee_email ?? "Unassigned";
   const projectLabel = taskProjectLabel(item, projects);
+  const showFeedback = isAiGeneratedTask(item) && Boolean(item.id);
   const pinnedCellClassName = isSelected
     ? "bg-accent"
     : "bg-background group-hover:bg-muted/50";
@@ -847,6 +850,20 @@ function TaskListItem({
             >
               {item.description || item.title || "Untitled task"}
             </p>
+            {showFeedback && item.id ? (
+              <div
+                className="mt-1 flex items-center"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <TaskFeedbackButtons
+                  projectId={buildTaskFeedbackSnapshot(item).projectId}
+                  taskId={item.id}
+                  taskSnapshot={buildTaskFeedbackSnapshot(item)}
+                  onRemove={onDelete}
+                  className="text-[11px]"
+                />
+              </div>
+            ) : null}
           </div>
         </div>
         <div
@@ -1038,14 +1055,8 @@ function TaskDetail({
   const selectedPriorityValue =
     task.priority?.trim().toLowerCase() || "__none__";
   const taskFeedbackSnapshot = {
-    name: task.description || task.title || "Untitled task",
-    assignee: task.assignee_name || task.assignee_email,
-    dueDate: task.due_date,
-    priority: task.priority ?? "medium",
+    ...buildTaskFeedbackSnapshot(task),
     notes: task.assigned_by ? `Assigned by ${task.assigned_by}` : null,
-    projectId: taskProjectId,
-    source: sourceLabel,
-    generatedBy: task.extraction_model,
   };
   const createdLabel = task.created_at
     ? new Date(task.created_at).toLocaleDateString("en-US", {
@@ -1470,7 +1481,7 @@ function TaskDetail({
 
             <TaskDetailRow label="Source date">{sourceDateLabel}</TaskDetailRow>
 
-            {task.id && (
+            {task.id && isAiGeneratedTask(task) && (
               <TaskDetailRow label="Training">
                 <TaskFeedbackButtons
                   projectId={taskProjectId}

@@ -12,6 +12,8 @@ import {
   commitmentListResponseSchema,
   type CommitmentListItem,
   type CommitmentListResponse,
+  commitmentScopeLookupResponseSchema,
+  type CommitmentScopeLookupResponse,
 } from "@/lib/validation/commitments";
 
 // =============================================================================
@@ -52,6 +54,8 @@ export const commitmentKeys = {
     [...commitmentKeys.all, "invoices", commitmentId] as const,
   attachments: (commitmentId: string) =>
     [...commitmentKeys.all, "attachments", commitmentId] as const,
+  scopeLookup: (projectId: string, query: string, companyId?: string) =>
+    [...commitmentKeys.all, "scope-lookup", projectId, query, companyId ?? null] as const,
 };
 
 // =============================================================================
@@ -95,6 +99,35 @@ export function useCommitmentsList(
     },
     enabled: !!projectId,
     staleTime: 30 * 1000, // 30 seconds - commitments change infrequently
+  });
+}
+
+export function useCommitmentScopeLookup(
+  projectId: string,
+  query: string,
+  options?: { companyId?: string; limit?: number },
+) {
+  return useQuery<CommitmentScopeLookupResponse>({
+    queryKey: commitmentKeys.scopeLookup(projectId, query, options?.companyId),
+    queryFn: async ({ signal }) => {
+      const params = new URLSearchParams();
+      params.set("q", query);
+      if (options?.companyId) params.set("companyId", options.companyId);
+      if (options?.limit) params.set("limit", String(options.limit));
+
+      const data = await apiFetch<unknown>(
+        `/api/projects/${projectId}/commitments/scope-lookup?${params.toString()}`,
+        { signal },
+      );
+      const parsed = commitmentScopeLookupResponseSchema.safeParse(data);
+      if (!parsed.success) {
+        throw new Error("Commitment scope finder returned an unexpected format.");
+      }
+      return parsed.data;
+    },
+    enabled: Boolean(projectId) && query.trim().length >= 2,
+    staleTime: 30 * 1000,
+    placeholderData: keepPreviousData,
   });
 }
 

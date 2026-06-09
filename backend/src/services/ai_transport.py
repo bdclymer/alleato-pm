@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import time
 from typing import Callable, TypeVar
 
@@ -47,6 +48,18 @@ def is_transient_ai_error(exc: Exception) -> bool:
         return True
 
     return is_transient_ai_error_message(str(exc))
+
+
+def get_openai_client():
+    """Return an OpenAI client using OPENAI_API_KEY directly.
+
+    All AI calls go to OpenAI — the Vercel AI Gateway is not used.
+    """
+    from openai import OpenAI
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY is required")
+    return OpenAI(api_key=api_key)
 
 
 def retry_ai_call(

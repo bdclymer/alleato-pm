@@ -3,9 +3,12 @@ import {
   createServiceClient,
 } from "@/lib/supabase/service";
 import {
+  buildRuleSuggestion,
   matchAttributionRule,
   type ActiveAttributionRule,
   type RuleMatch,
+  type RankedProjectMatch,
+  type RuleSuggestion,
 } from "./attribution-rule-match";
 
 export type InboxContentType = "meeting" | "email" | "teams" | "document";
@@ -25,6 +28,15 @@ export interface InboxItem {
   suggestedProjectName: string | null;
   suggestedConfidence: number | null;
   suggestionReason: string | null;
+  reviewStatus: "suggested" | "manual_review" | "undefined";
+  confidenceReasons: string[];
+  evidence: string[];
+  alternativeProjects: Array<{
+    projectId: number;
+    projectName: string | null;
+    confidence: number;
+  }>;
+  chainMessageCount: number;
 }
 
 export interface InboxProject {
@@ -95,17 +107,73 @@ interface BestCandidate {
   reasoning: string | null;
 }
 
+type EnrichedSuggestion = BestCandidate & {
+  reviewStatus: "suggested" | "manual_review" | "undefined";
+  confidenceReasons: string[];
+  evidence: string[];
+  alternativeProjects: Array<{
+    projectId: number;
+    projectName: string | null;
+    confidence: number;
+  }>;
+};
+
 /** Convert a learned-rule match into the suggestion shape used by the inbox. */
 function matchToSuggestion(
   match: RuleMatch | null,
   projectNameById: Map<number, string>,
-): BestCandidate | null {
+): EnrichedSuggestion | null {
   if (!match) return null;
   return {
     projectId: match.projectId,
     projectName: projectNameById.get(match.projectId) ?? null,
     confidence: match.confidence,
     reasoning: `Matched ${match.ruleType.replace("_", " ")} rule “${match.pattern}”`,
+    reviewStatus: "suggested",
+    confidenceReasons: [],
+    evidence: [`Matched ${match.ruleType.replace("_", " ")} rule ${match.pattern}`],
+    alternativeProjects: [],
+  };
+}
+
+function rankMatchesToAlternatives(
+  topMatches: RankedProjectMatch[],
+  projectNameById: Map<number, string>,
+) {
+  return topMatches.slice(0, 3).map((match) => ({
+    projectId: match.projectId,
+    projectName: projectNameById.get(match.projectId) ?? null,
+    confidence: match.confidence,
+  }));
+}
+
+function suggestionFromRuleSuggestion(
+  suggestion: RuleSuggestion,
+  projectNameById: Map<number, string>,
+): EnrichedSuggestion | null {
+  if (suggestion.suggestedProjectId == null && suggestion.topMatches.length === 0) {
+    return {
+      projectId: 0,
+      projectName: null,
+      confidence: suggestion.confidence ?? 0,
+      reasoning: suggestion.summary,
+      reviewStatus: suggestion.status,
+      confidenceReasons: suggestion.confidenceReasons,
+      evidence: suggestion.evidence,
+      alternativeProjects: [],
+    };
+  }
+
+  const primaryId = suggestion.suggestedProjectId ?? suggestion.topMatches[0]?.projectId ?? 0;
+  return {
+    projectId: primaryId,
+    projectName: projectNameById.get(primaryId) ?? null,
+    confidence: suggestion.confidence ?? 0,
+    reasoning: suggestion.summary,
+    reviewStatus: suggestion.status,
+    confidenceReasons: suggestion.confidenceReasons,
+    evidence: suggestion.evidence,
+    alternativeProjects: rankMatchesToAlternatives(suggestion.topMatches, projectNameById),
   };
 }
 
@@ -130,8 +198,18 @@ type EmailRow = {
   from_email: string | null;
   from_name: string | null;
   body_text: string | null;
+  to_list: string[] | null;
+  cc_list: string[] | null;
+  conversation_id: string | null;
   received_at: string | null;
   created_at: string | null;
+};
+
+type EmailThreadContext = {
+  messageCount: number;
+  participants: string[];
+  relatedTitles: string[];
+  content: string | null;
 };
 
 type WindowEntry =
@@ -140,6 +218,36 @@ type WindowEntry =
 
 function timestamp(value: string | null): number {
   return value ? Date.parse(value) : 0;
+}
+
+function buildEmailThreadContext(messages: EmailRow[]): EmailThreadContext {
+  const sorted = [...messages].sort(
+    (a, b) => timestamp(a.received_at ?? a.created_at) - timestamp(b.received_at ?? b.created_at),
+  );
+  const participants = [...new Set(
+    sorted.flatMap((message) => [
+      message.from_email,
+      ...(message.to_list ?? []),
+      ...(message.cc_list ?? []),
+    ].filter((value): value is string => Boolean(value))),
+  )];
+  const relatedTitles = [...new Set(
+    sorted
+      .map((message) => message.subject?.trim())
+      .filter((value): value is string => Boolean(value)),
+  )];
+  const content = sorted
+    .map((message) => message.body_text?.replace(/\s+/g, " ").trim())
+    .filter((value): value is string => Boolean(value))
+    .slice(0, 8)
+    .join("\n");
+
+  return {
+    messageCount: sorted.length,
+    participants,
+    relatedTitles,
+    content: content || null,
+  };
 }
 
 export async function loadInboxItems(
@@ -181,7 +289,9 @@ export async function loadInboxItems(
       .limit(windowLimit),
     supabase
       .from("outlook_email_intake")
-      .select("id, subject, from_email, from_name, body_text, received_at, created_at")
+      .select(
+        "id, subject, from_email, from_name, body_text, to_list, cc_list, conversation_id, received_at, created_at",
+      )
       .is("project_id", null)
       .neq("match_status", "ignored")
       .is("deleted_at", null)
@@ -243,6 +353,42 @@ export async function loadInboxItems(
 
   const pageEntries = windowEntries.slice(offset, offset + limit);
 
+  const pageEmailRows = pageEntries
+    .filter((entry): entry is Extract<WindowEntry, { kind: "email" }> => entry.kind === "email")
+    .map((entry) => entry.row);
+  const pageConversationIds = [...new Set(
+    pageEmailRows
+      .map((row) => row.conversation_id)
+      .filter((value): value is string => Boolean(value)),
+  )];
+
+  const emailThreadByConversationId = new Map<string, EmailThreadContext>();
+  if (pageConversationIds.length > 0) {
+    for (const ids of chunk(pageConversationIds, 100)) {
+      const { data: threadRows } = await supabase
+        .from("outlook_email_intake")
+        .select(
+          "id, subject, from_email, from_name, body_text, to_list, cc_list, conversation_id, received_at, created_at",
+        )
+        .in("conversation_id", ids)
+        .is("deleted_at", null)
+        .order("received_at", { ascending: true, nullsFirst: false })
+        .limit(2_000);
+
+      const rowsByConversation = new Map<string, EmailRow[]>();
+      for (const row of (threadRows ?? []) as EmailRow[]) {
+        if (!row.conversation_id) continue;
+        const existing = rowsByConversation.get(row.conversation_id) ?? [];
+        existing.push(row);
+        rowsByConversation.set(row.conversation_id, existing);
+      }
+
+      for (const [conversationId, rows] of rowsByConversation) {
+        emailThreadByConversationId.set(conversationId, buildEmailThreadContext(rows));
+      }
+    }
+  }
+
   // Enrich only this page's documents with RAG attribution candidates.
   const pageDocIds = pageEntries
     .filter((entry): entry is Extract<WindowEntry, { kind: "doc" }> => entry.kind === "doc")
@@ -303,17 +449,41 @@ export async function loadInboxItems(
         suggestedProjectName: suggestion?.projectName ?? null,
         suggestedConfidence: suggestion?.confidence ?? null,
         suggestionReason: suggestion?.reasoning ?? null,
+        reviewStatus: suggestion?.reviewStatus ?? "undefined",
+        confidenceReasons: suggestion?.confidenceReasons ?? [],
+        evidence: suggestion?.evidence ?? [],
+        alternativeProjects: suggestion?.alternativeProjects ?? [],
+        chainMessageCount: 1,
       };
     }
 
     const email = entry.row;
-    const suggestion = matchToSuggestion(
-      matchAttributionRule(
-        { fromEmail: email.from_email, title: email.subject },
-        activeRules,
-      ),
-      projectNameById,
+    const chainContext = email.conversation_id
+      ? emailThreadByConversationId.get(email.conversation_id) ?? null
+      : null;
+    const ruleSuggestion = buildRuleSuggestion(
+      {
+        fromEmail: email.from_email,
+        title: email.subject,
+        bodyText: chainContext?.content ?? email.body_text,
+        participants: chainContext?.participants ?? [
+          email.from_email,
+          ...(email.to_list ?? []),
+          ...(email.cc_list ?? []),
+        ].filter((value): value is string => Boolean(value)),
+        relatedTitles: chainContext?.relatedTitles ?? [email.subject].filter(Boolean) as string[],
+      },
+      activeRules,
     );
+    const suggestion =
+      suggestionFromRuleSuggestion(ruleSuggestion, projectNameById) ??
+      matchToSuggestion(
+        matchAttributionRule(
+          { fromEmail: email.from_email, title: email.subject },
+          activeRules,
+        ),
+        projectNameById,
+      );
     return {
       rowKey: `outlook_email_intake:${email.id}`,
       sourceTable: "outlook_email_intake",
@@ -323,10 +493,17 @@ export async function loadInboxItems(
       from: email.from_name ?? email.from_email ?? null,
       occurredAt: entry.occurredAt,
       preview: truncate(email.body_text),
-      suggestedProjectId: suggestion?.projectId ?? null,
-      suggestedProjectName: suggestion?.projectName ?? null,
+      suggestedProjectId:
+        suggestion?.reviewStatus === "suggested" ? suggestion.projectId : null,
+      suggestedProjectName:
+        suggestion?.reviewStatus === "suggested" ? suggestion.projectName ?? null : null,
       suggestedConfidence: suggestion?.confidence ?? null,
       suggestionReason: suggestion?.reasoning ?? null,
+      reviewStatus: suggestion?.reviewStatus ?? "undefined",
+      confidenceReasons: suggestion?.confidenceReasons ?? [],
+      evidence: suggestion?.evidence ?? [],
+      alternativeProjects: suggestion?.alternativeProjects ?? [],
+      chainMessageCount: chainContext?.messageCount ?? 1,
     };
   });
 

@@ -121,6 +121,18 @@ def _valid_due_date(value: Any) -> Optional[str]:
         return None
 
 
+def _task_title(value: Any) -> str:
+    text = _clean_text(value)
+    if not text:
+        return "Follow up"
+    sentence = re.split(r"(?<=[.!?])\s+", text, maxsplit=1)[0]
+    sentence = sentence.strip().strip(" .,:;")
+    words = sentence.split()
+    if len(words) > 10:
+        sentence = " ".join(words[:10])
+    return sentence[:90].strip() or "Follow up"
+
+
 def _signal_key(*parts: Any) -> str:
     raw = ":".join(_clean_text(part).lower() for part in parts if _clean_text(part))
     return re.sub(r"[^a-z0-9]+", "-", raw).strip("-")[:180] or "email-signal"
@@ -633,6 +645,7 @@ def write_tasks(
         rows.append(
             {
                 "metadata_id": head_doc_id,
+                "title": _task_title(description),
                 "description": description,
                 **assignee.row_values(),
                 "assigned_by": _clean_text(task.get("assigned_by")),

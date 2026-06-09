@@ -89,96 +89,33 @@ class IngestionResult:
     dry_run: bool
 
 
-def _openai_provider_configs() -> List[Dict[str, str]]:
-    providers: List[Dict[str, str]] = []
-    gateway_key = os.getenv("AI_GATEWAY_API_KEY")
-    if gateway_key:
-        providers.append(
-            {
-                "name": "AI Gateway",
-                "api_key": gateway_key,
-                "base_url": "https://ai-gateway.vercel.sh/v1",
-                "model_prefix": "openai/",
-            }
-        )
-
-    openai_key = os.getenv("OPENAI_API_KEY")
-    if openai_key:
-        providers.append(
-            {
-                "name": "OpenAI direct",
-                "api_key": openai_key,
-                "base_url": "",
-                "model_prefix": "",
-            }
-        )
-
-    return providers
-
-
-def _model_for_provider(model: str, provider: Dict[str, str]) -> str:
-    prefix = provider.get("model_prefix", "")
-    if prefix and not model.startswith(prefix):
-        return f"{prefix}{model}"
-    return model
-
-
-def _client_for_provider(provider: Dict[str, str]) -> OpenAI:
-    kwargs: Dict[str, str] = {"api_key": provider["api_key"]}
-    if provider.get("base_url"):
-        kwargs["base_url"] = provider["base_url"]
-    return OpenAI(**kwargs)
-
-
 class EmbeddingGenerator:
-    """Produces embeddings through configured providers and fails loudly."""
+    """Produces embeddings via OpenAI and fails loudly."""
 
     def __init__(self, model: str = "text-embedding-3-large") -> None:
         self.model = model
         if OpenAI is None:
             raise RuntimeError("openai package is required for Fireflies embeddings")
-        self._providers = _openai_provider_configs()
-        if not self._providers:
-            raise RuntimeError(
-                "AI_GATEWAY_API_KEY or OPENAI_API_KEY is required for Fireflies embeddings"
-            )
 
     def embed(self, texts: List[str]) -> List[List[float]]:
         if not texts:
             return []
-        errors: List[str] = []
+        from ..ai_transport import get_openai_client, retry_ai_call
         truncated = [text[:8000] for text in texts]
-        for provider in self._providers:
-            try:
-                client = _client_for_provider(provider)
-                response = retry_ai_call(
-                    lambda: client.embeddings.create(
-                        model=_model_for_provider(self.model, provider),
-                        input=truncated,
-                        dimensions=3072,
-                    ),
-                    provider_name=provider["name"],
-                    operation="fireflies embedding batch",
-                )
-                embeddings = [item.embedding for item in response.data]
-                if len(embeddings) != len(texts):
-                    raise RuntimeError(
-                        f"expected {len(texts)} embeddings, got {len(embeddings)}"
-                    )
-                logger.info(
-                    "[FirefliesIngestion] Embedded %d texts via %s",
-                    len(texts),
-                    provider["name"],
-                )
-                return embeddings
-            except Exception as exc:
-                message = f"{provider['name']}: {exc}"
-                logger.error("[FirefliesIngestion] Embedding provider failed: %s", message)
-                errors.append(message)
-
-        raise RuntimeError(
-            "Fireflies embedding failed across all providers: " + " | ".join(errors)
+        response = retry_ai_call(
+            lambda: get_openai_client().embeddings.create(
+                model=self.model,
+                input=truncated,
+                dimensions=3072,
+            ),
+            provider_name="OpenAI",
+            operation="fireflies embedding batch",
         )
+        embeddings = [item.embedding for item in response.data]
+        if len(embeddings) != len(texts):
+            raise RuntimeError(f"expected {len(texts)} embeddings, got {len(embeddings)}")
+        logger.info("[FirefliesIngestion] Embedded %d texts via OpenAI", len(texts))
+        return embeddings
 
 
 class FirefliesIngestionPipeline:
@@ -2043,7 +1980,7 @@ class FirefliesIngestionPipeline:
         providers = _openai_provider_configs()
         if not providers:
             raise RuntimeError(
-                "AI_GATEWAY_API_KEY or OPENAI_API_KEY is required for meeting memory extraction"
+                "OPENAI_API_KEY is required for meeting memory extraction"
             )
 
         # Build a compact transcript excerpt (first 4,000 chars)

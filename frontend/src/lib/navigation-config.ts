@@ -126,7 +126,6 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: Users,
     description: "Company-wide meetings and segments",
-    developerOnly: true,
   },
   {
     name: "Tasks",
@@ -134,7 +133,6 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: CheckCircle,
     description: "Company task board",
-    developerOnly: true,
   },
   {
     name: "Knowledge Base",
@@ -142,7 +140,6 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: Brain,
     description: "Team knowledge, insights, and lessons learned",
-    developerOnly: true,
   },
   {
     name: "Documents",
@@ -236,6 +233,14 @@ export const developerCompanyAdminTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: BookOpen,
     description: "AI knowledge source management",
+    adminOnly: true,
+  },
+  {
+    name: "Deep Research Archive",
+    path: "deep-research",
+    requiresProject: false,
+    icon: BookOpen,
+    description: "Past Deep Agents wiki research projects",
     adminOnly: true,
   },
   {
@@ -339,6 +344,7 @@ export const adminTools: NavigationTool[] = [
   { name: "Project Attribution", path: "/project-attribution", icon: Brain, requiresProject: false, adminOnly: true },
   { name: "Task Training", path: "/task-training", icon: Brain, requiresProject: false, adminOnly: true },
   { name: "Knowledge Sources", path: "/knowledge/manage", icon: BookOpen, requiresProject: false, adminOnly: true },
+  { name: "Deep Research Archive", path: "/deep-research", icon: BookOpen, requiresProject: false, adminOnly: true },
   // AI SDK DevTools — only visible in development (http://localhost:4983)
   ...(process.env.NODE_ENV === "development"
     ? [{ name: "AI DevTools", path: "http://localhost:4983", icon: Bug, requiresProject: false } as NavigationTool]
@@ -534,6 +540,7 @@ export const headerNavGroups: HeaderNavGroup[] = [
         icon: ClipboardList,
         description: "Monthly project status summary",
         module: "budget",
+        developerOnly: true,
       },
     ],
     subGroups: [

@@ -1081,20 +1081,34 @@ async function loadMetadata(
 ): Promise<Map<string, DocumentMetaRow>> {
   if (documentIds.length === 0) return new Map();
   const supabase = createServiceClient();
-  const { data, error } = await supabase
-    .from("document_metadata")
-    .select(
-      "id,title,project,project_id,date,created_at,captured_at,source_system,source,type,category,summary,overview,action_items,content,raw_text,url,source_web_url,fireflies_link,meeting_link",
-    )
-    .in("id", documentIds);
 
-  if (error) {
-    throw new Error(`document_metadata lookup failed: ${error.message}`);
+  // Chunk IDs to avoid URL length limits and reduce connection pressure.
+  const CHUNK_SIZE = 50;
+  const chunks: string[][] = [];
+  for (let i = 0; i < documentIds.length; i += CHUNK_SIZE) {
+    chunks.push(documentIds.slice(i, i + CHUNK_SIZE));
   }
 
-  return new Map(
-    ((data ?? []) as DocumentMetaRow[]).map((row) => [row.id, row]),
-  );
+  const results: DocumentMetaRow[] = [];
+  for (const chunk of chunks) {
+    const { data, error } = await supabase
+      .from("document_metadata")
+      .select(
+        "id,title,project,project_id,date,created_at,captured_at,source_system,source,type,category,summary,overview,action_items,content,raw_text,url,source_web_url,fireflies_link,meeting_link",
+      )
+      .in("id", chunk);
+
+    if (error) {
+      // Metadata is optional enrichment — log but don't abort the brief.
+      console.warn(
+        `[daily-brief] document_metadata chunk lookup failed (${chunk.length} ids): ${error.message}`,
+      );
+      continue;
+    }
+    results.push(...((data ?? []) as DocumentMetaRow[]));
+  }
+
+  return new Map(results.map((row) => [row.id, row]));
 }
 
 async function loadFallbackMetadata(

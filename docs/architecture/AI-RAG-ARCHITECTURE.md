@@ -311,22 +311,19 @@ Always use `generateEmbedding(openai, input, EMBEDDING.LARGE)` for new tools que
 
 ---
 
-## 7. Providers and AI Gateway
+## 7. Providers
 
-### Gateway Setup (`providers.ts`)
+### OpenAI Client (`ai_transport.py`)
 
-All LLM calls route through `getLanguageModel(modelId)`. Never call the OpenAI SDK directly from tool or agent code.
+All backend LLM and embedding calls use `get_openai_client()` from `backend/src/services/ai_transport.py`. This returns a plain `openai.OpenAI` client using `OPENAI_API_KEY` — no gateway, no provider fallback loop.
 
 ```
-AI_GATEWAY_API_KEY set → routes to https://ai-gateway.vercel.sh/v1
-                         (BYOK: billing stays with OpenAI, observability via Vercel)
-AI_GATEWAY_API_KEY absent → direct to OpenAI via OPENAI_API_KEY
-                            (local dev fallback only)
+OPENAI_API_KEY → direct to api.openai.com
 ```
 
-Model IDs must include the provider prefix: `openai/gpt-5.4`, not `gpt-5.4`. `ensureProviderPrefix()` in `providers.ts` adds it automatically.
+The Vercel AI Gateway (`AI_GATEWAY_API_KEY`, `ai-gateway.vercel.sh`) was removed 2026-06-09. All payments flow to OpenAI only.
 
-The gateway uses `/v1/chat/completions` (not `/v1/responses`) — the Responses API has validation bugs with multi-step tool calling in the gateway.
+For frontend/Next.js AI SDK calls, `providers.ts` still handles `getLanguageModel(modelId)`. Model IDs must include the provider prefix: `openai/gpt-5.4`.
 
 ### Model Registry
 
@@ -342,7 +339,7 @@ User-selectable models are defined in `assistant-models.ts`. The agent registry 
 
 ### Embeddings
 
-Embeddings are generated via the same OpenAI client (routes through gateway when `AI_GATEWAY_API_KEY` is set). Call `generateEmbedding()` from `tool-utils.ts`, never the raw OpenAI SDK directly in tool code.
+Backend embeddings use `get_openai_client()` directly. Call `generateEmbedding()` from `tool-utils.ts` in frontend tool code — never the raw OpenAI SDK directly.
 
 ---
 
@@ -757,7 +754,7 @@ Exhaustive inventory of every file that meaningfully touches AI assistant logic 
 | `backend/src/services/intelligence/teams_compiler.py` | Teams direct-message conversation compiler. Runs at end of every graph sync (batch 25, 170s budget). Writes to `project_insights`, `tasks`, `insights`, `source_signal_candidates`. | compiler.py, prompts.py, client.py |
 | `backend/src/services/intelligence/email_compiler.py` | Outlook email thread compiler. Mirrors Teams compiler but operates on threads (grouped by `conversation_id`), anchors artifacts to thread head. | compiler.py, prompts.py |
 | `backend/src/services/intelligence/operating_summary.py` | Backend-owned project operating summary packet refresh — production path on Render/FastAPI. Selects up to 96 source capsules with recency and source-priority ordering (project context, then recent meetings, Teams, email, structured controls, documents), scores each source as `clean_source`, `raw_dump`, `metadata_only`, or `stale_or_failed`, asks the model for `whatChanged`, `risks`, `openDecisions`, `moneyImpact`, `promisesMade`, `recommendedActions`, and `evidenceQuality`, and fails if the model returns raw headers/transcript dumps instead of synthesis. The compiler also derives deterministic document intelligence from selected document sources: latest document/revision signals, obligation candidates, conflict indicators, project-impact summaries, and evidence pointers back to source IDs/pages/snippets. Writes `packet_json.strategicReport`, `packet_json.strategicReport.documentIntelligence`, `source_coverage.sourceQualityCounts`, `source_coverage.documentIntelligence`, and a `qualityGate` so dashboards and agents can reject weak packets. It also emits an `operating-document-intelligence` insight card for assistant/page surfaces. Source citations are supplied as aliases and remapped back to canonical source IDs, accepting `S001`, `S01`, and `S1` formats for the same source. Generated cards use section-specific `next_action` values so the page and assistant do not repeat one generic recommendation across every section. | project-operating-summary-sources.ts, compiler.py |
-| `backend/src/services/intelligence/client.py` | OpenAI client wrapped to route through Vercel AI Gateway. Defines `COMPILER_MODEL = gpt-5.5`, retry helper `extract_with_retry`. | teams_compiler.py, email_compiler.py |
+| `backend/src/services/intelligence/client.py` | OpenAI client helpers for Teams/email intelligence. Uses `get_openai_client()` from `ai_transport`. Defines `COMPILER_MODEL = gpt-5.5`, retry helper `extract_with_retry`. | teams_compiler.py, email_compiler.py |
 | `backend/src/services/intelligence/prompts.py` | Prompt templates and JSON schemas for the Teams/email compilers. | teams_compiler.py, email_compiler.py |
 | `backend/src/services/intelligence/__init__.py` | Package init. | — |
 
