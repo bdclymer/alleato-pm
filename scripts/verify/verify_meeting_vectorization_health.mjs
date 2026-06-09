@@ -22,8 +22,8 @@
 import dotenv from "dotenv";
 import postgres from "postgres";
 
-dotenv.config({ path: ".env" });
-dotenv.config({ path: "frontend/.env.local", override: true });
+dotenv.config({ path: ".env", quiet: true });
+dotenv.config({ path: "frontend/.env.local", override: true, quiet: true });
 
 const databaseUrl = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
 const ragDatabaseUrl = process.env.RAG_DATABASE_URL;
@@ -36,18 +36,13 @@ const ragRestUrl = process.env.RAG_SUPABASE_URL;
 const ragRestKey = process.env.RAG_SUPABASE_SERVICE_ROLE_KEY;
 const aiGatewayKey = process.env.AI_GATEWAY_API_KEY;
 const openAiKey = process.env.OPENAI_API_KEY;
-const directSqlMode = process.env.MEETING_VERIFY_DIRECT_SQL === "true";
 
-if (directSqlMode && !databaseUrl) {
-  console.error("[FATAL] DATABASE_URL or SUPABASE_DB_URL is required.");
+if (!databaseUrl && (!appRestUrl || !appRestKey)) {
+  console.error("[FATAL] DATABASE_URL/SUPABASE_DB_URL or SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY is required.");
   process.exit(1);
 }
-if (directSqlMode && !ragDatabaseUrl) {
-  console.error("[FATAL] RAG_DATABASE_URL is required. document_chunks and fireflies_ingestion_jobs live in the AI/RAG database.");
-  process.exit(1);
-}
-if (!directSqlMode && (!appRestUrl || !appRestKey || !ragRestUrl || !ragRestKey)) {
-  console.error("[FATAL] Supabase REST env is required: SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY and RAG_SUPABASE_URL/RAG_SUPABASE_SERVICE_ROLE_KEY.");
+if (!ragDatabaseUrl && (!ragRestUrl || !ragRestKey)) {
+  console.error("[FATAL] RAG_DATABASE_URL or RAG_SUPABASE_URL/RAG_SUPABASE_SERVICE_ROLE_KEY is required. document_chunks and fireflies_ingestion_jobs live in the AI/RAG database.");
   process.exit(1);
 }
 
@@ -65,6 +60,9 @@ const EXCLUDED_DOCUMENT_STATUSES = [
   "skipped_low_content",
 ];
 
+const appSql = databaseUrl ? postgres(databaseUrl, { max: 1, ssl: "require" }) : null;
+const ragSql = ragDatabaseUrl ? postgres(ragDatabaseUrl, { max: 1, ssl: "require", prepare: false }) : null;
+
 const failures = [];
 const warnings = [];
 
@@ -74,23 +72,6 @@ function fail(msg) {
 
 function warn(msg) {
   warnings.push(msg);
-}
-
-function printAndExit() {
-  if (warnings.length > 0) {
-    console.error("\nWARNINGS:");
-    for (const w of warnings) console.error(`   - ${w}`);
-  }
-
-  if (failures.length > 0) {
-    console.error("\nMEETING VECTORIZATION HEALTH: FAIL");
-    console.error("The AI Strategist is degraded or about to be. Fix these now:\n");
-    for (const f of failures) console.error(`   FAIL: ${f}`);
-    console.error("");
-    process.exit(1);
-  }
-
-  console.log("\nMeeting vectorization health: PASS");
 }
 
 function isExcludedMeeting(row) {
@@ -121,8 +102,16 @@ async function restSelect(baseUrl, key, path, { timeoutMs = 30_000 } = {}) {
   };
 }
 
-async function runRestVerifier() {
-  warn("Using Supabase REST verification. Set MEETING_VERIFY_DIRECT_SQL=true to also exercise direct SQL/RPC probes.");
+async function runRestFallback(originalError) {
+  if (!appRestUrl || !appRestKey || !ragRestUrl || !ragRestKey) {
+    throw originalError;
+  }
+
+  warn(
+    `Direct Postgres verification failed (${originalError.code || originalError.message}); ` +
+      "using Supabase REST fallback for vectorization coverage."
+  );
+  warn("REST fallback cannot exercise the search_document_chunks RPC probe; fix direct Postgres credentials to restore that probe.");
 
   const since = new Date(Date.now() - RECENT_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
   const recentRows = await restSelect(
@@ -204,7 +193,7 @@ async function runRestVerifier() {
 
   const provider = await probeEmbeddingProvider();
   const result = {
-    mode: "rest",
+    mode: "rest-fallback",
     metadata: {
       total_meetings: recentMeetings.length,
       latest_meeting_at: recentMeetings[0]?.created_at ?? null,
@@ -221,7 +210,7 @@ async function runRestVerifier() {
     probes: {
       documentChunkSearch: {
         skipped: true,
-        reason: "REST mode verifies chunk coverage but does not exercise search_document_chunks RPC",
+        reason: "direct Postgres connection failed before RPC probe",
       },
       embeddingProvider: provider,
     },
@@ -231,6 +220,24 @@ async function runRestVerifier() {
 
   console.log(JSON.stringify(result, null, 2));
   printAndExit();
+  process.exit(0);
+}
+
+function printAndExit() {
+  if (warnings.length > 0) {
+    console.error("\nWARNINGS:");
+    for (const w of warnings) console.error(`   - ${w}`);
+  }
+
+  if (failures.length > 0) {
+    console.error("\nMEETING VECTORIZATION HEALTH: FAIL");
+    console.error("The AI Strategist is degraded or about to be. Fix these now:\n");
+    for (const f of failures) console.error(`   FAIL: ${f}`);
+    console.error("");
+    process.exit(1);
+  }
+
+  console.log("\nMeeting vectorization health: PASS");
 }
 
 async function probeEmbeddingProvider() {
@@ -314,14 +321,11 @@ async function probeEmbeddingProvider() {
   return { ok: successes.length > 0, providers: successes };
 }
 
-if (!directSqlMode) {
-  await runRestVerifier();
-}
-
-const appSql = postgres(databaseUrl, { max: 1, ssl: "require" });
-const ragSql = postgres(ragDatabaseUrl, { max: 1, ssl: "require", prepare: false });
-
 try {
+  if (!appSql || !ragSql) {
+    throw new Error("Direct Postgres URL missing");
+  }
+
   await appSql`set statement_timeout = '45s'`;
   await ragSql`set statement_timeout = '45s'`;
 
@@ -599,22 +603,10 @@ try {
   };
 
   console.log(JSON.stringify(result, null, 2));
-
-  if (warnings.length > 0) {
-    console.error("\nWARNINGS:");
-    for (const w of warnings) console.error(`   - ${w}`);
-  }
-
-  if (failures.length > 0) {
-    console.error("\nMEETING VECTORIZATION HEALTH: FAIL");
-    console.error("The AI Strategist is degraded or about to be. Fix these now:\n");
-    for (const f of failures) console.error(`   FAIL: ${f}`);
-    console.error("");
-    process.exit(1);
-  }
-
-  console.log("\nMeeting vectorization health: PASS");
+  printAndExit();
+} catch (err) {
+  await runRestFallback(err);
 } finally {
-  await appSql.end();
-  await ragSql.end();
+  await appSql?.end();
+  await ragSql?.end();
 }

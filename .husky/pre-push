@@ -1,16 +1,9 @@
 #!/usr/bin/env sh
 
-# Pre-push gate: catch missing-import build failures before they reach Vercel.
-# Typecheck (tsc --noEmit) is fast and catches the exact class of error that
-# caused repeated deploy failures: commits that import files not yet staged.
-
-cd frontend && npm run typecheck
-TYPECHECK_EXIT=$?
-cd ..
-
-if [ $TYPECHECK_EXIT -ne 0 ]; then
-  echo "ERROR: TypeScript errors found — push blocked to prevent broken Vercel build."
-  exit 1
-fi
+# Pre-push gate: run fast route-manifest checks before pushing.
+# Full typecheck/build and dirty-worktree lint checks remain predeploy/CI
+# responsibilities; they are too expensive and too sensitive to unrelated local
+# edits for every push.
 
 npm run check:routes
+npm run verify:nonprod-routes
