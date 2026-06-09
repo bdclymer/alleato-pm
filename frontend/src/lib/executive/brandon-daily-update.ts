@@ -100,6 +100,8 @@ export type BrandonBriefItem = {
   // Full citation list. Always at least one entry; multiple when an item is corroborated across sources.
   citations: BriefCitation[];
   project: string;
+  // Internal database project ID used for routing — NOT displayed to users.
+  projectInternalId?: number | null;
   owner?: string;
   status?: string;
   tone?: BriefTone;
@@ -671,11 +673,12 @@ function sourceDetail(hit: RankedHit): string {
 }
 
 function projectLabel(hit: RankedHit): string {
-  const projectId = hit.row.doc_project_id ?? hit.metadata?.project_id ?? null;
   const project = hit.metadata?.project ?? null;
-  if (projectId && project) return `${projectId} ${project}`;
-  if (projectId) return String(projectId);
   return project ?? "No project linked";
+}
+
+function projectInternalIdFromHit(hit: RankedHit): number | null {
+  return hit.row.doc_project_id ?? hit.metadata?.project_id ?? null;
 }
 
 function sourceUrl(row: DocumentMetaRow | undefined): string | undefined {
@@ -726,6 +729,7 @@ function buildItem(hit: RankedHit): BrandonBriefItem {
     date: citation.date,
     citations: [citation],
     project: projectLabel(hit),
+    projectInternalId: projectInternalIdFromHit(hit),
     owner: hit.spec.owner,
     status: hit.spec.status,
     tone: hit.spec.tone,
@@ -780,9 +784,8 @@ function makeFallbackItem(row: DocumentMetaRow): BrandonBriefItem | null {
     evidence: citation.evidence,
     date: citation.date,
     citations: [citation],
-    project: row.project_id
-      ? `${row.project_id}${row.project ? ` ${row.project}` : ""}`
-      : (row.project ?? "No project linked"),
+    project: row.project ?? "No project linked",
+    projectInternalId: row.project_id ?? null,
     status: "Recent source review",
     tone: "neutral",
     retrieval: "Recent document_metadata keyword match",
@@ -956,9 +959,8 @@ function buildCommunicationSignalItem(
     evidence: primaryCitation.evidence,
     date: primaryCitation.date,
     citations: [primaryCitation, ...extraCitations],
-    project: row.project_id
-      ? `${row.project_id}${row.project ? ` ${row.project}` : ""}`
-      : (row.project ?? "No project linked"),
+    project: row.project ?? "No project linked",
+    projectInternalId: row.project_id ?? null,
     owner: spec.owner,
     status: spec.status,
     tone: spec.tone,
@@ -1320,6 +1322,48 @@ function briefItemSupportIssues(item: BrandonBriefItem): string[] {
   return issues;
 }
 
+export function shouldSuppressDailyBriefAccountingItem(
+  item: BrandonBriefItem,
+): boolean {
+  const text = [
+    item.title,
+    item.summary,
+    item.sourceDetail,
+    item.recommendedAction,
+    item.whyItMatters,
+    item.evidence,
+    ...(item.evidenceFacts ?? []),
+    ...item.bullets,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  const sourceDetail = item.sourceDetail.toLowerCase();
+  const retrieval = (item.retrieval ?? "").toLowerCase();
+
+  const isAccountingSource =
+    sourceDetail.includes("acumatica") ||
+    retrieval.startsWith("financial pulse:");
+  if (!isAccountingSource) return false;
+
+  return hasAny(text, [
+    "accounts payable",
+    "accounts receivable",
+    "ar aging",
+    "ap aging",
+    "overdue ar",
+    "open ar",
+    "past due",
+    "money due",
+    "receivable",
+    "collections",
+    "invoice is due",
+    "invoice due",
+    "cash flow",
+  ]);
+}
+
 function filterSupportedSections(
   sections: BrandonDailyUpdatePacket["sections"],
 ): SupportedSectionsResult {
@@ -1330,6 +1374,12 @@ function filterSupportedSections(
     items: BrandonBriefItem[],
   ) =>
     items.filter((item) => {
+      if (shouldSuppressDailyBriefAccountingItem(item)) {
+        warnings.push(
+          `Suppressed ${section} item "${item.title || "(untitled)"}" because accounting aging and money-due signals are temporarily excluded from the Daily Brief.`,
+        );
+        return false;
+      }
       const issues = briefItemSupportIssues(item);
       if (issues.length === 0) return true;
       warnings.push(
@@ -1641,20 +1691,14 @@ async function synthesizeSections(
     existingCitationCount: item.citations.length,
   }));
 
-  const financialContext = financialPulse
-    ? "\n\n" + financialPulseToSynthesisContext(financialPulse)
-    : "";
-
   const system =
     "You write a daily executive business brief from an AI business strategist to Brandon, owner of Alleato Group, a commercial construction company. " +
     "Today is " + todayLabel + ". Use this date whenever you write 'today', 'this week', or other relative references. " +
     "Do not refer to Brandon in the third person. Prefer direct facts and, only when needed, 'you'. " +
     "Turn raw communication excerpts and financial data into clear business intelligence. Do not copy truncated excerpts verbatim. " +
-    "Use concrete names, dates, dollar amounts, quantities, blockers, and commitments. " +
+    "Use concrete names, dates, quantities, blockers, and commitments. " +
     "When using relative dates such as next Wednesday, include the exact calendar date in the same sentence. " +
-    "FINANCIAL CONTEXT IS AUTHORITATIVE: When the financial ground truth section is provided, use those figures to enrich and contextualize communication items. " +
-    "If an email or meeting item involves a project that appears in the financial data (e.g., overdue AR), include the dollar figure in that item's evidenceFacts. " +
-    "Do NOT create separate financial items from the financial ground truth — those are handled separately. Focus on enriching communication signals with financial context. " +
+    "Do not inject Acumatica AR/AP aging, money-due, cash-flow, or collections figures into this brief. Those accounting signals are temporarily excluded from the Daily Brief until the accounting feed is trusted again. " +
     "If a communication source is too vague or generic to be useful, exclude it. " +
     "CRITICAL - cross-source synthesis: when multiple candidates describe the same underlying issue (same project + same vendor/contract/topic, even from different sources like an email + a meeting + a Teams thread), MERGE them into a single item and list ALL relevant candidate indexes in sourceIndexes. Each candidate index may appear in only one item across the whole output, but each item may cite multiple indexes. Prefer corroborated multi-source items over single-source items. " +
     "Use needsBrandon only when the evidence shows a decision, confirmation, commitment, money/risk issue, or escalation that belongs at owner level. " +
@@ -1668,9 +1712,9 @@ async function synthesizeSections(
 
   const user =
     "Create the Daily Brief using the Brandon audience preset. " +
-    "Include every material decision, blocker, cash/margin issue, schedule risk, customer issue, vendor issue, accountability gap, or executive move that a construction business owner would reasonably care about today. " +
-    "Rank the highest-leverage executive items first in each section, but put additional material items in the same JSON arrays instead of suppressing them.\n" +
-    financialContext +
+    "Include every material Brandon-specific decision, blocker, schedule risk, customer issue, vendor issue, accountability gap, or executive move that the owner must personally understand or handle today. " +
+    "Start with Brandon's top priorities. needsBrandon is the short list of things Brandon specifically has to handle, approve, decide, confirm, or escalate. " +
+    "Do not include accounting-aging or money-due items sourced from Acumatica in this brief.\n" +
     "\n\nCOMMUNICATION SOURCE CANDIDATES:\n" +
     JSON.stringify(candidatePayload, null, 2);
 
@@ -2422,6 +2466,37 @@ async function enrichBriefSections(
   }
 }
 
+async function loadProjectNumberMap(): Promise<Map<number, string>> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from("projects")
+    .select("id, project_number")
+    .not("project_number", "is", null);
+  const map = new Map<number, string>();
+  for (const row of data ?? []) {
+    if (row.project_number) map.set(row.id, row.project_number);
+  }
+  return map;
+}
+
+function applyProjectNumbers(
+  sections: BrandonDailyUpdatePacket["sections"],
+  projectNumberMap: Map<number, string>,
+): BrandonDailyUpdatePacket["sections"] {
+  if (projectNumberMap.size === 0) return sections;
+  return mapBriefSections(sections, (item) => {
+    if (!item.projectInternalId) return item;
+    const projectNumber = projectNumberMap.get(item.projectInternalId);
+    if (!projectNumber) return item;
+    // Replace any leading numeric-only prefix (legacy format) with the project number
+    const nameOnly = item.project.replace(/^\d+\s*/, "").trim();
+    return {
+      ...item,
+      project: nameOnly ? `${projectNumber} ${nameOnly}` : projectNumber,
+    };
+  });
+}
+
 export async function generateBrandonDailyUpdate(
   options: { windowDays?: number; sourceBackedOnly?: boolean } = {},
 ): Promise<BrandonDailyUpdatePacket> {
@@ -2611,7 +2686,9 @@ export async function generateBrandonDailyUpdate(
           ],
         }
     : await enrichBriefSections(supportedResult.sections, financialPulse);
-  const sections = enforceExecutiveBriefBullets(enrichedResult.sections);
+  const projectNumberMap = await loadProjectNumberMap();
+  const numberedSections = applyProjectNumbers(enrichedResult.sections, projectNumberMap);
+  const sections = enforceExecutiveBriefBullets(numberedSections);
   const operatingBrief = buildExecutiveOperatingBrief(sections);
   const sourceCoverage = await loadRecentSourceCoverage(cutoffIso);
   const sourceCoverageWarnings = sourceCoverage

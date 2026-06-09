@@ -53,6 +53,25 @@ const validOutput = {
   operatingSummary: {
     currentExecutiveRead:
       "The project is waiting on pricing detail before the owner can approve the next design move.",
+    immediateAttention: [
+      {
+        title: "Send priced decision packet to owner",
+        detail: "Owner approval is blocked until the revised pricing and schedule effect are packaged clearly.",
+        priority: "high" as const,
+        sourceIds: ["email-1", "meeting-1"],
+      },
+    ],
+    currentFocus: [
+      {
+        title: "Owner pricing approval",
+        status: "Awaiting decision",
+        owner: "Brandon",
+        summary: "Pricing clarification is the active workstream driving approval timing.",
+        nextDecision: "Confirm whether the owner will approve the revised finish package.",
+        riskSeverity: "high" as const,
+        sourceIds: ["email-1", "meeting-1"],
+      },
+    ],
     timeline: [
       {
         title: "Owner requested revised pricing",
@@ -155,7 +174,7 @@ describe("summarizeProjectIntelligence", () => {
       ],
     });
 
-    expect(getLanguageModelMock).toHaveBeenCalledWith("openai/gpt-5.4-mini");
+    expect(getLanguageModelMock).toHaveBeenCalledWith("openai/gpt-5.5");
     expect(generateObjectMock).toHaveBeenCalledWith(
       expect.objectContaining({
         schemaName: "project_intelligence_summary",
@@ -167,9 +186,16 @@ describe("summarizeProjectIntelligence", () => {
         prompt: expect.stringContaining("Owner requested revised lobby finish pricing"),
       }),
     );
+    expect(generateObjectMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        system: expect.stringContaining(
+          "Lead with Brandon-specific priorities whenever the evidence shows something the owner must personally handle",
+        ),
+      }),
+    );
     expect(summary).toMatchObject({
       schema: "project_intelligence_summary_v1",
-      model: "openai/gpt-5.4-mini",
+      model: "openai/gpt-5.5",
       sourceCount: 2,
       sourceIds: ["email-1", "meeting-1"],
       headline: validOutput.headline,

@@ -7,6 +7,10 @@ import {
 } from "@/lib/executive/brandon-daily-update";
 import { CEO_EXECUTIVE_BRIEFING_RECAP_KIND } from "@/lib/executive/executive-briefing-workflow";
 
+const APP_BASE_URL =
+  process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+  "https://projects.alleatogroup.com";
+
 export type ExecutiveBriefingTeamsSendResult =
   | {
       ok: true;
@@ -98,6 +102,20 @@ export function buildExecutiveBriefingCard(
   const children: CardChild[] = [];
 
   // ── Today's Meetings ───────────────────────────────────────────────────────
+  if (needsBrandon.length > 0) {
+    children.push(Divider());
+    children.push(ChatText(`Brandon's Top Priorities (${needsBrandon.length})`, { style: "bold" }));
+    needsBrandon.forEach((item, i) => {
+      children.push(ChatText(`${i + 1}. ${projectName(item.project)}`, { style: "bold" }));
+      for (const bullet of getBullets(item, 3)) {
+        children.push(ChatText(`• ${bullet}`));
+      }
+      for (const source of linkedClaimSources(item)) {
+        children.push(ChatText(`Source: ${source.label} — ${source.href}`, { style: "muted" }));
+      }
+    });
+  }
+
   if (meetings.length > 0) {
     children.push(Divider());
     children.push(ChatText(`Today's Meetings (${meetings.length})`, { style: "bold" }));
@@ -107,19 +125,10 @@ export function buildExecutiveBriefingCard(
       for (const bullet of getBullets(item, 3)) {
         children.push(ChatText(`• ${bullet}`));
       }
-    }
-  }
-
-  // ── Decisions Needed ───────────────────────────────────────────────────────
-  if (needsBrandon.length > 0) {
-    children.push(Divider());
-    children.push(ChatText(`Decisions Needed (${needsBrandon.length})`, { style: "bold" }));
-    needsBrandon.forEach((item, i) => {
-      children.push(ChatText(`${i + 1}. ${projectName(item.project)}`, { style: "bold" }));
-      for (const bullet of getBullets(item, 3)) {
-        children.push(ChatText(`• ${bullet}`));
+      for (const source of linkedClaimSources(item)) {
+        children.push(ChatText(`Source: ${source.label} — ${source.href}`, { style: "muted" }));
       }
-    });
+    }
   }
 
   // ── Pending ────────────────────────────────────────────────────────────────
@@ -130,6 +139,9 @@ export function buildExecutiveBriefingCard(
       children.push(ChatText(projectName(item.project), { style: "bold" }));
       for (const bullet of getBullets(item, 2)) {
         children.push(ChatText(`• ${bullet}`));
+      }
+      for (const source of linkedClaimSources(item)) {
+        children.push(ChatText(`Source: ${source.label} — ${source.href}`, { style: "muted" }));
       }
     }
   }
@@ -204,6 +216,47 @@ function bulletBlock(item: BrandonBriefItem, max = 3): string {
   return `- ${fallback}`;
 }
 
+function projectIdFromLabel(value: string | null | undefined): number | null {
+  const match = String(value ?? "").replace(/\s+/g, " ").trim().match(/^(\d{2,5})\b/);
+  return match ? Number.parseInt(match[1], 10) : null;
+}
+
+function citationHref(item: BrandonBriefItem, index: number): string | null {
+  const citation = item.citations[index];
+  if (!citation) return null;
+  if (citation.sourceUrl?.trim()) return citation.sourceUrl.trim();
+  if (citation.sourceId?.trim()) {
+    const projectId = projectIdFromLabel(item.project);
+    if (projectId) {
+      return `${APP_BASE_URL}/${projectId}/intelligence/sources/${encodeURIComponent(
+        citation.sourceId.trim(),
+      )}`;
+    }
+  }
+  return null;
+}
+
+function citationLabel(item: BrandonBriefItem, index: number): string {
+  const citation = item.citations[index];
+  if (!citation) return `Source ${index + 1}`;
+  return clip(citation.sourceDetail?.trim() || citation.source, 44);
+}
+
+function linkedClaimSources(
+  item: BrandonBriefItem,
+  max = 2,
+): Array<{ label: string; href: string }> {
+  const links: Array<{ label: string; href: string }> = [];
+  const seen = new Set<string>();
+  item.citations.forEach((_, index) => {
+    const href = citationHref(item, index);
+    if (!href || seen.has(href)) return;
+    seen.add(href);
+    links.push({ label: citationLabel(item, index), href });
+  });
+  return links.slice(0, max);
+}
+
 export function formatExecutiveBriefingTeamsMessage(
   packet: BrandonDailyUpdatePacket,
   firstName: string | null,
@@ -266,25 +319,30 @@ export function formatExecutiveBriefingTeamsMessage(
   ];
 
   // ── Today's Meetings ──────────────────────────────────────────────────────
+  if (needsBrandon.length > 0) {
+    lines.push(`**Brandon's Top Priorities (${needsBrandon.length})**`);
+    lines.push("");
+    needsBrandon.forEach((item, i) => {
+      lines.push(`**${i + 1}. ${projectName(item.project)}**`);
+      lines.push(bulletBlock(item, 3));
+      linkedClaimSources(item).forEach((source) => {
+        lines.push(`Source: [${source.label}](${source.href})`);
+      });
+      lines.push("");
+    });
+  }
+
   if (meetings.length > 0) {
     lines.push(`**Today's Meetings (${meetings.length})**`);
     lines.push("");
     for (const [title, { item }] of meetings) {
       lines.push(`**${clip(title, 70)}**`);
       lines.push(bulletBlock(item, 3));
+      linkedClaimSources(item).forEach((source) => {
+        lines.push(`Source: [${source.label}](${source.href})`);
+      });
       lines.push("");
     }
-  }
-
-  // ── Decisions Needed ──────────────────────────────────────────────────────
-  if (needsBrandon.length > 0) {
-    lines.push(`**Decisions Needed (${needsBrandon.length})**`);
-    lines.push("");
-    needsBrandon.forEach((item, i) => {
-      lines.push(`**${i + 1}. ${projectName(item.project)}**`);
-      lines.push(bulletBlock(item, 3));
-      lines.push("");
-    });
   }
 
   // ── Pending ───────────────────────────────────────────────────────────────
@@ -294,6 +352,9 @@ export function formatExecutiveBriefingTeamsMessage(
     for (const item of waitingOnOthers) {
       lines.push(`**${projectName(item.project)}**`);
       lines.push(bulletBlock(item, 2));
+      linkedClaimSources(item).forEach((source) => {
+        lines.push(`Source: [${source.label}](${source.href})`);
+      });
       lines.push("");
     }
   }

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { formatAIProviderFailure } from "@/lib/ai/provider-config";
 import { getLanguageModel } from "@/lib/ai/providers";
 
-const DEFAULT_SUMMARY_MODEL = "openai/gpt-5.4-mini";
+const DEFAULT_SUMMARY_MODEL = "openai/gpt-5.5";
 const MAX_SOURCE_TEXT_CHARS = 1600;
 const MAX_SOURCES = 96;
 
@@ -23,6 +23,8 @@ function createCitedItemSchema(sourceIds?: string[]) {
 
 function createProjectIntelligenceSummarySchema(sourceIds?: string[]) {
   const citedItemSchema = createCitedItemSchema(sourceIds);
+  const prioritySchema = z.enum(["low", "medium", "high", "critical"]);
+  const severitySchema = z.enum(["low", "medium", "high", "critical"]);
 
   return z.object({
   headline: z
@@ -36,7 +38,7 @@ function createProjectIntelligenceSummarySchema(sourceIds?: string[]) {
   risks: z
     .array(
       citedItemSchema.extend({
-        severity: z.enum(["low", "medium", "high", "critical"]),
+        severity: severitySchema,
         recommendedAction: z.string().min(5),
       }),
     )
@@ -57,7 +59,7 @@ function createProjectIntelligenceSummarySchema(sourceIds?: string[]) {
           .string()
           .nullable()
           .describe("ISO date when explicit in the source, otherwise null."),
-        priority: z.enum(["low", "medium", "high", "critical"]),
+        priority: prioritySchema,
       }),
     )
     .max(8),
@@ -73,6 +75,27 @@ function createProjectIntelligenceSummarySchema(sourceIds?: string[]) {
       .string()
       .min(20)
       .describe("A concise but specific read of the project's current state."),
+    immediateAttention: z
+      .array(
+        citedItemSchema.extend({
+          detail: z.string().min(8),
+          priority: prioritySchema,
+        }),
+      )
+      .max(5)
+      .describe("The short list of items leadership should notice immediately."),
+    currentFocus: z
+      .array(
+        citedItemSchema.extend({
+          status: z.string().nullable(),
+          owner: z.string().nullable(),
+          summary: z.string().min(8),
+          nextDecision: z.string().nullable(),
+          riskSeverity: severitySchema.nullable(),
+        }),
+      )
+      .max(5)
+      .describe("The few active workstreams that define the job right now."),
     timeline: z
       .array(
         citedItemSchema.extend({
@@ -145,7 +168,7 @@ function createProjectIntelligenceSummarySchema(sourceIds?: string[]) {
       .array(
         citedItemSchema.extend({
           reason: z.string().min(8),
-          priority: z.enum(["low", "medium", "high", "critical"]),
+          priority: prioritySchema,
         }),
       )
       .max(8),
@@ -254,6 +277,8 @@ function collectCitedSourceIds(summary: z.infer<typeof projectIntelligenceSummar
     ...summary.risks.flatMap((risk) => risk.sourceIds),
     ...summary.decisions.flatMap((decision) => decision.sourceIds),
     ...summary.actionItems.flatMap((actionItem) => actionItem.sourceIds),
+    ...summary.operatingSummary.immediateAttention.flatMap((item) => item.sourceIds),
+    ...summary.operatingSummary.currentFocus.flatMap((item) => item.sourceIds),
     ...summary.operatingSummary.timeline.flatMap((item) => item.sourceIds),
     ...summary.operatingSummary.recentChanges.flatMap((item) => item.sourceIds),
     ...summary.operatingSummary.financialPosition.knownAmounts.flatMap((item) => item.sourceIds),
@@ -320,16 +345,22 @@ export async function summarizeProjectIntelligence(
       schema: runtimeSchema,
       schemaName: "project_intelligence_summary",
       schemaDescription:
-        "A traceable construction project operating summary with timeline, project controls, risks, decisions, actions, and data gaps.",
+        "A traceable construction project operating summary with present-state synthesis, current focus, risks, decisions, actions, timeline, and data gaps.",
       system: `You summarize construction project intelligence for operators.
 
 Rules:
+- Write this like an executive project briefing, not a PM widget dump.
+- Present state first: currentExecutiveRead, immediateAttention, and currentFocus should explain what matters now before timeline/history.
+- Lead with Brandon-specific priorities whenever the evidence shows something the owner must personally handle, approve, decide, confirm, or escalate.
+- immediateAttention, actionItems, and recommendedFocus must clearly notate what Brandon specifically needs to handle before broader project context.
 - Use only the provided sources.
 - Cite supporting source IDs exactly as provided for every risk, decision, and action item.
 - Cite source IDs for every operatingSummary item that references project facts.
 - Do not invent owners, due dates, dollar amounts, project names, or source IDs.
 - Use null when owner or due date is not explicit.
 - Prefer concrete operational language over generic advice.
+- Keep immediateAttention to the 3-5 items a leader should care about first.
+- Keep currentFocus to the 3-5 active workstreams shaping the project.
 - If the source evidence is thin, say so in dataGaps and lower confidence.`,
       prompt: [
         `Focus: ${input.focus ?? "project_brief"}`,

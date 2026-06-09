@@ -4,6 +4,7 @@ import {
   getHitDateAnchor,
   getRecencyAnchor,
   loadLiveBrandonSourceCoverage,
+  shouldSuppressDailyBriefAccountingItem,
 } from "../brandon-daily-update";
 
 const mockCreateServiceClient = jest.fn();
@@ -164,6 +165,27 @@ function briefItem(
 }
 
 describe("executive operating brief priority lanes", () => {
+  it("suppresses Acumatica money-due items from the Daily Brief", () => {
+    const suppressed = shouldSuppressDailyBriefAccountingItem(
+      briefItem("Overdue AR collections", {
+        summary: "$490K AR with $413K overdue and 74 days past due.",
+        sourceDetail: "Acumatica ERP - AR Aging Report",
+        retrieval: "Financial pulse: acumatica_ar_invoices",
+      }),
+    );
+
+    const allowed = shouldSuppressDailyBriefAccountingItem(
+      briefItem("Permit deadline follow-up", {
+        summary: "Permit package is still waiting on city review comments.",
+        sourceDetail: "Weekly design coordination Exol PA",
+        retrieval: "semantic search",
+      }),
+    );
+
+    expect(suppressed).toBe(true);
+    expect(allowed).toBe(false);
+  });
+
   it("keeps more than three owner decisions instead of suppressing them", () => {
     const brief = buildExecutiveOperatingBrief({
       needsBrandon: Array.from({ length: 4 }, (_, index) =>
