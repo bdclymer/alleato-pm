@@ -483,6 +483,14 @@ Runs automatically every 30 minutes via the `alleato-graph-sync` Render cron. Th
 
 Guardrail: when the candidate fetch returns zero docs, `_count_pending_status_rows` re-counts rows still matching the status filter **within the same 365-day date window** as the candidate query. If that count is > 0, the run is logged as `warning` with `unfetchable_pending` in the metadata. The date scoping matters — without it, very old `error`-status rows (pre-existing tech debt that the embed pipeline intentionally skips by date) would generate false alarms on every run. This guardrail catches the failure mode where a column filter goes stale after a schema change (the 2026-05-14 incident where 220 emails sat unembedded for five days because the candidate query still filtered `document_metadata.content`).
 
+### Fireflies Meeting Embed Gap (fixed 2026-06-09)
+
+Fireflies meetings (`source='fireflies'`, `status='processed'`) were never picked up by `embed_pending_graph_documents` because that function filters on `source='microsoft_graph'` only. They also have no `meeting_segments` rows so the segment-based `run_embedder` would raise `ValueError`. Content exists in `rag_document_metadata` but `embedding_status` stays `null` indefinitely.
+
+**Fix:** `embed_pending_fireflies_meetings()` in `embed.py` — queries `rag_document_metadata` directly for `type='meeting'` and `embedding_status=null`, chunks content via `_split_text`, embeds via OpenAI, writes chunks to `document_chunks` with `source_type='meeting_transcript'`, and marks `embedding_status='embedded'` in both DBs. Capped at 25 per sync run. Called from `run_graph_sync()` after the attachment embed step.
+
+Backfill script: `backend/src/scripts/backfill_fireflies_meeting_embeddings.py`
+
 ### Manual Commands
 
 ```bash

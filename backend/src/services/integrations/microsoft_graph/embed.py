@@ -749,6 +749,104 @@ def _has_embedded_graph_chunks(supabase_client, metadata_id: str) -> bool:
         return False
 
 
+def embed_pending_fireflies_meetings(limit: int = 25) -> Dict[str, Any]:
+    """
+    Embed Fireflies meetings that have content in rag_document_metadata but
+    were never vectorized (embedding_status=null).
+
+    These are missed by embed_pending_graph_documents because they have
+    source='fireflies' (not 'microsoft_graph') and status='processed' (not
+    'raw_ingested'). They also have no meeting_segments, so run_embedder
+    would crash. This function chunks content directly from the RAG DB.
+    """
+    import hashlib as _hashlib
+
+    started_at = datetime.now(timezone.utc)
+    rag_client = get_rag_write_client()
+
+    try:
+        resp = (
+            rag_client.from_("rag_document_metadata")
+            .select("id,title,content,raw_text,content_length")
+            .eq("type", "meeting")
+            .is_("embedding_status", "null")
+            .gt("content_length", 200)
+            .limit(limit)
+            .execute()
+        )
+        docs = resp.data or []
+    except Exception as exc:
+        logger.error("[FirefliesEmbed] Failed to fetch pending meetings: %s", exc)
+        return {"embedded": 0, "errors": 1}
+
+    if not docs:
+        logger.info("[FirefliesEmbed] No pending Fireflies meetings to embed")
+        return {"embedded": 0, "errors": 0}
+
+    logger.info("[FirefliesEmbed] Processing %d pending Fireflies meetings", len(docs))
+    embedded = 0
+    errors = 0
+    total_chunks = 0
+
+    for doc in docs:
+        doc_id = doc["id"]
+        title = doc.get("title") or "Untitled"
+        content = (doc.get("content") or doc.get("raw_text") or "").strip()
+
+        if not content or len(content) < 200:
+            logger.info("[FirefliesEmbed] %s skipped — no content", doc_id)
+            rag_client.from_("rag_document_metadata").update(
+                {"embedding_status": "skipped_low_content"}
+            ).eq("id", doc_id).execute()
+            continue
+
+        try:
+            full_text = f"[{title}]\n\n{content}"
+            chunks = _split_text(full_text)
+            if not chunks:
+                continue
+
+            embeddings = _batch_embed(chunks)
+
+            rows = []
+            for i, (chunk_text, embedding) in enumerate(zip(chunks, embeddings)):
+                chunk_id = f"{doc_id}__ff_meeting_chunk_{i}"
+                rows.append({
+                    "chunk_id": chunk_id,
+                    "document_id": doc_id,
+                    "chunk_index": i,
+                    "text": chunk_text,
+                    "embedding": embedding,
+                    "source_type": "meeting_transcript",
+                    "content_hash": _hashlib.sha256(chunk_text.encode()).hexdigest()[:16],
+                    "metadata": {"title": title, "chunk_index": i, "total_chunks": len(chunks)},
+                })
+
+            rag_client.from_("document_chunks").delete().eq("document_id", doc_id).execute()
+            batch_size = 50
+            for start in range(0, len(rows), batch_size):
+                rag_client.from_("document_chunks").upsert(rows[start:start + batch_size]).execute()
+
+            rag_client.from_("rag_document_metadata").update(
+                {"embedding_status": "embedded"}
+            ).eq("id", doc_id).execute()
+
+            logger.info("[FirefliesEmbed] %s → %d chunks ('%s')", doc_id, len(rows), title[:60])
+            embedded += 1
+            total_chunks += len(rows)
+        except Exception as exc:
+            logger.error("[FirefliesEmbed] Error embedding %s: %s", doc_id, exc)
+            errors += 1
+
+        time.sleep(0.1)
+
+    logger.info(
+        "[FirefliesEmbed] Done — %d embedded (%d chunks), %d errors",
+        embedded, total_chunks, errors,
+    )
+    return {"embedded": embedded, "total_chunks": total_chunks, "errors": errors}
+
+
 def embed_pending_attachment_documents(supabase_client, limit: int = 50) -> Dict[str, Any]:
     """
     Embed email_attachment_legacy rows that have raw_text and no chunks yet.

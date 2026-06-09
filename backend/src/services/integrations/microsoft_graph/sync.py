@@ -14,7 +14,7 @@ from .outlook import sync_outlook_emails
 from .teams import sync_teams_channel, get_all_teams_and_channels, sync_user_chat_messages, ChatReadPermissionError
 from .onedrive import sync_onedrive_folder, sync_sharepoint_folder
 from .client import get_graph_client
-from .embed import embed_pending_graph_documents, embed_pending_attachment_documents
+from .embed import embed_pending_graph_documents, embed_pending_attachment_documents, embed_pending_fireflies_meetings
 from .attachment_promotion import promote_outlook_intake_attachments
 
 logger = logging.getLogger(__name__)
@@ -678,6 +678,18 @@ def run_graph_sync(
         except Exception as e:
             logger.warning("[GraphSync] Attachment embedding step failed (non-fatal): %s", e)
             summary["embed_attachments"] = {"error": str(e)}
+
+    # ── Embed Fireflies meetings missed by the Graph embed sweep ─────────────
+    # Fireflies meetings have source='fireflies' and status='processed' so
+    # embed_pending_graph_documents never picks them up. Capped at 25 per run.
+    if run_embedding:
+        try:
+            ff_embed_result = embed_pending_fireflies_meetings(limit=25)
+            summary["embed_fireflies"] = ff_embed_result
+            logger.info("[GraphSync] Fireflies meeting embedding complete: %s", ff_embed_result)
+        except Exception as e:
+            logger.warning("[GraphSync] Fireflies meeting embedding failed (non-fatal): %s", e)
+            summary["embed_fireflies"] = {"error": str(e)}
 
     # ── Compile Teams DM conversations into structured intelligence ───────────
     # Runs after embed so newly embedded conversations are picked up immediately.
