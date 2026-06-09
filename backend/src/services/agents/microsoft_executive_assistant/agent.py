@@ -6,6 +6,7 @@ import json
 import os
 import re
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Optional
 
@@ -266,6 +267,249 @@ def _parse_tool_json(content: str) -> dict[str, Any]:
         return {}
 
 
+def _inbox_request_kind(prompt: str) -> Optional[str]:
+    normalized = " ".join(prompt.lower().split())
+    if "last five email" in normalized or "last 5 email" in normalized:
+        return "last_five"
+    if "reply triage" in normalized or "need a reply" in normalized or "needs a reply" in normalized:
+        return "reply_triage"
+    if "important emails this morning" in normalized or (
+        "important" in normalized and "this morning" in normalized and "email" in normalized
+    ):
+        return "important_morning"
+    if (
+        "arrived today" in normalized
+        or "mail arrived today" in normalized
+        or "today's inbox" in normalized
+        or ("came in" in normalized and "today" in normalized and "outlook" in normalized)
+    ):
+        return "arrived_today"
+    if "urgent inbox" in normalized or ("urgent" in normalized and "inbox" in normalized):
+        return "urgent_triage"
+    return None
+
+
+def _extract_live_inbox_messages(result: Any) -> list[dict[str, Any]]:
+    for message in _messages_from_result(result):
+        if _message_tool_name(message) != "read_live_outlook_inbox":
+            continue
+        parsed = _parse_tool_json(_message_content(message))
+        if parsed.get("ok") is not True:
+            continue
+        if parsed.get("source") != "microsoft_graph_live":
+            continue
+        rows = parsed.get("messages")
+        if isinstance(rows, list):
+            return [row for row in rows if isinstance(row, dict)]
+    return []
+
+
+def _parse_received_at(value: Any) -> Optional[datetime]:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc)
+    except Exception:
+        return None
+
+
+def _format_received_at(value: Any) -> str:
+    dt = _parse_received_at(value)
+    return dt.strftime("%Y-%m-%d %H:%M UTC") if dt else "unknown time"
+
+
+def _message_text(message: dict[str, Any]) -> str:
+    return " ".join(
+        str(message.get(key) or "")
+        for key in ("subject", "body_text", "from_name", "from_email")
+    ).lower()
+
+
+def _is_internal_sender(message: dict[str, Any]) -> bool:
+    from_email = str(message.get("from_email") or "").strip().lower()
+    return from_email.endswith("@alleatogroup.com")
+
+
+def _short_action_label(message: dict[str, Any]) -> str:
+    text = _message_text(message)
+    if "sign in" in text or "verification" in text or "login code" in text:
+        return "Login verification"
+    if "quarantine" in text or "security" in text:
+        return "Security/admin notice"
+    if "payment is due" in text or "approaching spend limit" in text:
+        return "Billing/limit reminder"
+    if any(token in text for token in ("can you", "please", "confirm", "review", "reply", "follow up", "?")):
+        return "Direct follow-up needed"
+    if "daily summary" in text or "summary" in text or "message center" in text:
+        return "Operational summary"
+    if message.get("has_attachments"):
+        return "Attachment review"
+    return "Review message"
+
+
+def _likely_reply_needed(message: dict[str, Any]) -> bool:
+    text = _message_text(message)
+    if any(token in text for token in ("sign in", "verification code", "quarantine", "approaching spend limit", "payment is due")):
+        return False
+    if any(token in text for token in ("can you", "please", "confirm", "reply", "follow up", "review/sign", "review and sign", "?")):
+        return True
+    if not _is_internal_sender(message) and str(message.get("subject") or "").lower().startswith("re:"):
+        return True
+    return False
+
+
+def _action_bucket(message: dict[str, Any]) -> str:
+    text = _message_text(message)
+    subject = str(message.get("subject") or "")
+    if any(token in text for token in ("sign in", "verification code")):
+        return "Ignore/noise"
+    if "quarantine" in text or "security" in text:
+        return "Watch"
+    if "approaching spend limit" in text or "payment is due" in text:
+        return "Watch"
+    if any(token in text for token in ("thursday", "today", "asap", "urgent")) and not _is_internal_sender(message):
+        return "Alert now"
+    if _likely_reply_needed(message) and not _is_internal_sender(message):
+        return "Reply"
+    if _likely_reply_needed(message) and _is_internal_sender(message):
+        return "Delegate"
+    if message.get("has_attachments") or subject.lower().startswith("re:"):
+        return "Watch"
+    return "Ignore/noise"
+
+
+def _message_reason(message: dict[str, Any], bucket: str) -> str:
+    text = _message_text(message)
+    if bucket == "Alert now":
+        return "External sender is asking for a time-bound confirmation."
+    if bucket == "Reply":
+        return "This reads like a direct sender ask that needs a response."
+    if bucket == "Delegate":
+        return "This looks like an internal/project follow-up that likely needs ownership or routing."
+    if "quarantine" in text or "security" in text:
+        return "Security/admin notice exists, but the inbox evidence alone does not prove an immediate incident."
+    if "approaching spend limit" in text or "payment is due" in text:
+        return "Time-sensitive admin reminder, but not clearly a same-minute operator issue from the email alone."
+    if "sign in" in text or "verification code" in text:
+        return "Authentication message; usually ignorable unless the sign-in was requested."
+    return "Present in the inbox, but the email evidence does not prove an immediate action."
+
+
+def _trimmed_messages_for_today(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    now = datetime.now(timezone.utc).date()
+    today_messages = [
+        message
+        for message in messages
+        if (_parse_received_at(message.get("received_at")) or datetime.min.replace(tzinfo=timezone.utc)).date() == now
+    ]
+    return today_messages or messages
+
+
+def _render_last_five_answer(messages: list[dict[str, Any]], mailbox: str) -> str:
+    rows = messages[:5]
+    lines = [f"Your last five emails in {mailbox} are:", ""]
+    for index, message in enumerate(rows, start=1):
+        sender = str(message.get("from_name") or message.get("from_email") or "Unknown sender")
+        subject = str(message.get("subject") or "(no subject)")
+        lines.append(
+            f"{index}. {subject} — {sender} — {_format_received_at(message.get('received_at'))}"
+        )
+        lines.append(f"   {_short_action_label(message)}.")
+        lines.append("")
+    return "\n".join(lines).strip()
+
+
+def _render_bucketed_triage_answer(
+    *,
+    heading: str,
+    messages: list[dict[str, Any]],
+    mailbox_owner: str,
+    include_only_reply_needed: bool = False,
+) -> str:
+    candidates = _trimmed_messages_for_today(messages)
+    if include_only_reply_needed:
+        candidates = [message for message in candidates if _likely_reply_needed(message)]
+
+    ordered_buckets = ["Alert now", "Reply", "Delegate", "Watch", "Ignore/noise"]
+    buckets: dict[str, list[dict[str, Any]]] = {name: [] for name in ordered_buckets}
+    for message in candidates[:12]:
+        bucket = _action_bucket(message)
+        if include_only_reply_needed and bucket not in {"Alert now", "Reply", "Delegate"}:
+            continue
+        buckets[bucket].append(message)
+
+    lines = [heading, ""]
+    for bucket in ordered_buckets:
+        rows = buckets[bucket]
+        if not rows:
+            continue
+        lines.append(f"{bucket}")
+        for message in rows[:4]:
+            sender = str(message.get("from_name") or message.get("from_email") or "Unknown sender")
+            subject = str(message.get("subject") or "(no subject)")
+            lines.append(f"- {subject} — {sender} — {_format_received_at(message.get('received_at'))}")
+            lines.append(f"  Action: {bucket}. Reason: {_message_reason(message, bucket)}")
+        lines.append("")
+
+    if not any(buckets[bucket] for bucket in ordered_buckets):
+        lines.append("No clear action-needed inbox items were identified from the live inbox read.")
+        lines.append("")
+
+    lines.extend(
+        [
+            f"Recommended next steps for {mailbox_owner}",
+            "1. Handle the Alert now items first, if any are present.",
+            "2. Reply to the direct sender asks next.",
+            "3. Leave Watch/Ignore items alone unless they match known work you are already handling.",
+        ]
+    )
+    return "\n".join(lines).strip()
+
+
+def _deterministic_inbox_answer(
+    request: MicrosoftExecutiveAssistantRequest,
+    result: Any,
+) -> Optional[str]:
+    kind = _inbox_request_kind(request.prompt)
+    if not kind:
+        return None
+
+    messages = _extract_live_inbox_messages(result)
+    if not messages:
+        return None
+
+    mailbox = request.mailbox_user_id or "the mailbox"
+    owner = _mailbox_owner_label(request)
+    if kind == "last_five":
+        return _render_last_five_answer(messages, mailbox)
+    if kind == "urgent_triage":
+        return _render_bucketed_triage_answer(
+            heading=f"Urgent inbox triage for {mailbox}:",
+            messages=messages,
+            mailbox_owner=owner,
+        )
+    if kind == "important_morning":
+        return _render_bucketed_triage_answer(
+            heading=f"Important emails this morning for {mailbox}:",
+            messages=messages,
+            mailbox_owner=owner,
+        )
+    if kind == "arrived_today":
+        return _render_bucketed_triage_answer(
+            heading=f"Messages that arrived today for {mailbox}:",
+            messages=messages,
+            mailbox_owner=owner,
+        )
+    if kind == "reply_triage":
+        return _render_bucketed_triage_answer(
+            heading=f"Emails that most likely need a reply in {mailbox}:",
+            messages=messages,
+            mailbox_owner=owner,
+            include_only_reply_needed=True,
+        )
+    return None
+
+
 def _tool_trace_from_result(result: Any, *, runtime_trace: MicrosoftAssistantTraceItem) -> list[MicrosoftAssistantTraceItem]:
     traces: list[MicrosoftAssistantTraceItem] = []
     known_tools = {
@@ -366,7 +610,7 @@ def run_microsoft_executive_assistant(
                 raise
             result = agent.invoke({"messages": [{"role": "user", "content": _microsoft_prompt(request)}]})
 
-        answer = _extract_agent_text(result)
+        answer = _deterministic_inbox_answer(request, result) or _extract_agent_text(result)
         if not answer:
             raise RuntimeError("Microsoft Executive Assistant returned an empty response.")
 

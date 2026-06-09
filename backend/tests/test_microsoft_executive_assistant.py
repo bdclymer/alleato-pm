@@ -142,6 +142,84 @@ def test_microsoft_prompt_adds_triage_guardrails_for_urgent_inbox_questions():
     assert "Do not propose a draft email or Teams escalation unless the user asked" in prompt
 
 
+def test_run_microsoft_assistant_formats_last_five_deterministically():
+    class LastFiveAgent:
+        def invoke(self, *_args, **_kwargs):
+            return {
+                "messages": [
+                    {
+                        "type": "tool",
+                        "name": "read_live_outlook_inbox",
+                        "content": (
+                            '{"ok":true,"source":"microsoft_graph_live","mailbox_user_id":"bclymer@alleatogroup.com","count":5,'
+                            '"messages":['
+                            '{"subject":"RE: ULTA update needed.","from":{"ignored":true},"from_name":"Walter Allen","from_email":"wallen@ulta.com","received_at":"2026-06-09T09:59:34Z","body_text":"Can you confirm by Thursday afternoon?","has_attachments":false},'
+                            '{"subject":"Sign in to Perplexity","from_name":"Perplexity","from_email":"team@mail.perplexity.ai","received_at":"2026-06-09T09:37:58Z","body_text":"Your verification code is 12345.","has_attachments":false},'
+                            '{"subject":"ERP Integrations Daily Summary","from_name":"Alleato Group notifications","from_email":"no-reply@alleatogroup.com","received_at":"2026-06-09T06:15:56Z","body_text":"Daily summary.","has_attachments":false},'
+                            '{"subject":"[Reminder] Your payment is due in 1 day","from_name":"Ryan Niddel","from_email":"payments@example.com","received_at":"2026-06-09T03:54:13Z","body_text":"Payment is due in 1 day.","has_attachments":false},'
+                            '{"subject":"RE: Exol Morrisville PA","from_name":"Steve Fischer","from_email":"steve.fischer@exol.com","received_at":"2026-06-09T02:59:12Z","body_text":"Please review the comments.","has_attachments":false}'
+                            ']}'
+                        ),
+                    },
+                    {"content": "freeform assistant output that should be ignored"},
+                ]
+            }
+
+    response = run_microsoft_executive_assistant(
+        MicrosoftExecutiveAssistantRequest(
+            userId="user-1",
+            mailboxUserId="bclymer@alleatogroup.com",
+            prompt="Can you tell me my last five emails?",
+        ),
+        create_agent=lambda **_kwargs: LastFiveAgent(),
+    )
+
+    assert response.answer.startswith("Your last five emails in bclymer@alleatogroup.com are:")
+    assert "Megan" not in response.answer
+    assert "Approvals needed" not in response.answer
+    assert "draft" not in response.answer.lower()
+
+
+def test_run_microsoft_assistant_formats_urgent_inbox_into_action_buckets():
+    class UrgentInboxAgent:
+        def invoke(self, *_args, **_kwargs):
+            return {
+                "messages": [
+                    {
+                        "type": "tool",
+                        "name": "read_live_outlook_inbox",
+                        "content": (
+                            '{"ok":true,"source":"microsoft_graph_live","mailbox_user_id":"bclymer@alleatogroup.com","count":4,'
+                            '"messages":['
+                            '{"subject":"RE: ULTA update needed.","from_name":"Walter Allen","from_email":"wallen@ulta.com","received_at":"2026-06-09T09:59:34Z","body_text":"Can you confirm by Thursday afternoon?","has_attachments":false},'
+                            '{"subject":"Microsoft 365 security: You have messages in quarantine","from_name":"Microsoft 365","from_email":"quarantine@messaging.microsoft.com","received_at":"2026-06-09T08:00:00Z","body_text":"Review 1 quarantined message.","has_attachments":false},'
+                            '{"subject":"FYI--approaching spend limit","from_name":"Capital One Business","from_email":"alerts@capitalone.com","received_at":"2026-06-09T07:00:00Z","body_text":"You are approaching your spend limit.","has_attachments":false},'
+                            '{"subject":"Sign in to Perplexity","from_name":"Perplexity","from_email":"team@mail.perplexity.ai","received_at":"2026-06-09T06:00:00Z","body_text":"Your verification code is 12345.","has_attachments":false}'
+                            ']}'
+                        ),
+                    },
+                    {"content": "freeform assistant output that should be ignored"},
+                ]
+            }
+
+    response = run_microsoft_executive_assistant(
+        MicrosoftExecutiveAssistantRequest(
+            userId="user-1",
+            mailboxUserId="bclymer@alleatogroup.com",
+            prompt="Anything urgent in my inbox today?",
+        ),
+        create_agent=lambda **_kwargs: UrgentInboxAgent(),
+    )
+
+    assert "Alert now" in response.answer
+    assert "Reply" not in response.answer or "Alert now" in response.answer
+    assert "Watch" in response.answer
+    assert "Ignore/noise" in response.answer
+    assert "Recommended next steps for Brandon" in response.answer
+    assert "Draft Teams message" not in response.answer
+    assert "Megan" not in response.answer
+
+
 def test_run_microsoft_assistant_fails_loudly_without_provider(monkeypatch):
     monkeypatch.delenv("AI_GATEWAY_API_KEY", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
