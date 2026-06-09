@@ -463,11 +463,59 @@ def _message_evidence(message: dict[str, Any]) -> str:
     if not body:
         return "No body preview available."
     body = re.sub(r"\s+", " ", body)
-    for splitter in (". ", "? ", "! "):
-        if splitter in body:
-            body = body.split(splitter, 1)[0] + splitter.strip()
-            break
-    return body[:160].strip()
+    sentences = [segment.strip() for segment in re.split(r"(?<=[.!?])\s+", body) if segment.strip()]
+    priority_tokens = (
+        "can you",
+        "please",
+        "confirm",
+        "reply",
+        "review",
+        "deadline",
+        "by ",
+        "today",
+        "tomorrow",
+        "thursday",
+        "friday",
+        "payment is due",
+        "approaching spend limit",
+        "verification code",
+        "sign in",
+        "do not reply",
+    )
+    for sentence in sentences:
+        lowered = sentence.lower()
+        if any(token in lowered for token in priority_tokens):
+            return sentence[:200].strip()
+    return (sentences[0] if sentences else body)[:200].strip()
+
+
+def _action_owner(message: dict[str, Any], bucket: str) -> str:
+    if bucket in {"Alert now", "Reply"}:
+        return "Brandon should reply"
+    if bucket == "Delegate":
+        return "Someone on the Alleato team should pick this up"
+    if bucket == "Watch":
+        return "Brandon should review only if this item matters to current work"
+    return "No response owner is confirmed from the email alone"
+
+
+def _action_risk(message: dict[str, Any], bucket: str) -> str:
+    text = _message_text(message)
+    if bucket == "Alert now":
+        if _has_explicit_deadline(text):
+            return "Ignoring it could miss the sender's stated timeline."
+        return "Ignoring it could leave an external sender waiting on a direct answer."
+    if bucket == "Reply":
+        return "Ignoring it could stall an active external thread that appears to expect a response."
+    if bucket == "Delegate":
+        return "Ignoring it could leave an internal follow-up without a clear owner."
+    if bucket == "Watch":
+        if "payment is due" in text or "approaching spend limit" in text:
+            return "Ignoring it could let a billing issue become time-sensitive later."
+        if "quarantine" in text or "security" in text:
+            return "Ignoring it could delay review of a security/admin notice."
+        return "Ignoring it is usually safe unless it connects to known active work."
+    return "Ignoring it is usually safe from the email evidence alone."
 
 
 def _dedupe_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -517,11 +565,14 @@ def _render_last_five_answer(messages: list[dict[str, Any]], mailbox: str) -> st
     for index, message in enumerate(rows, start=1):
         sender = str(message.get("from_name") or message.get("from_email") or "Unknown sender")
         subject = str(message.get("subject") or "(no subject)")
+        bucket = _action_bucket(message)
         lines.append(
             f"{index}. {subject} — {sender} — {_format_received_at(message.get('received_at'))}"
         )
         lines.append(f"   Response path: {_short_action_label(message)}.")
+        lines.append(f"   Owner: {_action_owner(message, bucket)}.")
         lines.append(f"   Evidence: {_message_evidence(message)}")
+        lines.append(f"   If ignored: {_action_risk(message, bucket)}")
         lines.append("")
     return "\n".join(lines).strip()
 
@@ -546,7 +597,9 @@ def _render_action_lists(
                 lines.append(f"  Thread activity: {count} messages in this subject thread.")
             lines.append(f"  Response path: {_short_action_label(message)}")
             lines.append(f"  Why: {_message_reason(message, bucket)}")
+            lines.append(f"  Owner: {_action_owner(message, bucket)}")
             lines.append(f"  Evidence: {_message_evidence(message)}")
+            lines.append(f"  If ignored: {_action_risk(message, bucket)}")
         lines.append("")
 
     if informational:
@@ -561,7 +614,9 @@ def _render_action_lists(
                 lines.append(f"  Thread activity: {count} messages in this subject thread.")
             lines.append(f"  Response path: {_short_action_label(message)}")
             lines.append(f"  Why: {_message_reason(message, bucket)}")
+            lines.append(f"  Owner: {_action_owner(message, bucket)}")
             lines.append(f"  Evidence: {_message_evidence(message)}")
+            lines.append(f"  If ignored: {_action_risk(message, bucket)}")
         lines.append("")
 
     if not action_needed and not informational:
@@ -581,7 +636,11 @@ def _render_bucketed_triage_answer(
     candidates = _trimmed_messages_for_today(messages) if same_day_only else messages
     candidates = _dedupe_messages(candidates)
     if include_only_reply_needed:
-        candidates = [message for message in candidates if _likely_reply_needed(message)]
+        candidates = [
+            message
+            for message in candidates
+            if _action_bucket(message) in {"Alert now", "Reply"}
+        ]
 
     ordered_buckets = ["Alert now", "Reply", "Delegate", "Watch", "Ignore/noise"]
     buckets: dict[str, list[dict[str, Any]]] = {name: [] for name in ordered_buckets}
@@ -605,7 +664,9 @@ def _render_bucketed_triage_answer(
             if count > 1:
                 lines.append(f"  Thread activity: {count} messages in this subject thread.")
             lines.append(f"  Action: {bucket}. Reason: {_message_reason(message, bucket)}")
+            lines.append(f"  Owner: {_action_owner(message, bucket)}")
             lines.append(f"  Evidence: {_message_evidence(message)}")
+            lines.append(f"  If ignored: {_action_risk(message, bucket)}")
         lines.append("")
 
     if not any(buckets[bucket] for bucket in ordered_buckets):
@@ -642,8 +703,8 @@ def _render_morning_answer(messages: list[dict[str, Any]], mailbox: str) -> str:
 
 def _render_arrived_today_answer(messages: list[dict[str, Any]], mailbox: str) -> str:
     rows = _dedupe_messages(_trimmed_messages_for_today(messages))
-    action_needed = [message for message in rows if _action_bucket(message) in {"Alert now", "Reply", "Delegate"}][:6]
-    informational = [message for message in rows if _action_bucket(message) not in {"Alert now", "Reply", "Delegate"}][:6]
+    action_needed = [message for message in rows if _action_bucket(message) in {"Alert now", "Reply"}][:6]
+    informational = [message for message in rows if _action_bucket(message) not in {"Alert now", "Reply"}][:6]
     return _render_action_lists(
         heading=f"Messages that arrived today for {mailbox}:",
         action_needed=action_needed,
