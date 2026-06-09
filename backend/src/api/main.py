@@ -377,11 +377,19 @@ async def health_check() -> Dict[str, Any]:
         os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_SERVICE_KEY")
     )
 
+    try:
+        from src.services.agents.llm_wiki.agent import storage_durability_status
+
+        deep_agent_storage = storage_durability_status()
+    except Exception:  # pragma: no cover - never let a probe break /health
+        deep_agent_storage = {"durable": None, "roots": {}}
+
     return {
         "status": "healthy",
         "openai_configured": openai_configured,
         "embedding_provider_configured": openai_configured,
         "supabase_service_configured": supabase_service_configured,
+        "deep_agent_storage": deep_agent_storage,
         "timestamp": datetime.now().isoformat()
     }
 

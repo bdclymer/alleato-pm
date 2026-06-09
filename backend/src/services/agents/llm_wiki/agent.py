@@ -32,6 +32,29 @@ OUTPUT_BASE_DIR = Path(os.getenv("LLM_WIKI_OUTPUT_ROOT", "/tmp/alleato-llm-wiki"
 ALLOWED_TEXT_SUFFIXES = {".md", ".txt", ".json", ".yaml", ".yml", ".csv"}
 
 
+def storage_durability_status() -> dict[str, Any]:
+    """Report whether deep-agent artifact roots survive a redeploy.
+
+    Artifacts written under ``/tmp`` are wiped on every Render container
+    restart/redeploy. Production must point each output root at the persistent
+    disk (``/data/*``). The ``/health`` endpoint surfaces this so a monitor can
+    alert when a root is ephemeral instead of silently losing saved research.
+    """
+    roots = {
+        "llm_wiki": os.getenv("LLM_WIKI_OUTPUT_ROOT", "/tmp/alleato-llm-wiki"),
+        "docs_research": os.getenv("DOCS_RESEARCH_OUTPUT_ROOT", "/tmp/alleato-docs-research"),
+        "content_builder": os.getenv("CONTENT_BUILDER_OUTPUT_ROOT", "/tmp/alleato-content-builder"),
+    }
+    details = {
+        name: {"path": path, "durable": not path.startswith("/tmp")}
+        for name, path in roots.items()
+    }
+    return {
+        "durable": all(entry["durable"] for entry in details.values()),
+        "roots": details,
+    }
+
+
 class _TestBackend:
     def __init__(self, workspace: Path):
         self.cwd = workspace

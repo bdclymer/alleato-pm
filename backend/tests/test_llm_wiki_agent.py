@@ -209,3 +209,30 @@ def test_llm_wiki_archive_route_returns_payload(client, monkeypatch, tmp_path):
     body = response.json()
     assert body["selectedProject"]["topicSlug"] == "ada-lovelace"
     assert any(artifact["path"] == "wiki/index.md" for artifact in body["artifacts"])
+
+
+def test_storage_durability_status_flags_tmp_roots(monkeypatch):
+    from src.services.agents.llm_wiki.agent import storage_durability_status
+
+    monkeypatch.setenv("LLM_WIKI_OUTPUT_ROOT", "/tmp/alleato-llm-wiki")
+    monkeypatch.delenv("DOCS_RESEARCH_OUTPUT_ROOT", raising=False)
+    monkeypatch.delenv("CONTENT_BUILDER_OUTPUT_ROOT", raising=False)
+
+    status = storage_durability_status()
+
+    assert status["durable"] is False
+    assert status["roots"]["llm_wiki"]["durable"] is False
+    assert status["roots"]["docs_research"]["durable"] is False
+
+
+def test_storage_durability_status_passes_for_persistent_disk(monkeypatch):
+    from src.services.agents.llm_wiki.agent import storage_durability_status
+
+    monkeypatch.setenv("LLM_WIKI_OUTPUT_ROOT", "/data/llm-wiki")
+    monkeypatch.setenv("DOCS_RESEARCH_OUTPUT_ROOT", "/data/docs-research")
+    monkeypatch.setenv("CONTENT_BUILDER_OUTPUT_ROOT", "/data/content-builder")
+
+    status = storage_durability_status()
+
+    assert status["durable"] is True
+    assert all(entry["durable"] for entry in status["roots"].values())

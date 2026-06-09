@@ -673,6 +673,15 @@ services:
         value: true
       - key: DEEP_AGENTS_LLM_WIKI_MODEL
         value: gpt-5.4-mini
+      # Deep-agent filesystem artifacts (LLM wiki / deep-research archive, docs
+      # research, content builder) MUST live on the persistent disk below — not
+      # /tmp — or every redeploy wipes saved "research and past work".
+      - key: LLM_WIKI_OUTPUT_ROOT
+        value: /data/llm-wiki
+      - key: DOCS_RESEARCH_OUTPUT_ROOT
+        value: /data/docs-research
+      - key: CONTENT_BUILDER_OUTPUT_ROOT
+        value: /data/content-builder
       - key: DEEP_AGENTS_MEMORY_ENABLED
         value: true
       - key: DEEP_AGENTS_STANDALONE_TOOLS_ENABLED
@@ -689,3 +698,9 @@ services:
         sync: false
       - key: CORS_ORIGINS
         value: https://alleato-procore.vercel.app,https://www.alleato-procore.vercel.app,https://alleato-backend-rbnj.onrender.com
+    # Persistent disk for deep-agent artifacts. A disk pins the service to a
+    # single instance and switches deploys to recreate (acceptable for this API).
+    disk:
+      name: deep-agents-data
+      mountPath: /data
+      sizeGB: 1
