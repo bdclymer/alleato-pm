@@ -1,9 +1,14 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { DB_INVENTORY } from "@/components/dev-tools/db-inventory.generated";
+import type {
+  DbInventory,
+  DbInventoryTable,
+} from "@/components/dev-tools/db-inventory.generated";
 
 async function requireAdmin() {
   const user = await getApiRouteUser();
@@ -25,6 +30,66 @@ interface RefreshUpdate {
   lastAutoanalyze: string | null;
 }
 
+const DB_INVENTORY_JSON_PATH = path.join(
+  process.cwd(),
+  "src/components/dev-tools/db-inventory.generated.json",
+);
+
+function assertDbInventoryShape(payload: unknown): asserts payload is DbInventory {
+  if (
+    !payload ||
+    typeof payload !== "object" ||
+    !Array.isArray((payload as { tables?: unknown }).tables)
+  ) {
+    throw new GuardrailError({
+      code: "SCHEMA_MISMATCH",
+      where: "/api/admin/db-inventory/refresh#loadDbInventory",
+      message: "Database inventory artifact is malformed.",
+      details: {
+        path: DB_INVENTORY_JSON_PATH,
+      },
+      status: 500,
+    });
+  }
+}
+
+async function loadDbInventory(): Promise<DbInventory> {
+  let raw = "";
+  try {
+    raw = await readFile(DB_INVENTORY_JSON_PATH, "utf8");
+  } catch (error) {
+    throw new GuardrailError({
+      code: "NOT_FOUND",
+      where: "/api/admin/db-inventory/refresh#loadDbInventory",
+      message: "Database inventory artifact is missing.",
+      details: {
+        path: DB_INVENTORY_JSON_PATH,
+        reason: error instanceof Error ? error.message : String(error),
+      },
+      status: 500,
+    });
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: "/api/admin/db-inventory/refresh#loadDbInventory",
+      message: "Database inventory artifact contains invalid JSON.",
+      details: {
+        path: DB_INVENTORY_JSON_PATH,
+        reason: error instanceof Error ? error.message : String(error),
+      },
+      status: 500,
+    });
+  }
+
+  assertDbInventoryShape(parsed);
+  return parsed;
+}
+
 // This route returns stats from the last generator run.
 // For true live counts, re-run `npm run db:inventory`.
 export const POST = withApiGuardrails(
@@ -43,9 +108,10 @@ export const POST = withApiGuardrails(
     const body = (await request.json().catch(() => ({}))) as { tables?: string[] };
     const requestedNames = body.tables ?? null;
 
-    const allTables = DB_INVENTORY.tables;
+    const inventory = await loadDbInventory();
+    const allTables = inventory.tables;
     const targetTables = requestedNames
-      ? allTables.filter((t) => requestedNames.includes(t.name))
+      ? allTables.filter((t: DbInventoryTable) => requestedNames.includes(t.name))
       : allTables;
 
     if (targetTables.length === 0) {
