@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 interface RouteParams {
   params: Promise<{ projectId: string; documentId: string }>;
@@ -25,6 +26,12 @@ const updateDocumentSchema = z.object({
   reviewed_by: z.string().nullable().optional(),
   reviewed_at: z.string().nullable().optional(),
 });
+
+type ProjectDocumentDeleteRow = {
+  id: number;
+  storage_bucket: string | null;
+  storage_path: string | null;
+};
 
 // =============================================================================
 // GET - Fetch a single document
@@ -56,7 +63,12 @@ export const GET = withApiGuardrails(
 
     if (error) {
       if (error.code === "PGRST116") {
-        return NextResponse.json({ error: "Document not found" }, { status: 404 });
+        throw new GuardrailError({
+          code: "NOT_FOUND",
+          where: "projects/[projectId]/documents/[documentId]#GET",
+          message: "Document not found.",
+          status: 404,
+        });
       }
       return apiErrorResponse(error);
     }
@@ -102,7 +114,12 @@ export const PUT = withApiGuardrails(
 
     if (error) {
       if (error.code === "PGRST116") {
-        return NextResponse.json({ error: "Document not found" }, { status: 404 });
+        throw new GuardrailError({
+          code: "NOT_FOUND",
+          where: "projects/[projectId]/documents/[documentId]#PUT",
+          message: "Document not found.",
+          status: 404,
+        });
       }
       return apiErrorResponse(error);
     }
@@ -118,7 +135,6 @@ export const PUT = withApiGuardrails(
 export const DELETE = withApiGuardrails(
   "projects/[projectId]/documents/[documentId]#DELETE",
   async ({ request, params }) => {
-  
     const { projectId, documentId } = await params;
     const supabase = await createClient();
 
@@ -129,6 +145,42 @@ export const DELETE = withApiGuardrails(
 
     if (userError || !user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/documents/[documentId]#DELETE", message: "Authentication required." });
+    }
+
+    const { data: document, error: lookupError } = await supabase
+      .from("project_documents")
+      .select("id, storage_bucket, storage_path")
+      .eq("id", Number(documentId))
+      .eq("project_id", Number(projectId))
+      .is("deleted_at", null)
+      .single<ProjectDocumentDeleteRow>();
+
+    if (lookupError) {
+      if (lookupError.code === "PGRST116") {
+        throw new GuardrailError({
+          code: "NOT_FOUND",
+          where: "projects/[projectId]/documents/[documentId]#DELETE",
+          message: "Document not found.",
+          status: 404,
+        });
+      }
+      return apiErrorResponse(lookupError);
+    }
+
+    if (document.storage_bucket && document.storage_path) {
+      const serviceClient = createServiceClient();
+      const { error: storageDeleteError } = await serviceClient.storage
+        .from(document.storage_bucket)
+        .remove([document.storage_path]);
+
+      if (storageDeleteError) {
+        throw new GuardrailError({
+          code: "UPSTREAM_FAILURE",
+          where: "projects/[projectId]/documents/[documentId]#DELETE",
+          message: `Failed to remove document file from storage: ${storageDeleteError.message}`,
+          status: 502,
+        });
+      }
     }
 
     const { data, error } = await supabase
@@ -142,7 +194,12 @@ export const DELETE = withApiGuardrails(
 
     if (error) {
       if (error.code === "PGRST116") {
-        return NextResponse.json({ error: "Document not found" }, { status: 404 });
+        throw new GuardrailError({
+          code: "NOT_FOUND",
+          where: "projects/[projectId]/documents/[documentId]#DELETE",
+          message: "Document not found.",
+          status: 404,
+        });
       }
       return apiErrorResponse(error);
     }
