@@ -3,7 +3,9 @@
 import {
   ArrowLeft,
   Calendar,
+  CheckCircle2,
   ChevronDown,
+  Circle,
   Clock,
   ExternalLink,
   FileText,
@@ -102,6 +104,18 @@ interface RelatedMeeting {
   duration_minutes: number | null;
 }
 
+export interface MeetingTask {
+  id: string;
+  title: string | null;
+  description: string;
+  assignee_name: string | null;
+  assignee_email: string | null;
+  status: string;
+  priority: string | null;
+  due_date: string | null;
+  segment_id: string | null;
+}
+
 export interface MeetingDetailContentProps {
   meeting: DocumentMetadata;
   segments: MeetingSegment[];
@@ -111,6 +125,7 @@ export interface MeetingDetailContentProps {
   allRisks: string[];
   allDecisions: string[];
   allOpportunities: string[];
+  meetingTasks?: MeetingTask[];
   transcriptContent: string | null;
   backHref: string;
   backLabel: string;
@@ -247,6 +262,56 @@ function ActionItemsByAssignee({ content }: { content: string }) {
         </div>
       ))}
     </div>
+  );
+}
+
+// ─── Tasks Section ──────────────────────────────────────────────────────────
+
+const PRIORITY_CLASSES: Record<string, string> = {
+  high: "text-destructive",
+  medium: "text-amber-600 dark:text-amber-400",
+  low: "text-muted-foreground",
+};
+
+function TaskStatusIcon({ status }: { status: string }) {
+  if (status === "completed" || status === "done") {
+    return <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600 dark:text-green-500" />;
+  }
+  return <Circle className="h-4 w-4 shrink-0 text-muted-foreground/50" />;
+}
+
+function MeetingTasksList({ tasks }: { tasks: MeetingTask[] }) {
+  return (
+    <ul className="space-y-3">
+      {tasks.map((task) => (
+        <li key={task.id} className="flex items-start gap-3">
+          <TaskStatusIcon status={task.status} />
+          <div className="min-w-0 flex-1 space-y-0.5">
+            <p className="text-sm leading-snug text-foreground">
+              {task.title || task.description}
+            </p>
+            {task.title && task.description !== task.title && (
+              <p className="text-xs text-muted-foreground line-clamp-2">{task.description}</p>
+            )}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 pt-0.5">
+              {task.assignee_name && (
+                <span className="text-xs text-muted-foreground">{task.assignee_name}</span>
+              )}
+              {task.priority && task.priority !== "normal" && (
+                <span className={`text-xs font-medium capitalize ${PRIORITY_CLASSES[task.priority.toLowerCase()] ?? "text-muted-foreground"}`}>
+                  {task.priority}
+                </span>
+              )}
+              {task.due_date && (
+                <span className="text-xs text-muted-foreground">
+                  Due {format(new Date(task.due_date), "MMM d")}
+                </span>
+              )}
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -447,6 +512,7 @@ export function MeetingDetailContent({
   allRisks,
   allDecisions: _allDecisions,
   allOpportunities,
+  meetingTasks = [],
   transcriptContent,
   backHref,
   backLabel,
@@ -640,6 +706,15 @@ export function MeetingDetailContent({
                 ) : (
                   <FirefliesSectionContent value={shorthandBullet!} />
                 )}
+              </AccordionSection>
+            </section>
+          ) : null}
+
+          {/* Tasks — AI-extracted tasks from the transcript */}
+          {meetingTasks.length > 0 ? (
+            <section className="border-t border-border pt-6">
+              <AccordionSection label={`Tasks (${meetingTasks.length})`}>
+                <MeetingTasksList tasks={meetingTasks} />
               </AccordionSection>
             </section>
           ) : null}

@@ -72,6 +72,14 @@ export default async function MeetingDetailPage({ params }: PageProps) {
     opportunities: allOpportunities,
   } = collectSegmentItems(segments);
 
+  const { data: meetingTasksData } = await supabase
+    .from("tasks")
+    .select("id, title, description, assignee_name, assignee_email, status, priority, due_date, segment_id")
+    .eq("metadata_id", meetingId)
+    .order("created_at", { ascending: true });
+
+  const meetingTasks = meetingTasksData ?? [];
+
   let transcriptContent = null;
   const storageUrl = meeting.url || meeting.source;
 
@@ -120,6 +128,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
       allRisks={allRisks}
       allDecisions={allDecisions}
       allOpportunities={allOpportunities}
+      meetingTasks={meetingTasks}
       transcriptContent={transcriptContent}
       backHref="/meetings"
       backLabel="Meetings"

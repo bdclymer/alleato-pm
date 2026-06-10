@@ -114,6 +114,7 @@ const RAG_CLIENT_IDENTS = [
   "ragSupabase",
   "ragReadClient",
   "ragWriteClient",
+  "rag",
 ];
 const RAG_FROM_RE = new RegExp(
   `\\b(?:${RAG_CLIENT_IDENTS.join("|")})\\s*\\.from\\(`,

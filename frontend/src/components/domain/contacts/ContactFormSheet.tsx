@@ -393,7 +393,7 @@ export function ContactFormSheet({
                                     variant="ghost"
                                     size="sm"
                                     className="w-full justify-start text-primary hover:text-primary"
-                                    onClick={() => { setOpen(false); setCompanyDialogOpen(true); }}
+                                    onClick={() => { setCompanyPopoverOpen(false); setCompanyDialogOpen(true); }}
                                   >
                                     <Plus className="mr-2 h-4 w-4" />
                                     Add New Company

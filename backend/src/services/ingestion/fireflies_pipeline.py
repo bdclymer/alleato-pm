@@ -493,11 +493,25 @@ class FirefliesIngestionPipeline:
         analytics = transcript.get("analytics") or {}
         sentiments = analytics.get("sentiments") or {}
 
-        # Duration: Fireflies returns duration already in minutes (integer column)
+        # Duration: Fireflies returns duration in minutes (integer column).
+        # Some transcripts arrive with duration=0 or duration=1 before full
+        # processing completes. Fall back to the last sentence's end_time
+        # (in seconds) when the API value is suspiciously low (< 2 minutes).
         duration_raw = transcript.get("duration")
         duration_minutes = None
-        if isinstance(duration_raw, (int, float)) and duration_raw > 0:
+        if isinstance(duration_raw, (int, float)) and duration_raw > 1:
             duration_minutes = int(round(duration_raw))
+        else:
+            sentences = transcript.get("sentences") or []
+            if sentences:
+                last_end = max(
+                    (s.get("end_time") or 0) for s in sentences if isinstance(s, dict)
+                )
+                if isinstance(last_end, (int, float)) and last_end > 0:
+                    duration_minutes = max(1, int(round(last_end / 60)))
+            # If sentences gave us nothing, keep the API value (even if 0 or 1)
+            if duration_minutes is None and isinstance(duration_raw, (int, float)) and duration_raw > 0:
+                duration_minutes = int(round(duration_raw))
 
         # Keywords: may be a list or newline-separated string
         keywords_raw = summary.get("keywords") or []
@@ -1021,6 +1035,15 @@ class FirefliesIngestionPipeline:
 
         duration = transcript.get("duration")
         if isinstance(duration, (int, float)):
+            # Fall back to sentence-derived duration when the API value is < 2 min
+            if duration <= 1:
+                sentences = transcript.get("sentences") or []
+                if sentences:
+                    last_end = max(
+                        (s.get("end_time") or 0) for s in sentences if isinstance(s, dict)
+                    )
+                    if isinstance(last_end, (int, float)) and last_end > 0:
+                        duration = last_end / 60
             lines.append(f"**Duration:** {round(float(duration))} minutes")
         if transcript.get("organizer_email"):
             lines.append(f"**Organizer Email:** {transcript['organizer_email']}")

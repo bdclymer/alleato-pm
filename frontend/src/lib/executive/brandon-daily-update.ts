@@ -775,11 +775,22 @@ function buildItem(hit: RankedHit): BrandonBriefItem {
 }
 
 function makeFallbackItem(row: DocumentMetaRow): BrandonBriefItem | null {
+  // Short text for the item summary; richer text (summary + overview + the
+  // fuller `content` field) for the evidence the synthesis model actually
+  // reads, so specifics like "7.7 feet from the power lines" survive instead of
+  // being lost to a thin auto-summary clip.
   const text = compactText(
     row.summary ?? row.overview ?? row.action_items,
     520,
   );
-  if (!text) return null;
+  const richText = compactCompleteText(
+    [row.summary, row.overview, row.content]
+      .map((value) => normalizeText(value))
+      .filter((value, index, arr) => value && arr.indexOf(value) === index)
+      .join(" "),
+    2200,
+  );
+  if (!text && !richText) return null;
   if (!row.title) return null;
 
   const source =
@@ -804,14 +815,14 @@ function makeFallbackItem(row: DocumentMetaRow): BrandonBriefItem | null {
     sourceDetail: compactText(row.title, 90),
     sourceUrl: sourceLink,
     sourceId: row.id,
-    evidence: text,
+    evidence: richText || text,
     date: formatSourceDate(row.date ?? row.created_at ?? row.captured_at),
   };
   if (citation.date === "Unknown date") return null;
 
   return {
     title: row.title,
-    summary: text,
+    summary: text || richText,
     evidenceFacts: [],
     bullets: [],
     source: citation.source,
@@ -1736,6 +1747,77 @@ function sanitizeAccountingSections(
   };
 }
 
+// Pull the FULL embedded text for a set of source documents from the AI
+// Database vector store (document_chunks), concatenated in chunk order. This is
+// what lets the brief read the COMPLETE meeting transcript instead of the lossy
+// document_metadata auto-summary — regardless of whether the item was surfaced
+// by semantic RAG or by the keyword-metadata fallback. Best-effort: any failure
+// just leaves the item on its existing (thinner) evidence.
+async function loadFullDocumentText(
+  documentIds: string[],
+): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  const ids = Array.from(new Set(documentIds.filter(Boolean)));
+  if (ids.length === 0) return out;
+
+  const rag = createRagServiceClient();
+  const partsByDoc = new Map<string, Array<{ index: number; text: string }>>();
+  const BATCH = 40;
+  for (let i = 0; i < ids.length; i += BATCH) {
+    const batch = ids.slice(i, i + BATCH);
+    const { data, error } = await rag
+      .from("document_chunks")
+      .select("document_id, chunk_index, text")
+      .in("document_id", batch);
+    if (error || !data) continue;
+    for (const row of data as Array<{
+      document_id?: string | null;
+      chunk_index?: number | null;
+      text?: string | null;
+    }>) {
+      const id = row.document_id;
+      const text = row.text;
+      if (!id || !text) continue;
+      if (!partsByDoc.has(id)) partsByDoc.set(id, []);
+      partsByDoc.get(id)!.push({ index: row.chunk_index ?? 0, text });
+    }
+  }
+
+  for (const [id, parts] of partsByDoc) {
+    parts.sort((a, b) => a.index - b.index);
+    out.set(id, compactCompleteText(parts.map((p) => p.text).join("\n"), 12000));
+  }
+  return out;
+}
+
+// Replace each candidate item's thin evidence with the FULL embedded document
+// text (the real transcript) when available, mutating the item AND its primary
+// citation so BOTH the synthesis and the downstream enrichment read the
+// complete meeting. This is the core fix for shallow briefs: items surfaced by
+// the keyword-metadata fallback previously carried only the ~2,800-char
+// auto-summary and never touched the rich chunks that exist in the vector store.
+async function enrichSectionsWithFullDocumentText(
+  sections: BrandonDailyUpdatePacket["sections"],
+): Promise<number> {
+  const allItems = [
+    ...sections.needsBrandon,
+    ...sections.waitingOnOthers,
+    ...sections.importantUpdates,
+  ];
+  const fullTextByDoc = await loadFullDocumentText(
+    allItems.map((item) => item.sourceId ?? "").filter(Boolean),
+  );
+  let enriched = 0;
+  for (const item of allItems) {
+    const full = item.sourceId ? fullTextByDoc.get(item.sourceId) : undefined;
+    if (!full) continue;
+    item.evidence = full;
+    if (item.citations[0]) item.citations[0].evidence = full;
+    enriched += 1;
+  }
+  return enriched;
+}
+
 async function synthesizeSections(
   sections: BrandonDailyUpdatePacket["sections"],
   financialPulse: FinancialPulseData | null,
@@ -1779,11 +1861,11 @@ async function synthesizeSections(
     status: item.status,
     owner: item.owner,
     evidence: compactCompleteText(
-      [item.summary, item.evidence]
+      [item.evidence, item.summary]
         .map((value) => normalizeText(value))
         .filter((value, idx, arr) => value && arr.indexOf(value) === idx)
         .join(" "),
-      900,
+      12000,
     ),
     existingCitationCount: item.citations.length,
   }));
@@ -2896,6 +2978,15 @@ export async function generateBrandonDailyUpdate(
   const seededSections = insightCardBrief
     ? insightCardBrief.sections
     : assignHitsToSections(dedupedHits, fallbackItems);
+
+  // Pull the full embedded transcript text for every surfaced item BEFORE
+  // synthesis, so both synthesis and enrichment read the complete meeting
+  // instead of the lossy auto-summary the keyword-fallback path carries.
+  const fullTextEnrichedCount = sourceBackedOnly
+    ? 0
+    : await enrichSectionsWithFullDocumentText(seededSections).catch(() => 0);
+
+
   const synthesizedResult = sourceBackedOnly
     ? {
         sections: seededSections,
@@ -3004,7 +3095,8 @@ export async function generateBrandonDailyUpdate(
       `Executive briefing source of truth: recap_kind=executive_briefing. Backend recap_kind=meeting_digest is the legacy meeting digest and must not be treated as the CEO operating brief.`,
       `Executive synthesis model: ${synthesizedResult.modelUsed}. Override with EXECUTIVE_BRIEFING_SYNTHESIS_MODEL only when the CEO brief intentionally needs a different model.`,
       `Financial pulse: ${financialPulse.totalOutstandingAR > 0 ? `$${Math.round(financialPulse.totalOutstandingAR / 1000)}K total outstanding AR, $${Math.round(financialPulse.totalOverdueAR / 1000)}K overdue across ${financialPulse.arByProject.length} projects; ${financialPulse.pendingCOsByProject.length} projects with pending COs ($${Math.round(financialPulse.totalPendingCORevenue / 1000)}K revenue)` : "No financial data available"}.`,
-      "The briefing window covers the last 3 business days in Eastern time (weekends skipped) so a Monday brief still includes the prior Thursday and Friday without dragging in week-old noise.",
+      `Full-transcript enrichment: ${fullTextEnrichedCount} surfaced item(s) were upgraded from the lossy document_metadata auto-summary to the complete embedded transcript text from the vector store (document_chunks in the AI Database) before synthesis.`,
+    "The briefing window covers the last 3 business days in Eastern time (weekends skipped) so a Monday brief still includes the prior Thursday and Friday without dragging in week-old noise.",
       "Financial data from Acumatica ERP (AR invoices, change orders) is treated as authoritative ground truth in the synthesis — these figures cannot be hallucinated.",
       "RAG similarity threshold is 0.35 (raised from 0.25) to reduce low-signal noise.",
       "Low-confidence items are excluded unless they have recent source evidence.",

@@ -205,62 +205,57 @@ export function formatExecutiveBriefingTeamsMessage(
   const financialFromPriorities = needsBrandon.filter(isFinancialItem);
   const financialAll = [...financialFromPriorities, ...financial];
 
-  const totalItems =
-    priorities.length + projectUpdates.length + financialAll.length;
-
-  // Title, then greeting + a short intro on their own paragraph.
-  const lines: string[] = [
+  // Teams' message renderer strips single newlines entirely (text on adjacent
+  // lines gets glued together with no space). The ONLY reliable separator is a
+  // blank line, so we build discrete blocks and join them with "\n\n". Bullet
+  // lists keep their internal single newlines — markdown list parsing handles
+  // those even though standalone newlines are stripped.
+  const blocks: string[] = [
     `**Daily Brief — ${today}**`,
-    "",
     `${greeting} Here's your daily brief — a quick read on what's moved across your projects over the last few business days.`,
-    "",
   ];
 
-  const renderItem = (item: BrandonBriefItem, bulletMax: number) => {
-    lines.push(`**${projectName(item.project)}**`);
-    lines.push(bulletBlock(item, bulletMax));
+  // Teams collapses the blank line between two consecutive bold lines, so a
+  // section header (or a prior item's bold insight line) glues directly onto
+  // the next project name. A non-breaking-space block survives that collapse
+  // and renders as a real blank line, giving every project name white space
+  // above it.
+  const SECTION_SPACER = " ";
+
+  const pushItem = (item: BrandonBriefItem, bulletMax: number) => {
+    blocks.push(SECTION_SPACER);
+    blocks.push(`**${projectName(item.project)}**`);
+    blocks.push(bulletBlock(item, bulletMax));
     const insight = insightLine(item);
-    if (insight) {
-      lines.push("");
-      lines.push(`**${insight}**`);
+    if (insight) blocks.push(`**${insight}**`);
+    for (const source of linkedClaimSources(item)) {
+      blocks.push(`[${source.label}](${source.href})`);
     }
-    const sources = linkedClaimSources(item);
-    for (const source of sources) {
-      lines.push(`[${source.label}](${source.href})`);
-    }
-    lines.push("");
   };
 
   if (priorities.length > 0) {
-    lines.push(`**Needs your attention**`);
-    lines.push("");
-    priorities.forEach((item) => renderItem(item, 4));
+    blocks.push(`**Needs your attention**`);
+    priorities.forEach((item) => pushItem(item, 4));
   }
 
   if (projectUpdates.length > 0) {
-    lines.push(`**Project updates**`);
-    lines.push("");
-    projectUpdates.forEach((item) => renderItem(item, 3));
+    blocks.push(`**Project updates**`);
+    projectUpdates.forEach((item) => pushItem(item, 3));
   }
 
   if (financialAll.length > 0) {
-    lines.push(`**Financial insights**`);
-    lines.push("");
-    financialAll.forEach((item) => renderItem(item, 3));
+    blocks.push(`**Financial insights**`);
+    financialAll.forEach((item) => pushItem(item, 3));
   }
 
   // A short closing that points Brandon at where to start — never promises an
   // action the assistant cannot actually perform.
   const firstItem = priorities[0] ?? projectUpdates[0] ?? financialAll[0];
-  if (firstItem) {
-    lines.push(
-      `If you only have a minute, ${projectName(firstItem.project)} is the one I'd look at first today. The source links above open the full meeting or thread whenever you want the detail.`,
-    );
-  } else {
-    lines.push(
-      "Nothing needs your attention across your projects today. Enjoy the quiet one.",
-    );
-  }
+  blocks.push(
+    firstItem
+      ? `If you only have a minute, ${projectName(firstItem.project)} is the one I'd look at first today. The source links above open the full meeting or thread whenever you want the detail.`
+      : "Nothing needs your attention across your projects today. Enjoy the quiet one.",
+  );
 
-  return lines.join("\n");
+  return blocks.join("\n\n");
 }

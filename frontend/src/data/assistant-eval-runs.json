@@ -1,7 +1,321 @@
 {
-  "generatedAt": "2026-06-09T15:09:11.370Z",
+  "generatedAt": "2026-06-10T02:04:58.476Z",
   "source": "scripts/verify/verify_ai_assistant_eval_suite.mjs",
   "runs": [
+    {
+      "runId": "2026-06-10T02-04-08-340Z-0ba155f3",
+      "generatedAt": "2026-06-10T02:04:58.463Z",
+      "baseUrl": "https://projects.alleatogroup.com",
+      "bundle": null,
+      "filter": "^toolcov-read-(web-search|construction-market)$",
+      "totalCases": 2,
+      "passed": 2,
+      "failed": 0,
+      "warningCount": 2,
+      "slowestCases": [
+        {
+          "id": "toolcov-read-construction-market",
+          "intent": "web_research",
+          "durationMs": 27836,
+          "status": "pass",
+          "warnings": [
+            "expected family 'web' not represented"
+          ]
+        },
+        {
+          "id": "toolcov-read-web-search",
+          "intent": "web_research",
+          "durationMs": 21539,
+          "status": "pass",
+          "warnings": [
+            "expected family 'web' not represented"
+          ]
+        }
+      ],
+      "file": "docs/ai-plan/evals/runs/2026-06-10T02-04-08-340Z-0ba155f3/results.json",
+      "summaryFile": "docs/ai-plan/evals/runs/2026-06-10T02-04-08-340Z-0ba155f3/summary.md",
+      "cases": [
+        {
+          "id": "toolcov-read-web-search",
+          "prompt": "What's the current market price trend for structural steel right now? Check the web.",
+          "intent": "web_research",
+          "status": "pass",
+          "durationMs": 21539,
+          "streamEventCount": 13,
+          "toolNames": [
+            "backendDeepAgentResearch",
+            "deepagents_research_runtime"
+          ],
+          "failures": [],
+          "warnings": [
+            "expected family 'web' not represented"
+          ],
+          "observations": [
+            "tools fired: backendDeepAgentResearch, deepagents_research_runtime",
+            "backend Deep Agents memory candidates: 0"
+          ],
+          "backendDeepAgentMemory": {
+            "candidateCount": 0,
+            "candidates": []
+          },
+          "judge": null,
+          "finalText": "Research plan:\n1. Check a few current public sources for structural steel or closely related steel benchmarks.\n2. Extract the most recent price direction and any stated month-over-month / year-over-year movement.\n3. Synthesize the trend, noting that structural steel pricing can vary by region and product type.\n\nPublic web findings:\n- Trading Economics’ HRC steel page says HRC steel was **1,192.03 USD/T on June 9, 2026**, **up 5.03% over the past month** and **up 35.00% year over year**; it also says the page was last updated June 10, 2026. URL: https://tradingeconomics.com/commodity/hrc-steel\n- Gordian’s April 13, 2026 update says **structural steel cost was $2,519.61/ton in April 2026**, **up 7.50% from Q1 to Q2**, while **down 3.27% year over year**. It also says January 2026 was **$2,343.93/ton**, down 5.38% from the prior quarter. URL: https://www.gordian.com/resources/steel-price-updates\n- Procurement Resource’s 2026 steel trend page says **US steel was $1,572/MT in April 2026** versus **$1,294.82/MT in March 2026**, and describes **global steel prices as mixed and range-bound in Q1 2026**, with cost support from inputs/logistics but weak demand and high inventories capping upside. URL: https://www.procurementresource.com/resource-center/steel-price-trends\n\nCurrent trend summary:\n- **Short version:** structural steel appears to be **firming / rising in the near term**, but **still below some year-ago levels** depending on the benchmark.\n- The clearest recent signal is **upward momentum in Q2 2026**: Gordian reports a **7.5% quarter-over-quarter increase** in structural steel costs.\n- At the same time, the market is **not uniformly in a sustained bull run**: Gordian still shows structural steel **down 3.27% YoY**, and Procurement Resource describes the broader steel market as **mixed and range-bound**, with demand weakness and inventories limiting stronger gains.\n- So the best read is: **near-term prices are trending upward, but the market remains volatile and not decisively broken out to the upside across all regions/products**.\n\nAlleato internal evidence:\n- None used. This was a public-web-only research question.\n\nIf you want, I can also narrow this to **U.S. structural beams**, **rebar**, or **fabricated structural steel** specifically, since those can move differently.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 75000,
+            "durationMs": 21539
+          }
+        },
+        {
+          "id": "toolcov-read-construction-market",
+          "prompt": "What's happening in the US commercial construction market this quarter?",
+          "intent": "web_research",
+          "status": "pass",
+          "durationMs": 27836,
+          "streamEventCount": 15,
+          "toolNames": [
+            "backendDeepAgentResearch",
+            "deepagents_research_runtime"
+          ],
+          "failures": [],
+          "warnings": [
+            "expected family 'web' not represented"
+          ],
+          "observations": [
+            "tools fired: backendDeepAgentResearch, deepagents_research_runtime",
+            "backend Deep Agents memory candidates: 0"
+          ],
+          "backendDeepAgentMemory": {
+            "candidateCount": 0,
+            "candidates": []
+          },
+          "judge": null,
+          "finalText": "## Research plan\n1. Check Alleato internal context for any relevant project/portfolio signal.\n2. Pull current public industry sources on backlog, demand mix, costs, labor, and financing/policy.\n3. Synthesize the quarter’s headline themes, separating internal context from public evidence.\n\n## Alleato internal evidence\n- No project-specific Alleato context was relevant to this question.\n- The only retrieved internal memory was a generic team commitment about Anderson Eye Surgeons budget estimate submission, which does **not** inform the US commercial construction market.\n\n## Public web evidence\n- ABC reported its Construction Backlog Indicator rose to **8.8 months in April 2026**, up **0.2 months from March** and **0.1 months from April 2025**. ABC also said its confidence readings for sales, profit margins, and staffing all increased and stayed above 50, indicating expected growth over the next six months. Source: https://www.abc.org/News-Media/News-Releases/abc-contractor-backlog-and-confidence-rise-again-in-april-buoyed-by-data-centers\n- ABC said the backlog increase was **highly concentrated among larger contractors**, with data center work driving much of the strength. ABC quoted that **42% of contractors with more than $100 million in revenue** are under contract to work on data centers, versus **7% of smaller contractors**. Source: https://www.abc.org/News-Media/News-Releases/abc-contractor-backlog-and-confidence-rise-again-in-april-buoyed-by-data-centers\n- JLL’s 2026 U.S. Construction Perspective says the market is being shaped by **policy volatility, trade-policy uncertainty, immigration enforcement, labor shortages, and cost pressure**, with **deepening divergence by sector and region**. JLL says **data centers, utilities, and infrastructure** remain resilient while other sectors search for footing. Source: https://www.jll.com/en-us/insights/2026-us-construction-perspective\n- JLL also says **trade-policy-related material cost increases** are still expected to materialize through 2026, and labor constraints are structural and likely to persist. Source: https://www.jll.com/en-us/insights/2026-us-construction-perspective\n\n## What’s happening in the US commercial construction market this quarter\n- The market is **not uniformly weak or strong**; it’s becoming more **two-speed**.\n- **Backlog is holding up or improving**, especially for large contractors with exposure to **data centers**.\n- **Demand is concentrated** in a few sectors: data centers are the standout, with **utilities/infrastructure** also resilient.\n- **Traditional commercial segments** are more uneven and face more caution, driven by policy uncertainty and execution risk.\n- **Costs remain pressured** by labor shortages and likely tariff/trade-related increases.\n- The practical takeaway this quarter: firms tied to **AI/data-center, power, and infrastructure** work are seeing better momentum, while firms reliant on more traditional CRE work face a tougher, more selective market.\n\n## Bottom line\nUS commercial construction this quarter looks **stable but highly polarized**: stronger backlog and confidence on the back of data centers and resilient infrastructure work, offset by ongoing labor, cost, and policy headwinds that are squeezing the broader market.\n\nIf you want, I can next turn this into a **1-page market brief** or break it down by **office / industrial / retail / healthcare / data center**.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 75000,
+            "durationMs": 27836
+          }
+        }
+      ]
+    },
+    {
+      "runId": "2026-06-10T01-38-03-487Z-b1195b4c",
+      "generatedAt": "2026-06-10T01:40:23.183Z",
+      "baseUrl": "https://projects.alleatogroup.com",
+      "bundle": null,
+      "filter": "^toolcov-read-(project-details|company-knowledge|ar-aging|web-search)$",
+      "totalCases": 4,
+      "passed": 0,
+      "failed": 4,
+      "warningCount": 5,
+      "slowestCases": [
+        {
+          "id": "toolcov-read-company-knowledge",
+          "intent": "company_knowledge",
+          "durationMs": 55530,
+          "status": "fail",
+          "warnings": [
+            "expected family 'knowledge' not represented",
+            "duration 55530ms exceeded warning budget 30000ms"
+          ]
+        },
+        {
+          "id": "toolcov-read-project-details",
+          "intent": "project_details",
+          "durationMs": 39086,
+          "status": "fail",
+          "warnings": [
+            "duration 39086ms exceeded warning budget 30000ms"
+          ]
+        },
+        {
+          "id": "toolcov-read-ar-aging",
+          "intent": "accounting",
+          "durationMs": 23651,
+          "status": "fail",
+          "warnings": [
+            "expected family 'accounting' not represented"
+          ]
+        },
+        {
+          "id": "toolcov-read-web-search",
+          "intent": "web_research",
+          "durationMs": 18808,
+          "status": "fail",
+          "warnings": [
+            "expected family 'web' not represented"
+          ]
+        }
+      ],
+      "file": "docs/ai-plan/evals/runs/2026-06-10T01-38-03-487Z-b1195b4c/results.json",
+      "summaryFile": "docs/ai-plan/evals/runs/2026-06-10T01-38-03-487Z-b1195b4c/summary.md",
+      "cases": [
+        {
+          "id": "toolcov-read-project-details",
+          "prompt": "Quick facts on Westfield — contract value, current phase, and project address.",
+          "intent": "project_details",
+          "status": "fail",
+          "durationMs": 39086,
+          "streamEventCount": 19,
+          "toolNames": [
+            "backendDeepAgentProjectStatus",
+            "project_lookup",
+            "packet_reader",
+            "teams_reader",
+            "meetings_reader",
+            "emails_reader",
+            "documents_reader",
+            "financials_reader",
+            "schedule_reader",
+            "rfi_reader",
+            "submittal_reader",
+            "deepagents_runtime"
+          ],
+          "failures": [
+            "expected at least one of [getProjectDetails] to fire — none did"
+          ],
+          "warnings": [
+            "duration 39086ms exceeded warning budget 30000ms"
+          ],
+          "observations": [
+            "tools fired: backendDeepAgentProjectStatus, project_lookup, packet_reader, teams_reader, meetings_reader, emails_reader, documents_reader, financials_reader, schedule_reader, rfi_reader, submittal_reader, deepagents_runtime",
+            "backend Deep Agents memory candidates: 0"
+          ],
+          "backendDeepAgentMemory": {
+            "candidateCount": 0,
+            "candidates": []
+          },
+          "judge": null,
+          "finalText": "Bottom line: Westfield Collective is in Current phase, but the structured project record does not have a populated address, and the formal contract value currently shows as $0 in the PM budget summary. Operationally, it looks like closeout/activation is underway, so I would treat the $0 financials as a data gap until someone reconciles the ERP/budget record.\n\nEvidence\n- The project record for Westfield Collective shows phase = Current and job number = 24-115; the address field is blank. Source: PM database `projects` row for id 43.\n- The PM budget summary shows original budget = $0, revised budget = $0, and revised prime contract = $0. Source: `project_budget_summary` / PM database.\n- The project briefing snapshot says the job is in “closeout / activation mode,” with grand opening completed or imminent, but there are still warranty, punch-list, and payment workflow issues. Source: `project_briefing_snapshot` on 2026-06-09.\n- Recent email activity on 2026-06-08 shows active follow-up on roll-up counter doors and a duct sweating issue, which fits a job that is still being closed out, not truly dormant. Sources: `search_emails` results dated 2026-06-08.\n- Structured coverage is thin where it matters: meetings, RFIs, and submittals are marked missing in the provided source coverage, so the cleanest read is incomplete. Source: user-provided source coverage.\n\nWhat this means\nThis is not a clean closeout record yet. The phase is Current, but the contract/budget fields are either not loaded or not reconciled, and the active email trail says there are still live punch/warranty items. If someone uses the current financial summary as a final truth set, they’ll probably tell themselves a false story.\n\nRecommended next steps\n- Brandon/PM: confirm the actual contract value from the prime contract or ERP record before using any owner-facing number.\n- PM team: fill the project address in the structured project record if it’s missing; that’s basic hygiene.\n- Closeout owner: reconcile the open warranty/punch/payment items before calling the job truly done.\n\nUncertainty\n- I could not confirm a real contract dollar value from the structured records; the only formal number returned was $0, which likely reflects missing or unreconciled data.\n- The project address is not populated in the project table, so I cannot give you one without guessing.\n- Because meetings/RFIs/submittals are missing in the provided coverage, this is a partial operator read, not a full closeout audit.\n\nSource coverage note: meetings: missing; rfi: missing; submittal: missing. I did not use unavailable or stale source categories as factual support.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 75000,
+            "durationMs": 39086
+          }
+        },
+        {
+          "id": "toolcov-read-company-knowledge",
+          "prompt": "What is Alleato's mission and what are the current strategic goals for the company?",
+          "intent": "company_knowledge",
+          "status": "fail",
+          "durationMs": 55530,
+          "streamEventCount": 24,
+          "toolNames": [
+            "backendDeepAgentExecutiveBriefing",
+            "executive_briefing_reader",
+            "tasks_reader",
+            "executive_follow_ups_reader",
+            "emails_reader",
+            "teams_reader",
+            "meetings_reader",
+            "documents_reader",
+            "projects_reader",
+            "financials_reader",
+            "schedule_reader",
+            "deepagents_runtime"
+          ],
+          "failures": [
+            "expected at least one of [getCompanyKnowledge] to fire — none did"
+          ],
+          "warnings": [
+            "expected family 'knowledge' not represented",
+            "duration 55530ms exceeded warning budget 30000ms"
+          ],
+          "observations": [
+            "tools fired: backendDeepAgentExecutiveBriefing, executive_briefing_reader, tasks_reader, executive_follow_ups_reader, emails_reader, teams_reader, meetings_reader, documents_reader, projects_reader, financials_reader, schedule_reader, deepagents_runtime",
+            "backend Deep Agents memory candidates: 0"
+          ],
+          "backendDeepAgentMemory": {
+            "candidateCount": 0,
+            "candidates": []
+          },
+          "judge": null,
+          "finalText": "Bottom line: Alleato’s mission is to be a true design-build partner from the ground up — not a paper-pushing GC — and to execute projects with ownership, urgency, and discipline. The current strategic push is growth with control: scale revenue, raise standards, hire enough to carry the workload, and build an ownership culture that can support much bigger numbers.\n\nEvidence\n- Brandon’s stated positioning is that Alleato is a firm that “build[s] rather than merely manage[s] projects,” paired with the brand line “Your Partner from the Ground Up” in company messaging. That is the clearest mission signal in the source set. [Teams DM, 2026-02-04 / 2026-02-16]\n- The company’s strategic horizon from the end-of-year meeting was explicit: reach $1B in revenue by 2032 through employee stock ownership and an ownership culture. [End of the year Meeting/Company event]\n- Near-term growth targets from that same meeting were $150M–$200M in 2026 revenue, even after absorbing a $12M project loss. [End of the year Meeting/Company event]\n- The company also called for hiring 10–20 new staff to handle workload and improve execution capacity. [End of the year Meeting/Company event]\n- The operating emphasis in recent materials keeps pointing to higher standards, internal promotion, accountability, and disciplined execution rather than just chasing volume. [Teams DM, 2026-02-16; Company Quarterly Meeting – April 30th]\n\nWhat this means\nAlleato is not trying to win by being the cheapest or the loudest. The strategy is to build a sharper operating engine: better execution, stronger people, tighter accountability, and enough capacity to scale without turning into chaos. The mission and the goals line up — they both say the company’s edge should be ownership, not just coordination.\n\nRecommended next steps\n- Use “build, not manage” and “partner from the ground up” as the default language in client-facing positioning.\n- Keep the operating focus on capacity, standards, and accountability; that’s what supports the revenue targets without breaking the machine.\n- If you want, I can turn this into a 1-paragraph internal company positioning statement or a tighter executive slide version.\n\nUncertainty\n- I did not find a fresh 2026 strategy memo that supersedes the end-of-year meeting language, so the revenue and hiring targets above are the best confirmed company-level goals in the source set.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 75000,
+            "durationMs": 55530
+          }
+        },
+        {
+          "id": "toolcov-read-ar-aging",
+          "prompt": "Pull our current AR aging from Acumatica — who owes us and how overdue are they?",
+          "intent": "accounting",
+          "status": "fail",
+          "durationMs": 23651,
+          "streamEventCount": 14,
+          "toolNames": [
+            "backendDeepAgentExecutiveBriefing",
+            "executive_briefing_reader",
+            "tasks_reader",
+            "executive_follow_ups_reader",
+            "emails_reader",
+            "teams_reader",
+            "meetings_reader",
+            "documents_reader",
+            "projects_reader",
+            "financials_reader",
+            "schedule_reader",
+            "deepagents_runtime"
+          ],
+          "failures": [
+            "expected at least one of [getARAgingReport] to fire — none did"
+          ],
+          "warnings": [
+            "expected family 'accounting' not represented"
+          ],
+          "observations": [
+            "tools fired: backendDeepAgentExecutiveBriefing, executive_briefing_reader, tasks_reader, executive_follow_ups_reader, emails_reader, teams_reader, meetings_reader, documents_reader, projects_reader, financials_reader, schedule_reader, deepagents_runtime",
+            "backend Deep Agents memory candidates: 0"
+          ],
+          "backendDeepAgentMemory": {
+            "candidateCount": 0,
+            "candidates": []
+          },
+          "judge": null,
+          "finalText": "Direct answer\n\nAlleato is carrying $4,492,409.11 in outstanding AR as of 2026-06-10. Of that, $1,955,559.41 is current and $2,536,849.70 is past due, with $858,138.61 sitting 61+ days overdue.\n\nEvidence\n\n- Acumatica AR aging as of 2026-06-10 shows total outstanding AR of $4,492,409.11.\n- Current bucket: $1,955,559.41 across 14 invoices.\n- 1-30 days past due: $1,371,846.53 across 8 invoices.\n- 31-60 days past due: $306,864.56 across 3 invoices.\n- 61-90 days past due: $614,548.66 across 4 invoices.\n- 90+ days past due: $243,589.95 across 6 invoices.\n\nWhat this means\n\nThe headline is not just the total — it’s the aging mix. More than half of the receivable balance is already past due, and the 61+ bucket is large enough to warrant active collection pressure, not passive waiting. This is a cash-flow issue, not just an accounting report.\n\nRecommended next steps\n\n- Finance: pull the customer-level aging detail today and rank the top overdue accounts by dollar value and days past due.\n- PMs / BD: identify any disputed invoices tied to owner pay apps, change orders, or closeout items before collections starts getting blamed for scope friction.\n- Brandon: focus the team on the 61+ day balances first; that’s where cash recovery risk is highest.\n\nUncertainty\n\n- This is the Acumatica aging summary only. It does not break down who owes what by customer. If you want, I can pull the customer-level AR aging next and name the slow payers.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 75000,
+            "durationMs": 23651
+          }
+        },
+        {
+          "id": "toolcov-read-web-search",
+          "prompt": "What's the current market price trend for structural steel right now? Check the web.",
+          "intent": "web_research",
+          "status": "fail",
+          "durationMs": 18808,
+          "streamEventCount": 13,
+          "toolNames": [
+            "backendDeepAgentResearch",
+            "deepagents_research_runtime"
+          ],
+          "failures": [
+            "expected at least one of [searchWeb] to fire — none did"
+          ],
+          "warnings": [
+            "expected family 'web' not represented"
+          ],
+          "observations": [
+            "tools fired: backendDeepAgentResearch, deepagents_research_runtime",
+            "backend Deep Agents memory candidates: 0"
+          ],
+          "backendDeepAgentMemory": {
+            "candidateCount": 0,
+            "candidates": []
+          },
+          "judge": null,
+          "finalText": "Concise research plan:\n1. Check whether Alleato internal context matters.\n2. Pull current public sources on structural steel pricing.\n3. Compare the latest signals and summarize the trend with citations.\n\nAlleato internal evidence:\n- I checked durable user memory and found unrelated project commitments; nothing relevant to structural steel pricing.\n- `think_tool` confirmed internal/project context was not needed for this question.\n\nPublic web findings:\n- Gordian/RSMeans says U.S. structural steel costs were **$2,519.61/ton in April 2026**, **up 7.50% quarter-over-quarter**, but **down 3.27% year-over-year**. It also says January 2026 was **$2,343.93/ton**, down 5.38% from the prior quarter and down 7.18% year over year. URL: https://www.gordian.com/resources/steel-price-updates\n- Trading Economics shows steel futures around **3,140 CNY/ton on June 9, 2026**, **down 3.00% over the past month** but **up 6.33% year over year**. It also notes the market is near six-week lows, with weak domestic demand in China. URL: https://tradingeconomics.com/commodity/steel\n- MEPS/Dodge commentary surfaced in search results suggests **upward pressure on U.S. construction steel prices** from tariffs and supply constraints, with construction demand possibly supporting prices in 2026. Search result URL: https://www.youtube.com/watch?v=JfJB0-kGWrk\n\nAnswer:\n**Structural steel prices are currently mixed, but the clearest near-term signal is a rebound after a prior decline.**  \nFor U.S. structural steel specifically, Gordian’s latest April 2026 update shows prices **jumped 7.5% quarter-over-quarter** after two down quarters, even though they remain **slightly below last year’s level**. That points to a **short-term upward move within a still-soft year-over-year trend**. https://www.gordian.com/resources/steel-price-updates\n\nFor broader steel markets, Trading Economics shows **near-term weakness in China** (down 3% over the month) but still **higher than a year ago**, which reinforces the idea that the market is **volatile rather than in a clean one-way trend**. https://tradingeconomics.com/commodity/steel\n\nBottom line: **right now, structural steel looks modestly up in the latest quarter, but not in a sustained long-term bull trend yet.** Prices appear to have **bottomed earlier in 2026 and rebounded**, with tariff/supply factors potentially keeping pressure upward in the near term.",
+          "latencyBudget": {
+            "warnDurationMs": 30000,
+            "maxDurationMs": 75000,
+            "durationMs": 18808
+          }
+        }
+      ]
+    },
     {
       "runId": "2026-06-09T15-07-42-031Z-25b84ec6",
       "generatedAt": "2026-06-09T15:09:11.353Z",
@@ -4971,512 +5285,6 @@
             "warnDurationMs": 30000,
             "maxDurationMs": 75000,
             "durationMs": 49921
-          }
-        }
-      ]
-    },
-    {
-      "runId": "2026-06-09T09-32-00-033Z-b73c8876",
-      "generatedAt": "2026-06-09T09:35:57.648Z",
-      "baseUrl": "https://alleato-ih4s3lmtz-meganharrisons-projects.vercel.app",
-      "bundle": "source-sync-teams-regression",
-      "filter": "(source-lookup-teams|source-freshness-rag-health|realworld-teams-source-freshness|realworld-teams-this-week-signal)$",
-      "totalCases": 4,
-      "passed": 0,
-      "failed": 4,
-      "warningCount": 8,
-      "slowestCases": [
-        {
-          "id": "realworld-teams-this-week-signal",
-          "intent": "source_lookup",
-          "durationMs": 103719,
-          "status": "fail",
-          "warnings": [
-            "duration 103719ms exceeded warning budget 30000ms"
-          ]
-        },
-        {
-          "id": "source-lookup-teams",
-          "intent": "source_lookup",
-          "durationMs": 67399,
-          "status": "fail",
-          "warnings": [
-            "global forbidden phrase: \"retrieval\"",
-            "duration 67399ms exceeded warning budget 30000ms"
-          ]
-        },
-        {
-          "id": "source-freshness-rag-health",
-          "intent": "source_health",
-          "durationMs": 48086,
-          "status": "fail",
-          "warnings": [
-            "expected family 'source_health' not represented",
-            "global forbidden phrase: \"retrieval\"",
-            "duration 48086ms exceeded warning budget 30000ms"
-          ]
-        },
-        {
-          "id": "realworld-teams-source-freshness",
-          "intent": "source_health",
-          "durationMs": 17263,
-          "status": "fail",
-          "warnings": [
-            "expected family 'source_health' not represented",
-            "global forbidden phrase: \"retrieval\""
-          ]
-        }
-      ],
-      "file": "docs/ai-plan/evals/runs/2026-06-09T09-32-00-033Z-b73c8876/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-09T09-32-00-033Z-b73c8876/summary.md",
-      "cases": [
-        {
-          "id": "source-lookup-teams",
-          "prompt": "Look through Teams for Westfield punch-list chatter. What is the latest real signal?",
-          "intent": "source_lookup",
-          "status": "fail",
-          "durationMs": 67399,
-          "streamEventCount": 759,
-          "toolNames": [
-            "clientProjectIntelligencePacket",
-            "getProjectBriefingSnapshot",
-            "semanticSearch",
-            "searchDocuments",
-            "searchMeetingsByTopic",
-            "loadIntelligencePacket"
-          ],
-          "failures": [
-            "duration 67399ms exceeded max budget 60000ms"
-          ],
-          "warnings": [
-            "global forbidden phrase: \"retrieval\"",
-            "duration 67399ms exceeded warning budget 30000ms"
-          ],
-          "observations": [
-            "tools fired: clientProjectIntelligencePacket, getProjectBriefingSnapshot, semanticSearch, searchDocuments, searchMeetingsByTopic, loadIntelligencePacket"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": null,
-          "finalText": "Latest real signal is still **lighting and small closeout defects, not a broad punch-list collapse**.\n\nWhat I found:\n- The strongest late-stage signal is from the **4/14/2026 OAC for Westfield Collective**: the team confirmed **all sconce lights were defective since December** and planned a **formal vendor claim for replacements**. They also discussed using **WAC track lights** at the ice cream bar as a workaround. [Source: OAC – Westfield Collective, 2026-04-14]\n- Another later indexed Westfield OAC summary shows **grading/landscaping nearing completion**, **lighting and patio/electrical coordination still active**, and **drainage/water intrusion responsibility still under review** with closeout documentation targeted for the following week. The retrieved chunk is dated in the index on **2026-04-28**, but the underlying meeting date was not exposed in the snippet, so I’d treat that as supporting evidence, not a precise meeting date. [Source: OAC – Westfield Collective, indexed 2026-04-28]\n- A separate Westfield email result titled **“Items to be fixed”** was indexed on **2026-05-06**, which suggests the fix-list was still live into May, but the returned snippet here didn’t expose the actual item list. [Source: Email: Re: Westfield Collective: Items to be fixed, indexed 2026-05-06]\n\nWhat that means:\n- The latest credible signal is **not new major field scope**. It’s **closeout cleanup with a few stubborn defects**:\n  - defective sconce lights\n  - some lighting performance issues\n  - exterior/site finishing\n  - drainage/water intrusion ownership\n- That lines up with the packet too: **shutters, lighting defects, and site finishing items** were the recurring late-stage holdouts. But the packet is stale, so I’m not treating that as “latest” by itself.\n\nWhat I did not get:\n- I did **not** get a clean fresh Teams-only hit that says, for example, “punch list is done” or “here are the last 3 open items.”\n- The packet has Teams coverage, and semantic retrieval surfaced at least one Teams DM, but **direct fresh Teams lookup for specific punch-list chatter did not return a strong exact-match thread** in this pass.\n\nBottom line:\n- **Latest real signal:** Westfield is in closeout, with **lighting defects still the clearest unresolved punch-list issue**, plus some **site/drainage cleanup items** still hanging around.\n- **Not seeing evidence here of a newly emerging major problem** — just the usual last-mile stuff that can still drag out final signoff and retainage.\n\nIf you want, I can take one more pass and go narrower:\n1. **Teams only**\n2. **last 30–45 days**\n3. keywords: **shutters, lights, drainage, items to be fixed, punch list, closeout**  \nThat should get us closer to the actual last message-level signal instead of summary-level evidence.",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 60000,
-            "durationMs": 67399
-          }
-        },
-        {
-          "id": "realworld-teams-this-week-signal",
-          "prompt": "Using Teams messages from this past week, what are people actually worried about?",
-          "intent": "source_lookup",
-          "status": "fail",
-          "durationMs": 103719,
-          "streamEventCount": 1743,
-          "toolNames": [
-            "sourceSpecificRagRetrieval",
-            "searchAppHelp",
-            "searchMeetingsByTopic",
-            "semanticSearch",
-            "getMeetingIntelligence",
-            "searchDocuments"
-          ],
-          "failures": [
-            "duration 103719ms exceeded max budget 60000ms"
-          ],
-          "warnings": [
-            "duration 103719ms exceeded warning budget 30000ms"
-          ],
-          "observations": [
-            "tools fired: sourceSpecificRagRetrieval, searchAppHelp, searchMeetingsByTopic, semanticSearch, getMeetingIntelligence, searchDocuments"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": null,
-          "finalText": "What people are actually worried about this past week is pretty clear: **execution drag**. Not abstract risk — specific things that can stall work, delay approvals, or create payment/accountability problems.\n\n## What’s showing up in Teams and adjacent weekly signals\n\n### 1. Drawings and design completeness are still a pressure point\nThis came through directly in live Teams snippets and in meeting follow-through.\n\n- A June 8 Teams thread with Tony Courtney / Brandon references **“the current drawing…”** and **“we got the number…”** — that reads like active confusion or urgency around drawing/version control, not a settled issue. [Source: live-teams:bclymer@alleatogroup.com:1780938933147, live-teams:bclymer@alleatogroup.com:1780938581258]\n- Nick Jepson’s June 8 Teams message references **“This is a surveyor…”**, which usually means site/layout dependencies are still moving through people instead of being fully locked. [Source: live-teams:njepson@alleatogroup.com:1780930504878]\n- On Vermillion’s June 4 design call, the team was still pushing toward a **Monday final drawing submission** with action items to verify CAD completeness and get structural drawings out. That’s not crisis, but it is deadline pressure. [Source: Meeting Intelligence — Vermillion design weekly call, 2026-06-04]\n- Exol PA/Wilmer had the same pattern on June 8: **stamped drawings needed same day**, permit submission sequencing had to be managed carefully to avoid resetting the city review clock. [Source: Meeting Intelligence — Weekly design coordination Exol PA, 2026-06-08]\n\n**What it means:** people are worried that incomplete or late drawing packages will cause downstream delay — permits, landlord review, field sequencing, all of it.\n\n---\n\n### 2. Permitting / external approvals are a real source of anxiety\nThis is one of the clearest themes.\n\n- Exol PA/Wilmer: the team explicitly flagged **permit submission delay risk** and was trying not to restart the city review clock. [Source: Meeting Intelligence — Weekly design coordination Exol PA, 2026-06-08]\n- Goodwill Kokomo: all materials are due by **Friday for BZA submittal**, and there’s a live issue around **power line setback clearance** with Duke Energy. [Source: Meeting Intelligence — Goodwill Kokomo Weekly Design Meeting, 2026-06-08]\n- Vermillion: Monday submission timing mattered because of **state approval timelines**. [Source: Meeting Intelligence — Vermillion design weekly call, 2026-06-04]\n\n**What it means:** the team is worried less about internal planning and more about losing time to outside reviewers, utilities, and agencies. That’s the kind of delay nobody can easily make up later.\n\n---\n\n### 3. Procurement and sequencing risk is still sitting underneath operations\nThis is showing up as “if this slips, everything behind it slips.”\n\n- GW Allisonville: **steel targeted for July 1** is a critical deadline for subsequent structural work. [Source: Meeting Intelligence — Weekly Schedule Review Goodwill Allisonville Road Teams Meeting, 2026-06-08]\n- Uniqlo/GPC on June 5: **hydro testing had to finish that day** to avoid racking delays. [Source: Meeting Intelligence — Uniqlo & GPC Huddle, 2026-06-05]\n- Uniqlo/GPC also showed worry about **crew reductions and manpower accountability**, which is the early warning sign for missed field commitments. [Source: Meeting Intelligence — Uniqlo & GPC Huddle, 2026-06-05]\n- Maria Calcetero’s June 8 Teams note to Mike Parsons starts **“Hi Mike…”** and Alec Wehner’s messages include **“Please take a look at…”** and **“Good morning Misty…”** — that wording by itself isn’t enough to quote a conclusion, but in context it supports the same pattern: active issue-routing, not quiet execution. [Sources: live-teams:mparsons@alleatogroup.com:1780947317628, live-teams:awehner@alleatogroup.com:1780943685592, live-teams:awehner@alleatogroup.com:1780926823900]\n\n**What it means:** people are worried about near-term handoff points — steel, inspections, hydro tests, manpower, and coordination between trades.\n\n---\n\n### 4. Accounting is worried about billing discipline and getting subs paid\nThis is blunt in the Teams data.\n\nFrom the Accounting Team conversation:\n- Jesse Dawson: **“please get the past due invoices for Exol Wilmer paid this week”**\n- He also notes **“we have not received payment yet but need to get the subs paid up.”**\n- Brandon adds: **“Get Andrew to do that billing for Vargo today.”**  \n[Source: semanticSearch result from Teams DM Conversation: Accounting Team, 2026-06-01]\n\nThat’s not bookkeeping chatter. That’s cash timing pressure.\n\n**What it means:** the accounting side is worried about a familiar failure mode — owner cash not in yet, but subs still need to be paid, and billing follow-through is lagging.\n\n---\n\n### 5. Internal tools are creating friction when people need to move fast\nSmaller issue, but still real.\n\n- Bluebeam access/licensing was blocking Bob’s use until support and admin rights got sorted out. [Source: Meeting Intelligence — Bluebeam set up, 2026-06-04; Bluebeam Technical support, 2026-06-05]\n\n**What it means:** not a portfolio-level threat by itself, but it’s another example of operational drag. When teams are already tight on drawings and submissions, tool friction matters.\n\n---\n\n## The actual pattern underneath all of this\n\nThe biggest concern isn’t one project. It’s this:\n\n**People are worried that small unresolved dependencies are stacking up faster than they’re being closed.**\n\nThat includes:\n- drawing/version clarity\n- permit/BZA/state submissions\n- survey/layout inputs\n- steel/hydro test/manpower sequencing\n- billing and invoice follow-through\n\nThat’s the pattern. And it matches what’s been coming up in prior conversations: **the company’s weak spot is still follow-through on open items before they become cost or schedule problems.**\n\n## Where I’d focus leadership attention right now\n\n1. **Design/approval choke points**\n   - Vermillion\n   - Exol PA/Wilmer\n   - GW Kokomo\n\n2. **Field sequencing / procurement choke points**\n   - GW Allisonville steel\n   - Uniqlo/GPC hydro testing and manpower\n\n3. **Cash/billing discipline**\n   - Exol Wilmer invoices\n   - Vargo billing follow-up\n   - any project where subs need payment before owner cash is in\n\n## Bottom line\n\nIf you want the shortest honest answer:\n\n**This week, people are mostly worried about delays caused by incomplete drawings, permit/submission timing, procurement/manpower sequencing, and billing lag.**  \nNot theoretical worries — the messages and meetings show people chasing those issues in real time.\n\nIf you want, I can turn this into a tighter **ranked worry list by project** using only Teams + meetings from June 2–9.",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 60000,
-            "durationMs": 103719
-          }
-        },
-        {
-          "id": "source-freshness-rag-health",
-          "prompt": "Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.",
-          "intent": "source_health",
-          "status": "fail",
-          "durationMs": 48086,
-          "streamEventCount": 1316,
-          "toolNames": [
-            "semanticSearch",
-            "getOutlookOperationsStatus",
-            "getMeetingIntelligence",
-            "searchDocuments"
-          ],
-          "failures": [
-            "expected required tool 'assistantSourceHealth' to fire",
-            "required metadata missing: source_health"
-          ],
-          "warnings": [
-            "expected family 'source_health' not represented",
-            "global forbidden phrase: \"retrieval\"",
-            "duration 48086ms exceeded warning budget 30000ms"
-          ],
-          "observations": [
-            "tools fired: semanticSearch, getOutlookOperationsStatus, getMeetingIntelligence, searchDocuments"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": null,
-          "finalText": "Short answer: **Teams and meetings look current enough to use. Outlook does not. “Packets” are the weakest area unless you mean meeting/intelligence snapshots, not a formal packet system.**\n\nWhat matters most: **the AI readout is reliable for recent Teams and meeting-derived signals, but not for live Outlook inbox coverage right now.** There are also some content-pipeline gaps that mean you should treat “no update found” differently depending on the source.\n\n## What looks current enough\n\n- **Teams sync is active and recent.** Multiple Teams sources synced this morning on **2026-06-09**, including Brandon’s DM export at **08:40 UTC** and several channel/message sources around **09:10 UTC**. That’s current enough for operational readouts. [Source: `getOutlookOperationsStatus`, 2026-06-09]\n- **Meeting intelligence is current through the last 7 days.** The system returned **10 meetings** from **2026-06-03 to 2026-06-09**, with structured risks, decisions, and action items. That means the meetings pipeline is alive and producing usable summaries. [Source: `getMeetingIntelligence`, 2026-06-09]\n- **SharePoint/OneDrive file sync has at least some current sources.** SharePoint SOP and Andrew Cannon OneDrive job folders synced around **02:30 UTC on 2026-06-09**. [Source: `getOutlookOperationsStatus`, 2026-06-09]\n\n## What is stale or broken\n\n- **Outlook live monitoring is not current.** The only Graph subscription shown is for **mharrison@alleatogroup.com**, and it is **inactive** with status **renewal_due**, expired **2026-05-15**, with error **“reauthorizationRequired.”** That means **live Outlook webhook coverage is broken**. [Source: `getOutlookOperationsStatus`, 2026-06-09]\n- **There is no evidence here of Brandon’s mailbox being live-monitored.** The subscription listed is Megan Harrison’s mailbox, not Brandon’s. So if the readout is claiming live Outlook freshness for Brandon, that is not supported by this status output. [Source: `getOutlookOperationsStatus`, 2026-06-09]\n- **At least one Outlook sync path has a data integrity problem.** For **acannon@alleatogroup.com**, the sync status is **mismatch**: sync returned **30 emails**, but only **9 durable document rows** increased. That means some Outlook ingestion is completing imperfectly even when it runs. [Source: `getOutlookOperationsStatus`, 2026-06-09]\n- **OneDrive coverage is uneven.** One source — **cgillespie@alleatogroup.com:/Alleato Group/2026 Jobs** — last synced on **2026-05-20**, which is stale compared with the rest. [Source: `getOutlookOperationsStatus`, 2026-06-09]\n\n## What is missing or structurally thin\n\n- **Opportunity/packet-style tracking is incomplete in meeting intelligence.** The meeting pipeline explicitly says: **“Opportunity tracking is not available in the current intelligence pipeline; only risks, decisions, and actions are surfaced.”** So if you expect a full executive packet with opportunities, momentum, blockers, owners, and commercial implications all in one place, the current meeting intelligence does not fully cover that. [Source: `getMeetingIntelligence`, 2026-06-09]\n- **There does not appear to be a distinct, searchable formal “packet” corpus from this check.** A document search for packet-related records returned **no matching documents**. That doesn’t prove packets don’t exist, but it does mean I don’t have evidence from this retrieval that there is a maintained packet repository being kept current. [Source: `searchDocuments`, 2026-06-09]\n- **There is a known reliability gap around recent Teams retrieval.** A stored team memory says there is **“a significant gap in the ability to retrieve recent Teams messages reliably”** and that a dedicated retrieval tool is needed. Current sync status looks healthy, but that note means retrieval quality has been a known issue even when sync is running. [Source: `semanticSearch` result from ai_memory, created 2026-05-19]\n\n## Practical trust level by source\n\n- **Meetings:** trust for recent project signal, decisions, and action items\n- **Teams:** generally trust for recent synced conversations, but be careful with “nothing found” conclusions\n- **Outlook:** **do not treat as live/current right now**\n- **Packets/briefing docs:** trust only if generated from fresh meetings/Teams/financial tools at query time, not as a standalone source of truth\n\n## What I’d treat as the real risk\n\nThe biggest issue is this: **the system can still sound current while Outlook is stale.** If a readout blends meetings, Teams, and “email context” without saying the Outlook monitor is degraded, that can create false confidence.\n\n## Recommendation\n\nUse the AI readout, but with this rule set:\n\n1. **Trust meeting and Teams-based project updates from the last 7 days**\n2. **Do not trust any claim that depends on live Outlook coverage until Graph is reauthorized**\n3. **If a briefing says “no recent email activity,” treat that as unverified**\n4. **If you want a high-confidence project update, build it from meetings + Teams + structured project/financial tools first, then add Outlook only if the mailbox status is healthy**\n\nIf you want, I can do the next useful step: **run a source-health audit specifically for Brandon’s operating view** and tell you, source by source, what your daily brief can safely rely on right now.",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 60000,
-            "durationMs": 48086
-          }
-        },
-        {
-          "id": "realworld-teams-source-freshness",
-          "prompt": "Are Teams messages current enough to trust today, or is source sync stale?",
-          "intent": "source_health",
-          "status": "fail",
-          "durationMs": 17263,
-          "streamEventCount": 241,
-          "toolNames": [
-            "semanticSearch"
-          ],
-          "failures": [
-            "expected required tool 'assistantSourceHealth' to fire",
-            "mustIncludeAny missing one of: \"stale\", \"fresh\", \"current\", \"sync\", \"source health\", \"unembedded\"",
-            "required metadata missing: source_health"
-          ],
-          "warnings": [
-            "expected family 'source_health' not represented",
-            "global forbidden phrase: \"retrieval\""
-          ],
-          "observations": [
-            "tools fired: semanticSearch"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": null,
-          "finalText": "Recent Teams retrieval is not reliable enough to trust as a complete source today.\n\nWhat I can confirm:\n- There’s a known retrieval gap for recent Teams messages: “There is a significant gap in the ability to retrieve recent Teams messages reliably; a dedicated recent message retrieval tool is needed” [ai_memory, 2026-05-19].\n- We do have evidence that Teams service itself was restored and messaging was functioning reliably after a browser issue, with redundant monitoring in place [Teams DM summary, 2026-04-30, referring to 2026-02-15 update].\n\nWhat that means:\n- **Platform uptime may be fine**\n- **Assistant-side retrieval of recent Teams messages is still not trustworthy as a complete source**\n\nSo the answer is: **treat Teams as potentially incomplete for “today” signal**. Good for partial context, not good enough to assume you’re seeing everything. [ai_memory, 2026-05-19; Teams DM summary, 2026-04-30]\n\nIf you want, I can still search Teams plus email and meetings together and tell you what’s confirmed versus what may be missing.",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 60000,
-            "durationMs": 17263
-          }
-        }
-      ]
-    },
-    {
-      "runId": "2026-06-09T09-31-59-982Z-9d8ad6cd",
-      "generatedAt": "2026-06-09T09:34:26.627Z",
-      "baseUrl": "https://alleato-ih4s3lmtz-meganharrisons-projects.vercel.app",
-      "bundle": "task-action-items-regression",
-      "filter": "(tasks-list-of-action-items-canonical|tasks-what-do-i-need-to-do-today|tasks-open-loops-all|tasks-whats-on-my-list|realworld-most-important-tasks|realworld-waiting-on-team)$",
-      "totalCases": 6,
-      "passed": 6,
-      "failed": 0,
-      "warningCount": 2,
-      "slowestCases": [
-        {
-          "id": "realworld-waiting-on-team",
-          "intent": "task_management",
-          "durationMs": 68081,
-          "status": "pass",
-          "warnings": [
-            "duration 68081ms exceeded warning budget 30000ms"
-          ]
-        },
-        {
-          "id": "realworld-most-important-tasks",
-          "intent": "task_management",
-          "durationMs": 64240,
-          "status": "pass",
-          "warnings": [
-            "duration 64240ms exceeded warning budget 30000ms"
-          ]
-        },
-        {
-          "id": "tasks-list-of-action-items-canonical",
-          "intent": "task_management",
-          "durationMs": 4346,
-          "status": "pass",
-          "warnings": []
-        },
-        {
-          "id": "tasks-what-do-i-need-to-do-today",
-          "intent": "task_management",
-          "durationMs": 350,
-          "status": "pass",
-          "warnings": []
-        },
-        {
-          "id": "tasks-whats-on-my-list",
-          "intent": "task_management",
-          "durationMs": 303,
-          "status": "pass",
-          "warnings": []
-        },
-        {
-          "id": "tasks-open-loops-all",
-          "intent": "task_management",
-          "durationMs": 258,
-          "status": "pass",
-          "warnings": []
-        }
-      ],
-      "file": "docs/ai-plan/evals/runs/2026-06-09T09-31-59-982Z-9d8ad6cd/results.json",
-      "summaryFile": "docs/ai-plan/evals/runs/2026-06-09T09-31-59-982Z-9d8ad6cd/summary.md",
-      "cases": [
-        {
-          "id": "tasks-list-of-action-items-canonical",
-          "prompt": "What's on my list of action items?",
-          "intent": "task_management",
-          "status": "pass",
-          "durationMs": 4346,
-          "streamEventCount": 7,
-          "toolNames": [
-            "getPersonalTaskRegister",
-            "getMyTasks"
-          ],
-          "failures": [],
-          "warnings": [],
-          "observations": [
-            "tools fired: getPersonalTaskRegister, getMyTasks"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": null,
-          "finalText": "I checked the Tasks page source of truth: `public.tasks` filtered to Brandon Clymer's open task owner identity.\n\nFound 27 open Brandon tasks in the Tasks table.\n- **Send updated calculations** | Project: Uniqlo Phillipsburg NJ | Due: May 6, 2026 | Source: Email: RE: Exotec In-Rack Sprinkler CO-01\n- **Complete Best Buy survey** | Due: May 12, 2026 | Source: Email: Tell us about your recent computer purchase for a chance to win a $250 Best Buy® Gift Card*\n- **Lock Uniqlo scope ownership in May 13 meeting** | Project: GW Allisonville Rd IN | Due: May 13, 2026 | Source: Teams DM Conversation: 19:c4beb912-\n- **Review quarantined message** | Due: May 19, 2026 | Source: Email: Microsoft 365 security: You have messages in quarantine\n- **Review Walter's Powerflex relocation delay email** | Project: Ulta Beauty Fresno | Due: May 22, 2026 | Source: Ulta Beauty Fresno Weekly Meeting\n- **Share completed phase one pricing** | Project: Exol Morrisville | Due: May 22, 2026 | Source: Exol - Morrisville PA - Weekly Status Call - Exol/Alleato\n- **Remove AJ from Marketing email group** | Source: Teams DM Conversation: 19:c4beb912-\n- **Escalate Westfield Collective overdue invoices** | Project: GW Allisonville Rd IN | Source: Teams DM Conversation: 19:c4beb912-\n- **Approve QuickBooks cutover controls and accountant offer** | Project: GW Allisonville Rd IN | Source: Teams DM Conversation: 19:c4beb912-\n- **Send ESI demo plan** | Source: Email: RE: Eye Surgeons of Indiana - Anderson Location Space Plan\n- **List estimated freight on quote** | Project: Uniqlo Phillipsburg NJ | Source: Email: Re: Nexcom G2P Exotec Sprinklers\n- **Confirm payment status** | Source: Email: Payment\n\nThis answer is a direct task-table lookup, not an executive briefing synthesis.",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 75000,
-            "durationMs": 4346
-          }
-        },
-        {
-          "id": "tasks-what-do-i-need-to-do-today",
-          "prompt": "What do I need to do today?",
-          "intent": "task_management",
-          "status": "pass",
-          "durationMs": 350,
-          "streamEventCount": 7,
-          "toolNames": [
-            "getPersonalTaskRegister",
-            "getMyTasks"
-          ],
-          "failures": [],
-          "warnings": [],
-          "observations": [
-            "tools fired: getPersonalTaskRegister, getMyTasks"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": null,
-          "finalText": "I checked the Tasks page source of truth: `public.tasks` filtered to Brandon Clymer's open task owner identity.\n\nFound 27 open Brandon tasks in the Tasks table.\n- **Send updated calculations** | Project: Uniqlo Phillipsburg NJ | Due: May 6, 2026 | Source: Email: RE: Exotec In-Rack Sprinkler CO-01\n- **Complete Best Buy survey** | Due: May 12, 2026 | Source: Email: Tell us about your recent computer purchase for a chance to win a $250 Best Buy® Gift Card*\n- **Lock Uniqlo scope ownership in May 13 meeting** | Project: GW Allisonville Rd IN | Due: May 13, 2026 | Source: Teams DM Conversation: 19:c4beb912-\n- **Review quarantined message** | Due: May 19, 2026 | Source: Email: Microsoft 365 security: You have messages in quarantine\n- **Review Walter's Powerflex relocation delay email** | Project: Ulta Beauty Fresno | Due: May 22, 2026 | Source: Ulta Beauty Fresno Weekly Meeting\n- **Share completed phase one pricing** | Project: Exol Morrisville | Due: May 22, 2026 | Source: Exol - Morrisville PA - Weekly Status Call - Exol/Alleato\n- **Remove AJ from Marketing email group** | Source: Teams DM Conversation: 19:c4beb912-\n- **Escalate Westfield Collective overdue invoices** | Project: GW Allisonville Rd IN | Source: Teams DM Conversation: 19:c4beb912-\n- **Approve QuickBooks cutover controls and accountant offer** | Project: GW Allisonville Rd IN | Source: Teams DM Conversation: 19:c4beb912-\n- **Send ESI demo plan** | Source: Email: RE: Eye Surgeons of Indiana - Anderson Location Space Plan\n- **List estimated freight on quote** | Project: Uniqlo Phillipsburg NJ | Source: Email: Re: Nexcom G2P Exotec Sprinklers\n- **Confirm payment status** | Source: Email: Payment\n\nThis answer is a direct task-table lookup, not an executive briefing synthesis.",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 75000,
-            "durationMs": 350
-          }
-        },
-        {
-          "id": "tasks-open-loops-all",
-          "prompt": "Any open loops I should know about?",
-          "intent": "task_management",
-          "status": "pass",
-          "durationMs": 258,
-          "streamEventCount": 7,
-          "toolNames": [
-            "getPersonalTaskRegister",
-            "getMyTasks"
-          ],
-          "failures": [],
-          "warnings": [],
-          "observations": [
-            "tools fired: getPersonalTaskRegister, getMyTasks"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": null,
-          "finalText": "I checked the Tasks page source of truth: `public.tasks` filtered to Brandon Clymer's open task owner identity.\n\nFound 27 open Brandon tasks in the Tasks table.\n- **Send updated calculations** | Project: Uniqlo Phillipsburg NJ | Due: May 6, 2026 | Source: Email: RE: Exotec In-Rack Sprinkler CO-01\n- **Complete Best Buy survey** | Due: May 12, 2026 | Source: Email: Tell us about your recent computer purchase for a chance to win a $250 Best Buy® Gift Card*\n- **Lock Uniqlo scope ownership in May 13 meeting** | Project: GW Allisonville Rd IN | Due: May 13, 2026 | Source: Teams DM Conversation: 19:c4beb912-\n- **Review quarantined message** | Due: May 19, 2026 | Source: Email: Microsoft 365 security: You have messages in quarantine\n- **Review Walter's Powerflex relocation delay email** | Project: Ulta Beauty Fresno | Due: May 22, 2026 | Source: Ulta Beauty Fresno Weekly Meeting\n- **Share completed phase one pricing** | Project: Exol Morrisville | Due: May 22, 2026 | Source: Exol - Morrisville PA - Weekly Status Call - Exol/Alleato\n- **Remove AJ from Marketing email group** | Source: Teams DM Conversation: 19:c4beb912-\n- **Escalate Westfield Collective overdue invoices** | Project: GW Allisonville Rd IN | Source: Teams DM Conversation: 19:c4beb912-\n- **Approve QuickBooks cutover controls and accountant offer** | Project: GW Allisonville Rd IN | Source: Teams DM Conversation: 19:c4beb912-\n- **Send ESI demo plan** | Source: Email: RE: Eye Surgeons of Indiana - Anderson Location Space Plan\n- **List estimated freight on quote** | Project: Uniqlo Phillipsburg NJ | Source: Email: Re: Nexcom G2P Exotec Sprinklers\n- **Confirm payment status** | Source: Email: Payment\n\nThis answer is a direct task-table lookup, not an executive briefing synthesis.",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 75000,
-            "durationMs": 258
-          }
-        },
-        {
-          "id": "tasks-whats-on-my-list",
-          "prompt": "What's on my list?",
-          "intent": "task_management",
-          "status": "pass",
-          "durationMs": 303,
-          "streamEventCount": 7,
-          "toolNames": [
-            "getPersonalTaskRegister",
-            "getMyTasks"
-          ],
-          "failures": [],
-          "warnings": [],
-          "observations": [
-            "tools fired: getPersonalTaskRegister, getMyTasks"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": null,
-          "finalText": "I checked the Tasks page source of truth: `public.tasks` filtered to Brandon Clymer's open task owner identity.\n\nFound 27 open Brandon tasks in the Tasks table.\n- **Send updated calculations** | Project: Uniqlo Phillipsburg NJ | Due: May 6, 2026 | Source: Email: RE: Exotec In-Rack Sprinkler CO-01\n- **Complete Best Buy survey** | Due: May 12, 2026 | Source: Email: Tell us about your recent computer purchase for a chance to win a $250 Best Buy® Gift Card*\n- **Lock Uniqlo scope ownership in May 13 meeting** | Project: GW Allisonville Rd IN | Due: May 13, 2026 | Source: Teams DM Conversation: 19:c4beb912-\n- **Review quarantined message** | Due: May 19, 2026 | Source: Email: Microsoft 365 security: You have messages in quarantine\n- **Review Walter's Powerflex relocation delay email** | Project: Ulta Beauty Fresno | Due: May 22, 2026 | Source: Ulta Beauty Fresno Weekly Meeting\n- **Share completed phase one pricing** | Project: Exol Morrisville | Due: May 22, 2026 | Source: Exol - Morrisville PA - Weekly Status Call - Exol/Alleato\n- **Remove AJ from Marketing email group** | Source: Teams DM Conversation: 19:c4beb912-\n- **Escalate Westfield Collective overdue invoices** | Project: GW Allisonville Rd IN | Source: Teams DM Conversation: 19:c4beb912-\n- **Approve QuickBooks cutover controls and accountant offer** | Project: GW Allisonville Rd IN | Source: Teams DM Conversation: 19:c4beb912-\n- **Send ESI demo plan** | Source: Email: RE: Eye Surgeons of Indiana - Anderson Location Space Plan\n- **List estimated freight on quote** | Project: Uniqlo Phillipsburg NJ | Source: Email: Re: Nexcom G2P Exotec Sprinklers\n- **Confirm payment status** | Source: Email: Payment\n\nThis answer is a direct task-table lookup, not an executive briefing synthesis.",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 75000,
-            "durationMs": 303
-          }
-        },
-        {
-          "id": "realworld-most-important-tasks",
-          "prompt": "What are my most important tasks right now?",
-          "intent": "task_management",
-          "status": "pass",
-          "durationMs": 64240,
-          "streamEventCount": 709,
-          "toolNames": [
-            "backendDeepAgentExecutiveBriefing",
-            "executive_briefing_reader",
-            "tasks_reader",
-            "executive_follow_ups_reader",
-            "emails_reader",
-            "teams_reader",
-            "meetings_reader",
-            "documents_reader",
-            "projects_reader",
-            "financials_reader",
-            "schedule_reader",
-            "deepagents_runtime",
-            "clientProjectIntelligencePacket",
-            "getProjectBriefingSnapshot",
-            "semanticSearch",
-            "getActionItemsAndInsights"
-          ],
-          "failures": [],
-          "warnings": [
-            "duration 64240ms exceeded warning budget 30000ms"
-          ],
-          "observations": [
-            "tools fired: backendDeepAgentExecutiveBriefing, executive_briefing_reader, tasks_reader, executive_follow_ups_reader, emails_reader, teams_reader, meetings_reader, documents_reader, projects_reader, financials_reader, schedule_reader, deepagents_runtime, clientProjectIntelligencePacket, getProjectBriefingSnapshot, semanticSearch, getActionItemsAndInsights",
-            "judge strategic_advisor: pass (4/4)"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": {
-            "status": "pass",
-            "rubric": "strategic_advisor",
-            "score": 4,
-            "minScore": 4,
-            "summary": "The answer is strategically useful and mostly anchored to live action items, not just a recap. It prioritizes overdue client-blocking work, distinguishes verified tasks from risk signals, and admits a data gap. The main weakness is that it mixes project-specific items with broader risk commentary without always making the owner/next-step structure crisp enough, and some recommendations are still a bit generic.",
-            "strengths": [
-              "Leads with a clear point of view: the highest-priority work is client-blocking follow-through and unresolved scope/risk, not a neutral task dump.",
-              "Connects evidence to business implications, especially around overdue follow-ups, scope ownership gaps, and how unresolved issues create schedule drift and finger-pointing.",
-              "Surfaces what the user did not explicitly ask for: risk cleanup, stale task hygiene, and turning comms into named owners and due dates.",
-              "Stays honest about evidence limits by flagging that some Westfield items are not verified task rows and that project linkage may be incomplete.",
-              "Keeps most claims anchored to project 31 and the Uniqlo/Westfield items, with some background labeling for lower-priority noise."
-            ],
-            "weaknesses": [
-              "Operational next steps are directionally good but not fully specific enough; owners and timing are only partially explicit beyond 'today' and 'next'.",
-              "Some items are framed as 'most important' based on inferred strategic risk rather than direct task ownership, which is useful but slightly less rigorous.",
-              "The answer could better separate confirmed tasks from adjacent risk signals to avoid blending evidence tiers.",
-              "It does not fully prioritize across all items with a crisp executive ranking tied to impact and urgency.",
-              "A few phrases sound like a competent task summary rather than a high-level operating plan, especially in the cleanup section."
-            ]
-          },
-          "finalText": "Your most important items right now are the ones blocking your response back to clients or leaving scope/risk unresolved.\n\n1. **Get the insurance requirements answer back from Corey** — this is marked **high priority**, overdue, and tied to **project 31**. You asked Corey for status so you could get back to the client that day. It’s still open. [Source: Action Items & Insights]\n\n2. **Send the updated calculations to Matthew** — assigned to **Brandon Clymer**, overdue since **2026-05-06**, also tied to **project 31**. If that hasn’t gone out, it’s a direct follow-through miss. [Source: Action Items & Insights]\n\n3. **Close the Uniqlo scope ownership gaps** — the task is to lock ownership for **fire suppression, racking coordination, MEP design/order timing, drawing-file format, and updated layout path** from the **May 13 Fast Retailing/Uniqlo meeting**. That’s the most strategically important item in your personal list because unresolved ownership turns into schedule drift and finger-pointing later. [Source: Action Items & Insights]\n\n4. **Westfield Collective needs attention** — not because there’s a clean task row with your name on it, but because the system is surfacing repeated unresolved risk signals:\n   - coordination risk around **landscaping vs. path work**\n   - unresolved **completion list / getting crews off site**\n   - field issue around **bollards and door clearance**\n   - owner concern about **condensation / “raining in the event space”**\n   - unresolved **LeMaster contract/warranty language** and retainage holdback issue  \n   Those are not all verified Tasks-page assignments to you, but they are active unresolved issues with your fingerprints on them. [Source: Action Items & Insights]\n\n5. **Ignore the noise unless you want a cleanup pass**:\n   - Best Buy survey [low priority]\n   - quarantined Microsoft message review\n   - Fountain Life scheduling  \n   Those are open, but they are not the highest-leverage work. [Source: Action Items & Insights]\n\nWhat this means:\nYou don’t have a lot of clean, current, well-maintained assigned task rows. What you do have is a mix of **older overdue follow-ups** and **project risks living in comms instead of task ownership**. That’s the real problem.\n\nWhat I’d do next, in order:\n- **Today:** close the Corey insurance item or get a definitive answer.\n- **Today:** send or confirm the updated calculations to Matthew.\n- **Next:** do a focused cleanup on **Uniqlo** ownership decisions.\n- **Then:** run a **Westfield risk/action sweep** and turn those unresolved comms into named owners and due dates.\n\nData gap:\nThe task list is pulling a lot from email/Teams-derived action tracking, and some of it is stale. I also have a source gap: `project_resolution` did not return, so some project linkage may be incomplete. The evidence I used is from the live action-items system, not the older transcript snippets you provided.\n\nIf you want, I can turn this into a **tight top-5 task list with owners, due dates, and which ones should be delegated vs. personally handled**.",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 75000,
-            "durationMs": 64240
-          }
-        },
-        {
-          "id": "realworld-waiting-on-team",
-          "prompt": "What am I waiting on from my team?",
-          "intent": "task_management",
-          "status": "pass",
-          "durationMs": 68081,
-          "streamEventCount": 958,
-          "toolNames": [
-            "backendDeepAgentExecutiveBriefing",
-            "executive_briefing_reader",
-            "tasks_reader",
-            "executive_follow_ups_reader",
-            "emails_reader",
-            "teams_reader",
-            "meetings_reader",
-            "documents_reader",
-            "projects_reader",
-            "financials_reader",
-            "schedule_reader",
-            "deepagents_runtime",
-            "clientProjectIntelligencePacket",
-            "getProjectBriefingSnapshot",
-            "semanticSearch",
-            "getActionItemsAndInsights"
-          ],
-          "failures": [],
-          "warnings": [
-            "duration 68081ms exceeded warning budget 30000ms"
-          ],
-          "observations": [
-            "tools fired: backendDeepAgentExecutiveBriefing, executive_briefing_reader, tasks_reader, executive_follow_ups_reader, emails_reader, teams_reader, meetings_reader, documents_reader, projects_reader, financials_reader, schedule_reader, deepagents_runtime, clientProjectIntelligencePacket, getProjectBriefingSnapshot, semanticSearch, getActionItemsAndInsights",
-            "judge strategic_advisor: pass (4/4)"
-          ],
-          "backendDeepAgentMemory": {
-            "candidateCount": 0,
-            "candidates": []
-          },
-          "judge": {
-            "status": "pass",
-            "rubric": "strategic_advisor",
-            "score": 4,
-            "minScore": 4,
-            "summary": "The answer gives a strong executive read: the user is waiting on overdue follow-through, not just a list of open items. It identifies specific people, tasks, and some operational implications like duplicate tasks and task hygiene. The main weakness is that it mixes solid project-specific evidence with broader noise and a few unsupported generalizations, but it stays mostly anchored and honest about one data gap.",
-            "strengths": [
-              "Leads with a clear point of view that the core issue is stale follow-through and overdue execution, not just volume.",
-              "Uses specific names, deliverables, due dates, and status labels, which makes the answer operationally useful.",
-              "Surfaces second-order issues like duplicate tasks and task hygiene, not just the immediate asks.",
-              "Includes a candid limitation that one source did not return in time, avoiding overclaiming.",
-              "Provides concrete next steps with a clear sequence and suggested focus areas."
-            ],
-            "weaknesses": [
-              "Some claims drift into broad interpretation, such as saying the team is updating inside conversations but not closing issues, without strong direct evidence for every project.",
-              "The Westfield Collective section feels adjacent and somewhat noisy relative to the direct question of what the user is waiting on from the team.",
-              "It does not assign owners/timing for the recommended follow-up actions beyond same-day, which weakens operational specificity.",
-              "The answer could better distinguish between the most critical blockers and lower-priority open items.",
-              "A few statements about recurring patterns are more strategic than evidentiary, which slightly reduces rigor."
-            ]
-          },
-          "finalText": "You’re waiting on a lot of stale follow-through. The biggest issue isn’t volume — it’s that too many asks are still hanging open past their due dates. [Source: Action Items & Insights]\n\nWhat your team still owes you:\n\n- **Richard Ellison** — share the **90% drawings** so you can review them. Due **2026-05-01**, still open and overdue. [Source: Action Items & Insights]\n- **Brandon Griffith** — send the **updated Om Nangia signature document** for **Ulta Greenwood**. Due **2026-05-05**, still open and overdue. There are **two near-duplicate open items** on this, which usually means nobody closed the loop cleanly. [Source: Action Items & Insights]\n- **Corey Kunkleman** — give you **status on insurance requirements** so you can respond to the client. Due **2026-05-05**, still open and overdue. Also duplicated in the task register. [Source: Action Items & Insights]\n- **Candon Rusin** — update the **Goodwill job rebid/pricing**, including drawing changes and other subcontractor rebid info. Due **2026-05-21**, still open and overdue. [Source: Action Items & Insights]\n- **Mike Parsons** — backfill **sprinkler installation progress dates** on the drawing to support schedule-delay documentation. Due **2026-05-21**, marked **high priority**, still open. [Source: Action Items & Insights]\n- **Bob Wright** — create the **design-cost change request** under the existing Steel Services PO for **Vermillion Rise**. Open, no due date attached. [Source: Action Items & Insights]\n- **Spencer Geissel** — review the attached **2- and 3-level sprinkler options** for **Superior Beverage**. Open, no due date attached; also appears duplicated. [Source: Action Items & Insights]\n\nWhat’s most concerning:\n- You have **20 open items**, **14 overdue**. [Source: Action Items & Insights]\n- Several are **duplicates**, which tells me the real problem is not just execution — it’s task hygiene and confirmation back to you. [Source: Action Items & Insights]\n- **Westfield Collective** keeps surfacing as unresolved noise and risk: completion list, schedule impacts, security/locks, outstanding invoices, counter shutter replacement, warranty language, and owner-facing issues like the HVAC/condensation complaint from Angie. That pattern says your team may be updating inside conversations, but not actually closing issues. [Source: Action Items & Insights; Email: Re: Raining in the event space at Westfield, 2026-05-20; Email: Fw: Westfield Collective: outstanding invoices, 2026-05-20]\n\nA few direct communication signals back this up:\n- Brandon asked, **“What bid packages are you waiting on?”** and Enzo replied he was **“just waiting on a couple of answer from subs that had items missing on their proposal.”** That’s one clear example of unresolved subcontractor follow-up sitting in limbo. [Source: Teams DM 19:5ef77e5e6, 2026-03-09]\n- Brandon also asked, **“What are we waiting on?”** in prior messages, which fits the same pattern: waiting is recurring, but the retrieved evidence doesn’t always show clean closure. [Source: Teams DM 19:362f7b90-, 2025-09-26]\n- I also found a gap: **project_resolution** did not return in time, so I can’t fully tie every waiting item to a specific project with perfect confidence. That’s a real data gap. [Source: Sources Unavailable — project_resolution]\n\nWhat to do next:\n1. **Force a same-day status roundup** from Richard, Brandon Griffith, Corey, Candon, Mike, Bob, and Spencer.\n2. Ask for only three things from each: **current status, exact next step, and committed completion date**.\n3. Start with **Corey, Candon, and Mike** — those are the cleanest overdue items with real project impact.\n4. Then clean up the duplicate task entries so your list stops overstating noise.\n\nIf you want, I can turn this into a **clean “waiting on team” punch list by person** and create/update task records so it’s usable instead of messy.",
-          "latencyBudget": {
-            "warnDurationMs": 30000,
-            "maxDurationMs": 75000,
-            "durationMs": 68081
           }
         }
       ]
