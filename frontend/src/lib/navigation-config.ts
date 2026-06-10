@@ -10,6 +10,7 @@ import {
   Briefcase,
   Bug,
   Building2,
+  FlaskConical,
   Calendar,
   Camera,
   CheckCircle,
@@ -248,6 +249,14 @@ export const developerCompanyAdminTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: BookOpen,
     description: "Past Deep Agents wiki research projects",
+    adminOnly: true,
+  },
+  {
+    name: "Assistant Eval Runs",
+    path: "eval-runs",
+    requiresProject: false,
+    icon: FlaskConical,
+    description: "AI-assistant eval results: pass/fail, tools fired, answers",
     adminOnly: true,
   },
   {
