@@ -7,11 +7,14 @@ operating summary into the packet-first intelligence tables.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 from ..ai_transport import get_openai_client
 
@@ -20,6 +23,10 @@ PACKET_VERSION = "project_operating_summary_v1"
 MAX_SOURCES = 96
 MAX_SOURCE_TEXT_CHARS = 1600
 DEFAULT_LOOKBACK_DAYS = int(os.getenv("PROJECT_OPERATING_SUMMARY_LOOKBACK_DAYS", "180"))
+
+# Mirrors compiler.ACTIVE_CARD_STATUSES. Defined locally because compiler.py
+# imports this module, so importing back from it would be circular.
+_ACTIVE_CARD_STATUSES = ("open", "blocked", "needs_review", "stale")
 
 CATEGORY_LABELS = {
     "project_detail": "Project Details",
@@ -1290,6 +1297,179 @@ def _source_coverage_card(source_set: Dict[str, Any]) -> Optional[Dict[str, Any]
     }
 
 
+def _as_metadata_dict(value: Any, *, card_id: Any = None) -> Dict[str, Any]:
+    """Coerce an insight_cards.metadata value (jsonb dict or json string) to a dict."""
+    if isinstance(value, dict):
+        return dict(value)
+    if isinstance(value, str) and value:
+        try:
+            parsed = json.loads(value)
+        except (ValueError, TypeError):
+            snippet = value[:120] if len(value) > 120 else value
+            logger.warning(
+                "insight_cards.metadata is not valid JSON — dedup key will be missing. "
+                "card_id=%s snippet=%r. Fix: check DB for corrupted metadata column.",
+                card_id,
+                snippet,
+            )
+            return {}
+        return parsed if isinstance(parsed, dict) else {}
+    return {}
+
+
+def _persist_operating_cards(
+    supabase: Any,
+    *,
+    target_id: str,
+    cards: List[Dict[str, Any]],
+    source_by_id: Dict[str, Dict[str, Any]],
+    confidence: str,
+    generated_at: str,
+    latest_dates: List[str],
+    project_label: str,
+) -> List[Dict[str, Any]]:
+    """Upsert operating-summary cards with per-key dedup and stale supersede.
+
+    Operating-summary cards for a target all share ``COMPILER_VERSION``, so a
+    card's stable section key (``card["key"]``) uniquely identifies it across
+    refreshes. Re-running updates the existing card in place instead of inserting
+    a new row, preserves its original ``first_seen_at``, and marks any prior card
+    whose key is absent from this refresh as ``resolved``. This keeps
+    ``insight_cards`` a living projection of the operating summary rather than an
+    append-only log that duplicates every card on every run.
+    """
+    existing_rows = _rows(
+        supabase.table("insight_cards")
+        .select("*")
+        .eq("primary_target_id", target_id)
+        .eq("compiler_version", COMPILER_VERSION)
+        .in_("current_status", list(_ACTIVE_CARD_STATUSES))
+        .execute()
+    )
+    # Group all existing rows by their stable key — supporting both the new
+    # `normalized_signal_key` field and the legacy `key` field written by older
+    # refreshes. Tracking all rows per key (not just the last) lets us detect
+    # and resolve pre-existing duplicates in the same pass.
+    existing_all_by_key: Dict[str, List[Dict[str, Any]]] = {}
+    for row in existing_rows:
+        meta = _as_metadata_dict(row.get("metadata"), card_id=row.get("id"))
+        key = meta.get("normalized_signal_key") or meta.get("key")
+        if key:
+            existing_all_by_key.setdefault(key, []).append(row)
+    # For each key pick the canonical row (most recently updated) and mark the
+    # rest as duplicate strays that should be resolved below.
+    existing_by_key: Dict[str, Dict[str, Any]] = {}
+    stray_ids: List[str] = []
+    for key, rows in existing_all_by_key.items():
+        rows_sorted = sorted(
+            rows,
+            key=lambda r: r.get("updated_at") or r.get("created_at") or "",
+            reverse=True,
+        )
+        existing_by_key[key] = rows_sorted[0]
+        stray_ids.extend(r["id"] for r in rows_sorted[1:])
+
+    stale_after = (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+    last_seen = latest_dates[-1] if latest_dates else generated_at
+    inserted_cards: List[Dict[str, Any]] = []
+    seen_keys: set[str] = set()
+
+    for card in cards:
+        signal_key = card["key"]
+        seen_keys.add(signal_key)
+        card_sources = [_find_source(source_by_id, sid) for sid in card["sourceIds"]]
+        card_sources = [source for source in card_sources if source]
+        first_source = card_sources[0] if card_sources else None
+        existing_card = existing_by_key.get(signal_key)
+        card_payload = {
+            "primary_target_id": target_id,
+            "title": _truncate(card["title"], 180),
+            "card_type": card["type"],
+            "summary": _truncate(card["summary"], 1600),
+            "why_it_matters": _truncate(card["why"] or "", 1000),
+            "current_status": "open",
+            "confidence": confidence,
+            "attribution_status": "approved" if confidence != "low" else "needs_review",
+            "next_action": _truncate(card.get("nextAction") or "", 600) or None,
+            "first_seen_at": (existing_card or {}).get("first_seen_at")
+            or (first_source or {}).get("capturedAt")
+            or generated_at,
+            "last_seen_at": last_seen,
+            "stale_after": stale_after,
+            "source_count": len(card_sources),
+            "compiler_version": COMPILER_VERSION,
+            "metadata": {
+                "key": signal_key,
+                "normalized_signal_key": signal_key,
+                "sourceIds": card["sourceIds"],
+                "generatedFrom": "project_operating_summary",
+                "operatingSummaryGeneratedAt": generated_at,
+            },
+        }
+
+        if existing_card:
+            card_id = existing_card["id"]
+            card_payload["updated_at"] = generated_at
+            inserted_card = _single_row(
+                supabase.table("insight_cards")
+                .update(card_payload)
+                .eq("id", card_id)
+                .execute()
+            ) or {**existing_card, **card_payload}
+            # Replace child rows so refreshed evidence/targets don't accumulate.
+            supabase.table("insight_card_evidence").delete().eq("insight_card_id", card_id).execute()
+            supabase.table("insight_card_targets").delete().eq("insight_card_id", card_id).execute()
+        else:
+            inserted_card = _single_row(supabase.table("insight_cards").insert(card_payload).execute())
+            if not inserted_card:
+                raise RuntimeError(f"Failed to create operating summary card {signal_key}")
+
+        inserted_cards.append(
+            {**inserted_card, "_section": card["section"], "_rank": card["rank"], "_sources": card_sources}
+        )
+        supabase.table("insight_card_targets").insert(
+            {
+                "insight_card_id": inserted_card["id"],
+                "target_id": target_id,
+                "relationship": "primary",
+                "confidence": confidence,
+                "attribution_status": "approved" if confidence != "low" else "needs_review",
+                "matched_terms": [project_label],
+                "reason": "Generated from structured project operating summary refresh.",
+            }
+        ).execute()
+        evidence_rows = []
+        for source in card_sources:
+            evidence_rows.append(
+                {
+                    "insight_card_id": inserted_card["id"],
+                    "source_document_id": source["recordId"] if source["category"] in {"meeting", "email", "teams", "document"} else None,
+                    "source_message_id": source["id"],
+                    "source_type": source["type"],
+                    "source_title": source.get("title") or source["recordId"],
+                    "source_occurred_at": source.get("capturedAt"),
+                    "participants": [],
+                    "excerpt": _truncate(source.get("text") or "", 700),
+                    "summary": _truncate(card["summary"], 700),
+                    "relevance_reason": f"Supports {card['title']}.",
+                    "evidence_role": "operating_summary_source",
+                    "confidence": confidence,
+                }
+            )
+        if evidence_rows:
+            supabase.table("insight_card_evidence").insert(evidence_rows).execute()
+
+    stale_card_ids = [
+        row["id"] for key, row in existing_by_key.items() if key not in seen_keys
+    ] + stray_ids
+    if stale_card_ids:
+        supabase.table("insight_cards").update(
+            {"current_status": "resolved", "updated_at": generated_at}
+        ).in_("id", stale_card_ids).execute()
+
+    return inserted_cards
+
+
 def refresh_project_operating_packet(
     supabase: Any,
     project_id: int,
@@ -1409,68 +1589,16 @@ def refresh_project_operating_packet(
     else:
         packet = _single_row(supabase.table("intelligence_packets").insert(payload).execute()) or payload
 
-    inserted_cards = []
-    for card in cards:
-        card_sources = [_find_source(source_by_id, sid) for sid in card["sourceIds"]]
-        card_sources = [source for source in card_sources if source]
-        first_source = card_sources[0] if card_sources else None
-        card_payload = {
-            "primary_target_id": target["id"],
-            "title": _truncate(card["title"], 180),
-            "card_type": card["type"],
-            "summary": _truncate(card["summary"], 1600),
-            "why_it_matters": _truncate(card["why"] or "", 1000),
-            "current_status": "open",
-            "confidence": confidence,
-            "attribution_status": "approved" if confidence != "low" else "needs_review",
-            "next_action": _truncate(card.get("nextAction") or "", 600) or None,
-            "first_seen_at": (first_source or {}).get("capturedAt") or generated_at,
-            "last_seen_at": latest_dates[-1] if latest_dates else generated_at,
-            "stale_after": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
-            "source_count": len(card_sources),
-            "compiler_version": COMPILER_VERSION,
-            "metadata": {
-                "key": card["key"],
-                "sourceIds": card["sourceIds"],
-                "generatedFrom": "project_operating_summary",
-                "operatingSummaryGeneratedAt": generated_at,
-            },
-        }
-        inserted_card = _single_row(supabase.table("insight_cards").insert(card_payload).execute())
-        if not inserted_card:
-            raise RuntimeError(f"Failed to create operating summary card {card['key']}")
-        inserted_cards.append({**inserted_card, "_section": card["section"], "_rank": card["rank"], "_sources": card_sources})
-        supabase.table("insight_card_targets").insert(
-            {
-                "insight_card_id": inserted_card["id"],
-                "target_id": target["id"],
-                "relationship": "primary",
-                "confidence": confidence,
-                "attribution_status": "approved" if confidence != "low" else "needs_review",
-                "matched_terms": [source_set.get("projectName") or f"project {project_id}"],
-                "reason": "Generated from structured project operating summary refresh.",
-            }
-        ).execute()
-        evidence_rows = []
-        for source in card_sources:
-            evidence_rows.append(
-                {
-                    "insight_card_id": inserted_card["id"],
-                    "source_document_id": source["recordId"] if source["category"] in {"meeting", "email", "teams", "document"} else None,
-                    "source_message_id": source["id"],
-                    "source_type": source["type"],
-                    "source_title": source.get("title") or source["recordId"],
-                    "source_occurred_at": source.get("capturedAt"),
-                    "participants": [],
-                    "excerpt": _truncate(source.get("text") or "", 700),
-                    "summary": _truncate(card["summary"], 700),
-                    "relevance_reason": f"Supports {card['title']}.",
-                    "evidence_role": "operating_summary_source",
-                    "confidence": confidence,
-                }
-            )
-        if evidence_rows:
-            supabase.table("insight_card_evidence").insert(evidence_rows).execute()
+    inserted_cards = _persist_operating_cards(
+        supabase,
+        target_id=target["id"],
+        cards=cards,
+        source_by_id=source_by_id,
+        confidence=confidence,
+        generated_at=generated_at,
+        latest_dates=latest_dates,
+        project_label=source_set.get("projectName") or f"project {project_id}",
+    )
 
     supabase.table("intelligence_packet_cards").delete().eq("packet_id", packet["id"]).execute()
     if inserted_cards:

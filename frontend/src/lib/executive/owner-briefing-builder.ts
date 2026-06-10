@@ -88,6 +88,13 @@ export type OwnerBriefingCardItem = {
   ageHours: number | null;
   isNewSinceYesterday: boolean;
   suggestedOwnerLabel: string | null;
+  /**
+   * Number of distinct sources that corroborated this card (incremented each
+   * time a new evidence document promotes the same normalized signal). >1 means
+   * the issue has recurred across multiple meetings/messages — a strong urgency
+   * and "this keeps coming up" signal for the brief.
+   */
+  sourceCount: number;
 };
 
 export type OwnerBriefingProject = {
@@ -225,7 +232,8 @@ export async function buildOwnerBriefingData(
        next_action,
        first_seen_at,
        last_seen_at,
-       stale_after`,
+       stale_after,
+       source_count`,
     )
     .in("primary_target_id", targetIds)
     .in("card_type", OWNER_RELEVANT_CARD_TYPES)
@@ -276,6 +284,7 @@ export async function buildOwnerBriefingData(
       ageHours,
       isNewSinceYesterday: isNew,
       suggestedOwnerLabel: row.suggested_owner_label,
+      sourceCount: typeof row.source_count === "number" ? row.source_count : 1,
     };
 
     const bucket = cardsByTarget.get(row.primary_target_id) ?? [];
@@ -380,6 +389,9 @@ function byUrgencyDesc(a: OwnerBriefingCardItem, b: OwnerBriefingCardItem): numb
   // Then: higher confidence first.
   const confDiff = CONFIDENCE_RANK[b.confidence] - CONFIDENCE_RANK[a.confidence];
   if (confDiff !== 0) return confDiff;
+  // Then: recurring issues (corroborated by more sources) outrank one-offs.
+  const recurrenceDiff = b.sourceCount - a.sourceCount;
+  if (recurrenceDiff !== 0) return recurrenceDiff;
   // Then: more recently seen.
   return (b.lastSeenAt ?? "").localeCompare(a.lastSeenAt ?? "");
 }
@@ -395,10 +407,13 @@ function computeUrgency(params: {
     // High-confidence risk/blocker > medium > low.
     score += CONFIDENCE_RANK[c.confidence] * 4;
     if (c.isNewSinceYesterday) score += 5;
+    // Recurring issues compound urgency, capped so a noisy signal can't dominate.
+    score += Math.min(Math.max(c.sourceCount - 1, 0), 3) * 3;
   }
   for (const c of params.actions) {
     score += CONFIDENCE_RANK[c.confidence] * 1;
     if (c.isNewSinceYesterday) score += 2;
+    score += Math.min(Math.max(c.sourceCount - 1, 0), 3) * 1;
   }
   // Stale packets penalty — a project whose compiler hasn't fired in days
   // shouldn't outrank a project with live signal.

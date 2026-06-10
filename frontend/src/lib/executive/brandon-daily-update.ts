@@ -15,6 +15,11 @@ import {
   type FinancialPulseData,
   loadFinancialPulse,
 } from "@/lib/executive/financial-pulse";
+import {
+  buildOwnerBriefingData,
+  type OwnerBriefingCardItem,
+  type OwnerBriefingProject,
+} from "@/lib/executive/owner-briefing-builder";
 
 type BriefTone = "neutral" | "good" | "watch" | "risk";
 type BriefSource = "Email" | "Teams" | "Meeting" | "Document";
@@ -2602,11 +2607,150 @@ function applyProjectNumbers(
   });
 }
 
+/**
+ * Feature flag for Phase 3 of the daily-briefs strategy: source the brief from
+ * the curated insight_cards layer (Pipeline B) instead of re-running RAG vector
+ * search over 900-char document chunks every morning. Default OFF so production
+ * is unchanged until the flag is flipped; flip back for instant rollback.
+ */
+function isInsightCardBriefEnabled(): boolean {
+  const flag = process.env.EXECUTIVE_BRIEF_FROM_INSIGHT_CARDS?.trim().toLowerCase();
+  return flag === "true" || flag === "1";
+}
+
+const INSIGHT_CARD_TONE: Record<string, BriefTone> = {
+  risk: "risk",
+  blocker: "risk",
+  schedule_risk: "risk",
+  financial_exposure: "risk",
+  decision: "watch",
+  change_management: "watch",
+  open_question: "watch",
+};
+
+/**
+ * Cross-time recurrence note: insight_cards.source_count increments each time a
+ * new evidence document promotes the same normalized signal, so >1 means the
+ * issue has resurfaced across multiple meetings/messages. Surfacing this is the
+ * "this keeps coming up" intelligence ("missed this 3 updates running") that a
+ * point-in-time RAG brief can't express.
+ */
+function insightCardRecurrenceNote(card: OwnerBriefingCardItem): string | null {
+  if (card.sourceCount < 2) return null;
+  const since = card.firstSeenAt ? formatSourceDate(card.firstSeenAt) : null;
+  return since
+    ? `Recurring: surfaced in ${card.sourceCount} updates since ${since}.`
+    : `Recurring: surfaced in ${card.sourceCount} updates.`;
+}
+
+function insightCardToBriefItem(
+  card: OwnerBriefingCardItem,
+  project: OwnerBriefingProject,
+): BrandonBriefItem {
+  const date =
+    formatSourceDate(card.lastSeenAt ?? card.firstSeenAt ?? null) ||
+    new Date().toISOString();
+  // Ensure every citation has non-empty evidence so filterSupportedSections
+  // does not suppress cards whose why_it_matters is empty/null.
+  const evidence =
+    card.whyItMatters?.trim() || card.summary?.trim() || card.title;
+  const recurrenceNote = insightCardRecurrenceNote(card);
+  const citation: BriefCitation = {
+    source: "Meeting",
+    sourceDetail: project.projectName,
+    sourceId: card.cardId,
+    evidence,
+    date,
+  };
+  return {
+    title: card.title,
+    summary: card.summary ?? card.title,
+    bullets: [],
+    evidenceFacts: recurrenceNote ? [recurrenceNote] : undefined,
+    recommendedAction: card.nextAction ?? undefined,
+    whyItMatters: card.whyItMatters ?? undefined,
+    source: "Meeting",
+    sourceDetail: project.projectName,
+    sourceId: card.cardId,
+    evidence,
+    date,
+    citations: [citation],
+    project: project.projectName,
+    projectInternalId: project.projectId,
+    owner: card.suggestedOwnerLabel ?? undefined,
+    tone: INSIGHT_CARD_TONE[card.cardType] ?? "neutral",
+    retrieval: `insight_cards: ${card.cardType}, confidence ${card.confidence}`,
+  };
+}
+
+/**
+ * Bucket owner-relevant insight cards into the three brief sections.
+ * Decisions/risks/blockers/financial/schedule cards → needsBrandon; action cards
+ * owned by someone else → waitingOnOthers (unowned actions fall back to
+ * needsBrandon). Pure (no I/O) so it is unit-testable. No LLM re-summarization —
+ * card content is used verbatim so the full-fidelity intelligence the compilers
+ * extracted survives into the brief.
+ */
+export function bucketInsightCardBriefSections(
+  topProjects: OwnerBriefingProject[],
+): BrandonDailyUpdatePacket["sections"] {
+  const needsBrandon: BrandonBriefItem[] = [];
+  const waitingOnOthers: BrandonBriefItem[] = [];
+  const importantUpdates: BrandonBriefItem[] = [];
+
+  for (const project of topProjects) {
+    for (const card of project.decisionsNeeded) {
+      needsBrandon.push(insightCardToBriefItem(card, project));
+    }
+    for (const card of project.actionsRequired) {
+      const item = insightCardToBriefItem(card, project);
+      if (card.suggestedOwnerLabel) {
+        waitingOnOthers.push(item);
+      } else {
+        needsBrandon.push(item);
+      }
+    }
+  }
+
+  return { needsBrandon, waitingOnOthers, importantUpdates };
+}
+
+/**
+ * Build the three brief sections directly from owner-relevant insight cards
+ * (Pipeline B), bypassing RAG chunk search and chunk-synthesis entirely.
+ */
+async function buildBriefSectionsFromInsightCards(): Promise<{
+  sections: BrandonDailyUpdatePacket["sections"];
+  warnings: string[];
+}> {
+  const recipientName =
+    process.env.EXECUTIVE_BRIEF_RECIPIENT_NAME?.trim() || "Brandon";
+  const data = await buildOwnerBriefingData({ recipientName });
+
+  const warnings: string[] = [];
+  if (data.topProjects.length === 0) {
+    warnings.push(
+      "Daily Brief (insight-cards mode) found no owner-relevant cards. Confirm the meeting/Teams compilers are promoting signals to insight_cards.",
+    );
+  }
+
+  return {
+    sections: bucketInsightCardBriefSections(data.topProjects),
+    warnings,
+  };
+}
+
 export async function generateBrandonDailyUpdate(
   options: { windowDays?: number; sourceBackedOnly?: boolean } = {},
 ): Promise<BrandonDailyUpdatePacket> {
   const windowDays = options.windowDays ?? DEFAULT_EXECUTIVE_WINDOW_DAYS;
   const sourceBackedOnly = options.sourceBackedOnly ?? false;
+  // Phase 3: when enabled, build the brief from the curated insight_cards layer
+  // instead of RAG chunk search. Skipped under sourceBackedOnly (manual fallback).
+  const useInsightCards = isInsightCardBriefEnabled() && !sourceBackedOnly;
+  const insightCardBrief = useInsightCards
+    ? await buildBriefSectionsFromInsightCards()
+    : null;
   const windowStartDateKey = getWindowStartDateKey(windowDays);
   const cutoff = new Date(`${windowStartDateKey}T00:00:00-04:00`);
   const cutoffIso = cutoff.toISOString();
@@ -2634,7 +2778,7 @@ export async function generateBrandonDailyUpdate(
   }
 
   let embeddingsBySpec: Array<{ spec: QuerySpec; queryEmbedding: string }>;
-  if (openai) {
+  if (openai && !useInsightCards) {
     try {
       embeddingsBySpec = await Promise.all(
         QUERY_SPECS.map(async (spec) => ({
@@ -2749,7 +2893,9 @@ export async function generateBrandonDailyUpdate(
   const fallbackItems = fallbackResult.rows
     .map(makeFallbackItem)
     .filter((item): item is BrandonBriefItem => item !== null);
-  const seededSections = assignHitsToSections(dedupedHits, fallbackItems);
+  const seededSections = insightCardBrief
+    ? insightCardBrief.sections
+    : assignHitsToSections(dedupedHits, fallbackItems);
   const synthesizedResult = sourceBackedOnly
     ? {
         sections: seededSections,
@@ -2759,7 +2905,17 @@ export async function generateBrandonDailyUpdate(
         ],
         degraded: false,
       }
-    : await synthesizeSections(seededSections, financialPulse);
+    : insightCardBrief
+      ? {
+          // Insight cards are already curated, deduped, full-fidelity intelligence.
+          // Do NOT re-summarize them through the chunk-synthesis LLM — that is the
+          // exact compression-drift step this mode exists to remove.
+          sections: seededSections,
+          modelUsed: "insight-cards",
+          warnings: insightCardBrief.warnings,
+          degraded: false,
+        }
+      : await synthesizeSections(seededSections, financialPulse);
   const communicationSignalResult =
     await loadRecentCommunicationSignalItems(cutoffIso);
 
@@ -2780,17 +2936,24 @@ export async function generateBrandonDailyUpdate(
           "Daily Brief evidence enrichment skipped in source-backed fallback mode.",
         ],
       }
-    : synthesizedResult.degraded
+    : insightCardBrief
       ? {
-          sections: mapBriefSections(supportedResult.sections, (item) => ({
-            ...item,
-            evidenceFacts: fallbackEvidenceFacts(item),
-          })),
-          warnings: [
-            "Daily Brief evidence enrichment skipped because synthesis already degraded to source-backed fallback mode.",
-          ],
+          // Insight card content is already full-fidelity — skip LLM enrichment
+          // to avoid the same re-summarization drift this mode was built to remove.
+          sections: supportedResult.sections,
+          warnings: [] as string[],
         }
-    : await enrichBriefSections(supportedResult.sections, financialPulse);
+      : synthesizedResult.degraded
+        ? {
+            sections: mapBriefSections(supportedResult.sections, (item) => ({
+              ...item,
+              evidenceFacts: fallbackEvidenceFacts(item),
+            })),
+            warnings: [
+              "Daily Brief evidence enrichment skipped because synthesis already degraded to source-backed fallback mode.",
+            ],
+          }
+        : await enrichBriefSections(supportedResult.sections, financialPulse);
   const projectNumberMap = await loadProjectNumberMap();
   const numberedSections = applyProjectNumbers(enrichedResult.sections, projectNumberMap);
   // Final guardrail: strip accounts-receivable/overdue/collections language from
@@ -2833,6 +2996,11 @@ export async function generateBrandonDailyUpdate(
     financialPulse,
     sourceCoverage,
     retrievalNotes: [
+      ...(insightCardBrief
+        ? [
+            "Daily Brief source: curated insight_cards (Pipeline B), not RAG chunk search. Card content (title/summary/why-it-matters/next-action) is used verbatim — no LLM re-summarization — to avoid compression drift.",
+          ]
+        : []),
       `Executive briefing source of truth: recap_kind=executive_briefing. Backend recap_kind=meeting_digest is the legacy meeting digest and must not be treated as the CEO operating brief.`,
       `Executive synthesis model: ${synthesizedResult.modelUsed}. Override with EXECUTIVE_BRIEFING_SYNTHESIS_MODEL only when the CEO brief intentionally needs a different model.`,
       `Financial pulse: ${financialPulse.totalOutstandingAR > 0 ? `$${Math.round(financialPulse.totalOutstandingAR / 1000)}K total outstanding AR, $${Math.round(financialPulse.totalOverdueAR / 1000)}K overdue across ${financialPulse.arByProject.length} projects; ${financialPulse.pendingCOsByProject.length} projects with pending COs ($${Math.round(financialPulse.totalPendingCORevenue / 1000)}K revenue)` : "No financial data available"}.`,

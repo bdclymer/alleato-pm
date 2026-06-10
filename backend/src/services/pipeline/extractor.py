@@ -17,7 +17,7 @@ from typing import Any, Dict, List
 from ..supabase_helpers import fetch_optional_row, get_rag_read_client, get_rag_write_client, get_supabase_client
 from ..ingestion.fireflies_pipeline import FirefliesIngestionPipeline
 from ..task_assignees import TaskAssigneeResolver
-from .models import DecisionItem, OpportunityItem, RiskItem, TaskItem
+from .models import DecisionItem, OpportunityItem, RiskItem, StructuredData, TaskItem
 from . import llm
 
 # NOTE: `fireflies_task_rewriter` is imported lazily inside the functions that
@@ -41,6 +41,22 @@ _LOW_SIGNAL_TASK_RE = re.compile(
     re.IGNORECASE,
 )
 _VALID_PRIORITIES = {"low", "medium", "high", "urgent"}
+
+# Compiler version namespacing the meeting-extractor's promoted signals in the
+# packet-first intelligence tables. Kept distinct from the Teams/email compiler
+# versions so meeting signals dedup among themselves and re-extraction is
+# idempotent (candidates are cleared per source_document_id + this version).
+MEETING_PACKET_COMPILER_VERSION = "meeting_extractor_compiler_v0_1"
+
+# Map a RiskItem.category to an insight_cards.card_type. Values MUST stay within
+# compiler.INSIGHT_CARD_TYPES (and the insight_cards.card_type CHECK constraint).
+_RISK_CATEGORY_SIGNAL_TYPE = {
+    "schedule": "schedule_risk",
+    "cost": "financial_exposure",
+    "budget": "financial_exposure",
+    "cash_flow": "financial_exposure",
+    "financial": "financial_exposure",
+}
 
 
 def _meeting_type_from_metadata(metadata: Dict[str, Any]) -> str:
@@ -422,13 +438,6 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
     doc_project_id = metadata.get("project_id")
     project_ids = [doc_project_id] if doc_project_id else []
 
-    for decision in structured.decisions:
-        _upsert_insight(client, "decision", decision, metadata_id,
-                        details={"rationale": decision.rationale, "impact": getattr(decision, "impact", None)})
-    for risk in structured.risks:
-        _upsert_insight(client, "risk", risk, metadata_id,
-                        details={"category": risk.category, "likelihood": risk.likelihood,
-                                 "impact": risk.impact, "mitigation_plan": getattr(risk, "mitigation_plan", None)})
     tasks_to_persist = structured.tasks if is_meeting else []
     # Build a lookup so _upsert_task can attach rewriter title + provenance
     # without changing the TaskItem dataclass.
@@ -460,10 +469,15 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
             metadata.get("client_id"),
             rewriter_match=rewriter_match,
         )
-    for opportunity in structured.opportunities:
-        _upsert_insight(client, "opportunity", opportunity, metadata_id,
-                        details={"opportunity_type": opportunity.type,
-                                 "next_step": getattr(opportunity, "next_step", None)})
+    # Route decisions / risks / opportunities into the packet-first intelligence
+    # layer (insight_cards) via the same candidate -> promotion path the Teams
+    # compiler uses. Replaces the deprecated no-op _upsert_insight writer so
+    # full-transcript meeting intelligence becomes durable, deduped cards.
+    signal_result = (
+        _promote_meeting_signals(client, metadata_id, doc_project_id, started_at, structured)
+        if is_meeting
+        else {"signals_written": 0, "signals_promoted": 0}
+    )
 
     # 6. Mark job done and metadata complete
     rag_client.table("fireflies_ingestion_jobs").update(
@@ -481,6 +495,8 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
         "risks": len(structured.risks),
         "opportunities": len(structured.opportunities),
         "tasks": len(tasks_to_persist),
+        "signalsWritten": signal_result.get("signals_written", 0),
+        "signalsPromoted": signal_result.get("signals_promoted", 0),
     }
 
 
@@ -497,12 +513,194 @@ def _upsert_insight(
 ) -> None:
     """DEPRECATED: legacy Pipeline A writer for the `insights` table.
 
-    Pipeline B (insight_cards via promote_signal_candidate) replaced this
-    in the 2026-05-15 migration. Kept as a no-op so existing call sites
-    do not error during the transition; remove after stability window.
+    Pipeline B (insight_cards via promote_signal_candidate) replaced this in the
+    2026-05-15 migration; live call sites now use ``_promote_meeting_signals``.
+    Kept as a no-op only so any stale importer does not error. Remove after the
+    stability window.
     """
     _ = client, insight_type, item, metadata_id, details  # noqa: F841
     return None
+
+
+def _meeting_signal_key(*parts: Any) -> str:
+    """Stable slug used as normalized_signal_key for insight-card dedup."""
+    raw = ":".join(str(part).strip().lower() for part in parts if str(part or "").strip())
+    return re.sub(r"[^a-z0-9]+", "-", raw).strip("-")[:180] or "meeting-signal"
+
+
+def _meeting_signal_confidence(description: str, *supporting: Any) -> float:
+    """Heuristic extraction confidence for a meeting-derived signal.
+
+    Meeting structured items carry no per-item confidence, so derive one from
+    content richness: well-formed items (substantive text + supporting context)
+    clear the 0.85 promotion bar and become insight cards directly, while thin
+    items land below it and remain ``needs_review`` candidates (review queue).
+    """
+    score = 0.7
+    if len((description or "").strip()) >= 40:
+        score += 0.1
+    if any(str(value or "").strip() for value in supporting):
+        score += 0.1
+    return round(min(score, 0.9), 2)
+
+
+def _build_meeting_signal_payloads(structured: "StructuredData") -> List[Dict[str, Any]]:
+    """Convert extracted decisions/risks/opportunities into signal-candidate kwargs."""
+    payloads: List[Dict[str, Any]] = []
+
+    for decision in structured.decisions:
+        description = (decision.description or "").strip()
+        if not description:
+            continue
+        title = (_derive_title(description) or description)[:180]
+        payloads.append(
+            {
+                "signal_type": "decision",
+                "title": title,
+                "summary": description,
+                "why_it_matters": decision.rationale or None,
+                "suggested_owner_label": decision.owner or None,
+                "current_status": "open",
+                "confidence_score": _meeting_signal_confidence(description, decision.rationale),
+                "excerpt": description[:900],
+                "normalized_signal_key": _meeting_signal_key("decision", title),
+                "extraction_json": {
+                    "source": "meeting_extractor",
+                    "kind": "decision",
+                    "rationale": decision.rationale,
+                    "owner": decision.owner,
+                },
+            }
+        )
+
+    for risk in structured.risks:
+        description = (risk.description or "").strip()
+        if not description:
+            continue
+        title = (_derive_title(description) or description)[:180]
+        signal_type = _RISK_CATEGORY_SIGNAL_TYPE.get((risk.category or "").strip().lower(), "risk")
+        payloads.append(
+            {
+                "signal_type": signal_type,
+                "title": title,
+                "summary": risk.impact or description,
+                "why_it_matters": description,
+                "suggested_owner_label": risk.owner or None,
+                "current_status": "open",
+                "confidence_score": _meeting_signal_confidence(description, risk.impact, risk.category),
+                "excerpt": description[:900],
+                "normalized_signal_key": _meeting_signal_key(signal_type, title),
+                "extraction_json": {
+                    "source": "meeting_extractor",
+                    "kind": "risk",
+                    "category": risk.category,
+                    "likelihood": risk.likelihood,
+                    "impact": risk.impact,
+                    "owner": risk.owner,
+                },
+            }
+        )
+
+    for opportunity in structured.opportunities:
+        description = (opportunity.description or "").strip()
+        if not description:
+            continue
+        title = (_derive_title(description) or description)[:180]
+        payloads.append(
+            {
+                "signal_type": "initiative_signal",
+                "title": title,
+                "summary": description,
+                "why_it_matters": "Opportunity surfaced from a project meeting.",
+                "suggested_owner_label": opportunity.owner or None,
+                "current_status": "open",
+                "confidence_score": _meeting_signal_confidence(description, opportunity.type),
+                "excerpt": description[:900],
+                "normalized_signal_key": _meeting_signal_key("opportunity", title),
+                "extraction_json": {
+                    "source": "meeting_extractor",
+                    "kind": "opportunity",
+                    "opportunity_type": opportunity.type,
+                    "owner": opportunity.owner,
+                },
+            }
+        )
+
+    return payloads
+
+
+def _promote_meeting_signals(
+    client,
+    metadata_id: str,
+    project_id: int | None,
+    source_occurred_at: str | None,
+    structured: "StructuredData",
+) -> Dict[str, Any]:
+    """Stage and promote meeting signals into the packet-first intelligence layer.
+
+    Mirrors ``teams_compiler.write_packet_first_signals``: ensure the project's
+    intelligence target, clear prior candidates for this meeting (idempotency),
+    then write each signal as a ``source_signal_candidate`` and promote the
+    high-confidence ones to ``insight_cards`` — where ``_upsert_insight_card_from_candidate``
+    dedups on ``normalized_signal_key`` and attaches evidence. Re-running updates
+    cards in place rather than inserting duplicates.
+    """
+    result = {"signals_written": 0, "signals_promoted": 0, "target_id": None, "skipped_reason": None}
+    if not project_id:
+        result["skipped_reason"] = "no project attribution"
+        return result
+
+    payloads = _build_meeting_signal_payloads(structured)
+    if not payloads:
+        return result
+
+    # Lazy import: the intelligence package eagerly loads compiler at startup, so
+    # a top-level import here would risk a circular load order under FastAPI/pytest.
+    from ..intelligence.compiler import (
+        ensure_client_project_target,
+        promote_signal_candidate,
+        write_source_signal_candidate,
+    )
+
+    target = ensure_client_project_target(
+        client, int(project_id), compiler_version=MEETING_PACKET_COMPILER_VERSION
+    )
+    target_id = target.get("id")
+    result["target_id"] = target_id
+    if not target_id:
+        result["skipped_reason"] = "missing intelligence target"
+        return result
+
+    get_rag_write_client().table("source_signal_candidates").delete().eq(
+        "source_document_id", metadata_id
+    ).eq("compiler_version", MEETING_PACKET_COMPILER_VERSION).execute()
+
+    for payload in payloads:
+        candidate = write_source_signal_candidate(
+            client,
+            source_document_id=metadata_id,
+            target_id=target_id,
+            project_id=int(project_id),
+            source_occurred_at=source_occurred_at,
+            compiler_version=MEETING_PACKET_COMPILER_VERSION,
+            **payload,
+        )
+        result["signals_written"] += 1
+        if candidate.get("status") == "candidate":
+            promotion = promote_signal_candidate(
+                client, candidate["id"], compiler_version=MEETING_PACKET_COMPILER_VERSION
+            )
+            if promotion.get("status") == "promoted":
+                result["signals_promoted"] += 1
+
+    logger.info(
+        "[Extractor] Meeting signals: wrote %d, promoted %d (project=%s, metadata=%s)",
+        result["signals_written"],
+        result["signals_promoted"],
+        project_id,
+        metadata_id,
+    )
+    return result
 
 
 _TITLE_CLAUSE_RE = re.compile(

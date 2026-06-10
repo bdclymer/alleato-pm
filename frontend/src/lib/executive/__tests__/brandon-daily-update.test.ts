@@ -1,11 +1,16 @@
 import {
   buildExecutiveOperatingBrief,
   type BrandonBriefItem,
+  bucketInsightCardBriefSections,
   getHitDateAnchor,
   getRecencyAnchor,
   loadLiveBrandonSourceCoverage,
   shouldSuppressDailyBriefAccountingItem,
 } from "../brandon-daily-update";
+import type {
+  OwnerBriefingCardItem,
+  OwnerBriefingProject,
+} from "../owner-briefing-builder";
 
 const mockCreateServiceClient = jest.fn();
 
@@ -293,5 +298,115 @@ describe("executive operating brief priority lanes", () => {
 
     expect(brief.recommendedMoves.length).toBeGreaterThan(0);
     expect(brief.recommendedMoves[0]).toMatch(/Confirm the owner/);
+  });
+});
+
+describe("bucketInsightCardBriefSections (Phase 3 insight-cards source)", () => {
+  function makeCard(
+    cardId: string,
+    cardType: OwnerBriefingCardItem["cardType"],
+    title: string,
+    extra: Partial<OwnerBriefingCardItem> = {},
+  ): OwnerBriefingCardItem {
+    return {
+      cardId,
+      cardType,
+      title,
+      summary: null,
+      whyItMatters: null,
+      nextAction: null,
+      confidence: "high",
+      firstSeenAt: null,
+      lastSeenAt: "2026-06-09T00:00:00.000Z",
+      ageHours: 1,
+      isNewSinceYesterday: true,
+      suggestedOwnerLabel: null,
+      sourceCount: 1,
+      ...extra,
+    };
+  }
+
+  function makeProject(over: Partial<OwnerBriefingProject>): OwnerBriefingProject {
+    return {
+      targetId: "target-1",
+      projectId: 42,
+      projectName: "Union Collective",
+      packetId: null,
+      packetGeneratedAt: null,
+      packetIsStale: false,
+      packetAgeHours: 1,
+      urgencyScore: 10,
+      decisionsNeeded: [],
+      actionsRequired: [],
+      ...over,
+    };
+  }
+
+  it("routes decisions/risks to needsBrandon and owned actions to waitingOnOthers", () => {
+    const project = makeProject({
+      decisionsNeeded: [
+        makeCard("c1", "risk", "Permit slips 4-6 weeks", {
+          whyItMatters: "Fire marshal rejected the design twice",
+          summary: "June permit target at risk",
+        }),
+        makeCard("c2", "decision", "Approve revised parking layout"),
+      ],
+      actionsRequired: [
+        makeCard("c3", "task", "Send CAD files", {
+          nextAction: "Send CAD files",
+          suggestedOwnerLabel: "Andrew",
+        }),
+        makeCard("c4", "open_question", "Confirm second-floor scope", {
+          nextAction: "Confirm scope",
+        }),
+      ],
+    });
+
+    const sections = bucketInsightCardBriefSections([project]);
+
+    // Decisions + unowned action go to needsBrandon; owned action waits on others.
+    expect(sections.needsBrandon.map((i) => i.sourceId)).toEqual(["c1", "c2", "c4"]);
+    expect(sections.waitingOnOthers.map((i) => i.sourceId)).toEqual(["c3"]);
+    expect(sections.importantUpdates).toHaveLength(0);
+
+    // Card content is preserved verbatim — no LLM re-summarization.
+    const risk = sections.needsBrandon.find((i) => i.sourceId === "c1");
+    expect(risk?.title).toBe("Permit slips 4-6 weeks");
+    expect(risk?.whyItMatters).toBe("Fire marshal rejected the design twice");
+    expect(risk?.tone).toBe("risk");
+    expect(risk?.project).toBe("Union Collective");
+    expect(risk?.projectInternalId).toBe(42);
+    expect(risk?.citations).toHaveLength(1);
+    expect(risk?.owner).toBeUndefined();
+
+    expect(sections.waitingOnOthers[0]?.owner).toBe("Andrew");
+    expect(sections.waitingOnOthers[0]?.recommendedAction).toBe("Send CAD files");
+  });
+
+  it("returns empty sections when there are no projects", () => {
+    const sections = bucketInsightCardBriefSections([]);
+    expect(sections.needsBrandon).toHaveLength(0);
+    expect(sections.waitingOnOthers).toHaveLength(0);
+    expect(sections.importantUpdates).toHaveLength(0);
+  });
+
+  it("annotates recurring cards (source_count > 1) with a cross-time recurrence fact", () => {
+    const project = makeProject({
+      decisionsNeeded: [
+        makeCard("recurring", "schedule_risk", "Hy-Tek submittal still outstanding", {
+          sourceCount: 3,
+          firstSeenAt: "2026-06-02T00:00:00.000Z",
+        }),
+        makeCard("one-off", "risk", "New scope question", { sourceCount: 1 }),
+      ],
+    });
+
+    const sections = bucketInsightCardBriefSections([project]);
+    const recurring = sections.needsBrandon.find((i) => i.sourceId === "recurring");
+    const oneOff = sections.needsBrandon.find((i) => i.sourceId === "one-off");
+
+    expect(recurring?.evidenceFacts?.[0]).toMatch(/Recurring: surfaced in 3 updates since/);
+    // A single-source card carries no recurrence note.
+    expect(oneOff?.evidenceFacts).toBeUndefined();
   });
 });
