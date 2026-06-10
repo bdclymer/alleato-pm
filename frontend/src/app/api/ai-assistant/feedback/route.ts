@@ -4,6 +4,7 @@ import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { ingestThumbsFeedbackLearning } from "@/lib/ai/services/agent-learning-service";
 import { recordAiFeedbackEvent } from "@/lib/ai/services/feedback-event-service";
+import { scoreUserFeedback } from "@/lib/ai/langfuse-trace";
 import { toSessionUuid } from "@/lib/ai/session-id";
 import { logger } from "@/lib/logger";
 import type { Json } from "@/types/database.types";
@@ -141,6 +142,41 @@ export const POST = withApiGuardrails("/api/ai-assistant/feedback#POST", async (
       visibility: "team",
     },
   });
+
+  // Mirror the thumbs onto the originating Langfuse trace as a `user_feedback`
+  // score — the highest-trust eval signal, unified with the heuristic + judge
+  // scores. Best-effort: the trace id is read from the assistant message's
+  // chat_history metadata (persisted by the streamText path). Never blocks.
+  if (messageId && sessionUuid) {
+    try {
+      const { data: assistantRows } = await supabase
+        .from("chat_history")
+        .select("metadata")
+        .eq("session_id", sessionUuid)
+        .eq("role", "assistant")
+        .order("created_at", { ascending: false })
+        .limit(30);
+      const match = (assistantRows ?? []).find(
+        (row) =>
+          (row.metadata as Record<string, unknown> | null)?.response_message_id ===
+          messageId,
+      );
+      const traceId = (match?.metadata as Record<string, unknown> | null)
+        ?.langfuse_trace_id;
+      if (typeof traceId === "string" && traceId) {
+        await scoreUserFeedback({
+          traceId,
+          feedback,
+          comment: reason ?? reasonCategory ?? null,
+        });
+      }
+    } catch (langfuseError) {
+      logger.error({
+        msg: "[Feedback] Langfuse user_feedback score failed:",
+        data: langfuseError,
+      });
+    }
+  }
 
   // Extract a learning when the user marks the response negatively. This
   // creates an agent_learnings row that gets injected into future prompts

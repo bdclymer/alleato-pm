@@ -1595,6 +1595,10 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
     : "";
   let responseAlreadyPersisted = false;
   let memoryUsage: MemoryUsageSummary | null = null;
+  // Captured inside the OTel root span; persisted to chat_history metadata so the
+  // feedback route (and eval/experiment tooling) can attach Langfuse scores to
+  // the exact trace this message produced.
+  let langfuseTraceId: string | undefined;
   let finishMetadata: {
     finishReason?: string;
     usage?: {
@@ -3322,7 +3326,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           startActiveObservation(
             "ai-assistant-chat",
             async (rootSpan) => {
-              const langfuseTraceId = getActiveTraceId();
+              langfuseTraceId = getActiveTraceId();
               setActiveTraceIO({ input: inputText });
 
               const result = streamText({
@@ -3466,6 +3470,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
       const metadata: Record<string, unknown> = {
         architecture: "retrieval-planner-v2",
         response_message_id: responseMessage.id,
+        langfuse_trace_id: langfuseTraceId ?? null,
         model: args.activeModel,
         synthesis_model: synthesisModel,
         provider_path: selectedDeepAgentsStrategist

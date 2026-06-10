@@ -158,6 +158,35 @@ export async function maybeJudgeAndScore(params: {
   }
 }
 
+/**
+ * Mirror a user thumbs-up/down onto its originating Langfuse trace as a
+ * `user_feedback` BOOLEAN score (1 = up, 0 = down). Best-effort no-op when
+ * Langfuse is unconfigured or no trace id is known.
+ */
+export async function scoreUserFeedback(params: {
+  traceId: string;
+  feedback: "up" | "down";
+  comment?: string | null;
+}): Promise<void> {
+  const lf = getClient();
+  if (!lf || !params.traceId) return;
+  try {
+    lf.score({
+      traceId: params.traceId,
+      name: "user_feedback",
+      value: params.feedback === "up" ? 1 : 0,
+      dataType: "BOOLEAN",
+      comment: params.comment ?? undefined,
+    });
+    await lf.flushAsync();
+  } catch (error) {
+    console.warn(
+      "[langfuse] user_feedback score failed (non-fatal)",
+      error instanceof Error ? error.message : error,
+    );
+  }
+}
+
 export async function traceChatCompletion(params: TraceParams): Promise<void> {
   const lf = getClient();
   if (!lf) return;

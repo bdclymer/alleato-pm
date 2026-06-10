@@ -25,7 +25,9 @@ to build next. Grounded in the Langfuse product surface (llms.txt, 2026-06-10).
 |---|---|---|---|
 | **LLM-as-a-Judge (online evals)** | ❌ (1 rule "Conciseness" produces 0 scores — broken) | Semantic quality heuristics can't see (hallucination, off-topic, ungroundedness) | Groundedness judge flags unsupported citations; relevance judge catches the source-health-hijack class semantically. Sample 10–20% for cost. |
 | **Dataset Experiments + CI/CD gate** | ❌ | Regression detection before deploy; run-to-run diffs | Run the 142-case suite as a Langfuse experiment; gate PRs with `langfuse/experiment-action` so the routing fixes (hijack, web-search) stay guarded |
-| **User feedback scores** (thumbs/ratings) | ❌ | Cheapest, most trustworthy label | Thumbs-down on a bad AR-aging answer labels the trace → feeds judge calibration + dataset |
+| **User feedback scores** (thumbs/ratings) | ✅ (2026-06-10) | Cheapest, most trustworthy label | Existing chat thumbs now also write a `user_feedback` score on the trace via `scoreUserFeedback()` (handler persists `langfuse_trace_id` → feedback route looks it up) |
+| **Code-owned LLM judge** (`llm_relevance`/`specificity`/`completeness`) | ✅ off by default | Semantic quality the heuristics miss | `LANGFUSE_LLM_JUDGE_ENABLED=true` + sample rate to enable |
+| **PII masking** (emails/SSN/card/phone) | ✅ (2026-06-10) | Privacy — real emails/contacts sent to 3rd-party cloud | masked on both OTel + v3 egress paths; financials deliberately preserved |
 
 ## Tier 1.5 — Privacy (don't skip)
 | Feature | Status | Why it matters here |
