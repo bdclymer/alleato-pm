@@ -789,7 +789,16 @@ function ProjectTeamSection({
                 {initials(p?.first_name, p?.last_name)}
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm font-medium">{p?.full_name ?? "Unknown"}</span>
+            {p ? (
+              <Link
+                href={`/directory/contacts/${p.id}`}
+                className="text-sm font-medium text-foreground hover:underline"
+              >
+                {p.full_name}
+              </Link>
+            ) : (
+              <span className="text-sm font-medium text-muted-foreground">Unknown</span>
+            )}
           </div>
         );
       },
@@ -1927,7 +1936,7 @@ function CompaniesSection({
   return (
     <>
       <SectionRow
-        title="Companies"
+        title="Subcontractors"
         action={
           <Button
             size="xs"
@@ -1938,7 +1947,7 @@ function CompaniesSection({
         }
         search={search}
         onSearch={setSearch}
-        searchPlaceholder="Search companies..."
+        searchPlaceholder="Search subcontractors..."
       />
 
       <div className="mt-4">
@@ -1948,7 +1957,7 @@ function CompaniesSection({
           <p className="text-sm text-destructive py-4">Failed to load companies.</p>
         ) : filteredRows.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            {search ? "No companies match your search." : "No companies found."}
+            {search ? "No subcontractors match your search." : "No subcontractors found."}
           </p>
         ) : (
           <DataTable
