@@ -8,7 +8,6 @@ import {
   detectRecentEmailInboxRequest,
   detectSourceSpecificRagRequest,
 } from "@/lib/ai/detect-rag-request";
-import { shouldAttachAssistantSourceHealth } from "@/lib/ai/source-health";
 import type { RetrievalPlan, SubAgent } from "./types";
 
 type PlanInput = {
@@ -101,6 +100,13 @@ function isBrandonDaily(message: string): boolean {
   return /brandon.{0,12}(daily|update|brief)/i.test(message);
 }
 
+// Decide whether to ROUTE the entire answer to the source-health fast-path.
+// This MUST be stricter than shouldAttachAssistantSourceHealth (which only
+// attaches supplemental context): routing hijacks the user's question, so it
+// may only fire when they are genuinely asking about the freshness / sync /
+// trustworthiness of the DATA itself — never on the common adjective "current"
+// (as in "current AR aging", "current phase", "current market price") or bare
+// "status"/"latest". See docs/ai-plan/evals/TOOL-COVERAGE-RUN-RESULTS.md.
 function isSourceHealthRequest(
   message: string,
   selectedProjectId?: number,
@@ -112,20 +118,37 @@ function isSourceHealthRequest(
   ) {
     return false;
   }
-  const hasFreshnessLanguage =
-    /\b(packet|snapshot|source|sources|coverage|context|document intelligence)\b/i.test(message) &&
-    /\b(stale|missing|thin|fresh|current|trust|available|loaded|health)\b/i.test(message);
 
-  if (typeof selectedProjectId === "number" && hasFreshnessLanguage) {
+  // Explicit "is my data fresh / synced / trustworthy" questions.
+  const explicitSourceHealth =
+    /\b(source health|source status|sync status|data (health|freshness|coverage)|how (fresh|current|up to date|stale) (is|are)|is (the|my) (data|inbox|source|sources|packet|snapshot)\b|are (the|my) (sources|data|emails|meetings|documents|packets?|messages|transcripts?) (synced|fresh|up to date|current|stale|loaded|missing|complete)|when (did|was) .{0,40}(sync|synced|updated|refreshed?)|can i trust|safe to use|is it (current|up to date|reliable|stale) enough)\b/i.test(
+      message,
+    );
+  if (explicitSourceHealth) return true;
+
+  // Generic: a freshness/sync SUBJECT (the data itself) plus a trust/health
+  // SIGNAL. "current"/"status"/"latest" are NOT subjects — they are adjectives.
+  const freshnessSubject =
+    /\b(sources?|data feeds?|sync|synced|syncing|embed|embedded|embedding|vectoriz\w*|packets?|snapshots?|coverage|pipeline|ingest\w*|source sync|data freshness)\b/i.test(
+      message,
+    );
+  const trustSignal =
+    /\b(stale|fresh|freshness|up[-\s]?to[-\s]?date|out of date|outdated|reliable|reliability|trust\w*|health|healthy|loaded|missing|thin|behind|backlog|last (sync|synced|updated|refresh\w*))\b/i.test(
+      message,
+    );
+  if (freshnessSubject && trustSignal) return true;
+
+  // Project-scoped packet/snapshot freshness check (requires a context word).
+  const hasPacketFreshness =
+    /\b(packets?|snapshots?|coverage|document intelligence)\b/i.test(message) &&
+    /\b(stale|missing|thin|fresh|loaded|health|up to date|current)\b/i.test(
+      message,
+    );
+  if (typeof selectedProjectId === "number" && hasPacketFreshness) {
     return true;
   }
 
-  return (
-    shouldAttachAssistantSourceHealth(message) &&
-    /\b(stale|missing|fresh|freshness|current|trust|health|status|up to date|reliable|reliability|safe to use)\b/i.test(
-      message,
-    )
-  );
+  return false;
 }
 
 function projectOperatingContextSources(selectedProjectId?: number): {

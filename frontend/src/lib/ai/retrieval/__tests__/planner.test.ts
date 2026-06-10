@@ -177,3 +177,50 @@ describe("planRetrieval", () => {
     expect(plan.sources.reusePriorBriefing).toBe(true);
   });
 });
+
+describe("source-health routing must not hijack content questions", () => {
+  // Regression for the assistantSourceHealth hijack: prompts using the common
+  // adjective "current" (or "status"/"latest") were being routed to the
+  // source-health fast-path and answered with a freshness report instead of the
+  // real answer. See docs/ai-plan/evals/TOOL-COVERAGE-RUN-RESULTS.md.
+  const mustNotRoute: Array<[string, number | undefined]> = [
+    ["Quick facts on Westfield — contract value, current phase, and project address.", 43],
+    ["What is Alleato's mission and what are the current strategic goals for the company?", undefined],
+    ["Pull our current AR aging from Acumatica — who owes us and how overdue are they?", undefined],
+    ["What's the current market price trend for structural steel right now? Check the web.", undefined],
+    ["Look through Teams for Westfield punch-list chatter. What is the latest real signal?", 43],
+    ["What risks exist in the business right now?", undefined],
+    ["Which vendors have we spent the most with this year? Pull it from Acumatica.", undefined],
+  ];
+  it.each(mustNotRoute)(
+    "does NOT route to source_health: %s",
+    (message, selectedProjectId) => {
+      const plan = planRetrieval({
+        message,
+        selectedProjectId,
+        messages: [userMsg(message)],
+      });
+      expect(plan.intent).not.toBe("source_health");
+    },
+  );
+
+  const mustRoute: Array<[string, number | undefined]> = [
+    ["For Westfield document intelligence, before I trust the AI readout, tell me whether the project packet, snapshot, and document sources look stale, missing, thin, or current enough.", 43],
+    ["Before I trust the AI readout, are Teams, Outlook, meetings, and packets current enough? Tell me what is stale or missing.", undefined],
+    ["Are Teams messages current enough to trust today, or is source sync stale?", undefined],
+    ["What's the source health right now?", undefined],
+    ["Is my data fresh?", undefined],
+    ["Are the sources synced?", undefined],
+  ];
+  it.each(mustRoute)(
+    "DOES route genuine source-health question: %s",
+    (message, selectedProjectId) => {
+      const plan = planRetrieval({
+        message,
+        selectedProjectId,
+        messages: [userMsg(message)],
+      });
+      expect(plan.intent).toBe("source_health");
+    },
+  );
+});
