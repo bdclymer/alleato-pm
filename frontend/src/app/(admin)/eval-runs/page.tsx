@@ -105,12 +105,16 @@ export default function EvalRunsPage() {
   const [selectedRun, setSelectedRun] = React.useState<SelectedRun | null>(null);
   const [available, setAvailable] = React.useState(true);
   const [query, setQuery] = React.useState("");
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [isListLoading, setIsListLoading] = React.useState(true);
+  const [isDetailLoading, setIsDetailLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [expandedCaseId, setExpandedCaseId] = React.useState<string | null>(null);
 
-  const load = React.useCallback(async (runId?: string | null) => {
-    setIsLoading(true);
+  // Loads the full run list (+ the requested run's detail). This reads many
+  // files, so it runs only on mount and on explicit Refresh — never on every
+  // selection (that would blank the list while re-reading every run).
+  const loadList = React.useCallback(async (runId?: string | null) => {
+    setIsListLoading(true);
     setError(null);
     try {
       const url = runId
@@ -126,13 +130,39 @@ export default function EvalRunsPage() {
         loadError instanceof Error ? loadError.message : "Eval runs could not be loaded.",
       );
     } finally {
-      setIsLoading(false);
+      setIsListLoading(false);
     }
   }, []);
 
+  // Loads ONLY the selected run's detail (one file). Keeps the list intact so
+  // selecting a run never blanks the page.
+  const loadDetail = React.useCallback(async (runId: string) => {
+    setIsDetailLoading(true);
+    setError(null);
+    try {
+      const response = await apiFetch<EvalRunsResponse>(
+        `/api/admin/eval-runs?runId=${encodeURIComponent(runId)}&detailOnly=1`,
+      );
+      setSelectedRun(response.selectedRun);
+    } catch (loadError) {
+      console.error("Failed to load eval run detail", loadError);
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "That run's detail could not be loaded.",
+      );
+    } finally {
+      setIsDetailLoading(false);
+    }
+  }, []);
+
+  const initialRunId = searchParams?.get("runId") ?? null;
+  const didInit = React.useRef(false);
   React.useEffect(() => {
-    void load(searchParams?.get("runId") ?? null);
-  }, [load, searchParams]);
+    if (didInit.current) return;
+    didInit.current = true;
+    void loadList(initialRunId);
+  }, [loadList, initialRunId]);
 
   const filteredRuns = React.useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -148,7 +178,7 @@ export default function EvalRunsPage() {
   function selectRun(runId: string) {
     setExpandedCaseId(null);
     router.replace(`${pathname}?runId=${encodeURIComponent(runId)}`, { scroll: false });
-    void load(runId);
+    void loadDetail(runId);
   }
 
   return (
@@ -159,15 +189,15 @@ export default function EvalRunsPage() {
       actions={
         <Button
           variant="outline"
-          onClick={() => void load(selectedRun?.runId)}
-          disabled={isLoading}
+          onClick={() => void loadList(selectedRun?.runId)}
+          disabled={isListLoading}
         >
-          <RefreshCw className={cn("mr-2 size-4", isLoading && "animate-spin")} />
+          <RefreshCw className={cn("mr-2 size-4", isListLoading && "animate-spin")} />
           Refresh
         </Button>
       }
     >
-      {!available && !isLoading ? (
+      {!available && !isListLoading ? (
         <EmptyState
           icon={<FlaskConical />}
           title="No eval runs found on this machine"
@@ -228,7 +258,10 @@ export default function EvalRunsPage() {
                   </Button>
                 );
               })}
-              {!isLoading && filteredRuns.length === 0 ? (
+              {isListLoading && filteredRuns.length === 0 ? (
+                <p className="px-1 text-sm text-muted-foreground">Loading runs…</p>
+              ) : null}
+              {!isListLoading && filteredRuns.length === 0 ? (
                 <EmptyState
                   icon={<FlaskConical />}
                   title="No runs match"
@@ -250,6 +283,9 @@ export default function EvalRunsPage() {
                       status={`${selectedRun.passed}/${selectedRun.totalCases} passed`}
                       variant={selectedRun.failed === 0 ? "success" : "warning"}
                     />
+                    {isDetailLoading ? (
+                      <span className="text-xs text-muted-foreground">Loading…</span>
+                    ) : null}
                   </div>
                   <p className="text-sm text-muted-foreground">
                     {formatDateTime(selectedRun.generatedAt)} · {targetLabel(selectedRun.baseUrl)} ·{" "}

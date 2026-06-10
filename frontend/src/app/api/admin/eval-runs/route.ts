@@ -11,6 +11,9 @@ export const dynamic = "force-dynamic";
 const WHERE = "api.admin.eval-runs#GET";
 const RUN_ID_PATTERN = /^[A-Za-z0-9._-]+$/;
 const MAX_ANSWER_CHARS = 8000;
+// Cap how many runs the list reads so the directory (which accumulates over
+// time) never makes the page slow. Newest-first; older runs stay on disk.
+const LIST_LIMIT = 150;
 
 interface RawScore {
   status?: string;
@@ -90,6 +93,30 @@ function summarize(runId: string, run: RawRun) {
   };
 }
 
+function buildDetail(runId: string, run: RawRun) {
+  return {
+    ...summarize(runId, run),
+    bundleCriteria: run.bundle?.criteria ?? [],
+    filter: run.filter ?? null,
+    cases: (run.results ?? []).map((entry) => ({
+      id: entry.id,
+      intent: entry.intent ?? null,
+      prompt: entry.prompt ?? "",
+      durationMs: entry.durationMs ?? null,
+      selectedProjectId: entry.selectedProjectId ?? null,
+      status: entry.score?.status ?? "unknown",
+      expectedToolNames: entry.expectedToolNames ?? [],
+      toolsFired: entry.score?.toolNames ?? [],
+      failures: entry.score?.failures ?? [],
+      warnings: entry.score?.warnings ?? [],
+      answer:
+        typeof entry.score?.finalText === "string"
+          ? entry.score.finalText.slice(0, MAX_ANSWER_CHARS)
+          : "",
+    })),
+  };
+}
+
 export const GET = withApiGuardrails(WHERE, async ({ request }) => {
   await requireAdmin(WHERE);
 
@@ -98,49 +125,49 @@ export const GET = withApiGuardrails(WHERE, async ({ request }) => {
     return NextResponse.json({ available: false, runs: [], selectedRun: null });
   }
 
-  const entries = await fs.readdir(dir, { withFileTypes: true });
-  const runIds = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
+  const requestedRunId = request.nextUrl.searchParams.get("runId");
+  const safeRequestedId =
+    requestedRunId && RUN_ID_PATTERN.test(requestedRunId) ? requestedRunId : null;
+  const detailOnly = request.nextUrl.searchParams.get("detailOnly") === "1";
 
-  const runs = [];
-  for (const runId of runIds) {
-    const run = await readRun(dir, runId);
-    if (run) runs.push(summarize(runId, run));
+  // Fast path: selecting a run only needs that one run's detail (1 file read).
+  // The client keeps the existing list in state, so we skip rebuilding it.
+  if (detailOnly && safeRequestedId) {
+    const run = await readRun(dir, safeRequestedId);
+    return NextResponse.json({
+      available: true,
+      runs: [],
+      selectedRun: run ? buildDetail(safeRequestedId, run) : null,
+    });
   }
-  runs.sort((a, b) =>
+
+  const entries = await fs.readdir(dir, { withFileTypes: true });
+  const runIds = entries
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort((a, b) => b.localeCompare(a)) // newest first (timestamp-prefixed names)
+    .slice(0, LIST_LIMIT);
+
+  // Read all summaries in parallel — sequential awaits made this take ~7s.
+  const summaries = (
+    await Promise.all(
+      runIds.map(async (runId) => {
+        const run = await readRun(dir, runId);
+        return run ? summarize(runId, run) : null;
+      }),
+    )
+  ).filter((entry): entry is ReturnType<typeof summarize> => entry !== null);
+
+  summaries.sort((a, b) =>
     String(b.generatedAt ?? b.runId).localeCompare(String(a.generatedAt ?? a.runId)),
   );
 
-  const requestedRunId = request.nextUrl.searchParams.get("runId");
-  const targetRunId =
-    requestedRunId && RUN_ID_PATTERN.test(requestedRunId) ? requestedRunId : runs[0]?.runId;
-
+  const targetRunId = safeRequestedId ?? summaries[0]?.runId;
   let selectedRun = null;
   if (targetRunId) {
     const run = await readRun(dir, targetRunId);
-    if (run) {
-      selectedRun = {
-        ...summarize(targetRunId, run),
-        bundleCriteria: run.bundle?.criteria ?? [],
-        filter: run.filter ?? null,
-        cases: (run.results ?? []).map((entry) => ({
-          id: entry.id,
-          intent: entry.intent ?? null,
-          prompt: entry.prompt ?? "",
-          durationMs: entry.durationMs ?? null,
-          selectedProjectId: entry.selectedProjectId ?? null,
-          status: entry.score?.status ?? "unknown",
-          expectedToolNames: entry.expectedToolNames ?? [],
-          toolsFired: entry.score?.toolNames ?? [],
-          failures: entry.score?.failures ?? [],
-          warnings: entry.score?.warnings ?? [],
-          answer:
-            typeof entry.score?.finalText === "string"
-              ? entry.score.finalText.slice(0, MAX_ANSWER_CHARS)
-              : "",
-        })),
-      };
-    }
+    if (run) selectedRun = buildDetail(targetRunId, run);
   }
 
-  return NextResponse.json({ available: true, runs, selectedRun });
+  return NextResponse.json({ available: true, runs: summaries, selectedRun });
 });
