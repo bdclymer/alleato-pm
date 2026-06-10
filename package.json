@@ -125,6 +125,7 @@
     "rag:verify:risk-quality": "python3 scripts/verify/verify_ai_assistant_risk_quality.py",
     "rag:verify:task-integrity": "python3 scripts/verify/verify_fireflies_task_integrity.py",
     "rag:verify:pm-briefing": "node scripts/verify/verify_rag_pm_briefing_quality.mjs",
+    "langfuse:sync-dataset": "node scripts/langfuse/sync-eval-dataset.mjs",
     "rag:verify:eval-suite": "node scripts/verify/verify_ai_assistant_eval_suite.mjs",
     "rag:verify:eval-suite:case": "node scripts/verify/verify_ai_assistant_eval_suite.mjs --case",
     "rag:verify:inbox-evals": "node scripts/verify/verify_ai_assistant_eval_suite.mjs --bundle inbox-outlook-regression",
