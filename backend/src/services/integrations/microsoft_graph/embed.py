@@ -614,14 +614,48 @@ def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any
         if conn is not None:
             conn.close()
 
-    # Post-RAG-split: PM APP status is already 'embedded'/'complete' for docs
-    # that were processed by the pre-split path. The primary scan finds 0 rows,
-    # but rag_document_metadata may still have embedding_status IS NULL.
-    # Signal the RAG-aware fallback to handle them.
-    if rag_database_writes_enabled() and not docs:
-        return None
+    # Post-RAG-split supplement: PM APP status is already 'embedded'/'complete'
+    # for emails/attachments processed by the pre-split path, so the SQL query
+    # above won't find them. Always supplement with unembedded RAG DB rows.
+    # This must run even when SQL found results (e.g. teams_message) because the
+    # "not docs" guard was insufficient — any non-email result kept emails hidden.
+    if rag_database_writes_enabled():
+        try:
+            from datetime import timedelta
+            cutoff = (datetime.now(timezone.utc) - timedelta(days=365)).isoformat()
+            rag_resp = (
+                get_rag_read_client()
+                .from_("rag_document_metadata")
+                .select("id, type, created_at")
+                .is_("embedding_status", "null")
+                .in_("type", ["email", "email_attachment"])
+                .gte("created_at", cutoff)
+                .order("created_at", desc=True)
+                .limit(limit)
+                .execute()
+            )
+            rag_docs = rag_resp.data or []
+            if rag_docs:
+                existing_ids = {d["id"] for d in docs}
+                rag_candidates = [
+                    {
+                        "id": d["id"],
+                        "category": d["type"],
+                        "status": "repair",
+                        "created_at": d["created_at"],
+                    }
+                    for d in rag_docs
+                    if d["id"] not in existing_ids
+                ]
+                docs = (rag_candidates + docs)[:limit]
+                logger.info(
+                    "[GraphEmbed] RAG supplement: %d email/attachment candidates added",
+                    len(rag_candidates),
+                )
+        except Exception as exc:
+            logger.warning("[GraphEmbed] RAG supplement scan failed: %s", exc)
 
-    return docs
+    return docs if docs else None
 
 
 def _fetch_graph_embedding_candidates_via_supabase(
