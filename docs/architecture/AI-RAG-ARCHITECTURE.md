@@ -2,7 +2,7 @@
 
 **Authoritative reference for all AI work. Read this before touching any file under `frontend/src/lib/ai/` or `backend/src/services/pipeline/`.**
 
-Last verified: 2026-06-10 (Langfuse OTel span processor wired into instrumentation; AI SDK experimental_telemetry now exports to Langfuse)
+Last verified: 2026-06-10 (Langfuse OTel span processor wired into instrumentation; AI SDK experimental_telemetry now exports to Langfuse; fixed missing _run_source_intelligence_compiler call in embed_pending_fireflies_meetings — Fireflies meetings now trigger insight_cards compilation after embedding)
 
 ---
 

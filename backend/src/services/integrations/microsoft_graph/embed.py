@@ -18,7 +18,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from ...ai_transport import get_openai_client, retry_ai_call
-from ...supabase_helpers import get_rag_read_client, get_rag_write_client, rag_database_writes_enabled
+from ...supabase_helpers import get_rag_read_client, get_rag_write_client, get_supabase_client, rag_database_writes_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -776,6 +776,7 @@ def embed_pending_fireflies_meetings(limit: int = 25) -> Dict[str, Any]:
             ).eq("id", doc_id).execute()
 
             logger.info("[FirefliesEmbed] %s → %d chunks ('%s')", doc_id, len(rows), title[:60])
+            _run_source_intelligence_compiler(get_supabase_client(), doc_id)
             embedded += 1
             total_chunks += len(rows)
         except Exception as exc:
