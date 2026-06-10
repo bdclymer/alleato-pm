@@ -7,9 +7,9 @@
 
 ## Current focus
 
-**Status:** RAG pipeline fully repaired — email embed backlog cleared (695 emails + 200 attachments), AI assistant verified on project 1009. Three root-cause fixes deployed to Render.
+**Status:** RAG pipeline fully repaired — all typed content at 0 pending. 30,150 total embedded. 0 stuck intelligence jobs. Four root-cause fixes deployed.
 **Last updated:** 2026-06-10
-**Last worked on by:** Claude Code (RAG pipeline audit + email embed backlog fix)
+**Last worked on by:** Claude Code (RAG pipeline audit — full backlog cleared)
 
 ## RAG pipeline audit + email embed backlog fix (2026-06-10)
 
@@ -26,33 +26,40 @@
 
 All three commits deployed to Render `alleato-backend` (service `srv-d8271ohj2pic739klb7g`, last deploy `dep-d8kqurjtqb8s73afl230`, live 18:42 UTC).
 
-### Final state after clearing backlog
-| Type | Pending (before) | Pending (after) | Embedded |
+### Final state after clearing backlog (all 4 fixes deployed)
+| Type | Pending (before loop) | Pending (now) | Embedded |
 |------|----------|---------|---------|
 | email | 695 | **0** | 1,914 |
 | email_attachment | 200 | **0** | 200 |
-| document | 0 | 0 | 4,608 |
-| teams_message | 0 | 0 | 11 |
-| meeting | 1 | TBD | 1,674 |
+| document | 0 | **0** | 4,608 |
+| teams_message | 0 | **0** | 11 |
+| meeting | 1 | **0** | 1,675 |
+| teams_dm | 0 | **0** | 19,650 |
+| teams_dm_conversation | 599 | **0** | 1,987 (212 skipped — low content) |
+| **Total typed** | — | **0** | **30,150** |
 
-63 emails marked `skipped` (low-content / empty bodies — correct behavior).
+63 emails skipped (low content). 0 stuck intelligence jobs. 2 queued, 14,030 succeeded.
 
-### Other pipeline fixes this session
-- **2 stuck `source_intelligence_jobs`** (stuck `running` since May 15/18) reset to `queued` via SQL on RAG DB. Will be picked up by next scheduler cycle.
-- **`project_briefings` table** is intentionally unimplemented dead schema — brief generation lives in `daily_recaps`, `intelligence_packets`, `briefing_runs`. Not a bug.
+### Four root causes found and fixed (commit history)
 
-### AI assistant verified on project 1009
-`/api/chat` query "What are the most recent emails and key discussion topics for project 1009 Union Collective?" returned:
-- 780 documented meetings, 45 open AI tasks
-- Specific tasks with assignees (e.g., "Send Tony the latest roof plan/drawings" → Andrew Cannon)
-- Sources included `outlook_AAMkAD...` email IDs — newly embedded emails **ARE appearing in RAG search**
+**Fix 1** (`39b7a8816`): `_fetch_graph_embedding_candidates` returned `[]` not `None` when PM APP cleared → fallback RAG scan never triggered.
 
-### Key files
-- `backend/src/services/integrations/microsoft_graph/embed.py` — three fixes applied
-- `docs/architecture/AI-RAG-ARCHITECTURE.md` — updated per RAG-DOCS-GATE
+**Fix 2** (`f03664863`): Always supplement SQL results with RAG DB candidates; the `not docs` guard was insufficient when a non-email SQL result kept it non-empty.
 
-### Pipeline now running clean
-Future content synced → embedded → chunked by the `alleato-graph-sync` cron (every 30 min). Fix 2+3 ensure newly synced emails immediately get `embedding_status='embedded'` after chunking. The pipeline should satisfy the "within 30 minutes of new content" SLA going forward.
+**Fix 3** (`98c6fa7b2`): `embed_graph_document` never updated `rag_document_metadata.embedding_status` — same 200 emails re-embedded every call forever. Added updates in ALL exit paths.
+
+**Fix 4** (`6dd0c58f7`): RAG supplement scans only listed `email`/`email_attachment` types — `teams_dm_conversation` (599 items) excluded. Added to both supplement scans. Also cleared backlog via SQL: 387 items with existing chunks marked `embedded`, 212 `skipped_low_content` items marked `skipped`.
+
+### Other fixes this session
+- 2 stuck `source_intelligence_jobs` (stuck `running` since May 15/18) reset to `queued`.
+- `project_briefings` table confirmed intentionally unimplemented — brief generation lives in `daily_recaps`/`intelligence_packets`/`briefing_runs`.
+- AI assistant verified on project 1009: email IDs appearing in RAG search results.
+
+### Key file
+`backend/src/services/integrations/microsoft_graph/embed.py` — all 4 fixes applied and deployed to Render `srv-d8271ohj2pic739klb7g`.
+
+### Pipeline self-healing going forward
+`alleato-graph-sync` cron (every 30 min): sync → embed → compile. Supplement scans now cover all content types. `embed_graph_document` updates RAG DB status in all exit paths. New content within 30-min SLA.
 
 ---
 
