@@ -2,6 +2,7 @@ import { generateObject } from "ai";
 import { z } from "zod";
 
 import { getLanguageModel } from "@/lib/ai/providers";
+import { aiTelemetry } from "@/lib/ai/ai-telemetry";
 import {
   shouldUsePacketFirstIntent,
   type AssistantIntent,
@@ -157,11 +158,10 @@ export async function planAssistantIntent(params: {
         `Deterministic fallback intent: ${params.deterministicIntent}`,
         `Source-specific RAG kind: ${params.sourceSpecificRagKind ?? "none"}`,
       ].join("\n"),
-      experimental_telemetry: {
-        isEnabled: process.env.PHOENIX_TRACING === "true",
+      experimental_telemetry: aiTelemetry({
         functionId: "intent-planner",
         metadata: { modelId: params.activeModel },
-      },
+      }),
     }),
     7000,
     "intent planner timed out",

@@ -32,7 +32,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ExportDialog } from "@/components/commitments/ExportDialog";
-import { CommitmentOwnershipFinder } from "@/components/commitments/CommitmentOwnershipFinder";
 import {
   TableExpandedRow,
   UnifiedTablePage,
@@ -909,8 +908,6 @@ export default function ProjectCommitmentsPage(): ReactElement {
               changeOrders={projectChangeOrders}
               isLoading={isLoadingProjectCOs}
             />
-          ) : !isRecycleBinTab ? (
-            <CommitmentOwnershipFinder projectId={projectId} className="pb-2" />
           ) : undefined
         }
       />

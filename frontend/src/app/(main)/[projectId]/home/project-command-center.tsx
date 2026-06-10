@@ -12,6 +12,7 @@ import {
   Calendar,
   Check,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   Download,
   Eye,
@@ -33,6 +34,11 @@ import {
   Button,
   StatusBadge,
 } from "@/components/ds";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as TablePrimitives from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -267,29 +273,48 @@ function isClosedStatus(status: string | null | undefined): boolean {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   SectionHeading
+   Homepage disclosure section
 ───────────────────────────────────────────────────────────── */
 
-function SectionHeading({
-  children,
+function HomeCollapsibleSection({
+  title,
   href,
+  children,
+  defaultOpen = true,
 }: {
-  children: React.ReactNode;
+  title: string;
   href?: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
 }) {
+  const [open, setOpen] = React.useState(defaultOpen);
+
   return (
-    <div className="mb-2 flex items-center justify-between">
-      <div className="text-sm font-semibold text-foreground">{children}</div>
-      {href && (
-        <Link
-          href={href}
-          prefetch={false}
-          className="flex items-center gap-0.5 text-xs text-primary transition-colors hover:text-primary/80"
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <div className="mb-2 flex min-h-11 items-center justify-between gap-3">
+        <CollapsibleTrigger
+          className="group flex min-h-11 flex-1 items-center gap-2 text-left text-sm font-semibold text-foreground outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          View all <ChevronRight className="h-3 w-3" />
-        </Link>
-      )}
-    </div>
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",
+              open && "rotate-180",
+            )}
+          />
+          <span>{title}</span>
+        </CollapsibleTrigger>
+        {href && (
+          <Link
+            href={href}
+            prefetch={false}
+            className="flex min-h-11 shrink-0 items-center gap-0.5 text-xs text-primary transition-colors hover:text-primary/80"
+          >
+            View all <ChevronRight className="h-3 w-3" />
+          </Link>
+        )}
+      </div>
+      <CollapsibleContent>{children}</CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -1295,31 +1320,25 @@ export function ProjectCommandCenter({
             </div>
           </div>
 
-          {/* Recent Meetings */}
-          <div>
-            <SectionHeading href={`/${projectId}/meetings`}>Recent Meetings</SectionHeading>
+          <HomeCollapsibleSection title="Recent Meetings" href={`/${projectId}/meetings`}>
             {lazyTabStatus.meetings.loading ? (
               <div className="py-4 text-sm text-muted-foreground">Loading meetings…</div>
             ) : (
               meetingsContent("")
             )}
-          </div>
+          </HomeCollapsibleSection>
 
-          {/* Daily Reports */}
-          <div>
-            <SectionHeading href={`/${projectId}/daily-log`}>Daily Reports</SectionHeading>
+          <HomeCollapsibleSection title="Daily Reports" href={`/${projectId}/daily-log`}>
             {lazyTabStatus["daily-logs"].loading ? (
               <div className="py-4 text-sm text-muted-foreground">Loading daily reports…</div>
             ) : (
               dailyLogsContent("")
             )}
-          </div>
+          </HomeCollapsibleSection>
 
-          {/* Document Intelligence */}
-          <div>
-            <SectionHeading>Document Intelligence</SectionHeading>
+          <HomeCollapsibleSection title="Document Intelligence">
             <TabSection tabs={docIntelTabs} defaultTab="documents" />
-          </div>
+          </HomeCollapsibleSection>
         </div>
       </div>
 

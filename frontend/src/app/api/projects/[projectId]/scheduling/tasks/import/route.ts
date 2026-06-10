@@ -23,6 +23,7 @@ interface ImportTaskData {
   name: string;
   external_id?: string;
   parent_external_id?: string | null;
+  predecessor_external_ids?: string[];
   wbs_code?: string;
   start_date?: string;
   finish_date?: string;
@@ -138,6 +139,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     }
 
     const importedTaskIdsByExternalId = new Map<string, string>();
+    const dependencyRows: Array<{ task_id: string; predecessor_task_id: string; dependency_type: string; lag_days: number }> = [];
 
     // Import each task in request order so parent_external_id references can map
     // Microsoft Project outline hierarchy without adding source columns yet.
@@ -170,6 +172,16 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         if (taskData.external_id) {
           importedTaskIdsByExternalId.set(taskData.external_id, importedTask.id);
         }
+        for (const predecessorExternalId of taskData.predecessor_external_ids ?? []) {
+          const predecessorTaskId = importedTaskIdsByExternalId.get(predecessorExternalId);
+          if (!predecessorTaskId) continue;
+          dependencyRows.push({
+            task_id: importedTask.id,
+            predecessor_task_id: predecessorTaskId,
+            dependency_type: "finish_to_start",
+            lag_days: 0,
+          });
+        }
         results.imported++;
       } catch (error) {
         results.failed++;
@@ -181,8 +193,18 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       }
     }
 
+    if (dependencyRows.length > 0) {
+      const { error: dependencyInsertError } = await supabase
+        .from("schedule_dependencies")
+        .insert(dependencyRows);
+      if (dependencyInsertError) {
+        throw new Error(`Imported tasks, but failed to create schedule dependencies: ${dependencyInsertError.message}`);
+      }
+    }
+
     return NextResponse.json({
       message: `Import completed: ${results.imported} imported, ${results.failed} failed`,
+      dependenciesImported: dependencyRows.length,
       ...results,
     });
     },

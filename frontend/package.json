@@ -8,7 +8,9 @@
       "agentation@3.0.2": "patches/agentation@3.0.2.patch"
     },
     "overrides": {
-      "@opentelemetry/sdk-trace-base": "^2.7.1"
+      "@opentelemetry/sdk-trace-base": "^2.7.1",
+      "@opentelemetry/exporter-trace-otlp-http": "^0.208.0",
+      "@opentelemetry/sdk-node": "^0.208.0"
     }
   },
   "scripts": {
@@ -141,8 +143,8 @@
     "@once-ui-system/core": "^1.6.0",
     "@opentelemetry/api": "1.9.0",
     "@opentelemetry/core": "^2.7.1",
-    "@opentelemetry/exporter-trace-otlp-http": "^0.57.2",
-    "@opentelemetry/sdk-node": "^0.57.2",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.208.0",
+    "@opentelemetry/sdk-node": "^0.208.0",
     "@opentelemetry/sdk-trace-base": "^2.7.1",
     "@opentelemetry/sdk-trace-node": "^2.7.1",
     "@radix-ui/react-accordion": "^1.2.12",

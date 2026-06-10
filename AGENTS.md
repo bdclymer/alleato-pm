@@ -388,6 +388,8 @@ When asked to design/build a page, default to **Linear/Supabase-style minimal UI
 - No heavy shadows (`shadow-lg`, `shadow-xl`, glow effects)
 - No mixed accent palette (pick one accent and stay consistent)
 - No emojis in production UI copy, states, labels, or empty-state visuals unless explicitly requested by the user
+- No unsolicited helper panels, finder widgets, explanatory blocks, banners, callouts, or "nice to have" modules on production pages. Every visible element must answer a user need already proven by the workflow. If it does not make the primary task faster, clearer, or safer, remove it.
+- No visual noise as a placeholder for product thinking. Do not add secondary search boxes, ownership finders, summary strips, empty helper text, badges, icons, or extra sections just because data exists. Earn the space with a concrete workflow requirement, or keep the page quiet.
 
 **Default page structure:**
 
@@ -420,6 +422,7 @@ When asked to design/build a page, default to **Linear/Supabase-style minimal UI
 - For accordion, activity, navigation, and side-list patterns, use icon weight, text hierarchy, row spacing, hover tint, and `divide-y` rows instead of wrapping every row or group in a bordered card
 - For chat history, navigation, and side lists: use plain list rows, not tiles, pills, or boxed cards
 - Prefer the quietest control that works: icon actions over labeled toolbars when the action is obvious
+- Page-level additions must pass the signal test before implementation: who uses it, when they use it, what decision it improves, and why the existing table toolbar/filter/search/detail flow cannot own it. If those answers are not clear, do not add the UI.
 
 **Spacing/typography baseline:**
 

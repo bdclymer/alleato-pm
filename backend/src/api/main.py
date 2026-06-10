@@ -284,6 +284,12 @@ class MicrosoftProjectConvertTokenResponse(BaseModel):
     expires_in_seconds: int
 
 
+class SchedulePdfExtractResponse(BaseModel):
+    text: str
+    page_count: int
+    character_count: int
+
+
 def _base64url(value: bytes | str) -> str:
     source = value.encode("utf-8") if isinstance(value, str) else value
     return base64.urlsafe_b64encode(source).decode("ascii").rstrip("=")
@@ -716,6 +722,56 @@ async def convert_microsoft_project_schedule(
         "tasks": tasks,
         "source_format": suffix.lstrip("."),
         "task_count": len(tasks),
+    }
+
+
+@app.post(
+    "/api/scheduling/schedule-pdf/extract",
+    tags=["Scheduling"],
+    summary="Extract readable text from a printed schedule PDF",
+    response_model=SchedulePdfExtractResponse,
+)
+async def extract_schedule_pdf_text(
+    project_id: int = Query(..., ge=1),
+    file: UploadFile = File(...),
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    file_name = file.filename or "schedule.pdf"
+    if Path(file_name).suffix.lower() != ".pdf" and file.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail="Upload a schedule PDF file.")
+
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Uploaded PDF is empty.")
+    if len(content) > 50 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Schedule PDF is larger than the 50 MB import limit.")
+    if content[:5] != b"%PDF-":
+        raise HTTPException(status_code=400, detail="Uploaded file is not a readable PDF.")
+
+    try:
+        import io
+        from pypdf import PdfReader
+
+        reader = PdfReader(io.BytesIO(content))
+        pages: List[str] = []
+        for index, page in enumerate(reader.pages, start=1):
+            text = page.extract_text() or ""
+            if text.strip():
+                pages.append(f"--- Page {index} ---\n{text.strip()}")
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=f"Unable to extract text from schedule PDF: {str(exc)[:300]}") from exc
+
+    extracted_text = "\n\n".join(pages).strip()
+    if len(extracted_text) < 50:
+        raise HTTPException(
+            status_code=422,
+            detail="This PDF did not contain enough selectable text to import. Upload MPP, XML, Excel, or CSV, or OCR the PDF first.",
+        )
+
+    return {
+        "text": extracted_text,
+        "page_count": len(reader.pages),
+        "character_count": len(extracted_text),
     }
 
 

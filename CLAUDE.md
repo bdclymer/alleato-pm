@@ -158,6 +158,10 @@ A fix is not complete without: a test that would have caught it, a validation ru
 ### UI Signal-to-Noise
 Remove anything that earns no place. No borders around sections — use spacing and tonal backgrounds. No labels next to self-explanatory icons. Three stacked buttons should be a `<Select>`. When in doubt, remove.
 
+Never add unsolicited helper panels, finder widgets, explanatory blocks, banners, callouts, or "nice to have" modules to production pages. Every visible element must answer a proven user workflow need. If it does not make the primary task faster, clearer, or safer, remove it.
+
+Do not use visual noise as a substitute for product thinking. Secondary search boxes, ownership finders, summary strips, empty helper text, badges, icons, and extra sections require a concrete answer to: who uses it, when they use it, what decision it improves, and why the existing table toolbar/filter/search/detail flow cannot own it. If those answers are not clear, do not add the UI.
+
 ### Chat UI
 No `<Alert>`/`<Card>` wrappers. No `Bot` icon — use "A" or `BriefcaseIcon`. User messages: `bg-primary text-primary-foreground`. Loading: animated dots.
 
@@ -278,3 +282,4 @@ After PR is merged, delete the branch.
 - `cd X && command` chains fail in zsh — use absolute paths.
 - **START of session:** Read `WORKING_CONTEXT.md`.
 - **END of session:** Update `WORKING_CONTEXT.md`.
+- **Resuming from a context summary:** Execute every pending task listed in the summary immediately and completely — fix, commit, deploy, verify — without asking. If a deploy doesn't auto-trigger, detect it and trigger it via the Render/Vercel API. Use `spawn_task` for any optional follow-up items discovered along the way. The user should come back to "done", not to a question.

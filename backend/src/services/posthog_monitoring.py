@@ -12,6 +12,7 @@ def init_posthog() -> bool:
     api_key = os.getenv("POSTHOG_API_KEY")
     if not api_key:
         return False
+    host = os.getenv("POSTHOG_HOST", "https://us.i.posthog.com").rstrip("/")
 
     try:
         from opentelemetry._logs import set_logger_provider
@@ -40,7 +41,7 @@ def init_posthog() -> bool:
     set_logger_provider(provider)
 
     exporter = OTLPLogExporter(
-        endpoint="https://us.i.posthog.com/otlp/v1/logs",
+        endpoint=f"{host}/i/v1/logs",
         headers={"Authorization": f"Bearer {api_key}"},
     )
     provider.add_log_record_processor(BatchLogRecordProcessor(exporter))

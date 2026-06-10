@@ -257,7 +257,7 @@ export default function NewBudgetLineItemPage() {
         method: "POST",
         body: JSON.stringify({
           cost_code_id: newCodeData.costCodeId,
-          cost_type_id: newCodeData.costType, // Send 'L', 'M', 'E', 'S', or 'O' directly
+          cost_type_id: newCodeData.costType, // Send the selected cost type code directly.
           description: selectedCostCode.title,
         }),
       });

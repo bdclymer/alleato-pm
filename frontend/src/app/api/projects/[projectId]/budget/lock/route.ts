@@ -4,6 +4,35 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { logger } from "@/lib/logger";
+import { createServiceClient } from "@/lib/supabase/service";
+
+async function resolveLockOwnerName(
+  userId: string | null,
+): Promise<string | null> {
+  if (!userId) return null;
+
+  const serviceClient = createServiceClient();
+  const { data: profile, error } = await serviceClient
+    .from("user_profiles")
+    .select("full_name, email")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) {
+    logger.warn({
+      msg: "Failed to resolve budget lock owner display name",
+      data: { userId, error: error.message },
+    });
+    return null;
+  }
+
+  const fullName = profile?.full_name?.trim();
+  if (fullName) return fullName;
+
+  const email = profile?.email?.trim();
+  return email || null;
+}
 
 // POST /api/projects/[id]/budget/lock - Lock the budget
 export const POST = withApiGuardrails<{ projectId: string }>(
@@ -79,6 +108,9 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     }
 
     const updatedProject = data[0];
+    const lockedByName = await resolveLockOwnerName(
+      updatedProject.budget_locked_by,
+    );
 
     return NextResponse.json({
       success: true,
@@ -87,6 +119,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         budget_locked: updatedProject.budget_locked,
         budget_locked_at: updatedProject.budget_locked_at,
         budget_locked_by: updatedProject.budget_locked_by,
+        budget_locked_by_name: lockedByName,
       },
     });
     },
@@ -264,7 +297,8 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     return NextResponse.json({
       isLocked: project.budget_locked || false,
       lockedAt: project.budget_locked_at,
-      lockedBy: project.budget_locked_by,
+      lockedBy: await resolveLockOwnerName(project.budget_locked_by),
+      lockedByUserId: project.budget_locked_by,
     });
     },
 );

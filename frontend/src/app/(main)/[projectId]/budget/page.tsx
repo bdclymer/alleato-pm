@@ -236,6 +236,7 @@ function BudgetPageContent() {
         isLocked?: boolean;
         lockedAt?: string | null;
         lockedBy?: string | null;
+        lockedByUserId?: string | null;
       }>(`/api/projects/${projectId}/budget/lock`);
       setIsLocked(data.isLocked || false);
       setLockedAt(data.lockedAt || null);
@@ -337,6 +338,7 @@ function BudgetPageContent() {
         data: {
           budget_locked_at: string | null;
           budget_locked_by: string | null;
+          budget_locked_by_name: string | null;
         };
       }>(`/api/projects/${projectId}/budget/lock`, {
         method: "POST",
@@ -344,7 +346,7 @@ function BudgetPageContent() {
 
       setIsLocked(true);
       setLockedAt(data.data.budget_locked_at);
-      setLockedBy(data.data.budget_locked_by);
+      setLockedBy(data.data.budget_locked_by_name);
       toast.success("Budget locked successfully");
     } catch (error) {
       toast.error("Failed to lock budget", {

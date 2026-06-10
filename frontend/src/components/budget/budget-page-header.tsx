@@ -23,7 +23,6 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -151,27 +150,19 @@ export function BudgetPageHeader({
     });
   };
 
+  const isUuid = (value: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      value.trim(),
+    );
+  const lockOwnerDisplay = lockedBy && !isUuid(lockedBy) ? lockedBy : null;
+
   const titleContent = (
-    <div className="flex items-center gap-2">
-      <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-medium text-foreground/90 break-words">{title}</h1>
-      <Badge
-        variant="outline"
-        className={cn(
-          "flex items-center gap-1 border px-2 py-0.5",
-          isLocked
-            ? "border-red-200 bg-red-50 text-red-700"
-            : "border-green-200 bg-green-50 text-green-700",
-        )}
-      >
-        <LockStateIcon className="w-3 h-3" />
-        {lockStateLabel}
-      </Badge>
-    </div>
+    <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-medium text-foreground/90 break-words">{title}</h1>
   );
 
   const statusDescription =
     isLocked && lockedAt
-      ? `Locked ${formatDate(lockedAt)}${lockedBy ? ` by ${lockedBy}` : ""}`
+      ? `Locked ${formatDate(lockedAt)}${lockOwnerDisplay ? ` by ${lockOwnerDisplay}` : ""}`
       : undefined;
 
   const actionButtons = (

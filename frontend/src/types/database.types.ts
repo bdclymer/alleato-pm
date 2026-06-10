@@ -34645,19 +34645,10 @@ export type Database = {
         Args: { p_rule_id: string }
         Returns: undefined
       }
-      refresh_budget_rollup:
-        | {
-            Args: { p_project_id?: number }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.refresh_budget_rollup(p_project_id => int8), public.refresh_budget_rollup(p_project_id => int4). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
-          }
-        | {
-            Args: { p_project_id?: number }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.refresh_budget_rollup(p_project_id => int8), public.refresh_budget_rollup(p_project_id => int4). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
-          }
+      refresh_budget_rollup: {
+        Args: { p_project_id?: number }
+        Returns: undefined
+      }
       refresh_contract_financial_summary: { Args: never; Returns: undefined }
       refresh_search_vectors: { Args: never; Returns: undefined }
       repair_graph_document_chunk_source_types_batch: {

@@ -94,6 +94,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
           ? parseFloat(item.unitCost)
           : null,
       amount: parseFloat(item.amount),
+      allowZeroAmount: item.allowZeroAmount === true,
       description: item.description ?? null,
     }));
 

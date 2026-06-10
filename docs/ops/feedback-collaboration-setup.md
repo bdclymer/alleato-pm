@@ -9,6 +9,10 @@ no-op (no provider calls, no UI, no errors).
 ```env
 NEXT_PUBLIC_POSTHOG_KEY=phc_xxx
 NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com   # or https://eu.i.posthog.com
+
+# Backend logs, optional but recommended. Use the same phc_ project token.
+POSTHOG_API_KEY=phc_xxx
+POSTHOG_HOST=https://us.i.posthog.com
 ```
 
 - Set the key in Vercel → Project → Settings → Environment Variables
@@ -19,6 +23,8 @@ NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com   # or https://eu.i.posthog.co
   can search recordings by person in PostHog.
 - Pageviews are captured manually on Next.js client navigation (the default
   `capture_pageview: true` only fires on hard loads in app router).
+- Backend logs are exported through OpenTelemetry when `POSTHOG_API_KEY` is
+  present on the Render backend service. The exporter is a no-op when unset.
 
 ## 2. Sentry (error tracking + replay on error)
 

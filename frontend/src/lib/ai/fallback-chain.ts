@@ -1,6 +1,7 @@
 import { generateText } from "ai";
 
 import { getLanguageModel } from "@/lib/ai/providers";
+import { aiTelemetry } from "@/lib/ai/ai-telemetry";
 import { createStrategistFailureResponse } from "@/lib/ai/strategist-failure-response";
 
 export async function generateRecoveryResponse(params: {
@@ -40,11 +41,10 @@ export async function generateRecoveryResponse(params: {
           ].join("\n\n"),
         },
       ],
-      experimental_telemetry: {
-        isEnabled: process.env.PHOENIX_TRACING === "true",
+      experimental_telemetry: aiTelemetry({
         functionId: "recovery-response",
         metadata: { modelId: "openai/gpt-4.1" },
-      },
+      }),
     });
 
     return result.text.trim() || fallback;

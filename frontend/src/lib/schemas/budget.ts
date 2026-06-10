@@ -10,6 +10,11 @@ const amountString = numericString.refine(
   "Amount must be non-zero",
 );
 
+const budgetLineAmountString = numericString.refine(
+  (val) => val !== "",
+  "Amount is required",
+);
+
 const optionalString = z
   .string()
   .trim()
@@ -23,8 +28,17 @@ export const BudgetLineItemSchema = z.object({
   qty: numericString.optional(),
   uom: optionalString,
   unitCost: numericString.optional(),
-  amount: amountString,
+  amount: budgetLineAmountString,
+  allowZeroAmount: z.boolean().optional(),
   description: optionalString,
+}).superRefine((value, ctx) => {
+  if (Number(value.amount) === 0 && value.allowZeroAmount !== true) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Amount must be non-zero unless allowZeroAmount is true",
+      path: ["amount"],
+    });
+  }
 });
 
 export const BudgetLineItemsPayloadSchema = z.object({
