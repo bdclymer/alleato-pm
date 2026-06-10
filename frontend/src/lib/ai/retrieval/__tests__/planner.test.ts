@@ -224,3 +224,45 @@ describe("source-health routing must not hijack content questions", () => {
     },
   );
 });
+
+describe("attachments + transactional asks must not status-dump", () => {
+  // Regression for the Goodwill Noblesville session: messages carrying
+  // attachments, or asking to create a record / migrate data, were routed to
+  // the project-status briefing instead of being acted on.
+  it("a message with attachments routes to conversational, not the briefing", () => {
+    const message = "I attached a few exports — help me get everything crossed over.";
+    const plan = planRetrieval({
+      message,
+      selectedProjectId: 43,
+      messages: [userMsg(message)],
+      hasAttachments: true,
+    });
+    expect(plan.responseFormat).not.toBe("briefing_template");
+    expect(plan.reason).toBe("user_attachments_present");
+  });
+
+  it.each([
+    "Can you help with creating the commitment also?",
+    "Create a subcontract commitment for the temp wall.",
+    "Open a change order for the added vestibule work.",
+    "How do I cross this data over from the old system?",
+    "I'm trying to migrate our records into this platform.",
+  ])("transactional/migration ask routes to conversational, not briefing: %s", (message) => {
+    const plan = planRetrieval({
+      message,
+      selectedProjectId: 43,
+      messages: [userMsg(message)],
+    });
+    expect(plan.responseFormat).not.toBe("briefing_template");
+  });
+
+  it("does NOT mis-route a genuine status question (no regression)", () => {
+    const message = "Give me the current status and risks on Westfield.";
+    const plan = planRetrieval({
+      message,
+      selectedProjectId: 43,
+      messages: [userMsg(message)],
+    });
+    expect(plan.responseFormat).toBe("briefing_template");
+  });
+});

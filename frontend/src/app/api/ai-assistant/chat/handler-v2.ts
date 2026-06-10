@@ -151,6 +151,33 @@ function extractTextFromParts(parts: UIMessage["parts"]): string {
     .join(" ");
 }
 
+/**
+ * Detect attachments on a user message. Text-readable files (csv/txt/json) are
+ * inlined into the message TEXT by the chat UI (so they reach the model); any
+ * remaining `file` parts are formats a text model cannot read (xlsx/pdf/docx).
+ * Returns whether attachments are present and the names of unreadable ones so
+ * the assistant can route to a "work with the files" path and, when it can't
+ * read them, ask for a CSV/TXT export instead of status-dumping.
+ */
+function detectAttachments(
+  parts: UIMessage["parts"] | undefined,
+  messageText: string,
+): { hasAttachments: boolean; unreadable: string[] } {
+  const fileParts = Array.isArray(parts)
+    ? parts.filter((p) => (p as { type?: string }).type === "file")
+    : [];
+  const unreadable = fileParts.map((p) => {
+    const f = p as { filename?: string; mediaType?: string };
+    return `${f.filename ?? "attachment"}${f.mediaType ? ` (${f.mediaType})` : ""}`;
+  });
+  // The UI marks inlined readable files with this header.
+  const hasInlinedReadable = messageText.includes("Attached readable files:");
+  return {
+    hasAttachments: fileParts.length > 0 || hasInlinedReadable,
+    unreadable,
+  };
+}
+
 function toJsonValue(value: unknown): Json | undefined {
   if (value === null) return null;
   if (
@@ -1616,10 +1643,12 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
     ReturnType<typeof executeRetrievalPlan>
   > | null = null;
 
+  const attachmentInfo = detectAttachments(lastUserMessage?.parts, lastUserContent);
   const plan = planRetrieval({
     message: lastUserContent,
     selectedProjectId: args.selectedProjectId,
     messages: args.messages,
+    hasAttachments: attachmentInfo.hasAttachments,
   });
   const selectedDeepAgentsStrategist = isDeepAgentsStrategistModelId(
     args.activeModel,
@@ -3254,8 +3283,21 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         retrievalCtx,
         baseSystemPrompt,
       );
+      // When the user attached a file the text model can't read (xlsx/pdf/etc.),
+      // tell the model to ask for a readable export rather than fabricate or
+      // fall back to a generic project status.
+      const attachmentNote =
+        attachmentInfo.unreadable.length > 0
+          ? [
+              "",
+              "## Attached files",
+              `The user attached file(s) you CANNOT read directly: ${attachmentInfo.unreadable.join(", ")}.`,
+              "Do NOT pretend to have read them, and do NOT answer with a generic project-status summary. If you need their contents, say you can read CSV, TXT, JSON, or Markdown and ask them to export or paste the data in one of those formats. Otherwise, help with exactly what they asked using the conversation so far.",
+            ].join("\n")
+          : "";
+
       const systemPrompt =
-        backendDeepAgentContextBlocks.length > 0
+        (backendDeepAgentContextBlocks.length > 0
           ? [
               assembledSystemPrompt,
               "",
@@ -3263,7 +3305,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               "",
               ...backendDeepAgentContextBlocks,
             ].join("\n")
-          : assembledSystemPrompt;
+          : assembledSystemPrompt) + attachmentNote;
 
       const tools = createStrategistTools(args.user.id, {
         pinnedProjectId: args.selectedProjectId,

@@ -14,7 +14,28 @@ type PlanInput = {
   message: string;
   selectedProjectId?: number;
   messages: UIMessage[];
+  /**
+   * True when the latest user message carries file attachments (the handler
+   * detects file parts). Attachments mean the user wants help WITH the files —
+   * route to a conversational path that uses them, never the cold project
+   * briefing (which is why an "I attached exports, help me migrate" turn used to
+   * get a generic project-health dump).
+   */
+  hasAttachments?: boolean;
 };
+
+// Create/open/add a record (commitment, change order, RFI, etc.). These are
+// transactional asks that must reach the model's create-* tools, NOT the
+// project-status briefing synthesis. Migration/import phrasing is included
+// because that workflow is "get these records into the system".
+const TRANSACTIONAL_CREATE_PATTERNS = [
+  /\b(create|open|add|set up|draft|generate|log|enter|build|start)\b.{0,40}\b(commitment|subcontract|purchase order|\bpo\b|change order|change event|\brfi\b|submittal|invoice|direct cost|prime contract|company|contact|vendor|daily log|budget line)\b/i,
+  /\b(migrat\w+|import\w*|cross over|crossover|transfer|bring over|move over|get .{0,20}(data|records|exports?) (in|into|over|crossed))\b/i,
+];
+
+function isTransactionalCreateRequest(message: string): boolean {
+  return TRANSACTIONAL_CREATE_PATTERNS.some((pattern) => pattern.test(message));
+}
 
 const FOLLOWUP_PHRASES = [
   /\b(source|cite|citation|evidence)\b/i,
@@ -261,6 +282,34 @@ export function planRetrieval(input: PlanInput): RetrievalPlan {
       reason: selectedProjectId
         ? "project_context_source_lookup_intent"
         : "source_lookup_intent",
+    };
+  }
+
+  // Intercept the status-dump default: a message carrying attachments, or a
+  // transactional create / data-migration ask, must NOT fall into the project
+  // briefing below. These checks sit just above packet-first so they only
+  // redirect what would otherwise become a cold status synthesis — the specific
+  // email/source/followup routes above keep their behavior.
+  if (input.hasAttachments) {
+    // Help WITH the files, using their (inlined) content + the conversation.
+    return {
+      intent,
+      responseFormat: "conversational",
+      sources: {},
+      preconsult: detectPreconsult(message),
+      selectedProjectId,
+      reason: "user_attachments_present",
+    };
+  }
+  if (isTransactionalCreateRequest(message)) {
+    // Let the model reach its create-* tools instead of briefing.
+    return {
+      intent,
+      responseFormat: "conversational",
+      sources: {},
+      preconsult: detectPreconsult(message),
+      selectedProjectId,
+      reason: "transactional_create_request",
     };
   }
 
