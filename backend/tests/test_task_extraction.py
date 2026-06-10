@@ -5,6 +5,7 @@ from src.services.pipeline.models import TaskItem
 from src.services.task_extraction import (
     _extract_tasks,
     _format_negative_feedback_examples,
+    _ingestion_recency,
     _resolve_extraction_limits,
     _source_occurred_at,
     _task_quality_rejection_reason,
@@ -33,6 +34,24 @@ def test_source_occurred_at_falls_back_to_created_at_when_source_date_missing():
     )
 
     assert source_date == datetime(2026, 5, 5, 16, 30, 50, 680246, tzinfo=timezone.utc)
+
+
+def test_ingestion_recency_uses_latest_ingest_timestamp_not_meeting_date():
+    # Meeting happened weeks ago but was ingested today — recency must reflect
+    # the ingest, so the freshness guard does not skip a brand-new doc.
+    recency = _ingestion_recency(
+        {
+            "date": "2026-01-02T00:00:00+00:00",
+            "captured_at": "2026-01-02T00:00:00+00:00",
+            "created_at": "2026-06-08T12:30:47+00:00",
+        }
+    )
+
+    assert recency == datetime(2026, 6, 8, 12, 30, 47, tzinfo=timezone.utc)
+
+
+def test_ingestion_recency_none_when_no_timestamps():
+    assert _ingestion_recency({"date": None, "captured_at": None, "created_at": None}) is None
 
 
 def test_task_extraction_limits_are_bounded_by_default(monkeypatch):

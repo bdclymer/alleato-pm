@@ -177,6 +177,79 @@ function SidebarList({
   );
 }
 
+// ─── Action items (grouped by assignee) ──────────────────────────────────────
+
+interface ActionItemGroup {
+  assignee: string | null;
+  items: string[];
+}
+
+/**
+ * Parse Fireflies action-item text into groups keyed by assignee.
+ *
+ * Fireflies groups every action item under a bold `**Owner Name**` header.
+ * Ingestion preserves that grouping in `action_items`, so each `**Name**` line
+ * starts a new owner group and the bullet lines beneath belong to that owner.
+ * Items that appear before any header (older transcripts) are "Unassigned".
+ */
+function parseActionItemsByAssignee(text: string): ActionItemGroup[] {
+  const groups: ActionItemGroup[] = [];
+  let current: ActionItemGroup | null = null;
+
+  for (const rawLine of text.split("\n")) {
+    const line = rawLine.trim();
+    if (!line) continue;
+
+    const headerMatch = line.match(/^\*\*(.+?)\*\*$/);
+    if (headerMatch) {
+      current = { assignee: headerMatch[1].trim(), items: [] };
+      groups.push(current);
+      continue;
+    }
+
+    const itemText = line.replace(/^[-*]\s*/, "").trim();
+    if (!itemText) continue;
+    if (!current) {
+      current = { assignee: null, items: [] };
+      groups.push(current);
+    }
+    current.items.push(itemText);
+  }
+
+  return groups.filter((group) => group.items.length > 0);
+}
+
+function ActionItemsByAssignee({ content }: { content: string }) {
+  const groups = parseActionItemsByAssignee(content);
+  if (groups.length === 0) return null;
+
+  return (
+    <div className="space-y-5">
+      {groups.map((group, groupIdx) => (
+        <div key={groupIdx} className="space-y-2">
+          <div className="text-sm font-semibold text-foreground">
+            {group.assignee ?? "Unassigned"}
+          </div>
+          <ul className="space-y-2">
+            {group.items.map((item, idx) => (
+              <li
+                key={idx}
+                className="flex items-start gap-2 text-sm leading-relaxed text-muted-foreground"
+              >
+                <span
+                  aria-hidden
+                  className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/60"
+                />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Markdown preprocessing ─────────────────────────────────────────────────
 
 /**
@@ -555,17 +628,27 @@ export function MeetingDetailContent({
       <div className="grid gap-20 lg:grid-cols-[minmax(0,1fr)_280px]">
         {/* Main content */}
         <div className="space-y-8">
-          {/* Meeting Overview — shows structured bullets when available */}
-          {(shorthandBullet || overviewContent) ? (
+          {/* Meeting Overview — leads with the prose summary; the bulleted
+              key points move to their own section below. */}
+          {(overviewContent || shorthandBullet) ? (
             <section className="space-y-4">
               <AccordionSection label="Meeting Overview">
-                {shorthandBullet ? (
-                  <FirefliesSectionContent value={shorthandBullet} />
-                ) : (
+                {overviewContent ? (
                   <p className="text-sm leading-relaxed text-muted-foreground">
                     {overviewContent}
                   </p>
+                ) : (
+                  <FirefliesSectionContent value={shorthandBullet!} />
                 )}
+              </AccordionSection>
+            </section>
+          ) : null}
+
+          {/* Action Items — grouped by the person Fireflies assigned them to */}
+          {actionItemsContent ? (
+            <section className="border-t border-border pt-6">
+              <AccordionSection label="Action Items">
+                <ActionItemsByAssignee content={actionItemsContent} />
               </AccordionSection>
             </section>
           ) : null}
@@ -579,12 +662,9 @@ export function MeetingDetailContent({
             </section>
           ) : null}
 
-          {/* AI Digest */}
-          {digestSlot ? (
-            <section className="border-t border-border pt-6">
-              {digestSlot}
-            </section>
-          ) : null}
+          {/* AI Digest — owns its own border/spacing so it leaves no empty
+              bordered section when the meeting has no digest yet. */}
+          {digestSlot}
 
           {/* Notes — collapsed by default */}
           {notesContent ? (
@@ -595,13 +675,11 @@ export function MeetingDetailContent({
             </section>
           ) : null}
 
-          {/* Summary Overview (paragraph form — only shown when bullets are in overview) */}
+          {/* Key Points (bulleted form — shown below the prose overview when both exist) */}
           {overviewContent && shorthandBullet ? (
             <section className="border-t border-border pt-6">
-              <AccordionSection label="Summary Overview" defaultOpen={false}>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {overviewContent}
-                </p>
+              <AccordionSection label="Key Points" defaultOpen={false}>
+                <FirefliesSectionContent value={shorthandBullet} />
               </AccordionSection>
             </section>
           ) : null}
@@ -667,27 +745,6 @@ export function MeetingDetailContent({
               <AttendeeAvatarStack participants={participantsList} />
             </div>
           )}
-
-          {/* Action Items */}
-          {actionItemsContent ? (
-            <div className="space-y-3 border-t border-border pt-6">
-              <div className="text-xs font-semibold uppercase tracking-widest text-primary">
-                Action Items
-              </div>
-              <ul className="space-y-2">
-                {actionItemsContent
-                  .split("\n")
-                  .map((line) => line.replace(/^[-*]\s*/, "").trim())
-                  .filter(Boolean)
-                  .map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-sm leading-relaxed text-muted-foreground">
-                      <span aria-hidden className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/60" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-              </ul>
-            </div>
-          ) : null}
 
           {/* Action Snapshot */}
           {hasActionItems && (

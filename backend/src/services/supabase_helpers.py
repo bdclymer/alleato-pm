@@ -428,6 +428,28 @@ class SupabaseRagStore:
                 task, on_conflict="metadata_id,description"
             ).execute()
 
+    def delete_open_rewriter_tasks_for_document(self, metadata_id: str) -> int:
+        """Delete auto-generated, still-open rewriter tasks for a meeting.
+
+        Makes re-ingestion idempotent: the LLM rewrites descriptions slightly
+        differently each run, so the (metadata_id, description) upsert key can't
+        dedupe paraphrases and re-ingests accumulate near-duplicate tasks. We
+        clear the prior batch before writing the new one. Scoped to
+        ``extraction_source='fireflies_rewriter'`` AND ``status='open'`` so a
+        user's edited, completed, or manually-created tasks are never touched.
+        """
+        if not metadata_id:
+            return 0
+        result = (
+            self._client.table("tasks")
+            .delete()
+            .eq("metadata_id", metadata_id)
+            .eq("extraction_source", "fireflies_rewriter")
+            .eq("status", "open")
+            .execute()
+        )
+        return len(result.data or [])
+
     def list_insights(self, project_id: Optional[int] = None, limit: int = 20) -> List[Dict[str, Any]]:
         """DEPRECATED: legacy Pipeline A reader for project_insights.
 

@@ -376,6 +376,23 @@ def _source_occurred_at(doc: dict[str, Any]) -> datetime | None:
     return None
 
 
+def _ingestion_recency(doc: dict[str, Any]) -> datetime | None:
+    """Return when the doc actually landed in our system.
+
+    Distinct from ``_source_occurred_at`` (the real meeting/email date, used for
+    relative-date interpretation in the prompt). Fireflies meetings are routinely
+    ingested days after they occur, so keying the freshness guard off the source
+    date skips legitimately-new docs and starves the tasks table. The most-recent
+    of created_at/captured_at/date reflects ingestion recency.
+    """
+    candidates = [
+        _parse_datetime(doc.get(field))
+        for field in ("created_at", "captured_at", "date")
+    ]
+    valid = [c for c in candidates if c]
+    return max(valid) if valid else None
+
+
 def _task_extraction_state(doc: dict[str, Any]) -> dict[str, Any]:
     source_metadata = doc.get("source_metadata")
     if not isinstance(source_metadata, dict):
@@ -548,20 +565,28 @@ def run_task_extraction(
     for doc in docs:
         doc_id = doc.get("id")
         source_occurred_at = _source_occurred_at(doc)
+        ingestion_recency = _ingestion_recency(doc)
 
         if docs_processed >= doc_limit:
             break
 
-        if source_occurred_at and source_occurred_at < since_dt:
+        # Skip only docs that did NOT land in our system within the window.
+        # Backfill mode intentionally reaches older docs, so it bypasses this.
+        if (
+            not backfill_mode
+            and ingestion_recency is not None
+            and ingestion_recency < since_dt
+        ):
             stale_source_skipped += 1
             skipped += 1
             logger.info(
-                "[TaskExtraction] Skipping stale source doc %s: source_occurred_at=%s window_start=%s",
+                "[TaskExtraction] Skipping doc not ingested in window %s: ingested=%s source=%s window_start=%s",
                 doc_id,
-                source_occurred_at.isoformat(),
+                ingestion_recency.isoformat(),
+                source_occurred_at.isoformat() if source_occurred_at else None,
                 since,
             )
-            _mark_task_extraction_state(client_db, doc, "skipped_stale_source", source_occurred_at, window_days)
+            _mark_task_extraction_state(client_db, doc, "skipped_not_recently_ingested", source_occurred_at, window_days)
             continue
 
         compiler_owned_reason = _compiler_owned_task_extraction_skip_reason(doc)

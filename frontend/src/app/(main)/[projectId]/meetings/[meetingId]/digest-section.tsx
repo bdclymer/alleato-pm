@@ -30,7 +30,7 @@ export function DigestSection({ projectId, meetingId }: DigestSectionProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex items-center gap-2 border-t border-border pt-6 text-sm text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin" />
         Loading digest...
       </div>
@@ -49,7 +49,7 @@ export function DigestSection({ projectId, meetingId }: DigestSectionProps) {
   const hasTakeaways = digest.key_takeaways?.length > 0;
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-4 border-t border-border pt-6">
       <div className="flex items-center gap-2">
         <Sparkles className="h-4 w-4 text-primary" />
         <SectionRuleHeading label="AI Digest" />

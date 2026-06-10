@@ -17,7 +17,7 @@ from uuid import NAMESPACE_URL, uuid4, uuid5
 
 import requests
 
-from ..ai_transport import retry_ai_call
+from ..ai_transport import get_openai_client, retry_ai_call
 from ..task_assignees import TaskAssigneeResolver
 from .fireflies_task_rewriter import REWRITER_PROMPT_VERSION, rewrite_action_items
 
@@ -59,6 +59,10 @@ class ParsedTranscript:
     summary: str
     transcript_segments: List[TranscriptSegment]
     raw_text: str
+    # Action items paired with the owner Fireflies grouped them under, in order.
+    # Each entry is {"assignee": str | None, "text": str}. Drives both the
+    # assignee display in the UI and owner-aware task creation.
+    action_items_structured: List[Dict[str, Optional[str]]] = None  # type: ignore[assignment]
     # Rich section fields (populated from new Fireflies markdown format)
     rich_sections: Dict[str, str] = None  # type: ignore[assignment]
     notes_topics: Dict[str, str] = None  # type: ignore[assignment]
@@ -67,6 +71,8 @@ class ParsedTranscript:
     speaker_email_map: Dict[str, str] = None  # type: ignore[assignment]
 
     def __post_init__(self):
+        if self.action_items_structured is None:
+            self.action_items_structured = []
         if self.rich_sections is None:
             self.rich_sections = {}
         if self.notes_topics is None:
@@ -270,7 +276,10 @@ class FirefliesIngestionPipeline:
             "fireflies_id": parsed.fireflies_id,
             "summary": parsed.summary or parsed.overview,
             "overview": parsed.overview or parsed.summary,
-            "action_items": "\n".join(parsed.action_items),
+            "action_items": (
+                self._format_action_items_storage(parsed.action_items_structured)
+                or "\n".join(parsed.action_items)
+            ),
             "content_hash": content_hash,
             "participants": ", ".join(parsed.attendees),
             "participants_array": parsed.attendees,
@@ -350,7 +359,7 @@ class FirefliesIngestionPipeline:
                     dry_run=False,
                 )
 
-            for task in self._build_task_rows_via_rewriter(
+            task_rows = self._build_task_rows_via_rewriter(
                 metadata_id=document_id,
                 meeting_title=parsed.title,
                 action_items=parsed.action_items,
@@ -359,8 +368,16 @@ class FirefliesIngestionPipeline:
                 speaker_email_map=parsed.speaker_email_map,
                 source_date=parsed.captured_at,
                 notes_context=parsed.raw_text,
-            ):
-                self.store.upsert_task(task)
+                action_items_structured=parsed.action_items_structured,
+            )
+            # Replace the prior auto-generated batch only when we have a fresh
+            # one — a transient empty rewriter response must not wipe existing
+            # tasks. User-edited/completed tasks are preserved (see the store
+            # method's status/source scoping).
+            if task_rows:
+                self.store.delete_open_rewriter_tasks_for_document(document_id)
+                for task in task_rows:
+                    self.store.upsert_task(task)
             embeddings = self.embedder.embed([chunk.text for chunk in chunks])
             for chunk, embedding in zip(chunks, embeddings):
                 chunk.embedding = embedding
@@ -402,7 +419,11 @@ class FirefliesIngestionPipeline:
                 self.store.insert_insight(insight)
 
             # Extract team-scoped AI memories from this meeting.
-            # Runs best-effort: failures don't block ingestion.
+            # Operational failures (network/API) are best-effort and don't block
+            # ingestion. Structural code bugs (NameError/AttributeError/etc.) mean
+            # memory extraction is broken for EVERY meeting, so they must surface
+            # loudly instead of degrading silently — re-raise so they're caught in
+            # tests/CI/monitoring rather than swallowed as a per-meeting warning.
             try:
                 self._extract_meeting_memories(
                     document_id=document_id,
@@ -411,6 +432,13 @@ class FirefliesIngestionPipeline:
                     content=parsed.raw_text,
                     action_items=parsed.action_items,
                 )
+            except (NameError, AttributeError, ImportError, TypeError) as bug_exc:
+                logger.error(
+                    "Memory extraction is structurally broken (affects all meetings): %s",
+                    bug_exc,
+                    exc_info=True,
+                )
+                raise
             except Exception as mem_exc:
                 logger.warning("Memory extraction failed for %s: %s", document_id, mem_exc)
 
@@ -750,6 +778,7 @@ class FirefliesIngestionPipeline:
         captured_at = self._parse_datetime(self._extract_metadata_value(header_block, "Date"))
         attendees = self._parse_attendees(header_block, sections)
         action_items = self._parse_action_items(sections)
+        action_items_structured = self._parse_action_items_structured(sections, action_items)
         overview = (
             sections.get("Summary", "")
             or sections.get("Overview", "")
@@ -784,6 +813,7 @@ class FirefliesIngestionPipeline:
             summary=summary,
             transcript_segments=transcript_segments,
             raw_text=markdown,
+            action_items_structured=action_items_structured,
             rich_sections=rich_sections,
             notes_topics=notes_topics,
             speakers_json=speakers_json,
@@ -1041,11 +1071,7 @@ class FirefliesIngestionPipeline:
         self._append_list_section(lines, "Keywords", summary.get("keywords"))
         self._append_list_section(lines, "Topics Discussed", summary.get("topics_discussed"))
         self._append_list_section(lines, "Transcript Chapters", summary.get("transcript_chapters"))
-        self._append_list_section(
-            lines,
-            "Action Items",
-            self._normalize_action_items(summary.get("action_items")),
-        )
+        self._append_action_items_section(lines, summary.get("action_items"))
         self._append_json_section(lines, "Extended Sections", summary.get("extended_sections"))
 
         self._append_json_section(lines, "User", transcript.get("user"))
@@ -1180,6 +1206,29 @@ class FirefliesIngestionPipeline:
             if normalized:
                 return normalized
         return []
+
+    def _parse_action_items_structured(
+        self,
+        sections: Dict[str, str],
+        flat_items: List[str],
+    ) -> List[Dict[str, Optional[str]]]:
+        """Return ordered ``[{assignee, text}]`` pairs for the action items.
+
+        Reads the same section the flat parser uses, preserving the ``**Owner**``
+        grouping. If the grouped parse can't recover the same items (e.g. legacy
+        inline format), fall back to owner-less pairs so callers still get every
+        item.
+        """
+        for section_name in ("Action Items", "Major Action Items", "Outstanding Tasks"):
+            block = sections.get(section_name, "")
+            if not block:
+                continue
+            structured = self._parse_grouped_action_items(block)
+            if structured:
+                if len(structured) == len(flat_items):
+                    return structured
+                return [{"assignee": None, "text": text} for text in flat_items]
+        return [{"assignee": None, "text": text} for text in flat_items]
 
     @staticmethod
     def _parse_bullets(block: str) -> List[str]:
@@ -1517,6 +1566,43 @@ class FirefliesIngestionPipeline:
         return items
 
     @staticmethod
+    def _parse_grouped_action_items(value: Any) -> List[Dict[str, Optional[str]]]:
+        """Parse Fireflies action items into ``[{"assignee", "text"}]`` pairs.
+
+        Fireflies groups action items under bold ``**Owner Name**`` headers and
+        lists each owner's items on the lines beneath. Preserving that owner is
+        what lets the UI show who an item is assigned to and lets the task
+        rewriter assign the right person — stripping the headers (the old
+        behavior) destroyed both. Items that appear before any header (or when
+        Fireflies omits headers) carry ``assignee = None``.
+        """
+        if value is None or isinstance(value, dict):
+            return []
+
+        if isinstance(value, list):
+            return [
+                {"assignee": None, "text": str(v).strip()}
+                for v in value
+                if str(v).strip()
+            ]
+
+        pairs: List[Dict[str, Optional[str]]] = []
+        current_assignee: Optional[str] = None
+        for raw_line in str(value).splitlines():
+            line = raw_line.strip()
+            if not line:
+                continue
+            if line.startswith("**") and line.endswith("**"):
+                current_assignee = line.strip("*").strip() or None
+                continue
+            line = re.sub(r"^[-*•]\s+", "", line)
+            line = re.sub(r"^\d+\.\s+", "", line)
+            line = line.strip()
+            if line:
+                pairs.append({"assignee": current_assignee, "text": line})
+        return pairs
+
+    @staticmethod
     def _normalize_person_text(value: str) -> str:
         normalized = unicodedata.normalize("NFKD", value or "")
         ascii_text = normalized.encode("ascii", "ignore").decode("ascii")
@@ -1799,23 +1885,41 @@ class FirefliesIngestionPipeline:
         speaker_email_map: Optional[Dict[str, str]] = None,
         source_date: Optional[datetime | str] = None,
         notes_context: str = "",
+        action_items_structured: Optional[List[Dict[str, Optional[str]]]] = None,
     ) -> List[Dict[str, Any]]:
         """LLM-rewritten task rows. Replaces the old regex-based extraction.
 
         Each Fireflies action-item line is rewritten into an imperative task
-        (≤10-word title + description) and the owner is the *doer*, not the
-        person being talked about. Owners that don't resolve to an internal
-        Alleato employee are dropped — those actions show up elsewhere as
+        (≤10-word title + description). When ``action_items_structured`` carries
+        the owner Fireflies grouped the item under, that owner is handed to the
+        rewriter as the proposed doer — without it the rewriter sees nameless
+        imperatives, can't pick an owner, and drops every item (the bug that left
+        the tasks table nearly empty). Owners that don't resolve to an internal
+        Alleato employee are still dropped — those actions show up elsewhere as
         project intelligence, not as tracked tasks.
         """
-        cleaned_items = [
-            self._strip_action_item_timestamp(item)
-            for item in action_items
-            if item and item.strip()
-        ]
-        cleaned_items = [item for item in cleaned_items if item and not self._is_low_value_task(item)]
-        if not cleaned_items:
+        # Pair each action item with the Fireflies owner, preserving alignment
+        # through the same cleaning the items go through.
+        if action_items_structured:
+            raw_pairs = [
+                (str(pair.get("text") or ""), pair.get("assignee"))
+                for pair in action_items_structured
+            ]
+        else:
+            raw_pairs = [(item, None) for item in action_items]
+
+        cleaned_pairs: List[tuple[str, Optional[str]]] = []
+        for text, owner in raw_pairs:
+            stripped = self._strip_action_item_timestamp(text)
+            if not stripped or not stripped.strip():
+                continue
+            if self._is_low_value_task(stripped):
+                continue
+            cleaned_pairs.append((stripped, owner))
+        if not cleaned_pairs:
             return []
+        cleaned_items = [text for text, _ in cleaned_pairs]
+        cleaned_owners = [owner for _, owner in cleaned_pairs]
 
         source_date_iso: Optional[str] = None
         if isinstance(source_date, datetime):
@@ -1833,6 +1937,7 @@ class FirefliesIngestionPipeline:
             speaker_email_map=speaker_email_map or {},
             source_date=source_date_iso,
             notes_context=notes_context or "",
+            item_owners=cleaned_owners,
         )
         if not rewritten:
             return []
@@ -1962,6 +2067,42 @@ class FirefliesIngestionPipeline:
             lines.append(f"- {item}")
         lines.append("")
 
+    @classmethod
+    def _append_action_items_section(cls, lines: List[str], value: Any) -> None:
+        """Write the Action Items section preserving the ``**Owner**`` grouping."""
+        pairs = cls._parse_grouped_action_items(value)
+        if not pairs:
+            return
+        lines.append("## Action Items")
+        current_assignee = "__unset__"
+        for pair in pairs:
+            assignee = pair.get("assignee")
+            if assignee != current_assignee:
+                if assignee:
+                    lines.append(f"**{assignee}**")
+                current_assignee = assignee
+            lines.append(f"- {pair['text']}")
+        lines.append("")
+
+    @staticmethod
+    def _format_action_items_storage(pairs: List[Dict[str, Optional[str]]]) -> str:
+        """Serialize ``[{assignee, text}]`` to grouped markdown for storage.
+
+        Stored in ``document_metadata.action_items`` so the meeting detail UI can
+        render each item under its owner. Falls back to a flat list when no
+        owners are present (older transcripts / Fireflies omitted headers).
+        """
+        out: List[str] = []
+        current_assignee = "__unset__"
+        for pair in pairs:
+            assignee = pair.get("assignee")
+            if assignee != current_assignee:
+                if assignee:
+                    out.append(f"**{assignee}**")
+                current_assignee = assignee
+            out.append(f"- {pair['text']}")
+        return "\n".join(out)
+
     @staticmethod
     def _append_json_section(lines: List[str], title: str, value: Any) -> None:
         if value is None:
@@ -1999,8 +2140,7 @@ class FirefliesIngestionPipeline:
             logger.debug("OpenAI not available, skipping memory extraction")
             return
 
-        providers = _openai_provider_configs()
-        if not providers:
+        if not os.getenv("OPENAI_API_KEY"):
             raise RuntimeError(
                 "OPENAI_API_KEY is required for meeting memory extraction"
             )
@@ -2031,32 +2171,17 @@ class FirefliesIngestionPipeline:
             "Return [] if nothing meaningful. Return ONLY valid JSON array."
         )
 
-        response = None
-        chat_errors: List[str] = []
-        for provider in providers:
-            try:
-                client = _client_for_provider(provider)
-                response = retry_ai_call(
-                    lambda: client.chat.completions.create(
-                        model=_model_for_provider("gpt-4.1-nano", provider),
-                        messages=[{"role": "user", "content": prompt}],
-                        temperature=0,
-                        max_tokens=512,
-                    ),
-                    provider_name=provider["name"],
-                    operation="meeting memory extraction chat",
-                )
-                break
-            except Exception as exc:
-                message = f"{provider['name']}: {exc}"
-                logger.error("[FirefliesIngestion] Memory extraction chat provider failed: %s", message)
-                chat_errors.append(message)
-
-        if response is None:
-            raise RuntimeError(
-                "Meeting memory extraction chat failed across all providers: "
-                + " | ".join(chat_errors)
-            )
+        client = get_openai_client()
+        response = retry_ai_call(
+            lambda: client.chat.completions.create(
+                model="gpt-4.1-nano",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0,
+                max_tokens=512,
+            ),
+            provider_name="OpenAI",
+            operation="meeting memory extraction chat",
+        )
 
         raw = (response.choices[0].message.content or "").strip()
         raw = raw.lstrip("```json").lstrip("```").rstrip("```").strip()

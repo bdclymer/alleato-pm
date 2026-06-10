@@ -40,6 +40,12 @@ REWRITER_MODEL = "gpt-5.5"
 REWRITER_PROMPT_VERSION = "fireflies_rewriter.v1.gpt-5.5"
 REWRITER_MAX_ACTION_ITEMS = 40
 REWRITER_MAX_CONTEXT_CHARS = 6000
+# Retries for empty / malformed JSON responses (separate from transport retries).
+REWRITER_EMPTY_RESPONSE_RETRIES = 2
+# Completion budget must cover the reasoning model's hidden reasoning tokens AND
+# the JSON output for up to REWRITER_MAX_ACTION_ITEMS tasks. 2400 truncated
+# multi-item meetings (finish_reason=length → empty body → all tasks dropped).
+REWRITER_MAX_COMPLETION_TOKENS = 8000
 
 
 @dataclass(frozen=True)
@@ -72,11 +78,12 @@ real action item as an IMPERATIVE task assigned to the person who must DO it.
 
 # Owner rules (CRITICAL)
 - The owner is the person who must DO the work, never the person being talked ABOUT.
+- Fireflies groups every action item under the person it assigned the item to. When an item is prefixed with "[Fireflies owner: <Name>]", that Name IS the doer — use it as "assignee_name" unless the item text unambiguously shows a different person must do the work. Do NOT discard an item just because its text is phrased as third-person narration when a Fireflies owner is given.
 - "Provide support to Brandon" → owner is the person providing support, NOT Brandon.
 - "Inform Maria when X is ready" → owner is the informer, NOT Maria.
 - "Coordinate with Sarah on contract edits" → owner is the coordinator, NOT Sarah.
 - "Send updated CAD to Joe" → owner is the sender, NOT Joe.
-- Owner MUST be one of the named participants/speakers provided to you. If the doer cannot be confidently identified from the action item or surrounding context, set "assignee_name" to null and the task will be discarded — DO NOT default to the first named person.
+- Owner MUST be one of the named participants/speakers provided to you. If no Fireflies owner is given and the doer cannot be confidently identified from the action item or surrounding context, set "assignee_name" to null and the task will be discarded — DO NOT default to the first named person.
 - Owner is the doer; "assigned_by" is the person who directed the work (set to null for self-commitments).
 
 # Filter rules — emit [] for items like:
@@ -144,8 +151,21 @@ def _build_user_prompt(
     speaker_email_map: Dict[str, str],
     action_items: List[str],
     notes_context: str,
+    item_owners: Optional[List[Optional[str]]] = None,
 ) -> str:
-    items_text = "\n".join(f"- {item}" for item in action_items[:REWRITER_MAX_ACTION_ITEMS])
+    owners = item_owners or []
+
+    def _format_item(idx: int, item: str) -> str:
+        owner = owners[idx] if idx < len(owners) else None
+        owner = (owner or "").strip()
+        if owner:
+            return f"- [Fireflies owner: {owner}] {item}"
+        return f"- {item}"
+
+    items_text = "\n".join(
+        _format_item(idx, item)
+        for idx, item in enumerate(action_items[:REWRITER_MAX_ACTION_ITEMS])
+    )
     notes_block = ""
     if notes_context:
         notes_block = f"\n\nMeeting notes excerpt (for owner disambiguation, do not extract new tasks from this):\n{notes_context[:REWRITER_MAX_CONTEXT_CHARS]}"
@@ -212,16 +232,29 @@ def rewrite_action_items(
     speaker_email_map: Optional[Dict[str, str]] = None,
     source_date: Optional[str] = None,
     notes_context: str = "",
+    item_owners: Optional[List[Optional[str]]] = None,
 ) -> List[RewrittenTask]:
     """Return imperative, owner-assigned tasks rewritten from Fireflies action items.
+
+    ``item_owners`` (optional, index-aligned with ``action_items``) carries the
+    owner Fireflies grouped each action item under. When provided, the LLM is
+    told to treat that name as the doer unless the text clearly contradicts it —
+    this is what lets owner-assigned tasks survive instead of being dropped as
+    nameless narration.
 
     Returns an empty list on any LLM error — callers should treat that as
     "no tasks for this meeting" rather than falling back to the raw items,
     because raw items are exactly what we're trying to stop persisting.
     """
-    cleaned_items = [item.strip() for item in action_items if item and item.strip()]
-    if not cleaned_items:
+    paired = [
+        (item.strip(), (item_owners[idx] if item_owners and idx < len(item_owners) else None))
+        for idx, item in enumerate(action_items)
+        if item and item.strip()
+    ]
+    if not paired:
         return []
+    cleaned_items = [item for item, _ in paired]
+    cleaned_owners = [owner for _, owner in paired]
 
     from ..ai_transport import get_openai_client, retry_ai_call
 
@@ -232,41 +265,76 @@ def rewrite_action_items(
         speaker_email_map=speaker_email_map or {},
         action_items=cleaned_items,
         notes_context=notes_context,
+        item_owners=cleaned_owners,
     )
 
-    response = None
+    # gpt-5.x intermittently returns empty content with finish_reason=stop (and
+    # occasionally malformed JSON). Either one would silently drop every task for
+    # a meeting, so retry the whole call+parse a couple of times before giving up.
+    # retry_ai_call still handles transport-level blips within each attempt.
+    payload = None
     last_error: Optional[str] = None
-    try:
-        response = retry_ai_call(
-            lambda: get_openai_client().chat.completions.create(
-                model=REWRITER_MODEL,
-                messages=[
-                    {"role": "system", "content": _REWRITER_SYSTEM_PROMPT},
-                    {"role": "user", "content": user_prompt},
-                ],
-                max_completion_tokens=2400,
-                response_format={"type": "json_object"},
-            ),
-            provider_name="OpenAI",
-            operation="fireflies task rewrite",
-        )
-    except Exception as exc:
-        last_error = str(exc)
-        logger.error("[FirefliesTaskRewriter] OpenAI call failed: %s", exc)
+    for attempt in range(REWRITER_EMPTY_RESPONSE_RETRIES + 1):
+        try:
+            response = retry_ai_call(
+                lambda: get_openai_client().chat.completions.create(
+                    model=REWRITER_MODEL,
+                    messages=[
+                        {"role": "system", "content": _REWRITER_SYSTEM_PROMPT},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    max_completion_tokens=REWRITER_MAX_COMPLETION_TOKENS,
+                    response_format={"type": "json_object"},
+                ),
+                provider_name="OpenAI",
+                operation="fireflies task rewrite",
+            )
+        except Exception as exc:
+            last_error = str(exc)
+            logger.error("[FirefliesTaskRewriter] OpenAI call failed: %s", exc)
+            break
 
-    if response is None:
+        finish_reason = response.choices[0].finish_reason
+        raw = (response.choices[0].message.content or "").strip()
+        raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+        if not raw:
+            last_error = "empty response (finish_reason=%s)" % finish_reason
+            # finish_reason=length means the model ran out of completion budget
+            # mid-reasoning — retrying with the same budget is deterministic waste.
+            # Surface it loudly (a real failure, not a transient blip).
+            if finish_reason == "length":
+                logger.error(
+                    "[FirefliesTaskRewriter] Truncated (finish_reason=length) with %d-token budget "
+                    "and %d action items — raise REWRITER_MAX_COMPLETION_TOKENS or batch items.",
+                    REWRITER_MAX_COMPLETION_TOKENS,
+                    len(cleaned_items),
+                )
+                break
+            logger.warning(
+                "[FirefliesTaskRewriter] Empty response (attempt %d/%d); retrying",
+                attempt + 1,
+                REWRITER_EMPTY_RESPONSE_RETRIES + 1,
+            )
+            continue
+        try:
+            payload = json.loads(raw)
+            break
+        except json.JSONDecodeError as exc:
+            last_error = f"non-JSON response: {exc}"
+            logger.warning(
+                "[FirefliesTaskRewriter] Non-JSON response (attempt %d/%d) (%s); raw=%.300s",
+                attempt + 1,
+                REWRITER_EMPTY_RESPONSE_RETRIES + 1,
+                exc,
+                raw,
+            )
+            continue
+
+    if payload is None:
         logger.error(
-            "[FirefliesTaskRewriter] All providers failed — dropping action items: %s",
+            "[FirefliesTaskRewriter] Dropping action items — no usable response: %s",
             last_error or "unknown error",
         )
-        return []
-
-    raw = (response.choices[0].message.content or "").strip()
-    raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
-    try:
-        payload = json.loads(raw)
-    except json.JSONDecodeError as exc:
-        logger.warning("[FirefliesTaskRewriter] Non-JSON response (%s); raw=%.500s", exc, raw)
         return []
 
     tasks_raw = payload.get("tasks") if isinstance(payload, dict) else None
@@ -275,6 +343,14 @@ def rewrite_action_items(
 
     participant_set = {name.lower() for name in participants if name}
     participant_set.update(name.lower() for name in (speaker_email_map or {}).keys())
+    # Fireflies-assigned owners are, by construction, people who were in the
+    # meeting — Fireflies derives them from the speaker list. Treat them as valid
+    # participants so a real owner isn't dropped just because the attendee list
+    # we were handed is emails-only (displayName missing) and the speaker→email
+    # map came up empty.
+    participant_set.update(
+        owner.lower() for owner in cleaned_owners if owner and owner.strip()
+    )
 
     results: List[RewrittenTask] = []
     for entry in tasks_raw:
