@@ -16,6 +16,21 @@ COMPILER_MODEL_DEFAULT = COMPILER_MODEL
 COMPILER_MODEL_LARGE = COMPILER_MODEL
 COMPILER_REQUEST_TIMEOUT_SECONDS = int(os.getenv("TEAMS_COMPILER_REQUEST_TIMEOUT_SECONDS", "60"))
 
+# Default sampling temperature for extraction. The gpt-5 family (and o-series
+# reasoning models) reject any non-default temperature with HTTP 400
+# ("Only the default (1) value is supported"), which the retry wrapper would
+# otherwise swallow into a silent _extraction_failed. For those models we omit
+# the param entirely; for everything else we keep the low-variance default.
+COMPILER_TEMPERATURE = float(os.getenv("TEAMS_COMPILER_TEMPERATURE", "0.2"))
+
+
+def _supports_custom_temperature(model: str) -> bool:
+    """False for models that only accept the default temperature (gpt-5*, o1*, o3*)."""
+    m = (model or "").lower()
+    # Strip a leading "openai/" (or other provider) prefix used via the gateway.
+    m = m.split("/", 1)[-1]
+    return not (m.startswith("gpt-5") or m.startswith("o1") or m.startswith("o3") or m.startswith("o4"))
+
 
 def _client() -> OpenAI:
     from ..ai_transport import get_openai_client
@@ -42,6 +57,7 @@ def extract_with_retry(
     messages: List[Dict[str, Any]],
     model: str = COMPILER_MODEL_DEFAULT,
     max_retries: int = 2,
+    timeout: int | None = None,
 ) -> Dict[str, Any]:
     """
     Call LLM with JSON mode across configured providers.
@@ -49,16 +65,23 @@ def extract_with_retry(
     AI Gateway does not support response_format=json_object, so JSON is enforced
     through the prompt on that provider. This function never raises; callers get a
     valid dict with _extraction_failed=True after provider exhaustion.
+
+    ``timeout`` overrides the per-request timeout (seconds). Large full-transcript
+    passes need far more than the Teams-compiler default; callers pass their own.
     """
+    request_timeout = timeout if timeout is not None else COMPILER_REQUEST_TIMEOUT_SECONDS
     for attempt in range(max_retries + 1):
         try:
             kwargs: Dict[str, Any] = {
                 "model": model,
                 "messages": messages,
-                "temperature": 0.2,
-                "timeout": COMPILER_REQUEST_TIMEOUT_SECONDS,
+                "timeout": request_timeout,
                 "response_format": {"type": "json_object"},
             }
+            # Only send temperature to models that accept a non-default value;
+            # gpt-5/o-series reject it with a 400 that would silently fail extraction.
+            if _supports_custom_temperature(model):
+                kwargs["temperature"] = COMPILER_TEMPERATURE
             response = _client().chat.completions.create(**kwargs)
             raw = response.choices[0].message.content or ""
             raw = raw.strip()

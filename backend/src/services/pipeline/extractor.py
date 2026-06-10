@@ -11,6 +11,7 @@ then marks the job as ``done``.
 from __future__ import annotations
 
 import logging
+import os
 import re
 from typing import Any, Dict, List
 
@@ -19,6 +20,26 @@ from ..ingestion.fireflies_pipeline import FirefliesIngestionPipeline
 from ..task_assignees import TaskAssigneeResolver
 from .models import DecisionItem, OpportunityItem, RiskItem, StructuredData, TaskItem
 from . import llm
+
+
+def _env_flag(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+# Feature flag (Part B+C+D rollout): when on, run_extractor reads the WHOLE
+# transcript against the project's real state via llm.extract_deep_meeting_intelligence
+# instead of the shallow segment-normalization pass. Off by default so the deep
+# path can be A/B'd against the existing pass before becoming default.
+DEEP_EXTRACTION_ENABLED = _env_flag("DEEP_EXTRACTION_ENABLED", False)
+# Deep tasks at/above this calibrated confidence are auto-created (status=open);
+# below it they are still written but flagged extraction_metadata.needs_review so
+# a human promotes them — we never silently auto-create a low-confidence task.
+DEEP_TASK_CONFIDENCE_THRESHOLD = float(os.getenv("DEEP_TASK_CONFIDENCE_THRESHOLD", "0.7"))
+# Bounded semantic prior-context lookup size (supporting input, not the source).
+DEEP_PRIOR_CONTEXT_TOPK = int(os.getenv("DEEP_PRIOR_CONTEXT_TOPK", "5"))
 
 # NOTE: `fireflies_task_rewriter` is imported lazily inside the functions that
 # use it. Top-level import here creates a circular load order under pytest /
@@ -47,6 +68,12 @@ _VALID_PRIORITIES = {"low", "medium", "high", "urgent"}
 # versions so meeting signals dedup among themselves and re-extraction is
 # idempotent (candidates are cleared per source_document_id + this version).
 MEETING_PACKET_COMPILER_VERSION = "meeting_extractor_compiler_v0_1"
+
+# Prompt/pipeline version recorded on tasks emitted by the deep full-transcript
+# pass. The tasks-quality trigger (migration 20260528000000) requires a non-empty
+# extraction_prompt_version on every AI-sourced task; deep tasks satisfy it with
+# this. Bump when the deep extraction prompt materially changes.
+DEEP_EXTRACTION_PROMPT_VERSION = "deep_extractor_v0_1"
 
 # Map a RiskItem.category to an insight_cards.card_type. Values MUST stay within
 # compiler.INSIGHT_CARD_TYPES (and the insight_cards.card_type CHECK constraint).
@@ -204,6 +231,138 @@ def _enrich_fireflies_tasks_with_llm_context(  # noqa: D401 — kept for backwar
     return enriched
 
 
+# ---------------------------------------------------------------------------
+# Deep-extraction ground-truth helpers (Part B)
+# ---------------------------------------------------------------------------
+
+def _fetch_project_state(client, project_id: int | None) -> str:
+    """Deterministic ground truth for the deep pass — open tasks + tracked
+    insight cards for the project, via DIRECT DB reads (not vector search).
+
+    Returned as a compact text block the model uses to decide new vs update vs
+    resolved. Best-effort: never raises into the pipeline.
+    """
+    if not project_id:
+        return ""
+    parts: List[str] = []
+
+    # Project name for orientation.
+    try:
+        proj = fetch_optional_row(client, "projects", "id,name", "id", project_id)
+        if proj.get("name"):
+            parts.append(f"Project: {proj['name']} (id={project_id})")
+    except Exception as exc:  # noqa: BLE001 — context is optional
+        logger.debug("[Extractor] project meta fetch failed: %s", exc)
+
+    # Open / active tasks already tracked.
+    try:
+        task_rows = (
+            client.table("tasks")
+            .select("title,assignee_name,due_date,priority,status")
+            .eq("project_id", int(project_id))
+            .in_("status", ["open", "in_progress", "blocked"])
+            .limit(50)
+            .execute()
+            .data
+            or []
+        )
+        if task_rows:
+            lines = []
+            for t in task_rows:
+                owner = t.get("assignee_name") or "unassigned"
+                due = f", due {t['due_date']}" if t.get("due_date") else ""
+                lines.append(f"- [{t.get('priority') or 'medium'}] {t.get('title')} ({owner}{due})")
+            parts.append("Currently tracked OPEN TASKS:\n" + "\n".join(lines))
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("[Extractor] open-task state fetch failed: %s", exc)
+
+    # Tracked insight cards (risks/decisions/blockers/etc.) for this project's target.
+    try:
+        from ..intelligence.compiler import ensure_client_project_target
+
+        target = ensure_client_project_target(
+            client, int(project_id), compiler_version=MEETING_PACKET_COMPILER_VERSION
+        )
+        target_id = target.get("id")
+        if target_id:
+            card_rows = (
+                client.table("insight_cards")
+                .select("card_type,title,summary,current_status")
+                .eq("primary_target_id", target_id)
+                .in_("current_status", ["open", "blocked", "needs_review", "stale"])
+                .limit(50)
+                .execute()
+                .data
+                or []
+            )
+            if card_rows:
+                lines = []
+                for c in card_rows:
+                    summary = (c.get("summary") or "").strip()
+                    summary = f" — {summary[:160]}" if summary else ""
+                    lines.append(
+                        f"- ({c.get('card_type')}, {c.get('current_status')}) {c.get('title')}{summary}"
+                    )
+                parts.append("Currently tracked INSIGHT CARDS:\n" + "\n".join(lines))
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("[Extractor] insight-card state fetch failed: %s", exc)
+
+    return "\n\n".join(parts)
+
+
+def _fetch_prior_context(project_id: int | None, query_text: str, top_k: int) -> str:
+    """One scoped, project-filtered semantic lookup — 'has this surfaced before?'.
+
+    Supporting input only. Best-effort: returns '' on any failure so the deep
+    pass never fails for lack of prior context.
+    """
+    if not project_id or not (query_text or "").strip():
+        return ""
+    try:
+        embedding = llm.batch_embed([query_text[:2000]])
+        if not embedding:
+            return ""
+        rows = (
+            get_rag_read_client()
+            .rpc(
+                "search_document_chunks",
+                {
+                    "query_embedding": embedding[0],
+                    "match_count": top_k,
+                    "match_threshold": 0.3,
+                    "filter_project_id": int(project_id),
+                },
+            )
+            .execute()
+            .data
+            or []
+        )
+        snippets = []
+        for r in rows:
+            text = r.get("content") or r.get("text") or r.get("chunk_text") or ""
+            text = text.strip()
+            if text:
+                snippets.append(f"- {text[:300]}")
+        return "\n".join(snippets[:top_k])
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("[Extractor] prior-context lookup failed: %s", exc)
+        return ""
+
+
+def _merge_deep_and_rewriter_tasks(
+    deep_tasks: List[TaskItem], rewriter_tasks: List[TaskItem]
+) -> List[TaskItem]:
+    """Keep all deep tasks (they carry evidence + confidence); append only the
+    Fireflies-rewriter tasks the deep pass did not already capture (dedupe by
+    normalized-description overlap)."""
+    merged = list(deep_tasks)
+    for rt in rewriter_tasks:
+        if any(_task_overlap_score(rt.description, dt.description) >= 0.5 for dt in deep_tasks):
+            continue
+        merged.append(rt)
+    return merged
+
+
 def run_extractor(metadata_id: str) -> Dict[str, Any]:
     """
     Extract and store structured data from a parsed meeting.
@@ -348,26 +507,71 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
         len(raw_decisions), len(raw_risks), len(raw_tasks), len(notes_context),
     )
 
-    # 3. LLM normalization + opportunity discovery
+    # 3. Structured extraction — deep (full-transcript, ground-truth-aware) or
+    #    the legacy shallow segment-normalization pass.
     date_str = started_at[:10] if started_at else None
-    structured = llm.extract_structured_data(
-        title=title,
-        date=date_str,
-        participants=participants,
-        summary=meeting_summary,
-        raw_decisions=raw_decisions,
-        raw_risks=raw_risks,
-        raw_tasks=raw_tasks,
-        notes_context=notes_context,
-        speaker_email_map=speaker_email_map,
-    )
+    doc_project_id = metadata.get("project_id")
+    structured: StructuredData | None = None
+    deep_used = False
+
+    if DEEP_EXTRACTION_ENABLED and is_meeting and content:
+        try:
+            project_state = _fetch_project_state(client, doc_project_id)
+            prior_context = _fetch_prior_context(
+                doc_project_id, meeting_summary or title, DEEP_PRIOR_CONTEXT_TOPK
+            )
+            deep = llm.extract_deep_meeting_intelligence(
+                title=title,
+                date=date_str,
+                participants=participants,
+                full_transcript=content,
+                project_state=project_state,
+                prior_context=prior_context,
+                speaker_email_map=speaker_email_map,
+            )
+            if any(
+                [deep.decisions, deep.risks, deep.tasks, deep.opportunities, deep.insights]
+            ):
+                structured = deep
+                deep_used = True
+                logger.info(
+                    "[Extractor] Deep extraction used (project=%s): %d decisions, %d risks, "
+                    "%d opportunities, %d insights, %d tasks",
+                    doc_project_id,
+                    len(deep.decisions),
+                    len(deep.risks),
+                    len(deep.opportunities),
+                    len(deep.insights),
+                    len(deep.tasks),
+                )
+            else:
+                logger.warning(
+                    "[Extractor] Deep extraction returned no items; falling back to shallow pass"
+                )
+        except Exception as exc:  # noqa: BLE001 — never let the deep path break ingestion
+            logger.exception("[Extractor] Deep extraction failed; falling back to shallow: %s", exc)
+
+    if structured is None:
+        structured = llm.extract_structured_data(
+            title=title,
+            date=date_str,
+            participants=participants,
+            summary=meeting_summary,
+            raw_decisions=raw_decisions,
+            raw_risks=raw_risks,
+            raw_tasks=raw_tasks,
+            notes_context=notes_context,
+            speaker_email_map=speaker_email_map,
+        )
 
     logger.info(
-        "[Extractor] Structured: %d decisions, %d risks, %d tasks, %d opportunities",
+        "[Extractor] Structured: %d decisions, %d risks, %d tasks, %d opportunities, %d insights (deep=%s)",
         len(structured.decisions),
         len(structured.risks),
         len(structured.tasks),
         len(structured.opportunities),
+        len(structured.insights),
+        deep_used,
     )
     rewritten_fireflies_tasks: List[Any] = []
     if fireflies_action_items and is_meeting:
@@ -387,10 +591,7 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
             source_date=source_date_iso,
             notes_context=notes_context,
         )
-        # Replace LLM-extractor tasks with the rewriter output. The rewriter is
-        # owner-aware and imperative-by-construction; the legacy LLM tasks
-        # double-count the same action items as third-person narration.
-        structured.tasks = [
+        rewriter_as_tasks = [
             TaskItem(
                 description=t.description or t.title,
                 assignee=t.assignee_name,
@@ -400,11 +601,21 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
             )
             for t in rewritten_fireflies_tasks
         ]
+        if deep_used:
+            # Deep tasks (with evidence + confidence) are primary; backfill only
+            # the Fireflies action items the deep pass missed. Then apply the
+            # owner/low-signal quality gates to the merged set.
+            structured.tasks = _apply_task_quality_gates(
+                _merge_deep_and_rewriter_tasks(structured.tasks, rewriter_as_tasks)
+            )
+        else:
+            # Legacy behavior: the rewriter is owner-aware and imperative; replace
+            # the shallow LLM tasks to avoid double-counting third-person narration.
+            structured.tasks = rewriter_as_tasks
         logger.info(
-            "[Extractor] Using %d rewritten Fireflies tasks (kept %d, dropped %d)",
+            "[Extractor] Tasks after Fireflies-rewriter merge: %d (deep=%s)",
             len(structured.tasks),
-            len(structured.tasks),
-            max(0, len(fireflies_action_items) - len(structured.tasks)),
+            deep_used,
         )
     else:
         structured.tasks = _apply_task_quality_gates(structured.tasks)
@@ -544,8 +755,35 @@ def _meeting_signal_confidence(description: str, *supporting: Any) -> float:
     return round(min(score, 0.9), 2)
 
 
+def _signal_confidence(item: "StructuredItem", *supporting: Any) -> float:
+    """Prefer the deep pass's calibrated per-item confidence; fall back to the
+    heuristic for the shallow pass (which leaves item.confidence None)."""
+    if getattr(item, "confidence", None) is not None:
+        return max(0.0, min(1.0, float(item.confidence)))
+    return _meeting_signal_confidence(item.description or "", *supporting)
+
+
+def _signal_status(item: "StructuredItem") -> str:
+    """Map the deep pass's status_hint onto the card's current_status. 'resolved'
+    closes the tracked card; 'new'/'update'/None stay open (update supersedes via
+    normalized_signal_key dedup in the promotion path)."""
+    return "resolved" if getattr(item, "status_hint", None) == "resolved" else "open"
+
+
+def _signal_excerpt(item: "StructuredItem", description: str) -> str:
+    """Evidence quote from the deep pass becomes the card evidence excerpt; the
+    shallow pass has no quote, so fall back to the description."""
+    return (getattr(item, "evidence_quote", None) or description)[:900]
+
+
 def _build_meeting_signal_payloads(structured: "StructuredData") -> List[Dict[str, Any]]:
-    """Convert extracted decisions/risks/opportunities into signal-candidate kwargs."""
+    """Convert extracted decisions/risks/opportunities/insights into signal-candidate kwargs.
+
+    For deep-extraction items, the model's calibrated confidence drives the
+    promote-vs-review gate, the evidence quote becomes the card excerpt, and
+    status_hint='resolved' closes the tracked card. Shallow-pass items fall back
+    to the heuristic confidence + description excerpt (unchanged behavior).
+    """
     payloads: List[Dict[str, Any]] = []
 
     for decision in structured.decisions:
@@ -560,15 +798,17 @@ def _build_meeting_signal_payloads(structured: "StructuredData") -> List[Dict[st
                 "summary": description,
                 "why_it_matters": decision.rationale or None,
                 "suggested_owner_label": decision.owner or None,
-                "current_status": "open",
-                "confidence_score": _meeting_signal_confidence(description, decision.rationale),
-                "excerpt": description[:900],
+                "current_status": _signal_status(decision),
+                "confidence_score": _signal_confidence(decision, decision.rationale),
+                "excerpt": _signal_excerpt(decision, description),
                 "normalized_signal_key": _meeting_signal_key("decision", title),
                 "extraction_json": {
                     "source": "meeting_extractor",
                     "kind": "decision",
                     "rationale": decision.rationale,
                     "owner": decision.owner,
+                    "evidence_quote": decision.evidence_quote,
+                    "status_hint": decision.status_hint,
                 },
             }
         )
@@ -586,9 +826,9 @@ def _build_meeting_signal_payloads(structured: "StructuredData") -> List[Dict[st
                 "summary": risk.impact or description,
                 "why_it_matters": description,
                 "suggested_owner_label": risk.owner or None,
-                "current_status": "open",
-                "confidence_score": _meeting_signal_confidence(description, risk.impact, risk.category),
-                "excerpt": description[:900],
+                "current_status": _signal_status(risk),
+                "confidence_score": _signal_confidence(risk, risk.impact, risk.category),
+                "excerpt": _signal_excerpt(risk, description),
                 "normalized_signal_key": _meeting_signal_key(signal_type, title),
                 "extraction_json": {
                     "source": "meeting_extractor",
@@ -597,6 +837,8 @@ def _build_meeting_signal_payloads(structured: "StructuredData") -> List[Dict[st
                     "likelihood": risk.likelihood,
                     "impact": risk.impact,
                     "owner": risk.owner,
+                    "evidence_quote": risk.evidence_quote,
+                    "status_hint": risk.status_hint,
                 },
             }
         )
@@ -613,15 +855,45 @@ def _build_meeting_signal_payloads(structured: "StructuredData") -> List[Dict[st
                 "summary": description,
                 "why_it_matters": "Opportunity surfaced from a project meeting.",
                 "suggested_owner_label": opportunity.owner or None,
-                "current_status": "open",
-                "confidence_score": _meeting_signal_confidence(description, opportunity.type),
-                "excerpt": description[:900],
+                "current_status": _signal_status(opportunity),
+                "confidence_score": _signal_confidence(opportunity, opportunity.type),
+                "excerpt": _signal_excerpt(opportunity, description),
                 "normalized_signal_key": _meeting_signal_key("opportunity", title),
                 "extraction_json": {
                     "source": "meeting_extractor",
                     "kind": "opportunity",
                     "opportunity_type": opportunity.type,
                     "owner": opportunity.owner,
+                    "evidence_quote": opportunity.evidence_quote,
+                    "status_hint": opportunity.status_hint,
+                },
+            }
+        )
+
+    for insight in structured.insights:
+        description = (insight.description or "").strip()
+        if not description:
+            continue
+        title = (_derive_title(description) or description)[:180]
+        signal_type = "open_question" if (insight.category or "").strip().lower() == "open_question" else "project_update"
+        payloads.append(
+            {
+                "signal_type": signal_type,
+                "title": title,
+                "summary": description,
+                "why_it_matters": "Surfaced from a project meeting.",
+                "suggested_owner_label": insight.owner or None,
+                "current_status": _signal_status(insight),
+                "confidence_score": _signal_confidence(insight, insight.category),
+                "excerpt": _signal_excerpt(insight, description),
+                "normalized_signal_key": _meeting_signal_key(signal_type, title),
+                "extraction_json": {
+                    "source": "meeting_extractor",
+                    "kind": "insight",
+                    "category": insight.category,
+                    "owner": insight.owner,
+                    "evidence_quote": insight.evidence_quote,
+                    "status_hint": insight.status_hint,
                 },
             }
         )
@@ -794,6 +1066,36 @@ def _upsert_task(
     else:
         prompt_version = None
 
+    # Deep-extraction provenance + confidence gate (Part C). Deep tasks must
+    # record a prompt version to satisfy the tasks-quality trigger. Tasks from the deep
+    # read carry an evidence quote and a calibrated confidence. Below the
+    # threshold we still write the task but flag needs_review so a human promotes
+    # it — never silently auto-create a low-confidence actionable task. (The tasks
+    # table CHECK has no 'needs_review' status, so the flag lives in metadata.)
+    is_deep_task = (not rewriter_match) and (task.confidence is not None)
+    if is_deep_task:
+        extraction_metadata["deep_confidence"] = task.confidence
+        if task.evidence_quote:
+            extraction_metadata["evidence_quote"] = task.evidence_quote
+        if task.status_hint:
+            extraction_metadata["status_hint"] = task.status_hint
+        if task.confidence < DEEP_TASK_CONFIDENCE_THRESHOLD:
+            extraction_metadata["needs_review"] = True
+            logger.info(
+                "[Extractor] Deep task below confidence gate (%.2f < %.2f) flagged needs_review: %r",
+                task.confidence,
+                DEEP_TASK_CONFIDENCE_THRESHOLD,
+                (task.description or "")[:80],
+            )
+
+    if rewriter_match:
+        extraction_source = "fireflies_rewriter"
+    elif is_deep_task:
+        extraction_source = "deep_extractor"
+        prompt_version = DEEP_EXTRACTION_PROMPT_VERSION
+    else:
+        extraction_source = "fireflies_pipeline_legacy"
+
     data = {
         "metadata_id": metadata_id,
         "title": title,
@@ -809,8 +1111,8 @@ def _upsert_task(
         "project_ids": project_ids or [],
         "project_id": resolved_project_id,
         "client_id": client_id,
-        "extraction_source": "fireflies_rewriter" if rewriter_match else "fireflies_pipeline_legacy",
-        "extraction_model": "gpt-5.5" if rewriter_match else None,
+        "extraction_source": extraction_source,
+        "extraction_model": "gpt-5.5" if (rewriter_match or is_deep_task) else None,
         "extraction_prompt_version": prompt_version,
         "extraction_metadata": extraction_metadata,
     }

@@ -13,7 +13,15 @@ from openai import OpenAI
 
 from ..ai_transport import retry_ai_call
 from .config import EMBEDDING_MODEL, EMBEDDING_DIMENSIONS
-from .models import DecisionItem, MeetingSegment, OpportunityItem, RiskItem, StructuredData, TaskItem
+from .models import (
+    DecisionItem,
+    InsightItem,
+    MeetingSegment,
+    OpportunityItem,
+    RiskItem,
+    StructuredData,
+    TaskItem,
+)
 
 # Maps each supported embedding model to its native output dimension.
 # If batch_embed is called with a non-default model, we look up the correct
@@ -39,6 +47,16 @@ logger = logging.getLogger(__name__)
 
 CHAT_MODEL = "gpt-4o-mini"
 SEGMENT_TRANSCRIPT_MAX_CHARS = int(os.getenv("SEGMENT_TRANSCRIPT_MAX_CHARS", "0"))
+
+# Safety ceiling for the deep, full-transcript pass — sized to the large-context
+# compiler model, NOT the small chat model. ~600k chars ≈ 150k tokens, well
+# inside gpt-5.5's window while bounding cost on a pathological transcript.
+# Tune via env without code changes.
+DEEP_TRANSCRIPT_MAX_CHARS = int(os.getenv("DEEP_TRANSCRIPT_MAX_CHARS", "600000"))
+# Per-request timeout for the deep pass. A full-transcript reasoning call is far
+# slower than the Teams-compiler's short default (60s) — a 130k-char transcript
+# can take several minutes — so the deep pass uses its own generous ceiling.
+DEEP_EXTRACTION_TIMEOUT_SECONDS = int(os.getenv("DEEP_EXTRACTION_TIMEOUT_SECONDS", "300"))
 
 
 def _client() -> OpenAI:
@@ -329,6 +347,225 @@ Guidelines:
     ]
 
     return StructuredData(decisions=decisions, risks=risks, tasks=tasks, opportunities=opportunities)
+
+
+# ---------------------------------------------------------------------------
+# Deep, full-transcript meeting intelligence extraction
+# ---------------------------------------------------------------------------
+
+def _coerce_confidence(raw: Any, default: float = 0.6) -> float:
+    """Clamp a model-provided confidence into [0, 1], falling back to default."""
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return default
+    if value != value:  # NaN guard
+        return default
+    return max(0.0, min(1.0, value))
+
+
+def _coerce_status_hint(raw: Any) -> Optional[str]:
+    value = str(raw or "").strip().lower()
+    return value if value in {"new", "update", "resolved"} else None
+
+
+def extract_deep_meeting_intelligence(
+    *,
+    title: str,
+    date: Optional[str],
+    participants: List[str],
+    full_transcript: str,
+    project_state: str,
+    prior_context: str = "",
+    speaker_email_map: Optional[Dict[str, str]] = None,
+) -> StructuredData:
+    """Deep extraction: read the *whole* transcript against the project's *real*
+    state and emit evidence-linked, confidence-calibrated risks / decisions /
+    opportunities / insights / tasks, each tagged new|update|resolved.
+
+    Uses the large-context compiler model (gpt-5.5), NOT the small CHAT_MODEL.
+    The full transcript is passed uncapped except for a safety ceiling at the
+    model's real context limit (``DEEP_TRANSCRIPT_MAX_CHARS``).
+    """
+    transcript = full_transcript or ""
+    if len(transcript) > DEEP_TRANSCRIPT_MAX_CHARS:
+        logger.warning(
+            "[LLM] deep extraction transcript truncated from %d to %d chars (safety ceiling)",
+            len(transcript),
+            DEEP_TRANSCRIPT_MAX_CHARS,
+        )
+        transcript = transcript[:DEEP_TRANSCRIPT_MAX_CHARS]
+
+    email_map_text = ""
+    if speaker_email_map:
+        mappings = [f"  {name} → {email}" for name, email in speaker_email_map.items()]
+        email_map_text = "\n\nSpeaker Email Mapping (use for task owner emails):\n" + "\n".join(mappings)
+
+    prior_block = ""
+    if prior_context.strip():
+        prior_block = (
+            "\n\nRELATED HISTORY (semantic prior context — supporting only, may be "
+            "noisy; do NOT invent items from it):\n" + prior_context.strip()
+        )
+
+    prompt = f"""You are the senior project intelligence analyst for a construction \
+project-management firm. Read the ENTIRE meeting transcript below and compare it \
+against the project's CURRENT TRACKED STATE. Produce the new or changed risks, \
+decisions, opportunities, insights, and tasks.
+
+For EVERY item you MUST:
+- ground it in the transcript with a short verbatim `evidence_quote` (≤ 240 chars, \
+copied from the transcript — never paraphrased or invented),
+- assign a calibrated `confidence` in [0,1] (1 = explicitly stated and unambiguous; \
+0.5 = reasonably implied; below 0.4 = speculative),
+- set `status_hint`: "new" (not in current state), "update" (changes/expands a \
+tracked item), or "resolved" (a tracked item that this meeting closes out).
+
+Do NOT fabricate. If the transcript does not support an item, omit it. Prefer fewer, \
+higher-confidence items over many weak ones. Catch IMPLIED action items and owner \
+assignments that a naive action-item list would miss.
+
+Meeting: {title}
+Date: {date or "Unknown"}
+Participants: {", ".join(participants) if participants else "Unknown"}{email_map_text}
+
+CURRENT TRACKED PROJECT STATE (ground truth — use to decide new vs update vs resolved):
+{project_state or "(no tracked state available)"}{prior_block}
+
+FULL MEETING TRANSCRIPT:
+{transcript}
+
+Return JSON in EXACTLY this shape (omit empty arrays’ items, never the keys):
+{{
+  "what_changed": "One short paragraph: what materially changed on this project since it was last tracked. Empty string if nothing material.",
+  "decisions": [
+    {{"description": "...", "rationale": "...", "owner": "Name or null", "evidence_quote": "...", "confidence": 0.0, "status_hint": "new|update|resolved"}}
+  ],
+  "risks": [
+    {{"description": "...", "category": "schedule|budget|cost|resource|technical|external", "likelihood": "low|medium|high", "impact": "low|medium|high", "owner": "Name or null", "evidence_quote": "...", "confidence": 0.0, "status_hint": "new|update|resolved"}}
+  ],
+  "opportunities": [
+    {{"description": "...", "type": "efficiency|revenue|relationship|innovation", "owner": "Name or null", "evidence_quote": "...", "confidence": 0.0, "status_hint": "new|update|resolved"}}
+  ],
+  "insights": [
+    {{"description": "...", "category": "status|open_question|context", "owner": "Name or null", "evidence_quote": "...", "confidence": 0.0, "status_hint": "new|update|resolved"}}
+  ],
+  "tasks": [
+    {{"description": "Imperative action", "assignee": "Name or null", "assigneeEmail": "email or null", "dueDate": "YYYY-MM-DD or null", "priority": "low|medium|high|urgent", "evidence_quote": "...", "confidence": 0.0, "status_hint": "new|update|resolved"}}
+  ]
+}}
+
+Task rules:
+- Owners must be real people from the participant list; map names→emails via the mapping above.
+- Due dates: resolve relative phrases against the meeting date ({date or "Unknown"}); null if none stated.
+- priority: "urgent" only for safety/inspection/compliance/hard-deadline; "high" for >$10k impact or blocking; else "medium"/"low".
+Output ONLY the JSON object."""
+
+    # Lazy import: the intelligence package eagerly loads the compiler at startup,
+    # so a top-level import risks a circular load order under FastAPI/pytest.
+    from ..intelligence.client import COMPILER_MODEL, extract_with_retry
+
+    logger.info(
+        "[LLM] Deep extraction via %s (transcript=%d chars, state=%d chars)",
+        COMPILER_MODEL,
+        len(transcript),
+        len(project_state or ""),
+    )
+    data = extract_with_retry(
+        [{"role": "user", "content": prompt}],
+        model=COMPILER_MODEL,
+        timeout=DEEP_EXTRACTION_TIMEOUT_SECONDS,
+    )
+    if data.get("_extraction_failed"):
+        logger.error("[LLM] Deep extraction failed: %s", data.get("_errors"))
+        return StructuredData()
+
+    _email_map = speaker_email_map or {}
+
+    decisions = [
+        DecisionItem(
+            description=d.get("description", ""),
+            rationale=d.get("rationale"),
+            owner=d.get("owner"),
+            evidence_quote=d.get("evidence_quote"),
+            confidence=_coerce_confidence(d.get("confidence")),
+            status_hint=_coerce_status_hint(d.get("status_hint")),
+        )
+        for d in data.get("decisions", [])
+        if d.get("description")
+    ]
+    risks = [
+        RiskItem(
+            description=r.get("description", ""),
+            category=r.get("category"),
+            likelihood=r.get("likelihood"),
+            impact=r.get("impact"),
+            owner=r.get("owner"),
+            evidence_quote=r.get("evidence_quote"),
+            confidence=_coerce_confidence(r.get("confidence")),
+            status_hint=_coerce_status_hint(r.get("status_hint")),
+        )
+        for r in data.get("risks", [])
+        if r.get("description")
+    ]
+    opportunities = [
+        OpportunityItem(
+            description=o.get("description", ""),
+            type=o.get("type"),
+            owner=o.get("owner"),
+            evidence_quote=o.get("evidence_quote"),
+            confidence=_coerce_confidence(o.get("confidence")),
+            status_hint=_coerce_status_hint(o.get("status_hint")),
+        )
+        for o in data.get("opportunities", [])
+        if o.get("description")
+    ]
+    insights = [
+        InsightItem(
+            description=i.get("description", ""),
+            category=i.get("category"),
+            owner=i.get("owner"),
+            evidence_quote=i.get("evidence_quote"),
+            confidence=_coerce_confidence(i.get("confidence")),
+            status_hint=_coerce_status_hint(i.get("status_hint")),
+        )
+        for i in data.get("insights", [])
+        if i.get("description")
+    ]
+    tasks: List[TaskItem] = []
+    for t in data.get("tasks", []):
+        if not t.get("description"):
+            continue
+        assignee = t.get("assignee")
+        assignee_email = t.get("assigneeEmail")
+        if not assignee_email and assignee and assignee in _email_map:
+            assignee_email = _email_map[assignee]
+        tasks.append(
+            TaskItem(
+                description=t.get("description", ""),
+                assignee=assignee,
+                assignee_email=assignee_email,
+                due_date=_parse_date(t.get("dueDate")),
+                priority=t.get("priority"),
+                evidence_quote=t.get("evidence_quote"),
+                confidence=_coerce_confidence(t.get("confidence")),
+                status_hint=_coerce_status_hint(t.get("status_hint")),
+            )
+        )
+
+    what_changed = str(data.get("what_changed") or "").strip() or None
+    logger.info(
+        "[LLM] Deep extraction: %d decisions, %d risks, %d opportunities, %d insights, %d tasks",
+        len(decisions), len(risks), len(opportunities), len(insights), len(tasks),
+    )
+    return StructuredData(
+        decisions=decisions,
+        risks=risks,
+        tasks=tasks,
+        opportunities=opportunities,
+        insights=insights,
+        what_changed=what_changed,
+    )
 
 
 # ---------------------------------------------------------------------------
