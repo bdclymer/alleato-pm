@@ -110,6 +110,11 @@ import {
   ArrowUpIcon,
 } from "lucide-react";
 import type { DynamicToolUIPart, FileUIPart } from "ai";
+import {
+  isSpreadsheetFile,
+  spreadsheetBytesToCsv,
+  truncateInlineText,
+} from "@/lib/chat/attachment-text";
 import { appToast as toast } from "@/lib/toast/app-toast";
 import { WelcomeScreen } from "./welcome-screen";
 import {
@@ -584,11 +589,14 @@ function isTextReadableFileUIPart(file: FileUIPart): boolean {
     name.endsWith(".csv") ||
     name.endsWith(".json") ||
     name.endsWith(".xml") ||
-    name.endsWith(".txt")
+    name.endsWith(".txt") ||
+    // Spreadsheet exports (xlsx/xls) are parsed to CSV and inlined too, so
+    // migration exports from another system actually reach the model.
+    isSpreadsheetFile(file.filename, file.mediaType)
   );
 }
 
-async function readTextFromFileUIPart(file: FileUIPart): Promise<string> {
+async function bytesFromFileUIPart(file: FileUIPart): Promise<Uint8Array> {
   const url = file.url;
   if (url.startsWith("data:")) {
     const base64Match = url.match(/^data:[^;]+;base64,(.+)$/);
@@ -598,13 +606,21 @@ async function readTextFromFileUIPart(file: FileUIPart): Promise<string> {
       for (let index = 0; index < binary.length; index++) {
         bytes[index] = binary.charCodeAt(index);
       }
-      return new TextDecoder("utf-8").decode(bytes);
+      return bytes;
     }
     const commaIndex = url.indexOf(",");
-    return decodeURIComponent(url.slice(commaIndex + 1));
+    return new TextEncoder().encode(decodeURIComponent(url.slice(commaIndex + 1)));
   }
   const response = await fetch(url);
-  return response.text();
+  return new Uint8Array(await response.arrayBuffer());
+}
+
+async function readTextFromFileUIPart(file: FileUIPart): Promise<string> {
+  const bytes = await bytesFromFileUIPart(file);
+  if (isSpreadsheetFile(file.filename, file.mediaType)) {
+    return spreadsheetBytesToCsv(bytes);
+  }
+  return truncateInlineText(new TextDecoder("utf-8").decode(bytes));
 }
 
 async function prepareMessageWithFileUIParts(
