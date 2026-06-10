@@ -1,5 +1,7 @@
 import { Langfuse } from "langfuse";
 
+import { computeTraceScores } from "@/lib/ai/score-response-quality";
+
 let _client: Langfuse | null = null;
 
 function getClient(): Langfuse | null {
@@ -31,6 +33,12 @@ type TraceParams = {
   stepCount?: number;
   toolCallNames?: string[];
   selectedProjectId?: number | null;
+  /**
+   * Full tool trace (with per-call `output`/`error`) when available. Enables the
+   * rich response-quality score and the `tool_failure` score. Omit it and the
+   * scores fall back to a lightweight estimate from output + tool names.
+   */
+  toolTrace?: Array<Record<string, unknown>>;
   metadata?: Record<string, unknown>;
 };
 
@@ -46,16 +54,27 @@ export async function traceChatCompletion(params: TraceParams): Promise<void> {
   const lf = getClient();
   if (!lf) return;
 
+  // Derived scores (no extra LLM calls) attached to every trace below so
+  // production traffic is continuously scored, not just observed.
+  const scores = computeTraceScores({
+    output: params.output,
+    toolCallNames: params.toolCallNames,
+    toolTrace: params.toolTrace,
+  });
+  // Prefer an explicit upstream qualityScore (0–100); else use the derived one.
+  const qualityScore = params.qualityScore ?? scores.responseQuality * 100;
+
   const tags: string[] = [];
   if (params.intent) tags.push(`intent:${params.intent}`);
   if (params.wasRetried) tags.push("retried");
-  if ((params.qualityScore ?? 100) < 60) tags.push("low_quality");
-  if ((params.qualityScore ?? 100) >= 80) tags.push("high_quality");
+  if (!scores.answered) tags.push("deflected");
+  if (qualityScore < 60) tags.push("low_quality");
+  if (qualityScore >= 80) tags.push("high_quality");
 
   const traceMetadata: Record<string, unknown> = {
     intent: params.intent ?? "unknown",
-    qualityScore: params.qualityScore,
-    qualityReasons: params.qualityReasons,
+    qualityScore,
+    qualityReasons: params.qualityReasons ?? scores.reasons,
     wasRetried: params.wasRetried ?? false,
     retryReason: params.retryReason,
     stepCount: params.stepCount,
@@ -92,6 +111,31 @@ export async function traceChatCompletion(params: TraceParams): Promise<void> {
       ...params.metadata,
     },
   });
+
+  // Attach derived scores so every trace is queryable/alertable on quality.
+  const scoreComment = scores.reasons.join("; ").slice(0, 500);
+  trace.score({
+    name: "response_quality",
+    value: scores.responseQuality,
+    dataType: "NUMERIC",
+    comment: scoreComment,
+  });
+  trace.score({
+    name: "answered",
+    value: scores.answered ? 1 : 0,
+    dataType: "BOOLEAN",
+    comment: scores.answered
+      ? "substantive answer"
+      : "empty response or meta-commentary deflection",
+  });
+  if (scores.toolFailure !== null) {
+    trace.score({
+      name: "tool_failure",
+      value: scores.toolFailure ? 1 : 0,
+      dataType: "BOOLEAN",
+      comment: scoreComment,
+    });
+  }
 
   await lf.flushAsync();
 }

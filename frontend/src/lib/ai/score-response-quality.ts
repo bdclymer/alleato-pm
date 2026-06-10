@@ -180,3 +180,90 @@ export function scoreResponseQuality(params: {
 
   return { confidence, sourceQuality, score, reasons, hasMetaCommentary };
 }
+
+/**
+ * Scores derived for a single assistant response, ready to push to Langfuse as
+ * trace scores. All are computed WITHOUT extra LLM calls from data the pipeline
+ * already produces, so every production trace can be scored for free.
+ *
+ * - `responseQuality` (0–1): normalized {@link scoreResponseQuality} score when a
+ *   rich tool trace is available, else a lightweight estimate from output + tool
+ *   names. Drives quality dashboards/alerting.
+ * - `answered` (boolean): false when the model returned nothing or stalled with
+ *   meta-commentary instead of answering. The cheap guardrail against the
+ *   "deflected / empty answer" failure class.
+ * - `toolFailure` (boolean | null): whether any tool call errored. `null` when no
+ *   rich tool trace was provided (we can't tell from names alone).
+ */
+export type TraceScores = {
+  responseQuality: number;
+  answered: boolean;
+  toolFailure: boolean | null;
+  reasons: string[];
+};
+
+export function computeTraceScores(params: {
+  output: string;
+  toolCallNames?: string[];
+  toolTrace?: Array<Record<string, unknown>>;
+}): TraceScores {
+  const output = (params.output ?? "").trim();
+  const normalized = output.toLowerCase();
+  const hasMetaCommentary = META_COMMENTARY_PHRASES.some((phrase) =>
+    normalized.includes(phrase),
+  );
+  const answered = output.length > 0 && !hasMetaCommentary;
+
+  // Rich path: reuse the full heuristic scorer when a real tool trace exists.
+  if (params.toolTrace && params.toolTrace.length > 0) {
+    const rich = scoreResponseQuality({ toolTrace: params.toolTrace, content: output });
+    return {
+      responseQuality: rich.score / 100,
+      answered,
+      toolFailure: params.toolTrace.some((entry) => Boolean(entry.error)),
+      reasons: rich.reasons,
+    };
+  }
+
+  // Lightweight fallback from output + tool names only (no error info available).
+  const reasons: string[] = [];
+  let score = 50;
+  const toolCount = params.toolCallNames?.length ?? 0;
+  if (toolCount >= 3) {
+    score += 25;
+    reasons.push("multiple tool calls");
+  } else if (toolCount >= 1) {
+    score += 12;
+    reasons.push("at least one tool call");
+  } else {
+    reasons.push("no tool calls");
+  }
+
+  const citationCount =
+    (output.match(/\[Source:/g) ?? []).length + (output.match(/https?:\/\//g) ?? []).length;
+  if (citationCount >= 2) {
+    score += 15;
+    reasons.push("multiple citations");
+  } else if (citationCount === 1) {
+    score += 8;
+    reasons.push("single citation");
+  } else {
+    reasons.push("no citations");
+  }
+
+  if (hasMetaCommentary) {
+    score -= 30;
+    reasons.push("meta-commentary detected: model narrated intent instead of answering");
+  }
+  if (output.length === 0) {
+    score = 0;
+    reasons.push("empty response");
+  }
+
+  return {
+    responseQuality: Math.max(0, Math.min(100, score)) / 100,
+    answered,
+    toolFailure: null,
+    reasons,
+  };
+}

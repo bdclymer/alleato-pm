@@ -9,7 +9,11 @@
  * @see frontend/src/lib/ai/score-response-quality.ts — source
  */
 
-import { scoreResponseQuality, META_COMMENTARY_PHRASES } from "../score-response-quality";
+import {
+  scoreResponseQuality,
+  META_COMMENTARY_PHRASES,
+  computeTraceScores,
+} from "../score-response-quality";
 
 const emptyTrace: Array<Record<string, unknown>> = [];
 
@@ -260,6 +264,52 @@ describe("scoreResponseQuality", () => {
         content: "Let me check on that for you.",
       });
       expect(result.hasMetaCommentary).toBe(true);
+    });
+  });
+
+  describe("computeTraceScores (Langfuse trace scoring)", () => {
+    it("scores answered=false for an empty response", () => {
+      const s = computeTraceScores({ output: "", toolCallNames: [] });
+      expect(s.answered).toBe(false);
+      expect(s.responseQuality).toBe(0);
+    });
+
+    it("scores answered=false when the model stalls with meta-commentary", () => {
+      const s = computeTraceScores({
+        output: "Let me search for that and get back to you.",
+        toolCallNames: ["semanticSearch"],
+      });
+      expect(s.answered).toBe(false);
+    });
+
+    it("scores answered=true for a substantive answer", () => {
+      const s = computeTraceScores({
+        output: "AR aging: $120k current, $30k 30-60 days, $5k over 90.",
+        toolCallNames: ["getARAgingReport"],
+      });
+      expect(s.answered).toBe(true);
+      expect(s.responseQuality).toBeGreaterThan(0.5);
+    });
+
+    it("normalizes the rich scorer to 0–1 and detects tool failure", () => {
+      const s = computeTraceScores({
+        output: "Here is the budget summary with [Source: budget].",
+        toolTrace: [
+          { tool: "getBudgetLineItems", output: { rowCount: 12 } },
+          { tool: "semanticSearch", error: "timeout" },
+        ],
+      });
+      expect(s.responseQuality).toBeGreaterThan(0);
+      expect(s.responseQuality).toBeLessThanOrEqual(1);
+      expect(s.toolFailure).toBe(true);
+    });
+
+    it("reports toolFailure=null when no rich tool trace is provided", () => {
+      const s = computeTraceScores({
+        output: "An answer.",
+        toolCallNames: ["semanticSearch"],
+      });
+      expect(s.toolFailure).toBeNull();
     });
   });
 });

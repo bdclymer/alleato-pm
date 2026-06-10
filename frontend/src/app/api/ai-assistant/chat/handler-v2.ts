@@ -1385,6 +1385,7 @@ async function persistDirectDeepAgentResponse(params: {
         .map((trace) => trace.toolName ?? trace.tool)
         .filter((tool): tool is string => typeof tool === "string"),
       stepCount: params.trace.toolTrace.length,
+      toolTrace: params.trace.toolTrace,
       metadata: {
         architecture: "render-backend-deep-agents-v1",
         responseLabel: params.responseLabel,
