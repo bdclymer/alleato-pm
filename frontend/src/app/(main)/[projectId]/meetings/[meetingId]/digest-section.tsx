@@ -64,7 +64,7 @@ export function DigestSection({ projectId, meetingId }: DigestSectionProps) {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {hasDecisions && (
           <DigestList
-            icon={<CheckCircle className="h-4 w-4 text-green-700" />}
+            icon={<CheckCircle className="h-4 w-4 text-success" />}
             title={`Decisions (${digest.decisions_summary.length})`}
           >
             {digest.decisions_summary.map((d: DigestDecision, i: number) => (
@@ -78,7 +78,7 @@ export function DigestSection({ projectId, meetingId }: DigestSectionProps) {
 
         {hasActions && (
           <DigestList
-            icon={<ListTodo className="h-4 w-4 text-blue-700" />}
+            icon={<ListTodo className="h-4 w-4 text-info" />}
             title={`Action Items (${digest.action_items_summary.length})`}
           >
             {digest.action_items_summary.map((a: DigestActionItem, i: number) => (
@@ -97,7 +97,7 @@ export function DigestSection({ projectId, meetingId }: DigestSectionProps) {
 
         {hasRisks && (
           <DigestList
-            icon={<AlertTriangle className="h-4 w-4 text-amber-700" />}
+            icon={<AlertTriangle className="h-4 w-4 text-warning" />}
             title={`Risks (${digest.risks_summary.length})`}
           >
             {digest.risks_summary.map((r: DigestRisk, i: number) => (
@@ -112,7 +112,7 @@ export function DigestSection({ projectId, meetingId }: DigestSectionProps) {
 
         {hasOpportunities && (
           <DigestList
-            icon={<Lightbulb className="h-4 w-4 text-purple-700" />}
+            icon={<Lightbulb className="h-4 w-4 text-primary" />}
             title={`Opportunities (${digest.opportunities_summary.length})`}
           >
             {digest.opportunities_summary.map((o: DigestOpportunity, i: number) => (
