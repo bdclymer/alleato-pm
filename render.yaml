@@ -155,14 +155,14 @@ services:
       - key: TEAMS_DM_EXPORT_MAX_PAGES
         value: "2"
 
-  # Runs Outlook/OneDrive/SharePoint sync every 2 hours, staggered away from
-  # Teams-only crons. Embedding is capped at 25 documents per run.
+  # Runs Outlook/OneDrive/SharePoint sync every 30 minutes.
+  # Embedding capped at 50 documents per run to clear backlog while staying within timeout.
   - type: cron
     name: alleato-graph-sync
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "20 */2 * * *"
+    schedule: "*/30 * * * *"
     dockerCommand: >-
       python3 -c "
       import json, sys;
@@ -174,7 +174,7 @@ services:
         run_teams=False,
         run_embedding=True,
         run_teams_compiler=False,
-        embed_limit=25,
+        embed_limit=50,
         teams_compiler_batch_size=25,
       );
       print(json.dumps(result, indent=2));
@@ -229,9 +229,58 @@ services:
       - key: GRAPH_SYNC_ONEDRIVE
         value: "true"
       - key: GRAPH_EMBEDDING_LIMIT
-        value: "25"
+        value: "50"
       - key: TEAMS_COMPILER_BATCH_SIZE
         value: "25"
+
+  # Syncs new Fireflies meeting transcripts every 30 minutes.
+  # Replaced the former APScheduler-based Fireflies sync that was disabled
+  # when DISABLE_SCHEDULER=true was set on alleato-backend. Without this cron,
+  # new meetings only get ingested when manually triggered.
+  - type: cron
+    name: alleato-fireflies-sync
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "15 * * * *"
+    dockerCommand: >-
+      timeout 20m python3 -c "
+      import json, sys;
+      sys.path.insert(0, '/app');
+      from src.services.ingestion.fireflies_pipeline import FirefliesIngestionPipeline;
+      pipeline = FirefliesIngestionPipeline();
+      result = pipeline.sync_recent_transcripts(limit=25);
+      print(json.dumps(result if isinstance(result, dict) else {'result': str(result)}, indent=2, default=str));
+      "
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_WRITES_ENABLED
+        value: "true"
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
+      - key: FIREFLIES_API_KEY
+        sync: false
+      - key: AI_GATEWAY_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
 
   - type: cron
     name: alleato-microsoft-executive-assistant-check
@@ -617,6 +666,10 @@ services:
         sync: false
       - key: GOOGLE_API_KEY
         sync: false
+      - key: POSTHOG_API_KEY
+        sync: false
+      - key: POSTHOG_HOST
+        value: https://us.i.posthog.com
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY

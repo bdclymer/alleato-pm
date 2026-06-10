@@ -620,7 +620,20 @@ def ensure_client_project_target(
     project = _fetch_project(supabase, project_id)
     name = project.get("name") or f"Project {project_id}"
     slug_parts = [project.get("project_number"), name]
-    slug = _slugify(" ".join(str(part) for part in slug_parts if part))
+    base_slug = _slugify(" ".join(str(part) for part in slug_parts if part))
+
+    # Disambiguate if slug is already taken by a different project
+    slug = base_slug
+    slug_taken = _single_row(
+        supabase.table("intelligence_targets")
+        .select("id, project_id")
+        .eq("slug", base_slug)
+        .limit(1)
+        .execute()
+    )
+    if slug_taken and slug_taken.get("project_id") != int(project_id):
+        slug = f"{base_slug}-{project_id}"
+
     payload = {
         "target_type": "client_project",
         "name": name,
