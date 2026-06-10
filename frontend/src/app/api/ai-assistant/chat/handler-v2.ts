@@ -40,6 +40,7 @@ import {
 } from "@/lib/ai/bot-core";
 import { isPersonalTaskRegisterRequest } from "@/lib/ai/personal-daily-brief";
 import { createStrategistTools } from "@/lib/ai/orchestrator";
+import { fetchWithGuardrails } from "@/lib/fetch-with-guardrails";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { scoreResponseQuality } from "@/lib/ai/score-response-quality";
 import type { TaskSummaryWidgetPayload } from "@/lib/ai/assistant-widgets";
@@ -647,13 +648,22 @@ function buildLiveToolTrace(
   };
 }
 
+function microsoftAssistantTimeoutMs(): number {
+  const parsed = Number(process.env.AI_ASSISTANT_MICROSOFT_BRIDGE_TIMEOUT_MS);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 120_000;
+}
+
 async function fetchMicrosoftExecutiveAssistant(params: {
   userId: string;
   sessionId: string;
   question: string;
   selectedProjectId?: number;
 }) {
-  const response = await fetch(
+  // fetchWithGuardrails enforces a timeout + structured error so a cold/hung
+  // Render backend fails fast with a readable message instead of riding the
+  // serverless function to its maxDuration kill (which the client renders as
+  // "network error"). retries=0: this is an expensive non-idempotent generation.
+  const response = await fetchWithGuardrails(
     `${microsoftAssistantBackendUrl()}/api/intelligence/microsoft-executive-assistant`,
     {
       method: "POST",
@@ -670,6 +680,11 @@ async function fetchMicrosoftExecutiveAssistant(params: {
         projectId: params.selectedProjectId,
         trigger: "strategist_delegation",
       }),
+      requestId: params.sessionId,
+      where: "ai-assistant/chat#microsoft-executive-assistant",
+      dependency: "render-backend",
+      timeoutMs: microsoftAssistantTimeoutMs(),
+      retries: 0,
     },
   );
   const body = await response.json().catch(() => null);
@@ -1659,6 +1674,17 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
 
   const stream = createUIMessageStream({
     originalMessages: args.messages,
+    // Surface a readable message when execute() throws. Without this, an
+    // unhandled error closes the stream and the client falls back to a generic
+    // "network error" — indistinguishable from a real connection drop. Returning
+    // the message here sends it as a stream error part the UI can render.
+    onError: (error) => {
+      const detail = error instanceof Error ? error.message : String(error);
+      console.error("[handler-v2] createUIMessageStream onError", {
+        message: detail,
+      });
+      return detail || "The assistant request failed before a response was returned.";
+    },
     execute: async ({ writer }) => {
       writer.write({
         type: "data-status",
@@ -3059,27 +3085,41 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
 
       // Run base system prompt assembly (memory load + project context)
       // and retrieval execution IN PARALLEL — they don't depend on each other.
-      const [baseSystemPrompt, retrievalCtx] = await Promise.all([
-        assembleSystemPrompt({
-          userId: args.user.id,
-          messageText: lastUserContent,
-          selectedProjectId: args.selectedProjectId,
-          sessionId: args.sessionId,
-          isFirstTurn: args.messages.length === 1,
-          onMemoryUsage: (usage) => {
-            memoryUsage = usage;
-          },
-        }),
-        executeRetrievalPlan(
-          plan,
-          buildExecutorDeps({
-            supabase: args.supabase,
-            userId: args.user.id,
-            sessionId: args.sessionId,
-          }),
-          { sessionId: args.sessionId, message: lastUserContent },
-        ),
-      ]);
+      //
+      // Wrap in withKeepAlive: this is the largest pre-token window (vector
+      // search across emails/meetings/chunks + memory load). With no bytes on
+      // the wire here, the HTTP/2 proxy can sever the stream and the client
+      // renders "network error" even though the server is still working.
+      const [baseSystemPrompt, retrievalCtx] = await withKeepAlive(
+        writer,
+        {
+          statusId: "strategist-status",
+          stage: "retrieval",
+          message: "Searching project knowledge…",
+        },
+        () =>
+          Promise.all([
+            assembleSystemPrompt({
+              userId: args.user.id,
+              messageText: lastUserContent,
+              selectedProjectId: args.selectedProjectId,
+              sessionId: args.sessionId,
+              isFirstTurn: args.messages.length === 1,
+              onMemoryUsage: (usage) => {
+                memoryUsage = usage;
+              },
+            }),
+            executeRetrievalPlan(
+              plan,
+              buildExecutorDeps({
+                supabase: args.supabase,
+                userId: args.user.id,
+                sessionId: args.sessionId,
+              }),
+              { sessionId: args.sessionId, message: lastUserContent },
+            ),
+          ]),
+      );
       latestRetrievalCtx = retrievalCtx;
 
       writer.write({
