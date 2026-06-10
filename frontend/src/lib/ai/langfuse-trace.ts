@@ -2,6 +2,7 @@ import { Langfuse } from "langfuse";
 
 import { computeTraceScores } from "@/lib/ai/score-response-quality";
 import { judgeChatResponse, shouldRunJudge } from "@/lib/ai/llm-judge";
+import { maskLangfuse } from "@/lib/ai/langfuse-mask";
 
 let _client: Langfuse | null = null;
 
@@ -13,6 +14,8 @@ function getClient(): Langfuse | null {
       publicKey: process.env.LANGFUSE_PUBLIC_KEY,
       baseUrl: process.env.LANGFUSE_BASE_URL ?? "https://us.cloud.langfuse.com",
       flushAt: 1,
+      // Redact PII (emails / SSN / card / phone) before egress to us.cloud.
+      mask: maskLangfuse,
     });
   }
   return _client;

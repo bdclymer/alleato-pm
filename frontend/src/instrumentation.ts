@@ -21,6 +21,26 @@ const sentryDsnPresent = Boolean(
   process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN,
 );
 
+const langfuseConfigured = Boolean(
+  process.env.LANGFUSE_PUBLIC_KEY?.trim() &&
+    process.env.LANGFUSE_SECRET_KEY?.trim(),
+);
+
+// Holds the live Langfuse span processor once register() wires it up so route
+// handlers can force a flush before the serverless function suspends. ES module
+// live bindings mean importers observe this assignment after startup.
+let langfuseSpanProcessor: { forceFlush: () => Promise<void> } | null = null;
+
+/**
+ * Flush any buffered Langfuse spans. Call from `after()` in AI route handlers
+ * so traces are not lost when the serverless function suspends. No-ops when
+ * Langfuse is not configured.
+ */
+export async function flushLangfuse(): Promise<void> {
+  if (!langfuseSpanProcessor) return;
+  await langfuseSpanProcessor.forceFlush();
+}
+
 export async function register() {
   if (sentryDsnPresent && process.env.NEXT_RUNTIME === "nodejs") {
     await import("../sentry.server.config");
@@ -31,7 +51,30 @@ export async function register() {
   }
 
   if (process.env.NEXT_RUNTIME === "nodejs") {
-    if (process.env.PHOENIX_TRACING === "true") {
+    // Langfuse takes precedence over Phoenix: both register a global OTel tracer
+    // provider, and only one can win. Langfuse is the production observability
+    // path; Phoenix stays a local-only opt-in fallback.
+    if (langfuseConfigured) {
+      const { LangfuseSpanProcessor } = await import("@langfuse/otel");
+      const { NodeTracerProvider } = await import(
+        "@opentelemetry/sdk-trace-node"
+      );
+      const { maskLangfuse } = await import("./lib/ai/langfuse-mask");
+
+      // Redact PII (emails / SSN / card / phone) before egress to us.cloud.
+      const processor = new LangfuseSpanProcessor({ mask: maskLangfuse });
+      langfuseSpanProcessor = processor;
+
+      const provider = new NodeTracerProvider({
+        spanProcessors: [processor],
+      });
+      provider.register();
+
+      console.log(
+        "[instrumentation] Langfuse tracing enabled → " +
+          (process.env.LANGFUSE_BASE_URL ?? "https://us.cloud.langfuse.com"),
+      );
+    } else if (process.env.PHOENIX_TRACING === "true") {
       const { NodeSDK } = await import("@opentelemetry/sdk-node");
       const { OTLPTraceExporter } = await import(
         "@opentelemetry/exporter-trace-otlp-http"
