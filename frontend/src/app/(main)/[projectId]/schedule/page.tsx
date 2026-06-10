@@ -45,6 +45,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { InfoAlert } from "@/components/ds/InfoAlert";
 import { TableToolbar, type FilterConfig, type ColumnConfig } from "@/components/tables/unified";
 import {
   Plus,
@@ -60,8 +61,10 @@ import {
   ChevronDown,
   Trash2,
   X,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Progress } from "@/components/ui/progress";
 import {
   ScheduleTask,
   ScheduleTaskWithHierarchy,
@@ -84,6 +87,13 @@ type QuickAddTaskInput = {
   status?: TaskStatus;
   startDate?: string | null;
   finishDate?: string | null;
+};
+
+type BulkDeleteProgress = {
+  phase: "deleting" | "complete";
+  total: number;
+  deleted: number;
+  failed: number;
 };
 
 type RelatedActionItemsResponse = {
@@ -179,46 +189,82 @@ function ViewModeTabs({
 
 function BulkActionBar({
   selectedCount,
+  deleteProgress,
   onUpdateStatus,
   onDelete,
   onClear,
 }: {
   selectedCount: number;
+  deleteProgress: BulkDeleteProgress | null;
   onUpdateStatus: (status: TaskStatus) => void;
   onDelete: () => void;
   onClear: () => void;
 }) {
+  const isDeleting = deleteProgress?.phase === "deleting";
+  const isDeleteProgressVisible = Boolean(deleteProgress);
+  const progressValue = deleteProgress
+    ? Math.min(100, Math.round(((deleteProgress.deleted + deleteProgress.failed) / deleteProgress.total) * 100))
+    : 0;
+
   return (
-    <div className="flex items-center gap-4 px-4 py-2.5 rounded-lg border bg-primary/5 border-primary/20 animate-reveal">
-      <span className="text-sm font-medium">{selectedCount} selected</span>
-      <div className="h-4 w-px bg-border" />
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">
-            Update Status
-            <ChevronDown />
+    <InfoAlert
+      variant="info"
+      role="status"
+      className="animate-reveal text-foreground"
+      icon={
+        <span className="mt-1 inline-flex h-2 w-2 shrink-0 rounded-full bg-primary" />
+      }
+    >
+      <div className="flex w-full flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-sm font-medium">{selectedCount} selected</span>
+          <div className="hidden h-4 w-px bg-border sm:block" />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" disabled={isDeleteProgressVisible}>
+                Update Status
+                <ChevronDown />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => onUpdateStatus("not_started")}>
+                Not Started
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onUpdateStatus("in_progress")}>
+                In Progress
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onUpdateStatus("complete")}>
+                Complete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button variant="destructive" size="sm" onClick={onDelete} disabled={isDeleteProgressVisible}>
+            {isDeleting ? (
+              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="mr-1.5 h-4 w-4" />
+            )}
+            {isDeleting ? "Deleting" : deleteProgress?.phase === "complete" ? "Deleted" : "Delete"}
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem onClick={() => onUpdateStatus("not_started")}>
-            Not Started
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onUpdateStatus("in_progress")}>
-            In Progress
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onUpdateStatus("complete")}>
-            Complete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      <Button variant="destructive" size="sm" onClick={onDelete}>
-        <Trash2 className="h-4 w-4 mr-1.5" />
-        Delete
-      </Button>
-      <Button variant="ghost" size="sm" onClick={onClear} className="ml-auto">
-        <X className="h-4 w-4" />
-      </Button>
-    </div>
+          <Button variant="ghost" size="sm" onClick={onClear} disabled={isDeleteProgressVisible} className="ml-auto">
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        {deleteProgress && (
+          <div className="space-y-2" role="status" aria-live="polite">
+            <div className="flex items-center justify-between gap-4 text-xs text-muted-foreground">
+              <span>
+                {deleteProgress.phase === "complete"
+                  ? `Deleted ${deleteProgress.deleted} of ${deleteProgress.total} tasks`
+                  : `Deleting ${deleteProgress.total} tasks`}
+              </span>
+              <span>{progressValue}%</span>
+            </div>
+            <Progress value={progressValue} className="h-1.5" />
+          </div>
+        )}
+      </div>
+    </InfoAlert>
   );
 }
 
@@ -241,6 +287,7 @@ export default function ProjectSchedulePage() {
   );
   const [copiedTask, setCopiedTask] = useState<ScheduleTask | null>(null);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [bulkDeleteProgress, setBulkDeleteProgress] = useState<BulkDeleteProgress | null>(null);
   const [relatedActionItemsByTaskId, setRelatedActionItemsByTaskId] = useState<
     Record<string, RelatedScheduleActionItem[]>
   >({});
@@ -702,15 +749,74 @@ export default function ProjectSchedulePage() {
   );
 
   const handleBulkDelete = useCallback(async () => {
-    const promises = Array.from(selectedIds).map((id) => handleDeleteTask(id));
+    const taskIds = Array.from(selectedIds);
+    if (taskIds.length === 0) return;
+
+    setBulkDeleteProgress({
+      phase: "deleting",
+      total: taskIds.length,
+      deleted: 0,
+      failed: 0,
+    });
+
     try {
-      await Promise.all(promises);
-      toast.success(`Deleted ${selectedIds.size} tasks`);
-      setSelectedIds(new Set());
-    } catch {
-      toast.error("Some tasks failed to delete");
+      const res = await fetch(`${apiUrl}/bulk`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task_ids: taskIds }),
+      });
+
+      const result = await res.json().catch(() => null) as {
+        deleted?: number;
+        failed?: number;
+        error?: string;
+        errors?: Array<{ taskId: string; error: string }>;
+      } | null;
+
+      if (!res.ok) {
+        throw new Error(result?.error || "Failed to delete selected tasks");
+      }
+
+      const deleted = result?.deleted ?? 0;
+      const failed = result?.failed ?? 0;
+
+      setBulkDeleteProgress({
+        phase: "complete",
+        total: taskIds.length,
+        deleted,
+        failed,
+      });
+
+      if (failed > 0) {
+        const firstError = result?.errors?.[0]?.error;
+        toast.error(`Deleted ${deleted} tasks; ${failed} failed`, {
+          description: firstError ?? "Review the remaining selected tasks and try again.",
+          duration: 7000,
+        });
+        const failedIds = new Set(result?.errors?.map((item) => item.taskId) ?? []);
+        setSelectedIds(failedIds);
+      } else {
+        toast.success(`Deleted ${deleted} tasks`);
+      }
+
+      await refetch();
+
+      window.setTimeout(() => {
+        if (failed === 0) {
+          setSelectedIds(new Set());
+        }
+        setBulkDeleteProgress(null);
+      }, 1800);
+    } catch (err) {
+      console.error("Failed to bulk delete tasks:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to delete selected tasks";
+      setBulkDeleteProgress(null);
+      toast.error("Error Deleting Tasks", {
+        description: errorMessage,
+        duration: 6000,
+      });
     }
-  }, [selectedIds, handleDeleteTask]);
+  }, [apiUrl, refetch, selectedIds]);
 
   const handleImportTasks = useCallback(
     async (importedTasks: Partial<ScheduleTask>[]) => {
@@ -919,9 +1025,13 @@ export default function ProjectSchedulePage() {
           {selectedIds.size > 0 && (
             <BulkActionBar
               selectedCount={selectedIds.size}
+              deleteProgress={bulkDeleteProgress}
               onUpdateStatus={handleBulkStatusUpdate}
               onDelete={handleBulkDelete}
-              onClear={() => setSelectedIds(new Set())}
+              onClear={() => {
+                setBulkDeleteProgress(null);
+                setSelectedIds(new Set());
+              }}
             />
           )}
 
