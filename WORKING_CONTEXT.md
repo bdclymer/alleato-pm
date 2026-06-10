@@ -7,9 +7,73 @@
 
 ## Current focus
 
-**Status:** Executive daily brief dramatically improved — financial ground truth layer added, synthesis quality overhauled.
-**Last updated:** 2026-06-09
-**Last worked on by:** Claude Code (executive daily brief — financial pulse + synthesis improvements)
+**Status:** RAG pipeline fully repaired — email embed backlog cleared (695 emails + 200 attachments), AI assistant verified on project 1009. Three root-cause fixes deployed to Render.
+**Last updated:** 2026-06-10
+**Last worked on by:** Claude Code (RAG pipeline audit + email embed backlog fix)
+
+## RAG pipeline audit + email embed backlog fix (2026-06-10)
+
+### Problem
+695 emails and 200 email_attachments stuck with `embedding_status IS NULL` in RAG DB (`rag_document_metadata`) since the 2026-05-15 RAG migration split. The email embed pipeline appeared to work but silently cleared 0 docs per run.
+
+### Three root causes found and fixed
+
+**Fix 1** (commit `39b7a8816`): `_fetch_graph_embedding_candidates` returned `[]` (not `None`) when PM APP status was already cleared → fallback RAG scan never ran.
+
+**Fix 2** (commit `f03664863`): The `[]` guard was insufficient — a single `teams_message` with `raw_ingested` status kept `not docs` False. Changed to **always supplement** SQL results with RAG DB email/attachment candidates (prepended, so they get priority in the batch).
+
+**Fix 3** (commit `98c6fa7b2`): `embed_graph_document` wrote chunks to RAG DB but **never updated `rag_document_metadata.embedding_status`** — so the same 200 emails were re-embedded on every call without the pending count ever dropping. Added `embedding_status='embedded'` (or `'skipped'`) update in all exit paths.
+
+All three commits deployed to Render `alleato-backend` (service `srv-d8271ohj2pic739klb7g`, last deploy `dep-d8kqurjtqb8s73afl230`, live 18:42 UTC).
+
+### Final state after clearing backlog
+| Type | Pending (before) | Pending (after) | Embedded |
+|------|----------|---------|---------|
+| email | 695 | **0** | 1,914 |
+| email_attachment | 200 | **0** | 200 |
+| document | 0 | 0 | 4,608 |
+| teams_message | 0 | 0 | 11 |
+| meeting | 1 | TBD | 1,674 |
+
+63 emails marked `skipped` (low-content / empty bodies — correct behavior).
+
+### Other pipeline fixes this session
+- **2 stuck `source_intelligence_jobs`** (stuck `running` since May 15/18) reset to `queued` via SQL on RAG DB. Will be picked up by next scheduler cycle.
+- **`project_briefings` table** is intentionally unimplemented dead schema — brief generation lives in `daily_recaps`, `intelligence_packets`, `briefing_runs`. Not a bug.
+
+### AI assistant verified on project 1009
+`/api/chat` query "What are the most recent emails and key discussion topics for project 1009 Union Collective?" returned:
+- 780 documented meetings, 45 open AI tasks
+- Specific tasks with assignees (e.g., "Send Tony the latest roof plan/drawings" → Andrew Cannon)
+- Sources included `outlook_AAMkAD...` email IDs — newly embedded emails **ARE appearing in RAG search**
+
+### Key files
+- `backend/src/services/integrations/microsoft_graph/embed.py` — three fixes applied
+- `docs/architecture/AI-RAG-ARCHITECTURE.md` — updated per RAG-DOCS-GATE
+
+### Pipeline now running clean
+Future content synced → embedded → chunked by the `alleato-graph-sync` cron (every 30 min). Fix 2+3 ensure newly synced emails immediately get `embedding_status='embedded'` after chunking. The pipeline should satisfy the "within 30 minutes of new content" SLA going forward.
+
+---
+
+## insight_cards Daily Brief activation (2026-06-10)
+
+### What was done
+Took PR #482 (insight_cards-sourced brief, merged via commit `80b6603`) from merged to live.
+
+1. **Confirmed cards populated** — PM APP has 4,411 active owner-relevant insight_cards with valid attribution, last updated 2026-06-09. Driven by `ai_intelligence_compiler_v0_1` (8,021 source_signal_candidates in RAG DB as of June 9).
+
+2. **Activated flag** — Set `EXECUTIVE_BRIEF_FROM_INSIGHT_CARDS=true` on both Preview and Production in Vercel (project `alleato-hub`). Confirmed via `vercel env ls` and API.
+
+3. **Production deployed** — Deployment `dpl_BrS1hb6qKuzBuEsZg6CJSAXD4NxM` (commit `ae3684ec`, "docs: add activation handoff") is READY at `projects.alleatogroup.com`.
+
+4. **Verified card path active** — Ran generation script locally with flag set. Brief generated in 4.8s (no LLM synthesis), 25 needsBrandon items. `daily_recaps` row `c4b4ab14-57d8-473a-996c-7defbe490643` has `retrievalNotes[0]` = `"Daily Brief source: curated insight_cards (Pipeline B), not RAG chunk search."` — confirmed Pipeline B path.
+
+### Rollback
+`vercel env update EXECUTIVE_BRIEF_FROM_INSIGHT_CARDS production --value "false" --yes` then trigger a redeploy.
+
+### Backend deployed (2026-06-10)
+Render `alleato-backend` redeployed via API (deploy `dep-d8knhbeq1p3s73fpju70`, commit `ae3684ec`, status: live in ~70s). The `_promote_meeting_signals` meeting-extractor changes from PR #482 are now running. Future meeting syncs will route decisions/risks/opportunities into `source_signal_candidates` with `compiler_version = 'meeting_extractor_compiler_v0_1'` → promoted to `insight_cards`.
 
 ## Executive Daily Brief overhaul (2026-06-09)
 

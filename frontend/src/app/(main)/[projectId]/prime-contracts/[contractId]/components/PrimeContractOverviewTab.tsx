@@ -326,19 +326,19 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
               <SectionRuleHeading label="General Information" className="mb-6 pb-0" />
               <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-x-10 gap-y-4">
                 <dl className="space-y-4 text-sm">
-                  <LabelValueRow label="Contract #" stacked labelClassName="w-36">
+                  <LabelValueRow label="Contract #" labelClassName="w-36">
                     {contract.contract_number || "—"}
                   </LabelValueRow>
-                  <LabelValueRow label="Title" stacked labelClassName="w-36">
+                  <LabelValueRow label="Title" labelClassName="w-36">
                     {contract.title}
                   </LabelValueRow>
-                  <LabelValueRow label="Status" stacked labelClassName="w-36">
+                  <LabelValueRow label="Status" labelClassName="w-36">
                     {formatStatusLabel(contract.status)}
                   </LabelValueRow>
-                  <LabelValueRow label="Executed" stacked labelClassName="w-36">
+                  <LabelValueRow label="Executed" labelClassName="w-36">
                     {contract.executed ? formatDate(contract.executed_at) || "Yes" : "No"}
                   </LabelValueRow>
-                  <LabelValueRow label="Owner/Client" stacked labelClassName="w-36" missing={!ownerName}>
+                  <LabelValueRow label="Owner/Client" labelClassName="w-36" missing={!ownerName}>
                     {ownerName && (contract.contract_company?.id || contract.client?.id) ? (
                       <Link
                         href={`/directory/vendors/${contract.contract_company?.id || contract.client?.id}`}
@@ -348,7 +348,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                       </Link>
                     ) : (ownerName || "—")}
                   </LabelValueRow>
-                  <LabelValueRow label="Contractor" stacked labelClassName="w-36" missing={!contract.contractor?.name}>
+                  <LabelValueRow label="Contractor" labelClassName="w-36" missing={!contract.contractor?.name}>
                     {contract.contractor?.name && contract.contractor?.id ? (
                       <Link
                         href={`/directory/companies/${contract.contractor.id}`}
@@ -358,37 +358,36 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                       </Link>
                     ) : (contract.contractor?.name || "—")}
                   </LabelValueRow>
-                  <LabelValueRow label="Architect" stacked labelClassName="w-36" missing={!contract.architect_engineer?.name}>
+                  <LabelValueRow label="Architect" labelClassName="w-36" missing={!contract.architect_engineer?.name}>
                     {contract.architect_engineer?.name || "—"}
                   </LabelValueRow>
                 </dl>
                 <dl className="space-y-4 text-sm">
-                  <LabelValueRow label="Start Date" stacked labelClassName="w-40">
+                  <LabelValueRow label="Start Date" labelClassName="w-40">
                     {renderDateOrDash(contract.start_date)}
                   </LabelValueRow>
-                  <LabelValueRow label="Est. Completion" stacked labelClassName="w-40">
+                  <LabelValueRow label="Est. Completion" labelClassName="w-40">
                     {renderDateOrDash(contract.end_date)}
                   </LabelValueRow>
-                  <LabelValueRow label="Substantial Date" stacked labelClassName="w-40">
+                  <LabelValueRow label="Substantial Date" labelClassName="w-40">
                     {renderDateOrDash(contract.substantial_completion_date)}
                   </LabelValueRow>
-                  <LabelValueRow label="Actual Completion" stacked labelClassName="w-40">
+                  <LabelValueRow label="Actual Completion" labelClassName="w-40">
                     {renderDateOrDash(contract.actual_completion_date)}
                   </LabelValueRow>
-                  <LabelValueRow label="Signed Date" stacked labelClassName="w-40">
+                  <LabelValueRow label="Signed Date" labelClassName="w-40">
                     {renderDateOrDash(contract.signed_contract_received_date)}
                   </LabelValueRow>
-                  <LabelValueRow label="Termination Date" stacked labelClassName="w-40">
+                  <LabelValueRow label="Termination Date" labelClassName="w-40">
                     {renderDateOrDash(contract.contract_termination_date)}
                   </LabelValueRow>
-                  <LabelValueRow label="Default Retainage" stacked labelClassName="w-40">
+                  <LabelValueRow label="Default Retainage" labelClassName="w-40">
                     {contract.retention_percentage ?? 0}%
                   </LabelValueRow>
                 </dl>
               </div>
               <LabelValueRow
                 label="Description"
-                stacked
                 labelClassName="w-36"
                 className="mt-6"
                 missing={getTextValue(contract.description).isMissing}
@@ -396,7 +395,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
               >
                 {getTextValue(contract.description).text}
               </LabelValueRow>
-              <LabelValueRow label="Attachments" stacked labelClassName="w-36" className="mt-6">
+              <LabelValueRow label="Attachments" labelClassName="w-36" className="mt-6">
                 <EntityAttachments
                   entityType="prime_contract"
                   entityId={String(contract.id)}
