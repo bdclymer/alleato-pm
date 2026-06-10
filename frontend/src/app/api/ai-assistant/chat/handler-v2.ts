@@ -7,7 +7,18 @@ import {
   type UIMessage,
 } from "ai";
 import { waitUntil } from "@vercel/functions";
-import { traceChatCompletion } from "@/lib/ai/langfuse-trace";
+import {
+  traceChatCompletion,
+  scoreChatTrace,
+  maybeJudgeAndScore,
+} from "@/lib/ai/langfuse-trace";
+import { aiTelemetry } from "@/lib/ai/ai-telemetry";
+import {
+  propagateAttributes,
+  startActiveObservation,
+  getActiveTraceId,
+  setActiveTraceIO,
+} from "@langfuse/tracing";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { planRetrieval } from "@/lib/ai/retrieval/planner";
 import { executeRetrievalPlan } from "@/lib/ai/retrieval/executor";
@@ -3292,86 +3303,124 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               .join(" ") ?? "")
         : "";
 
-      const result = streamText({
-        model: getLanguageModel(synthesisModel),
-        system: systemPrompt,
-        messages: modelMessages,
-        tools,
-        maxOutputTokens: assistantMaxOutputTokens(plan.reason),
-        stopWhen: stepCountIs(10),
-        experimental_telemetry: {
-          isEnabled: process.env.PHOENIX_TRACING === "true",
-          functionId: "ai-assistant-chat-v2",
+      // Unified Langfuse trace: `propagateAttributes` sets trace-level
+      // user/session/tags, the root span groups everything, and the
+      // `@langfuse/otel` processor auto-captures the generation, tool spans,
+      // model, and token usage from `experimental_telemetry`. Quality is
+      // attached as Langfuse SCORES on the same trace id (see `scoreChatTrace`),
+      // so there is exactly ONE trace per chat — no duplicate v3 trace. When
+      // Langfuse is not configured these wrappers are safe no-ops and streaming
+      // is unchanged.
+      await propagateAttributes(
+        {
+          userId: args.user.id,
+          sessionId: args.sessionId,
+          traceName: "ai-assistant-chat",
+          tags: [`intent:${plan.intent}`],
         },
-        onError: ({ error }) => {
-          console.error("[handler-v2] streamText onError", {
-            message: error instanceof Error ? error.message : String(error),
-            stack:
-              error instanceof Error
-                ? error.stack?.split("\n").slice(0, 5).join("\n")
-                : undefined,
-          });
-        },
-        onFinish: ({ finishReason, totalUsage, text, toolCalls, steps }) => {
-          // Aggregate tool call names across ALL agentic steps, not just the last.
-          const toolCallNames =
-            steps?.flatMap((s) => (s.toolCalls ?? []).map((c) => c.toolName)) ??
-            toolCalls?.map((c) => c.toolName) ??
-            [];
-          finishMetadata = {
-            finishReason,
-            usage: {
-              inputTokens: totalUsage.inputTokens,
-              outputTokens: totalUsage.outputTokens,
-              totalTokens: totalUsage.totalTokens,
-            },
-            toolCallNames,
-            stepCount: steps?.length ?? toolCallNames.length,
-          };
-          console.log("[handler-v2] streamText onFinish", {
-            finishReason,
-            totalUsage,
-            text_chars: text?.length ?? 0,
-            text_preview: text?.slice(0, 200) ?? "",
-            tool_calls: toolCallNames,
-            step_count: steps?.length ?? 0,
-          });
-          waitUntil(
-            traceChatCompletion({
-              userId: args.user.id,
-              sessionId: args.sessionId,
-              modelId: synthesisModel,
-              input: inputText,
-              output: text ?? "",
-              usage: {
-                inputTokens: totalUsage.inputTokens,
-                outputTokens: totalUsage.outputTokens,
-              },
-              toolCallNames,
-              stepCount: steps?.length ?? toolCallNames.length,
-              intent: plan.intent,
-              metadata: {
-                planReason: plan.reason,
-                responseFormat: plan.responseFormat,
-                retrievalSources: Object.keys(plan.sources),
-                retrievalWarnings: retrievalCtx.warnings.map(
-                  (w) => `${w.source}: ${w.message}`,
-                ),
-                retrievalDurationsMs: retrievalCtx.durationsMs,
-                hasIntelligencePacket: Boolean(retrievalCtx.intelligencePacket),
-                hasProjectSnapshot: Boolean(retrievalCtx.projectSnapshot),
-                hasSemanticResults: Boolean(retrievalCtx.semanticVectorResults),
-                selectedProjectId: args.selectedProjectId ?? null,
-                selectedModel: args.activeModel,
-                synthesisModel,
-              },
-            }),
-          );
-        },
-      });
+        () =>
+          startActiveObservation(
+            "ai-assistant-chat",
+            async (rootSpan) => {
+              const langfuseTraceId = getActiveTraceId();
+              setActiveTraceIO({ input: inputText });
 
-      writer.merge(
-        result.toUIMessageStream({ originalMessages: args.messages }),
+              const result = streamText({
+                model: getLanguageModel(synthesisModel),
+                system: systemPrompt,
+                messages: modelMessages,
+                tools,
+                maxOutputTokens: assistantMaxOutputTokens(plan.reason),
+                stopWhen: stepCountIs(10),
+                experimental_telemetry: aiTelemetry({
+                  functionId: "ai-assistant-chat-v2",
+                  metadata: {
+                    intent: plan.intent,
+                    planReason: plan.reason,
+                    responseFormat: plan.responseFormat,
+                    synthesisModel,
+                    selectedModel: args.activeModel,
+                    selectedProjectId: args.selectedProjectId ?? -1,
+                    hasIntelligencePacket: Boolean(
+                      retrievalCtx.intelligencePacket,
+                    ),
+                    hasProjectSnapshot: Boolean(retrievalCtx.projectSnapshot),
+                    hasSemanticResults: Boolean(
+                      retrievalCtx.semanticVectorResults,
+                    ),
+                  },
+                }),
+                onError: ({ error }) => {
+                  console.error("[handler-v2] streamText onError", {
+                    message:
+                      error instanceof Error ? error.message : String(error),
+                    stack:
+                      error instanceof Error
+                        ? error.stack?.split("\n").slice(0, 5).join("\n")
+                        : undefined,
+                  });
+                },
+                onFinish: ({
+                  finishReason,
+                  totalUsage,
+                  text,
+                  toolCalls,
+                  steps,
+                }) => {
+                  // Aggregate tool call names across ALL agentic steps, not just the last.
+                  const toolCallNames =
+                    steps?.flatMap((s) =>
+                      (s.toolCalls ?? []).map((c) => c.toolName),
+                    ) ??
+                    toolCalls?.map((c) => c.toolName) ??
+                    [];
+                  finishMetadata = {
+                    finishReason,
+                    usage: {
+                      inputTokens: totalUsage.inputTokens,
+                      outputTokens: totalUsage.outputTokens,
+                      totalTokens: totalUsage.totalTokens,
+                    },
+                    toolCallNames,
+                    stepCount: steps?.length ?? toolCallNames.length,
+                  };
+                  console.log("[handler-v2] streamText onFinish", {
+                    finishReason,
+                    totalUsage,
+                    text_chars: text?.length ?? 0,
+                    text_preview: text?.slice(0, 200) ?? "",
+                    tool_calls: toolCallNames,
+                    step_count: steps?.length ?? 0,
+                  });
+                  setActiveTraceIO({ input: inputText, output: text ?? "" });
+                  rootSpan.update({ output: text ?? "" });
+                  rootSpan.end();
+                  waitUntil(
+                    scoreChatTrace({
+                      traceId: langfuseTraceId,
+                      output: text ?? "",
+                      toolCallNames,
+                    }),
+                  );
+                  // Sampled, code-owned LLM judge (off by default; gated by
+                  // LANGFUSE_LLM_JUDGE_ENABLED + sample rate). Scores semantic
+                  // relevance/specificity/completeness the heuristics can't see.
+                  waitUntil(
+                    maybeJudgeAndScore({
+                      traceId: langfuseTraceId,
+                      question: inputText,
+                      answer: text ?? "",
+                    }),
+                  );
+                },
+              });
+
+              writer.merge(
+                result.toUIMessageStream({ originalMessages: args.messages }),
+              );
+            },
+            { endOnExit: false },
+          ),
       );
     },
     onFinish: async ({ responseMessage, finishReason }) => {
