@@ -208,4 +208,39 @@ describe("intent router", () => {
       expect(classifyAssistantIntent("What's on my plate this week?")).toBe("task_followup");
     });
   });
+
+  describe("market / industry questions route to external_research (web search)", () => {
+    // Regression: market-conditions and industry-trend questions without an
+    // explicit "web"/"research" verb were falling to internal RAG and being
+    // answered from internal files instead of searching the web.
+    // See docs/ai-plan/evals/TOOL-COVERAGE-RUN-RESULTS.md.
+    it.each([
+      "What's happening in the US commercial construction market this quarter?",
+      "What's the outlook for lumber prices nationally?",
+      "How's the commercial real estate market doing?",
+      "What are interest rates doing to the construction market?",
+      "What's the industry outlook for commercial construction?",
+      "What are steel prices doing nationally?",
+      "What's the current market price trend for structural steel right now?",
+    ])("routes to external_research: %s", (prompt) => {
+      expect(classifyAssistantIntent(prompt)).toBe("external_research");
+    });
+
+    it.each<[string, number | undefined]>([
+      ["What are the cost trends on Westfield?", 43],
+      ["What's our budget forecast?", 43],
+      ["What's the current phase of Union Collective?", 43],
+      ["Pull our current AR aging from Acumatica.", undefined],
+      ["Compare our margin across active projects.", undefined],
+      ["Show me vendor performance on Westfield.", 43],
+      ["What's happening on Westfield this week?", 43],
+    ])(
+      "does NOT send internal question to the web: %s",
+      (prompt, selectedProjectId) => {
+        expect(
+          classifyAssistantIntent(prompt, { selectedProjectId }),
+        ).not.toBe("external_research");
+      },
+    );
+  });
 });

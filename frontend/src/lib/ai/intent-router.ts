@@ -71,6 +71,14 @@ const EXTERNAL_RESEARCH_PATTERNS = [
   /\b(public sources?|web sources?|online sources?)\b.{0,80}\b(say|show|indicate|confirm)\b/i,
   /\b(current|latest|up[- ]?to[- ]?date)\b.{0,80}\b(requirements?|regulations?|rules?|ordinance|zoning|code|market|trends?|competitors?)\b/i,
   /\b(PUD|planned unit development|zoning|ordinance|permit requirements?|municipal requirements?)\b/i,
+  // Market / industry / economic conditions questions need live web data even
+  // when phrased without an explicit "web"/"research" verb (e.g. "what's
+  // happening in the construction market?"). Anchored on market/industry/
+  // economy/commodity/named-material so internal project questions ("cost
+  // trends on Westfield", "budget forecast") do NOT get sent to the web.
+  /\b(what'?s|what is|how'?s|how is|hows|whats)\b.{0,55}\b(market|industry|economy|sector)\b/i,
+  /\b(market|industry|economic|sector|commodity)\b.{0,25}\b(conditions?|outlook|forecast|trends?|landscape|news|update|rates?|pricing)\b/i,
+  /\b(construction|commercial real estate|cre|housing|labor|material|commodity|steel|lumber|concrete|rebar|copper|aluminum|diesel|fuel|interest rate)s?\b.{0,30}\b(market|industry|trends?|prices?|pricing|outlook|forecast|index|nationally|economy|rates?)\b/i,
 ];
 
 const APP_HELP_PATTERNS = [
