@@ -2,6 +2,11 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
+import {
+  normalizeRoleMemberIds,
+  planRoleMemberUpdate,
+  roleMemberSetsMatch,
+} from "@/lib/directory/project-role-members";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -155,13 +160,20 @@ export const PUT = withApiGuardrails(
       );
     }
 
-    if (!Array.isArray(member_person_ids)) {
+    let uniqueMemberPersonIds: string[];
+    try {
+      uniqueMemberPersonIds = normalizeRoleMemberIds(member_person_ids);
+    } catch (error) {
       return NextResponse.json(
-        { error: "member_person_ids must be an array" },
+        {
+          error:
+            error instanceof Error
+              ? error.message
+              : "member_person_ids must be an array",
+        },
         { status: 400 },
       );
     }
-    const uniqueMemberPersonIds = [...new Set(member_person_ids)];
 
     // Verify the role belongs to this project
     const { data: role, error: roleError } = await supabase
@@ -205,22 +217,42 @@ export const PUT = withApiGuardrails(
       }
     }
 
-    // Delete all existing members for this role
-    const { error: deleteError } = await supabase
+    const { data: currentMembers, error: currentMembersError } = await supabase
       .from("project_role_members")
-      .delete()
+      .select("person_id")
       .eq("project_role_id", role_id);
 
-    if (deleteError) {
+    if (currentMembersError) {
       return NextResponse.json(
-        { error: `Failed to update role members: ${deleteError.message}` },
+        {
+          error: `Failed to load current role members: ${currentMembersError.message}`,
+        },
         { status: 500 },
       );
     }
 
-    // Insert new members if any
-    if (uniqueMemberPersonIds.length > 0) {
-      const newMembers = uniqueMemberPersonIds.map((person_id: string) => ({
+    const updatePlan = planRoleMemberUpdate(
+      uniqueMemberPersonIds,
+      (currentMembers || []).map((member) => member.person_id),
+    );
+
+    if (updatePlan.idsToRemove.length > 0) {
+      const { error: deleteError } = await supabase
+        .from("project_role_members")
+        .delete()
+        .eq("project_role_id", role_id)
+        .in("person_id", updatePlan.idsToRemove);
+
+      if (deleteError) {
+        return NextResponse.json(
+          { error: `Failed to remove role members: ${deleteError.message}` },
+          { status: 500 },
+        );
+      }
+    }
+
+    if (updatePlan.idsToAdd.length > 0) {
+      const newMembers = updatePlan.idsToAdd.map((person_id: string) => ({
         project_role_id: role_id,
         person_id,
       }));
@@ -235,6 +267,39 @@ export const PUT = withApiGuardrails(
           { status: 500 },
         );
       }
+    }
+
+    const { data: persistedMembers, error: persistedMembersError } = await supabase
+      .from("project_role_members")
+      .select("person_id")
+      .eq("project_role_id", role_id);
+
+    if (persistedMembersError) {
+      return NextResponse.json(
+        {
+          error: `Failed to verify role member update: ${persistedMembersError.message}`,
+        },
+        { status: 500 },
+      );
+    }
+
+    const persistedPersonIds = (persistedMembers || []).map(
+      (member) => member.person_id,
+    );
+
+    if (!roleMemberSetsMatch(updatePlan.requestedIds, persistedPersonIds)) {
+      throw new GuardrailError({
+        code: "UPSTREAM_FAILURE",
+        where: "projects/[projectId]/directory/roles#PUT",
+        message: "Role member update verification failed.",
+        details: {
+          role_id,
+          requested_count: updatePlan.requestedIds.length,
+          persisted_count: persistedPersonIds.length,
+          removed_count: updatePlan.idsToRemove.length,
+          added_count: updatePlan.idsToAdd.length,
+        },
+      });
     }
 
     return NextResponse.json({ success: true });

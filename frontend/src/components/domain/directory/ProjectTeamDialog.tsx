@@ -125,7 +125,22 @@ export function ProjectTeamDialog({
   const [customRoleMode, setCustomRoleMode] = React.useState(false);
   const [customRoleName, setCustomRoleName] = React.useState("");
   const [savingRoleId, setSavingRoleId] = React.useState<string | null>(null);
+  const [memberIdsByRoleId, setMemberIdsByRoleId] = React.useState<
+    Record<string, string[]>
+  >({});
   const { confirm, ConfirmDialog } = useConfirm();
+
+  React.useEffect(() => {
+    if (!open) return;
+    setMemberIdsByRoleId(
+      Object.fromEntries(
+        roles.map((role) => [
+          role.id,
+          role.members.map((member) => member.person_id),
+        ]),
+      ),
+    );
+  }, [open, roles]);
 
   React.useEffect(() => {
     if (!open) return;
@@ -262,45 +277,59 @@ export function ProjectTeamDialog({
     }
   };
 
-  const handleTogglePerson = async (role: ProjectRole, personId: string) => {
-    const current = role.members.map((m) => m.person_id);
-    const next = current.includes(personId)
-      ? current.filter((id) => id !== personId)
-      : [...current, personId];
+  const getCurrentMemberIds = React.useCallback(
+    (role: ProjectRole) =>
+      memberIdsByRoleId[role.id] ??
+      role.members.map((member) => member.person_id),
+    [memberIdsByRoleId],
+  );
+
+  const commitRoleMembers = async (
+    role: ProjectRole,
+    next: string[],
+    failureEvent: string,
+    context?: Record<string, unknown>,
+  ) => {
+    const previous = getCurrentMemberIds(role);
+    setMemberIdsByRoleId((current) => ({ ...current, [role.id]: next }));
     setSavingRoleId(role.id);
     try {
       await updateRoleMembers(role.id, next);
     } catch (error) {
-      const message = reportProjectTeamDialogError(
-        "project_team_role_members_update_failed",
-        error,
-        { roleId: role.id, personId },
-      );
+      setMemberIdsByRoleId((current) => ({
+        ...current,
+        [role.id]: previous,
+      }));
+      const message = reportProjectTeamDialogError(failureEvent, error, {
+        roleId: role.id,
+        ...context,
+      });
       toast.error(`Role assignment was not updated: ${message}`);
     } finally {
       setSavingRoleId(null);
     }
   };
 
+  const handleTogglePerson = async (role: ProjectRole, personId: string) => {
+    const current = getCurrentMemberIds(role);
+    const next = current.includes(personId)
+      ? current.filter((id) => id !== personId)
+      : [...current, personId];
+    await commitRoleMembers(
+      role,
+      next,
+      "project_team_role_members_update_failed",
+      { personId },
+    );
+  };
+
   const handleRemovePerson = async (role: ProjectRole, personId: string) => {
-    setSavingRoleId(role.id);
-    try {
-      await updateRoleMembers(
-        role.id,
-        role.members
-          .filter((m) => m.person_id !== personId)
-          .map((m) => m.person_id),
-      );
-    } catch (error) {
-      const message = reportProjectTeamDialogError(
-        "project_team_role_member_remove_failed",
-        error,
-        { roleId: role.id, personId },
-      );
-      toast.error(`Role member was not removed: ${message}`);
-    } finally {
-      setSavingRoleId(null);
-    }
+    await commitRoleMembers(
+      role,
+      getCurrentMemberIds(role).filter((id) => id !== personId),
+      "project_team_role_member_remove_failed",
+      { personId },
+    );
   };
 
   const handleDeleteRole = async (role: ProjectRole) => {
@@ -349,6 +378,7 @@ export function ProjectTeamDialog({
                   <RoleRow
                     key={role.id}
                     role={role}
+                    currentMemberIds={getCurrentMemberIds(role)}
                     people={people}
                     externalPeople={externalPeople}
                     externalLoading={externalLoading}
@@ -500,6 +530,7 @@ export function ProjectTeamDialog({
 
 function RoleRow({
   role,
+  currentMemberIds,
   people,
   externalPeople,
   externalLoading,
@@ -511,6 +542,7 @@ function RoleRow({
   onDeleteRole,
 }: {
   role: ProjectRole;
+  currentMemberIds: string[];
   people: PersonOption[];
   externalPeople: PersonOption[];
   externalLoading: boolean;
@@ -526,10 +558,47 @@ function RoleRow({
     "employees",
   );
   const selectedIds = React.useMemo(
-    () => new Set(role.members.map((m) => m.person_id)),
-    [role.members],
+    () => new Set(currentMemberIds),
+    [currentMemberIds],
   );
   const pickerPeople = pickerMode === "external" ? externalPeople : people;
+  const knownPeople = React.useMemo(() => {
+    const map = new Map<string, PersonOption>();
+    [...people, ...externalPeople].forEach((person) => map.set(person.id, person));
+    return map;
+  }, [externalPeople, people]);
+  const effectiveMembers = React.useMemo(
+    () =>
+      currentMemberIds.map((personId) => {
+        const existing = role.members.find(
+          (member) => member.person_id === personId,
+        );
+        if (existing) return existing;
+        const person = knownPeople.get(personId);
+        return {
+          id: `${role.id}:${personId}`,
+          person_id: personId,
+          assigned_at: null,
+          person: person
+            ? {
+                id: person.id,
+                first_name: person.first_name ?? "",
+                last_name: person.last_name ?? "",
+                full_name: personDisplayName(
+                  person.first_name,
+                  person.last_name,
+                  person.email,
+                ),
+                email: person.email ?? "",
+                phone_mobile: null,
+                phone_business: null,
+                company_name: person.company_name,
+              }
+            : null,
+        };
+      }),
+    [currentMemberIds, knownPeople, role.id, role.members],
+  );
 
   return (
     <li className="flex items-start gap-3 rounded-md px-3 py-2 hover:bg-muted/40">
@@ -537,7 +606,7 @@ function RoleRow({
         {role.role_name}
       </span>
       <div className="flex flex-1 flex-wrap items-start gap-1.5 min-w-0">
-        {role.members.map((member) => {
+        {effectiveMembers.map((member) => {
           const p = member.person;
           const display = personDisplayName(
             p?.first_name ?? null,
@@ -568,6 +637,7 @@ function RoleRow({
                 onClick={() => onRemovePerson(member.person_id)}
                 className="h-4 w-4 rounded-full text-muted-foreground hover:text-foreground"
                 aria-label={`Remove ${display}`}
+                disabled={saving}
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -586,8 +656,9 @@ function RoleRow({
               variant="ghost"
               size="sm"
               className="h-7 px-2 text-xs text-primary"
+              disabled={saving}
             >
-              {role.members.length === 0 ? "Assign" : "+ Add"}
+              {effectiveMembers.length === 0 ? "Assign" : "+ Add"}
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="flex max-h-96 w-80 flex-col overflow-hidden p-0">
@@ -620,6 +691,7 @@ function RoleRow({
                       <CommandItem
                         key={person.id}
                         value={`${display} ${person.email ?? ""} ${person.company_name ?? ""}`}
+                        disabled={saving}
                         onSelect={() => onTogglePerson(person.id)}
                       >
                         <div className="flex min-w-0 flex-1 items-center gap-2">
