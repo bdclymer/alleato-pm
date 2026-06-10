@@ -4428,9 +4428,11 @@
         "web"
       ],
       "expectedToolNames": [
-        "searchWeb"
+        "searchWeb",
+        "backendDeepAgentResearch"
       ],
-      "minAnswerLength": 80
+      "minAnswerLength": 80,
+      "coverageNote": "Post web-search fix (2026-06-09): routes to the backend deep-research agent (live Tavily web search); frontend searchWeb is shadowed by that path."
     },
     {
       "id": "toolcov-read-research-company",
@@ -4457,9 +4459,11 @@
         "web"
       ],
       "expectedToolNames": [
-        "searchConstructionMarket"
+        "searchConstructionMarket",
+        "backendDeepAgentResearch"
       ],
-      "minAnswerLength": 100
+      "minAnswerLength": 100,
+      "coverageNote": "Post web-search fix (2026-06-09): market/industry questions now classify as external_research and reach live web search via the backend deep-research agent instead of internal RAG; frontend searchConstructionMarket is shadowed by that path."
     },
     {
       "id": "toolcov-read-generated-tasks-today",
