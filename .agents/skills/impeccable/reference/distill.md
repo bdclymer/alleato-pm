@@ -1,5 +1,6 @@
 Strip a design to its essence. Remove anything that doesn't earn its place: redundant elements, repeated information, decorative noise, cosmetic complexity.
 
+For Alleato product work, load [alleato-product-noise-gate.md](alleato-product-noise-gate.md) first. Its reduction pass is mandatory, not optional.
 
 ---
 
@@ -24,6 +25,8 @@ Analyze what makes the design feel complex or cluttered:
 If any of these are unclear from the codebase, {{ask_instruction}}
 
 **CRITICAL**: Simplicity is not about removing features. It's about removing obstacles between users and their goals. Every element should justify its existence.
+
+For Alleato, "nice to have" is usually a removal candidate. Helper panels, finder widgets, duplicate summaries, extra cards, badges, and decorative icons must prove they make the primary task faster, clearer, safer, or more source-trustworthy.
 
 ## Plan Simplification
 
@@ -53,6 +56,7 @@ Systematically remove complexity across these dimensions:
 - **Remove decorations**: Eliminate borders, shadows, backgrounds that don't serve hierarchy or function
 - **Flatten structure**: Reduce nesting, remove unnecessary containers; never nest cards inside cards
 - **Remove unnecessary cards**: Cards aren't needed for basic layout; use spacing and alignment instead
+- **Remove unsolicited modules**: Delete helper panels, finder widgets, insight strips, duplicated summaries, decorative filters, and secondary search boxes unless the workflow proves their value
 - **Consistent spacing**: Use one spacing scale, remove arbitrary gaps
 
 ### Layout Simplification
@@ -100,6 +104,7 @@ Ensure simplification improves usability:
 - **Still complete**: Are all necessary features still accessible?
 - **Clearer hierarchy**: Is it obvious what matters most?
 - **Better performance**: Does simpler design load faster?
+- **Noise gate**: Did the final result pass [alleato-product-noise-gate.md](alleato-product-noise-gate.md) with top noise sources removed or simplified?
 
 ## Document Removed Complexity
 

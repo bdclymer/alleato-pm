@@ -1,5 +1,7 @@
 Quiet design is harder than bold design. Subtlety needs precision. Reduce visual intensity in designs that are too loud, aggressive, or overstimulating without losing personality or making the result generic.
 
+For Alleato product work, load [alleato-product-noise-gate.md](alleato-product-noise-gate.md). "Quieter" means fewer unnecessary elements, not merely softer colors.
+
 ---
 
 ## Register
@@ -7,6 +9,8 @@ Quiet design is harder than bold design. Subtlety needs precision. Reduce visual
 Brand: "quieter" means more restrained palette, more whitespace, more typographic air. Drama is reduced, not eliminated; the POV stays intact.
 
 Product: "quieter" means reducing visual noise. Fewer background accents, flatter cards, less color, less motion. The tool should disappear more completely into the task.
+
+Alleato product: remove the thing first. Only restyle it if removal would make the workflow slower, less clear, less safe, or less source-trustworthy.
 
 ---
 
@@ -67,6 +71,7 @@ Systematically reduce intensity across these dimensions:
 - **Simplify shapes**: Reduce border radius extremes, simplify custom shapes
 - **Reduce layering**: Flatten visual hierarchy where possible
 - **Clean up effects**: Reduce or remove blur effects, glows, multiple shadows
+- **Remove product noise**: Delete decorative badges, wrapper cards, helper modules, finder widgets, duplicate summaries, and icons that do not carry state or action meaning
 
 ### Motion Reduction
 - **Reduce animation intensity**: Shorter distances (10-20px instead of 40px), gentler easing

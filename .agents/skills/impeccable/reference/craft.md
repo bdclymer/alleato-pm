@@ -43,6 +43,7 @@ If the user has already run {{command_prefix}}impeccable shape and has a confirm
 
 Based on the design brief's "Recommended References" section, consult the relevant impeccable reference files. At minimum, always consult:
 
+- [alleato-product-noise-gate.md](alleato-product-noise-gate.md) for Alleato product-register work
 - [spatial-design.md](spatial-design.md) for layout and spacing
 - [typography.md](typography.md) for type hierarchy
 
@@ -136,6 +137,7 @@ Implement the feature following the design brief. Build in passes so structure, 
 ### Production bar
 
 - Use real or realistic content. Remove placeholder copy, placeholder images, dead links, fake controls, and unused scaffold before presenting.
+- For Alleato product work, implement the smallest interface that completes the task. Additions must survive the pixel-economics questions in [alleato-product-noise-gate.md](alleato-product-noise-gate.md).
 - Preserve the approved mock's major ingredients. Missing hero objects, missing world/product imagery, different section structure, downgraded CTA/nav treatment, or generic replacements for distinctive motifs are blocking defects unless the user accepted the change.
 - Build semantically first: real headings, landmarks, labels, form associations, button/link semantics, accessible names, and state announcements where needed.
 - Calibrate spacing, alignment, grid placement, and vertical rhythm deliberately. Do not accept default gaps, arbitrary margins, unbalanced whitespace, or accidental optical misalignment.
@@ -172,11 +174,12 @@ After the first browser pass, write a short critique for yourself and patch the 
 1. **Does it match the brief?** Compare the live result against every section of the design brief. Fix discrepancies.
 2. **Does it match the approved mock?** Compare screenshots against the mock fidelity inventory: hero silhouette, major motifs, imagery, nav/CTA, section sequence, density, color/materials, and second-fold substance. Missing major ingredients are P0 defects.
 3. **Does it pass the AI slop test?** If someone saw this and said "AI made this," would they believe it immediately? If yes, it needs more design intention.
-4. **Check against impeccable's DON'T guidelines.** Fix any anti-pattern violations.
-5. **Check every state.** Navigate through empty, error, loading, and edge case states. Each one should feel intentional, not like an afterthought.
-6. **Check responsive behavior.** The design should adapt compositionally, not merely shrink.
-7. **Check craft details.** Spacing consistency, optical alignment, type hierarchy, color contrast, image quality, icon coherence, interactive feedback, motion timing, and focus treatment.
-8. **Check performance basics.** No obviously oversized images, avoidable layout thrash, blocking animations, or heavy assets without a reason.
+4. **Run the Alleato noise gate for product work.** Remove decorative cards, wrapper panels, badges, helper modules, duplicate CTAs, and anything that does not support the primary decision or action.
+5. **Check against impeccable's DON'T guidelines.** Fix any anti-pattern violations.
+6. **Check every state.** Navigate through empty, error, loading, and edge case states. Each one should feel intentional, not like an afterthought.
+7. **Check responsive behavior.** The design should adapt compositionally, not merely shrink.
+8. **Check craft details.** Spacing consistency, optical alignment, type hierarchy, color contrast, image quality, icon coherence, interactive feedback, motion timing, and focus treatment.
+9. **Check performance basics.** No obviously oversized images, avoidable layout thrash, blocking animations, or heavy assets without a reason.
 
 The exit bar is not "it works." It is: the rendered result looks intentional at all checked viewports, all expected states are handled, no placeholders remain unless explicitly accepted, and the implementation quality would be defensible in a high-end studio review.
 

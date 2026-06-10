@@ -66,6 +66,8 @@ If PRODUCT.md lacks the `register` field (legacy), infer it once from its "Users
 
 Load the matching reference: [reference/brand.md](reference/brand.md) or [reference/product.md](reference/product.md). The shared design laws below apply to both.
 
+For product-register work in the Alleato PM repository, also load [reference/alleato-product-noise-gate.md](reference/alleato-product-noise-gate.md). It is the product UI authority for attention allocation, visual silence, progressive disclosure, cards, dashboards, and final noise-gate approval. If this reference conflicts with generic brand, delight, bolder, animate, or overdrive guidance, the Alleato noise gate wins unless the user explicitly asks for an expressive brand surface.
+
 ## Shared design laws
 
 Apply to every design, both registers. Match implementation complexity to the aesthetic vision: maximalism needs elaborate code, minimalism needs precision. Interpret creatively. Vary across projects; never converge on the same choices. {{model}} is capable of extraordinary work. Don't hold back.
@@ -99,6 +101,7 @@ Before choosing, write one sentence of physical scene: who uses this, where, und
 - Vary spacing for rhythm. Same padding everywhere is monotony.
 - Cards are the lazy answer. Use them only when they're truly the best affordance. Nested cards are always wrong.
 - Don't wrap everything in a container. Most things don't need one.
+- For Alleato product surfaces, the burden of proof is on addition. If an element does not improve comprehension, confidence, speed, error prevention, or source trust, remove it.
 
 ### Motion
 
@@ -140,6 +143,7 @@ If someone could look at this interface and say "AI made that" without doubt, it
 | `document` | Build | Generate DESIGN.md from existing project code | [reference/document.md](reference/document.md) |
 | `extract [target]` | Build | Pull reusable tokens and components into design system | [reference/extract.md](reference/extract.md) |
 | `critique [target]` | Evaluate | UX design review with heuristic scoring | [reference/critique.md](reference/critique.md) |
+| `noise-gate [target]` | Evaluate | Veto additive visual noise and enforce Alleato attention hierarchy | [reference/noise-gate.md](reference/noise-gate.md) |
 | `audit [target]` | Evaluate | Technical quality checks (a11y, perf, responsive) | [reference/audit.md](reference/audit.md) |
 | `polish [target]` | Refine | Final quality pass before shipping | [reference/polish.md](reference/polish.md) |
 | `bolder [target]` | Refine | Amplify safe or bland designs | [reference/bolder.md](reference/bolder.md) |

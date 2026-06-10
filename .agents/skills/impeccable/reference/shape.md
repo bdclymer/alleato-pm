@@ -8,6 +8,8 @@ Shape the UX and UI for a feature before any code is written. This command produ
 
 Most AI-generated UIs fail not because of bad code, but because of skipped thinking. They jump to "here's a card grid" without asking "what is the user trying to accomplish?" This command inverts that: understand deeply first, so implementation is precise.
 
+For Alleato product work, load [alleato-product-noise-gate.md](alleato-product-noise-gate.md) before discovery. The shape brief must include attention tiers, what will be hidden until requested, and what should be removed. Do not proceed with a brief that only describes what to add.
+
 ## Phase 1: Discovery Interview
 
 **Do NOT write any code or make any design decisions during this phase.** Your only job is to understand the feature deeply enough to make excellent design decisions later.
@@ -118,30 +120,33 @@ What this is, who it's for, what it needs to accomplish.
 **2. Primary User Action**
 The single most important thing a user should do or understand here.
 
-**3. Design Direction**
+**3. Attention Architecture**
+Primary user, primary job, primary decision, Tier 1, Tier 2, Tier 3, what stays hidden until requested, what should be removed, primary action, and failure-loudly behavior.
+
+**4. Design Direction**
 Color strategy (Restrained / Committed / Full palette / Drenched) + the theme scene sentence + 2–3 named anchor references. Reference PRODUCT.md and DESIGN.md where they already answer, and note any per-surface overrides.
 
 If you ran the Visual Direction Probe step, name which probe direction won and what changed in the brief because of it.
 
-**4. Scope**
+**5. Scope**
 Fidelity, breadth, interactivity, and time intent from the Scope section of the interview. Task-scoped; these don't persist beyond the brief.
 
-**5. Layout Strategy**
+**6. Layout Strategy**
 High-level spatial approach: what gets emphasis, what's secondary, how information flows. Describe the visual hierarchy and rhythm, not specific CSS.
 
-**6. Key States**
+**7. Key States**
 List every state the feature needs: default, empty, loading, error, success, edge cases. For each, note what the user needs to see and feel.
 
-**7. Interaction Model**
+**8. Interaction Model**
 How users interact with this feature. What happens on click, hover, scroll? What feedback do they get? What's the flow from entry to completion?
 
-**8. Content Requirements**
+**9. Content Requirements**
 What copy, labels, empty state messages, error messages, and microcopy are needed. Note any dynamic content and its realistic ranges.
 
-**9. Recommended References**
+**10. Recommended References**
 Based on the brief, list which impeccable reference files would be most valuable during implementation (e.g., spatial-design.md for complex layouts, motion-design.md for animated features, interaction-design.md for form-heavy features).
 
-**10. Open Questions**
+**11. Open Questions**
 Anything unresolved that the implementer should resolve during build.
 
 ---

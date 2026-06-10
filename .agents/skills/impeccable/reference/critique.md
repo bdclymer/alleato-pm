@@ -1,5 +1,7 @@
 > **Additional context needed**: what the interface is trying to accomplish.
 
+For Alleato product work, load [alleato-product-noise-gate.md](alleato-product-noise-gate.md) and make it a primary scoring lens. A critique that only identifies styling issues but misses additive noise is incomplete.
+
 ### Gather Assessments
 
 Launch two independent assessments. **Neither may see the other's output.** This isolation is what makes the combined score honest. Running both in one head silently anchors them to each other; do not shortcut it for cost, speed, or context-size reasons.
@@ -26,6 +28,12 @@ Think like a design director. Evaluate:
 - Run the 8-item cognitive load checklist. Report failure count: 0-1 = low (good), 2-3 = moderate, 4+ = critical.
 - Count visible options at each decision point. If >4, flag it.
 - Check for progressive disclosure: is complexity revealed only when needed?
+
+**Alleato Noise Gate** (consult [alleato-product-noise-gate](alleato-product-noise-gate.md)):
+- Identify Tier 1, Tier 2, and Tier 3 content. Flag any Tier 3 through Tier 5 content competing with Tier 1.
+- List decorative or weak-value elements: wrapper cards, badges, icons, panels, charts, helper copy, duplicate CTAs, extra filters, and secondary summaries.
+- For each major element, answer what decision it supports, what action it enables, or what information would be lost if removed.
+- Flag every element whose cognitive cost exceeds user value.
 
 **Emotional Journey**:
 - What emotion does this interface evoke? Is that intentional?
@@ -118,6 +126,23 @@ Be honest with scores. A 4 means genuinely excellent. Most real interfaces score
 **Deterministic scan**: Summarize what the automated detector found, with counts and file locations. Note any additional issues the detector caught that you missed, and flag any false positives.
 
 **Visual overlays** (if browser was used): Tell the user that overlays are now visible in the **[Human]** tab in their browser, highlighting the detected issues. Summarize what the console output reported.
+
+#### Alleato Noise Gate
+
+For Alleato product UI, include:
+
+```text
+Gate: pass / needs revision
+Tier 1:
+Competing lower-tier content:
+Top noise sources:
+Remove now:
+Simplify now:
+Keep because:
+Regression guardrail:
+```
+
+If this gate fails, it is a priority issue even when the interface is visually attractive.
 
 #### Overall Impression
 A brief gut reaction: what works, what doesn't, and the single biggest opportunity.

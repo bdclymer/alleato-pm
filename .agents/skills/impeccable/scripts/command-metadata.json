@@ -47,6 +47,10 @@
     "description": "Evaluate design from a UX perspective, assessing visual hierarchy, information architecture, emotional resonance, cognitive load, and overall quality with quantitative scoring, persona-based testing, automated anti-pattern detection, and actionable feedback. Use when the user asks to review, critique, evaluate, or give feedback on a design or component.",
     "argumentHint": "[area (feature, page, component...)]"
   },
+  "noise-gate": {
+    "description": "Audit and fix additive product UI noise using Alleato's attention hierarchy, pixel-economics, progressive disclosure, and visual-silence rules. Use when the user mentions clutter, visual noise, cognitive overload, too many cards, badges, helper panels, dashboards, widgets, or needing every element to earn its place.",
+    "argumentHint": "[target]"
+  },
   "delight": {
     "description": "Add moments of joy, personality, and unexpected touches that make interfaces memorable and enjoyable to use. Elevates functional to delightful. Use when the user asks to add polish, personality, animations, micro-interactions, delight, or make an interface feel fun or memorable.",
     "argumentHint": "[target]"

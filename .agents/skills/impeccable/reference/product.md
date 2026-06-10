@@ -2,11 +2,21 @@
 
 When design SERVES the product: app UIs, admin dashboards, settings panels, data tables, tools, authenticated surfaces, anything where the user is in a task.
 
+For Alleato PM product work, load and obey [alleato-product-noise-gate.md](alleato-product-noise-gate.md) before design or code. It is stricter than this generic product register and wins when there is conflict.
+
 ## The product slop test
 
 Not "would someone say AI made this." Familiarity is often a feature here. The test is: would a user fluent in the category's best tools (Linear, Figma, Notion, Raycast, Stripe come to mind) sit down and trust this interface, or pause at every subtly-off component?
 
 Product UI's failure mode isn't flatness, it's strangeness without purpose: over-decorated buttons, mismatched form controls, gratuitous motion, display fonts where labels should be, invented affordances for standard tasks. The bar is earned familiarity. The tool should disappear into the task.
+
+For Alleato, the more common failure is additive noise: extra panels, finder widgets, boxed sections, badges, icons, summaries, helper copy, charts, and actions added because the page feels visually plain. Plain is acceptable when the workflow is clear. Noise is not.
+
+## Attention And Hierarchy
+
+Before product UI work, produce the attention brief from [alleato-product-noise-gate.md](alleato-product-noise-gate.md). Rank content into Tier 1 through Tier 5 before layout.
+
+Visual prominence must follow task importance. Tier 3 through Tier 5 content must not compete with Tier 1 content. If hierarchy is weak, first remove or hide content. Do not compensate with borders, backgrounds, icons, or larger text.
 
 ## Typography
 
@@ -29,6 +39,8 @@ Product defaults to Restrained. A single surface can earn Committed (a dashboard
 - Predictable grids. Consistency IS an affordance; users navigate faster when the structure is expected.
 - Familiar patterns are features. Standard navigation (top bar, side nav), breadcrumbs, tabs, and form layouts have established user expectations. Don't reinvent for flavor.
 - Responsive behavior is structural (collapse sidebar, responsive table, breakpoint-driven columns), not fluid typography.
+- Prefer open page sections, quiet rows, tables, and dividers over card grids.
+- Do not create dashboards by default. Use dashboards only when the user is monitoring many simultaneous variables. Otherwise prefer current state, top risks, next actions, evidence, and drilldowns.
 
 ## Components
 
@@ -47,10 +59,12 @@ Every interactive component has: default, hover, focus, active, disabled, loadin
 ## Product bans (on top of the shared absolute bans)
 
 - Decorative motion that doesn't convey state.
+- Decorative icons, decorative badges, unsolicited helper panels, and page-level wrapper cards.
 - Inconsistent component vocabulary across screens. If the "save" button looks different in two places, one is wrong.
 - Display fonts in UI labels, buttons, data.
 - Reinventing standard affordances for flavor (custom scrollbars, weird form controls, non-standard modals).
 - Heavy color or full-saturation accents on inactive states.
+- Any new visual element that cannot answer what decision it supports, what action it enables, or what information would be lost if removed.
 
 ## Product permissions
 

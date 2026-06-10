@@ -2,6 +2,8 @@
 
 Perform a meticulous final pass to catch all the small details that separate good work from great work. The difference between shipped and polished.
 
+For Alleato product work, load [alleato-product-noise-gate.md](alleato-product-noise-gate.md) before polishing. Polish is not permission to add more UI. The first polish move is removal.
+
 ## Design System Discovery
 
 Aligning the feature to the design system is **not optional**. Polish without alignment is decoration on top of drift, and it makes the next person's job harder. Discovery comes before any other polish work.
@@ -32,6 +34,7 @@ Understand the current state and goals before touching anything:
    - Edge cases and error states
    - Loading and transition smoothness
    - Information architecture and flow drift (does this feature reveal complexity the way neighboring features do?)
+   - Visual noise (cards, borders, icons, badges, helper text, wrapper panels, duplicate summaries, and actions that do not help the primary job)
 
 4. **Triage cosmetic vs functional**: Classify each issue as **cosmetic** (looks off, doesn't impede the user) or **functional** (breaks, blocks, or confuses the experience). When polish time is tight, functional issues ship first; cosmetic ones can land in a follow-up. Quality should be consistent; never perfect one corner while leaving another rough.
 
@@ -64,6 +67,7 @@ Visual polish on a misshapen flow is wasted work. Match the *shape* of the exper
 - **Hierarchy & complexity**: The same conceptual weight gets the same visual weight throughout. Primary actions don't become tertiary in one corner of the product, and tertiary actions don't shout.
 - **Empty, loading, and arrival transitions**: How content arrives, updates, and leaves matches how it does in adjacent features.
 - **Naming and mental model**: The feature uses the same nouns and verbs as the rest of the system. A "Workspace" here shouldn't be a "Project" three screens away.
+- **Attention allocation**: Tier 1 content owns the focal point. Tier 3 through Tier 5 content is muted, hidden, or moved to drilldown. If secondary content competes, remove or demote it before changing styling.
 
 ### Typography Refinement
 
@@ -169,6 +173,15 @@ Every interactive element needs all states:
 - **Type safety**: No TypeScript `any` or ignored errors
 - **Accessibility**: Proper ARIA labels and semantic HTML
 
+### Alleato Noise Gate
+
+Before final verification, run the gate from [alleato-product-noise-gate.md](alleato-product-noise-gate.md):
+
+- Remove 30 percent of visual elements.
+- Re-evaluate task completion.
+- Remove another 10 percent if usability is unchanged or improved.
+- Report top noise sources, what was removed or simplified, remaining risk, and regression guardrail.
+
 ## Polish Checklist
 
 Go through systematically:
@@ -195,6 +208,7 @@ Go through systematically:
 - [ ] Works in all supported browsers
 - [ ] Respects reduced motion preference
 - [ ] Code is clean (no TODOs, console.logs, commented code)
+- [ ] Alleato product noise gate passed, or any failure is explicitly scoped as follow-up
 
 **IMPORTANT**: Polish is about details. Zoom in. Squint at it. Use it yourself. The little things add up.
 
@@ -230,4 +244,3 @@ After polishing, ensure code quality:
 - **Remove orphaned code**: Delete unused styles, components, or files made obsolete by polish.
 - **Consolidate tokens**: If you introduced new values, check whether they should be tokens.
 - **Verify DRYness**: Look for duplication introduced during polishing and consolidate.
-
