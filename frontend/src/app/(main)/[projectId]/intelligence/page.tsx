@@ -254,7 +254,7 @@ function narrativeItemsFromUnknown(
   fieldKeys: string[] = [],
 ): StrategicItem[] {
   return (Array.isArray(value) ? value : [])
-    .map((item) => {
+    .map((item): StrategicItem | null => {
       const record = asRecord(item);
       const title = cleanUnknown(record.title);
       if (!title) return null;

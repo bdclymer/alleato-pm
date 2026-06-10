@@ -118,6 +118,22 @@ type EnrichedSuggestion = BestCandidate & {
   }>;
 };
 
+/**
+ * Wrap a raw RAG attribution candidate in the enriched suggestion shape used by
+ * the inbox. RAG candidates carry no review status, confidence reasons, evidence,
+ * or ranked alternatives, so those fields default to the same empty values the
+ * inbox previously applied at the callsite.
+ */
+function enrichBestCandidate(candidate: BestCandidate): EnrichedSuggestion {
+  return {
+    ...candidate,
+    reviewStatus: "undefined",
+    confidenceReasons: [],
+    evidence: [],
+    alternativeProjects: [],
+  };
+}
+
 /** Convert a learned-rule match into the suggestion shape used by the inbox. */
 function matchToSuggestion(
   match: RuleMatch | null,
@@ -430,8 +446,8 @@ export async function loadInboxItems(
       const title = doc.title ?? doc.file_name ?? "Untitled";
       const fromEmail = doc.host_email ?? doc.organizer_email ?? null;
       const candidate = bestByDoc.get(doc.id) ?? null;
-      const suggestion =
-        candidate ??
+      const suggestion: EnrichedSuggestion | null =
+        (candidate && enrichBestCandidate(candidate)) ??
         matchToSuggestion(
           matchAttributionRule({ fromEmail, title }, activeRules),
           projectNameById,

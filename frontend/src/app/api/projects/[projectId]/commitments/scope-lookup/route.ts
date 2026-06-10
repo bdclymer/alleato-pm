@@ -56,7 +56,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     const projectIdNumber = Number(projectId);
     if (!Number.isInteger(projectIdNumber) || projectIdNumber <= 0) {
       throw new GuardrailError({
-        code: "INVALID_PATH_PARAM",
+        code: "INVALID_PAYLOAD",
         where: "projects/[projectId]/commitments/scope-lookup#GET",
         message: "Project ID must be a positive integer.",
       });

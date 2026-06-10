@@ -30,7 +30,7 @@ export function CommitmentOwnershipFinder({
   return (
     <section className={cn("space-y-3", className)}>
       <div className="space-y-1">
-        <SectionRuleHeading>Who Does This?</SectionRuleHeading>
+        <SectionRuleHeading label="Who Does This?" />
         <p className="text-sm text-muted-foreground">
           Search contract scope, inclusions, exclusions, and SOV language to find the commitment owner.
         </p>
