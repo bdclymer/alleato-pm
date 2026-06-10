@@ -2,7 +2,7 @@
 
 **Authoritative reference for all AI work. Read this before touching any file under `frontend/src/lib/ai/` or `backend/src/services/pipeline/`.**
 
-Last verified: 2026-06-10 (fix 3: embed_graph_document never updated rag_document_metadata.embedding_status after writing chunks, causing infinite re-embed of same 695 emails each call. Added embedding_status='embedded' update in all exit paths of embed_graph_document.)
+Last verified: 2026-06-10 (fix 4: RAG supplement scan in _fetch_graph_embedding_candidates and _fetch_graph_embedding_candidates_via_supabase only covered email/email_attachment — teams_dm_conversation and teams_dm were excluded, leaving 599 items permanently pending. Added both types to both supplement scans.)
 
 ---
 

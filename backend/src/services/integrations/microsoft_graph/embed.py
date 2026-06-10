@@ -645,7 +645,7 @@ def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any
                 .from_("rag_document_metadata")
                 .select("id, type, created_at")
                 .is_("embedding_status", "null")
-                .in_("type", ["email", "email_attachment"])
+                .in_("type", ["email", "email_attachment", "teams_dm_conversation", "teams_dm"])
                 .gte("created_at", cutoff)
                 .order("created_at", desc=True)
                 .limit(limit)
@@ -666,7 +666,7 @@ def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any
                 ]
                 docs = (rag_candidates + docs)[:limit]
                 logger.info(
-                    "[GraphEmbed] RAG supplement: %d email/attachment candidates added",
+                    "[GraphEmbed] RAG supplement: %d email/attachment/teams_dm candidates added",
                     len(rag_candidates),
                 )
         except Exception as exc:
@@ -692,7 +692,7 @@ def _fetch_graph_embedding_candidates_via_supabase(
                 .from_("rag_document_metadata")
                 .select("id, type, created_at")
                 .is_("embedding_status", "null")
-                .in_("type", ["email", "document", "email_attachment"])
+                .in_("type", ["email", "document", "email_attachment", "teams_dm_conversation", "teams_dm"])
                 .gte("created_at", cutoff)
                 .order("created_at", desc=True)
                 .limit(limit)
