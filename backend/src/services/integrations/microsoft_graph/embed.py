@@ -609,10 +609,19 @@ def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute("set local statement_timeout = '15s'")
             cur.execute(query, query_params)
-            return [dict(row) for row in cur.fetchall()]
+            docs = [dict(row) for row in cur.fetchall()]
     finally:
         if conn is not None:
             conn.close()
+
+    # Post-RAG-split: PM APP status is already 'embedded'/'complete' for docs
+    # that were processed by the pre-split path. The primary scan finds 0 rows,
+    # but rag_document_metadata may still have embedding_status IS NULL.
+    # Signal the RAG-aware fallback to handle them.
+    if rag_database_writes_enabled() and not docs:
+        return None
+
+    return docs
 
 
 def _fetch_graph_embedding_candidates_via_supabase(
@@ -620,6 +629,40 @@ def _fetch_graph_embedding_candidates_via_supabase(
     limit: int,
 ) -> List[Dict[str, Any]]:
     """Fallback candidate scan when the backend only has Supabase API access."""
+    # Post-RAG-split fast path: query rag_document_metadata directly for rows
+    # with embedding_status IS NULL. PM APP's status is already 'embedded'/'complete'
+    # for these docs, so the per-row repair scan below would need to page through
+    # thousands of rows. This is O(1) instead of O(N).
+    if rag_database_writes_enabled():
+        try:
+            cutoff = (datetime.now(timezone.utc) - timedelta(days=365)).isoformat()
+            rag_resp = (
+                get_rag_read_client()
+                .from_("rag_document_metadata")
+                .select("id, type, created_at")
+                .is_("embedding_status", "null")
+                .in_("type", ["email", "document", "email_attachment"])
+                .gte("created_at", cutoff)
+                .order("created_at", desc=True)
+                .limit(limit)
+                .execute()
+            )
+            rag_docs = rag_resp.data or []
+            if rag_docs:
+                logger.info("[GraphEmbed] RAG direct scan found %d unembedded docs", len(rag_docs))
+                return [
+                    {
+                        "id": d["id"],
+                        "category": d["type"],
+                        "status": "repair",
+                        "created_at": d["created_at"],
+                        "date": d["created_at"][:10],
+                    }
+                    for d in rag_docs
+                ]
+        except Exception as exc:
+            logger.warning("[GraphEmbed] RAG direct scan failed, continuing to repair scan: %s", exc)
+
     try:
         # Post-RAG-split: document_metadata.content is always NULL because content
         # now lives in rag_document_metadata. Don't filter by content here — trust

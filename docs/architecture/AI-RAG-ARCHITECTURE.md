@@ -2,7 +2,7 @@
 
 **Authoritative reference for all AI work. Read this before touching any file under `frontend/src/lib/ai/` or `backend/src/services/pipeline/`.**
 
-Last verified: 2026-06-10 (Langfuse OTel span processor; fixed missing _run_source_intelligence_compiler for Fireflies; added alleato-fireflies-sync cron every 30 min at :15; moved alleato-graph-sync from every 2h to every 30 min at :00/:30; fixed intelligence_targets slug collision for same-name projects; cleared 120 stuck failed source_intelligence_jobs)
+Last verified: 2026-06-10 (fixed email embed backlog: _fetch_graph_embedding_candidates returns None when primary scan empty to trigger RAG direct scan; added fast path in _fetch_graph_embedding_candidates_via_supabase that queries rag_document_metadata.embedding_status IS NULL; embed_graph_document now also marks rag_document_metadata.embedding_status=embedded)
 
 ---
 

@@ -1552,6 +1552,7 @@ export function ChatArea({
   // Shared prompt input element
   const promptInputEl = (
     <PromptInput
+      multiple
       onSubmit={handleSubmit}
       className={cn(
         "overflow-hidden rounded-2xl border-0 bg-transparent shadow-[0_10px_40px_-28px_rgb(15_23_42/0.45)] ring-1 ring-border/70 transition-all focus-within:ring-2 focus-within:ring-border",
