@@ -221,9 +221,15 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
   const [saving, setSaving] = React.useState(false);
   const [logoFile, setLogoFile] = React.useState<File | null>(null);
   const [photoFile, setPhotoFile] = React.useState<File | null>(null);
+  const [companySearch, setCompanySearch] = React.useState("");
   const router = useRouter();
-  const { options: companyOptions, isLoading: isLoadingCompanies } = useCompanies({
+  const {
+    options: companyOptions,
+    isLoading: isLoadingCompanies,
+    error: companiesError,
+  } = useCompanies({
     enabled: open,
+    search: companySearch,
   });
 
   React.useEffect(() => {
@@ -231,6 +237,7 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
       setForm(initForm(project));
       setLogoFile(null);
       setPhotoFile(null);
+      setCompanySearch("");
     }
   }, [open, project]);
 
@@ -343,8 +350,13 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
                   }}
                   placeholder={isLoadingCompanies ? "Loading companies..." : "Select client"}
                   searchPlaceholder="Search companies..."
-                  emptyMessage="No companies found"
+                  emptyMessage={
+                    companiesError
+                      ? `Could not load companies: ${companiesError.message}`
+                      : "No companies found"
+                  }
                   loading={isLoadingCompanies}
+                  onSearch={setCompanySearch}
                   clearable
                 />
                 <SelectField

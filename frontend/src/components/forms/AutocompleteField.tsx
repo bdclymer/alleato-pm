@@ -24,6 +24,7 @@ export interface AutocompleteOption {
   value: string;
   label: string;
   description?: string;
+  keywords?: string[];
 }
 
 interface AutocompleteFieldProps extends FormFieldBaseProps {
@@ -136,6 +137,9 @@ export function AutocompleteField({
                   <CommandItem
                     key={option.value}
                     value={option.value}
+                    keywords={[option.label, option.description, ...(option.keywords ?? [])].filter(
+                      (keyword): keyword is string => Boolean(keyword),
+                    )}
                     onSelect={handleSelect}
                     className="flex items-start gap-2"
                   >

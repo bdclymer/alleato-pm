@@ -20,9 +20,20 @@ import {
  * is confusing for typeahead pickers. Components can still override by passing
  * their own `filter` prop or `shouldFilter={false}`.
  */
-function substringFilter(value: string, search: string): number {
+export function substringFilter(
+  value: string,
+  search: string,
+  keywords: string[] = [],
+): number {
   if (!search) return 1;
-  return value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0;
+
+  const normalizedSearch = search.toLowerCase();
+  const searchableText = [value, ...keywords]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return searchableText.includes(normalizedSearch) ? 1 : 0;
 }
 
 function Command({
