@@ -1,14 +1,9 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { z, ZodError } from "zod";
+import { z } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
 import { createClient } from "@/lib/supabase/server";
-
-interface RouteParams {
-  params: Promise<{ projectId: string }>;
-}
 
 const createDocumentSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -25,7 +20,115 @@ const createDocumentSchema = z.object({
   uploaded_by: z.string().nullable().optional(),
   reviewed_by: z.string().nullable().optional(),
   reviewed_at: z.string().nullable().optional(),
+  storage_bucket: z.string().nullable().optional(),
+  storage_path: z.string().nullable().optional(),
 });
+
+const MAX_PROJECT_DOCUMENT_UPLOAD_BYTES = 100 * 1024 * 1024;
+const DOCUMENTS_BUCKET = "documents";
+
+type CreateDocumentValues = z.infer<typeof createDocumentSchema>;
+
+function safeStorageFileName(fileName: string): string {
+  const cleaned = fileName
+    .replace(/[/\\?%*:|"<>]/g, "-")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return cleaned || "document";
+}
+
+function formValue(formData: FormData, key: string): string | undefined {
+  const value = formData.get(key);
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+async function parseCreateDocumentRequest(
+  request: Request,
+  projectId: number,
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<{
+  values: CreateDocumentValues;
+  uploadedStoragePath: string | null;
+}> {
+  const contentType = request.headers.get("content-type") ?? "";
+
+  if (!contentType.includes("multipart/form-data")) {
+    const body = await request.json();
+    return {
+      values: createDocumentSchema.parse(body),
+      uploadedStoragePath: null,
+    };
+  }
+
+  const formData = await request.formData();
+  const file = formData.get("file");
+
+  if (!(file instanceof File)) {
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: "projects/[projectId]/documents#POST",
+      message: "Select a file before uploading.",
+      status: 400,
+    });
+  }
+
+  if (file.size <= 0) {
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: "projects/[projectId]/documents#POST",
+      message: "The selected file is empty.",
+      status: 400,
+    });
+  }
+
+  if (file.size > MAX_PROJECT_DOCUMENT_UPLOAD_BYTES) {
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: "projects/[projectId]/documents#POST",
+      message: "Project document uploads are limited to 100 MB.",
+      status: 413,
+    });
+  }
+
+  const safeFileName = safeStorageFileName(file.name);
+  const storagePath = `projects/${projectId}/documents/${crypto.randomUUID()}-${safeFileName}`;
+  const fileBuffer = Buffer.from(await file.arrayBuffer());
+
+  const { error: uploadError } = await supabase.storage
+    .from(DOCUMENTS_BUCKET)
+    .upload(storagePath, fileBuffer, {
+      contentType: file.type || "application/octet-stream",
+      upsert: false,
+    });
+
+  if (uploadError) {
+    throw new GuardrailError({
+      code: "UPSTREAM_FAILURE",
+      where: "projects/[projectId]/documents#POST",
+      message: `Failed to upload document to storage: ${uploadError.message}`,
+      status: 502,
+    });
+  }
+
+  return {
+    uploadedStoragePath: storagePath,
+    values: createDocumentSchema.parse({
+      title: formValue(formData, "title") ?? safeFileName,
+      description: formValue(formData, "description") ?? null,
+      folder: formValue(formData, "folder") ?? "Root",
+      file_name: safeFileName,
+      file_url: `supabase://${DOCUMENTS_BUCKET}/${storagePath}`,
+      file_size: file.size,
+      content_type: file.type || "application/octet-stream",
+      status: formValue(formData, "status") ?? "Draft",
+      category: formValue(formData, "category") ?? null,
+      is_private: formValue(formData, "is_private") === "true",
+      storage_bucket: DOCUMENTS_BUCKET,
+      storage_path: storagePath,
+    }),
+  };
+}
 
 // =============================================================================
 // GET - List documents with filters
@@ -95,8 +198,8 @@ export const GET = withApiGuardrails(
 export const POST = withApiGuardrails(
   "projects/[projectId]/documents#POST",
   async ({ request, params }) => {
-  
     const { projectId } = await params;
+    const numericProjectId = Number(projectId);
     const supabase = await createClient();
 
     const {
@@ -108,14 +211,14 @@ export const POST = withApiGuardrails(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/documents#POST", message: "Authentication required." });
     }
 
-    const body = await request.json();
-    const validated = createDocumentSchema.parse(body);
+    const { values: validated, uploadedStoragePath } =
+      await parseCreateDocumentRequest(request, numericProjectId, supabase);
 
     const { data, error } = await supabase
       .from("project_documents")
       .insert({
         ...validated,
-        project_id: Number(projectId),
+        project_id: numericProjectId,
         created_by: user.id,
         uploaded_by: validated.uploaded_by ?? user.email,
       })
@@ -123,9 +226,26 @@ export const POST = withApiGuardrails(
       .single();
 
     if (error) {
+      if (uploadedStoragePath) {
+        const { error: cleanupError } = await supabase.storage
+          .from(DOCUMENTS_BUCKET)
+          .remove([uploadedStoragePath]);
+
+        if (cleanupError) {
+          console.error(
+            JSON.stringify({
+              event: "project_document_upload_cleanup_failed",
+              project_id: numericProjectId,
+              storage_bucket: DOCUMENTS_BUCKET,
+              storage_path: uploadedStoragePath,
+              error: cleanupError.message,
+            }),
+          );
+        }
+      }
       return apiErrorResponse(error);
     }
 
     return NextResponse.json(data, { status: 201 });
-    },
+  },
 );

@@ -70,6 +70,8 @@ export interface CreateDocumentInput {
   uploaded_by?: string | null;
 }
 
+export type CreateDocumentPayload = CreateDocumentInput | FormData;
+
 export interface UpdateDocumentInput {
   title?: string;
   description?: string | null;
@@ -144,11 +146,15 @@ export function useCreateDocument(projectId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: CreateDocumentInput) =>
-      apiFetch<ProjectDocument>(`/api/projects/${projectId}/documents`, {
+    mutationFn: (data: CreateDocumentPayload) => {
+      const isFormData =
+        typeof FormData !== "undefined" && data instanceof FormData;
+
+      return apiFetch<ProjectDocument>(`/api/projects/${projectId}/documents`, {
         method: "POST",
-        body: JSON.stringify(data),
-      }),
+        body: isFormData ? data : JSON.stringify(data),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: documentKeys.all(projectId),

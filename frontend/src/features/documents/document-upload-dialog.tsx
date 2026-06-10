@@ -36,7 +36,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
-import { useCreateDocument, type CreateDocumentInput } from "@/hooks/use-documents";
+import { useCreateDocument } from "@/hooks/use-documents";
 
 // =============================================================================
 // Schema
@@ -77,6 +77,7 @@ export function DocumentUploadDialog({
   const createDocument = useCreateDocument(projectId);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const [isDraggingFile, setIsDraggingFile] = React.useState(false);
+  const [fileError, setFileError] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const form = useForm<
@@ -107,12 +108,14 @@ export function DocumentUploadDialog({
       });
       setSelectedFile(null);
       setIsDraggingFile(false);
+      setFileError(null);
     }
   }, [open, defaultFolder, form]);
 
   const selectFile = React.useCallback(
     (file: File) => {
       setSelectedFile(file);
+      setFileError(null);
       if (!form.getValues("title")) {
         form.setValue("title", file.name.replace(/\.[^.]+$/, ""));
       }
@@ -137,24 +140,21 @@ export function DocumentUploadDialog({
   };
 
   const handleSubmit = async (values: DocumentUploadFormValues) => {
-    // In a real implementation, you would upload the file to Supabase Storage first
-    // and get back a URL. For now, we create the record with a placeholder URL.
-    const input: CreateDocumentInput = {
-      title: values.title,
-      description: values.description || null,
-      folder: values.folder || "Root",
-      file_name: selectedFile?.name ?? `${values.title}.pdf`,
-      file_url: selectedFile
-        ? URL.createObjectURL(selectedFile)
-        : `/documents/${values.title}`,
-      file_size: selectedFile?.size ?? null,
-      content_type: selectedFile?.type ?? null,
-      status: values.status,
-      category: values.category || null,
-      is_private: values.is_private,
-    };
+    if (!selectedFile) {
+      setFileError("Select a file before uploading.");
+      return;
+    }
 
-    await createDocument.mutateAsync(input);
+    const formData = new FormData();
+    formData.set("file", selectedFile);
+    formData.set("title", values.title);
+    formData.set("description", values.description || "");
+    formData.set("folder", values.folder || "Root");
+    formData.set("category", values.category || "");
+    formData.set("status", values.status);
+    formData.set("is_private", String(values.is_private));
+
+    await createDocument.mutateAsync(formData);
     onOpenChange(false);
   };
 
@@ -215,6 +215,11 @@ export function DocumentUploadDialog({
                 </>
               )}
             </label>
+            {fileError ? (
+              <p className="text-sm font-medium text-destructive">
+                {fileError}
+              </p>
+            ) : null}
             <Input
               id="document-file-input"
               ref={fileInputRef}
