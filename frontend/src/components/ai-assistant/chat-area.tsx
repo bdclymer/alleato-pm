@@ -693,6 +693,35 @@ function AttachmentPreviews() {
   );
 }
 
+function AssistantPromptSubmit({
+  className,
+  input,
+  isStreaming,
+  onStop,
+}: {
+  className?: string;
+  input: string;
+  isStreaming: boolean;
+  onStop?: () => void;
+}) {
+  const attachments = usePromptInputAttachments();
+
+  return (
+    <PromptInputSubmit
+      status={isStreaming ? "streaming" : "ready"}
+      onStop={onStop}
+      variant="ghost"
+      size="icon-sm"
+      disabled={!input.trim() && attachments.files.length === 0 && !isStreaming}
+      className={className}
+    >
+      {isStreaming ? undefined : (
+        <ArrowUpIcon className="h-3.5 w-3.5" strokeWidth={2.25} />
+      )}
+    </PromptInputSubmit>
+  );
+}
+
 function AssistantActionList() {
   return (
     <section aria-label="Assistant actions" className="border-y border-border/70 py-5 text-left">
@@ -1782,22 +1811,16 @@ export function ChatArea({
           </TooltipProvider>
         </div>
         <div className="flex shrink-0 items-center justify-end gap-2">
-          <PromptInputSubmit
-            status={isStreaming ? "streaming" : "ready"}
+          <AssistantPromptSubmit
+            input={input}
+            isStreaming={isStreaming}
             onStop={onStop}
-            variant="ghost"
-            size="icon-sm"
-            disabled={!input.trim() && !isStreaming}
             className={cn(
               "relative h-7 w-7 rounded-full bg-transparent text-muted-foreground/40 shadow-none hover:bg-transparent hover:text-foreground sm:h-8 sm:w-8",
               input.trim() && "text-foreground",
               isStreaming && "text-foreground/60 hover:text-foreground/60",
             )}
-          >
-            {isStreaming ? undefined : (
-              <ArrowUpIcon className="h-3.5 w-3.5" strokeWidth={2.25} />
-            )}
-          </PromptInputSubmit>
+          />
         </div>
       </PromptInputFooter>
     </PromptInput>
