@@ -4,10 +4,22 @@
 `tool-coverage-read-regression`, judge disabled.
 
 **Initial result: 5 / 13 pass.** After accepting the deep-agent path on the 3 by-design
-cases (see class 3 below — capability works, granular tool shadowed), **standing result:
-8 / 13 pass.** The remaining **5 failures are genuine product findings**, left red on
-purpose: 4× `assistantSourceHealth` hijack + 1× web-tool gap. They clear when the
-`source_status_request` over-routing fix lands.
+cases (class 3 below), standing result was 8 / 13.
+
+**Update 2026-06-09 — source-health hijack FIXED (commit `d7c9e9934`, verified on prod):**
+The 4 `assistantSourceHealth` hijack cases no longer return a source-freshness report —
+they now reach real answer paths. `project-details` and `company-knowledge` answer correctly
+via the deep-agent runtimes (greened, granular tool shadowed). **Standing result: 10 / 13.**
+The remaining **3 reds are one finding, not the hijack**: the live Strategist shadows several
+granular read tools, and the `web` tool family is unreachable:
+- `ar-aging` → routes to the executive deep-agent (`financials_reader`) instead of `getARAgingReport`,
+  even though sibling Acumatica reads (vendor/bills/invoices/list) fire directly.
+- `web-search` → `backendDeepAgentResearch`; `construction-market` → internal RAG. Neither hits
+  `searchWeb`/`searchConstructionMarket`.
+
+These 3 are a **routing-precision decision** (should simple lookups / web queries hit the
+lightweight tool, or is deep-agent absorption acceptable?), not a correctness bug — the
+answers are produced. Left red as honest signal.
 
 These 13 cases each directly assert a single runtime READ tool that had **zero** coverage
 across the prior 129 suite cases. Run artifacts (gitignored):

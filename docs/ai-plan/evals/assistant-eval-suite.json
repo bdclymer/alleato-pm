@@ -4301,12 +4301,14 @@
         "project"
       ],
       "expectedToolNames": [
-        "getProjectDetails"
+        "getProjectDetails",
+        "backendDeepAgentProjectStatus"
       ],
       "mustInclude": [
         "Westfield"
       ],
-      "minAnswerLength": 80
+      "minAnswerLength": 80,
+      "coverageNote": "Post hijack-fix (2026-06-09): routes to the deep-agent project path, which answers correctly; granular getProjectDetails is shadowed."
     },
     {
       "id": "toolcov-read-structured-financial-rows",
@@ -4329,15 +4331,18 @@
       "intent": "company_knowledge",
       "prompt": "What is Alleato's mission and what are the current strategic goals for the company?",
       "expectedToolFamilies": [
-        "knowledge"
+        "knowledge",
+        "project"
       ],
       "expectedToolNames": [
-        "getCompanyKnowledge"
+        "getCompanyKnowledge",
+        "backendDeepAgentExecutiveBriefing"
       ],
       "mustInclude": [
         "Alleato"
       ],
-      "minAnswerLength": 80
+      "minAnswerLength": 80,
+      "coverageNote": "Post hijack-fix (2026-06-09): routes to the executive deep-agent, which answers correctly; granular getCompanyKnowledge is shadowed."
     },
     {
       "id": "toolcov-read-ar-aging",
