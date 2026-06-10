@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import type { KeyboardEvent, ReactElement } from "react";
 import Link from "next/link";
 
 import { formatDate } from "@/lib/format";
@@ -112,7 +112,9 @@ export const projectDocumentDefaultVisibleColumns = projectDocumentColumns
 // Helpers
 // =============================================================================
 
-function formatFileSize(bytes: number | null | undefined): string {
+export function formatProjectDocumentFileSize(
+  bytes: number | null | undefined,
+): string {
   if (bytes === null || bytes === undefined) return "-";
   if (bytes === 0) return "0 B";
   const units = ["B", "KB", "MB", "GB"];
@@ -390,10 +392,10 @@ export function buildDocumentTableColumns(opts?: {
       width: 100,
       render: (item) => (
         <span className="text-muted-foreground tabular-nums">
-          {formatFileSize(item.file_size)}
+          {formatProjectDocumentFileSize(item.file_size)}
         </span>
       ),
-      csvValue: (item) => formatFileSize(item.file_size),
+      csvValue: (item) => formatProjectDocumentFileSize(item.file_size),
       sortValue: (item) => item.file_size ?? 0,
       sortable: true,
     },
@@ -520,15 +522,26 @@ export function renderDocumentCard(
       : null;
   const canShowImagePreview = inlineHref && format === "Image";
   const canShowPdfPreview = inlineHref && format === "PDF";
+  const updatedDate = formatDate(item.updated_at ?? item.created_at);
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onClick(item);
+    }
+  };
 
   return (
     <div
-      className="group cursor-pointer overflow-hidden rounded-lg bg-card shadow-xs transition-shadow hover:shadow-sm"
+      role="button"
+      tabIndex={0}
+      aria-label={`Preview ${item.title}`}
+      className="group min-w-0 cursor-pointer overflow-hidden rounded-md border border-border bg-background transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       onClick={() => onClick(item)}
+      onKeyDown={handleKeyDown}
     >
-      {/* Preview area */}
       <div
-        className={`relative flex h-32 items-center justify-center overflow-hidden ${canShowImagePreview || canShowPdfPreview ? "bg-muted" : bg}`}
+        className={`relative flex aspect-[4/3] items-center justify-center overflow-hidden ${canShowImagePreview || canShowPdfPreview ? "bg-muted/40" : bg}`}
       >
         {canShowImagePreview ? (
           <img
@@ -548,7 +561,7 @@ export function renderDocumentCard(
           icon
         )}
         {ext && (
-          <span className="absolute bottom-2 right-2 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-background/80 text-foreground">
+          <span className="absolute bottom-2 right-2 rounded-sm bg-background/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-foreground shadow-xs">
             {ext}
           </span>
         )}
@@ -559,15 +572,22 @@ export function renderDocumentCard(
         )}
       </div>
 
-      {/* File info */}
-      <div className="px-3 py-2.5">
-        <p className="truncate text-sm font-medium leading-tight">
-          {item.title}
-        </p>
-        <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
-          <FolderOpen className="h-3 w-3 shrink-0" />
-          {item.folder ?? "Root"}
-        </p>
+      <div className="space-y-2 px-3 py-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium leading-tight text-foreground">
+            {item.title}
+          </p>
+          <p className="mt-1 truncate text-xs text-muted-foreground">
+            {item.file_name}
+          </p>
+        </div>
+        <div className="flex min-w-0 items-center justify-between gap-2 text-xs text-muted-foreground">
+          <span className="flex min-w-0 items-center gap-1 truncate">
+            <FolderOpen className="h-3 w-3 shrink-0" />
+            <span className="truncate">{item.folder ?? "Root"}</span>
+          </span>
+          <span className="shrink-0">{updatedDate}</span>
+        </div>
       </div>
     </div>
   );
@@ -594,7 +614,7 @@ export function renderDocumentList(
             item.folder ?? "Root",
             `v${item.version ?? 1}`,
             item.category,
-            formatFileSize(item.file_size),
+            formatProjectDocumentFileSize(item.file_size),
             formatDate(item.created_at),
           ]
             .filter(Boolean)

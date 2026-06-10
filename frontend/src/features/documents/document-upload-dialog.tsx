@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 import { useCreateDocument, type CreateDocumentInput } from "@/hooks/use-documents";
 
@@ -75,6 +76,7 @@ export function DocumentUploadDialog({
 }: DocumentUploadDialogProps) {
   const createDocument = useCreateDocument(projectId);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
+  const [isDraggingFile, setIsDraggingFile] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const form = useForm<
@@ -104,16 +106,33 @@ export function DocumentUploadDialog({
         is_private: false,
       });
       setSelectedFile(null);
+      setIsDraggingFile(false);
     }
   }, [open, defaultFolder, form]);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
+  const selectFile = React.useCallback(
+    (file: File) => {
       setSelectedFile(file);
       if (!form.getValues("title")) {
         form.setValue("title", file.name.replace(/\.[^.]+$/, ""));
       }
+    },
+    [form],
+  );
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      selectFile(file);
+    }
+  };
+
+  const handleFileDrop = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDraggingFile(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) {
+      selectFile(file);
     }
   };
 
@@ -158,7 +177,23 @@ export function DocumentUploadDialog({
             {/* File Upload Area */}
             <label
               htmlFor="document-file-input"
-              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border p-6 text-center transition-colors hover:bg-muted/50"
+              onDragEnter={(event) => {
+                event.preventDefault();
+                setIsDraggingFile(true);
+              }}
+              onDragOver={(event) => {
+                event.preventDefault();
+                setIsDraggingFile(true);
+              }}
+              onDragLeave={(event) => {
+                event.preventDefault();
+                setIsDraggingFile(false);
+              }}
+              onDrop={handleFileDrop}
+              className={cn(
+                "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border p-6 text-center transition-colors hover:bg-muted/50",
+                isDraggingFile && "border-primary bg-primary/10",
+              )}
             >
               {selectedFile ? (
                 <>
@@ -172,7 +207,7 @@ export function DocumentUploadDialog({
                 <>
                   <Upload className="h-8 w-8 text-muted-foreground" />
                   <p className="text-sm font-medium">
-                    Click to select a file
+                    Drop a file here or click to browse
                   </p>
                   <p className="text-xs text-muted-foreground">
                     PDF, DOC, XLS, IMG, or any file type

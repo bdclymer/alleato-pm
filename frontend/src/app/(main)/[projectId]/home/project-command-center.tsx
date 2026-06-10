@@ -13,9 +13,12 @@ import {
   Check,
   CheckCircle2,
   ChevronRight,
+  Download,
+  Eye,
   DollarSign,
   ExternalLink,
   FileText,
+  FolderOpen,
   Image,
   MapPin,
   Search,
@@ -82,6 +85,7 @@ type ProjectDocument = Pick<
   | "created_at"
   | "updated_at"
   | "reviewed_at"
+  | "file_size"
 >;
 type ProjectTeamMember = Database["public"]["Functions"]["get_project_team"]["Returns"][number];
 type BudgetLineSummary = Pick<Database["public"]["Tables"]["budget_lines"]["Row"], "id" | "project_id" | "original_amount">;
@@ -239,6 +243,21 @@ function formatMonthDay(value: string | null | undefined): string | null {
   const date = parseLocalDate(value);
   if (Number.isNaN(date.getTime())) return null;
   return format(date, "MMM d");
+}
+
+function formatFileSize(bytes: number | null | undefined): string | null {
+  if (bytes == null) return null;
+  if (bytes === 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  const index = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(1024)),
+    units.length - 1,
+  );
+  return `${(bytes / Math.pow(1024, index)).toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
+}
+
+function documentExtension(fileName: string | null | undefined): string {
+  return fileName?.split(".").pop()?.toUpperCase() ?? "FILE";
 }
 
 function isClosedStatus(status: string | null | undefined): boolean {
@@ -1002,30 +1021,69 @@ export function ProjectCommandCenter({
       .slice(0, 8);
     if (filtered.length === 0) return <EmptyTabState label="documents" />;
     return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Updated</TableHead>
-            <TableHead>Status</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filtered.map((d) => (
-            <TableRow key={d.id}>
-              <TableCell className="max-w-xs">
-                <Link href={`/${projectId}/documents`} prefetch={false} className="truncate text-foreground hover:text-primary transition-colors">
-                  {d.title || d.file_name || "Untitled"}
-                </Link>
-              </TableCell>
-              <TableCell className="text-muted-foreground">{d.category || "—"}</TableCell>
-              <TableCell className="text-muted-foreground">{formatMonthDay(d.updated_at ?? d.created_at) || "—"}</TableCell>
-              <TableCell>{d.status ? <StatusBadge status={d.status} /> : "—"}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <div className="grid grid-cols-1 gap-2 px-3 py-2 sm:grid-cols-2 lg:grid-cols-4">
+        {filtered.map((document) => {
+          const title = document.title || document.file_name || "Untitled";
+          const updated = formatMonthDay(document.updated_at ?? document.created_at);
+          const size = formatFileSize(document.file_size);
+
+          return (
+            <div
+              key={document.id}
+              className="group min-w-0 rounded-md border border-border bg-background transition-colors hover:bg-muted/20"
+            >
+              <Link
+                href={`/${projectId}/documents/${document.id}`}
+                prefetch={false}
+                className="block min-w-0 p-3"
+                aria-label={`Preview ${title}`}
+              >
+                <div className="mb-3 flex aspect-[4/3] items-center justify-center rounded-sm bg-muted/50 text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
+                  <FileText className="h-8 w-8" />
+                </div>
+                <div className="min-w-0 space-y-1">
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {title}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {document.file_name}
+                  </p>
+                </div>
+              </Link>
+              <div className="flex min-w-0 items-center justify-between gap-2 border-t border-border px-3 py-2 text-xs text-muted-foreground">
+                <span className="flex min-w-0 items-center gap-1 truncate">
+                  <FolderOpen className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{document.folder ?? "Root"}</span>
+                </span>
+                <span className="shrink-0">{documentExtension(document.file_name)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2 px-3 pb-3 text-xs text-muted-foreground">
+                <span>{updated ?? size ?? "Recent"}</span>
+                <div className="flex items-center gap-1">
+                  <Button asChild size="icon" variant="ghost" className="h-7 w-7">
+                    <Link
+                      href={`/${projectId}/documents/${document.id}`}
+                      prefetch={false}
+                      aria-label={`Preview ${title}`}
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
+                  <Button asChild size="icon" variant="ghost" className="h-7 w-7">
+                    <a
+                      href={`/api/projects/${projectId}/documents/${document.id}/download`}
+                      download={document.file_name ?? undefined}
+                      aria-label={`Download ${title}`}
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     );
   };
 

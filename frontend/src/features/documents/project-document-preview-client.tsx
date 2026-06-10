@@ -1,78 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Download, ExternalLink, FileText } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { PageShell } from "@/components/layout";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState, StatusBadge } from "@/components/ds";
-import { formatDate } from "@/lib/format";
 import { useDocument } from "@/hooks/use-documents";
-import type { ProjectDocument } from "@/hooks/use-documents";
 import { inferProjectDocumentFormat } from "@/features/documents/project-documents-table-config";
+import {
+  ProjectDocumentPreviewActions,
+  ProjectDocumentPreviewBody,
+  ProjectDocumentPreviewMeta,
+  projectDocumentFileHref,
+} from "@/features/documents/project-document-preview";
 
 type ProjectDocumentPreviewClientProps = {
   projectId: string;
   documentId: string;
 };
-
-function fileHref(projectId: string, documentId: string, inline: boolean): string {
-  const base = `/api/projects/${projectId}/documents/${documentId}/download`;
-  return inline ? `${base}?disposition=inline` : base;
-}
-
-function originalSourceHref(document: ProjectDocument): string | null {
-  if (document.source_web_url) return document.source_web_url;
-  if (document.file_url?.startsWith("http://") || document.file_url?.startsWith("https://")) {
-    return document.file_url;
-  }
-  return null;
-}
-
-function DocumentPreviewBody({
-  document,
-  inlineHref,
-}: {
-  document: ProjectDocument;
-  inlineHref: string;
-}) {
-  const format = inferProjectDocumentFormat(document).label;
-
-  if (format === "Image") {
-    return (
-      <div className="flex min-h-96 items-start justify-center bg-muted/30 p-4">
-        <img
-          src={inlineHref}
-          alt={document.title}
-          className="max-w-full object-contain"
-          style={{ maxHeight: "72vh" }}
-        />
-      </div>
-    );
-  }
-
-  if (format === "PDF") {
-    return (
-      <iframe
-        src={inlineHref}
-        title={`${document.title} preview`}
-        className="w-full bg-background"
-        style={{ height: "72vh" }}
-      />
-    );
-  }
-
-  return (
-    <div className="min-h-96 bg-muted/30 p-8">
-      <EmptyState
-        icon={<FileText />}
-        title="Preview is not available for this file type"
-        description="Download the file or open the original source to view it."
-      />
-    </div>
-  );
-}
 
 export function ProjectDocumentPreviewClient({
   projectId,
@@ -84,10 +30,8 @@ export function ProjectDocumentPreviewClient({
     error,
   } = useDocument(Number(projectId), documentId);
 
-  const backHref = `/${projectId}/documents?view=table`;
-  const inlineHref = fileHref(projectId, documentId, true);
-  const downloadHref = fileHref(projectId, documentId, false);
-  const sourceHref = document ? originalSourceHref(document) : null;
+  const backHref = `/${projectId}/documents?view=card`;
+  const inlineHref = projectDocumentFileHref(projectId, documentId, true);
 
   if (isLoading) {
     return (
@@ -142,20 +86,7 @@ export function ProjectDocumentPreviewClient({
         .join(" - ")}
       actions={
         <div className="flex flex-wrap items-center gap-2">
-          {sourceHref ? (
-            <Button asChild size="sm" variant="outline">
-              <a href={sourceHref} target="_blank" rel="noopener noreferrer">
-                Original
-                <ExternalLink className="ml-2 h-4 w-4" />
-              </a>
-            </Button>
-          ) : null}
-          <Button asChild size="sm" variant="outline">
-            <a href={downloadHref} download={document.file_name}>
-              <Download className="mr-2 h-4 w-4" />
-              Download
-            </a>
-          </Button>
+          <ProjectDocumentPreviewActions document={document} projectId={projectId} />
           <Button asChild size="sm" variant="ghost">
             <Link href={backHref}>
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -166,15 +97,12 @@ export function ProjectDocumentPreviewClient({
       }
       contentClassName="space-y-6"
     >
-      <section className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-        <span>{format}</span>
-        <span>{document.file_size ? `${Math.round(document.file_size / 1024)} KB` : "Size unavailable"}</span>
-        <span>Uploaded {formatDate(document.created_at)}</span>
-        <StatusBadge status={document.status} />
+      <section>
+        <ProjectDocumentPreviewMeta document={document} />
       </section>
 
       <section className="overflow-hidden rounded-md border border-border bg-background">
-        <DocumentPreviewBody document={document} inlineHref={inlineHref} />
+        <ProjectDocumentPreviewBody document={document} inlineHref={inlineHref} />
       </section>
     </PageShell>
   );

@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import type { ReactElement } from "react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Plus } from "lucide-react";
+import { ExternalLink, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
@@ -18,6 +19,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -41,6 +49,12 @@ import {
 } from "@/features/documents/project-documents-table-config";
 import { DocumentUploadDialog } from "@/features/documents/document-upload-dialog";
 import { DocumentEditDialog } from "@/features/documents/document-edit-dialog";
+import {
+  ProjectDocumentPreviewActions,
+  ProjectDocumentPreviewBody,
+  ProjectDocumentPreviewMeta,
+  projectDocumentFileHref,
+} from "@/features/documents/project-document-preview";
 
 // =============================================================================
 // Types
@@ -84,6 +98,86 @@ interface DocumentsClientProps {
   projectId: string;
 }
 
+function DocumentPreviewSheet({
+  document,
+  projectId,
+  open,
+  onOpenChange,
+}: {
+  document: ProjectDocument | null;
+  projectId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}): ReactElement | null {
+  if (!document) return null;
+
+  const inlineHref = projectDocumentFileHref(projectId, document.id, true);
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="w-full gap-0 p-0 sm:max-w-none md:w-2/3 lg:w-3/5 xl:w-1/2"
+      >
+        <SheetHeader className="border-b border-border px-5 py-4">
+          <div className="flex items-start justify-between gap-4 pr-8">
+            <div className="min-w-0 space-y-1">
+              <SheetTitle className="truncate text-base">
+                {document.title}
+              </SheetTitle>
+              <SheetDescription className="truncate">
+                {[document.file_name, document.folder ?? "Root"]
+                  .filter(Boolean)
+                  .join(" - ")}
+              </SheetDescription>
+            </div>
+            <div className="hidden shrink-0 items-center gap-2 sm:flex">
+              <ProjectDocumentPreviewActions
+                document={document}
+                projectId={projectId}
+              />
+              <Button asChild size="sm" variant="ghost">
+                <Link
+                  href={`/${projectId}/documents/${document.id}`}
+                  prefetch={false}
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Full page
+                </Link>
+              </Button>
+            </div>
+          </div>
+          <ProjectDocumentPreviewMeta document={document} />
+          <div className="flex flex-wrap items-center gap-2 sm:hidden">
+            <ProjectDocumentPreviewActions
+              document={document}
+              projectId={projectId}
+            />
+            <Button asChild size="sm" variant="ghost">
+              <Link
+                href={`/${projectId}/documents/${document.id}`}
+                prefetch={false}
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Full page
+              </Link>
+            </Button>
+          </div>
+        </SheetHeader>
+
+        <div className="min-h-0 flex-1 overflow-auto bg-muted/20 p-4">
+          <div className="overflow-hidden rounded-md border border-border bg-background">
+            <ProjectDocumentPreviewBody
+              document={document}
+              inlineHref={inlineHref}
+            />
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
 export function DocumentsClient({
   projectId,
 }: DocumentsClientProps): ReactElement {
@@ -112,6 +206,8 @@ export function DocumentsClient({
     React.useState<ProjectDocument | null>(null);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = React.useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = React.useState(false);
+  const [previewDocument, setPreviewDocument] =
+    React.useState<ProjectDocument | null>(null);
 
   // Table state
   const initialFilters: FilterState = {
@@ -130,7 +226,7 @@ export function DocumentsClient({
     pathname,
     router,
     defaults: {
-      view: "table",
+      view: "card",
       page: 1,
       perPage: 25,
       search: "",
@@ -184,20 +280,6 @@ export function DocumentsClient({
 
     window.localStorage.setItem(migrationKey, "1");
   }, [tableState.setVisibleColumns, tableState.visibleColumns]);
-
-  // Mobile: default to list view
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.innerWidth >= 768) return;
-    if (tableState.currentView !== "table") return;
-
-    tableState.setCurrentView("list");
-    tableState.setSearchParams({ view: "list" });
-  }, [
-    tableState.currentView,
-    tableState.setCurrentView,
-    tableState.setSearchParams,
-  ]);
 
   // ==========================================================================
   // Filtering
@@ -394,7 +476,7 @@ export function DocumentsClient({
       return;
     }
 
-    router.push(`/${projectId}/documents/${item.id}`);
+    setPreviewDocument(item);
   };
 
   const handleEdit = (item: ProjectDocument) => {
@@ -596,6 +678,10 @@ export function DocumentsClient({
           card: (item) => renderDocumentCard(item, handleRowClick, projectId),
           list: (item) => renderDocumentList(item, handleRowClick),
         }}
+        layout={{
+          cardGridClassName:
+            "grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5",
+        }}
         emptyState={{
           title: "No documents yet",
           description:
@@ -642,6 +728,15 @@ export function DocumentsClient({
         onOpenChange={setEditDialogOpen}
         document={documentToEdit}
         projectId={numericProjectId}
+      />
+
+      <DocumentPreviewSheet
+        document={previewDocument}
+        projectId={projectId}
+        open={Boolean(previewDocument)}
+        onOpenChange={(open) => {
+          if (!open) setPreviewDocument(null);
+        }}
       />
 
       {/* Delete Confirmation */}
