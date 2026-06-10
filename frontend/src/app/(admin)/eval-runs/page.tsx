@@ -185,16 +185,24 @@ export default function EvalRunsPage() {
     <PageShell
       variant="dashboard"
       title="Assistant Eval Runs"
-      description="Browse local AI-assistant eval runs: pass/fail per case, the exact tools each prompt fired, failure reasons, and the answer the assistant returned."
       actions={
-        <Button
-          variant="outline"
-          onClick={() => void loadList(selectedRun?.runId)}
-          disabled={isListLoading}
-        >
-          <RefreshCw className={cn("mr-2 size-4", isListLoading && "animate-spin")} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-1.5">
+          <ExpandableSearch
+            value={query}
+            onChange={setQuery}
+            placeholder="Search runs..."
+            ariaLabel="Search eval runs"
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => void loadList(selectedRun?.runId)}
+            disabled={isListLoading}
+          >
+            <RefreshCw className={cn("mr-2 size-4", isListLoading && "animate-spin")} />
+            Refresh
+          </Button>
+        </div>
       }
     >
       {!available && !isListLoading ? (
@@ -206,18 +214,9 @@ export default function EvalRunsPage() {
       ) : (
         <div className="grid gap-8 xl:grid-cols-[minmax(320px,400px)_1fr]">
           <section className="min-w-0 space-y-4">
-            <div className="flex justify-end">
-              <ExpandableSearch
-                value={query}
-                onChange={setQuery}
-                placeholder="Search runs..."
-                ariaLabel="Search eval runs"
-              />
-            </div>
-
             {error ? <ErrorState title="Couldn't load eval runs" description={error} /> : null}
 
-            <div className="space-y-3">
+            <div className="space-y-0.5">
               {filteredRuns.map((run) => {
                 const isSelected = selectedRun?.runId === run.runId;
                 const allPassed = run.failed === 0 && run.totalCases > 0;
@@ -228,32 +227,24 @@ export default function EvalRunsPage() {
                     variant="ghost"
                     onClick={() => selectRun(run.runId)}
                     className={cn(
-                      "h-auto w-full justify-start whitespace-normal rounded-md border border-border/70 bg-background p-0 text-left transition-colors hover:border-foreground/20 hover:bg-muted/20",
-                      isSelected && "border-foreground/25 bg-muted/30",
+                      "flex h-auto w-full flex-col items-stretch gap-1 rounded-md px-3 py-2.5 text-left whitespace-normal hover:bg-muted/50",
+                      isSelected && "bg-muted",
                     )}
                   >
-                    <span className="flex w-full flex-col gap-3 p-4">
-                      <span className="flex items-start justify-between gap-3">
-                        <span className="min-w-0 space-y-1">
-                          <span className="block truncate font-mono text-sm font-medium text-foreground">
-                            {run.bundleName}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {formatDateTime(run.generatedAt)} · {targetLabel(run.baseUrl)}
-                          </span>
-                        </span>
-                        <StatusBadge
-                          status={`${run.passed}/${run.totalCases}`}
-                          variant={allPassed ? "success" : "warning"}
-                        />
+                    <span className="flex items-center justify-between gap-3">
+                      <span className="min-w-0 truncate text-sm font-medium text-foreground">
+                        {run.bundleName}
                       </span>
-                      <span className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                        <span>{run.passed} passed</span>
-                        {run.failed > 0 ? (
-                          <span className="text-destructive">{run.failed} failed</span>
-                        ) : null}
-                        {run.warningCount > 0 ? <span>{run.warningCount} warnings</span> : null}
-                      </span>
+                      <StatusBadge
+                        status={`${run.passed}/${run.totalCases}`}
+                        variant={allPassed ? "success" : "warning"}
+                      />
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {formatDateTime(run.generatedAt)} · {targetLabel(run.baseUrl)}
+                      {run.failed > 0 ? (
+                        <span className="text-destructive"> · {run.failed} failed</span>
+                      ) : null}
                     </span>
                   </Button>
                 );
