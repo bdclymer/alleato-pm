@@ -658,6 +658,10 @@ services:
         value: "false"
       - key: TASK_EXTRACTION_ENABLED
         value: "false"
+      # Deep full-transcript meeting extraction (Stage 3). Enabled in prod via the
+      # Render API 2026-06-10; declared here so a Blueprint sync keeps it on.
+      - key: DEEP_EXTRACTION_ENABLED
+        value: "true"
       - key: OPENAI_API_KEY
         sync: false
       - key: AI_GATEWAY_API_KEY
