@@ -21,6 +21,18 @@ These 3 are a **routing-precision decision** (should simple lookups / web querie
 lightweight tool, or is deep-agent absorption acceptable?), not a correctness bug — the
 answers are produced. Left red as honest signal.
 
+**Update 2026-06-09 — web-search gap FIXED (commit `a1eaed55e`, verified on prod):**
+Market/industry questions phrased without an explicit "web"/"research" verb now classify as
+`external_research` and reach live web search (Tavily) via `backendDeepAgentResearch`, instead
+of being answered from internal files. Re-ran on prod: `web-search` and `construction-market`
+both now fire `backendDeepAgentResearch` and **no internal RAG tools** — the old "answered
+market questions from internal documents" behavior is gone. Both greened. **Standing result:
+12 / 13.** Regression coverage: `frontend/src/lib/ai/__tests__/intent-router.test.ts`.
+
+Only remaining red: `ar-aging` routes to the executive deep-agent (`financials_reader`)
+instead of the direct `getARAgingReport` tool — answer is produced, granular tool shadowed.
+A routing-precision nit, not a correctness bug.
+
 These 13 cases each directly assert a single runtime READ tool that had **zero** coverage
 across the prior 129 suite cases. Run artifacts (gitignored):
 `docs/ai-plan/evals/runs/2026-06-09T14-39-29-493Z-cf9adf03/`.
