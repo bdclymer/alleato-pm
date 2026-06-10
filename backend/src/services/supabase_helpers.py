@@ -18,6 +18,7 @@ The official ``supabase`` Python package must be installed (add it to
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 import json
@@ -29,6 +30,11 @@ from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
 from supabase import Client, create_client
+
+logger = logging.getLogger(__name__)
+
+# Warn at most once per process per resolver about RAG flag/credential drift.
+_RAG_FLAG_DRIFT_WARNED: set[str] = set()
 
 _QUERY_STOPWORDS = {
     "the",
@@ -100,6 +106,33 @@ def rag_database_reads_enabled() -> bool:
     return _env_flag_enabled("RAG_DATABASE_READS_ENABLED")
 
 
+def rag_supabase_configured() -> bool:
+    """True when RAG project credentials are present in the environment.
+
+    Post the 2026-05-15 RAG migration, the RAG tables (``rag_document_metadata``,
+    ``document_chunks``, etc.) live ONLY in the AI Database. The legacy copies in
+    the PM APP database were removed, so once RAG credentials exist there is no
+    valid reason to route RAG reads/writes back to the PM APP project.
+    """
+
+    return bool(os.getenv("RAG_SUPABASE_URL"))
+
+
+def _warn_rag_flag_drift_once(resolver: str, flag_name: str) -> None:
+    if resolver in _RAG_FLAG_DRIFT_WARNED:
+        return
+    _RAG_FLAG_DRIFT_WARNED.add(resolver)
+    logger.warning(
+        "[RAG] %s: RAG_SUPABASE_URL is configured but %s is not enabled. "
+        "Using the RAG (AI Database) client anyway — the PM APP database no "
+        "longer has the RAG tables, so falling back there would raise PGRST205. "
+        "Fix env drift by setting %s=true on this service.",
+        resolver,
+        flag_name,
+        flag_name,
+    )
+
+
 @lru_cache(maxsize=1)
 def get_rag_supabase_client() -> Client:
     """Return a cached Supabase client for the isolated AI/RAG project."""
@@ -116,20 +149,33 @@ def get_rag_supabase_client() -> Client:
 def get_rag_write_client() -> Client:
     """Return the client that owns high-churn RAG write tables.
 
-    RAG writes stay on the app database until the explicit cutover flag is set.
-    Once enabled, missing RAG Supabase credentials are treated as a hard config
-    error so ingestion cannot silently fall back to the operational database.
+    The RAG migration (2026-05-15) is complete: RAG tables live only in the AI
+    Database. Whenever RAG credentials are configured we use the RAG client,
+    regardless of the ``RAG_DATABASE_WRITES_ENABLED`` flag — falling back to the
+    PM APP database (which no longer has these tables) would silently break
+    ingestion with PGRST205. The flag is honored only as a one-time drift
+    warning. Only when RAG credentials are absent do we use the PM APP client
+    (legacy/pre-migration deployments).
     """
 
-    if rag_database_writes_enabled():
+    if rag_supabase_configured():
+        if not rag_database_writes_enabled():
+            _warn_rag_flag_drift_once("get_rag_write_client", "RAG_DATABASE_WRITES_ENABLED")
         return get_rag_supabase_client()
     return get_supabase_client()
 
 
 def get_rag_read_client() -> Client:
-    """Return the client used for high-churn RAG read tables."""
+    """Return the client used for high-churn RAG read tables.
 
-    if rag_database_reads_enabled():
+    See :func:`get_rag_write_client` — RAG reads must hit the AI Database when
+    RAG credentials are configured, since the PM APP copies were removed after
+    the migration.
+    """
+
+    if rag_supabase_configured():
+        if not rag_database_reads_enabled():
+            _warn_rag_flag_drift_once("get_rag_read_client", "RAG_DATABASE_READS_ENABLED")
         return get_rag_supabase_client()
     return get_supabase_client()
 

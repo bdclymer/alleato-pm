@@ -6,6 +6,8 @@ Last verified: 2026-06-10 (observability: AI SDK telemetry is now centralized in
 
 Last verified: 2026-06-10 (fix 4: RAG supplement scan in _fetch_graph_embedding_candidates and _fetch_graph_embedding_candidates_via_supabase only covered email/email_attachment — teams_dm_conversation and teams_dm were excluded, leaving 599 items permanently pending. Added both types to both supplement scans.)
 
+Last verified: 2026-06-10 (RAG client routing hardened — `get_rag_read_client`/`get_rag_write_client` now route to the AI Database whenever `RAG_SUPABASE_URL` is set, ignoring the READS/WRITES cutover flags except as a one-time drift warning. Fixes a Fireflies segmentation outage caused by the sync cron missing those env vars and silently reading `rag_document_metadata` from the PM APP DB. See the "Two Supabase projects" callout + `backend/tests/test_rag_client_routing.py`.)
+
 ---
 
 ## 1. Overview
@@ -252,6 +254,8 @@ All tools are server-side only (Next.js API routes). They receive `userId` for R
 ## 6. Vector Store
 
 > **⚠️ Two Supabase projects.** As of **2026-05-15** the RAG tables (`document_chunks`, `rag_document_metadata`, `rag_pipeline_state`) live in the **"AI Database"** project (`fqcvmfqldlewvbsuxdvz`), reached by backend code via `RAG_SUPABASE_URL` and the `get_rag_read_client()` / `get_rag_write_client()` helpers in `backend/src/services/supabase_helpers.py`. Frontend/server tool code reaches the same AI Database through `createRagServiceClient()` in `frontend/src/lib/supabase/service.ts`; operational semantic-search tools now use that RAG client directly for `document_chunks` while keeping the app service client for PM-app metadata and project tables.
+>
+> **Client routing is credential-gated, not flag-gated (hardened 2026-06-10).** `get_rag_read_client()` / `get_rag_write_client()` route to the AI Database whenever `RAG_SUPABASE_URL` is configured, **regardless of `RAG_DATABASE_READS_ENABLED` / `RAG_DATABASE_WRITES_ENABLED`**. Those flags are honored only as a one-time drift warning. Rationale: the PM APP copies of the RAG tables were removed after the migration, so the old silent fallback to the PM APP client raised `PGRST205: Could not find the table 'public.rag_document_metadata'`. This caused a same-day outage where the `alleato-fireflies-sync` cron (missing the READS/WRITES env vars in its live Render env despite `render.yaml` declaring them) failed every segmentation job, leaving all Fireflies meetings with zero `meeting_segments`. Regression test: `backend/tests/test_rag_client_routing.py`.
 >
 > RAG-owned operational ledgers and health tables (`source_sync_runs`, `source_sync_health_snapshots`, `source_signal_candidates`, `source_intelligence_jobs`, `document_attribution_candidates`, ingestion job tables, and packet refresh jobs) must also use `createRagServiceClient()` from frontend/server code. The predeploy gate runs `npm run rag:verify:client-boundary`, which fails if those tables or RAG search RPCs are queried through a file that does not use the RAG service client, or if old RAG/main fallback unions are reintroduced.
 >
