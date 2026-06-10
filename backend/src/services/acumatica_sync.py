@@ -1772,15 +1772,20 @@ class AcumaticaFinancialSyncService:
                 line_nbr = _unwrap(detail.get("LineNbr")) or _unwrap(detail.get("LineNumber"))
                 if line_nbr is None:
                     continue
-                raw_amount = (
-                    _num(_unwrap(detail.get("Amount")))
-                    or _num(_unwrap(detail.get("ExtCost")))
-                    or _num(_unwrap(detail.get("ExtendedCost")))
-                    or 0
-                )
-                # subcontract_sov_items has amount >= 0 constraint; negative
-                # lines in Acumatica are credit adjustments — clamp to 0
-                amount = max(0, raw_amount)
+                # Use the GROSS extended line value. In Acumatica, `ExtendedCost`
+                # sums across all detail lines (including negative adjustment
+                # lines) to the subcontract total, whereas `Amount` is net of
+                # retainage. Retainage must NOT be baked into the SOV value —
+                # it is applied at invoicing via retainage_percent. Using
+                # `Amount` understated every retained line by the retainage %.
+                raw_amount = _unwrap(detail.get("ExtendedCost"))
+                if raw_amount is None:
+                    raw_amount = _unwrap(detail.get("ExtCost"))
+                if raw_amount is None:
+                    raw_amount = _unwrap(detail.get("Amount"))
+                # Negative lines are legitimate deductive adjustments and are
+                # kept as-is so the SOV reconciles to the subcontract total.
+                amount = _num(raw_amount) or 0
                 description = _unwrap(detail.get("Description")) or _unwrap(
                     detail.get("TransactionDescription")
                 )
@@ -1792,6 +1797,11 @@ class AcumaticaFinancialSyncService:
                         "description": description,
                         "budget_code": _unwrap(detail.get("CostCode")),
                         "amount": amount,
+                        "quantity": _num(_unwrap(detail.get("OrderQty")))
+                        or _num(_unwrap(detail.get("Qty"))),
+                        "unit_cost": _num(_unwrap(detail.get("UnitCost"))),
+                        "unit_of_measure": _unwrap(detail.get("UOM")),
+                        "retainage_percent": _num(_unwrap(detail.get("RetainagePct"))),
                         "updated_at": synced_at,
                     }
                 )
@@ -1801,6 +1811,20 @@ class AcumaticaFinancialSyncService:
                     self.supabase.table("subcontract_sov_items").upsert(
                         list(chunk), on_conflict="subcontract_id,line_number"
                     ).execute()
+                # Guardrail: the SOV must reconcile to the Acumatica subcontract
+                # total. Surface drift instead of silently shipping wrong money.
+                sov_sum = round(sum(item["amount"] for item in sov_items), 2)
+                contract_total = _num(row.get("subcontract_total")) or 0
+                if abs(sov_sum - contract_total) > 0.01:
+                    result.errors += 1
+                    logger.warning(
+                        "[AcumaticaSync] SOV reconciliation drift for %s: "
+                        "sov_sum=%.2f subcontract_total=%.2f (delta=%.2f)",
+                        row["external_key"],
+                        sov_sum,
+                        contract_total,
+                        sov_sum - contract_total,
+                    )
 
         return result
 
@@ -1880,10 +1904,12 @@ class AcumaticaFinancialSyncService:
                 line_nbr = _unwrap(detail.get("LineNbr")) or _unwrap(detail.get("LineNumber"))
                 if line_nbr is None:
                     continue
+                # Gross extended line value (sums to the order total); `Amount`
+                # is net of retainage and must not be used for the SOV value.
                 amount = (
-                    _num(_unwrap(detail.get("Amount")))
+                    _num(_unwrap(detail.get("ExtendedCost")))
                     or _num(_unwrap(detail.get("ExtCost")))
-                    or _num(_unwrap(detail.get("ExtendedCost")))
+                    or _num(_unwrap(detail.get("Amount")))
                     or 0
                 )
                 description = _unwrap(detail.get("Description")) or _unwrap(
