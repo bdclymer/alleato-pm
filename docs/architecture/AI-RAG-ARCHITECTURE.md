@@ -2,7 +2,7 @@
 
 **Authoritative reference for all AI work. Read this before touching any file under `frontend/src/lib/ai/` or `backend/src/services/pipeline/`.**
 
-Last verified: 2026-06-10 (fix 2: 'not docs' guard insufficient — teams_message with raw_ingested PM APP status prevented email RAG scan. Now always supplements SQL candidates with RAG rag_document_metadata email/email_attachment where embedding_status IS NULL, prepended before SQL results.)
+Last verified: 2026-06-10 (fix 3: embed_graph_document never updated rag_document_metadata.embedding_status after writing chunks, causing infinite re-embed of same 695 emails each call. Added embedding_status='embedded' update in all exit paths of embed_graph_document.)
 
 ---
 

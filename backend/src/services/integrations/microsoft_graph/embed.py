@@ -269,6 +269,9 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         logger.warning("[GraphEmbed] Document %s has no content — skipping", metadata_id)
         # Still mark as embedded so we don't retry it forever
         supabase_client.from_("document_metadata").update({"status": "embedded"}).eq("id", metadata_id).execute()
+        get_rag_write_client().from_("rag_document_metadata").update(
+            {"embedding_status": "embedded"}
+        ).eq("id", metadata_id).execute()
         _clear_ingestion_error("embedded")
         return 0
 
@@ -285,6 +288,9 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         supabase_client.from_("document_metadata").update(
             {"status": "skipped_low_content"}
         ).eq("id", metadata_id).execute()
+        get_rag_write_client().from_("rag_document_metadata").update(
+            {"embedding_status": "skipped"}
+        ).eq("id", metadata_id).execute()
         _clear_ingestion_error("embedded")
         return 0
 
@@ -293,6 +299,9 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
     chunks = _split_text(full_text)
     if not chunks:
         supabase_client.from_("document_metadata").update({"status": "embedded"}).eq("id", metadata_id).execute()
+        get_rag_write_client().from_("rag_document_metadata").update(
+            {"embedding_status": "embedded"}
+        ).eq("id", metadata_id).execute()
         _clear_ingestion_error("embedded")
         return 0
 
@@ -343,13 +352,21 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         ).eq("id", metadata_id).execute()
         return 0
 
-    # Mark embedded
+    # Mark embedded in PM APP
     try:
         supabase_client.from_("document_metadata").update({
             "status": "embedded",
         }).eq("id", metadata_id).execute()
     except Exception as e:
-        logger.warning("[GraphEmbed] Could not update status for %s: %s", metadata_id, e)
+        logger.warning("[GraphEmbed] Could not update PM APP status for %s: %s", metadata_id, e)
+
+    # Mark embedded in RAG DB so the supplement scan doesn't re-process this doc
+    try:
+        get_rag_write_client().from_("rag_document_metadata").update(
+            {"embedding_status": "embedded"}
+        ).eq("id", metadata_id).execute()
+    except Exception as e:
+        logger.warning("[GraphEmbed] Could not update RAG embedding_status for %s: %s", metadata_id, e)
 
     _clear_ingestion_error("embedded")
     _run_source_intelligence_compiler(supabase_client, metadata_id)
