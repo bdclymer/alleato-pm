@@ -9,9 +9,7 @@ import { Sparkles } from "lucide-react";
 import { isDevelopment } from "@/lib/dev-autofill";
 import {
   PrimeContractAddCompanyDialog,
-  PrimeContractAttachmentsSection,
   PrimeContractDatesSection,
-  PrimeContractDescriptionSection,
   PrimeContractGeneralInfoSection,
   PrimeContractPrivacySection,
   PrimeContractScopeSection,
@@ -149,24 +147,18 @@ export function ContractForm({
             companyOptions={companyOptions}
             companiesLoading={companiesLoading}
             contractStatuses={CONTRACT_STATUSES}
+            attachments={mode === "create" ? formData.attachments || [] : undefined}
+            isSubmitting={isSubmitting}
             onCreateCompany={() => setShowAddCompany(true)}
             onClearValidationError={clearValidationError}
             onUpdateFormData={updateFormData}
+            onAttachmentChange={
+              mode === "create" ? handleAttachmentListChange : undefined
+            }
+            onFilesSelected={
+              mode === "create" ? handleFilesSelected : undefined
+            }
           />
-
-          <PrimeContractDescriptionSection
-            formData={formData}
-            onUpdateFormData={updateFormData}
-          />
-
-          {mode === "create" ? (
-            <PrimeContractAttachmentsSection
-              attachments={formData.attachments || []}
-              isSubmitting={isSubmitting}
-              onChange={handleAttachmentListChange}
-              onFilesSelected={handleFilesSelected}
-            />
-          ) : null}
 
           <PrimeContractDatesSection
             formData={formData}

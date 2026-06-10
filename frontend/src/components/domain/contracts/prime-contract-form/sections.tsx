@@ -36,114 +36,149 @@ export function PrimeContractGeneralInfoSection({
   companyOptions,
   companiesLoading,
   contractStatuses,
+  attachments,
+  isSubmitting,
   onCreateCompany,
   onClearValidationError,
   onUpdateFormData,
+  onAttachmentChange,
+  onFilesSelected,
 }: {
   formData: Partial<ContractFormData>;
   validationErrors: ValidationErrors;
   companyOptions: Array<{ value: string; label: string }>;
   companiesLoading: boolean;
   contractStatuses: Array<{ value: string; label: string }>;
+  attachments?: NonNullable<ContractFormData["attachments"]>;
+  isSubmitting?: boolean;
   onCreateCompany: () => void;
   onClearValidationError: (field: "number" | "title") => void;
   onUpdateFormData: (updates: Partial<ContractFormData>) => void;
+  onAttachmentChange?: (
+    nextFiles: NonNullable<ContractFormData["attachments"]>
+  ) => void;
+  onFilesSelected?: (files: File[]) => void;
 }) {
   return (
     <FormSection title="General Information">
-      <FormGrid columns={2} className="gap-y-8">
-        <TextField
-          label="Contract #"
-          value={formData.number || ""}
-          onChange={(e) => {
-            onClearValidationError("number");
-            onUpdateFormData({ number: e.target.value });
-          }}
-          placeholder="Enter contract number"
-          error={validationErrors.number}
-          required
-        />
-        <SearchableSelect
-          label="Owner/Client"
-          options={companyOptions}
-          value={formData.ownerCompanyId}
-          onValueChange={(value) =>
-            onUpdateFormData({
-              ownerCompanyId: value,
-              contractCompanyId: value,
-            })
-          }
-          placeholder="Select company"
-          searchPlaceholder="Search"
-          disabled={companiesLoading}
-          triggerTestId="owner-client-select"
-          optionTestIdPrefix="owner-client-option"
-          onCreateNew={onCreateCompany}
-          createNewLabel="+ Create New Company"
-        />
-        <TextField
-          label="Title"
-          value={formData.title || ""}
-          onChange={(e) => {
-            onClearValidationError("title");
-            onUpdateFormData({ title: e.target.value });
-          }}
-          placeholder="Enter title"
-          error={validationErrors.title}
-          required
-        />
-        <SelectField
-          label="Status"
-          options={contractStatuses}
-          value={formData.status || "draft"}
-          onValueChange={(value) => onUpdateFormData({ status: value })}
-          required
-        />
-        <SearchableSelect
-          label="Contractor"
-          options={companyOptions}
-          value={formData.contractorId}
-          onValueChange={(value) => onUpdateFormData({ contractorId: value })}
-          placeholder="Select contractor"
-          searchPlaceholder="Search"
-          disabled={companiesLoading}
-        />
-        <SearchableSelect
-          label="Architect/Engineer"
-          options={companyOptions}
-          value={formData.architectEngineerId}
-          onValueChange={(value) => onUpdateFormData({ architectEngineerId: value })}
-          placeholder="Select architect/engineer"
-          searchPlaceholder="Search"
-          disabled={companiesLoading}
-        />
-        <NumberField
-          label="Default Retainage"
-          value={formData.defaultRetainage}
-          onChange={(value) => onUpdateFormData({ defaultRetainage: value })}
-          suffix="%"
-          placeholder=""
-          min={0}
-          max={100}
-        />
-        <div className="flex items-start gap-x-2">
-          <Label className="w-40 shrink-0 pt-2 text-[13px] font-medium text-foreground">
-            Executed
-          </Label>
-          <div className="flex h-10 min-w-0 flex-1 items-center">
-            <Checkbox
-              id="executed"
-              checked={formData.executed || false}
-              onCheckedChange={(checked) =>
-                onUpdateFormData({ executed: checked === true })
-              }
-            />
-            <Label htmlFor="executed" className="ml-2 text-sm font-normal">
-              Contract is executed
+      <div className="space-y-8">
+        <FormGrid columns={2} className="gap-y-8">
+          <TextField
+            label="Contract #"
+            value={formData.number || ""}
+            onChange={(e) => {
+              onClearValidationError("number");
+              onUpdateFormData({ number: e.target.value });
+            }}
+            placeholder="Enter contract number"
+            error={validationErrors.number}
+            required
+          />
+          <SearchableSelect
+            label="Owner/Client"
+            options={companyOptions}
+            value={formData.ownerCompanyId}
+            onValueChange={(value) =>
+              onUpdateFormData({
+                ownerCompanyId: value,
+                contractCompanyId: value,
+              })
+            }
+            placeholder="Select company"
+            searchPlaceholder="Search"
+            disabled={companiesLoading}
+            triggerTestId="owner-client-select"
+            optionTestIdPrefix="owner-client-option"
+            onCreateNew={onCreateCompany}
+            createNewLabel="+ Create New Company"
+          />
+          <TextField
+            label="Title"
+            value={formData.title || ""}
+            onChange={(e) => {
+              onClearValidationError("title");
+              onUpdateFormData({ title: e.target.value });
+            }}
+            placeholder="Enter title"
+            error={validationErrors.title}
+            required
+          />
+          <SelectField
+            label="Status"
+            options={contractStatuses}
+            value={formData.status || "draft"}
+            onValueChange={(value) => onUpdateFormData({ status: value })}
+            required
+          />
+          <SearchableSelect
+            label="Contractor"
+            options={companyOptions}
+            value={formData.contractorId}
+            onValueChange={(value) => onUpdateFormData({ contractorId: value })}
+            placeholder="Select contractor"
+            searchPlaceholder="Search"
+            disabled={companiesLoading}
+          />
+          <SearchableSelect
+            label="Architect/Engineer"
+            options={companyOptions}
+            value={formData.architectEngineerId}
+            onValueChange={(value) => onUpdateFormData({ architectEngineerId: value })}
+            placeholder="Select architect/engineer"
+            searchPlaceholder="Search"
+            disabled={companiesLoading}
+          />
+          <NumberField
+            label="Default Retainage"
+            value={formData.defaultRetainage}
+            onChange={(value) => onUpdateFormData({ defaultRetainage: value })}
+            suffix="%"
+            placeholder=""
+            min={0}
+            max={100}
+          />
+          <div className="flex items-start gap-x-2">
+            <Label className="w-40 shrink-0 pt-2 text-[13px] font-medium text-foreground">
+              Executed
             </Label>
+            <div className="flex h-10 min-w-0 flex-1 items-center">
+              <Checkbox
+                id="executed"
+                checked={formData.executed || false}
+                onCheckedChange={(checked) =>
+                  onUpdateFormData({ executed: checked === true })
+                }
+              />
+              <Label htmlFor="executed" className="ml-2 text-sm font-normal">
+                Contract is executed
+              </Label>
+            </div>
           </div>
-        </div>
-      </FormGrid>
+        </FormGrid>
+
+        <RichTextField
+          label="Description"
+          value={formData.description || ""}
+          onChange={(value) => onUpdateFormData({ description: value })}
+          placeholder="Enter contract description..."
+          fullWidth
+        />
+
+        {attachments && onAttachmentChange && onFilesSelected ? (
+          <FileUploadField
+            label="Attachments"
+            value={attachments}
+            onChange={onAttachmentChange}
+            onFilesSelected={onFilesSelected}
+            multiple
+            maxFiles={20}
+            maxSize={50 * 1024 * 1024}
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+            disabled={isSubmitting}
+            variant="minimal"
+          />
+        ) : null}
+      </div>
     </FormSection>
   );
 }
