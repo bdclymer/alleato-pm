@@ -3,15 +3,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowUpRight, TrendingDown, TrendingUp } from "lucide-react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import { cn } from "@/lib/utils";
 import { formatPercent } from "@/lib/format";
 
@@ -81,38 +72,26 @@ function pct(part: number, whole: number): number {
   return Math.min(100, Math.max(0, (part / whole) * 100));
 }
 
-type BudgetChartPayload = Array<{
-  name?: string;
-  value?: number | null;
-  payload?: {
-    label?: string;
-  };
-}>;
+function niceTickStep(maxValue: number): number {
+  if (maxValue <= 0) return 1;
+  const roughStep = maxValue / 4;
+  const magnitude = 10 ** Math.floor(Math.log10(roughStep));
+  const residual = roughStep / magnitude;
 
-function BudgetChartTooltip({
-  active,
-  payload,
-}: {
-  active?: boolean;
-  payload?: BudgetChartPayload;
-}) {
-  if (!active || !payload?.length) return null;
+  if (residual <= 1) return magnitude;
+  if (residual <= 1.5) return 1.5 * magnitude;
+  if (residual <= 2) return 2 * magnitude;
+  if (residual <= 2.5) return 2.5 * magnitude;
+  if (residual <= 5) return 5 * magnitude;
+  return 10 * magnitude;
+}
 
-  return (
-    <div className="rounded-md border border-border bg-popover px-3 py-2 text-xs shadow-sm">
-      <p className="mb-1 font-medium text-foreground">{payload[0]?.payload?.label}</p>
-      <div className="space-y-1">
-        {payload.map((entry) => (
-          <div key={entry.name} className="flex items-center justify-between gap-4">
-            <span className="text-muted-foreground">{entry.name}</span>
-            <span className="font-medium tabular-nums text-foreground">
-              {fmtFull(entry.value)}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+function splitChartLabel(label: string): string[] {
+  const words = label.split(" ");
+  if (label.length <= 16 || words.length < 2) return [label];
+
+  const midpoint = Math.ceil(words.length / 2);
+  return [words.slice(0, midpoint).join(" "), words.slice(midpoint).join(" ")];
 }
 
 function BudgetDivisionChart({
@@ -120,75 +99,115 @@ function BudgetDivisionChart({
 }: {
   divisions: BudgetDivisionSummary[];
 }) {
-  const chartRows = divisions
-    .filter((division) => division.budget > 0 || division.committed > 0)
-    .slice(0, 6);
+  const chartRows = divisions.filter(
+    (division) => division.budget > 0 || division.committed > 0,
+  );
   const chartHeight = Math.max(180, chartRows.length * 54);
 
   if (chartRows.length === 0) {
     return null;
   }
 
+  const chartWidth = 680;
+  const labelWidth = 150;
+  const plotWidth = 500;
+  const topPadding = 12;
+  const rowHeight = 42;
+  const axisHeight = 28;
+  const legendHeight = 28;
+  const chartHeight = topPadding + chartRows.length * rowHeight + axisHeight + legendHeight;
+  const maxValue = Math.max(...chartRows.flatMap((division) => [division.budget, division.committed]), 1);
+  const tickStep = niceTickStep(maxValue);
+  const axisMax = tickStep * 4;
+  const ticks = Array.from({ length: 5 }, (_, index) => index * tickStep);
+  const xForValue = (value: number) => labelWidth + (Math.max(0, value) / axisMax) * plotWidth;
+
   return (
-    <div className="min-h-0 w-full">
-      <ResponsiveContainer width="100%" height={chartHeight}>
-        <BarChart
-          data={chartRows}
-          layout="vertical"
-          barCategoryGap={12}
-          margin={{ top: 4, right: 8, bottom: 0, left: 4 }}
-        >
-          <CartesianGrid
-            horizontal={false}
-            stroke="hsl(var(--border))"
-            strokeOpacity={0.7}
-          />
-          <XAxis
-            type="number"
-            tickFormatter={(value) => fmtCompact(Number(value))}
-            tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis
-            type="category"
-            dataKey="label"
-            width={136}
-            tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }}
-            axisLine={false}
-            tickLine={false}
-            interval={0}
-          />
-          <Tooltip
-            content={<BudgetChartTooltip />}
-            cursor={{ fill: "hsl(var(--muted) / 0.35)" }}
-          />
-          <Bar
-            dataKey="budget"
-            name="Budget"
-            fill="hsl(var(--muted-foreground) / 0.35)"
-            radius={[0, 3, 3, 0]}
-            barSize={10}
-          />
-          <Bar
-            dataKey="committed"
-            name="Committed"
-            fill="hsl(var(--primary))"
-            radius={[0, 3, 3, 0]}
-            barSize={10}
-          />
-        </BarChart>
-      </ResponsiveContainer>
-      <div className="mt-3 flex items-center gap-4 pl-36 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm bg-muted-foreground/35" />
-          Budget
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm bg-primary" />
-          Committed
-        </span>
-      </div>
+    <div className="min-h-0 w-full overflow-x-auto">
+      <svg
+        role="img"
+        aria-label="Budget and committed costs by division"
+        viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+        className="h-auto min-w-full text-xs"
+      >
+        <title>Budget and committed costs by division</title>
+        {ticks.map((tick) => {
+          const x = xForValue(tick);
+          return (
+            <g key={tick}>
+              <line
+                x1={x}
+                x2={x}
+                y1={topPadding}
+                y2={topPadding + chartRows.length * rowHeight}
+                className="stroke-border"
+                strokeOpacity={0.65}
+              />
+              <text
+                x={x}
+                y={topPadding + chartRows.length * rowHeight + 18}
+                textAnchor="middle"
+                className="fill-muted-foreground tabular-nums"
+              >
+                {fmtCompact(tick)}
+              </text>
+            </g>
+          );
+        })}
+        {chartRows.map((division, index) => {
+          const rowTop = topPadding + index * rowHeight;
+          const labelLines = splitChartLabel(division.label);
+          const labelY = rowTop + 19 - (labelLines.length - 1) * 6;
+          const budgetWidth = Math.max(2, xForValue(division.budget) - labelWidth);
+          const committedWidth = Math.max(2, xForValue(division.committed) - labelWidth);
+
+          return (
+            <g key={division.id}>
+              <title>
+                {division.label}: Budget {fmtFull(division.budget)}, Committed {fmtFull(division.committed)}
+              </title>
+              <text
+                x={labelWidth - 8}
+                y={labelY}
+                textAnchor="end"
+                className="fill-foreground"
+              >
+                {labelLines.map((line, lineIndex) => (
+                  <tspan key={line} x={labelWidth - 8} dy={lineIndex === 0 ? 0 : 12}>
+                    {line}
+                  </tspan>
+                ))}
+              </text>
+              <rect
+                x={labelWidth}
+                y={rowTop + 8}
+                width={budgetWidth}
+                height={8}
+                rx={3}
+                className="fill-muted-foreground/35"
+              />
+              <rect
+                x={labelWidth}
+                y={rowTop + 22}
+                width={committedWidth}
+                height={8}
+                rx={3}
+                className="fill-primary"
+              />
+            </g>
+          );
+        })}
+        <g transform={`translate(${labelWidth}, ${topPadding + chartRows.length * rowHeight + axisHeight + 12})`}>
+          <rect width={8} height={8} rx={2} className="fill-muted-foreground/35" />
+          <text x={16} y={8} className="fill-muted-foreground">
+            Budget
+          </text>
+          <rect x={80} width={8} height={8} rx={2} className="fill-primary" />
+          <text x={96} y={8} className="fill-muted-foreground">
+            Committed
+          </text>
+        </g>
+      </svg>
     </div>
   );
 }
