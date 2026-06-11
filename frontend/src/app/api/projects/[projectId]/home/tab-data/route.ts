@@ -62,7 +62,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     if (kind === "meetings") {
       const { data, error } = await supabase
         .from("document_metadata")
-        .select("id,title,file_name,date,created_at,duration_minutes,type")
+        .select("id,title,file_name,date,created_at,summary,overview,description,notes")
         .eq("project_id", projectIdNum)
         .eq("type", "meeting")
         .is("deleted_at", null)
@@ -85,11 +85,11 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     if (kind === "documents") {
       const { data, error } = await supabase
         .from("project_documents")
-        .select("id,title,file_name,status,category,folder,source_system,created_at,updated_at,reviewed_at")
+        .select("id,title,file_name,file_url,status,category,content_type,folder,source_system,created_at,updated_at,reviewed_at,file_size,storage_path")
         .eq("project_id", projectIdNum)
         .is("deleted_at", null)
         .order("updated_at", { ascending: false, nullsFirst: false })
-        .limit(10);
+        .limit(12);
 
       if (error) {
         throw new GuardrailError({
@@ -107,7 +107,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     if (kind === "daily-logs") {
       const { data, error } = await supabase
         .from("daily_logs")
-        .select("id,log_date")
+        .select("id,log_date,general_notes,status,weather_conditions")
         .eq("project_id", projectIdNum)
         .order("log_date", { ascending: false })
         .limit(5);

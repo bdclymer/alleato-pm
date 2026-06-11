@@ -14,12 +14,9 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronRight,
-  Download,
-  Eye,
   DollarSign,
   ExternalLink,
   FileText,
-  FolderOpen,
   Image,
   MapPin,
   Search,
@@ -53,6 +50,7 @@ const TableHead = TablePrimitives.TableHead;
 const TableHeader = TablePrimitives.TableHeader;
 const TableRow = TablePrimitives.TableRow;
 import { apiFetch } from "@/lib/api-client";
+import { FinancialOverview } from "./financial-overview";
 import type { Database } from "@/types/database.types";
 import type { BudgetGrandTotals } from "@/types/budget";
 
@@ -64,7 +62,15 @@ type Project = Database["public"]["Tables"]["projects"]["Row"];
 type Task = Database["public"]["Tables"]["tasks"]["Row"];
 type Meeting = Pick<
   Database["public"]["Tables"]["document_metadata"]["Row"],
-  "id" | "title" | "file_name" | "date" | "created_at" | "duration_minutes" | "type"
+  | "id"
+  | "title"
+  | "file_name"
+  | "date"
+  | "created_at"
+  | "summary"
+  | "overview"
+  | "description"
+  | "notes"
 >;
 interface ChangeOrder {
   id: string | number;
@@ -84,14 +90,17 @@ type ProjectDocument = Pick<
   | "id"
   | "title"
   | "file_name"
+  | "file_url"
   | "status"
   | "category"
+  | "content_type"
   | "folder"
   | "source_system"
   | "created_at"
   | "updated_at"
   | "reviewed_at"
   | "file_size"
+  | "storage_path"
 >;
 type ProjectTeamMember = Database["public"]["Functions"]["get_project_team"]["Returns"][number];
 type BudgetLineSummary = Pick<Database["public"]["Tables"]["budget_lines"]["Row"], "id" | "project_id" | "original_amount">;
@@ -107,7 +116,10 @@ type Submittal = Pick<
   | "created_at"
   | "status"
 >;
-type DailyLog = Pick<Database["public"]["Tables"]["daily_logs"]["Row"], "id" | "log_date">;
+type DailyLog = Pick<
+  Database["public"]["Tables"]["daily_logs"]["Row"],
+  "id" | "log_date" | "general_notes" | "status" | "weather_conditions"
+>;
 type LazyHomeTabKind = "meetings" | "documents" | "daily-logs" | "submittals";
 
 type LazyHomeTabPayload =
@@ -264,6 +276,42 @@ function formatFileSize(bytes: number | null | undefined): string | null {
 
 function documentExtension(fileName: string | null | undefined): string {
   return fileName?.split(".").pop()?.toUpperCase() ?? "FILE";
+}
+
+function readableText(value: string | null | undefined): string | null {
+  const normalized = (value ?? "")
+    .replace(/\s+/g, " ")
+    .replace(/^#+\s*/g, "")
+    .trim();
+  if (!normalized || normalized === "{}" || normalized === "[]") return null;
+  return normalized;
+}
+
+function oneSentence(value: string | null | undefined, fallback: string): string {
+  const text = readableText(value);
+  if (!text) return fallback;
+  const sentence = text.match(/^(.+?[.!?])(\s|$)/)?.[1] ?? text;
+  return sentence.length > 160 ? `${sentence.slice(0, 157).trim()}...` : sentence;
+}
+
+function documentInlineHref(projectId: string, documentId: number): string {
+  return `/api/projects/${projectId}/documents/${documentId}/download?disposition=inline`;
+}
+
+function isPreviewableDocument(document: ProjectDocument): boolean {
+  const extension = document.file_name.split(".").pop()?.toLowerCase() ?? "";
+  const contentType = document.content_type?.toLowerCase() ?? "";
+  return (
+    contentType.includes("pdf") ||
+    contentType.includes("image") ||
+    ["pdf", "jpg", "jpeg", "png", "webp", "gif"].includes(extension)
+  );
+}
+
+function isImageDocument(document: ProjectDocument): boolean {
+  const extension = document.file_name.split(".").pop()?.toLowerCase() ?? "";
+  const contentType = document.content_type?.toLowerCase() ?? "";
+  return contentType.includes("image") || ["jpg", "jpeg", "png", "webp", "gif"].includes(extension);
 }
 
 function isClosedStatus(status: string | null | undefined): boolean {
@@ -481,6 +529,31 @@ interface TeamSlot {
   displayName: string | null;
   email: string | null;
   phone: string | null;
+  group: "internal" | "subcontractor";
+}
+
+function classifyTeamSlot({
+  roleName,
+  email,
+  companyName,
+}: {
+  roleName: string | null | undefined;
+  email: string | null | undefined;
+  companyName?: string | null;
+}): "internal" | "subcontractor" {
+  const haystack = `${roleName ?? ""} ${companyName ?? ""} ${email ?? ""}`.toLowerCase();
+  if (haystack.includes("@alleatogroup.com") || haystack.includes("alleato")) {
+    return "internal";
+  }
+  if (
+    haystack.includes("subcontractor") ||
+    haystack.includes("vendor") ||
+    haystack.includes("supplier") ||
+    haystack.includes("trade")
+  ) {
+    return "subcontractor";
+  }
+  return email?.includes("@") ? "subcontractor" : "internal";
 }
 
 function SidebarTeamSection({
@@ -509,6 +582,11 @@ function SidebarTeamSection({
               displayName,
               email: person?.email || null,
               phone: person?.phone_mobile || person?.phone_business || null,
+              group: classifyTeamSlot({
+                roleName: role.role_name,
+                email: person?.email || null,
+                companyName: person?.company || null,
+              }),
             };
           }),
         );
@@ -526,6 +604,11 @@ function SidebarTeamSection({
           displayName,
           email: member.email || null,
           phone: member.phone_mobile || member.phone_office || null,
+          group: classifyTeamSlot({
+            roleName,
+            email: member.email || null,
+            companyName: member.company_name || null,
+          }),
         };
       })
       .filter((slot) => {
@@ -535,6 +618,10 @@ function SidebarTeamSection({
         return true;
       });
   }, [roles, team]);
+  const [activeGroup, setActiveGroup] = React.useState<"internal" | "subcontractor">("internal");
+  const internalSlots = slots.filter((slot) => slot.group === "internal");
+  const subcontractorSlots = slots.filter((slot) => slot.group === "subcontractor");
+  const visibleSlots = activeGroup === "internal" ? internalSlots : subcontractorSlots;
 
   if (isLoading && slots.length === 0) {
     return (
@@ -565,8 +652,22 @@ function SidebarTeamSection({
   }
 
   return (
-    <div className="space-y-0.5">
-      {slots.map(({ key, roleName, displayName, email, phone }) => (
+    <div className="space-y-2">
+      <Tabs value={activeGroup} onValueChange={(value) => setActiveGroup(value as "internal" | "subcontractor")}>
+        <TabsList className="h-8">
+          <TabsTrigger value="internal" className="h-7 text-xs">
+            Internal ({internalSlots.length})
+          </TabsTrigger>
+          <TabsTrigger value="subcontractor" className="h-7 text-xs">
+            Subs ({subcontractorSlots.length})
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+      {visibleSlots.length === 0 ? (
+        <div className="py-3 text-xs text-muted-foreground">
+          No {activeGroup === "internal" ? "internal team members" : "subcontractors"} assigned.
+        </div>
+      ) : visibleSlots.map(({ key, roleName, displayName, email, phone }) => (
         <Button
           key={key}
           asChild
@@ -844,6 +945,7 @@ export function ProjectCommandCenter({
   pendingSsovReviews = [],
   team,
   budget,
+  changeEvents = [],
   schedule,
   submittals = [],
   dailyLogs = [],
@@ -916,6 +1018,7 @@ export function ProjectCommandCenter({
   const revisedBudget = grandTotals.revisedBudget || grandTotals.originalBudgetAmount;
   const ecac = grandTotals.estimatedCostAtCompletion;
   const variance = grandTotals.projectedOverUnder;
+  const committedCosts = grandTotals.committedCosts;
   const homeMeetings = lazyTabData.meetings;
   const homeDocuments = lazyTabData.projectDocuments;
   const homeDailyLogs = lazyTabData.dailyLogs;
@@ -1010,102 +1113,91 @@ export function ProjectCommandCenter({
     const filtered = [...homeMeetings]
       .sort((a, b) => getDateMs(b.date ?? b.created_at) - getDateMs(a.date ?? a.created_at))
       .filter((m) => (m.title || m.file_name || "").toLowerCase().includes(search.toLowerCase()))
-      .slice(0, 10);
+      .slice(0, 5);
     if (filtered.length === 0) return <EmptyTabState label="meetings" />;
     return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Meeting</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Duration</TableHead>
-            <TableHead>Type</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filtered.map((m) => (
-            <TableRow key={m.id}>
-              <TableCell className="max-w-xs">
-                <Link href={`/${projectId}/meetings/${m.id}`} prefetch={false} className="truncate text-foreground hover:text-primary transition-colors">
-                  {m.title || m.file_name || "Untitled Meeting"}
-                </Link>
-              </TableCell>
-              <TableCell className="text-muted-foreground">{formatMonthDay(m.date ?? m.created_at) || "—"}</TableCell>
-              <TableCell className="text-muted-foreground">{m.duration_minutes ? `${m.duration_minutes} min` : "—"}</TableCell>
-              <TableCell><StatusBadge status={m.type || "Meeting"} /></TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <div className="divide-y divide-border/50">
+        {filtered.map((m) => {
+          const title = m.title || m.file_name || "Untitled meeting";
+          const insight = oneSentence(
+            m.summary ?? m.overview ?? m.description ?? m.notes,
+            "No meeting summary has been captured yet.",
+          );
+
+          return (
+            <Link
+              key={m.id}
+              href={`/${projectId}/meetings/${m.id}`}
+              prefetch={false}
+              className="grid gap-1 py-3 transition-colors hover:text-primary sm:grid-cols-[minmax(0,1fr)_6rem] sm:items-start"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-foreground">{title}</p>
+                <p className="mt-1 line-clamp-2 text-sm leading-normal text-muted-foreground">
+                  {insight}
+                </p>
+              </div>
+              <span className="text-xs tabular-nums text-muted-foreground sm:text-right">
+                {formatMonthDay(m.date ?? m.created_at) || "No date"}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
     );
   };
 
   const documentsContent = (search: string) => {
     const filtered = homeDocuments
       .filter((d) => (d.title || d.file_name || "").toLowerCase().includes(search.toLowerCase()))
-      .slice(0, 8);
+      .slice(0, 12);
     if (filtered.length === 0) return <EmptyTabState label="documents" />;
     return (
-      <div className="grid grid-cols-1 gap-2 px-3 py-2 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 px-3 py-2 sm:grid-cols-3 lg:grid-cols-6">
         {filtered.map((document) => {
           const title = document.title || document.file_name || "Untitled";
           const updated = formatMonthDay(document.updated_at ?? document.created_at);
-          const size = formatFileSize(document.file_size);
+          const inlineHref = documentInlineHref(projectId, document.id);
+          const previewable = isPreviewableDocument(document);
+          const imagePreview = isImageDocument(document);
 
           return (
-            <div
+            <Link
               key={document.id}
-              className="group min-w-0 rounded-md border border-border bg-background transition-colors hover:bg-muted/20"
+              href={`/${projectId}/documents/${document.id}`}
+              prefetch={false}
+              className="group min-w-0 overflow-hidden rounded-md bg-background transition-colors hover:bg-muted/20"
             >
-              <Link
-                href={`/${projectId}/documents/${document.id}`}
-                prefetch={false}
-                className="block min-w-0 p-3"
-                aria-label={`Preview ${title}`}
-              >
-                <div className="mb-3 flex aspect-[4/3] items-center justify-center rounded-sm bg-muted/50 text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
-                  <FileText className="h-8 w-8" />
-                </div>
-                <div className="min-w-0 space-y-1">
-                  <p className="truncate text-sm font-medium text-foreground">
-                    {title}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {document.file_name}
-                  </p>
-                </div>
-              </Link>
-              <div className="flex min-w-0 items-center justify-between gap-2 border-t border-border px-3 py-2 text-xs text-muted-foreground">
-                <span className="flex min-w-0 items-center gap-1 truncate">
-                  <FolderOpen className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{document.folder ?? "Root"}</span>
+              <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-muted/50 text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
+                {previewable && imagePreview ? (
+                  <img src={inlineHref} alt="" loading="lazy" className="h-full w-full object-cover" />
+                ) : previewable ? (
+                  <iframe
+                    src={`${inlineHref}#toolbar=0&navpanes=0&scrollbar=0`}
+                    title={`${title} preview`}
+                    loading="lazy"
+                    className="h-full w-full pointer-events-none bg-background"
+                  />
+                ) : (
+                  <FileText className="h-6 w-6" />
+                )}
+                <span className="absolute bottom-1.5 right-1.5 rounded-sm bg-background/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-foreground shadow-xs">
+                  {documentExtension(document.file_name)}
                 </span>
-                <span className="shrink-0">{documentExtension(document.file_name)}</span>
               </div>
-              <div className="flex items-center justify-between gap-2 px-3 pb-3 text-xs text-muted-foreground">
-                <span>{updated ?? size ?? "Recent"}</span>
-                <div className="flex items-center gap-1">
-                  <Button asChild size="icon" variant="ghost" className="h-7 w-7">
-                    <Link
-                      href={`/${projectId}/documents/${document.id}`}
-                      prefetch={false}
-                      aria-label={`Preview ${title}`}
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                    </Link>
-                  </Button>
-                  <Button asChild size="icon" variant="ghost" className="h-7 w-7">
-                    <a
-                      href={`/api/projects/${projectId}/documents/${document.id}/download`}
-                      download={document.file_name ?? undefined}
-                      aria-label={`Download ${title}`}
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                    </a>
-                  </Button>
+              <div className="min-w-0 px-2.5 py-2">
+                <p className="truncate text-xs font-medium leading-tight text-foreground">
+                  {title}
+                </p>
+                <div className="mt-1 flex min-w-0 items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                  <span className="truncate">{document.folder ?? "Root"}</span>
+                  <span className="shrink-0">{documentExtension(document.file_name)}</span>
                 </div>
+                <p className="mt-1 text-[11px] text-muted-foreground/70">
+                  {updated ?? formatFileSize(document.file_size) ?? "Recent"}
+                </p>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>
@@ -1115,27 +1207,27 @@ export function ProjectCommandCenter({
   const dailyLogsContent = (search: string) => {
     const filtered = homeDailyLogs
       .filter((dl) => (dl.log_date ?? "").includes(search.toLowerCase()))
-      .slice(0, 8);
+      .slice(0, 5);
     if (filtered.length === 0) return <EmptyTabState label="daily logs" />;
     return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Date</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filtered.map((dl) => (
-            <TableRow key={dl.id}>
-              <TableCell>
-                <Link href={`/${projectId}/daily-log`} prefetch={false} className="text-foreground hover:text-primary transition-colors">
-                  {formatShortDate(dl.log_date) ?? `Log ${dl.id}`}
-                </Link>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <div className="divide-y divide-border/50">
+        {filtered.map((dl) => (
+          <Link
+            key={dl.id}
+            href={`/${projectId}/daily-log`}
+            prefetch={false}
+            className="grid gap-1 py-3 transition-colors hover:text-primary sm:grid-cols-[7rem_minmax(0,1fr)_6rem] sm:items-start"
+          >
+            <span className="text-sm font-medium text-foreground">
+              {formatShortDate(dl.log_date) ?? `Log ${dl.id}`}
+            </span>
+            <span className="line-clamp-2 text-sm leading-normal text-muted-foreground">
+              {oneSentence(dl.general_notes, "No daily report notes have been captured yet.")}
+            </span>
+            <span className="text-xs text-muted-foreground sm:text-right">{dl.status}</span>
+          </Link>
+        ))}
+      </div>
     );
   };
 
@@ -1262,6 +1354,19 @@ export function ProjectCommandCenter({
 
           {/* Alerts */}
           {alerts.length > 0 && <AlertsBand alerts={alerts} />}
+
+          {/* Financials */}
+          <FinancialOverview
+            projectId={projectId}
+            revisedBudget={revisedBudget}
+            committedCosts={committedCosts}
+            estimatedCostAtCompletion={ecac}
+            projectedOverUnder={variance}
+            changeOrders={changeOrders}
+            changeEventsCount={changeEvents?.length ?? 0}
+            openRfisCount={rfisOpen.length}
+            openTasksCount={openTasks.length}
+          />
 
           {/* Project Details + Team 2-up */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
