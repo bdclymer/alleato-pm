@@ -59,6 +59,49 @@ If the answer is weak, remove or hide the element.
 
 Decorative elements are guilty until proven useful.
 
+## Actionability Gate
+
+Alleato pages are not reports unless the user explicitly asks for read-only output. If the page surfaces a finding, task, risk, commitment, decision, meeting takeaway, missing field, or follow-up, the design must make the next useful action obvious and close at hand.
+
+Before approving a design, answer:
+
+1. What can the user complete, correct, assign, escalate, or inspect from this page?
+2. Which surfaced records require follow-up today?
+3. Can the user update the most common editable fields without leaving context?
+4. Can the user open full details without losing their place?
+5. Can the user create the next needed record from the page?
+6. Can the user remove, delete, archive, or dismiss stale items when the workflow allows it?
+7. Does every actionable row open a detail surface or link to the canonical record?
+
+If a surfaced item has no action path, either add the action path or remove the item from the primary surface. Static insight is not enough when the user can reasonably act on it.
+
+## Task And Action Item Standard
+
+Any task, action item, commitment, follow-up, meeting takeaway, or "needs attention" item shown on an Alleato product page must be manageable from that page unless the user explicitly requests read-only review.
+
+Required behavior:
+
+- Status must be editable in place or in the task detail surface. Users must be able to mark a task complete without navigating away.
+- Assignee must be editable in place or in the task detail surface.
+- Clicking the task row or card must open a `Sheet` or `Dialog` with full task details, source context, comments or notes when available, and edit controls.
+- The detail surface must include the canonical path: `View project tasks` for project-scoped tasks, or `View all tasks` for unscoped tasks.
+- The page must include an `Add Task` action when tasks are part of the page's workflow.
+- Delete, archive, or dismiss must be available from the detail surface or row action menu when allowed by the data model.
+- Empty and error states must offer the next recovery action, not only state that data is missing.
+
+Do not make task rows look interactive unless they are interactive. Do not ship task lists where status and ownership are locked behind another page.
+
+## Meeting-Derived Intelligence
+
+When a page surfaces information from meetings, email, documents, or AI extraction, convert findings into workflow:
+
+- Meeting action items become manageable tasks with status, assignee, due date, source, add, delete or archive, and detail view.
+- Risks and blockers expose owner, next action, severity, source link, and escalation path.
+- Decisions expose source link, impacted project area, and follow-up action when one exists.
+- Missing or low-confidence data exposes the direct fix path when possible.
+
+If the backend or API cannot support the needed action, fail loudly in implementation notes with cause, detection gap, and prevention step. Add the smallest guardrail or follow-up needed. Do not silently ship a read-only UI that looks like it should be actionable.
+
 ## Default Alleato Page Shape
 
 Normal project pages should use the established app shell and shared layout primitives:
