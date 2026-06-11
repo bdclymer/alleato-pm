@@ -68,7 +68,12 @@ import {
   saveQuickFilterPreference,
 } from "@/lib/budget-filters";
 import type { QuickFilterType } from "@/components/budget/budget-filters";
-import { applyGrouping, type GroupingType } from "@/lib/budget-grouping";
+import {
+  applyGrouping,
+  calculateBudgetModificationActivityTotal,
+  calculateGrandTotals,
+  type GroupingType,
+} from "@/lib/budget-grouping";
 import { BudgetTableCommentsWrapper } from "@/components/budget/budget-table-comments-wrapper";
 import { PermissionGate } from "@/components/domain/permissions/PermissionGate";
 
@@ -298,6 +303,14 @@ function BudgetPageContent() {
 
     return grouped;
   }, [budgetData, quickFilter, selectedGroup]);
+  const displayedGrandTotals = React.useMemo(
+    () => ({
+      ...calculateGrandTotals(filteredData),
+      budgetModifications:
+        calculateBudgetModificationActivityTotal(filteredData),
+    }),
+    [filteredData],
+  );
 
   // Handle quick filter change
   const handleQuickFilterChange = React.useCallback(
@@ -1120,7 +1133,7 @@ function BudgetPageContent() {
                   <BudgetTableCommentsWrapper projectId={projectId}>
                     <BudgetTable
                       data={filteredData}
-                      grandTotals={grandTotals}
+                      grandTotals={displayedGrandTotals}
                       isLocked={isLocked}
                       onEditLineItem={handleEditLineItem}
                       onDeleteLineItem={handleDeleteLineItem}
