@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Check, ChevronsUpDown, ExternalLink, File, Tag } from "lucide-react";
+import { Check, ChevronsUpDown, ExternalLink, Tag } from "lucide-react";
 import {
   UnifiedTablePage,
   type ColumnConfig,
@@ -43,7 +43,6 @@ import {
 import { apiFetch } from "@/lib/api-client";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { appToast as toast } from "@/lib/toast/app-toast";
-import { cn } from "@/lib/utils";
 import {
   ACTIVE_FILE_GROUPS,
   EMPTY_FILE_FILTERS,
@@ -56,12 +55,7 @@ import {
   filesTableDefinition,
 } from "@/features/files/files-table-definition";
 import { useServerTableDefinition } from "@/features/tables/server-table";
-
-function FileTypeIcon({ className }: { item: FileItem; className?: string }) {
-  return (
-    <File className={cn("h-4 w-4 shrink-0 text-muted-foreground", className)} />
-  );
-}
+import { fileHref } from "@/features/files/file-link";
 
 // Source label
 
@@ -664,10 +658,9 @@ function buildColumns(
     {
       ...col("name"),
       render: (item) => {
-        const href = item.source_web_url ?? item.url;
+        const href = fileHref(item);
         return (
           <div className="flex items-center gap-2.5 min-w-0">
-            <FileTypeIcon item={item} />
             <div className="min-w-0">
               {href ? (
                 <a
@@ -887,7 +880,7 @@ function buildColumns(
 // ── Row actions ───────────────────────────────────────────────────────────────
 
 function renderRowActions(item: FileItem) {
-  const href = item.source_web_url ?? item.url;
+  const href = fileHref(item);
   if (!href) return null;
   return (
     <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
