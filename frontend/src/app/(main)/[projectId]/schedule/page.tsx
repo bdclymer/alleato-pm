@@ -23,6 +23,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { parseISO, startOfDay, endOfDay, startOfWeek, endOfWeek } from "date-fns";
 import { PageShell } from "@/components/layout";
 import { GanttChart } from "@/components/scheduling/gantt-chart";
 import { TaskEditModal } from "@/components/scheduling/task-edit-modal";
@@ -81,6 +82,7 @@ import { apiFetch } from "@/lib/api-client";
 // =============================================================================
 
 type ViewMode = "grid" | "board" | "schedule" | "timeline" | "calendar";
+type DateFilter = "all" | "today" | "this_week";
 type QuickAddTaskInput = {
   name: string;
   parentId?: string | null;
@@ -130,10 +132,97 @@ const SCHEDULE_COLUMNS: ColumnConfig[] = [
   { id: "finish_date", label: "Finish Date", defaultVisible: true },
   { id: "duration_days", label: "Duration", defaultVisible: true },
   { id: "percent_complete", label: "% Complete", defaultVisible: true },
-  { id: "assigned_to", label: "Assigned To", defaultVisible: false },
+  { id: "assigned_to", label: "Assigned To", defaultVisible: true },
   { id: "wbs_code", label: "WBS Code", defaultVisible: false },
   { id: "constraint_type", label: "Constraint", defaultVisible: false },
 ];
+
+// =============================================================================
+// DATE FILTER HELPERS
+// =============================================================================
+
+function isTaskActiveOnDate(task: ScheduleTask, range: { start: Date; end: Date }): boolean {
+  const taskStart = task.start_date ? parseISO(task.start_date) : null;
+  const taskEnd = task.finish_date ? parseISO(task.finish_date) : null;
+
+  if (!taskStart && !taskEnd) return false;
+
+  if (taskStart && taskEnd) {
+    // Task overlaps the range if it starts before range end and ends after range start
+    return taskStart <= range.end && taskEnd >= range.start;
+  }
+  if (taskStart) {
+    return taskStart >= range.start && taskStart <= range.end;
+  }
+  if (taskEnd) {
+    return taskEnd >= range.start && taskEnd <= range.end;
+  }
+  return false;
+}
+
+function filterTasksByDate(
+  tasks: ScheduleTaskWithHierarchy[],
+  dateFilter: DateFilter
+): ScheduleTaskWithHierarchy[] {
+  if (dateFilter === "all") return tasks;
+
+  const now = new Date();
+  const range =
+    dateFilter === "today"
+      ? { start: startOfDay(now), end: endOfDay(now) }
+      : { start: startOfWeek(now, { weekStartsOn: 1 }), end: endOfWeek(now, { weekStartsOn: 1 }) };
+
+  function filterHierarchy(list: ScheduleTaskWithHierarchy[]): ScheduleTaskWithHierarchy[] {
+    return list.flatMap((task) => {
+      const filteredChildren = filterHierarchy(task.children ?? []);
+      const matches = isTaskActiveOnDate(task, range);
+      if (matches || filteredChildren.length > 0) {
+        return [{ ...task, children: filteredChildren }];
+      }
+      return [];
+    });
+  }
+
+  return filterHierarchy(tasks);
+}
+
+// =============================================================================
+// DATE FILTER PILLS
+// =============================================================================
+
+const DATE_FILTER_OPTIONS: { value: DateFilter; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "today", label: "Today" },
+  { value: "this_week", label: "This Week" },
+];
+
+function DateFilterPills({
+  value,
+  onChange,
+}: {
+  value: DateFilter;
+  onChange: (v: DateFilter) => void;
+}) {
+  return (
+    <div className="flex items-center gap-1.5 pb-1">
+      {DATE_FILTER_OPTIONS.map(({ value: v, label }) => (
+        <button
+          key={v}
+          type="button"
+          onClick={() => onChange(v)}
+          className={cn(
+            "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+            value === v
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+          )}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 // =============================================================================
 // VIEW MODE TABS (Microsoft Planner Style)
@@ -269,6 +358,22 @@ function BulkActionBar({
 }
 
 // =============================================================================
+// HELPERS
+// =============================================================================
+
+function flattenIds(tasks: ScheduleTaskWithHierarchy[]): Set<string> {
+  const ids = new Set<string>();
+  const walk = (list: ScheduleTaskWithHierarchy[]) => {
+    for (const t of list) {
+      ids.add(t.id);
+      if (t.children?.length) walk(t.children);
+    }
+  };
+  walk(tasks);
+  return ids;
+}
+
+// =============================================================================
 // MAIN COMPONENT
 // =============================================================================
 
@@ -278,6 +383,7 @@ export default function ProjectSchedulePage() {
 
   // State
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingTask, setEditingTask] = useState<ScheduleTask | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -875,6 +981,23 @@ export default function ProjectSchedulePage() {
     return data?.tasks ? count(data.tasks) : 0;
   }, [data?.tasks]);
 
+  const dateFilteredTasks = useMemo(
+    () => filterTasksByDate(data?.tasks ?? [], dateFilter),
+    [data?.tasks, dateFilter]
+  );
+
+  const dateFilteredCount = useMemo(() => {
+    const count = (tasks: ScheduleTaskWithHierarchy[]): number =>
+      tasks.reduce((acc, t) => acc + 1 + (t.children ? count(t.children) : 0), 0);
+    return count(dateFilteredTasks);
+  }, [dateFilteredTasks]);
+
+  const dateFilteredGanttData = useMemo(() => {
+    if (dateFilter === "all") return data?.ganttData ?? [];
+    const ids = flattenIds(dateFilteredTasks);
+    return (data?.ganttData ?? []).filter((item) => ids.has(item.id));
+  }, [data?.ganttData, dateFilter, dateFilteredTasks]);
+
   // Actions for header — just the primary action, like every other page
   const headerActions = (
     <div className="flex w-full items-center gap-2 sm:w-auto">
@@ -900,9 +1023,9 @@ export default function ProjectSchedulePage() {
     </div>
   );
 
-  // Shared view props
+  // Shared view props — use date-filtered tasks so "Today" / "This Week" filters apply to all views
   const viewProps = {
-    tasks: data?.tasks || [],
+    tasks: dateFilteredTasks,
     selectedIds,
     onSelectionChange: setSelectedIds,
     visibleColumns,
@@ -998,11 +1121,14 @@ export default function ProjectSchedulePage() {
       {!isLoading && !error && (
         <>
           <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
-            <ViewModeTabs mode={viewMode} onChange={setViewMode} />
+            <div className="flex flex-col gap-1">
+              <DateFilterPills value={dateFilter} onChange={setDateFilter} />
+              <ViewModeTabs mode={viewMode} onChange={setViewMode} />
+            </div>
             <TableToolbar
               className="w-full lg:w-auto"
               totalItems={totalTaskCount}
-              filteredItems={totalTaskCount}
+              filteredItems={dateFilteredCount}
               selectedCount={selectedIds.size}
               searchValue={searchValue}
               onSearchChange={setSearchValue}
@@ -1057,12 +1183,31 @@ export default function ProjectSchedulePage() {
             </div>
           )}
 
-          {data?.tasks && data.tasks.length > 0 && (
+          {data?.tasks && data.tasks.length > 0 && dateFilteredTasks.length === 0 && (
+            <div className="mt-4 flex flex-col items-center justify-center py-16 px-4 animate-reveal">
+              <div className="rounded-full bg-muted p-4 mb-4">
+                <CalendarDays className="h-7 w-7 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">
+                {dateFilter === "today" ? "No tasks scheduled for today" : "No tasks scheduled this week"}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-6 max-w-sm text-center leading-relaxed">
+                {dateFilter === "today"
+                  ? "No tasks have a start or finish date of today. Switch to All to see the full schedule."
+                  : "No tasks are active this week. Switch to All to see the full schedule."}
+              </p>
+              <Button size="sm" variant="outline" onClick={() => setDateFilter("all")}>
+                Show All Tasks
+              </Button>
+            </div>
+          )}
+
+          {data?.tasks && data.tasks.length > 0 && dateFilteredTasks.length > 0 && (
             <div key={viewMode} className="flex-1 min-h-[600px] animate-reveal">
               {viewMode === "grid" && (
                 <div className="-mx-4 sm:-mx-6 lg:-mx-8">
                   <GanttChart
-                    data={data?.ganttData || []}
+                    data={dateFilteredGanttData}
                     visibleColumns={visibleColumns}
                     onQuickAddTask={(name) => handleQuickAddTask({ name })}
                     onUpdateTask={handleUpdateTask}
