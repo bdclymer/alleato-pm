@@ -1891,8 +1891,10 @@ export function UnifiedTablePage<T>({
       {(tabs || !toolbarInlineWithHeader) && (
         <div
           className={cn(
-            "flex flex-col gap-2 md:flex-row md:items-end md:gap-4",
-            tabs ? "md:justify-between" : "md:justify-end",
+            "flex flex-col gap-2",
+            tabs
+              ? "2xl:flex-row 2xl:items-end 2xl:justify-between 2xl:gap-4"
+              : "md:flex-row md:items-end md:justify-end md:gap-4",
             isCompactDensity
               ? "pb-1 pt-0"
               : cn("pb-3", containerPadding ? "pt-1 sm:pt-2" : "pt-0"),
@@ -1902,11 +1904,16 @@ export function UnifiedTablePage<T>({
             <PageTabs
               tabs={tabs}
               variant="inline"
-              className="-mr-1 mb-0 w-[calc(100vw-0.25rem)] min-w-0 sm:mr-0 sm:w-full md:flex-1"
+              className="-mr-1 mb-0 w-full min-w-0 sm:mr-0 2xl:flex-1"
             />
           )}
           {!toolbarInlineWithHeader ? (
-            <div className="hidden min-w-0 justify-end sm:flex md:shrink-0">
+            <div
+              className={cn(
+                "hidden min-w-0 justify-end sm:flex",
+                tabs ? "self-end 2xl:shrink-0" : "md:shrink-0",
+              )}
+            >
               {tableToolbar}
             </div>
           ) : null}
@@ -2877,7 +2884,7 @@ export function UnifiedTablePage<T>({
                 "relative grid grid-cols-1",
                 isFullBleedTable &&
                   (sidePanel
-                    ? "-ml-1 sm:-ml-6 lg:-ml-8"
+                    ? "mx-0"
                     : "-mx-1 sm:-mx-6 lg:-mx-8"),
                 !panelMounted &&
                   isSidePanelOpen &&

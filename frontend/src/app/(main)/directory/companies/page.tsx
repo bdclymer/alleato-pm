@@ -645,8 +645,6 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
       }}
       features={{
         enableExport: false,
-        enableBulkDelete: false,
-        enableRowSelection: false,
         enableInlineEditing: true,
       }}
       layout={{

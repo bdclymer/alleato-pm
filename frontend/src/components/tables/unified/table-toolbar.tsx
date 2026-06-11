@@ -279,9 +279,9 @@ function FilterFields({
       return (
         <div
           key={filter.id}
-          className="flex items-center justify-between gap-3 px-2 py-1.5"
+          className="flex items-center justify-between gap-3 px-1 py-1.5"
         >
-          <span className="text-sm text-foreground">{filter.label}</span>
+          <span className="text-sm text-muted-foreground">{filter.label}</span>
           <Select
             value={currentValue || "all"}
             onValueChange={(nextValue) =>
@@ -291,7 +291,7 @@ function FilterFields({
               })
             }
           >
-            <SelectTrigger className="h-8 w-45 bg-background text-sm">
+            <SelectTrigger className="h-8 w-44 bg-background text-sm">
               <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent>
@@ -324,14 +324,14 @@ function FilterFields({
       return (
         <div
           key={filter.id}
-          className="flex items-center justify-between gap-3 px-2 py-1.5"
+          className="flex items-center justify-between gap-3 px-1 py-1.5"
         >
-          <span className="text-sm text-foreground">{filter.label}</span>
+          <span className="text-sm text-muted-foreground">{filter.label}</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="h-8 w-45 justify-between px-3 text-left text-sm font-normal"
+                className="h-8 w-44 justify-between px-3 text-left text-sm font-normal"
               >
                 <span className="truncate">{summary}</span>
               </Button>
@@ -377,15 +377,15 @@ function FilterFields({
       return (
         <div
           key={filter.id}
-          className="flex items-center justify-between gap-3 px-2 py-1.5"
+          className="flex items-center justify-between gap-3 px-1 py-1.5"
         >
-          <span className="text-sm text-foreground">{filter.label}</span>
+          <span className="text-sm text-muted-foreground">{filter.label}</span>
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 className={cn(
-                  "h-8 w-45 justify-start text-left text-sm font-normal",
+                  "h-8 w-44 justify-start text-left text-sm font-normal",
                   !currentValue && "text-muted-foreground",
                 )}
               >
@@ -434,8 +434,8 @@ function FilterFields({
       const toDate = toValue ? new Date(`${toValue}T00:00:00`) : undefined;
 
       return (
-        <div key={filter.id} className="space-y-2 px-2 py-1.5">
-          <span className="text-sm text-foreground">{filter.label}</span>
+        <div key={filter.id} className="space-y-2 px-1 py-1.5">
+          <span className="text-sm text-muted-foreground">{filter.label}</span>
           <div className="grid grid-cols-2 gap-2">
             <Popover>
               <PopoverTrigger asChild>
@@ -500,18 +500,18 @@ function FilterFields({
       return (
         <div
           key={filter.id}
-          className="flex items-center justify-between gap-3 px-2 py-1.5"
+          className="flex items-center justify-between gap-3 px-1 py-1.5"
         >
           <label
             htmlFor={`filter-${filter.id}`}
-            className="text-sm text-foreground"
+            className="text-sm text-muted-foreground"
           >
             {filter.label}
           </label>
           <Input
             id={`filter-${filter.id}`}
             type={filter.type === "number" ? "number" : "text"}
-            className="h-8 w-45 text-sm"
+            className="h-8 w-44 text-sm"
             min={filter.type === "number" ? "0" : undefined}
             step={filter.type === "number" ? "1" : undefined}
             placeholder={filter.placeholder}
@@ -536,7 +536,7 @@ function FilterFields({
       return (
         <label
           key={filter.id}
-          className="flex items-center justify-between gap-3 px-2 py-1.5 text-sm text-foreground"
+          className="flex items-center justify-between gap-3 px-1 py-1.5 text-sm text-muted-foreground"
         >
           {filter.label}
           <Checkbox
@@ -591,29 +591,21 @@ export function FilterMenu({
               >
                 <SlidersHorizontal className="h-4 w-4" />
                 {activeCount > 0 ? (
-                  <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-muted px-1 text-[10px] font-semibold text-foreground">
-                    {activeCount}
-                  </span>
+                  <TableCountIndicator
+                    count={activeCount}
+                    className="absolute -right-1 -top-1 bg-secondary text-secondary-foreground"
+                  />
                 ) : null}
-                <TableCountIndicator
-                  count={activeCount}
-                  className="absolute -right-1 -top-1 bg-secondary text-secondary-foreground sm:hidden"
-                />
               </Button>
             </PopoverTrigger>
           </TooltipTrigger>
           <TooltipContent>Filter</TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      <PopoverContent align="start" className="w-85 p-0">
+      <PopoverContent align="start" className="w-80 p-0">
         <div className="space-y-0">
           <div className="flex items-center justify-between border-b px-3 py-2.5">
-            <div>
-              <p className="text-sm font-medium text-foreground">Filters</p>
-              <p className="text-xs text-muted-foreground">
-                Narrow this table by column.
-              </p>
-            </div>
+            <p className="text-sm font-medium text-foreground">Filters</p>
             {activeCount > 0 ? (
               <Button
                 variant="ghost"
