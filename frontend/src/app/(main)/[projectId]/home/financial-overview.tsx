@@ -76,6 +76,11 @@ function getDivisionCode(label: string): string {
   return match?.[1] ?? label.slice(0, 2);
 }
 
+function getDivisionOrder(label: string): number {
+  const code = Number.parseInt(getDivisionCode(label), 10);
+  return Number.isFinite(code) ? code : Number.MAX_SAFE_INTEGER;
+}
+
 function getDivisionTitle(label: string): string {
   return label.replace(/^\d{1,2}\s*/, "").trim();
 }
@@ -85,9 +90,12 @@ function BudgetDivisionChart({
 }: {
   divisions: BudgetDivisionSummary[];
 }) {
-  const chartRows = divisions.filter(
-    (division) => division.budget > 0 || division.committed > 0,
-  );
+  const chartRows = divisions
+    .filter((division) => division.budget > 0 || division.committed > 0)
+    .sort((left, right) => {
+      const orderDelta = getDivisionOrder(left.label) - getDivisionOrder(right.label);
+      return orderDelta || left.label.localeCompare(right.label);
+    });
 
   if (chartRows.length === 0) {
     return null;
@@ -97,7 +105,7 @@ function BudgetDivisionChart({
   const rightPadding = 20;
   const topPadding = 18;
   const plotHeight = 230;
-  const axisHeight = 68;
+  const axisHeight = 104;
   const legendHeight = 24;
   const groupWidth = 70;
   const chartWidth = Math.max(680, leftPadding + rightPadding + chartRows.length * groupWidth);
@@ -151,6 +159,7 @@ function BudgetDivisionChart({
           const committedHeight = Math.max(2, baselineY - committedY);
           const divisionCode = getDivisionCode(division.label);
           const divisionTitle = getDivisionTitle(division.label);
+          const label = `${divisionCode} ${divisionTitle}`.trim();
 
           return (
             <g key={division.id}>
@@ -158,36 +167,29 @@ function BudgetDivisionChart({
                 {division.label}: Budget {fmtFull(division.budget)}, Committed {fmtFull(division.committed)}
               </title>
               <rect
-                x={groupX - 13}
+                x={groupX - 18}
                 y={budgetY}
-                width={10}
+                width={16}
                 height={budgetHeight}
-                rx={3}
+                rx={4}
                 className="fill-muted-foreground/35"
               />
               <rect
-                x={groupX + 3}
+                x={groupX + 2}
                 y={committedY}
-                width={10}
+                width={16}
                 height={committedHeight}
-                rx={3}
+                rx={4}
                 className="fill-primary"
               />
               <text
-                x={groupX}
-                y={baselineY + 18}
-                textAnchor="middle"
+                x={groupX - 12}
+                y={baselineY + 22}
+                textAnchor="end"
+                transform={`rotate(-45 ${groupX - 12} ${baselineY + 22})`}
                 className="fill-foreground font-medium"
               >
-                {divisionCode}
-              </text>
-              <text
-                x={groupX}
-                y={baselineY + 34}
-                textAnchor="middle"
-                className="fill-muted-foreground"
-              >
-                {divisionTitle.slice(0, 10)}
+                {label}
               </text>
             </g>
           );
