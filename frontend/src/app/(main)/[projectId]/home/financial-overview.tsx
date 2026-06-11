@@ -262,19 +262,27 @@ function BudgetVsCommittedPanel({
       prefetch={false}
       className="group flex flex-col justify-between gap-5 rounded-lg bg-card p-4 transition-colors hover:bg-muted/40"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
           <Eyebrow>Budget vs committed</Eyebrow>
-          <p className="mt-2 text-2xl font-semibold leading-none tabular-nums text-foreground">
-            {fmtFull(revisedBudget)}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {fmtCompact(displayedCommittedCosts)} committed
-          </p>
+          <div className="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-1">
+            <div>
+              <p className="text-xl font-semibold leading-none tabular-nums text-foreground">
+                {fmtFull(revisedBudget)}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">Budget</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium leading-none tabular-nums text-foreground">
+                {fmtCompact(displayedCommittedCosts)}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">Committed</p>
+            </div>
+          </div>
         </div>
         <span
           className={cn(
-            "inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold tabular-nums",
+            "mt-4 inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold tabular-nums",
             overBudget
               ? "bg-destructive/10 text-destructive"
               : "bg-success/10 text-success",
