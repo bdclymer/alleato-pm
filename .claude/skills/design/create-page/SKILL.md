@@ -290,54 +290,9 @@ Allowed: `p-1` `p-2` `p-3` `p-4` `p-6` `gap-2` `gap-3` `gap-4` `gap-6` `space-y-
 
 ## Step 5: Actionability And Usability Gate
 
-Before treating a page as designed, ask what the user can actually do with the data surfaced on the page. A detail page, dashboard, intelligence page, or meeting-derived summary is incomplete if it only displays findings and leaves the user to navigate elsewhere to act on obvious next steps.
+For Alleato product UI, use the `impeccable` skill as the authority for actionability, usability, and product noise decisions. Load and obey `.agents/skills/impeccable/reference/alleato-product-noise-gate.md`, especially its Actionability Gate, Task And Action Item Standard, and Meeting-Derived Intelligence sections.
 
-### Required questions
-
-- [ ] What is the main job this page supports, and what action should be easier after this redesign?
-- [ ] Which surfaced records require user follow-up today? Make those records actionable in place.
-- [ ] Can the user update the most common editable fields without leaving the page?
-- [ ] Can the user inspect full details from the current context without losing their place?
-- [ ] Can the user create the next needed record from this page?
-- [ ] Can the user delete, archive, or dismiss records when that is part of the workflow?
-- [ ] Does every row/card either open a useful detail surface or link to the canonical record?
-- [ ] If the surfaced data came from a meeting, email, document, or AI summary, is the source visible enough to build trust and recover context?
-
-### Task and action item requirements
-
-Any task, action item, commitment, follow-up, meeting takeaway, or "needs attention" item shown on a page must support management from that page unless the user explicitly asks for read-only output.
-
-Required task behavior:
-
-- Status must be editable in place or in the task detail surface. Users must be able to mark a task complete without navigating away.
-- Assignee must be editable in place or in the task detail surface.
-- Clicking the task row/card must open a `Sheet` or `Dialog` with full task details, source context, comments/notes when available, and edit controls.
-- The detail surface must include a canonical link: `View project tasks` when the task belongs to a project, or `View all tasks` when it is not project-scoped.
-- The page must include an `Add Task` action when tasks are part of the page's workflow.
-- The detail surface or row action menu must support delete/archive when permitted by the data model.
-- Empty and error states must explain what action is available next, not only that data is missing.
-
-### Meeting-derived intelligence pages
-
-When a page surfaces information from meetings or AI extraction, do not stop at "nice summary cards." Convert findings into the user's next workflow:
-
-- Meeting action items -> manageable tasks with status, assignee, due date, source, add, delete/archive, and detail view.
-- Risks/blockers -> explicit owner, next action, severity, source link, and escalation path.
-- Decisions -> source link, impacted project area, and follow-up action when one exists.
-- Mentions of missing data -> direct affordance to fix or enrich the underlying record where possible.
-
-If an item cannot be edited because the backend/API does not support it, fail loudly in the implementation notes and add the smallest guardrail or follow-up needed. Do not silently ship a read-only UI that looks actionable.
-
-### Actionability anti-patterns
-
-| Anti-pattern | Required correction |
-|--------------|---------------------|
-| Showing tasks as static text | Add status/assignee management and a task detail surface |
-| Row click does nothing | Open detail sheet/dialog or navigate to canonical record |
-| "View all" exists but no inline action | Keep the link, but add the common inline actions |
-| Meeting summary has action items but no task creation/editing | Wire add/edit/delete task behavior from the page |
-| AI surfaced a problem but the page cannot help fix it | Add the direct fix path or clearly mark the implementation blocked with cause |
-| Empty state says "No tasks" only | Provide `Add Task` or the correct recovery action |
+If this page-creation protocol conflicts with Impeccable on product usability or design judgment, Impeccable wins.
 
 ---
 
