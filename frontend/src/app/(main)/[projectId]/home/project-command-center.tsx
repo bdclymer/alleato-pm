@@ -1350,7 +1350,7 @@ export function ProjectCommandCenter({
       .slice(0, 5);
     if (filtered.length === 0) return <EmptyTabState label="meetings" />;
     return (
-      <div className="divide-y divide-border/50">
+      <div className="divide-y divide-border/40">
         {filtered.map((m) => {
           const title = m.title || m.file_name || "Untitled meeting";
           const insight = oneSentence(
@@ -1363,15 +1363,17 @@ export function ProjectCommandCenter({
               key={m.id}
               href={`/${projectId}/meetings/${m.id}`}
               prefetch={false}
-              className="grid gap-1 py-3 transition-colors hover:text-primary sm:grid-cols-[minmax(0,1fr)_6rem] sm:items-start"
+              className="group grid gap-2 px-2 py-3.5 transition-colors hover:bg-muted/30 sm:grid-cols-[minmax(0,1fr)_5.5rem] sm:items-start"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-foreground">{title}</p>
-                <p className="mt-1 line-clamp-2 text-sm leading-normal text-muted-foreground">
+                <p className="truncate text-sm font-medium leading-5 text-foreground transition-colors group-hover:text-primary">
+                  {title}
+                </p>
+                <p className="mt-1 line-clamp-1 max-w-4xl text-xs leading-5 text-muted-foreground">
                   {insight}
                 </p>
               </div>
-              <span className="text-xs tabular-nums text-muted-foreground sm:text-right">
+              <span className="text-xs tabular-nums text-muted-foreground sm:justify-self-end sm:pt-0.5">
                 {formatMonthDay(m.date ?? m.created_at) || "No date"}
               </span>
             </Link>
