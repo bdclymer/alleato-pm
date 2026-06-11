@@ -9,10 +9,8 @@ import {
   Briefcase,
   Building2,
   CalendarDays,
-  ExternalLink,
   FileText,
   HardHat,
-  Loader2,
   Receipt,
   Search,
   Settings,
@@ -22,17 +20,9 @@ import {
 } from "lucide-react";
 
 import { EmptyState } from "@/components/ds";
-import { StatusBadge } from "@/components/ds";
 import { PageShell } from "@/components/layout";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import {
   useKnowledgeDocuments,
   type KnowledgeDocument,
@@ -109,9 +99,7 @@ export function KnowledgeBasePage() {
   const { profile } = useCurrentUserProfile();
   const [search, setSearch] = React.useState("");
   const [activeCategory, setActiveCategory] = React.useState<Category | null>(null);
-  const [selectedDocument, setSelectedDocument] =
-    React.useState<KnowledgeDocument | null>(null);
-  const [viewLoading, setViewLoading] = React.useState(false);
+  const [openingDocumentId, setOpeningDocumentId] = React.useState<string | null>(null);
 
   const isAdmin = profile?.isAdmin === true;
   const searchTerm = search.trim().toLowerCase();
@@ -146,18 +134,22 @@ export function KnowledgeBasePage() {
     (c) => (categoryCounts[c] ?? 0) > 0,
   );
 
-  async function handleViewDocument() {
-    if (!selectedDocument) return;
-    setViewLoading(true);
+  async function handleOpenDocument(document: KnowledgeDocument) {
+    if (!document.file_path) {
+      toast.error("Document has no associated file.");
+      return;
+    }
+
+    setOpeningDocumentId(document.id);
     try {
       const { url } = await apiFetch<{ url: string }>(
-        `/api/knowledge/signed-url?id=${encodeURIComponent(selectedDocument.id)}`,
+        `/api/knowledge/signed-url?id=${encodeURIComponent(document.id)}`,
       );
       window.open(url, "_blank", "noopener,noreferrer");
     } catch {
       toast.error("Could not load document. Try again.");
     } finally {
-      setViewLoading(false);
+      setOpeningDocumentId(null);
     }
   }
 
@@ -216,7 +208,8 @@ export function KnowledgeBasePage() {
           activeCategory={activeCategory}
           onClearCategory={() => setActiveCategory(null)}
           onClearSearch={() => setSearch("")}
-          onSelect={setSelectedDocument}
+          onOpenDocument={handleOpenDocument}
+          openingDocumentId={openingDocumentId}
         />
       ) : presentCategories.length === 0 ? (
         <EmptyState
@@ -231,89 +224,6 @@ export function KnowledgeBasePage() {
           onSelect={setActiveCategory}
         />
       )}
-
-      {/* Detail sheet */}
-      <Sheet
-        open={Boolean(selectedDocument)}
-        onOpenChange={(open) => {
-          if (!open) setSelectedDocument(null);
-        }}
-      >
-        <SheetContent
-          side="right"
-          className="w-full overflow-y-auto sm:max-w-md"
-        >
-          {selectedDocument && (
-            <>
-              <SheetHeader className="mb-5 text-left">
-                <div className="mb-3 flex items-center gap-2">
-                  <StatusBadge status={selectedDocument.status ?? "uploaded"} />
-                  <span className="text-xs text-muted-foreground">
-                    {getDisplayDate(selectedDocument)}
-                  </span>
-                </div>
-                <SheetTitle className="text-lg font-semibold leading-tight">
-                  {selectedDocument.title ??
-                    selectedDocument.file_name ??
-                    "Untitled"}
-                </SheetTitle>
-              </SheetHeader>
-
-              <div className="space-y-5">
-                {selectedDocument.file_path && (
-                  <Button
-                    onClick={handleViewDocument}
-                    disabled={viewLoading}
-                    className="w-full gap-2"
-                    size="sm"
-                  >
-                    {viewLoading ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    )}
-                    {viewLoading ? "Loading…" : "View Document"}
-                  </Button>
-                )}
-
-                {selectedDocument.tags && (
-                  <div>
-                    <div className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      Category
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {selectedDocument.tags
-                        .split(",")
-                        .map((t) => t.trim())
-                        .filter(Boolean)
-                        .map((tag) => (
-                          <Badge
-                            key={tag}
-                            variant="secondary"
-                            className="font-normal"
-                          >
-                            {tag}
-                          </Badge>
-                        ))}
-                    </div>
-                  </div>
-                )}
-
-                {selectedDocument.file_name && (
-                  <div>
-                    <div className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      File
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedDocument.file_name}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
     </PageShell>
   );
 }
@@ -399,14 +309,16 @@ function FilteredResults({
   activeCategory,
   onClearCategory,
   onClearSearch,
-  onSelect,
+  onOpenDocument,
+  openingDocumentId,
 }: {
   documents: KnowledgeDocument[];
   searchTerm: string;
   activeCategory: Category | null;
   onClearCategory: () => void;
   onClearSearch: () => void;
-  onSelect: (doc: KnowledgeDocument) => void;
+  onOpenDocument: (doc: KnowledgeDocument) => void;
+  openingDocumentId: string | null;
 }) {
   const hint = activeCategory
     ? CATEGORY_DESCRIPTIONS[activeCategory]
@@ -453,7 +365,11 @@ function FilteredResults({
           }
         />
       ) : (
-        <DocumentList docs={documents} onSelect={onSelect} />
+        <DocumentList
+          docs={documents}
+          onOpenDocument={onOpenDocument}
+          openingDocumentId={openingDocumentId}
+        />
       )}
     </div>
   );
@@ -465,10 +381,12 @@ function FilteredResults({
 
 function DocumentList({
   docs,
-  onSelect,
+  onOpenDocument,
+  openingDocumentId,
 }: {
   docs: KnowledgeDocument[];
-  onSelect: (doc: KnowledgeDocument) => void;
+  onOpenDocument: (doc: KnowledgeDocument) => void;
+  openingDocumentId: string | null;
 }) {
   return (
     <div className="overflow-hidden rounded-xl bg-card shadow-xs">
@@ -477,11 +395,12 @@ function DocumentList({
           key={doc.id}
           role="button"
           tabIndex={0}
-          onClick={() => onSelect(doc)}
+          aria-busy={openingDocumentId === doc.id}
+          onClick={() => onOpenDocument(doc)}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
-              onSelect(doc);
+              onOpenDocument(doc);
             }
           }}
           className={
@@ -497,11 +416,7 @@ function DocumentList({
               </p>
               <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
                 <span>
-                  {doc.date
-                    ? new Date(doc.date).toLocaleDateString()
-                    : doc.created_at
-                      ? new Date(doc.created_at).toLocaleDateString()
-                      : ""}
+                  {getDisplayDate(doc)}
                 </span>
                 {doc.file_name && doc.file_name !== doc.title && (
                   <span className="truncate text-muted-foreground/60">
@@ -511,7 +426,10 @@ function DocumentList({
               </div>
             </div>
           </div>
-          <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground/40 transition-all group-hover:text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground transition-colors group-hover:text-primary">
+            {openingDocumentId === doc.id ? "Opening" : "Open"}
+            <ArrowUpRight className="h-4 w-4 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </span>
         </div>
       ))}
     </div>
