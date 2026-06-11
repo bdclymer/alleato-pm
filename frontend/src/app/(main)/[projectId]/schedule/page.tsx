@@ -1175,9 +1175,11 @@ export default function ProjectSchedulePage() {
                   <Plus />
                   Add Task
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => setIsImportExportModalOpen(true)}>
-                  <Upload />
-                  Import Schedule
+                <Button size="sm" variant="outline" asChild>
+                  <Link href={`/${projectId}/schedule/import`}>
+                    <Upload />
+                    Import Schedule
+                  </Link>
                 </Button>
               </div>
             </div>
