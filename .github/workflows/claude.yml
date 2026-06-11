@@ -21,6 +21,7 @@ jobs:
       (github.event_name == 'issues' && github.event.action == 'assigned' && contains(github.event.issue.assignees.*.login, 'anthropic-claude-code'))
     runs-on: ubuntu-latest
     permissions:
+      actions: read
       contents: write
       pull-requests: write
       issues: write

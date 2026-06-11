@@ -94,7 +94,6 @@ docs/video/
 # Claude skills that are local symlinks to ~/.agents/skills (dangling on CI)
 .claude/skills/react-email
 .claude/skills/postgresql-table-design
-.claude/skills/api-design-principles
 .claude/skills/rag-implementation
 .claude/skills/impeccable-alleato
 .claude/skills/email-best-practices
