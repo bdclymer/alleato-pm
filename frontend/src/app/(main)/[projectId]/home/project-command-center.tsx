@@ -21,7 +21,6 @@ import {
   FileSpreadsheet,
   FileText,
   Image,
-  MapPin,
   Presentation,
   Search,
   Users,
@@ -981,8 +980,7 @@ function ProjectDetailsSidebar({
       </div>
 
       {address && (
-        <div className="flex items-start gap-2 text-xs text-muted-foreground">
-          <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
+        <div className="text-xs text-muted-foreground">
           <span>{address}</span>
         </div>
       )}
@@ -1623,8 +1621,7 @@ export function ProjectCommandCenter({
                 </Button>
               </div>
               {projAddress && (
-                <div className="mb-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <MapPin className="h-3.5 w-3.5 shrink-0 opacity-60" />
+                <div className="mb-3 text-xs text-muted-foreground">
                   {projAddress}
                 </div>
               )}
