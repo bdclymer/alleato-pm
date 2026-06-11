@@ -158,6 +158,28 @@ A fix is not complete without: a test that would have caught it, a validation ru
 ### UI Signal-to-Noise
 Remove anything that earns no place. No borders around sections — use spacing and tonal backgrounds. No labels next to self-explanatory icons. Three stacked buttons should be a `<Select>`. When in doubt, remove.
 
+For any user-facing frontend page, feature, component, form, table, AI surface,
+dashboard, executive brief, project intelligence view, or visual polish task,
+treat Impeccable's Alleato product noise gate as active even when the user does
+not mention Impeccable.
+
+Canonical reference: `.agents/skills/impeccable/reference/alleato-product-noise-gate.md`
+Direct command: `impeccable noise-gate [target]`
+
+Required behavior:
+- Before adding UI, identify the primary user, primary job, primary decision,
+  Tier 1 content, content hidden until requested, removal candidates, primary
+  action, and failure-loudly behavior.
+- The burden of proof is on addition. Any new visual element must improve
+  comprehension, decision quality, task speed, error prevention, source
+  confidence, or recovery.
+- Remove before restyling. Do not make noisy elements prettier until they prove
+  they deserve to exist.
+- Do not ship nested cards, wrapper panels, decorative badges/icons, helper
+  widgets, duplicate CTAs, decorative dashboards, or visual filler.
+- Final frontend responses must include noise gate pass/fail, what was removed
+  or simplified, remaining risk, and regression guardrail.
+
 Never add unsolicited helper panels, finder widgets, explanatory blocks, banners, callouts, or "nice to have" modules to production pages. Every visible element must answer a proven user workflow need. If it does not make the primary task faster, clearer, or safer, remove it.
 
 Do not use visual noise as a substitute for product thinking. Secondary search boxes, ownership finders, summary strips, empty helper text, badges, icons, and extra sections require a concrete answer to: who uses it, when they use it, what decision it improves, and why the existing table toolbar/filter/search/detail flow cannot own it. If those answers are not clear, do not add the UI.

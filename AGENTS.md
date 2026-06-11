@@ -374,6 +374,31 @@ When encountering a bug: **fix it immediately, then report what you fixed.** Do 
 
 When asked to design/build a page, default to **Linear/Supabase-style minimal UI**.
 
+### 7A. Always-On Alleato Product Noise Gate (MANDATORY)
+
+For any user-facing frontend page, feature, component, form, table, AI surface,
+dashboard, executive brief, project intelligence view, or visual polish task,
+treat Impeccable's Alleato product noise gate as active even when the user does
+not mention Impeccable.
+
+Canonical reference: `.agents/skills/impeccable/reference/alleato-product-noise-gate.md`
+Direct command: `impeccable noise-gate [target]`
+
+Required behavior:
+
+- Before adding UI, identify the primary user, primary job, primary decision,
+  Tier 1 content, content hidden until requested, removal candidates, primary
+  action, and failure-loudly behavior.
+- The burden of proof is on addition. Any new visual element must improve
+  comprehension, decision quality, task speed, error prevention, source
+  confidence, or recovery.
+- Remove before restyling. Do not make noisy elements prettier until they prove
+  they deserve to exist.
+- Do not ship nested cards, wrapper panels, decorative badges/icons, helper
+  widgets, duplicate CTAs, decorative dashboards, or visual filler.
+- Final frontend responses must include noise gate pass/fail, what was removed
+  or simplified, remaining risk, and regression guardrail.
+
 **Hard constraints:**
 
 - No nested cards (`Card` inside `Card` is forbidden)
