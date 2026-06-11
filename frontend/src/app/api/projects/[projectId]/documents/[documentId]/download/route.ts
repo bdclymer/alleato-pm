@@ -15,6 +15,8 @@ interface ProjectDocumentDownloadRow {
   source_web_url: string | null;
   source_metadata: {
     outlook_intake_attachment_id?: number | null;
+    text_storage_bucket?: string | null;
+    text_storage_path?: string | null;
   } | null;
 }
 
@@ -34,6 +36,25 @@ function isReachableUrl(url: string | null | undefined): url is string {
   } catch {
     return false;
   }
+}
+
+function isMicrosoftContainerUrl(url: string): boolean {
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+    return (
+      hostname.endsWith("sharepoint.com") ||
+      hostname.endsWith("office.com") ||
+      hostname.endsWith("office365.com") ||
+      hostname.endsWith("microsoft.com") ||
+      hostname.endsWith("1drv.ms")
+    );
+  } catch {
+    return false;
+  }
+}
+
+function canUseUrlForInlinePreview(url: string): boolean {
+  return !isMicrosoftContainerUrl(url);
 }
 
 function redirectTo(url: string, headers?: HeadersInit): NextResponse {
@@ -58,6 +79,46 @@ function decodeBytea(value: string | number[] | null): Buffer {
 
 function attachmentFilename(fileName: string): string {
   return fileName.replace(/["\r\n]/g, "_");
+}
+
+async function streamExtractedTextPreview(
+  document: ProjectDocumentDownloadRow,
+): Promise<NextResponse | null> {
+  const textStorageBucket = document.source_metadata?.text_storage_bucket;
+  const textStoragePath = document.source_metadata?.text_storage_path;
+
+  if (!textStorageBucket || !textStoragePath) {
+    return null;
+  }
+
+  const serviceClient = createServiceClient();
+  const { data, error } = await serviceClient.storage
+    .from(textStorageBucket)
+    .download(textStoragePath);
+
+  if (error || !data) {
+    console.error(
+      JSON.stringify({
+        event: "project_document_text_preview_failed",
+        document_id: document.id,
+        text_storage_bucket: textStorageBucket,
+        text_storage_path: textStoragePath,
+        error: error?.message ?? "Text preview object was not returned.",
+      }),
+    );
+    return null;
+  }
+
+  const text = await data.text();
+  return new NextResponse(text, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Content-Disposition": `inline; filename="${attachmentFilename(
+        `${document.file_name}.txt`,
+      )}"`,
+      "x-document-source": "extracted-text-preview",
+    },
+  });
 }
 
 /**
@@ -189,19 +250,33 @@ export const GET = withApiGuardrails<{ projectId: string; documentId: string }>(
       }
     }
 
+    if (disposition === "inline") {
+      const extractedTextPreview = await streamExtractedTextPreview(document);
+      if (extractedTextPreview) {
+        return extractedTextPreview;
+      }
+    }
+
     // Fall back to file_url first. This is the durable per-file URL for legacy
     // records and Outlook attachment promotions, while source_web_url can point
     // at the parent container (for example the email thread or OneDrive page).
     // Relative paths and non-http schemes (e.g. onedrive://) would produce a
     // browser error, so we reject them explicitly.
-    if (isReachableUrl(document.file_url)) {
+    if (
+      isReachableUrl(document.file_url) &&
+      (disposition !== "inline" || canUseUrlForInlinePreview(document.file_url))
+    ) {
       return redirectTo(document.file_url, {
         "x-document-source": "file-url",
       });
     }
 
     // Last resort: use the source page link when no direct file URL exists.
-    if (isReachableUrl(document.source_web_url)) {
+    if (
+      isReachableUrl(document.source_web_url) &&
+      (disposition !== "inline" ||
+        canUseUrlForInlinePreview(document.source_web_url))
+    ) {
       return redirectTo(document.source_web_url, {
         "x-document-source": "source-web-url",
       });

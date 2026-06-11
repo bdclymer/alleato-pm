@@ -32,12 +32,14 @@ type DocumentRow = {
   source_web_url: string | null;
   source_metadata: {
     outlook_intake_attachment_id?: number | null;
+    text_storage_bucket?: string | null;
+    text_storage_path?: string | null;
   } | null;
 };
 
-function makeRequest() {
+function makeRequest(search = "") {
   return new NextRequest(
-    "http://localhost/api/projects/1009/documents/42/download",
+    `http://localhost/api/projects/1009/documents/42/download${search}`,
   );
 }
 
@@ -84,6 +86,10 @@ function buildServiceClient() {
     data: null,
     error: { message: "No signed URL" },
   });
+  const download = jest.fn().mockResolvedValue({
+    data: null,
+    error: { message: "No text preview" },
+  });
   const attachmentSingle = jest.fn();
   const attachmentQuery = {
     select: jest.fn().mockReturnThis(),
@@ -103,10 +109,12 @@ function buildServiceClient() {
       storage: {
         from: jest.fn(() => ({
           createSignedUrl,
+          download,
         })),
       },
     } as Awaited<ReturnType<typeof createServiceClient>>,
     createSignedUrl,
+    download,
     attachmentQuery,
   };
 }
@@ -172,6 +180,72 @@ describe("project document download route", () => {
       "https://outlook.office.com/mail/id/abc",
     );
     expect(response.headers.get("x-document-source")).toBe("source-web-url");
+  });
+
+  it("streams extracted text for inline Microsoft previews instead of embedding the source page", async () => {
+    const supabase = buildSupabaseClient({
+      data: {
+        id: 42,
+        file_name: "proposal.pdf",
+        file_url: "https://tenant.sharepoint.com/Documents/proposal.pdf",
+        storage_bucket: null,
+        storage_path: null,
+        source_system: "onedrive",
+        source_web_url: "https://tenant.sharepoint.com/Documents/proposal.pdf",
+        source_metadata: {
+          text_storage_bucket: "documents",
+          text_storage_path: "onedrive/proposal.pdf.txt",
+        },
+      },
+      error: null,
+    });
+    const service = buildServiceClient();
+    service.download.mockResolvedValue({
+      data: new Blob(["Extracted proposal preview"]),
+      error: null,
+    });
+    createClientMock.mockResolvedValue(supabase.client);
+    createServiceClientMock.mockReturnValue(service.client);
+
+    const response = await GET(makeRequest("?disposition=inline"), {
+      params: Promise.resolve({ projectId: "1009", documentId: "42" }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-document-source")).toBe(
+      "extracted-text-preview",
+    );
+    expect(response.headers.get("content-type")).toContain("text/plain");
+    await expect(response.text()).resolves.toBe("Extracted proposal preview");
+  });
+
+  it("does not iframe Microsoft source links when no inline preview artifact exists", async () => {
+    const supabase = buildSupabaseClient({
+      data: {
+        id: 42,
+        file_name: "proposal.pdf",
+        file_url: "https://tenant.sharepoint.com/Documents/proposal.pdf",
+        storage_bucket: null,
+        storage_path: null,
+        source_system: "onedrive",
+        source_web_url: "https://tenant.sharepoint.com/Documents/proposal.pdf",
+        source_metadata: null,
+      },
+      error: null,
+    });
+    const service = buildServiceClient();
+    createClientMock.mockResolvedValue(supabase.client);
+    createServiceClientMock.mockReturnValue(service.client);
+
+    const response = await GET(makeRequest("?disposition=inline"), {
+      params: Promise.resolve({ projectId: "1009", documentId: "42" }),
+    });
+
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toMatchObject({
+      error_code: "NOT_FOUND",
+      success: false,
+    });
   });
 
   it("streams promoted Outlook attachment bytes before falling back to the email web link", async () => {
