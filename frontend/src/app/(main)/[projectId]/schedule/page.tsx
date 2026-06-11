@@ -1,24 +1,4 @@
 "use client";
-/* eslint-disable design-system/no-raw-heading */
-
-/**
- * =============================================================================
- * PROJECT SCHEDULE PAGE
- * =============================================================================
- *
- * Main scheduling page with multiple view modes inspired by Microsoft Planner:
- * - Grid: Detailed table view with all columns
- * - Board: Kanban-style grouped by status
- * - Schedule: Split view with task table + Gantt chart (original)
- * - Timeline: Enhanced Gantt chart view
- * - Calendar: Monthly calendar view
- *
- * Features:
- * - Task CRUD operations
- * - Hierarchy management (indent/outdent)
- * - Summary statistics
- * - Context menu actions
- */
 
 import { useState, useCallback, useMemo, useEffect } from "react";
 import Link from "next/link";
@@ -46,15 +26,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { InfoAlert } from "@/components/ds/InfoAlert";
+import { InfoAlert, EmptyState, ErrorState } from "@/components/ds";
 import { TableToolbar, type FilterConfig, type ColumnConfig } from "@/components/tables/unified";
 import {
   Plus,
   Columns,
   Upload,
-  RefreshCw,
   Calendar,
-  AlertCircle,
   Table2,
   Kanban,
   CalendarDays,
@@ -204,21 +182,18 @@ function DateFilterPills({
   onChange: (v: DateFilter) => void;
 }) {
   return (
-    <div className="flex items-center gap-1.5 pb-1">
+    <div className="flex items-center gap-0.5">
       {DATE_FILTER_OPTIONS.map(({ value: v, label }) => (
-        <button
+        <Button
           key={v}
           type="button"
+          size="sm"
+          variant={value === v ? "default" : "ghost"}
           onClick={() => onChange(v)}
-          className={cn(
-            "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-            value === v
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-          )}
+          className="h-7 rounded-full px-3 text-xs"
         >
           {label}
-        </button>
+        </Button>
       ))}
     </div>
   );
@@ -248,24 +223,26 @@ function ViewModeTabs({
   onChange: (mode: ViewMode) => void;
 }) {
   return (
-    <nav className="flex overflow-x-auto overscroll-x-contain pb-1 scrollbar-hide" aria-label="View mode">
-      <div className="flex min-w-max space-x-2 sm:space-x-5">
+    <nav className="flex overflow-x-auto overscroll-x-contain scrollbar-hide" aria-label="View mode">
+      <div className="flex min-w-max">
         {viewModeConfig.map(({ mode: viewMode, label, icon: Icon }) => (
-          <button
-            type="button"
+          <Button
             key={viewMode}
+            type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => onChange(viewMode)}
             aria-label={`Switch to ${label} view`}
             className={cn(
-              "group inline-flex min-h-11 items-center gap-2 whitespace-nowrap px-2 pb-2 pt-2 text-sm font-medium transition-colors",
+              "gap-1.5 whitespace-nowrap rounded-none px-3 font-medium border-b-2 border-transparent transition-colors",
               mode === viewMode
-                ? "text-[hsl(var(--schedule-view-active))]"
-                : "text-muted-foreground hover:text-foreground"
+                ? "border-[hsl(var(--schedule-view-active))] text-[hsl(var(--schedule-view-active))] hover:text-[hsl(var(--schedule-view-active))]"
+                : "text-muted-foreground hover:text-foreground hover:bg-transparent"
             )}
           >
             <Icon className="h-4 w-4" />
             {label}
-          </button>
+          </Button>
         ))}
       </div>
     </nav>
@@ -1075,77 +1052,44 @@ export default function ProjectSchedulePage() {
       {!isLoading && error && (
         <>
           <ViewModeTabs mode={viewMode} onChange={setViewMode} />
-          <div
+          <ErrorState
             data-testid="error-state"
-            className="flex flex-col items-center justify-center py-16 px-4 animate-reveal"
-          >
-            <div className="rounded-full bg-destructive/10 p-4 mb-4">
-              <AlertCircle className="h-6 w-6 text-destructive" />
-            </div>
-            <h3 className="text-lg font-semibold mb-1">
-              {isAuthError
-                ? "Session Expired"
-                : isPermissionError
-                  ? "Access Denied"
-                  : "Unable to Load Schedule"}
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4 max-w-md text-center">
-              {error.message}
-            </p>
-            <div className="flex gap-2">
-              {isAuthError ? (
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => window.location.reload()}
-                >
-                  Refresh Page
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => refetch()}
-                  disabled={isLoading}
-                >
-                  <RefreshCw className={cn(isLoading && "animate-spin")} />
-                  Try Again
-                </Button>
-              )}
-            </div>
-          </div>
+            title={isAuthError ? "Session Expired" : isPermissionError ? "Access Denied" : "Unable to Load Schedule"}
+            error={error}
+            onRetry={isAuthError ? undefined : () => refetch()}
+          />
         </>
       )}
 
       {/* Main content */}
       {!isLoading && !error && (
         <>
-          <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
-            <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+            <ViewModeTabs mode={viewMode} onChange={setViewMode} />
+            <div className="flex flex-wrap items-center gap-2">
               <DateFilterPills value={dateFilter} onChange={setDateFilter} />
-              <ViewModeTabs mode={viewMode} onChange={setViewMode} />
+              <TableToolbar
+                className="w-full sm:w-auto"
+                totalItems={totalTaskCount}
+                filteredItems={dateFilteredCount}
+                selectedCount={selectedIds.size}
+                searchValue={searchValue}
+                onSearchChange={setSearchValue}
+                searchPlaceholder="Search tasks..."
+                currentView="table"
+                onViewChange={() => {}}
+                enableViews={false}
+                filters={SCHEDULE_FILTERS}
+                activeFilters={activeFilters}
+                onFilterChange={setActiveFilters}
+                onClearFilters={() => setActiveFilters({})}
+                columns={SCHEDULE_COLUMNS}
+                visibleColumns={visibleColumns}
+                onColumnVisibilityChange={setVisibleColumns}
+                onExport={() => setIsImportExportModalOpen(true)}
+                enableBulkDelete={false}
+              />
             </div>
-            <TableToolbar
-              className="w-full lg:w-auto"
-              totalItems={totalTaskCount}
-              filteredItems={dateFilteredCount}
-              selectedCount={selectedIds.size}
-              searchValue={searchValue}
-              onSearchChange={setSearchValue}
-              searchPlaceholder="Search tasks..."
-              currentView="table"
-              onViewChange={() => {}}
-              enableViews={false}
-              filters={SCHEDULE_FILTERS}
-              activeFilters={activeFilters}
-              onFilterChange={setActiveFilters}
-              onClearFilters={() => setActiveFilters({})}
-              columns={SCHEDULE_COLUMNS}
-              visibleColumns={visibleColumns}
-              onColumnVisibilityChange={setVisibleColumns}
-              onExport={() => setIsImportExportModalOpen(true)}
-              enableBulkDelete={false}
-            />
           </div>
 
           {selectedIds.size > 0 && (
@@ -1162,46 +1106,44 @@ export default function ProjectSchedulePage() {
           )}
 
           {data && (!data.tasks || data.tasks.length === 0) && (
-            <div className="mt-4 flex flex-col items-center justify-center py-20 px-4 animate-reveal">
-              <div className="rounded-full bg-primary/10 p-4 mb-4">
-                <Calendar className="h-7 w-7 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">No tasks scheduled</h3>
-              <p className="text-sm text-muted-foreground mb-6 max-w-sm text-center leading-relaxed">
-                Create tasks, set milestones, and track dependencies with Gantt charts and multiple view modes.
-              </p>
-              <div className="flex gap-4">
-                <Button size="sm" onClick={() => handleAddTask()}>
-                  <Plus />
-                  Add Task
-                </Button>
-                <Button size="sm" variant="outline" asChild>
-                  <Link href={`/${projectId}/schedule/import`}>
-                    <Upload />
-                    Import Schedule
-                  </Link>
-                </Button>
-              </div>
-            </div>
+            <EmptyState
+              className="mt-4 animate-reveal"
+              icon={<Calendar />}
+              title="No tasks scheduled"
+              description="Create tasks, set milestones, and track dependencies with Gantt charts and multiple view modes."
+              action={
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={() => handleAddTask()}>
+                    <Plus />
+                    Add Task
+                  </Button>
+                  <Button size="sm" variant="outline" asChild>
+                    <Link href={`/${projectId}/schedule/import`}>
+                      <Upload />
+                      Import Schedule
+                    </Link>
+                  </Button>
+                </div>
+              }
+            />
           )}
 
           {data?.tasks && data.tasks.length > 0 && dateFilteredTasks.length === 0 && (
-            <div className="mt-4 flex flex-col items-center justify-center py-16 px-4 animate-reveal">
-              <div className="rounded-full bg-muted p-4 mb-4">
-                <CalendarDays className="h-7 w-7 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">
-                {dateFilter === "today" ? "No tasks scheduled for today" : "No tasks scheduled this week"}
-              </h3>
-              <p className="text-sm text-muted-foreground mb-6 max-w-sm text-center leading-relaxed">
-                {dateFilter === "today"
+            <EmptyState
+              className="mt-4 animate-reveal"
+              icon={<CalendarDays />}
+              title={dateFilter === "today" ? "No tasks scheduled for today" : "No tasks scheduled this week"}
+              description={
+                dateFilter === "today"
                   ? "No tasks have a start or finish date of today. Switch to All to see the full schedule."
-                  : "No tasks are active this week. Switch to All to see the full schedule."}
-              </p>
-              <Button size="sm" variant="outline" onClick={() => setDateFilter("all")}>
-                Show All Tasks
-              </Button>
-            </div>
+                  : "No tasks are active this week. Switch to All to see the full schedule."
+              }
+              action={
+                <Button size="sm" variant="outline" onClick={() => setDateFilter("all")}>
+                  Show All Tasks
+                </Button>
+              }
+            />
           )}
 
           {data?.tasks && data.tasks.length > 0 && dateFilteredTasks.length > 0 && (
