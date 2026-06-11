@@ -672,7 +672,10 @@ def create_microsoft_project_convert_token(
     _: None = Depends(require_admin_api_key),
 ) -> Dict[str, Any]:
     token = _sign_schedule_convert_token(project_id)
-    base_url = str(request.base_url).rstrip("/")
+    # Render sets RENDER_EXTERNAL_URL to the public service URL.
+    # request.base_url is unreliable behind proxies (resolves to http://0.0.0.0:PORT).
+    render_external = os.getenv("RENDER_EXTERNAL_URL", "").rstrip("/")
+    base_url = render_external or str(request.base_url).rstrip("/")
     return {
         "convert_url": f"{base_url}/api/scheduling/microsoft-project/convert?project_id={project_id}&token={token}",
         "expires_in_seconds": 300,

@@ -40,6 +40,10 @@
         {
             "filePath": "docs/architecture/ai-rag-architecture.html",
             "group": "Default"
+        },
+        {
+            "filePath": "docs/PRODUCT.md",
+            "group": "Default"
         }
     ],
     "files.exclude": {

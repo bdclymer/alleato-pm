@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 const ALLOWED_FIELDS = new Set([
   "title",
   "type",
+  "document_type",
   "category",
   "source",
   "status",
@@ -78,6 +79,30 @@ export const PATCH = withApiGuardrails<{ docId: string }>(
           );
         } else {
           updates.category = trimmed;
+        }
+      }
+    }
+
+    if ("document_type" in updates) {
+      const documentType = updates.document_type;
+      if (documentType === null || documentType === "") {
+        updates.document_type = null;
+      } else if (typeof documentType !== "string") {
+        return NextResponse.json(
+          { error: "document_type must be a string or null" },
+          { status: 400 },
+        );
+      } else {
+        const trimmed = documentType.trim();
+        if (trimmed.length === 0) {
+          updates.document_type = null;
+        } else if (trimmed.length > 100) {
+          return NextResponse.json(
+            { error: "document_type must be 100 characters or fewer" },
+            { status: 400 },
+          );
+        } else {
+          updates.document_type = trimmed;
         }
       }
     }

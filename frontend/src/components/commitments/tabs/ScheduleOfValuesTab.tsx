@@ -42,7 +42,6 @@ interface LineItem {
   description?: string | null;
   amount?: number | null;
   billed_to_date?: number | null;
-  retainage_percent?: number | null;
   quantity?: number | null;
   uom?: string | null;
   unit_cost?: number | null;
@@ -160,7 +159,7 @@ export function ScheduleOfValuesTab({
 
   const updateItem = (
     id: string,
-    field: "budget_code" | "description" | "amount" | "retainage_percent" | "quantity" | "uom" | "unit_cost",
+    field: "budget_code" | "description" | "amount" | "quantity" | "uom" | "unit_cost",
     value: string | number | undefined,
   ) => {
     setItems((prev) =>
@@ -169,13 +168,6 @@ export function ScheduleOfValuesTab({
         if (field === "amount") {
           if (isLocked(item)) return item;
           return { ...item, amount: value === undefined ? null : Number(value), isDirty: true };
-        }
-        if (field === "retainage_percent") {
-          return {
-            ...item,
-            retainage_percent: value === undefined || value === "" ? null : Number(value),
-            isDirty: true,
-          };
         }
         if (field === "quantity" || field === "unit_cost") {
           if (isLocked(item)) return item;
@@ -225,7 +217,6 @@ export function ScheduleOfValuesTab({
               description: item.description,
               amount: item.amount,
               billed_to_date: item.billed_to_date,
-              retainage_percent: item.retainage_percent,
               quantity: item.quantity,
               uom: item.uom,
               unit_cost: item.unit_cost,
@@ -371,7 +362,6 @@ export function ScheduleOfValuesTab({
               </>
             ) : null}
             <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
-            <InlineTableHeaderCell align="right">Retainage %</InlineTableHeaderCell>
             <InlineTableHeaderCell align="right">Billed to Date</InlineTableHeaderCell>
             <InlineTableHeaderCell align="right">Remaining</InlineTableHeaderCell>
             <InlineTableHeaderCell className="w-px" />
@@ -472,25 +462,6 @@ export function ScheduleOfValuesTab({
                     value={item.amount ?? undefined}
                     onChange={(value) => updateItem(item.id, "amount", value)}
                     disabled={locked}
-                  />
-                </InlineTableCell>
-                <InlineTableCell align="right">
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    step="0.01"
-                    className="text-right w-24 ml-auto"
-                    aria-label={`Retainage percent ${index + 1}`}
-                    value={item.retainage_percent ?? ""}
-                    placeholder="—"
-                    onChange={(e) =>
-                      updateItem(
-                        item.id,
-                        "retainage_percent",
-                        e.target.value === "" ? undefined : e.target.value,
-                      )
-                    }
                   />
                 </InlineTableCell>
                 <InlineTableCell align="right" numeric className="text-muted-foreground">

@@ -89,8 +89,14 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       });
     }
 
+    // The backend builds convert_url using request.base_url, which on Render resolves
+    // to the internal binding address (http://0.0.0.0:PORT) rather than the public URL.
+    // Override the base with our configured BACKEND_URL so the browser gets a reachable URL.
+    const returnedUrl = new URL(payload.convert_url);
+    const convertUrl = normalizeBackendUrl() + returnedUrl.pathname + returnedUrl.search;
+
     return NextResponse.json({
-      convertUrl: payload.convert_url,
+      convertUrl,
       expiresInSeconds: payload.expires_in_seconds ?? 300,
     });
   },

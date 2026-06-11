@@ -2,6 +2,8 @@
 
 **Authoritative reference for all AI work. Read this before touching any file under `frontend/src/lib/ai/` or `backend/src/services/pipeline/`.**
 
+Last verified: 2026-06-11 (Strategist agent tool: added `generateExecutiveDailyBrief` to `createStrategistTools()` via new `frontend/src/lib/ai/tools/executive-brief-tools.ts`. Uses the same production pipeline as the scheduled Teams delivery (`regenerateExecutiveBriefingDraft` from `executive-briefing-workflow.ts`). The tool is available on-demand via AI chat so users can ask "generate the daily brief" without waiting for the cron.)
+
 Last verified: 2026-06-10 (observability: AI SDK telemetry is now centralized in `frontend/src/lib/ai/ai-telemetry.ts` via `aiTelemetry()`, used by `fallback-chain.ts` and `intent-classifier.ts`. The gate is `aiTelemetryEnabled()` = Langfuse configured (`LANGFUSE_PUBLIC_KEY`/`LANGFUSE_SECRET_KEY`) OR `PHOENIX_TRACING=true` — previously only Phoenix gated it, so installed `@langfuse/otel` emitted nothing. The `/ai-assistant/chat` route now calls `flushLangfuse()` via `next/server` `after()` so buffered spans are not dropped when the serverless function suspends. Telemetry/observability only — no change to tools, tables, retrieval flow, models, or embeddings.)
 
 Last verified: 2026-06-10 (fix 4: RAG supplement scan in _fetch_graph_embedding_candidates and _fetch_graph_embedding_candidates_via_supabase only covered email/email_attachment — teams_dm_conversation and teams_dm were excluded, leaving 599 items permanently pending. Added both types to both supplement scans.)

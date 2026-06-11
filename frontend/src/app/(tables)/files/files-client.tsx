@@ -422,7 +422,7 @@ function InlineStringSelect({
   onCommit: (docId: string, next: string | null) => void;
   clearLabel: string;
   placeholder: string;
-  fieldKey: "category" | "access_level";
+  fieldKey: "category" | "access_level" | "document_type";
   docId: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -448,7 +448,9 @@ function InlineStringSelect({
         userVisibleFallback:
           fieldKey === "category"
             ? "Category could not be saved."
-            : "Access level could not be saved.",
+            : fieldKey === "document_type"
+              ? "File type could not be saved."
+              : "Access level could not be saved.",
       });
     } finally {
       setSaving(false);
@@ -644,6 +646,7 @@ const DEFAULT_ACCESS_OPTIONS = [
 function buildColumns(
   projects: Project[],
   categoryOptions: string[],
+  documentTypeOptions: string[],
   accessOptions: string[],
   onProjectSave: (
     docId: string,
@@ -652,6 +655,7 @@ function buildColumns(
   ) => void,
   onTagSave: (docId: string, tags: string) => void,
   onCategorySave: (docId: string, category: string | null) => void,
+  onDocumentTypeSave: (docId: string, documentType: string | null) => void,
   onAccessSave: (docId: string, access: string | null) => void,
 ): TableColumn<FileItem>[] {
   return [
@@ -702,10 +706,21 @@ function buildColumns(
     },
     {
       ...col("document_type"),
-      render: (item) => <CellText value={item.document_type} muted />,
+      render: (item) => (
+        <InlineStringSelect
+          docId={item.id}
+          value={item.document_type}
+          options={documentTypeOptions}
+          onCommit={onDocumentTypeSave}
+          fieldKey="document_type"
+          placeholder="Search or create..."
+          clearLabel="Clear type"
+        />
+      ),
       csvValue: (item) => item.document_type ?? "",
       sortValue: (item) => item.document_type ?? "",
       sortable: true,
+      width: 180,
     },
     {
       ...col("category"),
@@ -963,6 +978,9 @@ export function FilesClient() {
   const [categoryOverrides, setCategoryOverrides] = useState<
     Record<string, string | null>
   >({});
+  const [documentTypeOverrides, setDocumentTypeOverrides] = useState<
+    Record<string, string | null>
+  >({});
   const [accessOverrides, setAccessOverrides] = useState<
     Record<string, string | null>
   >({});
@@ -991,6 +1009,16 @@ export function FilesClient() {
     [],
   );
 
+  const handleDocumentTypeSave = useCallback(
+    (docId: string, documentType: string | null) => {
+      setDocumentTypeOverrides((prev) => ({
+        ...prev,
+        [docId]: documentType,
+      }));
+    },
+    [],
+  );
+
   const handleAccessSave = useCallback(
     (docId: string, access: string | null) => {
       setAccessOverrides((prev) => ({ ...prev, [docId]: access }));
@@ -1009,11 +1037,21 @@ export function FilesClient() {
         ...(categoryOverrides[item.id] !== undefined
           ? { category: categoryOverrides[item.id] }
           : {}),
+        ...(documentTypeOverrides[item.id] !== undefined
+          ? { document_type: documentTypeOverrides[item.id] }
+          : {}),
         ...(accessOverrides[item.id] !== undefined
           ? { access_level: accessOverrides[item.id] }
           : {}),
       })),
-    [items, projectOverrides, tagOverrides, categoryOverrides, accessOverrides],
+    [
+      items,
+      projectOverrides,
+      tagOverrides,
+      categoryOverrides,
+      documentTypeOverrides,
+      accessOverrides,
+    ],
   );
 
   const categoryOptions = useMemo(() => {
@@ -1021,6 +1059,15 @@ export function FilesClient() {
     for (const item of itemsWithOverrides) {
       const c = item.category?.trim();
       if (c) seen.add(c);
+    }
+    return Array.from(seen).sort((a, b) => a.localeCompare(b));
+  }, [itemsWithOverrides]);
+
+  const documentTypeOptions = useMemo(() => {
+    const seen = new Set<string>();
+    for (const item of itemsWithOverrides) {
+      const type = item.document_type?.trim();
+      if (type) seen.add(type);
     }
     return Array.from(seen).sort((a, b) => a.localeCompare(b));
   }, [itemsWithOverrides]);
@@ -1149,19 +1196,23 @@ export function FilesClient() {
       buildColumns(
         projects,
         categoryOptions,
+        documentTypeOptions,
         accessOptions,
         handleProjectSave,
         handleTagSave,
         handleCategorySave,
+        handleDocumentTypeSave,
         handleAccessSave,
       ),
     [
       projects,
       categoryOptions,
+      documentTypeOptions,
       accessOptions,
       handleProjectSave,
       handleTagSave,
       handleCategorySave,
+      handleDocumentTypeSave,
       handleAccessSave,
     ],
   );

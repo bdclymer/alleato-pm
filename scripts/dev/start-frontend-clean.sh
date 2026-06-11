@@ -62,5 +62,5 @@ fi
 
 cd "$FRONTEND_DIR"
 echo "$$" > "$PID_FILE"
-export NODE_OPTIONS='--max-old-space-size=6144'
+export NODE_OPTIONS='--max-old-space-size=4096'
 exec npx next dev --port "$PORT"

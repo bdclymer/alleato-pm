@@ -355,19 +355,28 @@ export default function FeedbackInboxPage() {
 
   // ---- Delete ----
   async function deleteItem(id: string) {
+    const previousItems = items;
+    const previousSelectedId = selectedId;
+    const previousMobileShowDetail = mobileShowDetail;
+
     setDeletingId(id);
+    setItems((currentItems) => currentItems.filter((item) => item.id !== id));
+    if (selectedId === id) {
+      setSelectedId(null);
+      setMobileShowDetail(false);
+    }
+
     try {
       await apiFetch("/api/admin/feedback", {
         method: "DELETE",
         body: JSON.stringify({ id }),
       });
       toast.success("Feedback item deleted");
-      if (selectedId === id) {
-        setSelectedId(null);
-        setMobileShowDetail(false);
-      }
       fetchItems();
     } catch (err) {
+      setItems(previousItems);
+      setSelectedId(previousSelectedId);
+      setMobileShowDetail(previousMobileShowDetail);
       notifyFeedbackInboxFailure({
         operation: "delete-feedback-item",
         title: "Could not delete feedback item",

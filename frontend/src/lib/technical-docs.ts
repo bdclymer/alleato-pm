@@ -33,14 +33,12 @@ const TECHNICAL_DOC_SOURCES: TechnicalDocSource[] = [
     slugPrefix: "reference",
     files: [
       "docs/AGENTIC-TOOL-LAYER.md",
-      "docs/SCHEMA-DOCUMENTATION.md",
       "docs/FK-TYPES-REFERENCE.md",
       "docs/RUNBOOK.md",
       "docs/ERROR-PREVENTION-SYSTEM.md",
       "docs/MANDATORY-ERROR-PREVENTION.md",
       "docs/PREVENTION-CHECKLIST.md",
       "docs/REALITY-MAP.md",
-      "docs/SECURE-API-KEY-SETUP.md",
       "docs/development-guardrails.md",
       "docs/development-guardrails-detailed.md",
       "docs/directory-auth-permissions.md",
@@ -219,7 +217,7 @@ export function filterTechnicalDocs(
 async function getDocsForSource(source: TechnicalDocSource): Promise<TechnicalDoc[]> {
   const root = source.directory ? path.join(repoRoot, source.directory) : repoRoot;
   const files = source.files
-    ? source.files.map((file) => path.join(repoRoot, file))
+    ? await getExistingSourceFiles(source.files)
     : await getMarkdownFiles(root);
 
   return Promise.all(
@@ -250,6 +248,43 @@ async function getDocsForSource(source: TechnicalDocSource): Promise<TechnicalDo
       };
     }),
   );
+}
+
+async function getExistingSourceFiles(sourceFiles: string[]): Promise<string[]> {
+  const files = await Promise.all(
+    sourceFiles.map(async (sourcePath) => {
+      const filePath = path.join(repoRoot, sourcePath);
+      try {
+        const stats = await fs.stat(filePath);
+        if (stats.isFile()) {
+          return filePath;
+        }
+      } catch (error) {
+        console.warn(
+          JSON.stringify({
+            event: "technical_doc_source_missing",
+            timestamp: new Date().toISOString(),
+            sourcePath,
+            filePath,
+            error: error instanceof Error ? error.message : String(error),
+          }),
+        );
+        return null;
+      }
+
+      console.warn(
+        JSON.stringify({
+          event: "technical_doc_source_not_file",
+          timestamp: new Date().toISOString(),
+          sourcePath,
+          filePath,
+        }),
+      );
+      return null;
+    }),
+  );
+
+  return files.filter((file): file is string => Boolean(file));
 }
 
 async function getMarkdownFiles(root: string): Promise<string[]> {
