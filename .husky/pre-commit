@@ -77,6 +77,16 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+# ── Broken symlink guard ─────────────────────────────────────────
+# Block staged symlinks that are dangling or use absolute paths.
+# These have repeatedly crashed the Claude Code Action skill scanner
+# (ENOENT statx) in CI. See scripts/audits/check-symlinks.mjs.
+node scripts/audits/check-symlinks.mjs
+if [ $? -ne 0 ]; then
+  echo "Broken symlink found. Fix before committing."
+  exit 1
+fi
+
 # ── RAG architecture docs freshness gate ─────────────────────────
 # If staged changes touch RAG code or RAG-table migrations, the two
 # architecture docs (AI-RAG-ARCHITECTURE.md + TABLE-INVENTORY.md) must

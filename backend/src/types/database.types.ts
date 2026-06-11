@@ -1,1 +1,0 @@
-/Users/meganharrison/Documents/github/alleato-procore/database.types.ts
