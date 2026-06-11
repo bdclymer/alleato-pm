@@ -54,7 +54,10 @@ const TableHead = TablePrimitives.TableHead;
 const TableHeader = TablePrimitives.TableHeader;
 const TableRow = TablePrimitives.TableRow;
 import { apiFetch } from "@/lib/api-client";
-import { FinancialOverview } from "./financial-overview";
+import {
+  FinancialOverview,
+  type BudgetDivisionSummary,
+} from "./financial-overview";
 import type { Database } from "@/types/database.types";
 import type { BudgetGrandTotals } from "@/types/budget";
 
@@ -107,7 +110,17 @@ type ProjectDocument = Pick<
   | "storage_path"
 >;
 type ProjectTeamMember = Database["public"]["Functions"]["get_project_team"]["Returns"][number];
-type BudgetLineSummary = Pick<Database["public"]["Tables"]["budget_lines"]["Row"], "id" | "project_id" | "original_amount">;
+interface BudgetLineSummary {
+  id: string;
+  project_id: number;
+  original_amount: number | null;
+  cost_code_id: string | null;
+  cost_code?: {
+    division_id: string | null;
+    division_title: string | null;
+    title: string | null;
+  } | null;
+}
 type ScheduleSummary = Pick<Database["public"]["Tables"]["schedule_tasks"]["Row"], "id">;
 type Submittal = Pick<
   Database["public"]["Tables"]["submittals"]["Row"],
@@ -187,7 +200,9 @@ interface ProjectCommandCenterProps {
   commitments: Commitment[];
   commitmentTotal?: number;
   contracts: Contract[];
-  contractLineItems?: Pick<ContractLineItem, "contract_id" | "total_cost" | "quantity" | "unit_cost">[];
+  contractLineItems?: Array<
+    Pick<ContractLineItem, "contract_id" | "total_cost" | "quantity" | "unit_cost" | "cost_code_id">
+  >;
   changeEvents?: ChangeEvent[];
   schedule?: ScheduleSummary[];
   team?: ProjectTeamMember[];
@@ -465,6 +480,72 @@ function isClosedStatus(status: string | null | undefined): boolean {
   return ["approved", "cancelled", "closed", "complete", "completed", "done", "paid", "rejected", "void"].includes(
     (status ?? "").toLowerCase(),
   );
+}
+
+function formatDivisionLabel(divisionId: string, divisionTitle: string | null): string {
+  if (divisionTitle) return divisionTitle;
+  if (!divisionId || divisionId === "uncategorized") return "Uncategorized";
+  return `Division ${divisionId}`;
+}
+
+function divisionIdFromCostCode(costCodeId: string | null | undefined): string {
+  const value = costCodeId?.trim();
+  if (!value) return "uncategorized";
+  const match = value.match(/^(\d{1,2})/);
+  return match?.[1]?.padStart(2, "0") ?? "uncategorized";
+}
+
+function buildBudgetDivisionSummaries({
+  budget,
+  contractLineItems,
+}: {
+  budget: BudgetLineSummary[];
+  contractLineItems: NonNullable<ProjectCommandCenterProps["contractLineItems"]>;
+}): BudgetDivisionSummary[] {
+  const summaries = new Map<string, BudgetDivisionSummary>();
+  const divisionByCostCode = new Map<string, { id: string; label: string }>();
+
+  const ensureSummary = (id: string, label: string) => {
+    const existing = summaries.get(id);
+    if (existing) return existing;
+
+    const created = { id, label, budget: 0, committed: 0 };
+    summaries.set(id, created);
+    return created;
+  };
+
+  budget.forEach((line) => {
+    const divisionId =
+      line.cost_code?.division_id?.trim() ||
+      divisionIdFromCostCode(line.cost_code_id);
+    const label = formatDivisionLabel(divisionId, line.cost_code?.division_title ?? null);
+    if (line.cost_code_id) {
+      divisionByCostCode.set(line.cost_code_id, { id: divisionId, label });
+    }
+    const summary = ensureSummary(divisionId, label);
+    summary.budget += Number(line.original_amount) || 0;
+  });
+
+  contractLineItems.forEach((line) => {
+    const knownDivision = line.cost_code_id
+      ? divisionByCostCode.get(line.cost_code_id)
+      : null;
+    const divisionId =
+      knownDivision?.id ?? divisionIdFromCostCode(line.cost_code_id);
+    const label = knownDivision?.label ?? formatDivisionLabel(divisionId, null);
+    const summary = ensureSummary(divisionId, label);
+    summary.committed +=
+      Number(line.total_cost) ||
+      (Number(line.quantity) || 0) * (Number(line.unit_cost) || 0);
+  });
+
+  return Array.from(summaries.values())
+    .filter((summary) => summary.budget > 0 || summary.committed > 0)
+    .sort((left, right) => {
+      const leftValue = Math.max(left.budget, left.committed);
+      const rightValue = Math.max(right.budget, right.committed);
+      return rightValue - leftValue || left.label.localeCompare(right.label);
+    });
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -1166,6 +1247,10 @@ export function ProjectCommandCenter({
   const ecac = grandTotals.estimatedCostAtCompletion;
   const variance = grandTotals.projectedOverUnder;
   const committedCosts = grandTotals.committedCosts;
+  const budgetDivisions = React.useMemo(
+    () => buildBudgetDivisionSummaries({ budget: budget ?? [], contractLineItems: contractLineItems ?? [] }),
+    [budget, contractLineItems],
+  );
   const homeMeetings = lazyTabData.meetings;
   const homeDocuments = lazyTabData.projectDocuments;
   const homeDailyLogs = lazyTabData.dailyLogs;
@@ -1511,6 +1596,7 @@ export function ProjectCommandCenter({
             committedCosts={committedCosts}
             estimatedCostAtCompletion={ecac}
             projectedOverUnder={variance}
+            budgetDivisions={budgetDivisions}
             changeOrders={changeOrders}
             changeEventsCount={changeEvents?.length ?? 0}
             openRfisCount={rfisOpen.length}

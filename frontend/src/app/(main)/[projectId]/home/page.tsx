@@ -307,13 +307,13 @@ export default async function ProjectHomePage({
     // Fetch prime contract SOV line items for contract value rollups
     supabase
       .from("contract_line_items")
-      .select("contract_id,total_cost,quantity,unit_cost,prime_contracts!inner(project_id)")
+      .select("contract_id,total_cost,quantity,unit_cost,cost_code_id,prime_contracts!inner(project_id)")
       .eq("prime_contracts.project_id", numericProjectId),
 
     // Fetch budget lines
     supabase
       .from("budget_lines")
-      .select("id, project_id, original_amount")
+      .select("id, project_id, original_amount, cost_code_id, cost_code:cost_codes(division_id, division_title, title)")
       .eq("project_id", numericProjectId)
       .order("cost_code_id", { ascending: true }),
 

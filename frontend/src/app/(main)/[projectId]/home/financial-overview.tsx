@@ -20,12 +20,20 @@ interface ChangeOrderLike {
   total_amount?: number | null;
 }
 
+export interface BudgetDivisionSummary {
+  id: string;
+  label: string;
+  budget: number;
+  committed: number;
+}
+
 interface FinancialOverviewProps {
   projectId: string;
   revisedBudget: number;
   committedCosts: number;
   estimatedCostAtCompletion: number;
   projectedOverUnder: number;
+  budgetDivisions: BudgetDivisionSummary[];
   changeOrders: ChangeOrderLike[];
   changeEventsCount: number;
   openRfisCount: number;
@@ -81,29 +89,25 @@ function BudgetVsCommittedPanel({
   committedCosts,
   estimatedCostAtCompletion,
   projectedOverUnder,
+  budgetDivisions,
 }: {
   projectId: string;
   revisedBudget: number;
   committedCosts: number;
   estimatedCostAtCompletion: number;
   projectedOverUnder: number;
+  budgetDivisions: BudgetDivisionSummary[];
 }) {
   const overBudget = projectedOverUnder < 0;
-  const max = Math.max(revisedBudget, committedCosts, estimatedCostAtCompletion, 1);
+  const divisionRows = budgetDivisions.filter(
+    (division) => division.budget > 0 || division.committed > 0,
+  );
+  const maxDivisionValue = Math.max(
+    ...divisionRows.flatMap((division) => [division.budget, division.committed]),
+    1,
+  );
   const variancePctOfBudget =
     revisedBudget > 0 ? (projectedOverUnder / revisedBudget) * 100 : 0;
-  const rows = [
-    {
-      label: "Budget",
-      value: revisedBudget,
-      className: "bg-muted-foreground/35",
-    },
-    {
-      label: "Committed",
-      value: committedCosts,
-      className: committedCosts > revisedBudget ? "bg-destructive" : "bg-primary",
-    },
-  ];
 
   return (
     <Link
@@ -143,20 +147,74 @@ function BudgetVsCommittedPanel({
       </div>
 
       <div className="space-y-3">
-        {rows.map((row) => (
-          <div key={row.label} className="grid grid-cols-[5.5rem_1fr_4.5rem] items-center gap-3">
-            <span className="text-xs font-medium text-muted-foreground">{row.label}</span>
-            <div className="h-2.5 overflow-hidden rounded-full bg-muted-foreground/12">
-              <div
-                className={cn("h-full rounded-full", row.className)}
-                style={{ width: `${pct(row.value, max)}%` }}
-              />
+        {divisionRows.length > 0 ? (
+          divisionRows.map((division) => {
+            const overCommitted = division.committed > division.budget && division.budget > 0;
+
+            return (
+              <div key={division.id} className="space-y-1.5">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="truncate text-xs font-medium text-foreground">
+                    {division.label}
+                  </span>
+                  <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+                    {fmtCompact(division.committed)} / {fmtCompact(division.budget)}
+                  </span>
+                </div>
+                <div className="grid grid-cols-[4.25rem_1fr] gap-2">
+                  <span className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+                    Budget
+                  </span>
+                  <div className="h-2 overflow-hidden rounded-full bg-muted-foreground/12">
+                    <div
+                      className="h-full rounded-full bg-muted-foreground/35"
+                      style={{ width: `${pct(division.budget, maxDivisionValue)}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+                    Committed
+                  </span>
+                  <div className="h-2 overflow-hidden rounded-full bg-muted-foreground/12">
+                    <div
+                      className={cn(
+                        "h-full rounded-full",
+                        overCommitted ? "bg-destructive" : "bg-primary",
+                      )}
+                      style={{ width: `${pct(division.committed, maxDivisionValue)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="space-y-3">
+            <div className="grid grid-cols-[5.5rem_1fr_4.5rem] items-center gap-3">
+              <span className="text-xs font-medium text-muted-foreground">Budget</span>
+              <div className="h-2.5 overflow-hidden rounded-full bg-muted-foreground/12">
+                <div className="h-full rounded-full bg-muted-foreground/35" style={{ width: "100%" }} />
+              </div>
+              <span className="text-right text-xs font-medium tabular-nums text-foreground">
+                {fmtCompact(revisedBudget)}
+              </span>
             </div>
-            <span className="text-right text-xs font-medium tabular-nums text-foreground">
-              {fmtCompact(row.value)}
-            </span>
+            <div className="grid grid-cols-[5.5rem_1fr_4.5rem] items-center gap-3">
+              <span className="text-xs font-medium text-muted-foreground">Committed</span>
+              <div className="h-2.5 overflow-hidden rounded-full bg-muted-foreground/12">
+                <div
+                  className={cn(
+                    "h-full rounded-full",
+                    committedCosts > revisedBudget ? "bg-destructive" : "bg-primary",
+                  )}
+                  style={{ width: `${pct(committedCosts, Math.max(revisedBudget, committedCosts, 1))}%` }}
+                />
+              </div>
+              <span className="text-right text-xs font-medium tabular-nums text-foreground">
+                {fmtCompact(committedCosts)}
+              </span>
+            </div>
           </div>
-        ))}
+        )}
         <div className="grid grid-cols-[5.5rem_1fr_4.5rem] items-center gap-3">
           <span className="text-xs font-medium text-muted-foreground">ECAC</span>
           <div className="h-px bg-border" />
@@ -300,6 +358,7 @@ export function FinancialOverview({
   committedCosts,
   estimatedCostAtCompletion,
   projectedOverUnder,
+  budgetDivisions,
   changeOrders,
   changeEventsCount,
   openRfisCount,
@@ -329,6 +388,7 @@ export function FinancialOverview({
           committedCosts={committedCosts}
           estimatedCostAtCompletion={estimatedCostAtCompletion}
           projectedOverUnder={projectedOverUnder}
+          budgetDivisions={budgetDivisions}
         />
         <WorkQueuePanel
           projectId={projectId}
