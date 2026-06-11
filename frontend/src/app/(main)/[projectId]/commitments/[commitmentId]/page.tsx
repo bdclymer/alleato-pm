@@ -423,7 +423,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                       commitment.contract_company_id ? (
                         <Link
                           href={`/directory/companies/${encodeURIComponent(commitment.contract_company_id)}`}
-                          className="text-link hover:text-link-hover hover:underline"
+                          className="text-primary hover:underline"
                         >
                           {commitment.contract_company.name}
                         </Link>
@@ -446,7 +446,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                               {index > 0 ? ", " : null}
                               <Link
                                 href={`/directory/contacts/${encodeURIComponent(contact.id)}`}
-                                className="text-link hover:text-link-hover hover:underline"
+                                className="text-primary hover:underline"
                               >
                                 {contact.name}
                               </Link>

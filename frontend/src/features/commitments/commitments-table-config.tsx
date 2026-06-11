@@ -1,7 +1,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import Link from "next/link";
-import { ChevronRight, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ChevronRight, ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import { formatDate } from "@/lib/format";
 
@@ -29,26 +29,26 @@ import type { CommitmentListItem } from "@/lib/validation/commitments";
 
 export const commitmentColumns: ColumnConfig[] = [
   { id: "number", label: "Number", alwaysVisible: true },
-  { id: "contract_company", label: "Contract Company", defaultVisible: true },
+  { id: "title", label: "Title", defaultVisible: true },
+  { id: "contract_company", label: "Company", defaultVisible: true },
   { id: "trade_names", label: "Trade / Division", defaultVisible: true },
   { id: "scope_summary", label: "Scope Summary", defaultVisible: true },
-  { id: "title", label: "Title", defaultVisible: true },
   { id: "type", label: "Type", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
   { id: "original_amount", label: "Original Contract Amount", defaultVisible: true },
   { id: "revised_contract_amount", label: "Revised Contract Amount", defaultVisible: true },
   { id: "approved_change_orders", label: "Approved Change Orders", defaultVisible: true },
   { id: "invoiced_amount", label: "Invoiced", defaultVisible: true },
-  { id: "remaining_balance", label: "Remaining Balance Outstanding", defaultVisible: true },
+  { id: "remaining_balance", label: "Balance", defaultVisible: true },
   { id: "executed", label: "Executed", defaultVisible: true },
+  { id: "acumatica_link", label: "Acumatica", defaultVisible: true },
   { id: "erp_status", label: "ERP Status", defaultVisible: false },
   { id: "ssov_status", label: "SOV Status", defaultVisible: false },
-  { id: "pending_change_orders", label: "Pending Change Orders", defaultVisible: false },
-  { id: "draft_change_orders", label: "Draft Change Orders", defaultVisible: false },
+  { id: "pending_change_orders", label: "Pending CO's", defaultVisible: false },
+  { id: "draft_change_orders", label: "Draft CO's", defaultVisible: false },
   { id: "payments_issued", label: "Payments Issued", defaultVisible: false },
   { id: "percent_paid", label: "% Paid", defaultVisible: false },
   { id: "is_private", label: "Private", defaultVisible: false },
-  { id: "balance_to_finish", label: "Balance to Finish", defaultVisible: false },
   { id: "created_at", label: "Created", defaultVisible: false },
 ];
 
@@ -155,6 +155,24 @@ function yesNo(value: boolean): string {
   return value ? "Yes" : "No";
 }
 
+const ACUMATICA_BASE_URL = "https://alleatogroup.acumatica.com";
+
+/**
+ * Build the Acumatica deep link for a commitment. Subcontracts (number prefixed
+ * "SC-") open on the Subcontracts screen; purchase orders open on the Purchase
+ * Orders screen. The commitment `number` is the Acumatica reference number.
+ */
+function acumaticaCommitmentUrl(
+  number: string | null | undefined,
+  type: string | null | undefined,
+): string | null {
+  if (!number) return null;
+  if (type === "purchase_order") {
+    return `${ACUMATICA_BASE_URL}/Main?ScreenId=PO301000&OrderType=RO&OrderNbr=${encodeURIComponent(number)}`;
+  }
+  return `${ACUMATICA_BASE_URL}/Main?ScreenId=SC301000&SubcontractNbr=${encodeURIComponent(number)}`;
+}
+
 export function buildCommitmentTableColumns(
   projectId: string,
   expandedIds?: Set<string>,
@@ -197,7 +215,18 @@ export function buildCommitmentTableColumns(
       sortValue: (item) => item.number,
     },
     contract_company: {
-      render: (item) => <span>{item.contract_company?.name ?? "-"}</span>,
+      render: (item) =>
+        item.contract_company?.id && item.contract_company?.name ? (
+          <Link
+            href={`/directory/companies/${item.contract_company.id}`}
+            className="text-primary hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {item.contract_company.name}
+          </Link>
+        ) : (
+          <span>{item.contract_company?.name ?? "-"}</span>
+        ),
       csvValue: (item) => item.contract_company?.name ?? "",
       sortValue: (item) => item.contract_company?.name ?? "",
     },
@@ -290,6 +319,28 @@ export function buildCommitmentTableColumns(
       csvValue: (item) => yesNo(item.executed),
       sortValue: (item) => (item.executed ? 1 : 0),
     },
+    acumatica_link: {
+      render: (item) => {
+        const url = acumaticaCommitmentUrl(item.number, item.type);
+        return url ? (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1 text-primary hover:underline"
+            title={`Open ${item.number} in Acumatica`}
+          >
+            View
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        ) : (
+          <span className="text-muted-foreground">-</span>
+        );
+      },
+      csvValue: (item) => acumaticaCommitmentUrl(item.number, item.type) ?? "",
+      sortValue: (item) => item.number,
+    },
     ssov_status: {
       render: (item) => <span>{item.ssov_status ?? "-"}</span>,
       csvValue: (item) => item.ssov_status ?? "",
@@ -344,11 +395,6 @@ export function buildCommitmentTableColumns(
       render: (item) => <span>{yesNo(item.is_private)}</span>,
       csvValue: (item) => yesNo(item.is_private),
       sortValue: (item) => (item.is_private ? 1 : 0),
-    },
-    balance_to_finish: {
-      render: (item) => <span>{formatCurrency(item.balance_to_finish)}</span>,
-      csvValue: (item) => String(item.balance_to_finish),
-      sortValue: (item) => item.balance_to_finish,
     },
     created_at: {
       render: (item) => <span>{formatDate(item.created_at)}</span>,

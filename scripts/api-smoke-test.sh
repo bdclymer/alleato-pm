@@ -55,6 +55,7 @@ ENDPOINTS=(
   "GET /api/projects/${PROJECT_ID}/budget/snapshots Budget snapshots"
   "GET /api/projects/${PROJECT_ID}/budget/direct-costs Budget direct costs"
   "GET /api/projects/${PROJECT_ID}/budget-codes Budget codes"
+  "GET /api/projects/${PROJECT_ID}/budget-codes/acumatica Acumatica budget codes"
 
   # ─── Change Events ───
   "GET /api/projects/${PROJECT_ID}/change-events Change events list"

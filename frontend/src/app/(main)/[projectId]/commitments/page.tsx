@@ -883,7 +883,6 @@ export default function ProjectCommitmentsPage(): ReactElement {
             // The invoiced_amount column above covers the "Invoiced" total shown in the table.
             payments_issued: <span className="font-semibold">{formatCurrency(financialTotals.payments_issued)}</span>,
             remaining_balance: <span className="font-semibold">{formatCurrency(financialTotals.remaining_balance)}</span>,
-            balance_to_finish: <span className="font-semibold">{formatCurrency(financialTotals.balance_to_finish)}</span>,
           },
         }}
         pagination={isChangeOrdersTab ? undefined : {

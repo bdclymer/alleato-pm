@@ -33,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCostCodes } from "@/hooks/use-cost-codes";
+import { useProjectBudgetCodes } from "@/hooks/use-project-budget-codes";
 
 interface LineItem {
   id: string;
@@ -88,10 +89,30 @@ export function ScheduleOfValuesTab({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Fetch cost codes for budget code selection — need high limit to cover all divisions
-  const { options: costCodeOptions, isLoading: costCodesLoading } = useCostCodes({
+  const { options: internalCostCodeOptions, isLoading: costCodesLoading } = useCostCodes({
     enabled: true,
     limit: 1000,
   });
+
+  // Subcontract/PO SOV lines store CSI-style budget codes (e.g. "024113") that
+  // come from the Acumatica import and are NOT in the internal cost_codes table.
+  // Merge the project's Acumatica budget codes so those lines resolve to a
+  // readable "code - description" label and stay selectable.
+  const { options: projectBudgetCodeOptions, isLoading: projectCodesLoading } =
+    useProjectBudgetCodes(projectId);
+
+  const costCodeOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const merged: { value: string; label: string }[] = [];
+    for (const option of [...projectBudgetCodeOptions, ...internalCostCodeOptions]) {
+      if (seen.has(option.value)) continue;
+      seen.add(option.value);
+      merged.push({ value: option.value, label: option.label });
+    }
+    return merged.sort((a, b) => a.value.localeCompare(b.value));
+  }, [projectBudgetCodeOptions, internalCostCodeOptions]);
+
+  const budgetCodesLoading = costCodesLoading || projectCodesLoading;
 
   useEffect(() => {
     setItems(lineItems);
@@ -380,10 +401,10 @@ export function ScheduleOfValuesTab({
                   <Select
                     value={item.budget_code || "none"}
                     onValueChange={(value) => updateItem(item.id, "budget_code", value === "none" ? "" : value)}
-                    disabled={costCodesLoading}
+                    disabled={budgetCodesLoading}
                   >
                     <SelectTrigger className="w-full" aria-label={`Budget code ${index + 1}`}>
-                      <SelectValue placeholder={costCodesLoading ? "Loading..." : "Select budget code"}>
+                      <SelectValue placeholder={budgetCodesLoading ? "Loading..." : "Select budget code"}>
                         {item.budget_code
                           ? (() => {
                               const match = costCodeOptions.find((o) => o.value === item.budget_code);
