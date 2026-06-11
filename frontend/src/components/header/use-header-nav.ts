@@ -36,6 +36,11 @@ function normalizeProject(project: Project | null | undefined): Project | null {
   };
 }
 
+function getProjectBreadcrumbLabel(project: Project | null): string {
+  const projectName = project?.name.trim();
+  return projectName || "Project";
+}
+
 interface Breadcrumb {
   label: string;
   href: string;
@@ -413,7 +418,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
 
       // Check if this segment is a project ID (numeric)
       if (index === 0 && /^\d+$/.test(segment)) {
-        label = breadcrumbProject?.name || `Project ${segment}`;
+        label = getProjectBreadcrumbLabel(breadcrumbProject);
         href = `/${segment}/home`;
       } else if (isGlobalMeetingDetailRoute && index === 1) {
         label = globalMeetingTitle || "Meeting";
