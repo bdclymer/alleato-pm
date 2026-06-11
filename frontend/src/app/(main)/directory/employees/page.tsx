@@ -332,18 +332,6 @@ export default function DirectoryEmployeesPage(): ReactElement {
     [handleInlineEmployeeEdit],
   );
 
-  const handleSelectAll = (checked: boolean) => {
-    tableState.setSelectedIds(checked ? tableData.map((e) => e.id) : []);
-  };
-
-  const handleSelectRow = (id: string, checked: boolean) => {
-    if (checked) {
-      tableState.setSelectedIds((prev) => [...new Set([...prev, id])]);
-    } else {
-      tableState.setSelectedIds((prev) => prev.filter((itemId) => itemId !== id));
-    }
-  };
-
   return (
     <UnifiedTablePage
       header={{
@@ -360,7 +348,6 @@ export default function DirectoryEmployeesPage(): ReactElement {
       toolbar={{
         totalItems,
         filteredItems: tableData.length,
-        selectedCount: tableState.selectedIds.length,
         searchValue: tableState.searchInput,
         onSearchChange: tableState.setSearchInput,
         searchPlaceholder: employeesTableDefinition.searchPlaceholder,
@@ -431,11 +418,6 @@ export default function DirectoryEmployeesPage(): ReactElement {
         sortDirection: tableState.sortDirection,
         onSortChange: handleSortChange,
       }}
-      selection={{
-        selectedIds: tableState.selectedIds,
-        onSelectAll: handleSelectAll,
-        onSelectRow: handleSelectRow,
-      }}
       emptyState={{
         title: "No employees found",
         description: `No people with company set to "${ALLEATO_COMPANY}".`,
@@ -453,7 +435,6 @@ export default function DirectoryEmployeesPage(): ReactElement {
       features={{
         enableExport: false,
         enableBulkDelete: false,
-        enableRowSelection: true,
         enableInlineEditing: true,
       }}
       layout={{

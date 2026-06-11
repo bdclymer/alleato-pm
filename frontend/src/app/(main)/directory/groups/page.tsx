@@ -439,18 +439,6 @@ export default function DistributionGroupsPage(): ReactElement {
     }
   };
 
-  const handleSelectAll = (checked: boolean) => {
-    tableState.setSelectedIds(checked ? groups.map((g) => g.id) : []);
-  };
-
-  const handleSelectRow = (id: string, checked: boolean) => {
-    if (checked) {
-      tableState.setSelectedIds((prev) => [...prev, id]);
-    } else {
-      tableState.setSelectedIds((prev) => prev.filter((itemId) => itemId !== id));
-    }
-  };
-
   const tabs = getDirectoryTabs(pathname);
   const isFiltered = Boolean(tableState.searchInput);
   const totalPages = Math.max(1, Math.ceil(groups.length / tableState.perPage));
@@ -486,7 +474,6 @@ export default function DistributionGroupsPage(): ReactElement {
         toolbar={{
           totalItems: groups.length,
           filteredItems: groups.length,
-          selectedCount: tableState.selectedIds.length,
           searchValue: tableState.searchInput,
           onSearchChange: tableState.setSearchInput,
           searchPlaceholder: "Search groups...",
@@ -540,11 +527,6 @@ export default function DistributionGroupsPage(): ReactElement {
             });
             tableState.setPage(1);
           },
-        }}
-        selection={{
-          selectedIds: tableState.selectedIds,
-          onSelectAll: handleSelectAll,
-          onSelectRow: handleSelectRow,
         }}
         emptyState={{
           title: "No distribution groups found",

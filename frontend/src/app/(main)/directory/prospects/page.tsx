@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { createClient } from "@/lib/supabase/client";
+import { apiFetch } from "@/lib/api-client";
 import { getDirectoryTabs } from "@/config/directory-tabs";
 import type { Database } from "@/types/database.types";
 import {
@@ -33,6 +33,10 @@ import { StatusBadge } from "@/components/ds";
 type Prospect = Database["public"]["Tables"]["prospects"]["Row"];
 
 type ProspectFilterState = Record<string, FilterValue>;
+
+interface ProspectsResponse {
+  data: Prospect[];
+}
 
 const EMPTY_FILTERS: ProspectFilterState = {
   status: undefined,
@@ -375,14 +379,8 @@ export default function DirectoryProspectsPage(): ReactElement {
   const fetchProspects = React.useCallback(async () => {
     try {
       setIsLoading(true);
-      const supabase = createClient();
-      const { data, error: fetchError } = await supabase
-        .from("prospects")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (fetchError) throw fetchError;
-      setProspects(data || []);
+      const payload = await apiFetch<ProspectsResponse>("/api/directory/prospects");
+      setProspects(payload.data);
     } catch (fetchError) {
       setError(fetchError as Error);
     } finally {
@@ -488,12 +486,9 @@ export default function DirectoryProspectsPage(): ReactElement {
   const handleDeleteProspect = React.useCallback(
     async (prospect: Prospect) => {
       try {
-        const supabase = createClient();
-        const { error: deleteError } = await supabase
-          .from("prospects")
-          .delete()
-          .eq("id", prospect.id);
-        if (deleteError) throw deleteError;
+        await apiFetch(`/api/directory/prospects/${prospect.id}`, {
+          method: "DELETE",
+        });
         toast.success("Prospect deleted");
         setProspects((prev) => prev.filter((p) => p.id !== prospect.id));
       } catch {
@@ -514,18 +509,6 @@ export default function DirectoryProspectsPage(): ReactElement {
     tableState.setPage(1);
   };
 
-  const handleSelectAll = (checked: boolean) => {
-    tableState.setSelectedIds(
-      checked ? filteredProspects.map((p) => String(p.id)) : [],
-    );
-  };
-
-  const handleSelectRow = (id: string, checked: boolean) => {
-    tableState.setSelectedIds((prev) =>
-      checked ? [...prev, id] : prev.filter((i) => i !== id),
-    );
-  };
-
   return (
     <UnifiedTablePage
       header={{
@@ -543,7 +526,6 @@ export default function DirectoryProspectsPage(): ReactElement {
       toolbar={{
         totalItems: prospects.length,
         filteredItems: filteredProspects.length,
-        selectedCount: tableState.selectedIds.length,
         searchValue: tableState.searchInput,
         onSearchChange: tableState.setSearchInput,
         searchPlaceholder: "Search company, contact, email, industry...",
@@ -592,11 +574,6 @@ export default function DirectoryProspectsPage(): ReactElement {
           tableState.setSortDirection(direction);
           tableState.setSearchParams({ sort: sortBy, sort_dir: direction });
         },
-      }}
-      selection={{
-        selectedIds: tableState.selectedIds,
-        onSelectAll: handleSelectAll,
-        onSelectRow: handleSelectRow,
       }}
       emptyState={{
         title: "No prospects found",

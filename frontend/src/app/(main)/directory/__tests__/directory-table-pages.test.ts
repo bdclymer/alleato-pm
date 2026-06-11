@@ -44,4 +44,29 @@ describe("directory list table pages", () => {
       expect(source).not.toMatch(legacyPattern);
     }
   });
+
+  it.each(["employees/page.tsx", "groups/page.tsx"])(
+    "does not expose dead row selection on %s",
+    (relativePath) => {
+      const source = fs.readFileSync(
+        path.join(directoryRoot, relativePath),
+        "utf8",
+      );
+
+      expect(source).not.toContain("selection={{");
+      expect(source).not.toContain("enableRowSelection: true");
+      expect(source).not.toContain("selectedCount: tableState.selectedIds.length");
+    },
+  );
+
+  it("keeps prospects off browser Supabase select-star access", () => {
+    const source = fs.readFileSync(
+      path.join(directoryRoot, "prospects/page.tsx"),
+      "utf8",
+    );
+
+    expect(source).not.toContain('from "@/lib/supabase/client"');
+    expect(source).not.toContain('select("*")');
+    expect(source).toContain('apiFetch<ProspectsResponse>("/api/directory/prospects")');
+  });
 });
