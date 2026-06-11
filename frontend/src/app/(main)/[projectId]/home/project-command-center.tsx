@@ -1439,7 +1439,6 @@ export function ProjectCommandCenter({
           const updated = formatMonthDay(document.updated_at ?? document.created_at);
           const inlineHref = documentInlineHref(projectId, document.id);
           const imagePreview = isImageDocument(document);
-          const textPreview = document.preview_status != null;
 
           return (
             <Link
@@ -1449,18 +1448,12 @@ export function ProjectCommandCenter({
               className="group min-w-0 overflow-hidden rounded-md bg-background transition-colors hover:bg-muted/20"
             >
               <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-muted/50 text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
-                {textPreview ? (
-                  <DocumentTextPreview
-                    text={document.preview_text}
-                    status={document.preview_status}
-                    title={title}
-                  />
-                ) : previewable && imagePreview ? (
+                {imagePreview ? (
                   <img src={inlineHref} alt="" loading="lazy" className="h-full w-full object-cover" />
                 ) : (
                   <DocumentTypePreview document={document} title={title} />
                 )}
-                {(previewable || textPreview) && (
+                {imagePreview && (
                   <span className="absolute bottom-1.5 right-1.5 rounded-sm bg-background/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-foreground shadow-xs">
                     {documentExtension(document.file_name)}
                   </span>
