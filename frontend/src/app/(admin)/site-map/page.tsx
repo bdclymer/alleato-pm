@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 
+import { PageShell } from "@/components/layout";
+import { inferPageAccessDefaults } from "@/lib/page-access";
 import SiteMapClient, { type InventoryRoute } from "./site-map-client";
 
 type InventoryCsvRow = {
@@ -127,22 +129,44 @@ function readRouteInventory(): InventoryRoute[] {
   if (!inventoryPath) return [];
 
   const csv = readFileSync(inventoryPath, "utf8");
-  return parseRouteInventoryCsv(csv).map((row) => ({
-    route: row.route,
-    page: toTitle(row.route),
-    category: inferCategory(row.route, row.file),
-    type: inferType(row.route, row.file),
-    status: "Needs Review",
-    notes: "",
-    lastReviewed: "",
-    dynamic: row.dynamic === "true",
-    kind: row.kind,
-    refCount: Number(row.refCount) || 0,
-    file: row.file,
-    refSample: row.refSample,
-  }));
+  return parseRouteInventoryCsv(csv).map((row) => {
+    const category = inferCategory(row.route, row.file);
+    const access = inferPageAccessDefaults({
+      route: row.route,
+      file: row.file,
+      category,
+    });
+
+    return {
+      route: row.route,
+      page: toTitle(row.route),
+      category,
+      type: inferType(row.route, row.file),
+      status: "Needs Review",
+      notes: "",
+      lastReviewed: "",
+      dynamic: row.dynamic === "true",
+      kind: row.kind,
+      refCount: Number(row.refCount) || 0,
+      file: row.file,
+      refSample: row.refSample,
+      accessLevel: access.accessLevel,
+      permissionModule: access.permissionModule,
+      accessUpdatedAt: null,
+      accessIsExplicit: false,
+    };
+  });
 }
 
 export default function SiteMapPage() {
-  return <SiteMapClient routes={readRouteInventory()} />;
+  return (
+    <PageShell
+      variant="table"
+      title="Page Access"
+      showHeader={false}
+      contentClassName="space-y-0"
+    >
+      <SiteMapClient routes={readRouteInventory()} />
+    </PageShell>
+  );
 }

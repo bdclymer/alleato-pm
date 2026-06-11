@@ -144,10 +144,10 @@ const sections: AdminMenuSection[] = [
         icon: FileText,
       },
       {
-        label: "Site Map",
+        label: "Page Access",
         href: "/site-map",
         route: "/site-map",
-        description: "Route inventory, page audit state, and page notes.",
+        description: "View every page and set route access levels.",
         icon: MapIcon,
       },
     ],

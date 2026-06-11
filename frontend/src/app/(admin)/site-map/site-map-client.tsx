@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { StatusBadge, type StatusVariant } from "@/components/ds";
 import {
@@ -43,6 +44,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { apiFetch } from "@/lib/api-client";
+import {
+  PAGE_ACCESS_LEVEL_LABELS,
+  PAGE_ACCESS_LEVELS,
+  PAGE_ACCESS_MODULE_LABELS,
+  PAGE_ACCESS_MODULES,
+  accessLevelRequiresModule,
+  inferPageAccessDefaults,
+  normalizePageAccessInput,
+  type PageAccessLevel,
+  type PageAccessPolicy,
+  type PageAccessPolicyInput,
+} from "@/lib/page-access";
+import type { PermissionModule } from "@/lib/permissions-shared";
+import { appToast as toast } from "@/lib/toast/app-toast";
 import { cn } from "@/lib/utils";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 
@@ -88,6 +104,10 @@ export type InventoryRoute = {
   refCount: number;
   file: string;
   refSample: string;
+  accessLevel: PageAccessLevel;
+  permissionModule: PermissionModule | null;
+  accessUpdatedAt: string | null;
+  accessIsExplicit: boolean;
   _group?: string;
   _groupCount?: number;
 };
@@ -173,6 +193,8 @@ const columns: ColumnConfig[] = [
   { id: "page", label: "Page / Route", alwaysVisible: true },
   { id: "category", label: "Category", defaultVisible: true },
   { id: "type", label: "Type", defaultVisible: true },
+  { id: "accessLevel", label: "Access", defaultVisible: true },
+  { id: "permissionModule", label: "Module", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
   { id: "notes", label: "Notes", defaultVisible: true },
   { id: "lastReviewed", label: "Last Reviewed", defaultVisible: true },
@@ -254,6 +276,39 @@ function applyOverlay(routes: InventoryRoute[], overlay: Record<string, Inventor
   return routes.map((route) => ({ ...route, ...overlay[route.route] }));
 }
 
+function applyPageAccessPolicies(
+  routes: InventoryRoute[],
+  policies: PageAccessPolicy[],
+): InventoryRoute[] {
+  const policyByRoute = new Map(policies.map((policy) => [policy.route, policy]));
+
+  return routes.map((route) => {
+    const policy = policyByRoute.get(route.route);
+    const inferred = inferPageAccessDefaults({
+      route: route.route,
+      file: route.file,
+      category: route.category,
+    });
+
+    return {
+      ...route,
+      accessLevel: policy?.accessLevel ?? inferred.accessLevel,
+      permissionModule: policy?.permissionModule ?? inferred.permissionModule,
+      accessUpdatedAt: policy?.updatedAt ?? null,
+      accessIsExplicit: Boolean(policy),
+    };
+  });
+}
+
+async function fetchPageAccessPolicies(): Promise<PageAccessPolicy[]> {
+  const { data } = await apiFetch<{ data: PageAccessPolicy[] }>("/api/permissions/page-access");
+  return data;
+}
+
+function defaultModuleForRoute(route: InventoryRoute): PermissionModule {
+  return route.permissionModule ?? inferPageAccessDefaults(route).permissionModule ?? "directory";
+}
+
 function buildTabHref(pathname: string, searchParams: URLSearchParams, tab: SitemapTab): string {
   const nextParams = new URLSearchParams(searchParams.toString());
   if (tab === "all") nextParams.delete("tab");
@@ -302,6 +357,10 @@ function buildGroupedItems(routes: InventoryRoute[], groupBy: GroupBy, collapsed
       refCount: groupRoutes.length,
       file: "",
       refSample: "",
+      accessLevel: "signed_in",
+      permissionModule: null,
+      accessUpdatedAt: null,
+      accessIsExplicit: false,
       _group: group,
       _groupCount: groupRoutes.length,
     });
@@ -382,11 +441,71 @@ function fieldSelect<TValue extends string>({
   );
 }
 
+function pageAccessSelect({
+  value,
+  onChange,
+}: {
+  value: PageAccessLevel;
+  onChange: (value: PageAccessLevel) => void;
+}) {
+  return (
+    <Select value={value} onValueChange={(next) => onChange(next as PageAccessLevel)}>
+      <SelectTrigger
+        className="h-8 min-w-36 border-0 bg-transparent px-0 shadow-none focus:ring-0 focus:ring-offset-0"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {PAGE_ACCESS_LEVELS.map((option) => (
+          <SelectItem key={option} value={option}>
+            {PAGE_ACCESS_LEVEL_LABELS[option]}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function pageModuleSelect({
+  value,
+  disabled,
+  onChange,
+}: {
+  value: PermissionModule | null;
+  disabled: boolean;
+  onChange: (value: PermissionModule) => void;
+}) {
+  if (disabled) {
+    return <span className="text-xs text-muted-foreground">Not required</span>;
+  }
+
+  return (
+    <Select value={value ?? "directory"} onValueChange={(next) => onChange(next as PermissionModule)}>
+      <SelectTrigger
+        className="h-8 min-w-36 border-0 bg-transparent px-0 shadow-none focus:ring-0 focus:ring-offset-0"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {PAGE_ACCESS_MODULES.map((option) => (
+          <SelectItem key={option} value={option}>
+            {PAGE_ACCESS_MODULE_LABELS[option]}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 function buildColumns({
   overlay,
   selectedRouteId,
   collapsedGroups,
   onFieldChange,
+  onAccessChange,
+  onModuleChange,
   onToggleGroup,
   onOpenDetails,
   onMarkReviewed,
@@ -395,6 +514,8 @@ function buildColumns({
   selectedRouteId: string | null;
   collapsedGroups: Set<string>;
   onFieldChange: <TKey extends keyof InventoryOverlay>(route: string, key: TKey, value: InventoryOverlay[TKey]) => void;
+  onAccessChange: (route: InventoryRoute, accessLevel: PageAccessLevel) => void;
+  onModuleChange: (route: InventoryRoute, permissionModule: PermissionModule) => void;
   onToggleGroup: (group: string) => void;
   onOpenDetails: (route: string) => void;
   onMarkReviewed: (route: string) => void;
@@ -477,6 +598,33 @@ function buildColumns({
       render: (item) =>
         item._group
           ? null
+          : pageAccessSelect({
+              value: item.accessLevel,
+              onChange: (value) => onAccessChange(item, value),
+            }),
+      csvValue: (item) => PAGE_ACCESS_LEVEL_LABELS[item.accessLevel],
+      sortValue: (item) => item.accessLevel,
+      sortable: true,
+    },
+    {
+      ...columns[4],
+      render: (item) =>
+        item._group
+          ? null
+          : pageModuleSelect({
+              value: item.permissionModule,
+              disabled: !accessLevelRequiresModule(item.accessLevel),
+              onChange: (value) => onModuleChange(item, value),
+            }),
+      csvValue: (item) => item.permissionModule ? PAGE_ACCESS_MODULE_LABELS[item.permissionModule] : "",
+      sortValue: (item) => item.permissionModule ?? "",
+      sortable: true,
+    },
+    {
+      ...columns[5],
+      render: (item) =>
+        item._group
+          ? null
           : fieldSelect({
               value: item.status,
               options: STATUSES,
@@ -488,7 +636,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[4],
+      ...columns[6],
       width: 280,
       render: (item) => {
         if (item._group) return null;
@@ -515,7 +663,7 @@ function buildColumns({
       sortable: false,
     },
     {
-      ...columns[5],
+      ...columns[7],
       render: (item) =>
         item._group ? null : (
           <span className="text-xs text-muted-foreground">
@@ -527,7 +675,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[6],
+      ...columns[8],
       align: "right",
       render: (item) => (item._group ? null : <span className="text-xs text-muted-foreground">{item.refCount}</span>),
       csvValue: (item) => String(item.refCount),
@@ -535,7 +683,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[7],
+      ...columns[9],
       render: (item) => {
         if (item._group) return null;
         const canOpen = !isDynamicRoute(item.route);
@@ -579,6 +727,7 @@ function buildColumns({
 }
 
 export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) {
+  const queryClient = useQueryClient();
   const rawSearchParams = useSearchParams()!;
   const searchParams = rawSearchParams ?? new URLSearchParams();
   const pathname = usePathname()! ?? "";
@@ -602,7 +751,41 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
     return () => window.clearTimeout(timeout);
   }, [savedAt]);
 
-  const mergedRoutes = useMemo(() => applyOverlay(routes, overlay), [routes, overlay]);
+  const pageAccessQuery = useQuery({
+    queryKey: ["page-access-policies"],
+    queryFn: fetchPageAccessPolicies,
+  });
+
+  const pageAccessMutation = useMutation({
+    mutationFn: async (policies: PageAccessPolicyInput[]) => {
+      const normalizedPolicies = policies.map(normalizePageAccessInput);
+      const { data } = await apiFetch<{ data: PageAccessPolicy[] }>("/api/permissions/page-access", {
+        method: "PUT",
+        body: JSON.stringify({ policies: normalizedPolicies }),
+      });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["page-access-policies"] });
+      toast.success("Page access saved");
+    },
+    onError: (error) => {
+      reportNonCriticalFailure({
+        area: "site-map",
+        operation: "save-page-access-policy",
+        error,
+        userVisibleFallback: "Page access was not saved.",
+      });
+      toast.error("Page access was not saved. Try refreshing the page.");
+    },
+  });
+
+  const routesWithAccess = useMemo(
+    () => applyPageAccessPolicies(routes, pageAccessQuery.data ?? []),
+    [pageAccessQuery.data, routes],
+  );
+
+  const mergedRoutes = useMemo(() => applyOverlay(routesWithAccess, overlay), [routesWithAccess, overlay]);
 
   const tableState = useUnifiedTableState({
     entityKey: "sitemap-inventory",
@@ -694,6 +877,69 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
       return next;
     });
   }, [persistOverlay, selectedIds]);
+
+  const handleAccessChange = useCallback(
+    (route: InventoryRoute, accessLevel: PageAccessLevel) => {
+      pageAccessMutation.mutate([
+        {
+          route: route.route,
+          accessLevel,
+          permissionModule: accessLevelRequiresModule(accessLevel)
+            ? defaultModuleForRoute(route)
+            : null,
+        },
+      ]);
+    },
+    [pageAccessMutation],
+  );
+
+  const handleModuleChange = useCallback(
+    (route: InventoryRoute, permissionModule: PermissionModule) => {
+      pageAccessMutation.mutate([
+        {
+          route: route.route,
+          accessLevel: route.accessLevel,
+          permissionModule,
+        },
+      ]);
+    },
+    [pageAccessMutation],
+  );
+
+  const handleBulkAccessChange = useCallback(
+    (accessLevel: PageAccessLevel) => {
+      const selectedRoutes = mergedRoutes.filter((route) => selectedIds.includes(route.route));
+      if (selectedRoutes.length === 0) return;
+
+      pageAccessMutation.mutate(
+        selectedRoutes.map((route) => ({
+          route: route.route,
+          accessLevel,
+          permissionModule: accessLevelRequiresModule(accessLevel)
+            ? defaultModuleForRoute(route)
+            : null,
+        })),
+      );
+    },
+    [mergedRoutes, pageAccessMutation, selectedIds],
+  );
+
+  const handleBulkModuleChange = useCallback(
+    (permissionModule: PermissionModule) => {
+      const selectedRoutes = mergedRoutes.filter((route) => selectedIds.includes(route.route));
+      const moduleRoutes = selectedRoutes.filter((route) => accessLevelRequiresModule(route.accessLevel));
+      if (moduleRoutes.length === 0) return;
+
+      pageAccessMutation.mutate(
+        moduleRoutes.map((route) => ({
+          route: route.route,
+          accessLevel: route.accessLevel,
+          permissionModule,
+        })),
+      );
+    },
+    [mergedRoutes, pageAccessMutation, selectedIds],
+  );
 
   const handleToggleGroup = useCallback((group: string) => {
     setCollapsedGroups((previous) => {
@@ -791,11 +1037,22 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
         selectedRouteId: activeRouteId,
         collapsedGroups,
         onFieldChange: handleFieldChange,
+        onAccessChange: handleAccessChange,
+        onModuleChange: handleModuleChange,
         onToggleGroup: handleToggleGroup,
         onOpenDetails: setActiveRouteId,
         onMarkReviewed: handleMarkReviewed,
       }),
-    [activeRouteId, collapsedGroups, handleFieldChange, handleMarkReviewed, handleToggleGroup, overlay],
+    [
+      activeRouteId,
+      collapsedGroups,
+      handleAccessChange,
+      handleFieldChange,
+      handleMarkReviewed,
+      handleModuleChange,
+      handleToggleGroup,
+      overlay,
+    ],
   );
 
   const totalPages = Math.max(1, Math.ceil(sortedRoutes.length / tableState.perPage));
@@ -847,6 +1104,26 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
     selectedIds.length > 0 ? (
       <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2">
         <span className="text-xs font-medium text-foreground">{selectedIds.length} selected</span>
+        <Select key={`access-${selectedIds.length}`} onValueChange={(value) => handleBulkAccessChange(value as PageAccessLevel)}>
+          <SelectTrigger className="h-8 w-40 bg-background text-xs">
+            <SelectValue placeholder="Set access" />
+          </SelectTrigger>
+          <SelectContent>
+            {PAGE_ACCESS_LEVELS.map((level) => (
+              <SelectItem key={level} value={level}>{PAGE_ACCESS_LEVEL_LABELS[level]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select key={`module-${selectedIds.length}`} onValueChange={(value) => handleBulkModuleChange(value as PermissionModule)}>
+          <SelectTrigger className="h-8 w-40 bg-background text-xs">
+            <SelectValue placeholder="Set module" />
+          </SelectTrigger>
+          <SelectContent>
+            {PAGE_ACCESS_MODULES.map((module) => (
+              <SelectItem key={module} value={module}>{PAGE_ACCESS_MODULE_LABELS[module]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select key={`category-${selectedIds.length}`} onValueChange={(value) => handleBulkFieldChange("category", value as InventoryCategory)}>
           <SelectTrigger className="h-8 w-40 bg-background text-xs">
             <SelectValue placeholder="Set category" />
@@ -892,11 +1169,12 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
   return (
     <UnifiedTablePage<InventoryRoute>
       header={{
-        title: "Sitemap",
-        description: `${filteredRoutes.length} of ${tabbedRoutes.length} generated inventory routes shown`,
+        title: "Page Access",
+        description: `${filteredRoutes.length} of ${tabbedRoutes.length} generated pages shown`,
         actions: (
           <div className="flex items-center gap-2">
             {savedAt ? <span className="text-xs text-muted-foreground">Saved</span> : null}
+            {pageAccessMutation.isPending ? <span className="text-xs text-muted-foreground">Saving access</span> : null}
             <Button variant="outline" size="sm" asChild className="h-8 gap-1.5 text-xs">
               <Link href="/sitemap.xml" target="_blank" rel="noreferrer">
                 XML Sitemap
@@ -930,7 +1208,12 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
         visibleColumns: tableState.visibleColumns,
         onColumnVisibilityChange: tableState.setVisibleColumns,
       }}
-      data={{ items: itemsForTable, isLoading: false, isFetching: false, error: null }}
+      data={{
+        items: itemsForTable,
+        isLoading: pageAccessQuery.isLoading,
+        isFetching: pageAccessQuery.isFetching,
+        error: pageAccessQuery.error instanceof Error ? pageAccessQuery.error : null,
+      }}
       table={{
         columns: tableColumns,
         getRowId: (item) => item.route,
@@ -987,6 +1270,14 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
 
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
+                      <p className="text-xs text-muted-foreground">Access</p>
+                      <p className="font-medium">{PAGE_ACCESS_LEVEL_LABELS[activeRoute.accessLevel]}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Access source</p>
+                      <p className="font-medium">{activeRoute.accessIsExplicit ? "Explicit" : "Inferred"}</p>
+                    </div>
+                    <div>
                       <p className="text-xs text-muted-foreground">Category</p>
                       <p className="font-medium">{activeRoute.category}</p>
                     </div>
@@ -1001,6 +1292,43 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
                     <div>
                       <p className="text-xs text-muted-foreground">References</p>
                       <p className="font-medium">{activeRoute.refCount}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium text-foreground">Page Access</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Select
+                        value={activeRoute.accessLevel}
+                        onValueChange={(value) => handleAccessChange(activeRoute, value as PageAccessLevel)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PAGE_ACCESS_LEVELS.map((level) => (
+                            <SelectItem key={level} value={level}>
+                              {PAGE_ACCESS_LEVEL_LABELS[level]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select
+                        value={activeRoute.permissionModule ?? "directory"}
+                        disabled={!accessLevelRequiresModule(activeRoute.accessLevel)}
+                        onValueChange={(value) => handleModuleChange(activeRoute, value as PermissionModule)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PAGE_ACCESS_MODULES.map((module) => (
+                            <SelectItem key={module} value={module}>
+                              {PAGE_ACCESS_MODULE_LABELS[module]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 

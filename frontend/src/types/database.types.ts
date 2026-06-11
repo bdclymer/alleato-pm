@@ -3563,6 +3563,36 @@ export type Database = {
           },
         ]
       }
+      app_page_access_policies: {
+        Row: {
+          access_level: string
+          created_at: string
+          notes: string | null
+          permission_module: string | null
+          route: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          access_level?: string
+          created_at?: string
+          notes?: string | null
+          permission_module?: string | null
+          route: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          access_level?: string
+          created_at?: string
+          notes?: string | null
+          permission_module?: string | null
+          route?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       app_pages: {
         Row: {
           category: string | null
