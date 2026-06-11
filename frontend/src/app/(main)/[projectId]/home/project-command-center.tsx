@@ -16,9 +16,13 @@ import {
   ChevronRight,
   DollarSign,
   ExternalLink,
+  FileArchive,
+  FileCode2,
+  FileSpreadsheet,
   FileText,
   Image,
   MapPin,
+  Presentation,
   Search,
   Users,
 } from "lucide-react";
@@ -312,6 +316,149 @@ function isImageDocument(document: ProjectDocument): boolean {
   const extension = document.file_name.split(".").pop()?.toLowerCase() ?? "";
   const contentType = document.content_type?.toLowerCase() ?? "";
   return contentType.includes("image") || ["jpg", "jpeg", "png", "webp", "gif"].includes(extension);
+}
+
+type DocumentPreviewKind =
+  | "spreadsheet"
+  | "document"
+  | "presentation"
+  | "archive"
+  | "code"
+  | "pdf"
+  | "image"
+  | "file";
+
+function getDocumentPreviewKind(document: ProjectDocument): DocumentPreviewKind {
+  const extension = document.file_name.split(".").pop()?.toLowerCase() ?? "";
+  const contentType = document.content_type?.toLowerCase() ?? "";
+
+  if (contentType.includes("image") || ["jpg", "jpeg", "png", "webp", "gif"].includes(extension)) {
+    return "image";
+  }
+  if (contentType.includes("pdf") || extension === "pdf") return "pdf";
+  if (
+    contentType.includes("spreadsheet") ||
+    contentType.includes("excel") ||
+    ["xls", "xlsx", "xlsm", "csv"].includes(extension)
+  ) {
+    return "spreadsheet";
+  }
+  if (
+    contentType.includes("presentation") ||
+    ["ppt", "pptx", "pptm"].includes(extension)
+  ) {
+    return "presentation";
+  }
+  if (
+    contentType.includes("word") ||
+    contentType.includes("document") ||
+    ["doc", "docx", "rtf", "txt"].includes(extension)
+  ) {
+    return "document";
+  }
+  if (["zip", "rar", "7z", "tar", "gz"].includes(extension)) return "archive";
+  if (["json", "xml", "html", "css", "js", "ts", "tsx", "sql"].includes(extension)) return "code";
+  return "file";
+}
+
+function DocumentTypePreview({
+  document,
+  title,
+}: {
+  document: ProjectDocument;
+  title: string;
+}) {
+  const kind = getDocumentPreviewKind(document);
+  const extension = documentExtension(document.file_name);
+  const meta = document.folder ?? document.source_system ?? "Project file";
+  const styles: Record<
+    Exclude<DocumentPreviewKind, "image" | "pdf">,
+    {
+      icon: React.ComponentType<{ className?: string }>;
+      accent: string;
+      panel: string;
+      label: string;
+    }
+  > = {
+    spreadsheet: {
+      icon: FileSpreadsheet,
+      accent: "text-emerald-700",
+      panel: "bg-emerald-50/80",
+      label: "Spreadsheet",
+    },
+    document: {
+      icon: FileText,
+      accent: "text-sky-700",
+      panel: "bg-sky-50/80",
+      label: "Document",
+    },
+    presentation: {
+      icon: Presentation,
+      accent: "text-amber-700",
+      panel: "bg-amber-50/80",
+      label: "Deck",
+    },
+    archive: {
+      icon: FileArchive,
+      accent: "text-stone-700",
+      panel: "bg-stone-100/80",
+      label: "Archive",
+    },
+    code: {
+      icon: FileCode2,
+      accent: "text-violet-700",
+      panel: "bg-violet-50/80",
+      label: "Source",
+    },
+    file: {
+      icon: FileText,
+      accent: "text-muted-foreground",
+      panel: "bg-muted/60",
+      label: "File",
+    },
+  };
+  const style = styles[kind === "image" || kind === "pdf" ? "file" : kind];
+  const Icon = style.icon;
+
+  return (
+    <div className={cn("flex h-full w-full flex-col p-3", style.panel)}>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <Icon className={cn("h-4 w-4 shrink-0", style.accent)} />
+        <span className="rounded-sm bg-background/85 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-foreground">
+          {extension}
+        </span>
+      </div>
+      {kind === "spreadsheet" ? (
+        <div className="grid flex-1 grid-cols-4 gap-px overflow-hidden rounded-sm border border-emerald-700/15 bg-background/80">
+          {Array.from({ length: 16 }).map((_, index) => (
+            <span
+              key={index}
+              className={cn(
+                "min-h-0 bg-background",
+                index < 4 && "bg-emerald-100/80",
+                index % 4 === 0 && "bg-emerald-50",
+              )}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-1 flex-col justify-end gap-1.5">
+          <span className={cn("text-[11px] font-medium", style.accent)}>{style.label}</span>
+          <div className="space-y-1">
+            <span className="block h-1.5 w-11/12 rounded-full bg-foreground/15" />
+            <span className="block h-1.5 w-4/5 rounded-full bg-foreground/12" />
+            <span className="block h-1.5 w-2/3 rounded-full bg-foreground/10" />
+          </div>
+        </div>
+      )}
+      <div className="mt-2 min-w-0">
+        <p className="truncate text-[11px] font-medium leading-tight text-foreground/85">
+          {title}
+        </p>
+        <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{meta}</p>
+      </div>
+    </div>
+  );
 }
 
 function isClosedStatus(status: string | null | undefined): boolean {
@@ -1179,11 +1326,13 @@ export function ProjectCommandCenter({
                     className="h-full w-full pointer-events-none bg-background"
                   />
                 ) : (
-                  <FileText className="h-6 w-6" />
+                  <DocumentTypePreview document={document} title={title} />
                 )}
-                <span className="absolute bottom-1.5 right-1.5 rounded-sm bg-background/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-foreground shadow-xs">
-                  {documentExtension(document.file_name)}
-                </span>
+                {previewable && (
+                  <span className="absolute bottom-1.5 right-1.5 rounded-sm bg-background/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-foreground shadow-xs">
+                    {documentExtension(document.file_name)}
+                  </span>
+                )}
               </div>
               <div className="min-w-0 px-2.5 py-2">
                 <p className="truncate text-xs font-medium leading-tight text-foreground">
