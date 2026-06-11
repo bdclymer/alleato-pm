@@ -232,9 +232,15 @@ export interface TableColumn<T> extends ColumnConfig {
   sortable?: boolean;
   sortValue?: (item: T) => string | number | null | undefined;
   align?: "left" | "center" | "right";
+  /**
+   * Inline editing is opt-in per column. Keep identifier/name columns as links
+   * and mark operational fields editable so table views can update records in place.
+   */
   editable?: boolean;
   editValue?: (item: T) => string;
   onEdit?: (item: T, value: string) => void | Promise<void>;
+  editEmptyLabel?: string;
+  editInputType?: React.HTMLInputTypeAttribute;
   /** Preferred column width in pixels. Applied as default when the user has not manually resized. */
   width?: number;
   /** Custom editor widget (e.g. dropdown select). Receives current value, onChange, onCommit, and onCancel. */
@@ -242,7 +248,7 @@ export interface TableColumn<T> extends ColumnConfig {
     item: T;
     value: string;
     onChange: (value: string) => void;
-    onCommit: () => void;
+    onCommit: (value?: string) => void;
     onCancel: () => void;
   }) => ReactNode;
 }
@@ -889,6 +895,10 @@ export function UnifiedTablePage<T>({
     columnId: string;
   } | null>(null);
   const [editingValue, setEditingValue] = React.useState("");
+  const [savingCell, setSavingCell] = React.useState<{
+    rowId: string;
+    columnId: string;
+  } | null>(null);
   const [inlineEdits, setInlineEdits] = React.useState<Record<string, string>>(
     {},
   );
@@ -1609,10 +1619,14 @@ export function UnifiedTablePage<T>({
       }
 
       try {
+        setSavingCell({ rowId, columnId: column.id });
         if (column.onEdit) {
           await column.onEdit(item, nextValue);
         }
         setInlineEdits((prev) => ({ ...prev, [cellKey]: nextValue }));
+        toast.success(`${column.label} updated`, {
+          id: `unified-table-cell-updated-${column.id}`,
+        });
       } catch (error) {
         toast.error("Cell update issue", {
           id: "unified-table-cell-update",
@@ -1622,6 +1636,7 @@ export function UnifiedTablePage<T>({
       } finally {
         setEditingCell(null);
         setEditingValue("");
+        setSavingCell(null);
       }
     },
     [inlineEdits],
@@ -2417,6 +2432,13 @@ export function UnifiedTablePage<T>({
                       {orderedVisibleColumns.map((column) => (
                         <TableCell
                           key={column.id}
+                          data-editable-cell={
+                            resolvedFeatures.enableInlineEditing &&
+                            column.editable &&
+                            column.editValue
+                              ? "true"
+                              : undefined
+                          }
                           style={
                             columnWidths[column.id] ||
                             column.width ||
@@ -2435,13 +2457,29 @@ export function UnifiedTablePage<T>({
                               : undefined
                           }
                           className={cn(
-                            "group/cell relative",
+                            "group/cell relative align-middle",
                             resolvedFeatures.enableInlineEditing &&
                               column.editable &&
                               column.editValue
-                              ? "hover:bg-muted/60 transition-colors"
+                              ? "cursor-text hover:bg-muted/50 transition-colors focus-within:bg-muted/40"
                               : "",
                           )}
+                          onClick={(event) => {
+                            if (
+                              !(
+                                resolvedFeatures.enableInlineEditing &&
+                                column.editable &&
+                                column.editValue
+                              )
+                            ) {
+                              return;
+                            }
+                            if (isInteractiveRowTarget(event.target)) {
+                              return;
+                            }
+                            event.stopPropagation();
+                            startInlineEdit(item, column);
+                          }}
                         >
                           {editingCell?.rowId === table.getRowId(item) &&
                           editingCell.columnId === column.id &&
@@ -2453,12 +2491,12 @@ export function UnifiedTablePage<T>({
                                 item,
                                 value: editingValue,
                                 onChange: setEditingValue,
-                                onCommit: () =>
+                                onCommit: (nextValue) =>
                                   void commitInlineEdit(
                                     item,
                                     column,
                                     table.getRowId(item),
-                                    editingValue,
+                                    nextValue ?? editingValue,
                                   ),
                                 onCancel: () => {
                                   setEditingCell(null);
@@ -2467,9 +2505,15 @@ export function UnifiedTablePage<T>({
                               })
                             ) : (
                               <Input
-                                className="h-7 w-full rounded border border-border bg-background px-2 text-sm -my-0.5"
+                                type={column.editInputType}
+                                variant="inline"
+                                className="h-8 w-full px-0 text-sm"
                                 value={editingValue}
                                 autoFocus
+                                disabled={
+                                  savingCell?.rowId === table.getRowId(item) &&
+                                  savingCell.columnId === column.id
+                                }
                                 onChange={(event) =>
                                   setEditingValue(event.target.value)
                                 }
@@ -2511,24 +2555,23 @@ export function UnifiedTablePage<T>({
                           ) : resolvedFeatures.enableInlineEditing &&
                             column.editable &&
                             column.editValue ? (
-                            <>
-                              <div className="pr-7">{column.render(item)}</div>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 rounded-sm text-muted-foreground/55 opacity-0 transition-opacity hover:text-foreground group-hover/cell:opacity-100 focus-visible:opacity-100"
-                                aria-label={`Edit ${column.label}`}
-                                title={`Edit ${column.label}`}
-                                data-row-interactive="true"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  startInlineEdit(item, column);
-                                }}
-                              >
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Button>
-                            </>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              className="flex h-auto min-h-8 w-full min-w-0 items-center justify-between gap-2 px-0 py-0 text-left font-normal hover:bg-transparent focus-visible:ring-1 focus-visible:ring-ring"
+                              data-row-interactive="true"
+                              aria-label={`Edit ${column.label}`}
+                              title={`Edit ${column.label}`}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                startInlineEdit(item, column);
+                              }}
+                            >
+                              <span className="min-w-0 flex-1 truncate">
+                                {column.render(item)}
+                              </span>
+                              <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50 opacity-0 transition-opacity group-hover/cell:opacity-100 group-focus-within/cell:opacity-100" />
+                            </Button>
                           ) : (
                             column.render(item)
                           )}

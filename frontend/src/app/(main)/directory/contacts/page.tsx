@@ -6,12 +6,10 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { formatDate } from "@/lib/format";
 import {
   Building2,
-  Check,
   ChevronLeft,
   ChevronRight,
   Mail,
   MoreHorizontal,
-  Pencil,
   Phone,
   Plus,
   Trash2,
@@ -21,6 +19,7 @@ import {
 import { toast } from "sonner";
 
 import { createClient } from "@/lib/supabase/client";
+import { apiFetch } from "@/lib/api-client";
 import { useConfirm } from "@/hooks/use-confirm";
 import { getDirectoryTabs } from "@/config/directory-tabs";
 import { ContactFormSheet } from "@/components/domain/contacts/ContactFormSheet";
@@ -30,13 +29,13 @@ import {
   CellEmail,
   CellLink,
   CellText,
+  InlineSelectEditor,
   TableDateValue,
   type CellColorMap,
 } from "@/components/tables/unified";
 import type { ColumnConfig, TableColumn } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,13 +51,17 @@ import {
   type ContactTableRow,
 } from "@/features/contacts/directory-contacts-table-definition";
 
-type InlineEditDraft = Pick<ContactTableRow, "first_name" | "last_name" | "email" | "type" | "phone">;
-
 const CONTACT_TYPE_COLORS: CellColorMap = {
   user: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
   employee: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
   contact: "bg-muted text-muted-foreground",
 };
+
+const CONTACT_TYPE_OPTIONS = [
+  { value: "contact", label: "Contact" },
+  { value: "employee", label: "Employee" },
+  { value: "user", label: "User" },
+];
 
 function escapeCsvValue(value: string): string {
   if (value.includes(",") || value.includes("\"") || value.includes("\n")) {
@@ -68,71 +71,50 @@ function escapeCsvValue(value: string): string {
 }
 
 function buildContactTableColumns(
-  editingContactId: string | null,
-  inlineDraft: InlineEditDraft,
-  onInlineDraftChange: (field: keyof InlineEditDraft, value: string) => void,
+  onInlineEdit: (contact: ContactTableRow, field: string, value: string) => Promise<void>,
 ): TableColumn<ContactTableRow>[] {
   return [
     {
       ...contactColumns[0],
-      render: (item) =>
-        editingContactId === item.id ? (
-          <div className="flex gap-2">
-            <Input
-              value={inlineDraft.first_name}
-              onChange={(event) => onInlineDraftChange("first_name", event.target.value)}
-              placeholder="First name"
-              className="h-8 min-w-32"
-            />
-            <Input
-              value={inlineDraft.last_name}
-              onChange={(event) => onInlineDraftChange("last_name", event.target.value)}
-              placeholder="Last name"
-              className="h-8 min-w-32"
-            />
-          </div>
-        ) : (
-          <CellLink
-            value={item.full_name}
-            href={`/directory/contacts/${item.id}`}
-            className="font-medium"
-          />
-        ),
+      render: (item) => (
+        <CellLink
+          value={item.full_name}
+          href={`/directory/contacts/${item.id}`}
+          className="font-medium"
+        />
+      ),
       sortValue: (item) => item.full_name,
       csvValue: (item) => item.full_name,
     },
     {
       ...contactColumns[1],
-      render: (item) =>
-        editingContactId === item.id ? (
-          <Input
-            type="email"
-            value={inlineDraft.email}
-            onChange={(event) => onInlineDraftChange("email", event.target.value)}
-            placeholder="email@example.com"
-            className="h-8"
-          />
-        ) : (
-          <span>{item.email || "-"}</span>
-        ),
+      render: (item) => <CellText value={item.email} emptyLabel="-" />,
       sortValue: (item) => item.email || "",
       csvValue: (item) => item.email || "",
+      editable: true,
+      editInputType: "email",
+      editValue: (item) => item.email || "",
+      onEdit: (item, value) => onInlineEdit(item, "email", value),
     },
     {
       ...contactColumns[2],
-      render: (item) =>
-        editingContactId === item.id ? (
-          <Input
-            value={inlineDraft.type}
-            onChange={(event) => onInlineDraftChange("type", event.target.value)}
-            placeholder="Type"
-            className="h-8"
-          />
-        ) : (
-          <CellBadge value={item.type} colorMap={CONTACT_TYPE_COLORS} emptyLabel="-" />
-        ),
+      render: (item) => (
+        <CellBadge value={item.type} colorMap={CONTACT_TYPE_COLORS} emptyLabel="-" />
+      ),
       sortValue: (item) => item.type || "",
       csvValue: (item) => item.type || "",
+      editable: true,
+      editValue: (item) => item.type || "contact",
+      onEdit: (item, value) => onInlineEdit(item, "type", value),
+      renderEditor: ({ value, onChange, onCommit }) => (
+        <InlineSelectEditor
+          value={value || "contact"}
+          options={CONTACT_TYPE_OPTIONS}
+          placeholder="Select contact type"
+          onChange={onChange}
+          onCommit={onCommit}
+        />
+      ),
     },
     {
       ...contactColumns[3],
@@ -148,19 +130,13 @@ function buildContactTableColumns(
     },
     {
       ...contactColumns[4],
-      render: (item) =>
-        editingContactId === item.id ? (
-          <Input
-            value={inlineDraft.phone}
-            onChange={(event) => onInlineDraftChange("phone", event.target.value)}
-            placeholder="Phone"
-            className="h-8"
-          />
-        ) : (
-          <span>{item.phone || "-"}</span>
-        ),
+      render: (item) => <CellText value={item.phone} emptyLabel="-" />,
       sortValue: (item) => item.phone || "",
       csvValue: (item) => item.phone || "",
+      editable: true,
+      editInputType: "tel",
+      editValue: (item) => item.phone || "",
+      onEdit: (item, value) => onInlineEdit(item, "phone", value),
     },
     {
       ...contactColumns[5],
@@ -353,14 +329,6 @@ export default function DirectoryContactsPage(): ReactElement {
   const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
   const { confirm, ConfirmDialog } = useConfirm();
   const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [editingContactId, setEditingContactId] = React.useState<string | null>(null);
-  const [inlineDraft, setInlineDraft] = React.useState<InlineEditDraft>({
-    first_name: "",
-    last_name: "",
-    email: "",
-    type: "",
-    phone: "",
-  });
 
   const {
     tableState,
@@ -396,71 +364,22 @@ export default function DirectoryContactsPage(): ReactElement {
   const activeContactId = selectedContact?.id ?? null;
 
   const tabs = getDirectoryTabs(pathname);
-  const onInlineDraftChange = React.useCallback((field: keyof InlineEditDraft, value: string) => {
-    setInlineDraft((prev) => ({ ...prev, [field]: value }));
-  }, []);
 
-  const tableColumns = React.useMemo(
-    () => buildContactTableColumns(editingContactId, inlineDraft, onInlineDraftChange),
-    [editingContactId, inlineDraft, onInlineDraftChange],
+  const handleInlineContactEdit = React.useCallback(
+    async (contact: ContactTableRow, field: string, value: string) => {
+      await apiFetch(`/api/directory/contacts/${contact.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ [field]: value || null }),
+      });
+      await refresh();
+    },
+    [refresh],
   );
 
-  const handleStartInlineEdit = (contact: ContactTableRow) => {
-    setEditingContactId(contact.id);
-    setInlineDraft({
-      first_name: contact.first_name,
-      last_name: contact.last_name,
-      email: contact.email,
-      type: contact.type,
-      phone: contact.phone,
-    });
-  };
-
-  const handleCancelInlineEdit = () => {
-    setEditingContactId(null);
-    setInlineDraft({
-      first_name: "",
-      last_name: "",
-      email: "",
-      type: "",
-      phone: "",
-    });
-  };
-
-  const handleSaveInlineEdit = async () => {
-    if (!editingContactId) {
-      return;
-    }
-    const firstName = inlineDraft.first_name.trim();
-    const lastName = inlineDraft.last_name.trim();
-    const personType = inlineDraft.type.trim();
-    if (!firstName || !lastName || !personType) {
-      toast.error("First name, last name, and type are required.");
-      return;
-    }
-
-    const supabase = createClient();
-    const { error: updateError } = await supabase
-      .from("people")
-      .update({
-        first_name: firstName,
-        last_name: lastName,
-        email: inlineDraft.email.trim() || null,
-        person_type: personType,
-        phone_business: inlineDraft.phone.trim() || null,
-        phone_mobile: inlineDraft.phone.trim() || null,
-      })
-      .eq("id", editingContactId);
-
-    if (updateError) {
-      toast.error(updateError.message || "Failed to update contact.");
-      return;
-    }
-
-    toast.success("Contact updated.");
-    handleCancelInlineEdit();
-    await refresh();
-  };
+  const tableColumns = React.useMemo(
+    () => buildContactTableColumns(handleInlineContactEdit),
+    [handleInlineContactEdit],
+  );
 
   const deleteContacts = React.useCallback(async (ids: string[]): Promise<boolean> => {
     if (ids.length === 0) return true;
@@ -496,9 +415,6 @@ export default function DirectoryContactsPage(): ReactElement {
     const deleted = await deleteContacts([contact.id]);
     if (!deleted) return;
     toast.success("Contact deleted.");
-    if (editingContactId === contact.id) {
-      handleCancelInlineEdit();
-    }
     tableState.setSelectedIds((prev) => prev.filter((id) => id !== contact.id));
     await refresh();
   };
@@ -517,9 +433,6 @@ export default function DirectoryContactsPage(): ReactElement {
     const deleted = await deleteContacts(selectedIds);
     if (!deleted) return;
     toast.success(`${selectedIds.length} contact(s) deleted.`);
-    if (editingContactId && selectedIds.includes(editingContactId)) {
-      handleCancelInlineEdit();
-    }
     tableState.setSelectedIds([]);
     await refresh();
   };
@@ -574,19 +487,6 @@ export default function DirectoryContactsPage(): ReactElement {
   };
 
   const renderRowActions = (contact: ContactTableRow) => {
-    if (editingContactId === contact.id) {
-      return (
-        <div className="flex items-center justify-end gap-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleSaveInlineEdit}>
-            <Check />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleCancelInlineEdit}>
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      );
-    }
-
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -595,10 +495,6 @@ export default function DirectoryContactsPage(): ReactElement {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => handleStartInlineEdit(contact)}>
-            <Pencil className="mr-2 h-4 w-4" />
-            Edit Contact
-          </DropdownMenuItem>
           <DropdownMenuItem
             className="text-destructive"
             onClick={() => void handleDeleteContact(contact)}
@@ -729,6 +625,7 @@ export default function DirectoryContactsPage(): ReactElement {
           enableBulkDelete: true,
           enableRowSelection: true,
           enableRowActions: true,
+          enableInlineEditing: true,
         }}
         layout={{
           fullBleedTable: true,

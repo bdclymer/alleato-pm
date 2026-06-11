@@ -22,10 +22,10 @@ import {
   UnifiedTablePage,
   CellBadge,
   CellText,
-  CellEmail,
   CellLink,
   TableDateValue,
   TablePageActions,
+  InlineSelectEditor,
   type FilterValue,
   type CellColorMap,
 } from "@/components/tables/unified";
@@ -33,6 +33,7 @@ import type { ColumnConfig, FilterConfig, TableColumn } from "@/components/table
 import { useServerTableDefinition } from "@/features/tables/server-table";
 import {
   companyColumns,
+  companyFilters,
   createGlobalCompaniesTableDefinition,
   EMPTY_COMPANY_FILTERS,
   type CompanyFilterState,
@@ -53,7 +54,22 @@ const TYPE_COLORS: CellColorMap = {
   "connected company": "bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300",
 };
 
-function buildCompanyTableColumns(): TableColumn<CompanyRow>[] {
+const COMPANY_TYPE_OPTIONS = [
+  { value: "client", label: "Client" },
+  { value: "vendor", label: "Vendor" },
+  { value: "subcontractor", label: "Subcontractor" },
+  { value: "supplier", label: "Supplier" },
+  { value: "connected company", label: "Connected Company" },
+];
+
+const COMPANY_STATUS_OPTIONS = [
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+];
+
+function buildCompanyTableColumns(
+  onInlineEdit: (company: CompanyRow, field: string, value: string) => Promise<void>,
+): TableColumn<CompanyRow>[] {
   const colMap = Object.fromEntries(companyColumns.map((c) => [c.id, c]));
   const col = (id: string) => colMap[id];
 
@@ -72,11 +88,33 @@ function buildCompanyTableColumns(): TableColumn<CompanyRow>[] {
       ...col("company_type"),
       render: (item) => <CellBadge value={item.company_type} colorMap={TYPE_COLORS} emptyLabel="-" />,
       sortValue: (item) => item.company_type || "",
+      editable: true,
+      editValue: (item) => item.company_type?.toLowerCase() || "",
+      onEdit: (item, value) => onInlineEdit(item, "company_type", value),
+      renderEditor: ({ value, onChange, onCommit }) => (
+        <InlineSelectEditor
+          value={value || "vendor"}
+          options={COMPANY_TYPE_OPTIONS}
+          onChange={onChange}
+          onCommit={onCommit}
+        />
+      ),
     },
     {
       ...col("status"),
       render: (item) => <CellBadge value={item.status} colorMap={STATUS_COLORS} emptyLabel="-" />,
       sortValue: (item) => item.status || "",
+      editable: true,
+      editValue: (item) => item.status?.toLowerCase() || "active",
+      onEdit: (item, value) => onInlineEdit(item, "status", value),
+      renderEditor: ({ value, onChange, onCommit }) => (
+        <InlineSelectEditor
+          value={value || "active"}
+          options={COMPANY_STATUS_OPTIONS}
+          onChange={onChange}
+          onCommit={onCommit}
+        />
+      ),
     },
     {
       ...col("contact_count"),
@@ -100,25 +138,40 @@ function buildCompanyTableColumns(): TableColumn<CompanyRow>[] {
       ...col("business_phone"),
       render: (item) => <CellText value={item.business_phone} emptyLabel="-" />,
       sortValue: (item) => item.business_phone || "",
+      editable: true,
+      editInputType: "tel",
+      editValue: (item) => item.business_phone || "",
+      onEdit: (item, value) => onInlineEdit(item, "business_phone", value),
     },
     {
       ...col("website"),
       render: (item) => {
         if (!item.website) return <span className="text-muted-foreground">-</span>;
         const display = item.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
-        return <CellLink value={display} href={item.website} external />;
+        return <CellText value={display} />;
       },
       sortValue: (item) => item.website || "",
+      editable: true,
+      editInputType: "url",
+      editValue: (item) => item.website || "",
+      onEdit: (item, value) => onInlineEdit(item, "website", value),
     },
     {
       ...col("email_address"),
-      render: (item) => <CellEmail value={item.email_address} emptyLabel="-" />,
+      render: (item) => <CellText value={item.email_address} emptyLabel="-" />,
       sortValue: (item) => item.email_address || "",
+      editable: true,
+      editInputType: "email",
+      editValue: (item) => item.email_address || "",
+      onEdit: (item, value) => onInlineEdit(item, "email_address", value),
     },
     {
       ...col("erp_vendor_id"),
       render: (item) => <CellText value={item.erp_vendor_id} emptyLabel="-" />,
       sortValue: (item) => item.erp_vendor_id || "",
+      editable: true,
+      editValue: (item) => item.erp_vendor_id || "",
+      onEdit: (item, value) => onInlineEdit(item, "erp_vendor_id", value),
     },
     {
       ...col("created_at"),
@@ -225,7 +278,7 @@ function CompanyPreviewPane({
             <h3 className="text-sm font-semibold leading-tight truncate">{displayName}</h3>
             <div className="mt-1.5 flex flex-wrap items-center gap-2">
               {typeLabel && (
-                <span className="inline-flex items-center rounded-md border border-border bg-card px-2 py-0.5 text-[11px] font-medium text-foreground">
+                <span className="text-xs text-muted-foreground">
                   {typeLabel}
                 </span>
               )}
@@ -344,6 +397,17 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
 
   const [isSyncing, setIsSyncing] = React.useState(false);
 
+  const handleInlineCompanyEdit = React.useCallback(
+    async (company: CompanyRow, field: string, value: string) => {
+      await apiFetch(`/api/directory/companies/${company.company_id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ [field]: value || null }),
+      });
+      await refresh();
+    },
+    [refresh],
+  );
+
   const handleErpSync = React.useCallback(async () => {
     setIsSyncing(true);
     try {
@@ -370,43 +434,18 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
     }
   }, [refresh]);
 
-  const companyTypeOptions = React.useMemo(() => {
-    const uniqueTypes = Array.from(
-      new Set(companies.map((company) => company.company_type).filter(Boolean)),
-    );
-    return uniqueTypes.map((type) => ({
-      value: String(type),
-      label: String(type),
-    }));
-  }, [companies]);
-
   const filters: FilterConfig[] = React.useMemo(() => {
-    const statusFilterConfig: FilterConfig = {
-      id: "status",
-      label: "Status",
-      type: "select",
-      options: [
-        { value: "ACTIVE", label: "Active" },
-        { value: "INACTIVE", label: "Inactive" },
-      ],
-    };
-
     if (forcedCompanyType) {
-      return [statusFilterConfig];
+      return companyFilters.filter((filter) => filter.id !== "company_type");
     }
 
-    return [
-      statusFilterConfig,
-      {
-        id: "company_type",
-        label: "Type",
-        type: "select",
-        options: companyTypeOptions,
-      },
-    ];
-  }, [companyTypeOptions, forcedCompanyType]);
+    return companyFilters;
+  }, [forcedCompanyType]);
 
-  const tableColumns = React.useMemo(() => buildCompanyTableColumns(), []);
+  const tableColumns = React.useMemo(
+    () => buildCompanyTableColumns(handleInlineCompanyEdit),
+    [handleInlineCompanyEdit],
+  );
   const selectedCompanyId = searchParams.get("detail");
   const selectedCompany =
     selectedCompanyId ? companies.find((company) => company.id === selectedCompanyId) ?? null : null;
@@ -501,8 +540,10 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
   const tabs = getDirectoryTabs(pathname);
   const isFiltered =
     Boolean(tableState.searchInput) ||
-    Boolean(activeFilters.status) ||
-    Boolean(activeFilters.company_type && activeFilters.company_type !== forcedCompanyType);
+    Object.entries(activeFilters).some(([key, value]) => {
+      if (forcedCompanyType && key === "company_type") return false;
+      return value !== undefined && value !== "" && value !== null;
+    });
 
   return (
     <UnifiedTablePage
@@ -614,6 +655,7 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
       features={{
         enableExport: false,
         enableBulkDelete: false,
+        enableInlineEditing: true,
       }}
       layout={{
         fullBleedTable: true,

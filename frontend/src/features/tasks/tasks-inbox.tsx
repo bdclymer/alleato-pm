@@ -2367,8 +2367,11 @@ export function TasksInbox({
     () =>
       buildTasksTableColumns(null, {
         onOpenPanel: openPanelForItem,
-        onUpdate: (id, patch) => {
-          void updateTaskRef.current(id, patch);
+        onUpdate: async (id, patch) => {
+          const saved = await updateTaskRef.current(id, patch);
+          if (!saved) {
+            throw new Error("Task update did not save.");
+          }
         },
         onDelete: (id) => {
           void deleteItemRef.current(id);
@@ -2819,6 +2822,7 @@ export function TasksInbox({
           enableExport: true,
           enableBulkDelete: true,
           enableRowSelection: true,
+          enableInlineEditing: true,
         }}
         layout={{
           fullBleedTable: false,

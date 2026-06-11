@@ -17,6 +17,25 @@ const SORT_FIELD_MAP: Record<string, string> = {
   updated_at: "updated_at",
 };
 
+function parseMinimumCount(value: string | null): number | null {
+  if (!value) return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  return parsed;
+}
+
+function applyTextFilter<T>(
+  query: T,
+  column: string,
+  value: string | null,
+): T {
+  if (!value?.trim()) return query;
+  return (query as { ilike: (column: string, pattern: string) => T }).ilike(
+    column,
+    `%${value.trim()}%`,
+  );
+}
+
 export const GET = withApiGuardrails(
   "directory/project-companies#GET",
   async ({ request }) => {
@@ -42,11 +61,28 @@ export const GET = withApiGuardrails(
     const status = searchParams.get("status") || "all";
     const company_type = searchParams.get("company_type") || "";
     const sort = searchParams.get("sort") || "updated_at:desc";
+    const companyName = searchParams.get("company_name");
+    const businessPhone = searchParams.get("business_phone");
+    const website = searchParams.get("website");
+    const emailAddress = searchParams.get("email_address");
+    const erpVendorId = searchParams.get("erp_vendor_id");
+    const primaryContactId = searchParams.get("primary_contact_id");
+    const logoUrl = searchParams.get("logo_url");
+    const createdAtFrom = searchParams.get("created_at_from");
+    const createdAtTo = searchParams.get("created_at_to");
+    const updatedAtFrom = searchParams.get("updated_at_from");
+    const updatedAtTo = searchParams.get("updated_at_to");
+    const contactCountMin = parseMinimumCount(
+      searchParams.get("contact_count_min"),
+    );
+    const projectCountMin = parseMinimumCount(
+      searchParams.get("project_count_min"),
+    );
 
     // Query companies directly using the type column
     let query = supabase
       .from("companies")
-      .select("id, name, website, type, status, contact_phone, contact_email, acumatica_vendor_id, logo_url, created_at, updated_at", { count: "exact" });
+      .select("id, name, website, type, status, contact_phone, contact_email, acumatica_vendor_id, primary_contact_id, logo_url, created_at, updated_at", { count: "exact" });
 
     if (status !== "all") {
       query = query.eq("status", status);
@@ -54,6 +90,30 @@ export const GET = withApiGuardrails(
 
     if (company_type) {
       query = query.ilike("type", company_type);
+    }
+
+    query = applyTextFilter(query, "name", companyName);
+    query = applyTextFilter(query, "contact_phone", businessPhone);
+    query = applyTextFilter(query, "website", website);
+    query = applyTextFilter(query, "contact_email", emailAddress);
+    query = applyTextFilter(query, "acumatica_vendor_id", erpVendorId);
+    query = applyTextFilter(query, "primary_contact_id", primaryContactId);
+    query = applyTextFilter(query, "logo_url", logoUrl);
+
+    if (createdAtFrom) {
+      query = query.gte("created_at", `${createdAtFrom}T00:00:00.000Z`);
+    }
+
+    if (createdAtTo) {
+      query = query.lte("created_at", `${createdAtTo}T23:59:59.999Z`);
+    }
+
+    if (updatedAtFrom) {
+      query = query.gte("updated_at", `${updatedAtFrom}T00:00:00.000Z`);
+    }
+
+    if (updatedAtTo) {
+      query = query.lte("updated_at", `${updatedAtTo}T23:59:59.999Z`);
     }
 
     if (search) {
@@ -72,7 +132,11 @@ export const GET = withApiGuardrails(
 
     const from = (page - 1) * per_page;
     const to = from + per_page - 1;
-    query = query.range(from, to);
+    const hasDerivedCountFilter =
+      contactCountMin !== null || projectCountMin !== null;
+    if (!hasDerivedCountFilter) {
+      query = query.range(from, to);
+    }
 
     const { data: companies, error, count } = await query;
 
@@ -113,13 +177,14 @@ export const GET = withApiGuardrails(
       }
     }
 
-    const rows = (companies || []).map((company) => ({
+    const rows = (companies || [])
+      .map((company) => ({
       id: company.id,
       project_id: 0,
       company_id: company.id,
       business_phone: company.contact_phone ?? null,
       email_address: company.contact_email ?? null,
-      primary_contact_id: null,
+      primary_contact_id: company.primary_contact_id ?? null,
       erp_vendor_id: company.acumatica_vendor_id ?? null,
       company_type: company.type ?? null,
       status: company.status ?? null,
@@ -130,13 +195,29 @@ export const GET = withApiGuardrails(
       website: company.website ?? null,
       contact_count: contactCountMap.get(company.id) ?? 0,
       project_count: projectCountMap.get(company.id) ?? 0,
-    }));
+      }))
+      .filter((company) => {
+        if (
+          contactCountMin !== null &&
+          company.contact_count < contactCountMin
+        ) {
+          return false;
+        }
+        if (
+          projectCountMin !== null &&
+          company.project_count < projectCountMin
+        ) {
+          return false;
+        }
+        return true;
+      });
 
-    const total = count || 0;
+    const pagedRows = hasDerivedCountFilter ? rows.slice(from, to + 1) : rows;
+    const total = hasDerivedCountFilter ? rows.length : count || 0;
     const total_pages = Math.ceil(total / per_page);
 
     return NextResponse.json({
-      data: rows,
+      data: pagedRows,
       pagination: {
         page,
         per_page,

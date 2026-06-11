@@ -25,6 +25,8 @@ interface SelectFieldProps extends FormFieldBaseProps {
   placeholder?: string;
   className?: string;
   dataTestId?: string;
+  /** Help text shown in a tooltip on an info icon next to the label. */
+  labelTooltip?: React.ReactNode;
 }
 
 export function SelectField({
@@ -40,6 +42,7 @@ export function SelectField({
   className,
   disabled = false,
   dataTestId,
+  labelTooltip,
 }: SelectFieldProps) {
   const triggerId = `select-field-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 
@@ -48,6 +51,7 @@ export function SelectField({
       label={label}
       error={error}
       hint={hint}
+      labelTooltip={labelTooltip}
       required={required}
       fullWidth={fullWidth}
     >

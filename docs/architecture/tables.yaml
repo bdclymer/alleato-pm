@@ -2181,7 +2181,8 @@ tables:
     domain: pipeline
     owner: pipeline
     status: live
-    purpose: "Per-resource delta sync tokens for Microsoft Graph. 325 rows."
+    purpose: "Per-resource delta sync tokens for Microsoft Graph. Per-user mailbox rows key resource_id by the bare mailbox email, not user:<email>."
+    gotchas: "Do not prefix mailbox resource_id values when reading graph_sync_state for stale-first sync selection; prefixed lookups match zero rows and collapse the limited mailbox batch into alphabetical order."
     relatedTables: []
 
   - name: ingestion_jobs

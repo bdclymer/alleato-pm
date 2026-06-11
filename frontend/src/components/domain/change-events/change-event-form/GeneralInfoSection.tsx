@@ -9,6 +9,7 @@ import {
   SelectField,
   TextField,
 } from "@/components/forms";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type {
   ChangeEventFormData,
   ChangeEventStatus,
@@ -159,7 +160,7 @@ export function GeneralInfoSection({
           value={formData.lineItemRevenueSource || ""}
           onValueChange={(value) => updateFormData({ lineItemRevenueSource: value })}
           placeholder="Select Revenue Source"
-          hint="Match Cost: auto-copies cost to revenue. Enter Manually: type revenue per line. Qty × Unit Cost: calculates from those fields."
+          labelTooltip="Match Cost: auto-copies cost to revenue. Enter Manually: type revenue per line. Qty × Unit Cost: calculates from those fields."
         />
         <SelectField
           label="Prime Contract For Markup Estimates"
@@ -173,28 +174,20 @@ export function GeneralInfoSection({
         <div className="md:col-span-3">
           <div className="space-y-2">
             <label className="text-sm font-medium leading-none">Expecting Revenue</label>
-            <div className="flex items-center gap-6">
+            <RadioGroup
+              value={formData.expectingRevenue ? "yes" : "no"}
+              onValueChange={(value) => updateFormData({ expectingRevenue: value === "yes" })}
+              className="flex items-center gap-6"
+            >
               <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="expectingRevenue"
-                  checked={formData.expectingRevenue === true}
-                  onChange={() => updateFormData({ expectingRevenue: true })}
-                  className="h-4 w-4 accent-primary"
-                />
+                <RadioGroupItem value="yes" />
                 <span className="text-sm">Yes</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="expectingRevenue"
-                  checked={formData.expectingRevenue === false}
-                  onChange={() => updateFormData({ expectingRevenue: false })}
-                  className="h-4 w-4 accent-primary"
-                />
+                <RadioGroupItem value="no" />
                 <span className="text-sm">No</span>
               </label>
-            </div>
+            </RadioGroup>
           </div>
         </div>
         <div className="md:col-span-3">

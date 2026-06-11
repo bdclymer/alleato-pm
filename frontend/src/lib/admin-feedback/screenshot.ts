@@ -1,4 +1,5 @@
 import { ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE } from "@/lib/admin-feedback/constants";
+import { compressImageDataUrl } from "@/lib/admin-feedback/compress-image";
 
 export async function captureTargetScreenshot(target: HTMLElement) {
   const captureRoot =
@@ -32,7 +33,11 @@ export async function captureTargetScreenshot(target: HTMLElement) {
     if (!dataUrl || dataUrl === "data:,") {
       throw new Error("Capture produced an empty image");
     }
-    return dataUrl;
+
+    // Full-page captures (e.g. the Budget table) can be many MB as PNG, which
+    // overflows the 4.5MB request-body limit on submit. Compress up front so
+    // the stored/annotated screenshot stays within budget.
+    return compressImageDataUrl(dataUrl);
   } finally {
     hidden.forEach(({ el, prev }) => {
       el.style.visibility = prev;

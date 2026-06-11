@@ -204,7 +204,9 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         line_items: lineItems as unknown as Json,
         created_by: user.id,
       })
-      .select()
+      // Return only metadata — the full line_items/grand_totals JSON can be
+      // large and the client discards it, so don't serialize it back.
+      .select("id, name, description, created_at, created_by, project_id")
       .single();
 
     if (insertError) return apiErrorResponse(insertError);

@@ -251,17 +251,6 @@ function FilterFields({
   activeFilters: Record<string, FilterValue>;
   onFilterChange: (filters: Record<string, FilterValue>) => void;
 }): ReactElement {
-  const selectFilters = filters.filter(
-    (filter) => filter.type === "select" && filter.options,
-  );
-  const dateFilters = filters.filter((filter) => filter.type === "date");
-  const dateRangeFilters = filters.filter(
-    (filter) => filter.type === "dateRange",
-  );
-  const inputFilters = filters.filter(
-    (filter) => filter.type === "number" || filter.type === "text",
-  );
-
   const formatDateValue = (date: Date): string => {
     const yyyy = date.getFullYear();
     const mm = String(date.getMonth() + 1).padStart(2, "0");
@@ -280,200 +269,235 @@ function FilterFields({
     });
   };
 
-  return (
-    <div className="space-y-2">
-      {selectFilters.map((filter) => {
-        const currentValue =
-          typeof activeFilters[filter.id] === "string"
-            ? (activeFilters[filter.id] as string)
-            : "";
+  const renderFilter = (filter: FilterConfig) => {
+    if (filter.type === "select" && filter.options) {
+      const currentValue =
+        typeof activeFilters[filter.id] === "string"
+          ? (activeFilters[filter.id] as string)
+          : "";
 
-        return (
-          <div
-            key={filter.id}
-            className="flex items-center justify-between gap-3 px-2 py-1.5"
+      return (
+        <div
+          key={filter.id}
+          className="flex items-center justify-between gap-3 px-2 py-1.5"
+        >
+          <span className="text-sm text-foreground">{filter.label}</span>
+          <Select
+            value={currentValue || "all"}
+            onValueChange={(nextValue) =>
+              onFilterChange({
+                ...activeFilters,
+                [filter.id]: nextValue === "all" ? undefined : nextValue,
+              })
+            }
           >
-            <span className="text-sm text-foreground">{filter.label}</span>
-            <Select
-              value={currentValue || "all"}
-              onValueChange={(nextValue) =>
-                onFilterChange({
-                  ...activeFilters,
-                  [filter.id]: nextValue === "all" ? undefined : nextValue,
-                })
-              }
-            >
-              <SelectTrigger className="h-8 w-45 bg-background text-sm">
-                <SelectValue placeholder="All" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All</SelectItem>
-                {filter.options?.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
+            <SelectTrigger className="h-8 w-45 bg-background text-sm">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              {filter.options.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      );
+    }
+
+    if (filter.type === "multiSelect" && filter.options) {
+      const currentValues = Array.isArray(activeFilters[filter.id])
+        ? (activeFilters[filter.id] as string[])
+        : [];
+      const selectedLabels = filter.options
+        .filter((option) => currentValues.includes(option.value))
+        .map((option) => option.label);
+      const summary =
+        selectedLabels.length === 0
+          ? "All"
+          : selectedLabels.length === 1
+            ? selectedLabels[0]
+            : `${selectedLabels.length} selected`;
+
+      return (
+        <div
+          key={filter.id}
+          className="flex items-center justify-between gap-3 px-2 py-1.5"
+        >
+          <span className="text-sm text-foreground">{filter.label}</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="h-8 w-45 justify-between px-3 text-left text-sm font-normal"
+              >
+                <span className="truncate">{summary}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              {filter.options.map((option) => {
+                const checked = currentValues.includes(option.value);
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={option.value}
+                    checked={checked}
+                    onSelect={(event) => event.preventDefault()}
+                    onCheckedChange={(nextChecked) => {
+                      const nextValues = nextChecked
+                        ? [...currentValues, option.value]
+                        : currentValues.filter((value) => value !== option.value);
+                      onFilterChange({
+                        ...activeFilters,
+                        [filter.id]:
+                          nextValues.length > 0 ? nextValues : undefined,
+                      });
+                    }}
+                  >
                     {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        );
-      })}
+                  </DropdownMenuCheckboxItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      );
+    }
 
-      {selectFilters.length > 0 &&
-        (dateFilters.length > 0 || inputFilters.length > 0) && (
-          <div className="h-px bg-border/70" />
-        )}
+    if (filter.type === "date") {
+      const currentValue =
+        typeof activeFilters[filter.id] === "string"
+          ? (activeFilters[filter.id] as string)
+          : "";
+      const selectedDate = currentValue
+        ? new Date(currentValue + "T00:00:00")
+        : undefined;
 
-      {dateFilters.map((filter) => {
-        const currentValue =
-          typeof activeFilters[filter.id] === "string"
-            ? (activeFilters[filter.id] as string)
-            : "";
-        const selectedDate = currentValue
-          ? new Date(currentValue + "T00:00:00")
-          : undefined;
+      return (
+        <div
+          key={filter.id}
+          className="flex items-center justify-between gap-3 px-2 py-1.5"
+        >
+          <span className="text-sm text-foreground">{filter.label}</span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "h-8 w-45 justify-start text-left text-sm font-normal",
+                  !currentValue && "text-muted-foreground",
+                )}
+              >
+                <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                {selectedDate
+                  ? selectedDate.toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                  : "Pick a date"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) =>
+                  onFilterChange({
+                    ...activeFilters,
+                    [filter.id]: date ? formatDateValue(date) : undefined,
+                  })
+                }
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+      );
+    }
 
-        return (
-          <div
-            key={filter.id}
-            className="flex items-center justify-between gap-3 px-2 py-1.5"
-          >
-            <span className="text-sm text-foreground">{filter.label}</span>
+    if (filter.type === "dateRange") {
+      const fromKey = `${filter.id}_from`;
+      const toKey = `${filter.id}_to`;
+      const fromValue =
+        typeof activeFilters[fromKey] === "string"
+          ? (activeFilters[fromKey] as string)
+          : "";
+      const toValue =
+        typeof activeFilters[toKey] === "string"
+          ? (activeFilters[toKey] as string)
+          : "";
+      const fromDate = fromValue
+        ? new Date(`${fromValue}T00:00:00`)
+        : undefined;
+      const toDate = toValue ? new Date(`${toValue}T00:00:00`) : undefined;
+
+      return (
+        <div key={filter.id} className="space-y-2 px-2 py-1.5">
+          <span className="text-sm text-foreground">{filter.label}</span>
+          <div className="grid grid-cols-2 gap-2">
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                    "h-8 w-45 justify-start text-left text-sm font-normal",
-                    !currentValue && "text-muted-foreground",
+                    "h-8 justify-start px-2 text-left text-sm font-normal",
+                    !fromValue && "text-muted-foreground",
                   )}
                 >
                   <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                  {selectedDate
-                    ? selectedDate.toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })
-                    : "Pick a date"}
+                  {renderDateButtonLabel(fromValue, "From")}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
-                  selected={selectedDate}
-                  onSelect={(date) => {
-                    if (date) {
-                      const yyyy = date.getFullYear();
-                      const mm = String(date.getMonth() + 1).padStart(2, "0");
-                      const dd = String(date.getDate()).padStart(2, "0");
-                      onFilterChange({
-                        ...activeFilters,
-                        [filter.id]: `${yyyy}-${mm}-${dd}`,
-                      });
-                    } else {
-                      onFilterChange({
-                        ...activeFilters,
-                        [filter.id]: undefined,
-                      });
-                    }
-                  }}
+                  selected={fromDate}
+                  onSelect={(date) =>
+                    onFilterChange({
+                      ...activeFilters,
+                      [fromKey]: date ? formatDateValue(date) : undefined,
+                    })
+                  }
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "h-8 justify-start px-2 text-left text-sm font-normal",
+                    !toValue && "text-muted-foreground",
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                  {renderDateButtonLabel(toValue, "To")}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={toDate}
+                  onSelect={(date) =>
+                    onFilterChange({
+                      ...activeFilters,
+                      [toKey]: date ? formatDateValue(date) : undefined,
+                    })
+                  }
                   initialFocus
                 />
               </PopoverContent>
             </Popover>
           </div>
-        );
-      })}
+        </div>
+      );
+    }
 
-      {(selectFilters.length > 0 || dateFilters.length > 0) &&
-        dateRangeFilters.length > 0 && <div className="h-px bg-border/70" />}
-
-      {dateRangeFilters.map((filter) => {
-        const fromKey = `${filter.id}_from`;
-        const toKey = `${filter.id}_to`;
-        const fromValue =
-          typeof activeFilters[fromKey] === "string"
-            ? (activeFilters[fromKey] as string)
-            : "";
-        const toValue =
-          typeof activeFilters[toKey] === "string"
-            ? (activeFilters[toKey] as string)
-            : "";
-        const fromDate = fromValue
-          ? new Date(`${fromValue}T00:00:00`)
-          : undefined;
-        const toDate = toValue ? new Date(`${toValue}T00:00:00`) : undefined;
-
-        return (
-          <div key={filter.id} className="space-y-2 px-2 py-1.5">
-            <span className="text-sm text-foreground">{filter.label}</span>
-            <div className="grid grid-cols-2 gap-2">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "h-8 justify-start px-2 text-left text-sm font-normal",
-                      !fromValue && "text-muted-foreground",
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                    {renderDateButtonLabel(fromValue, "From")}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={fromDate}
-                    onSelect={(date) =>
-                      onFilterChange({
-                        ...activeFilters,
-                        [fromKey]: date ? formatDateValue(date) : undefined,
-                      })
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "h-8 justify-start px-2 text-left text-sm font-normal",
-                      !toValue && "text-muted-foreground",
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                    {renderDateButtonLabel(toValue, "To")}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={toDate}
-                    onSelect={(date) =>
-                      onFilterChange({
-                        ...activeFilters,
-                        [toKey]: date ? formatDateValue(date) : undefined,
-                      })
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-        );
-      })}
-
-      {(selectFilters.length > 0 ||
-        dateFilters.length > 0 ||
-        dateRangeFilters.length > 0) &&
-        inputFilters.length > 0 && <div className="h-px bg-border/70" />}
-
-      {inputFilters.map((filter) => (
+    if (filter.type === "number" || filter.type === "text") {
+      return (
         <div
           key={filter.id}
           className="flex items-center justify-between gap-3 px-2 py-1.5"
@@ -489,7 +513,7 @@ function FilterFields({
             type={filter.type === "number" ? "number" : "text"}
             className="h-8 w-45 text-sm"
             min={filter.type === "number" ? "0" : undefined}
-            step={filter.type === "number" ? "0.01" : undefined}
+            step={filter.type === "number" ? "1" : undefined}
             placeholder={filter.placeholder}
             value={
               typeof activeFilters[filter.id] === "string"
@@ -504,7 +528,36 @@ function FilterFields({
             }
           />
         </div>
-      ))}
+      );
+    }
+
+    if (filter.type === "boolean") {
+      const checked = activeFilters[filter.id] === true;
+      return (
+        <label
+          key={filter.id}
+          className="flex items-center justify-between gap-3 px-2 py-1.5 text-sm text-foreground"
+        >
+          {filter.label}
+          <Checkbox
+            checked={checked}
+            onCheckedChange={(nextChecked) =>
+              onFilterChange({
+                ...activeFilters,
+                [filter.id]: nextChecked ? true : undefined,
+              })
+            }
+          />
+        </label>
+      );
+    }
+
+    return null;
+  };
+
+  return (
+    <div className="space-y-2">
+      {filters.map(renderFilter)}
     </div>
   );
 }
@@ -555,7 +608,12 @@ export function FilterMenu({
       <PopoverContent align="start" className="w-85 p-0">
         <div className="space-y-0">
           <div className="flex items-center justify-between border-b px-3 py-2.5">
-            <p className="text-sm font-medium text-foreground">View settings</p>
+            <div>
+              <p className="text-sm font-medium text-foreground">Filters</p>
+              <p className="text-xs text-muted-foreground">
+                Narrow this table by column.
+              </p>
+            </div>
             {activeCount > 0 ? (
               <Button
                 variant="ghost"
@@ -567,7 +625,7 @@ export function FilterMenu({
               </Button>
             ) : null}
           </div>
-          <div className="p-2.5">
+          <div className="max-h-96 overflow-y-auto p-2.5">
             <FilterFields
               filters={filters}
               activeFilters={activeFilters}

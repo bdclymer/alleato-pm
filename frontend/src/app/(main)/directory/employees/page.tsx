@@ -14,12 +14,15 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { apiFetch } from "@/lib/api-client";
 import { getDirectoryTabs } from "@/config/directory-tabs";
 import {
   UnifiedTablePage,
   CellBadge,
   CellEmail,
+  CellLink,
   CellText,
+  InlineSelectEditor,
   TableDateValue,
   type CellColorMap,
 } from "@/components/tables/unified";
@@ -40,42 +43,99 @@ const STATUS_COLORS: CellColorMap = {
   inactive: "bg-muted text-muted-foreground",
 };
 
-function buildEmployeeTableColumns(): TableColumn<EmployeeRow>[] {
+const EMPLOYEE_STATUS_OPTIONS = [
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+];
+
+const EMPLOYEE_TYPE_OPTIONS = [
+  { value: "employee", label: "Employee" },
+  { value: "user", label: "User" },
+  { value: "contact", label: "Contact" },
+];
+
+function buildEmployeeTableColumns(
+  onInlineEdit: (employee: EmployeeRow, field: string, value: string) => Promise<void>,
+): TableColumn<EmployeeRow>[] {
   return [
     {
       ...employeeColumns[0],
-      render: (item) => <span className="font-medium">{item.full_name}</span>,
+      render: (item) => (
+        <CellLink
+          value={item.full_name}
+          href={`/directory/employees?detail=${item.id}`}
+          className="font-medium"
+        />
+      ),
       sortValue: (item) => item.full_name,
     },
     {
       ...employeeColumns[1],
       render: (item) => <CellText value={item.job_title} emptyLabel="-" />,
       sortValue: (item) => item.job_title || "",
+      editable: true,
+      editValue: (item) => item.job_title || "",
+      onEdit: (item, value) => onInlineEdit(item, "job_title", value),
     },
     {
       ...employeeColumns[2],
       render: (item) => <CellText value={item.business_unit} emptyLabel="-" />,
       sortValue: (item) => item.business_unit || "",
+      editable: true,
+      editValue: (item) => item.business_unit || "",
+      onEdit: (item, value) => onInlineEdit(item, "business_unit", value),
     },
     {
       ...employeeColumns[3],
-      render: (item) => <CellEmail value={item.email} emptyLabel="-" />,
+      render: (item) => <CellText value={item.email} emptyLabel="-" />,
       sortValue: (item) => item.email || "",
+      editable: true,
+      editInputType: "email",
+      editValue: (item) => item.email || "",
+      onEdit: (item, value) => onInlineEdit(item, "email", value),
     },
     {
       ...employeeColumns[4],
       render: (item) => <CellText value={item.phone} emptyLabel="-" />,
       sortValue: (item) => item.phone || "",
+      editable: true,
+      editInputType: "tel",
+      editValue: (item) => item.phone || "",
+      onEdit: (item, value) => onInlineEdit(item, "phone", value),
     },
     {
       ...employeeColumns[5],
       render: (item) => <CellBadge value={item.status} colorMap={STATUS_COLORS} emptyLabel="-" />,
       sortValue: (item) => item.status || "",
+      editable: true,
+      editValue: (item) => item.status || "active",
+      onEdit: (item, value) => onInlineEdit(item, "status", value),
+      renderEditor: ({ value, onChange, onCommit }) => (
+        <InlineSelectEditor
+          value={value || "active"}
+          options={EMPLOYEE_STATUS_OPTIONS}
+          placeholder="Select status"
+          onChange={onChange}
+          onCommit={onCommit}
+        />
+      ),
     },
     {
       ...employeeColumns[6],
       render: (item) => <CellText value={item.person_type} emptyLabel="-" />,
       sortValue: (item) => item.person_type || "",
+      editable: true,
+      editValue: (item) => item.person_type || "employee",
+      onEdit: (item, value) => onInlineEdit(item, "type", value),
+      renderEditor: ({ value, onChange, onCommit }) => (
+        <InlineSelectEditor
+          value={value || "employee"}
+          options={EMPLOYEE_TYPE_OPTIONS}
+          placeholder="Select employee type"
+          onChange={onChange}
+          onCommit={onCommit}
+        />
+      ),
     },
     {
       ...employeeColumns[7],
@@ -232,6 +292,7 @@ export default function DirectoryEmployeesPage(): ReactElement {
     error,
     activeFilters,
     isFiltered,
+    refresh,
     handleViewChange,
     handleFilterChange,
     handleSortChange,
@@ -255,7 +316,21 @@ export default function DirectoryEmployeesPage(): ReactElement {
     : null;
 
   const tabs = getDirectoryTabs(pathname);
-  const tableColumns = React.useMemo(() => buildEmployeeTableColumns(), []);
+  const handleInlineEmployeeEdit = React.useCallback(
+    async (employee: EmployeeRow, field: string, value: string) => {
+      await apiFetch(`/api/directory/employees/${employee.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ [field]: value || null }),
+      });
+      await refresh();
+    },
+    [refresh],
+  );
+
+  const tableColumns = React.useMemo(
+    () => buildEmployeeTableColumns(handleInlineEmployeeEdit),
+    [handleInlineEmployeeEdit],
+  );
 
   const handleSelectAll = (checked: boolean) => {
     tableState.setSelectedIds(checked ? tableData.map((e) => e.id) : []);
@@ -379,6 +454,7 @@ export default function DirectoryEmployeesPage(): ReactElement {
         enableExport: false,
         enableBulkDelete: false,
         enableRowSelection: true,
+        enableInlineEditing: true,
       }}
       layout={{
         fullBleedTable: true,

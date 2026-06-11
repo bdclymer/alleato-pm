@@ -26,6 +26,7 @@ import {
   type FeedbackTargetSnapshot,
 } from "@/lib/admin-feedback/targeting";
 import { captureTargetScreenshot } from "@/lib/admin-feedback/screenshot";
+import { compressImageDataUrl } from "@/lib/admin-feedback/compress-image";
 import {
   MAX_RECORDING_DURATION_MS,
   type ScreenRecorderHandle,
@@ -690,6 +691,26 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
     setIsSubmitting(true);
 
     void (async () => {
+      // Guarantee the screenshot fits within the 4.5MB serverless body limit.
+      // An oversized screenshot must never block the whole submission — drop it
+      // with a warning rather than failing the feedback entirely.
+      let screenshotForUpload = screenshotDataUrl;
+      if (screenshotForUpload) {
+        try {
+          screenshotForUpload = await compressImageDataUrl(screenshotForUpload);
+        } catch (compressionError) {
+          reportNonCriticalFailure({
+            area: "admin-feedback-widget",
+            operation: "compress-feedback-screenshot",
+            error: compressionError,
+            userVisibleFallback: "Feedback screenshot could not be processed.",
+            metadata: { pagePath },
+          });
+          screenshotForUpload = null;
+          toast.warning("Screenshot couldn't be attached — submitting feedback without it.");
+        }
+      }
+
       try {
         const payload = await apiFetch<{
           githubIssue?: { url?: string };
@@ -705,7 +726,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
             pagePath,
             pageTitle: document.title || null,
             projectId: inferProjectId(pagePath),
-            screenshotDataUrl,
+            screenshotDataUrl: screenshotForUpload,
             target: {
               id: selectedTarget.targetId,
               selector: selectedTarget.selector,

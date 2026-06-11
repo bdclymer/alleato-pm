@@ -1,7 +1,13 @@
 "use client";
 
 import * as React from "react";
+import { HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 /**
  * Shared base props for all form field components.
@@ -20,9 +26,41 @@ interface FormFieldProps {
   children: React.ReactNode;
   error?: string;
   hint?: string;
+  /** Optional help text shown in a tooltip on an info icon next to the label. */
+  labelTooltip?: React.ReactNode;
   required?: boolean;
   className?: string;
   fullWidth?: boolean;
+}
+
+/** Renders the field label with optional required marker and help tooltip. */
+function LabelContent({
+  label,
+  required,
+  labelTooltip,
+}: {
+  label: React.ReactNode;
+  required: boolean;
+  labelTooltip?: React.ReactNode;
+}) {
+  return (
+    <>
+      {label}
+      {required && <span className="ml-1 text-destructive">*</span>}
+      {labelTooltip && (
+        <Tooltip>
+          <TooltipTrigger
+            type="button"
+            className="ml-1 inline-flex align-middle text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="More information"
+          >
+            <HelpCircle className="size-3.5" />
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs">{labelTooltip}</TooltipContent>
+        </Tooltip>
+      )}
+    </>
+  );
 }
 
 // ── Layout context ─────────────────────────────────────────────────────────
@@ -64,6 +102,7 @@ export function FormField({
   children,
   error,
   hint,
+  labelTooltip,
   required = false,
   className,
   fullWidth = false,
@@ -79,8 +118,7 @@ export function FormField({
             htmlFor={inputId}
             className="w-40 shrink-0 pt-2 text-[13px] font-medium text-foreground"
           >
-            {label}
-            {required && <span className="ml-1 text-destructive">*</span>}
+            <LabelContent label={label} required={required} labelTooltip={labelTooltip} />
           </label>
           <div className="flex-1 min-w-0">
             {hint && !error && (
@@ -102,8 +140,7 @@ export function FormField({
     <FormFieldContext.Provider value={inputId}>
       <div className={cn(fullWidth ? "sm:col-span-2" : "", className)}>
         <label htmlFor={inputId} className="block text-sm font-medium text-foreground">
-          {label}
-          {required && <span className="ml-1 text-destructive">*</span>}
+          <LabelContent label={label} required={required} labelTooltip={labelTooltip} />
         </label>
         {hint && !error && <p className="mt-1 text-sm text-muted-foreground">{hint}</p>}
         <div className="mt-1">

@@ -57,3 +57,7 @@ export {
   type TablePageActionsProps,
   type TablePageActionItem,
 } from "./table-page-actions";
+export {
+  InlineSelectEditor,
+  type InlineSelectOption,
+} from "./inline-select-editor";

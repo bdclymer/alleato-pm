@@ -107,14 +107,19 @@ def _limit_sync_users(
     if len(users) <= limit:
         return users
 
-    resource_ids = [f"user:{email}" for email in users]
+    # graph_sync_state keys per-user rows by the bare mailbox email (see the
+    # resource_id=user_email writes below), NOT a "user:<email>" prefix. Using a
+    # prefixed key here silently matched zero rows, so every mailbox resolved to
+    # an empty last_sync_at and the "stalest-first" sort collapsed into plain
+    # alphabetical order — starving every mailbox except the alphabetically-first
+    # one (acannon@) and freezing the rest for weeks. Key by the bare email.
     last_sync_by_resource: dict[str, str] = {}
     try:
         result = (
             supabase.from_("graph_sync_state")
             .select("resource_id,last_sync_at")
             .eq("source", source)
-            .in_("resource_id", resource_ids)
+            .in_("resource_id", users)
             .execute()
         )
         last_sync_by_resource = {
@@ -128,7 +133,7 @@ def _limit_sync_users(
     return sorted(
         users,
         key=lambda email: (
-            last_sync_by_resource.get(f"user:{email}") or "",
+            last_sync_by_resource.get(email) or "",
             email,
         ),
     )[:limit]

@@ -2,7 +2,14 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Badge, Tabs, TabsList, TabsTrigger } from "@/components/ds";
+import {
+  Button,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ds";
 import { PageShell } from "@/components/layout";
 import { apiFetch } from "@/lib/api-client";
 import { appToast as toast } from "@/lib/toast/app-toast";
@@ -480,47 +487,62 @@ export default function FeedbackInboxPage() {
                 "w-full lg:w-112 lg:max-w-lg lg:shrink-0",
               )}
             >
-              {/* Unified filter bar — type axis on top, status axis below,
-                  same component for both, tight stack. */}
-              <div className="space-y-1 px-4 pb-4 pt-5">
-                <div className="flex items-center justify-between gap-2">
-                  <Tabs value={activeTab} onValueChange={handleInboxTabClick}>
-                    <TabsList>
-                      {FEEDBACK_INBOX_TABS.map((tab) => {
-                        const count =
-                          tab.value === "feature_requests"
-                            ? featureRequestItems.length
-                            : issueItems.length;
-                        return (
-                          <TabsTrigger key={tab.value} value={tab.value}>
-                            <span className="inline-flex items-center gap-1.5">
-                              {tab.label}
-                              <Badge
-                                variant="secondary"
-                                className="h-4 min-w-4 justify-center px-1 text-[10px] font-medium"
-                              >
-                                {count}
-                              </Badge>
-                            </span>
-                          </TabsTrigger>
-                        );
-                      })}
-                    </TabsList>
-                  </Tabs>
+              <div className="space-y-4 px-4 pb-4 pt-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div
+                    className="flex min-w-0 items-center gap-3"
+                    aria-label="Feedback type"
+                  >
+                    {FEEDBACK_INBOX_TABS.map((tab) => {
+                      const count =
+                        tab.value === "feature_requests"
+                          ? featureRequestItems.length
+                          : issueItems.length;
+                      const selected = activeTab === tab.value;
+                      return (
+                        <Button
+                          key={tab.value}
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleInboxTabClick(tab.value)}
+                          aria-pressed={selected}
+                          className={cn(
+                            "h-auto rounded-none px-0 py-0 text-sm font-medium hover:bg-transparent",
+                            selected
+                              ? "text-foreground"
+                              : "text-muted-foreground hover:text-foreground",
+                          )}
+                        >
+                          <span>{tab.label}</span>
+                          <span className="ml-1 text-xs font-normal text-muted-foreground">
+                            {count}
+                          </span>
+                        </Button>
+                      );
+                    })}
+                  </div>
                   <VeltCommentToolbar />
                 </div>
-                <Tabs value={filter} onValueChange={handleFilterTabClick}>
-                  <TabsList>
+                <Select value={filter} onValueChange={handleFilterTabClick}>
+                  <SelectTrigger
+                    aria-label="Filter feedback status"
+                    size="sm"
+                    className="h-8 w-full bg-background text-sm shadow-none"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
                     {STATUS_FILTERS.map((statusFilter) => (
-                      <TabsTrigger
+                      <SelectItem
                         key={statusFilter.value}
                         value={statusFilter.value}
                       >
                         {statusFilter.label}
-                      </TabsTrigger>
+                      </SelectItem>
                     ))}
-                  </TabsList>
-                </Tabs>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex-1 overflow-y-auto">
                 <FeedbackQueue

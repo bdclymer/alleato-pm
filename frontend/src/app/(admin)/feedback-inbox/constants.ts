@@ -17,6 +17,7 @@ export const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "deferred", label: "Deferred" },
   { value: "resolved", label: "Resolved" },
   { value: "dispatched", label: "Dispatched" },
+  { value: "all", label: "All" },
 ];
 
 export const STATUS_OPTIONS: { value: DisplayStatus; label: string }[] = [

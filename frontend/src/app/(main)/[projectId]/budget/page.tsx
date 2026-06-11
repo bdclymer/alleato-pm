@@ -439,10 +439,13 @@ function BudgetPageContent() {
         router.push(`/${projectId}/budget?tab=snapshots`);
       }
     } catch (error) {
-      toast.error(
-        "Failed to create snapshot",
-        { id: toastId },
-);
+      // Surface the real reason — never a bare "Failed to create snapshot".
+      // A generic message left an actual failure undiagnosable (CLAUDE.md Rule 1).
+      toast.error("Failed to create snapshot", {
+        id: toastId,
+        description:
+          error instanceof Error ? error.message : "An unexpected error occurred.",
+      });
     }
   }, [activeTab, projectId, router]);
 

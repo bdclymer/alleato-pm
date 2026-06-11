@@ -1,7 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { MessageSquare, MessageSquarePlus, MessagesSquare } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  MessageSquare,
+  MessageSquarePlus,
+  MessagesSquare,
+} from "lucide-react";
 import {
   VeltCommentTool,
   VeltSidebarButton,
@@ -14,10 +20,18 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useCommentsVisibilityStore } from "@/lib/stores/comments-visibility-store";
 
 export function CommentsSidebarButton() {
   const [open, setOpen] = React.useState(false);
   const commentModeActive = useCommentModeState();
+  const commentsVisible = useCommentsVisibilityStore((state) => state.visible);
+  const toggleCommentsVisible = useCommentsVisibilityStore(
+    (state) => state.toggle,
+  );
+  const setCommentsVisible = useCommentsVisibilityStore(
+    (state) => state.setVisible,
+  );
 
   // Close the popover automatically when comment mode activates
   React.useEffect(() => {
@@ -53,7 +67,9 @@ export function CommentsSidebarButton() {
           targetElementId="app-main-content"
           shadowDom={false}
         >
+          {/* Leaving a comment requires the layer to be visible */}
           <span
+            onClick={() => setCommentsVisible(true)}
             className={cn(
               buttonVariants({ variant: "ghost", size: "sm" }),
               "w-full cursor-pointer justify-start gap-2.5 px-2.5 font-normal",
@@ -67,6 +83,25 @@ export function CommentsSidebarButton() {
             Leave a comment
           </span>
         </VeltCommentTool>
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => toggleCommentsVisible()}
+          className="w-full justify-start gap-2.5 px-2.5 font-normal text-foreground"
+          aria-pressed={commentsVisible ? "true" : "false"}
+          aria-label={
+            commentsVisible ? "Hide comments on page" : "Show comments on page"
+          }
+        >
+          {commentsVisible ? (
+            <EyeOff className="h-4 w-4 shrink-0" />
+          ) : (
+            <Eye className="h-4 w-4 shrink-0" />
+          )}
+          {commentsVisible ? "Hide comments on page" : "Show comments on page"}
+        </Button>
 
         <div className="my-1 h-px bg-border/50" />
 

@@ -24,11 +24,37 @@ export interface CompanyRow {
 export type CompanyFilterState = {
   status: FilterValue;
   company_type: FilterValue;
+  company_name: FilterValue;
+  contact_count_min: FilterValue;
+  project_count_min: FilterValue;
+  business_phone: FilterValue;
+  website: FilterValue;
+  email_address: FilterValue;
+  erp_vendor_id: FilterValue;
+  created_at_from: FilterValue;
+  created_at_to: FilterValue;
+  updated_at_from: FilterValue;
+  updated_at_to: FilterValue;
+  primary_contact_id: FilterValue;
+  logo_url: FilterValue;
 };
 
 export const EMPTY_COMPANY_FILTERS: CompanyFilterState = {
   status: undefined,
   company_type: undefined,
+  company_name: undefined,
+  contact_count_min: undefined,
+  project_count_min: undefined,
+  business_phone: undefined,
+  website: undefined,
+  email_address: undefined,
+  erp_vendor_id: undefined,
+  created_at_from: undefined,
+  created_at_to: undefined,
+  updated_at_from: undefined,
+  updated_at_to: undefined,
+  primary_contact_id: undefined,
+  logo_url: undefined,
 };
 
 export const companyColumns: ColumnConfig[] = [
@@ -63,6 +89,98 @@ const ALLOWED_SERVER_SORT_FIELDS = new Set([
   "updated_at",
 ]);
 
+export const COMPANY_TYPE_FILTER_OPTIONS = [
+  { value: "client", label: "Client" },
+  { value: "vendor", label: "Vendor" },
+  { value: "subcontractor", label: "Subcontractor" },
+  { value: "supplier", label: "Supplier" },
+  { value: "connected company", label: "Connected Company" },
+];
+
+export const COMPANY_STATUS_FILTER_OPTIONS = [
+  { value: "active", label: "Active" },
+  { value: "inactive", label: "Inactive" },
+];
+
+export const companyFilters = [
+  {
+    id: "company_name",
+    label: "Name",
+    type: "text" as const,
+    placeholder: "Contains...",
+  },
+  {
+    id: "company_type",
+    label: "Type",
+    type: "select" as const,
+    options: COMPANY_TYPE_FILTER_OPTIONS,
+  },
+  {
+    id: "status",
+    label: "Status",
+    type: "select" as const,
+    options: COMPANY_STATUS_FILTER_OPTIONS,
+  },
+  {
+    id: "contact_count_min",
+    label: "Contacts",
+    type: "number" as const,
+    placeholder: "Minimum",
+  },
+  {
+    id: "project_count_min",
+    label: "Projects",
+    type: "number" as const,
+    placeholder: "Minimum",
+  },
+  {
+    id: "business_phone",
+    label: "Phone",
+    type: "text" as const,
+    placeholder: "Contains...",
+  },
+  {
+    id: "website",
+    label: "Website",
+    type: "text" as const,
+    placeholder: "Contains...",
+  },
+  {
+    id: "email_address",
+    label: "Email",
+    type: "text" as const,
+    placeholder: "Contains...",
+  },
+  {
+    id: "erp_vendor_id",
+    label: "ERP Vendor ID",
+    type: "text" as const,
+    placeholder: "Contains...",
+  },
+  {
+    id: "created_at",
+    label: "Date Added",
+    type: "dateRange" as const,
+  },
+  {
+    id: "updated_at",
+    label: "Last Updated",
+    type: "dateRange" as const,
+  },
+  {
+    id: "primary_contact_id",
+    label: "Primary Contact ID",
+    type: "text" as const,
+    placeholder: "Contains...",
+  },
+  {
+    id: "logo_url",
+    label: "Logo URL",
+    type: "text" as const,
+    placeholder: "Contains...",
+  },
+];
+
 interface GlobalCompaniesResponse {
   data: CompanyRow[];
   pagination: {
@@ -89,7 +207,7 @@ export function createGlobalCompaniesTableDefinition(options: {
     searchPlaceholder: "Search name, phone, email, ERP ID...",
     columns: companyColumns,
     defaultVisibleColumns: companyDefaultVisibleColumns,
-    filters: [],
+    filters: companyFilters,
     defaultFilters: {
       ...EMPTY_COMPANY_FILTERS,
       ...(forcedCompanyType ? { company_type: forcedCompanyType } : {}),
@@ -99,6 +217,22 @@ export function createGlobalCompaniesTableDefinition(options: {
         status: searchParams.get("status") ?? undefined,
         company_type:
           forcedCompanyType ?? searchParams.get("company_type") ?? undefined,
+        company_name: searchParams.get("company_name") ?? undefined,
+        contact_count_min:
+          searchParams.get("contact_count_min") ?? undefined,
+        project_count_min:
+          searchParams.get("project_count_min") ?? undefined,
+        business_phone: searchParams.get("business_phone") ?? undefined,
+        website: searchParams.get("website") ?? undefined,
+        email_address: searchParams.get("email_address") ?? undefined,
+        erp_vendor_id: searchParams.get("erp_vendor_id") ?? undefined,
+        created_at_from: searchParams.get("created_at_from") ?? undefined,
+        created_at_to: searchParams.get("created_at_to") ?? undefined,
+        updated_at_from: searchParams.get("updated_at_from") ?? undefined,
+        updated_at_to: searchParams.get("updated_at_to") ?? undefined,
+        primary_contact_id:
+          searchParams.get("primary_contact_id") ?? undefined,
+        logo_url: searchParams.get("logo_url") ?? undefined,
       };
     },
     serializeFiltersToSearchParams(filters) {
@@ -109,6 +243,54 @@ export function createGlobalCompaniesTableDefinition(options: {
           : typeof filters.company_type === "string"
             ? filters.company_type
             : null,
+        company_name:
+          typeof filters.company_name === "string"
+            ? filters.company_name
+            : null,
+        contact_count_min:
+          typeof filters.contact_count_min === "string"
+            ? filters.contact_count_min
+            : null,
+        project_count_min:
+          typeof filters.project_count_min === "string"
+            ? filters.project_count_min
+            : null,
+        business_phone:
+          typeof filters.business_phone === "string"
+            ? filters.business_phone
+            : null,
+        website:
+          typeof filters.website === "string" ? filters.website : null,
+        email_address:
+          typeof filters.email_address === "string"
+            ? filters.email_address
+            : null,
+        erp_vendor_id:
+          typeof filters.erp_vendor_id === "string"
+            ? filters.erp_vendor_id
+            : null,
+        created_at_from:
+          typeof filters.created_at_from === "string"
+            ? filters.created_at_from
+            : null,
+        created_at_to:
+          typeof filters.created_at_to === "string"
+            ? filters.created_at_to
+            : null,
+        updated_at_from:
+          typeof filters.updated_at_from === "string"
+            ? filters.updated_at_from
+            : null,
+        updated_at_to:
+          typeof filters.updated_at_to === "string"
+            ? filters.updated_at_to
+            : null,
+        primary_contact_id:
+          typeof filters.primary_contact_id === "string"
+            ? filters.primary_contact_id
+            : null,
+        logo_url:
+          typeof filters.logo_url === "string" ? filters.logo_url : null,
       };
     },
     async fetchPage(query) {
@@ -128,6 +310,28 @@ export function createGlobalCompaniesTableDefinition(options: {
           : "");
       if (effectiveCompanyType) {
         params.set("company_type", effectiveCompanyType);
+      }
+
+      const filterParamKeys: Array<keyof CompanyFilterState> = [
+        "company_name",
+        "contact_count_min",
+        "project_count_min",
+        "business_phone",
+        "website",
+        "email_address",
+        "erp_vendor_id",
+        "created_at_from",
+        "created_at_to",
+        "updated_at_from",
+        "updated_at_to",
+        "primary_contact_id",
+        "logo_url",
+      ];
+      for (const key of filterParamKeys) {
+        const value = query.filters[key];
+        if (typeof value === "string" && value.trim()) {
+          params.set(key, value.trim());
+        }
       }
 
       params.set("page", String(query.page));

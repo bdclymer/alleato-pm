@@ -1,19 +1,12 @@
 import { ArrowUpRight, Eye, Trash2 } from "lucide-react";
 import { TaskFeedbackButtons } from "@/components/ai/TaskFeedbackButtons";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   TableDateValue,
   TableAvatarUsers,
   TableRowActionsMenu,
   TableTagBadge,
+  InlineSelectEditor,
   type TableColumn,
   type FilterConfig,
   type ColumnConfig,
@@ -50,16 +43,11 @@ export type TaskUserOption = {
 
 export interface TaskInlineEditOptions {
   onOpenPanel?: (item: TasksRow) => void;
-  onUpdate?: (id: string, patch: TaskPatch) => void;
+  onUpdate?: (id: string, patch: TaskPatch) => void | Promise<void>;
   onDelete?: (id: string) => void;
   projects?: TaskProjectOption[];
   users?: TaskUserOption[];
 }
-
-const GHOST_SELECT_CLS =
-  "h-7 w-auto min-w-[5.5rem] gap-1 border-0 bg-transparent -ml-2 px-2 text-xs shadow-none font-normal text-foreground hover:bg-muted/50 focus:ring-0 data-[state=open]:bg-muted/50 [&>svg]:text-muted-foreground/60";
-const GHOST_DATE_CLS =
-  "h-7 max-w-[9rem] border-0 bg-transparent -ml-2 px-2 text-xs shadow-none text-foreground hover:bg-muted/50 focus:ring-0 focus-visible:ring-0";
 
 // ---------------------------------------------------------------------------
 // Column / Filter / Defaults
@@ -117,6 +105,22 @@ export function buildTasksFilters(items: TasksRow[]): FilterConfig[] {
 export const tasksDefaultVisibleColumns: string[] = tasksColumns
   .filter((c) => c.defaultVisible !== false)
   .map((c) => c.id);
+
+const TASK_STATUS_OPTIONS = [
+  { value: "open", label: "Open" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "blocked", label: "Blocked" },
+  { value: "done", label: "Done" },
+  { value: "cancelled", label: "Cancelled" },
+];
+
+const TASK_PRIORITY_OPTIONS = [
+  { value: "__none__", label: "Not set" },
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
+  { value: "urgent", label: "Urgent" },
+];
 
 // ---------------------------------------------------------------------------
 // Table columns (render / sort)
@@ -177,32 +181,6 @@ export function buildTasksTableColumns(
         return {
           ...column,
           render: (item) => {
-            if (onUpdate && users.length > 0) {
-              const matchedUser =
-                users.find((u) => u.person_id && item.assignee_person_id && u.person_id === item.assignee_person_id) ??
-                users.find((u) => u.email && item.assignee_email && u.email.toLowerCase() === item.assignee_email?.toLowerCase());
-              const selectValue = matchedUser?.id ?? "__unassigned__";
-              return (
-                <Select
-                  value={selectValue}
-                  onValueChange={(value) =>
-                    onUpdate(item.id!, { assignee_user_id: value === "__unassigned__" ? null : value })
-                  }
-                >
-                  <SelectTrigger className={GHOST_SELECT_CLS}>
-                    <SelectValue placeholder="Unassigned" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__unassigned__">Unassigned</SelectItem>
-                    {users.map((u) => (
-                      <SelectItem key={u.id} value={u.id}>
-                        {u.full_name || u.email || u.id}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              );
-            }
             return item.assignee_name ? (
               <span className="flex min-w-0 max-w-56 items-center gap-2">
                 <TableAvatarUsers users={[item.assignee_name]} maxVisible={1} />
@@ -214,34 +192,37 @@ export function buildTasksTableColumns(
           },
           sortValue: (item) => item.assignee_name ?? "",
           sortable: true,
+          editable: Boolean(onUpdate && users.length > 0),
+          editValue: (item) => {
+            const matchedUser =
+              users.find((u) => u.person_id && item.assignee_person_id && u.person_id === item.assignee_person_id) ??
+              users.find((u) => u.email && item.assignee_email && u.email.toLowerCase() === item.assignee_email?.toLowerCase());
+            return matchedUser?.id ?? "__unassigned__";
+          },
+          onEdit: (item, value) =>
+            onUpdate?.(item.id!, {
+              assignee_user_id: value === "__unassigned__" ? null : value,
+            }),
+          renderEditor: ({ value, onChange, onCommit }) => (
+            <InlineSelectEditor
+              value={value || "__unassigned__"}
+              options={[
+                { value: "__unassigned__", label: "Unassigned" },
+                ...users.map((user) => ({
+                  value: user.id,
+                  label: user.full_name || user.email || user.id,
+                })),
+              ]}
+              placeholder="Select assignee"
+              onChange={onChange}
+              onCommit={onCommit}
+            />
+          ),
         };
       case "project_name":
         return {
           ...column,
           render: (item) => {
-            if (onUpdate && projects.length > 0) {
-              const selectValue = item.project_id ? String(item.project_id) : "__none__";
-              return (
-                <Select
-                  value={selectValue}
-                  onValueChange={(value) =>
-                    onUpdate(item.id!, { project_id: value === "__none__" ? null : Number(value) })
-                  }
-                >
-                  <SelectTrigger className={GHOST_SELECT_CLS}>
-                    <SelectValue placeholder="Unlinked" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">Unlinked</SelectItem>
-                    {projects.map((p) => (
-                      <SelectItem key={p.id} value={String(p.id)}>
-                        {p.name ?? `Project ${p.id}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              );
-            }
             return (
               <span className="block max-w-56 text-xs text-foreground truncate">
                 {item.project_name || "Unlinked"}
@@ -250,6 +231,27 @@ export function buildTasksTableColumns(
           },
           sortValue: (item) => item.project_name ?? "",
           sortable: true,
+          editable: Boolean(onUpdate && projects.length > 0),
+          editValue: (item) => item.project_id ? String(item.project_id) : "__none__",
+          onEdit: (item, value) =>
+            onUpdate?.(item.id!, {
+              project_id: value === "__none__" ? null : Number(value),
+            }),
+          renderEditor: ({ value, onChange, onCommit }) => (
+            <InlineSelectEditor
+              value={value || "__none__"}
+              options={[
+                { value: "__none__", label: "Unlinked" },
+                ...projects.map((project) => ({
+                  value: String(project.id),
+                  label: project.name ?? `Project ${project.id}`,
+                })),
+              ]}
+              placeholder="Select project"
+              onChange={onChange}
+              onCommit={onCommit}
+            />
+          ),
         };
       case "source_system":
         return {
@@ -310,23 +312,13 @@ export function buildTasksTableColumns(
       case "due_date":
         return {
           ...column,
-          render: (item) => {
-            if (onUpdate) {
-              return (
-                <Input
-                  type="date"
-                  className={GHOST_DATE_CLS}
-                  value={item.due_date?.split("T")[0] ?? ""}
-                  onChange={(e) =>
-                    onUpdate(item.id!, { due_date: e.target.value || null })
-                  }
-                />
-              );
-            }
-            return <TableDateValue value={item.due_date} />;
-          },
+          render: (item) => <TableDateValue value={item.due_date} />,
           sortValue: (item) => item.due_date ?? "",
           sortable: true,
+          editable: Boolean(onUpdate),
+          editInputType: "date",
+          editValue: (item) => item.due_date?.split("T")[0] ?? "",
+          onEdit: (item, value) => onUpdate?.(item.id!, { due_date: value || null }),
         };
       case "created_at":
         return {
@@ -338,70 +330,53 @@ export function buildTasksTableColumns(
       case "priority":
         return {
           ...column,
-          render: (item) => {
-            if (onUpdate) {
-              return (
-                <Select
-                  value={item.priority?.toLowerCase() ?? "__none__"}
-                  onValueChange={(value) =>
-                    onUpdate(item.id!, { priority: value === "__none__" ? null : value })
-                  }
-                >
-                  <SelectTrigger className={GHOST_SELECT_CLS}>
-                    <SelectValue placeholder="Not set" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">Not set</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                  </SelectContent>
-                </Select>
-              );
-            }
-            return (
-              <TableTagBadge
-                label={item.priority}
-                variant={item.priority?.toLowerCase().includes("high") ? "default" : "secondary"}
-              />
-            );
-          },
+          render: (item) => (
+            <TableTagBadge
+              label={item.priority}
+              variant={item.priority?.toLowerCase().includes("high") ? "default" : "secondary"}
+            />
+          ),
           sortValue: (item) => item.priority ?? "",
           sortable: true,
+          editable: Boolean(onUpdate),
+          editValue: (item) => item.priority?.toLowerCase() ?? "__none__",
+          onEdit: (item, value) =>
+            onUpdate?.(item.id!, {
+              priority: value === "__none__" ? null : value,
+            }),
+          renderEditor: ({ value, onChange, onCommit }) => (
+            <InlineSelectEditor
+              value={value || "__none__"}
+              options={TASK_PRIORITY_OPTIONS}
+              placeholder="Select priority"
+              onChange={onChange}
+              onCommit={onCommit}
+            />
+          ),
         };
       case "status":
         return {
           ...column,
-          render: (item) => {
-            if (onUpdate) {
-              return (
-                <Select
-                  value={item.status ?? "__none__"}
-                  onValueChange={(value) =>
-                    onUpdate(item.id!, { status: value === "__none__" ? undefined : value })
-                  }
-                >
-                  <SelectTrigger className={GHOST_SELECT_CLS}>
-                    <SelectValue placeholder="No status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="To-Do">To Do</SelectItem>
-                    <SelectItem value="In-Progress">In Progress</SelectItem>
-                    <SelectItem value="Blocked">Blocked</SelectItem>
-                    <SelectItem value="Complete">Complete</SelectItem>
-                  </SelectContent>
-                </Select>
-              );
-            }
-            return (
-              <TableTagBadge
-                label={item.status}
-                variant={item.status?.toLowerCase().includes("complete") ? "default" : "outline"}
-              />
-            );
-          },
+          render: (item) => (
+            <TableTagBadge
+              label={item.status}
+              variant={item.status?.toLowerCase().includes("done") ? "default" : "outline"}
+            />
+          ),
           sortValue: (item) => item.status ?? "",
           sortable: true,
+          editable: Boolean(onUpdate),
+          editValue: (item) => item.status ?? "open",
+          onEdit: (item, value) => onUpdate?.(item.id!, { status: value }),
+          renderEditor: ({ value, onChange, onCommit }) => (
+            <InlineSelectEditor
+              value={value || "open"}
+              options={TASK_STATUS_OPTIONS}
+              placeholder="Select status"
+              onChange={onChange}
+              onCommit={onCommit}
+            />
+          ),
         };
       default:
         return {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useCommentsVisibilityStore } from "@/lib/stores/comments-visibility-store";
 import {
   VeltComments,
   VeltCommentsSidebar,
@@ -45,6 +46,7 @@ export function VeltGlobalLayer() {
   const rawPathname = usePathname();
   const pathname = rawPathname ?? "/";
   const [activeRecorderId, setActiveRecorderId] = useState<string | null>(null);
+  const commentsVisible = useCommentsVisibilityStore((state) => state.visible);
 
   // Scope page annotations to the current route
   useSetDocument(pathname, { documentName: pathname });
@@ -57,6 +59,13 @@ export function VeltGlobalLayer() {
       window.dispatchEvent(new CustomEvent("velt-recorder-active"));
     }
   });
+
+  // When the user hides comments, unmount the entire visual layer — comment
+  // pins, the floating recorder control panel, and any audio/video playback
+  // widgets — so the page content is unobstructed. Hooks above still run.
+  if (!commentsVisible) {
+    return null;
+  }
 
   return (
     <>
