@@ -190,11 +190,13 @@ const TAB_LABELS: Record<SitemapTab, string> = {
 };
 
 const columns: ColumnConfig[] = [
-  { id: "page", label: "Page / Route", alwaysVisible: true },
+  { id: "page", label: "Page", alwaysVisible: true },
+  { id: "route", label: "Route", defaultVisible: true },
   { id: "category", label: "Category", defaultVisible: true },
   { id: "type", label: "Type", defaultVisible: true },
   { id: "accessLevel", label: "Access", defaultVisible: true },
   { id: "permissionModule", label: "Module", defaultVisible: true },
+  { id: "dynamic", label: "Dynamic", defaultVisible: false },
   { id: "status", label: "Status", defaultVisible: true },
   { id: "notes", label: "Notes", defaultVisible: true },
   { id: "lastReviewed", label: "Last Reviewed", defaultVisible: true },
@@ -523,7 +525,7 @@ function buildColumns({
   return [
     {
       ...columns[0],
-      width: 360,
+      width: 220,
       render: (item) => {
         if (item._group) {
           const collapsed = collapsedGroups.has(item._group);
@@ -549,23 +551,31 @@ function buildColumns({
           );
         }
 
-        const dynamic = isDynamicRoute(item.route);
         return (
-          <div className="min-w-0 pl-5">
-            <div className="flex items-center gap-2">
-              <span className="truncate text-sm font-medium text-foreground">{item.page}</span>
-              {dynamic ? <Badge variant="outline" className="text-[10px] font-normal">Dynamic</Badge> : null}
-            </div>
-            <code className="block truncate text-xs text-muted-foreground">{item.route}</code>
-          </div>
+          <span className="block min-w-0 truncate pl-5 text-sm font-medium text-foreground">
+            {item.page}
+          </span>
         );
       },
-      csvValue: (item) => item.route,
+      csvValue: (item) => item.page,
       sortValue: (item) => item.page,
       sortable: true,
     },
     {
       ...columns[1],
+      width: 300,
+      render: (item) =>
+        item._group ? null : (
+          <code className="block max-w-80 truncate text-xs text-muted-foreground">
+            {item.route}
+          </code>
+        ),
+      csvValue: (item) => item.route,
+      sortValue: (item) => item.route,
+      sortable: true,
+    },
+    {
+      ...columns[2],
       render: (item) =>
         item._group
           ? null
@@ -579,7 +589,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[2],
+      ...columns[3],
       render: (item) =>
         item._group
           ? null
@@ -594,7 +604,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[3],
+      ...columns[4],
       render: (item) =>
         item._group
           ? null
@@ -607,7 +617,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[4],
+      ...columns[5],
       render: (item) =>
         item._group
           ? null
@@ -621,7 +631,19 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[5],
+      ...columns[6],
+      render: (item) =>
+        item._group ? null : (
+          <span className="text-xs text-muted-foreground">
+            {isDynamicRoute(item.route) ? "Yes" : "No"}
+          </span>
+        ),
+      csvValue: (item) => (isDynamicRoute(item.route) ? "Yes" : "No"),
+      sortValue: (item) => (isDynamicRoute(item.route) ? "Yes" : "No"),
+      sortable: true,
+    },
+    {
+      ...columns[7],
       render: (item) =>
         item._group
           ? null
@@ -636,7 +658,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[6],
+      ...columns[8],
       width: 280,
       render: (item) => {
         if (item._group) return null;
@@ -663,7 +685,7 @@ function buildColumns({
       sortable: false,
     },
     {
-      ...columns[7],
+      ...columns[9],
       render: (item) =>
         item._group ? null : (
           <span className="text-xs text-muted-foreground">
@@ -675,7 +697,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[8],
+      ...columns[10],
       align: "right",
       render: (item) => (item._group ? null : <span className="text-xs text-muted-foreground">{item.refCount}</span>),
       csvValue: (item) => String(item.refCount),
@@ -683,7 +705,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[9],
+      ...columns[11],
       render: (item) => {
         if (item._group) return null;
         const canOpen = !isDynamicRoute(item.route);
