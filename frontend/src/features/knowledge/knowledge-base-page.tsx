@@ -5,18 +5,25 @@ import Link from "next/link";
 import {
   ArrowLeft,
   ArrowUpRight,
+  BookOpen,
+  Briefcase,
+  Building2,
+  CalendarDays,
   ExternalLink,
   FileText,
+  HardHat,
   Loader2,
+  Receipt,
   Search,
   Settings,
+  Shield,
+  Users,
   X,
 } from "lucide-react";
 
 import { EmptyState } from "@/components/ds";
 import { StatusBadge } from "@/components/ds";
 import { PageShell } from "@/components/layout";
-import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +59,19 @@ const CATEGORY_ORDER = [
 ] as const;
 
 type Category = (typeof CATEGORY_ORDER)[number];
+
+const CATEGORY_ICONS: Record<Category, React.ReactNode> = {
+  "Company Policies": <Shield className="h-4 w-4" />,
+  "HR & Onboarding": <Users className="h-4 w-4" />,
+  "Finance & Accounting": <Receipt className="h-4 w-4" />,
+  Contracts: <FileText className="h-4 w-4" />,
+  "Field Operations": <HardHat className="h-4 w-4" />,
+  Meetings: <CalendarDays className="h-4 w-4" />,
+  "Notion & Tools": <Briefcase className="h-4 w-4" />,
+  "Project Management": <Building2 className="h-4 w-4" />,
+  Templates: <BookOpen className="h-4 w-4" />,
+  Other: <FileText className="h-4 w-4" />,
+};
 
 const CATEGORY_DESCRIPTIONS: Record<Category, string> = {
   "Company Policies": "Handbooks, code of conduct, safety policies, and compliance documents.",
@@ -92,7 +112,6 @@ export function KnowledgeBasePage() {
   const [selectedDocument, setSelectedDocument] =
     React.useState<KnowledgeDocument | null>(null);
   const [viewLoading, setViewLoading] = React.useState(false);
-  const [canManageSources, setCanManageSources] = React.useState(false);
 
   const isAdmin = profile?.isAdmin === true;
   const searchTerm = search.trim().toLowerCase();
@@ -127,10 +146,6 @@ export function KnowledgeBasePage() {
     (c) => (categoryCounts[c] ?? 0) > 0,
   );
 
-  React.useEffect(() => {
-    setCanManageSources(isAdmin);
-  }, [isAdmin]);
-
   async function handleViewDocument() {
     if (!selectedDocument) return;
     setViewLoading(true);
@@ -146,50 +161,48 @@ export function KnowledgeBasePage() {
     }
   }
 
-  const headerActions = canManageSources ? (
-    <Button asChild variant="outline" size="sm" className="gap-1.5">
-      <Link href="/knowledge/manage">
-        <Settings className="h-3.5 w-3.5" />
-        Manage sources
-      </Link>
-    </Button>
-  ) : undefined;
-
   return (
-    <PageShell
-      variant="content"
-      title="Knowledge Base"
-      description="Find company documents, lessons learned, and reference material used by Ask Alleato."
-      actions={headerActions}
-    >
-      <section className="space-y-3">
-        <label
-          htmlFor="knowledge-search"
-          className="text-sm font-medium text-foreground"
-        >
-          Search knowledge
-        </label>
-        <div className="relative max-w-xl">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
-          <Input
-            id="knowledge-search"
-            placeholder="Search by title, file, or tag"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="h-10 bg-card pl-10 pr-10 text-sm shadow-xs placeholder:text-muted-foreground/60"
-          />
-          {search && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => setSearch("")}
-              className="absolute right-1.5 top-1/2 h-7 w-7 -translate-y-1/2 p-0 text-muted-foreground/60 hover:text-foreground"
-              aria-label="Clear search"
-            >
-              <X className="h-3.5 w-3.5" />
-            </Button>
-          )}
+    <PageShell variant="detail" title="Knowledge Base" showHeader={false}>
+      {/* Hero panel */}
+      <section className="relative overflow-hidden rounded-2xl bg-muted/40 px-6 py-14 sm:px-12 sm:py-16">
+        {isAdmin && (
+          <Link
+            href="/knowledge/manage"
+            className="absolute right-5 top-5 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Settings className="h-3.5 w-3.5" />
+            Manage sources
+          </Link>
+        )}
+        <div className="mx-auto max-w-2xl text-center">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+            Knowledge Base
+          </h1>
+          <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
+            Browse company documents, lessons learned, and reference material
+            that Ask Alleato can use.
+          </p>
+          <div className="relative mx-auto mt-8 max-w-lg">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
+            <Input
+              placeholder="Search company knowledge…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-11 bg-background pl-11 pr-10 text-sm shadow-xs placeholder:text-muted-foreground/60"
+            />
+            {search && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setSearch("")}
+                className="absolute right-2 top-1/2 h-7 w-7 -translate-y-1/2 p-0 text-muted-foreground/60 hover:text-foreground"
+                aria-label="Clear search"
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
         </div>
       </section>
 
@@ -207,7 +220,7 @@ export function KnowledgeBasePage() {
         />
       ) : presentCategories.length === 0 ? (
         <EmptyState
-          icon={<FileText className="h-5 w-5" />}
+          icon={<BookOpen className="h-5 w-5" />}
           title="No knowledge entries yet"
           description="Admins can add approved knowledge from the source manager."
         />
@@ -319,70 +332,59 @@ function CategoryGrid({
   onSelect: (cat: Category) => void;
 }) {
   return (
-    <section className="space-y-4">
-      <div>
-        <SectionRuleHeading label="Browse by category" className="mb-1" />
-        <p className="mt-1 text-sm text-muted-foreground">
-          Open a category to inspect approved documents.
-        </p>
-      </div>
-      <div className="divide-y divide-border/50">
-        {categories.map((cat) => {
-          const count = counts[cat] ?? 0;
-          return (
-            <Button
-              key={cat}
-              type="button"
-              variant="ghost"
-              onClick={() => onSelect(cat)}
-              className="group h-auto w-full justify-between whitespace-normal rounded-none px-1 py-4 text-left hover:bg-muted/40 focus-visible:bg-muted/40 sm:px-3"
-            >
-              <div className="min-w-0 space-y-1">
-                <div className="text-base font-semibold text-foreground">
-                  {cat}
-                </div>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {CATEGORY_DESCRIPTIONS[cat]}
-                </p>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {categories.map((cat) => {
+        const count = counts[cat] ?? 0;
+        return (
+          <div
+            key={cat}
+            role="button"
+            tabIndex={0}
+            onClick={() => onSelect(cat)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSelect(cat);
+              }
+            }}
+            className="group relative flex cursor-pointer flex-col items-start gap-4 rounded-2xl bg-card p-6 text-left shadow-xs transition-all hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-foreground/70 transition-colors group-hover:bg-primary/10 group-hover:text-primary">
+              {CATEGORY_ICONS[cat]}
+            </div>
+            <div className="flex-1 space-y-1.5">
+              <div className="text-base font-semibold text-foreground">
+                {cat}
               </div>
-              <div className="flex shrink-0 items-center gap-4 pt-0.5 text-xs text-muted-foreground">
-                <span>
-                  {count} {count === 1 ? "entry" : "entries"}
-                </span>
-                <span className="hidden items-center gap-1 font-medium text-foreground transition-colors group-hover:text-primary sm:inline-flex">
-                  Browse
-                  <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                </span>
-              </div>
-            </Button>
-          );
-        })}
-      </div>
-    </section>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {CATEGORY_DESCRIPTIONS[cat]}
+              </p>
+            </div>
+            <div className="flex w-full items-center justify-between pt-2">
+              <span className="text-xs text-muted-foreground">
+                {count} {count === 1 ? "entry" : "entries"}
+              </span>
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground transition-colors group-hover:text-primary">
+                Browse
+                <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
 function CategoryGridSkeleton() {
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <div className="h-5 w-40 animate-pulse rounded-md bg-muted" />
-        <div className="h-4 w-64 animate-pulse rounded-md bg-muted/60" />
-      </div>
-      <div className="divide-y divide-border/50">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div
-            key={i}
-            className="flex items-center justify-between gap-4 py-4"
-          >
-            <div className="min-w-0 flex-1 space-y-2">
-              <div className="h-5 w-40 animate-pulse rounded-md bg-muted" />
-              <div className="h-4 w-full max-w-md animate-pulse rounded-md bg-muted/60" />
-            </div>
-            <div className="h-4 w-16 animate-pulse rounded-md bg-muted/60" />
-          </div>
-        ))}
-      </div>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div
+          key={i}
+          className="h-48 animate-pulse rounded-2xl bg-muted/40"
+        />
+      ))}
     </div>
   );
 }
@@ -469,14 +471,23 @@ function DocumentList({
   onSelect: (doc: KnowledgeDocument) => void;
 }) {
   return (
-    <div className="divide-y divide-border/50">
-      {docs.map((doc) => (
-        <Button
+    <div className="overflow-hidden rounded-xl bg-card shadow-xs">
+      {docs.map((doc, idx) => (
+        <div
           key={doc.id}
-          type="button"
-          variant="ghost"
+          role="button"
+          tabIndex={0}
           onClick={() => onSelect(doc)}
-          className="group h-auto w-full justify-between whitespace-normal rounded-none px-1 py-3.5 text-left hover:bg-muted/40 focus-visible:bg-muted/40 sm:px-3"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onSelect(doc);
+            }
+          }}
+          className={
+            "group flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-3.5 text-left transition-colors hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:outline-none" +
+            (idx > 0 ? " border-t border-muted" : "")
+          }
         >
           <div className="flex min-w-0 items-start gap-3">
             <FileText className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/50 transition-colors group-hover:text-primary" />
@@ -501,7 +512,7 @@ function DocumentList({
             </div>
           </div>
           <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground/40 transition-all group-hover:text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-        </Button>
+        </div>
       ))}
     </div>
   );
