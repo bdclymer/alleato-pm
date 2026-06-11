@@ -145,6 +145,10 @@ export function isPatternCEntityType(value: string): value is PatternCEntityType
   return value in PATTERN_C_ENTITY_CONFIG;
 }
 
+function entityForeignKeyValue(fkColumn: string, entityId: string): string | number {
+  return fkColumn.endsWith("_id") && /^\d+$/.test(entityId) ? Number(entityId) : entityId;
+}
+
 export async function resolvePatternCEntity(
   supabase: AppClient,
   entityType: string,
@@ -315,7 +319,7 @@ export async function uploadAndLinkPatternCDocument({
   }
 
   const row: Record<string, unknown> = {
-    [config.fkColumn]: config.fkColumn.endsWith("_id") && /^\d+$/.test(entityId) ? Number(entityId) : entityId,
+    [config.fkColumn]: entityForeignKeyValue(config.fkColumn, entityId),
     document_metadata_id: docId,
     attached_by: userId,
     attached_at: attachedAt,
@@ -369,10 +373,44 @@ export async function deletePatternCDocumentLink({
   const { error } = await supabase
     .from(config.table)
     .delete()
-    .eq(config.fkColumn, entityId)
+    .eq(config.fkColumn, entityForeignKeyValue(config.fkColumn, entityId))
     .eq("document_metadata_id", documentMetadataId);
 
   if (error) {
     throw new Error(`Failed to remove document link: ${error.message}`);
+  }
+}
+
+export async function updatePatternCDocumentType({
+  supabase,
+  entityType,
+  entityId,
+  documentMetadataId,
+  documentType,
+}: {
+  supabase: AppClient;
+  entityType: PatternCEntityType;
+  entityId: string;
+  documentMetadataId: string;
+  documentType: string | null;
+}): Promise<void> {
+  const config = getPatternCConfig(entityType);
+  const { error: linkError } = await supabase
+    .from(config.table)
+    .update({ document_type: documentType } as never)
+    .eq(config.fkColumn, entityForeignKeyValue(config.fkColumn, entityId))
+    .eq("document_metadata_id", documentMetadataId);
+
+  if (linkError) {
+    throw new Error(`Failed to update linked document type: ${linkError.message}`);
+  }
+
+  const { error: metaError } = await supabase
+    .from("document_metadata")
+    .update({ document_type: documentType })
+    .eq("id", documentMetadataId);
+
+  if (metaError) {
+    throw new Error(`Failed to update document metadata type: ${metaError.message}`);
   }
 }

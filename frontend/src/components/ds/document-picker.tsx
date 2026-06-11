@@ -8,6 +8,13 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { apiFetch } from '@/lib/api-client';
 import { cn } from '@/lib/utils';
 
@@ -35,6 +42,13 @@ interface LinkedDoc {
   file_path: string | null;
   source_size: number | null;
   download_url: string | null;
+}
+
+interface DocumentTypeOption {
+  type_key: string;
+  display_name: string;
+  category: string;
+  sort_order: number;
 }
 
 export interface DocumentPickerProps {
@@ -72,6 +86,7 @@ const ACCEPTED_TYPES = [
 ].join(',');
 
 const MAX_SIZE_BYTES = 50 * 1024 * 1024;
+const NO_DOCUMENT_TYPE = '__none';
 
 // ─── EntityAttachments ────────────────────────────────────────────────────────
 
@@ -92,6 +107,9 @@ export function EntityAttachments({
 }: EntityAttachmentsProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState<string[]>([]);
+  const [selectedDocumentType, setSelectedDocumentType] = useState(
+    defaultDocumentType ?? NO_DOCUMENT_TYPE
+  );
   const fileInputId = useRef(`entity-attach-${entityType}-${entityId}`);
   const queryClient = useQueryClient();
 
@@ -108,6 +126,22 @@ export function EntityAttachments({
       ),
   });
 
+  const { data: documentTypes = [] } = useQuery<DocumentTypeOption[]>({
+    queryKey: ['document-types', entityType],
+    queryFn: () =>
+      apiFetch<DocumentTypeOption[]>(
+        `/api/document-picker/types?for=${encodeURIComponent(entityType)}`
+      ),
+  });
+
+  const typeLabelByKey = useMemo(
+    () =>
+      new Map(
+        documentTypes.map((option) => [option.type_key, option.display_name])
+      ),
+    [documentTypes]
+  );
+
   const removeMutation = useMutation({
     mutationFn: (documentMetadataId: string) =>
       apiFetch(
@@ -119,6 +153,36 @@ export function EntityAttachments({
       toast.success('Document removed');
     },
     onError: () => toast.error('Failed to remove document'),
+  });
+
+  const updateTypeMutation = useMutation({
+    mutationFn: ({
+      documentMetadataId,
+      documentType,
+    }: {
+      documentMetadataId: string;
+      documentType: string | null;
+    }) =>
+      apiFetch('/api/document-picker/linked', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          entityType,
+          entityId,
+          documentMetadataId,
+          documentType,
+        }),
+      }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey });
+      toast.success('Document type updated');
+    },
+    onError: (error) => {
+      toast.error('Failed to update document type', {
+        description:
+          error instanceof Error ? error.message : 'Please try again.',
+      });
+    },
   });
 
   const uploadFile = useCallback(
@@ -134,17 +198,22 @@ export function EntityAttachments({
         fd.append('entityType', entityType);
         fd.append('entityId', entityId);
         fd.append('projectId', String(projectId));
-        if (defaultDocumentType) fd.append('documentType', defaultDocumentType);
+        if (selectedDocumentType !== NO_DOCUMENT_TYPE) {
+          fd.append('documentType', selectedDocumentType);
+        }
         await apiFetch('/api/document-picker/upload', { method: 'POST', body: fd });
         void queryClient.invalidateQueries({ queryKey });
         toast.success(`${file.name} uploaded`);
-      } catch {
-        toast.error(`Failed to upload ${file.name}`);
+      } catch (error) {
+        toast.error(`Failed to upload ${file.name}`, {
+          description:
+            error instanceof Error ? error.message : 'Please try again.',
+        });
       } finally {
         setUploading((prev) => prev.filter((n) => n !== file.name));
       }
     },
-    [entityType, entityId, projectId, defaultDocumentType, queryClient, queryKey]
+    [entityType, entityId, projectId, selectedDocumentType, queryClient, queryKey]
   );
 
   const handleFiles = useCallback(
@@ -167,6 +236,25 @@ export function EntityAttachments({
 
   return (
     <div className={cn('space-y-4', className)}>
+      {documentTypes.length > 0 && (
+        <div className="flex flex-col gap-1.5 sm:max-w-xs">
+          <span className="text-xs text-muted-foreground">Type for new uploads</span>
+          <Select value={selectedDocumentType} onValueChange={setSelectedDocumentType}>
+            <SelectTrigger size="sm">
+              <SelectValue placeholder="Select document type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_DOCUMENT_TYPE}>Uncategorized</SelectItem>
+              {documentTypes.map((option) => (
+                <SelectItem key={option.type_key} value={option.type_key}>
+                  {option.display_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       {/* Drop zone — using <label> so clicking opens the file picker without JS */}
       <label
         htmlFor={fileInputId.current}
@@ -229,24 +317,57 @@ export function EntityAttachments({
               <li
                 key={doc.document_metadata_id}
                 className={cn(
-                  'flex items-center gap-3 py-2.5 first:pt-0',
+                  'flex flex-col gap-3 py-2.5 first:pt-0 sm:flex-row sm:items-center',
                   isRemoving && 'opacity-50'
                 )}
               >
-                <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {[
-                      doc.source_size ? formatBytes(doc.source_size) : null,
-                      doc.document_type ?? null,
-                      doc.attached_at ? formatDate(doc.attached_at) : null,
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </p>
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {[
+                        doc.source_size ? formatBytes(doc.source_size) : null,
+                        doc.document_type
+                          ? typeLabelByKey.get(doc.document_type) ?? doc.document_type
+                          : null,
+                        doc.attached_at ? formatDate(doc.attached_at) : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
+                <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto">
+                  {documentTypes.length > 0 && (
+                    <Select
+                      value={doc.document_type ?? NO_DOCUMENT_TYPE}
+                      disabled={
+                        updateTypeMutation.isPending &&
+                        updateTypeMutation.variables?.documentMetadataId ===
+                          doc.document_metadata_id
+                      }
+                      onValueChange={(value) =>
+                        updateTypeMutation.mutate({
+                          documentMetadataId: doc.document_metadata_id,
+                          documentType:
+                            value === NO_DOCUMENT_TYPE ? null : value,
+                        })
+                      }
+                    >
+                      <SelectTrigger size="sm" className="h-8 min-w-0 flex-1 sm:w-44 sm:flex-none">
+                        <SelectValue placeholder="Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={NO_DOCUMENT_TYPE}>Uncategorized</SelectItem>
+                        {documentTypes.map((option) => (
+                          <SelectItem key={option.type_key} value={option.type_key}>
+                            {option.display_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                   {doc.download_url && (
                     <Button
                       variant="ghost"

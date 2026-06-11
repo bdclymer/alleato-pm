@@ -13,6 +13,12 @@ function validationError(message: string, status: number): Response {
   return Response.json({ success: false, error_message: message, error: message }, { status });
 }
 
+function taxonomyEntityType(entityType: string): string {
+  return entityType === 'subcontract' || entityType === 'purchase_order'
+    ? 'commitment'
+    : entityType;
+}
+
 /**
  * POST /api/document-picker/upload
  *
@@ -58,6 +64,24 @@ export async function POST(req: NextRequest) {
   const resolved = await resolvePatternCEntity(supabase, entityType, entityId);
   if ('error' in resolved) {
     return validationError(resolved.error, resolved.status);
+  }
+
+  if (documentType) {
+    const { data: taxonomyRow, error: taxonomyError } = await supabase
+      .from('document_type_taxonomy')
+      .select('type_key')
+      .eq('type_key', documentType)
+      .eq('is_active', true)
+      .contains('applies_to', [taxonomyEntityType(resolved.entityType)])
+      .maybeSingle();
+
+    if (taxonomyError) {
+      return apiErrorResponse(taxonomyError);
+    }
+
+    if (!taxonomyRow) {
+      return validationError(`Document type "${documentType}" is not available for ${taxonomyEntityType(resolved.entityType)} attachments.`, 400);
+    }
   }
 
   try {
