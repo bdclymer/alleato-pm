@@ -8,6 +8,8 @@ Last verified: 2026-06-10 (fix 4: RAG supplement scan in _fetch_graph_embedding_
 
 Last verified: 2026-06-10 (RAG client routing hardened — `get_rag_read_client`/`get_rag_write_client` now route to the AI Database whenever `RAG_SUPABASE_URL` is set, ignoring the READS/WRITES cutover flags except as a one-time drift warning. Fixes a Fireflies segmentation outage caused by the sync cron missing those env vars and silently reading `rag_document_metadata` from the PM APP DB. See the "Two Supabase projects" callout + `backend/tests/test_rag_client_routing.py`.)
 
+Last verified: 2026-06-10 (intelligence compiler cost split — `COMPILER_MODEL` (default `gpt-5.5`) and new `COMPILER_MODEL_LIGHT` (default `gpt-4.1-mini`) in `backend/src/services/intelligence/client.py` are now env-configurable. Teams DM (`teams_compiler.extract_intelligence`) and email (`email_compiler.extract_intelligence`) signal extraction route to the LIGHT tier; meeting deep full-transcript extraction (`pipeline/extractor.py`) keeps full `gpt-5.5`. Driver: frontier gpt-5.5 was running on every email/DM — including ~5.5× redundant re-extraction of the same Teams DM conversation as new messages arrived — at ~$60/day. Mini routing cuts per-call cost ~10-20×. Deferred follow-up: debounce per-conversation Teams DM recompiles.)
+
 ---
 
 ## 1. Overview

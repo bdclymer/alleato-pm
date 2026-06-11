@@ -29,7 +29,7 @@ except ModuleNotFoundError:
     from services.integrations.microsoft_graph.project_inference import infer_project_id
     from services.supabase_helpers import get_rag_read_client, get_rag_write_client
 
-from .client import COMPILER_MODEL_DEFAULT, COMPILER_MODEL_LARGE, extract_with_retry
+from .client import COMPILER_MODEL_DEFAULT, COMPILER_MODEL_LIGHT, extract_with_retry
 from .compiler import (
     compile_current_packet,
     ensure_client_project_target,
@@ -449,9 +449,13 @@ def attribute_project(
 def extract_intelligence(
     normalized: Dict[str, Any],
     attribution: Dict[str, Any],
-    model: str = COMPILER_MODEL_DEFAULT,
+    model: str = COMPILER_MODEL_LIGHT,
 ) -> Dict[str, Any]:
-    """Single LLM call returning structured email-thread intelligence."""
+    """Single LLM call returning structured email-thread intelligence.
+
+    Emails are high-volume and low-stakes, so they run on the cheaper
+    COMPILER_MODEL_LIGHT tier (meeting deep-extraction keeps full gpt-5.5).
+    """
     thread_text = normalized.get("thread_text") or ""
     if len(thread_text) > MAX_LLM_THREAD_CHARS:
         logger.warning(
@@ -460,8 +464,7 @@ def extract_intelligence(
             MAX_LLM_THREAD_CHARS,
         )
         thread_text = thread_text[:MAX_LLM_THREAD_CHARS]
-    token_estimate = len(thread_text) // 4
-    selected_model = COMPILER_MODEL_LARGE if token_estimate > 2000 else model
+    selected_model = model
     messages = build_email_extraction_messages(
         thread_text=thread_text,
         project_name=attribution.get("project_name"),

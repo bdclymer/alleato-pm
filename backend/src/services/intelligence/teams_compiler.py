@@ -16,7 +16,7 @@ except ModuleNotFoundError:  # Allows backend-local scripts with sys.path.insert
     from services.integrations.microsoft_graph.project_inference import infer_project_id
     from services.supabase_helpers import get_rag_read_client, get_rag_write_client
 
-from .client import COMPILER_MODEL_DEFAULT, COMPILER_MODEL_LARGE, extract_with_retry
+from .client import COMPILER_MODEL_DEFAULT, COMPILER_MODEL_LIGHT, extract_with_retry
 from .compiler import (
     compile_current_packet,
     ensure_client_project_target,
@@ -394,9 +394,14 @@ def extract_intelligence(
     conversation_text: str,
     normalized: Dict[str, Any],
     attribution: Dict[str, Any],
-    model: str = COMPILER_MODEL_DEFAULT,
+    model: str = COMPILER_MODEL_LIGHT,
 ) -> Dict[str, Any]:
-    """Extract all Teams intelligence in one LLM call."""
+    """Extract all Teams intelligence in one LLM call.
+
+    Teams DMs are high-volume and low-stakes, so they run on the cheaper
+    COMPILER_MODEL_LIGHT tier (meeting deep-extraction keeps full gpt-5.5).
+    The mini tier has a large context window, so no large-model bump is needed.
+    """
     llm_text = conversation_text or ""
     if len(llm_text) > MAX_LLM_CONVERSATION_CHARS:
         logger.warning(
@@ -405,8 +410,7 @@ def extract_intelligence(
             MAX_LLM_CONVERSATION_CHARS,
         )
         llm_text = llm_text[:MAX_LLM_CONVERSATION_CHARS]
-    token_estimate = len(llm_text) // 4
-    selected_model = COMPILER_MODEL_LARGE if token_estimate > 2000 else model
+    selected_model = model
     messages = build_extraction_messages(
         conversation_text=llm_text,
         project_name=attribution.get("project_name"),
