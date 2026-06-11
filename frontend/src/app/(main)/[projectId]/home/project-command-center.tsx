@@ -504,6 +504,7 @@ function buildBudgetDivisionSummaries({
 }): BudgetDivisionSummary[] {
   const summaries = new Map<string, BudgetDivisionSummary>();
   const divisionByCostCode = new Map<string, { id: string; label: string }>();
+  const divisionByPrefix = new Map<string, { id: string; label: string }>();
 
   const ensureSummary = (id: string, label: string) => {
     const existing = summaries.get(id);
@@ -521,6 +522,7 @@ function buildBudgetDivisionSummaries({
     const label = formatDivisionLabel(divisionId, line.cost_code?.division_title ?? null);
     if (line.cost_code_id) {
       divisionByCostCode.set(line.cost_code_id, { id: divisionId, label });
+      divisionByPrefix.set(divisionIdFromCostCode(line.cost_code_id), { id: divisionId, label });
     }
     const summary = ensureSummary(divisionId, label);
     summary.budget += Number(line.original_amount) || 0;
@@ -528,7 +530,8 @@ function buildBudgetDivisionSummaries({
 
   contractLineItems.forEach((line) => {
     const knownDivision = line.cost_code_id
-      ? divisionByCostCode.get(line.cost_code_id)
+      ? divisionByCostCode.get(line.cost_code_id) ??
+        divisionByPrefix.get(divisionIdFromCostCode(line.cost_code_id))
       : null;
     const divisionId =
       knownDivision?.id ?? divisionIdFromCostCode(line.cost_code_id);

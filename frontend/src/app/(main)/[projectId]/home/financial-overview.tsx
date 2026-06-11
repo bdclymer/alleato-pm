@@ -3,7 +3,17 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowUpRight, TrendingDown, TrendingUp } from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { cn } from "@/lib/utils";
+import { formatPercent } from "@/lib/format";
 
 /* ─────────────────────────────────────────────────────────────
    FinancialOverview — at-a-glance cost health for the project home.
@@ -71,6 +81,118 @@ function pct(part: number, whole: number): number {
   return Math.min(100, Math.max(0, (part / whole) * 100));
 }
 
+type BudgetChartPayload = Array<{
+  name?: string;
+  value?: number | null;
+  payload?: {
+    label?: string;
+  };
+}>;
+
+function BudgetChartTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: BudgetChartPayload;
+}) {
+  if (!active || !payload?.length) return null;
+
+  return (
+    <div className="rounded-md border border-border bg-popover px-3 py-2 text-xs shadow-sm">
+      <p className="mb-1 font-medium text-foreground">{payload[0]?.payload?.label}</p>
+      <div className="space-y-1">
+        {payload.map((entry) => (
+          <div key={entry.name} className="flex items-center justify-between gap-4">
+            <span className="text-muted-foreground">{entry.name}</span>
+            <span className="font-medium tabular-nums text-foreground">
+              {fmtFull(entry.value)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BudgetDivisionChart({
+  divisions,
+}: {
+  divisions: BudgetDivisionSummary[];
+}) {
+  const chartRows = divisions
+    .filter((division) => division.budget > 0 || division.committed > 0)
+    .slice(0, 6);
+  const chartHeight = Math.max(180, chartRows.length * 54);
+
+  if (chartRows.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="min-h-0 w-full">
+      <ResponsiveContainer width="100%" height={chartHeight}>
+        <BarChart
+          data={chartRows}
+          layout="vertical"
+          barCategoryGap={12}
+          margin={{ top: 4, right: 8, bottom: 0, left: 4 }}
+        >
+          <CartesianGrid
+            horizontal={false}
+            stroke="hsl(var(--border))"
+            strokeOpacity={0.7}
+          />
+          <XAxis
+            type="number"
+            tickFormatter={(value) => fmtCompact(Number(value))}
+            tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            type="category"
+            dataKey="label"
+            width={136}
+            tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }}
+            axisLine={false}
+            tickLine={false}
+            interval={0}
+          />
+          <Tooltip
+            content={<BudgetChartTooltip />}
+            cursor={{ fill: "hsl(var(--muted) / 0.35)" }}
+          />
+          <Bar
+            dataKey="budget"
+            name="Budget"
+            fill="hsl(var(--muted-foreground) / 0.35)"
+            radius={[0, 3, 3, 0]}
+            barSize={10}
+          />
+          <Bar
+            dataKey="committed"
+            name="Committed"
+            fill="hsl(var(--primary))"
+            radius={[0, 3, 3, 0]}
+            barSize={10}
+          />
+        </BarChart>
+      </ResponsiveContainer>
+      <div className="mt-3 flex items-center gap-4 pl-36 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-sm bg-muted-foreground/35" />
+          Budget
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-sm bg-primary" />
+          Committed
+        </span>
+      </div>
+    </div>
+  );
+}
+
 /* ── Eyebrow label ─────────────────────────────────────────── */
 
 function Eyebrow({ children }: { children: ReactNode }) {
@@ -102,10 +224,12 @@ function BudgetVsCommittedPanel({
   const divisionRows = budgetDivisions.filter(
     (division) => division.budget > 0 || division.committed > 0,
   );
-  const maxDivisionValue = Math.max(
-    ...divisionRows.flatMap((division) => [division.budget, division.committed]),
-    1,
+  const divisionCommittedCosts = divisionRows.reduce(
+    (sum, division) => sum + division.committed,
+    0,
   );
+  const displayedCommittedCosts =
+    committedCosts > 0 ? committedCosts : divisionCommittedCosts;
   const variancePctOfBudget =
     revisedBudget > 0 ? (projectedOverUnder / revisedBudget) * 100 : 0;
 
@@ -122,7 +246,7 @@ function BudgetVsCommittedPanel({
             {fmtFull(revisedBudget)}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {fmtCompact(committedCosts)} committed
+            {fmtCompact(displayedCommittedCosts)} committed
           </p>
         </div>
         <span
@@ -141,52 +265,14 @@ function BudgetVsCommittedPanel({
           {overBudget ? "" : "+"}
           {fmtCompact(projectedOverUnder)}
           <span className="opacity-60">
-            {Math.abs(variancePctOfBudget).toFixed(1)}%
+            {formatPercent(Math.abs(variancePctOfBudget), 1)}
           </span>
         </span>
       </div>
 
       <div className="space-y-3">
         {divisionRows.length > 0 ? (
-          divisionRows.map((division) => {
-            const overCommitted = division.committed > division.budget && division.budget > 0;
-
-            return (
-              <div key={division.id} className="space-y-1.5">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="truncate text-xs font-medium text-foreground">
-                    {division.label}
-                  </span>
-                  <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
-                    {fmtCompact(division.committed)} / {fmtCompact(division.budget)}
-                  </span>
-                </div>
-                <div className="grid grid-cols-[4.25rem_1fr] gap-2">
-                  <span className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
-                    Budget
-                  </span>
-                  <div className="h-2 overflow-hidden rounded-full bg-muted-foreground/12">
-                    <div
-                      className="h-full rounded-full bg-muted-foreground/35"
-                      style={{ width: `${pct(division.budget, maxDivisionValue)}%` }}
-                    />
-                  </div>
-                  <span className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
-                    Committed
-                  </span>
-                  <div className="h-2 overflow-hidden rounded-full bg-muted-foreground/12">
-                    <div
-                      className={cn(
-                        "h-full rounded-full",
-                        overCommitted ? "bg-destructive" : "bg-primary",
-                      )}
-                      style={{ width: `${pct(division.committed, maxDivisionValue)}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            );
-          })
+          <BudgetDivisionChart divisions={divisionRows} />
         ) : (
           <div className="space-y-3">
             <div className="grid grid-cols-[5.5rem_1fr_4.5rem] items-center gap-3">
@@ -204,13 +290,18 @@ function BudgetVsCommittedPanel({
                 <div
                   className={cn(
                     "h-full rounded-full",
-                    committedCosts > revisedBudget ? "bg-destructive" : "bg-primary",
+                    displayedCommittedCosts > revisedBudget ? "bg-destructive" : "bg-primary",
                   )}
-                  style={{ width: `${pct(committedCosts, Math.max(revisedBudget, committedCosts, 1))}%` }}
+                  style={{
+                    width: `${pct(
+                      displayedCommittedCosts,
+                      Math.max(revisedBudget, displayedCommittedCosts, 1),
+                    )}%`,
+                  }}
                 />
               </div>
               <span className="text-right text-xs font-medium tabular-nums text-foreground">
-                {fmtCompact(committedCosts)}
+                {fmtCompact(displayedCommittedCosts)}
               </span>
             </div>
           </div>
