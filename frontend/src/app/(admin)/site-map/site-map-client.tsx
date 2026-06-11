@@ -15,7 +15,6 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { StatusBadge, type StatusVariant } from "@/components/ds";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -153,27 +152,6 @@ const STATUSES: InventoryStatus[] = [
   "Planned",
 ];
 
-const STATUS_VARIANT: Record<InventoryStatus, StatusVariant> = {
-  Active: "success",
-  "Needs Review": "warning",
-  "Missing Nav": "warning",
-  "Internal Only": "info",
-  Deprecated: "neutral",
-  Broken: "error",
-  Planned: "info",
-};
-
-const TYPE_VARIANT: Record<InventoryType, StatusVariant> = {
-  "Project Page": "success",
-  "Admin Page": "error",
-  Report: "info",
-  "AI / Intelligence": "info",
-  Workflow: "warning",
-  Settings: "neutral",
-  "Database / Table": "neutral",
-  Utility: "neutral",
-};
-
 const GROUP_BY_LABELS: Record<GroupBy, string> = {
   none: "None",
   category: "Category",
@@ -196,7 +174,7 @@ const columns: ColumnConfig[] = [
   { id: "type", label: "Type", defaultVisible: true },
   { id: "accessLevel", label: "Access", defaultVisible: true },
   { id: "permissionModule", label: "Module", defaultVisible: true },
-  { id: "dynamic", label: "Dynamic", defaultVisible: false },
+  { id: "dynamic", label: "Dynamic", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
   { id: "notes", label: "Notes", defaultVisible: true },
   { id: "lastReviewed", label: "Last Reviewed", defaultVisible: true },
@@ -230,10 +208,14 @@ function isDynamicRoute(route: string): boolean {
   return route.includes("[");
 }
 
+function routeHref(route: string): string | null {
+  return isDynamicRoute(route) ? null : route;
+}
+
 function formatDateTime(value: string | undefined): string {
-  if (!value) return "Not reviewed";
+  if (!value) return "";
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "Not reviewed";
+  if (Number.isNaN(parsed.getTime())) return "";
   return parsed.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -417,17 +399,15 @@ function fieldSelect<TValue extends string>({
   value,
   options,
   onChange,
-  variant,
 }: {
   value: TValue;
   options: TValue[];
   onChange: (value: TValue) => void;
-  variant?: Record<TValue, StatusVariant>;
 }) {
   return (
     <Select value={value} onValueChange={(next) => onChange(next as TValue)}>
       <SelectTrigger
-        className="h-8 min-w-36 border-0 bg-transparent px-0 shadow-none focus:ring-0 focus:ring-offset-0"
+        className="h-8 min-w-36 border-0 bg-transparent px-0 text-xs font-normal text-muted-foreground shadow-none focus:ring-0 focus:ring-offset-0"
         onClick={(event) => event.stopPropagation()}
       >
         <SelectValue />
@@ -435,7 +415,7 @@ function fieldSelect<TValue extends string>({
       <SelectContent>
         {options.map((option) => (
           <SelectItem key={option} value={option}>
-            {variant ? <StatusBadge status={option} variant={variant[option]} /> : option}
+            {option}
           </SelectItem>
         ))}
       </SelectContent>
@@ -479,7 +459,7 @@ function pageModuleSelect({
   onChange: (value: PermissionModule) => void;
 }) {
   if (disabled) {
-    return <span className="text-xs text-muted-foreground">Not required</span>;
+    return <span className="text-xs text-muted-foreground">N/A</span>;
   }
 
   return (
@@ -564,12 +544,30 @@ function buildColumns({
     {
       ...columns[1],
       width: 300,
-      render: (item) =>
-        item._group ? null : (
-          <code className="block max-w-80 truncate text-xs text-muted-foreground">
-            {item.route}
-          </code>
-        ),
+      render: (item) => {
+        if (item._group) return null;
+        const href = routeHref(item.route);
+
+        if (!href) {
+          return (
+            <code className="block max-w-80 truncate text-xs text-muted-foreground">
+              {item.route}
+            </code>
+          );
+        }
+
+        return (
+          <Link
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className="block max-w-80 truncate text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <code>{item.route}</code>
+          </Link>
+        );
+      },
       csvValue: (item) => item.route,
       sortValue: (item) => item.route,
       sortable: true,
@@ -597,7 +595,6 @@ function buildColumns({
               value: item.type,
               options: TYPES,
               onChange: (value) => onFieldChange(item.route, "type", value),
-              variant: TYPE_VARIANT,
             }),
       csvValue: (item) => item.type,
       sortValue: (item) => item.type,
@@ -635,11 +632,11 @@ function buildColumns({
       render: (item) =>
         item._group ? null : (
           <span className="text-xs text-muted-foreground">
-            {isDynamicRoute(item.route) ? "Yes" : "No"}
+            {isDynamicRoute(item.route) ? "Dynamic" : ""}
           </span>
         ),
-      csvValue: (item) => (isDynamicRoute(item.route) ? "Yes" : "No"),
-      sortValue: (item) => (isDynamicRoute(item.route) ? "Yes" : "No"),
+      csvValue: (item) => (isDynamicRoute(item.route) ? "Dynamic" : ""),
+      sortValue: (item) => (isDynamicRoute(item.route) ? "Dynamic" : ""),
       sortable: true,
     },
     {
@@ -651,7 +648,6 @@ function buildColumns({
               value: item.status,
               options: STATUSES,
               onChange: (value) => onFieldChange(item.route, "status", value),
-              variant: STATUS_VARIANT,
             }),
       csvValue: (item) => item.status,
       sortValue: (item) => item.status,
@@ -663,6 +659,8 @@ function buildColumns({
       render: (item) => {
         if (item._group) return null;
         const note = overlay[item.route]?.notes ?? item.notes;
+        if (!note) return null;
+
         return (
           <Button
             type="button"
@@ -677,7 +675,7 @@ function buildColumns({
               onOpenDetails(item.route);
             }}
           >
-            {note || "Open details to add notes"}
+            {note}
           </Button>
         );
       },
@@ -708,7 +706,7 @@ function buildColumns({
       ...columns[11],
       render: (item) => {
         if (item._group) return null;
-        const canOpen = !isDynamicRoute(item.route);
+        const href = routeHref(item.route);
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -730,9 +728,9 @@ function buildColumns({
                 <CheckCircle2 className="mr-2 h-4 w-4" />
                 Mark reviewed
               </DropdownMenuItem>
-              {canOpen ? (
+              {href ? (
                 <DropdownMenuItem asChild>
-                  <Link href={item.route}>
+                  <Link href={href} target="_blank" rel="noreferrer">
                     <ExternalLink className="mr-2 h-4 w-4" />
                     Open route
                   </Link>
@@ -1173,7 +1171,7 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
           <SelectContent>
             {STATUSES.map((status) => (
               <SelectItem key={status} value={status}>
-                <StatusBadge status={status} variant={STATUS_VARIANT[status]} />
+                {status}
               </SelectItem>
             ))}
           </SelectContent>
@@ -1285,7 +1283,7 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <h2 className="text-lg font-semibold text-foreground">{activeRoute.page}</h2>
-                      <StatusBadge status={activeRoute.status} variant={STATUS_VARIANT[activeRoute.status]} />
+                      <span className="text-xs text-muted-foreground">{activeRoute.status}</span>
                     </div>
                     <code className="block break-all text-xs text-muted-foreground">{activeRoute.route}</code>
                   </div>
@@ -1335,22 +1333,27 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
                           ))}
                         </SelectContent>
                       </Select>
-                      <Select
-                        value={activeRoute.permissionModule ?? "directory"}
-                        disabled={!accessLevelRequiresModule(activeRoute.accessLevel)}
-                        onValueChange={(value) => handleModuleChange(activeRoute, value as PermissionModule)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {PAGE_ACCESS_MODULES.map((module) => (
-                            <SelectItem key={module} value={module}>
-                              {PAGE_ACCESS_MODULE_LABELS[module]}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {accessLevelRequiresModule(activeRoute.accessLevel) ? (
+                        <Select
+                          value={activeRoute.permissionModule ?? "directory"}
+                          onValueChange={(value) => handleModuleChange(activeRoute, value as PermissionModule)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PAGE_ACCESS_MODULES.map((module) => (
+                              <SelectItem key={module} value={module}>
+                                {PAGE_ACCESS_MODULE_LABELS[module]}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <div className="flex h-10 items-center rounded-md border border-input bg-background px-3 text-sm text-muted-foreground">
+                          N/A
+                        </div>
+                      )}
                     </div>
                   </div>
 
