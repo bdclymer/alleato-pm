@@ -1601,7 +1601,6 @@ export function ProjectCommandCenter({
             estimatedCostAtCompletion={ecac}
             projectedOverUnder={variance}
             budgetDivisions={budgetDivisions}
-            changeOrders={changeOrders}
             changeEventsCount={changeEvents?.length ?? 0}
             openRfisCount={rfisOpen.length}
             openTasksCount={openTasks.length}

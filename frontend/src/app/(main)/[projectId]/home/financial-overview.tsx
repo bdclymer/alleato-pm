@@ -15,12 +15,6 @@ import { formatPercent } from "@/lib/format";
      3. Change orders split.
 ───────────────────────────────────────────────────────────── */
 
-interface ChangeOrderLike {
-  status: string | null;
-  amount?: number | null;
-  total_amount?: number | null;
-}
-
 export interface BudgetDivisionSummary {
   id: string;
   label: string;
@@ -35,7 +29,6 @@ interface FinancialOverviewProps {
   estimatedCostAtCompletion: number;
   projectedOverUnder: number;
   budgetDivisions: BudgetDivisionSummary[];
-  changeOrders: ChangeOrderLike[];
   changeEventsCount: number;
   openRfisCount: number;
   openTasksCount: number;
@@ -58,14 +51,6 @@ function fmtCompact(value: number | null | undefined): string {
   if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(0)}K`;
   return `${sign}$${abs.toFixed(0)}`;
 }
-
-const APPROVED_STATES = new Set([
-  "approved",
-  "executed",
-  "closed",
-  "complete",
-  "completed",
-]);
 
 function pct(part: number, whole: number): number {
   if (whole <= 0) return 0;
@@ -103,7 +88,6 @@ function BudgetDivisionChart({
   const chartRows = divisions.filter(
     (division) => division.budget > 0 || division.committed > 0,
   );
-  const chartHeight = Math.max(180, chartRows.length * 54);
 
   if (chartRows.length === 0) {
     return null;
@@ -407,77 +391,6 @@ function WorkQueuePanel({
   );
 }
 
-/* ── Panel 3: Change orders split ──────────────────────────── */
-
-function ChangeOrdersPanel({
-  projectId,
-  changeOrders,
-}: {
-  projectId: string;
-  changeOrders: ChangeOrderLike[];
-}) {
-  const total = changeOrders.length;
-  const approved = changeOrders.filter((co) =>
-    APPROVED_STATES.has((co.status ?? "").toLowerCase()),
-  ).length;
-  const pending = Math.max(0, total - approved);
-  const value = changeOrders.reduce(
-    (sum, co) => sum + (Number(co.total_amount ?? co.amount) || 0),
-    0,
-  );
-  const approvedW = total > 0 ? (approved / total) * 100 : 0;
-
-  return (
-    <Link
-      href={`/${projectId}/change-orders`}
-      prefetch={false}
-      className="group flex flex-col justify-between gap-4 rounded-lg bg-card p-4 transition-colors hover:bg-muted/40"
-    >
-      <div className="flex items-start justify-between gap-2">
-        <Eyebrow>Change Orders</Eyebrow>
-        <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground/40 transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
-      </div>
-
-      <div className="flex items-baseline gap-2.5">
-        <span className="text-2xl font-semibold leading-none tabular-nums text-foreground">
-          {total}
-        </span>
-        <span className="text-sm tabular-nums text-muted-foreground">
-          {fmtCompact(value)} total
-        </span>
-      </div>
-
-      <div>
-        {total > 0 ? (
-          <>
-            <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted-foreground/12">
-              <div className="bg-success" style={{ width: `${approvedW}%` }} />
-            </div>
-            <div className="mt-2 flex items-center gap-4 text-xs">
-              <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-success" />
-                <span className="text-muted-foreground">Approved</span>
-                <span className="font-medium tabular-nums text-foreground">
-                  {approved}
-                </span>
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-muted-foreground/30" />
-                <span className="text-muted-foreground">Pending</span>
-                <span className="font-medium tabular-nums text-foreground">
-                  {pending}
-                </span>
-              </span>
-            </div>
-          </>
-        ) : (
-          <p className="text-xs text-muted-foreground">No change orders yet.</p>
-        )}
-      </div>
-    </Link>
-  );
-}
-
 /* ── Composite ─────────────────────────────────────────────── */
 
 export function FinancialOverview({
@@ -487,13 +400,16 @@ export function FinancialOverview({
   estimatedCostAtCompletion,
   projectedOverUnder,
   budgetDivisions,
-  changeOrders,
   changeEventsCount,
   openRfisCount,
   openTasksCount,
 }: FinancialOverviewProps) {
   // Nothing meaningful to show before a budget exists.
-  if (revisedBudget <= 0 && committedCosts <= 0 && changeOrders.length === 0) {
+  if (
+    revisedBudget <= 0 &&
+    committedCosts <= 0 &&
+    changeEventsCount + openRfisCount + openTasksCount === 0
+  ) {
     return null;
   }
 
@@ -509,7 +425,7 @@ export function FinancialOverview({
           View budget
         </Link>
       </div>
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1.5fr_1fr_1fr]">
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1.5fr_1fr]">
         <BudgetVsCommittedPanel
           projectId={projectId}
           revisedBudget={revisedBudget}
@@ -524,7 +440,6 @@ export function FinancialOverview({
           openRfisCount={openRfisCount}
           openTasksCount={openTasksCount}
         />
-        <ChangeOrdersPanel projectId={projectId} changeOrders={changeOrders} />
       </div>
     </section>
   );
