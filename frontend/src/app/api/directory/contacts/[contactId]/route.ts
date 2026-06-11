@@ -8,9 +8,14 @@ import { createClient } from "@/lib/supabase/server";
 
 const PatchBodySchema = z
   .object({
-    email: z.union([z.string().trim().email(), z.literal(""), z.null()]).optional(),
+    email: z
+      .union([z.string().trim().email(), z.literal(""), z.null()])
+      .optional(),
     type: z.string().trim().min(1).optional(),
     person_type: z.string().trim().min(1).optional(),
+    company_id: z
+      .union([z.string().trim().uuid(), z.literal(""), z.null()])
+      .optional(),
     phone: z.union([z.string().trim(), z.null()]).optional(),
     phone_business: z.union([z.string().trim(), z.null()]).optional(),
     phone_mobile: z.union([z.string().trim(), z.null()]).optional(),
@@ -20,6 +25,7 @@ const PatchBodySchema = z
       body.email !== undefined ||
       body.type !== undefined ||
       body.person_type !== undefined ||
+      body.company_id !== undefined ||
       body.phone !== undefined ||
       body.phone_business !== undefined ||
       body.phone_mobile !== undefined,
@@ -55,8 +61,7 @@ export const PATCH = withApiGuardrails<{ contactId: string }>(
       });
     }
 
-    const nextPhone =
-      parsed.phone !== undefined ? parsed.phone : undefined;
+    const nextPhone = parsed.phone !== undefined ? parsed.phone : undefined;
     const updates = {
       ...(parsed.email !== undefined && {
         email: parsed.email === "" ? null : parsed.email,
@@ -64,6 +69,9 @@ export const PATCH = withApiGuardrails<{ contactId: string }>(
       ...(parsed.type !== undefined && { person_type: parsed.type }),
       ...(parsed.person_type !== undefined && {
         person_type: parsed.person_type,
+      }),
+      ...(parsed.company_id !== undefined && {
+        company_id: parsed.company_id === "" ? null : parsed.company_id,
       }),
       ...(nextPhone !== undefined && {
         phone_business: nextPhone,

@@ -4,18 +4,7 @@ import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { formatDate } from "@/lib/format";
-import {
-  Building2,
-  ChevronLeft,
-  ChevronRight,
-  Mail,
-  MoreHorizontal,
-  Phone,
-  Plus,
-  Trash2,
-  User,
-  X,
-} from "lucide-react";
+import { MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { createClient } from "@/lib/supabase/client";
@@ -26,11 +15,9 @@ import { ContactFormSheet } from "@/components/domain/contacts/ContactFormSheet"
 import {
   UnifiedTablePage,
   CellBadge,
-  CellEmail,
   CellLink,
   CellText,
   InlineSelectEditor,
-  TableDateValue,
   type CellColorMap,
 } from "@/components/tables/unified";
 import type { ColumnConfig, TableColumn } from "@/components/tables/unified";
@@ -63,15 +50,27 @@ const CONTACT_TYPE_OPTIONS = [
   { value: "user", label: "User" },
 ];
 
+const NO_COMPANY_VALUE = "__no_company__";
+
+interface CompanyOption {
+  id: string;
+  name: string;
+}
+
 function escapeCsvValue(value: string): string {
-  if (value.includes(",") || value.includes("\"") || value.includes("\n")) {
-    return `"${value.replace(/"/g, "\"\"")}"`;
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`;
   }
   return value;
 }
 
 function buildContactTableColumns(
-  onInlineEdit: (contact: ContactTableRow, field: string, value: string) => Promise<void>,
+  onInlineEdit: (
+    contact: ContactTableRow,
+    field: string,
+    value: string,
+  ) => Promise<void>,
+  companyOptions: CompanyOption[],
 ): TableColumn<ContactTableRow>[] {
   return [
     {
@@ -99,7 +98,11 @@ function buildContactTableColumns(
     {
       ...contactColumns[2],
       render: (item) => (
-        <CellBadge value={item.type} colorMap={CONTACT_TYPE_COLORS} emptyLabel="-" />
+        <CellBadge
+          value={item.type}
+          colorMap={CONTACT_TYPE_COLORS}
+          emptyLabel="-"
+        />
       ),
       sortValue: (item) => item.type || "",
       csvValue: (item) => item.type || "",
@@ -118,15 +121,43 @@ function buildContactTableColumns(
     },
     {
       ...contactColumns[3],
-      render: (item) => (
-        <CellLink
-          value={item.company}
-          href={item.company_id ? `/directory/companies?companyId=${item.company_id}` : null}
-          emptyLabel="-"
-        />
-      ),
+      render: (item) => <CellText value={item.company} emptyLabel="-" />,
       sortValue: (item) => item.company || "",
       csvValue: (item) => item.company || "",
+      editable: true,
+      editValue: (item) => item.company_id || NO_COMPANY_VALUE,
+      onEdit: (item, value) =>
+        onInlineEdit(
+          item,
+          "company_id",
+          value === NO_COMPANY_VALUE ? "" : value,
+        ),
+      renderEditor: ({ item, value, onChange, onCommit }) => {
+        const options = [
+          { value: NO_COMPANY_VALUE, label: "No company" },
+          ...companyOptions.map((company) => ({
+            value: company.id,
+            label: company.name,
+          })),
+        ];
+        const currentOptionMissing =
+          item.company_id &&
+          item.company &&
+          !options.some((option) => option.value === item.company_id);
+        const resolvedOptions = currentOptionMissing
+          ? [...options, { value: item.company_id, label: item.company }]
+          : options;
+
+        return (
+          <InlineSelectEditor
+            value={value || NO_COMPANY_VALUE}
+            options={resolvedOptions}
+            placeholder="Select company"
+            onChange={onChange}
+            onCommit={onCommit}
+          />
+        );
+      },
     },
     {
       ...contactColumns[4],
@@ -141,194 +172,30 @@ function buildContactTableColumns(
     {
       ...contactColumns[5],
       render: (item) =>
-        item.is_admin ? (
-          <Badge variant="default">Admin</Badge>
-        ) : null,
+        item.is_admin ? <Badge variant="default">Admin</Badge> : null,
       sortValue: (item) => (item.is_admin ? 1 : 0),
       csvValue: (item) => (item.is_admin ? "Admin" : "Standard"),
     },
     {
       ...contactColumns[6],
       render: (item) => <span>{formatDate(item.created_at)}</span>,
-      sortValue: (item) => (item.created_at ? new Date(item.created_at).getTime() : 0),
+      sortValue: (item) =>
+        item.created_at ? new Date(item.created_at).getTime() : 0,
       csvValue: (item) => formatDate(item.created_at),
     },
   ];
 }
 
-function ContactPreviewPane({
-  contact,
-  contacts,
-  onSelectContact,
-  onClose,
-}: {
-  contact: ContactTableRow | null;
-  contacts: ContactTableRow[];
-  onSelectContact: (id: string) => void;
-  onClose: () => void;
-}): ReactElement {
-  const router = useRouter();
-  const currentIndex = contact ? contacts.findIndex((c) => c.id === contact.id) : -1;
-  const hasPrev = currentIndex > 0;
-  const hasNext = currentIndex >= 0 && currentIndex < contacts.length - 1;
-
-  if (!contact) {
-    return (
-      <div className="p-6 text-sm text-muted-foreground">
-        <p>Select a contact to preview details.</p>
-      </div>
-    );
-  }
-
-  const typeLabel = contact.type
-    ? contact.type.charAt(0).toUpperCase() + contact.type.slice(1).toLowerCase()
-    : null;
-
-  return (
-    <div className="flex flex-col h-full">
-      {/* Panel header with navigation */}
-      <div className="flex items-center justify-between gap-1 px-4 h-11">
-        <div className="flex items-center gap-1">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-5 w-5"
-            disabled={!hasPrev}
-            onClick={() => hasPrev && onSelectContact(contacts[currentIndex - 1].id)}
-            aria-label="Previous contact"
-          >
-            <ChevronLeft />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-5 w-5"
-            disabled={!hasNext}
-            onClick={() => hasNext && onSelectContact(contacts[currentIndex + 1].id)}
-            aria-label="Next contact"
-          >
-            <ChevronRight />
-          </Button>
-          <span className="text-xs text-muted-foreground ml-1">
-            {currentIndex + 1} of {contacts.length}
-          </span>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-5 w-5"
-            onClick={onClose}
-            aria-label="Close panel"
-          >
-            <X className="h-3 w-3" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto">
-        {/* Contact header */}
-        <div className="px-5 pt-5 pb-4">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-              <User className="h-5 w-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              {/* eslint-disable-next-line design-system/no-raw-heading */}
-              <h3 className="text-sm font-semibold leading-tight truncate">{contact.full_name}</h3>
-              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                {typeLabel && (
-                  <CellBadge value={contact.type} colorMap={CONTACT_TYPE_COLORS} />
-                )}
-                {contact.is_admin && (
-                  <Badge variant="default" className="text-xs">Admin</Badge>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Company */}
-        {contact.company && (
-          <div className="px-5 pb-4">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
-              Company
-            </p>
-            <div className="flex items-center gap-2 text-sm">
-              <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              {contact.company_id ? (
-                <a
-                  href={`/directory/companies?companyId=${contact.company_id}`}
-                  className="text-primary hover:underline truncate"
-                >
-                  {contact.company}
-                </a>
-              ) : (
-                <span className="truncate">{contact.company}</span>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Contact info */}
-        {(contact.email || contact.phone) && (
-          <div className="px-5 pb-4">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
-              Contact
-            </p>
-            <div className="space-y-2">
-              {contact.email && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                  <CellEmail value={contact.email} />
-                </div>
-              )}
-              {contact.phone && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                  <CellText value={contact.phone} />
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Details */}
-        {contact.created_at && (
-          <div className="px-5 pb-5">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
-              Details
-            </p>
-            <dl className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-muted-foreground">Added</dt>
-                <dd><TableDateValue value={contact.created_at} /></dd>
-              </div>
-            </dl>
-          </div>
-        )}
-      </div>
-
-      <div className="shrink-0 px-5 pb-5">
-        <Button
-          className="w-full"
-          variant="outline"
-          onClick={() => router.push(`/directory/contacts/${contact.id}`)}
-        >
-          View Contact
-        </Button>
-      </div>
-    </div>
-  );
-}
-
 export default function DirectoryContactsPage(): ReactElement {
   const pathname = usePathname()! ?? "";
   const router = useRouter();
-  const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
+  const searchParams = (useSearchParams() ??
+    new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
   const { confirm, ConfirmDialog } = useConfirm();
   const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [companyOptions, setCompanyOptions] = React.useState<CompanyOption[]>(
+    [],
+  );
 
   const {
     tableState,
@@ -354,16 +221,40 @@ export default function DirectoryContactsPage(): ReactElement {
   });
 
   const uniqueTypes = React.useMemo(
-    () => Array.from(new Set(tableData.map((contact) => contact.type).filter(Boolean))),
+    () =>
+      Array.from(
+        new Set(tableData.map((contact) => contact.type).filter(Boolean)),
+      ),
     [tableData],
   );
 
-  const selectedContactId = searchParams.get("detail");
-  const selectedContact =
-    selectedContactId ? tableData.find((c) => c.id === selectedContactId) ?? null : null;
-  const activeContactId = selectedContact?.id ?? null;
-
   const tabs = getDirectoryTabs(pathname);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    void apiFetch<CompanyOption[]>("/api/companies")
+      .then((companies) => {
+        if (cancelled) return;
+        setCompanyOptions(
+          companies
+            .filter((company) => company.id && company.name)
+            .map((company) => ({ id: company.id, name: company.name })),
+        );
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to load company options.";
+        toast.error(message);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleInlineContactEdit = React.useCallback(
     async (contact: ContactTableRow, field: string, value: string) => {
@@ -377,32 +268,38 @@ export default function DirectoryContactsPage(): ReactElement {
   );
 
   const tableColumns = React.useMemo(
-    () => buildContactTableColumns(handleInlineContactEdit),
-    [handleInlineContactEdit],
+    () => buildContactTableColumns(handleInlineContactEdit, companyOptions),
+    [companyOptions, handleInlineContactEdit],
   );
 
-  const deleteContacts = React.useCallback(async (ids: string[]): Promise<boolean> => {
-    if (ids.length === 0) return true;
+  const deleteContacts = React.useCallback(
+    async (ids: string[]): Promise<boolean> => {
+      if (ids.length === 0) return true;
 
-    const supabase = createClient();
+      const supabase = createClient();
 
-    const { error: unlinkError } = await supabase
-      .from("users_auth")
-      .delete()
-      .in("person_id", ids);
-    if (unlinkError) {
-      toast.error(unlinkError.message || "Failed to remove user links.");
-      return false;
-    }
+      const { error: unlinkError } = await supabase
+        .from("users_auth")
+        .delete()
+        .in("person_id", ids);
+      if (unlinkError) {
+        toast.error(unlinkError.message || "Failed to remove user links.");
+        return false;
+      }
 
-    const { error: deleteError } = await supabase.from("people").delete().in("id", ids);
-    if (deleteError) {
-      toast.error(deleteError.message || "Failed to delete contact.");
-      return false;
-    }
+      const { error: deleteError } = await supabase
+        .from("people")
+        .delete()
+        .in("id", ids);
+      if (deleteError) {
+        toast.error(deleteError.message || "Failed to delete contact.");
+        return false;
+      }
 
-    return true;
-  }, []);
+      return true;
+    },
+    [],
+  );
 
   const handleDeleteContact = async (contact: ContactTableRow) => {
     const confirmed = await confirm({
@@ -464,11 +361,15 @@ export default function DirectoryContactsPage(): ReactElement {
       tableState.visibleColumns.includes(column.id),
     );
 
-    const headers = visibleColumns.map((column) => escapeCsvValue(column.label));
+    const headers = visibleColumns.map((column) =>
+      escapeCsvValue(column.label),
+    );
     const rows = rowsToExport.map((item) =>
       visibleColumns
         .map((column) => {
-          const value = column.csvValue ? column.csvValue(item) : String(column.sortValue?.(item) ?? "");
+          const value = column.csvValue
+            ? column.csvValue(item)
+            : String(column.sortValue?.(item) ?? "");
           return escapeCsvValue(value);
         })
         .join(","),
@@ -515,7 +416,10 @@ export default function DirectoryContactsPage(): ReactElement {
           description:
             "Manage companies, clients, contacts, users, and employees across your organization",
           actions: (
-            <Button onClick={() => setDialogOpen(true)} className="bg-primary hover:bg-primary/90">
+            <Button
+              onClick={() => setDialogOpen(true)}
+              className="bg-primary hover:bg-primary/90"
+            >
               <Plus />
               New Contact
             </Button>
@@ -537,7 +441,10 @@ export default function DirectoryContactsPage(): ReactElement {
               id: "type",
               label: "Type",
               type: "select",
-              options: uniqueTypes.map((type) => ({ value: type, label: type })),
+              options: uniqueTypes.map((type) => ({
+                value: type,
+                label: type,
+              })),
             },
             {
               id: "is_admin",
@@ -550,7 +457,8 @@ export default function DirectoryContactsPage(): ReactElement {
             },
           ],
           activeFilters,
-          onFilterChange: (filters) => handleFilterChange(filters as ContactFilterState),
+          onFilterChange: (filters) =>
+            handleFilterChange(filters as ContactFilterState),
           onClearFilters: () => handleFilterChange(EMPTY_CONTACT_FILTERS),
           columns: contactColumns,
           visibleColumns: tableState.visibleColumns,
@@ -576,19 +484,7 @@ export default function DirectoryContactsPage(): ReactElement {
         table={{
           columns: tableColumns,
           getRowId: (item) => item.id,
-          activeRowId: activeContactId,
-          onRowClick: (item) => tableState.setSearchParams({ detail: item.id }),
           rowActions: renderRowActions,
-        }}
-        sidePanel={{
-          content: (
-            <ContactPreviewPane
-              contact={selectedContact}
-              contacts={tableData}
-              onSelectContact={(id) => tableState.setSearchParams({ detail: id })}
-              onClose={() => tableState.setSearchParams({ detail: null })}
-            />
-          ),
         }}
         sorting={{
           sortBy: tableState.sortBy,
@@ -606,7 +502,10 @@ export default function DirectoryContactsPage(): ReactElement {
           filteredDescription: "Try adjusting your search or filters.",
           isFiltered,
           action: (
-            <Button onClick={() => setDialogOpen(true)} className="bg-primary hover:bg-primary/90">
+            <Button
+              onClick={() => setDialogOpen(true)}
+              className="bg-primary hover:bg-primary/90"
+            >
               <Plus />
               Add Contact
             </Button>

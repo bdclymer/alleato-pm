@@ -55,7 +55,9 @@ describe("directory list table pages", () => {
 
       expect(source).not.toContain("selection={{");
       expect(source).not.toContain("enableRowSelection: true");
-      expect(source).not.toContain("selectedCount: tableState.selectedIds.length");
+      expect(source).not.toContain(
+        "selectedCount: tableState.selectedIds.length",
+      );
     },
   );
 
@@ -67,6 +69,39 @@ describe("directory list table pages", () => {
 
     expect(source).not.toContain('from "@/lib/supabase/client"');
     expect(source).not.toContain('select("*")');
-    expect(source).toContain('apiFetch<ProspectsResponse>("/api/directory/prospects")');
+    expect(source).toContain(
+      'apiFetch<ProspectsResponse>("/api/directory/prospects")',
+    );
+  });
+
+  it("keeps contacts row data editable inline instead of opening the preview drawer", () => {
+    const source = fs.readFileSync(
+      path.join(directoryRoot, "contacts/page.tsx"),
+      "utf8",
+    );
+
+    expect(source).toContain("href={`/directory/contacts/${item.id}`}");
+    expect(source).toContain("onInlineEdit(");
+    expect(source).toContain('"company_id"');
+    expect(source).toContain("InlineSelectEditor");
+    expect(source).not.toContain("ContactPreviewPane");
+    expect(source).not.toContain("onRowClick:");
+    expect(source).not.toContain("sidePanel={{");
+  });
+
+  it("keeps contacts company inline edits accepted by the PATCH route", () => {
+    const source = fs.readFileSync(
+      path.join(
+        directoryRoot,
+        "..",
+        "..",
+        "api/directory/contacts/[contactId]/route.ts",
+      ),
+      "utf8",
+    );
+
+    expect(source).toContain("company_id");
+    expect(source).toContain("parsed.company_id");
+    expect(source).toContain("company_id: parsed.company_id");
   });
 });
