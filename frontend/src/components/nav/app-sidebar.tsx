@@ -48,6 +48,7 @@ import {
   type SidebarNavGroup,
 } from "@/lib/navigation-config"
 import { useProjectPermissions, hasModulePermission } from "@/hooks/use-project-permissions"
+import { useCurrentUserProfile } from "@/hooks/use-current-user-profile"
 import { ProjectSelector } from "@/components/header/project-selector"
 import { useHeaderNav } from "@/components/header/use-header-nav"
 import { cn } from "@/lib/utils"
@@ -544,7 +545,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Extract project ID from URL path
   const projectId = React.useMemo(() => extractProjectId(pathname), [pathname])
-  const { permissions, userType, isAppAdmin, isDeveloper } = useProjectPermissions(projectId)
+  const { permissions, userType, isAppAdmin, isDeveloper: isDeveloperFromShell } = useProjectPermissions(projectId)
+  const { profile: currentUserProfile } = useCurrentUserProfile()
+  const isDeveloper = isDeveloperFromShell || currentUserProfile?.isDeveloper === true
 
   // Header nav hook for project selector
   const nav = useHeaderNav()

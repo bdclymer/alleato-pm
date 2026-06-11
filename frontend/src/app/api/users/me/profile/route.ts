@@ -18,6 +18,7 @@ const CurrentUserProfileSchema = z.object({
   phone: z.string().optional(),
   profileCompleteness: z.number(),
   isAdmin: z.boolean(),
+  isDeveloper: z.boolean(),
   onboardingCompletedAt: z.string().nullable(),
 });
 
