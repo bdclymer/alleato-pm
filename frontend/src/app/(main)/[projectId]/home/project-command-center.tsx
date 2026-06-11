@@ -316,16 +316,6 @@ function documentInlineHref(projectId: string, documentId: number): string {
   return `/api/projects/${projectId}/documents/${documentId}/download?disposition=inline`;
 }
 
-function isPreviewableDocument(document: ProjectDocument): boolean {
-  const extension = document.file_name.split(".").pop()?.toLowerCase() ?? "";
-  const contentType = document.content_type?.toLowerCase() ?? "";
-  return (
-    contentType.includes("pdf") ||
-    contentType.includes("image") ||
-    ["pdf", "jpg", "jpeg", "png", "webp", "gif"].includes(extension)
-  );
-}
-
 function isImageDocument(document: ProjectDocument): boolean {
   const extension = document.file_name.split(".").pop()?.toLowerCase() ?? "";
   const contentType = document.content_type?.toLowerCase() ?? "";
@@ -386,95 +376,111 @@ function DocumentTypePreview({
   const extension = documentExtension(document.file_name);
   const meta = document.folder ?? document.source_system ?? "Project file";
   const styles: Record<
-    Exclude<DocumentPreviewKind, "image" | "pdf">,
+    Exclude<DocumentPreviewKind, "image">,
     {
       icon: React.ComponentType<{ className?: string }>;
       accent: string;
-      panel: string;
+      border: string;
+      fill: string;
       label: string;
     }
   > = {
+    pdf: {
+      icon: FileText,
+      accent: "text-red-700",
+      border: "border-red-200",
+      fill: "bg-red-50",
+      label: "PDF",
+    },
     spreadsheet: {
       icon: FileSpreadsheet,
       accent: "text-emerald-700",
-      panel: "bg-emerald-50/80",
+      border: "border-emerald-200",
+      fill: "bg-emerald-50",
       label: "Spreadsheet",
     },
     document: {
       icon: FileText,
       accent: "text-sky-700",
-      panel: "bg-sky-50/80",
+      border: "border-sky-200",
+      fill: "bg-sky-50",
       label: "Document",
     },
     presentation: {
       icon: Presentation,
       accent: "text-amber-700",
-      panel: "bg-amber-50/80",
+      border: "border-amber-200",
+      fill: "bg-amber-50",
       label: "Deck",
     },
     archive: {
       icon: FileArchive,
       accent: "text-stone-700",
-      panel: "bg-stone-100/80",
+      border: "border-stone-200",
+      fill: "bg-stone-100",
       label: "Archive",
     },
     code: {
       icon: FileCode2,
       accent: "text-violet-700",
-      panel: "bg-violet-50/80",
+      border: "border-violet-200",
+      fill: "bg-violet-50",
       label: "Source",
     },
     file: {
       icon: FileText,
       accent: "text-muted-foreground",
-      panel: "bg-muted/60",
+      border: "border-border",
+      fill: "bg-muted/60",
       label: "File",
     },
   };
-  const style = styles[kind === "image" || kind === "pdf" ? "file" : kind];
+  const style = styles[kind === "image" ? "file" : kind];
   const Icon = style.icon;
 
   return (
-    <div className={cn("flex h-full w-full flex-col p-3", style.panel)}>
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <Icon className={cn("h-4 w-4 shrink-0", style.accent)} />
-        <span className="rounded-sm bg-background/85 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-foreground">
-          {extension}
-        </span>
-      </div>
-      {kind === "spreadsheet" ? (
-        <div className="grid flex-1 grid-cols-4 gap-px overflow-hidden rounded-sm border border-emerald-700/15 bg-background/80">
-          {Array.from({ length: 16 }).map((_, index) => (
-            <span
-              key={index}
-              className={cn(
-                "min-h-0 bg-background",
-                index < 4 && "bg-emerald-100/80",
-                index % 4 === 0 && "bg-emerald-50",
-              )}
-            />
-          ))}
+    <div className="flex h-full w-full items-center justify-center bg-muted/35 p-4">
+      <div className={cn("relative flex h-full w-full flex-col rounded-sm border bg-background p-3 shadow-xs", style.border)}>
+        <div className={cn("absolute right-0 top-0 h-5 w-5 rounded-bl-sm border-b border-l", style.border, style.fill)} />
+        <div className="flex items-center justify-between gap-2">
+          <Icon className={cn("h-4 w-4 shrink-0", style.accent)} />
+          <span className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-foreground">
+            {extension}
+          </span>
         </div>
-      ) : (
-        <div className="flex flex-1 flex-col justify-end gap-1.5">
+        <div className="mt-5 flex min-h-0 flex-1 flex-col justify-end gap-2">
           <span className={cn("text-[11px] font-medium", style.accent)}>{style.label}</span>
-          <div className="space-y-1">
-            <span className="block h-1.5 w-11/12 rounded-full bg-foreground/15" />
-            <span className="block h-1.5 w-4/5 rounded-full bg-foreground/12" />
-            <span className="block h-1.5 w-2/3 rounded-full bg-foreground/10" />
-          </div>
+          {kind === "spreadsheet" ? (
+            <div className="grid h-14 grid-cols-4 gap-px overflow-hidden rounded-sm border border-emerald-700/15 bg-background">
+              {Array.from({ length: 16 }).map((_, index) => (
+                <span
+                  key={index}
+                  className={cn(
+                    "min-h-0 bg-background",
+                    index < 4 && "bg-emerald-100/80",
+                    index % 4 === 0 && "bg-emerald-50",
+                  )}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <span className="block h-1.5 w-11/12 rounded-full bg-foreground/15" />
+              <span className="block h-1.5 w-4/5 rounded-full bg-foreground/12" />
+              <span className="block h-1.5 w-2/3 rounded-full bg-foreground/10" />
+            </div>
+          )}
         </div>
-      )}
-      <div className="mt-2 min-w-0">
-        <p className="truncate text-[11px] font-medium leading-tight text-foreground/85">
-          {title}
-        </p>
-        <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{meta}</p>
+        <div className="mt-3 min-w-0">
+          <p className="truncate text-[11px] font-medium leading-tight text-foreground/85">
+            {title}
+          </p>
+          <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{meta}</p>
+        </div>
       </div>
     </div>
   );
 }
-
 function isClosedStatus(status: string | null | undefined): boolean {
   return ["approved", "cancelled", "closed", "complete", "completed", "done", "paid", "rejected", "void"].includes(
     (status ?? "").toLowerCase(),
@@ -1394,7 +1400,6 @@ export function ProjectCommandCenter({
           const title = document.title || document.file_name || "Untitled";
           const updated = formatMonthDay(document.updated_at ?? document.created_at);
           const inlineHref = documentInlineHref(projectId, document.id);
-          const previewable = isPreviewableDocument(document);
           const imagePreview = isImageDocument(document);
 
           return (
@@ -1405,19 +1410,12 @@ export function ProjectCommandCenter({
               className="group min-w-0 overflow-hidden rounded-md bg-background transition-colors hover:bg-muted/20"
             >
               <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-muted/50 text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
-                {previewable && imagePreview ? (
+                {imagePreview ? (
                   <img src={inlineHref} alt="" loading="lazy" className="h-full w-full object-cover" />
-                ) : previewable ? (
-                  <iframe
-                    src={`${inlineHref}#toolbar=0&navpanes=0&scrollbar=0`}
-                    title={`${title} preview`}
-                    loading="lazy"
-                    className="h-full w-full pointer-events-none bg-background"
-                  />
                 ) : (
                   <DocumentTypePreview document={document} title={title} />
                 )}
-                {previewable && (
+                {imagePreview && (
                   <span className="absolute bottom-1.5 right-1.5 rounded-sm bg-background/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-foreground shadow-xs">
                     {documentExtension(document.file_name)}
                   </span>
