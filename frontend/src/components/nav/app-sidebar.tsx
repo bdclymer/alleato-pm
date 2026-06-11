@@ -593,13 +593,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const tools = filterTools(subcontractorSidebarGroup.tools)
       return tools.length > 0 ? [{ ...subcontractorSidebarGroup, tools }] : []
     }
-    return sidebarNavGroups
+    const projectGroups = sidebarNavGroups
       .map((group) => ({
         ...group,
         tools: filterTools(group.tools),
       }))
       .filter((group) => group.tools.length > 0)
-  }, [filterTools, isSubcontractor, projectId])
+
+    if (!isDeveloper) return projectGroups
+
+    const adminGroupTools = filterTools(developerCompanyAdminTools)
+    if (adminGroupTools.length === 0) return projectGroups
+
+    return [
+      ...projectGroups,
+      {
+        id: "admin",
+        label: "Admin",
+        icon: SlidersHorizontal,
+        tools: adminGroupTools,
+      },
+    ]
+  }, [filterTools, isDeveloper, isSubcontractor, projectId])
 
   const companyWideTools = React.useMemo<NavigationTool[]>(
     () => [

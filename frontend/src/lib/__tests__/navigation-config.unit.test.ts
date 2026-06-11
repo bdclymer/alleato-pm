@@ -1,6 +1,7 @@
 import {
   buildToolUrl,
   companyWideHeaderTools,
+  developerCompanyAdminTools,
   filterToolsByPermission,
   financialManagementTools,
   headerNavGroups,
@@ -54,6 +55,54 @@ describe("navigation config", () => {
 
     expect(tools.some((tool) => tool.name === "Progress Reports")).toBe(false);
     expect(tools.some((tool) => tool.name === "Project Status Report")).toBe(false);
+  });
+
+  it("marks company admin navigation as developer-only", () => {
+    expect(developerCompanyAdminTools.length).toBeGreaterThan(0);
+    expect(
+      developerCompanyAdminTools.every((tool) => tool.developerOnly === true && !tool.adminOnly)
+    ).toBe(true);
+  });
+
+  it("hides company admin navigation from regular app admins", () => {
+    const tools = filterToolsByPermission(
+      developerCompanyAdminTools,
+      25125,
+      {},
+      true,
+      "admin",
+      false,
+    );
+
+    expect(tools).toHaveLength(0);
+  });
+
+  it("shows company admin navigation to developers", () => {
+    const tools = filterToolsByPermission(
+      developerCompanyAdminTools,
+      25125,
+      {},
+      false,
+      "employee",
+      true,
+    );
+
+    expect(tools.some((tool) => tool.name === "Admin Dashboard")).toBe(true);
+    expect(tools.some((tool) => tool.name === "Project Intelligence")).toBe(true);
+  });
+
+  it("does not show project-scoped admin navigation without a project", () => {
+    const tools = filterToolsByPermission(
+      developerCompanyAdminTools,
+      null,
+      {},
+      false,
+      "employee",
+      true,
+    );
+
+    expect(tools.some((tool) => tool.name === "Admin Dashboard")).toBe(true);
+    expect(tools.some((tool) => tool.name === "Project Intelligence")).toBe(false);
   });
 
   it("shows developer-only report tools to developers with module access", () => {

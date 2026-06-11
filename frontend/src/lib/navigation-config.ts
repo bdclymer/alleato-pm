@@ -193,7 +193,7 @@ export const developerCompanyAdminTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: Shield,
     description: "Internal admin command center",
-    adminOnly: true,
+    developerOnly: true,
   },
   {
     name: "Project Intelligence",
@@ -201,7 +201,7 @@ export const developerCompanyAdminTools: HeaderNavigationTool[] = [
     requiresProject: true,
     icon: Brain,
     description: "Current project intelligence packet",
-    adminOnly: true,
+    developerOnly: true,
   },
   {
     name: "AI Compiler Health",
@@ -209,7 +209,7 @@ export const developerCompanyAdminTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: BrainCircuit,
     description: "Ingestion and intelligence compiler status",
-    adminOnly: true,
+    developerOnly: true,
   },
   {
     name: "Project Attribution",
@@ -217,7 +217,7 @@ export const developerCompanyAdminTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: Brain,
     description: "Communication project mapping",
-    adminOnly: true,
+    developerOnly: true,
   },
   {
     name: "Operations Readiness",
@@ -225,7 +225,7 @@ export const developerCompanyAdminTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: CheckCircle,
     description: "Source sync, tasks, packets, and daily brief readiness",
-    adminOnly: true,
+    developerOnly: true,
   },
   {
     name: "Task Training",
@@ -233,7 +233,7 @@ export const developerCompanyAdminTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: Brain,
     description: "Task extraction and learning review",
-    adminOnly: true,
+    developerOnly: true,
   },
   {
     name: "Knowledge Sources",
@@ -241,7 +241,7 @@ export const developerCompanyAdminTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: BookOpen,
     description: "AI knowledge source management",
-    adminOnly: true,
+    developerOnly: true,
   },
   {
     name: "Deep Research Archive",
@@ -249,7 +249,7 @@ export const developerCompanyAdminTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: BookOpen,
     description: "Past Deep Agents wiki research projects",
-    adminOnly: true,
+    developerOnly: true,
   },
   {
     name: "Assistant Eval Runs",
@@ -257,7 +257,7 @@ export const developerCompanyAdminTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: FlaskConical,
     description: "AI-assistant eval results: pass/fail, tools fired, answers",
-    adminOnly: true,
+    developerOnly: true,
   },
   {
     name: "Annotation Inbox",
@@ -265,7 +265,7 @@ export const developerCompanyAdminTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: MessageCircle,
     description: "Agentation annotation triage",
-    adminOnly: true,
+    developerOnly: true,
   },
 ];
 

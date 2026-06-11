@@ -441,8 +441,12 @@ function MobileNavOverlay({
       isDeveloper,
     ),
   }));
+  const companyToolList = [
+    ...companyWideHeaderTools,
+    ...(isDeveloper ? developerCompanyAdminTools : []),
+  ];
   const companyTools = filterToolsByPermission(
-    companyWideHeaderTools,
+    companyToolList,
     projectId,
     permissions,
     isAppAdmin,
@@ -534,7 +538,7 @@ function MobileNavOverlay({
             Company Tools
           </p>
           <div className="flex w-full flex-col items-center gap-5">
-            {companyWideHeaderTools.map((tool) => {
+            {companyToolList.map((tool) => {
               const isDisabled = !companyTools.includes(tool);
               const href = buildToolUrl(tool.path, projectId, tool.requiresProject);
               const isActive = tool.name === activeToolName;
@@ -643,6 +647,7 @@ function ToolsDropdown({
       permissions,
       isAppAdmin,
       userType,
+      isDeveloper,
     ),
   }));
   const visibleCompanyTools = filterToolsByPermission(
@@ -651,10 +656,16 @@ function ToolsDropdown({
     permissions,
     isAppAdmin,
     userType,
+    isDeveloper,
   );
-  const visibleDeveloperAdminTools = isDeveloper
-    ? developerCompanyAdminTools
-    : [];
+  const visibleDeveloperAdminTools = filterToolsByPermission(
+    isDeveloper ? developerCompanyAdminTools : [],
+    projectId,
+    permissions,
+    isAppAdmin,
+    userType,
+    isDeveloper,
+  );
 
   React.useEffect(() => {
     if (!open) {
