@@ -81,6 +81,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
   const meetingTasks = meetingTasksData ?? [];
 
   let transcriptContent = null;
+  let transcriptLoadFailed = false;
   const storageUrl = meeting.url || meeting.source;
 
   if (storageUrl && storageUrl.includes("supabase.co/storage")) {
@@ -88,8 +89,11 @@ export default async function MeetingDetailPage({ params }: PageProps) {
       const response = await fetch(storageUrl);
       if (response.ok) {
         transcriptContent = await response.text();
+      } else {
+        transcriptLoadFailed = true;
       }
     } catch (storageError) {
+      transcriptLoadFailed = true;
       console.warn(JSON.stringify({
         event: "meeting_transcript_storage_fetch_failed",
         meetingId,
@@ -130,6 +134,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
       allOpportunities={allOpportunities}
       meetingTasks={meetingTasks}
       transcriptContent={transcriptContent}
+      transcriptLoadFailed={transcriptLoadFailed && !transcriptContent}
       backHref="/meetings"
       backLabel="Meetings"
       relatedMeetings={relatedMeetings}

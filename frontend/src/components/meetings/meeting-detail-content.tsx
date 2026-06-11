@@ -3,14 +3,11 @@
 import {
   ArrowLeft,
   Calendar,
-  CheckCircle2,
   ChevronDown,
-  Circle,
   Clock,
   ExternalLink,
   FileText,
   FolderOpen,
-  MoreVertical,
   Users,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -35,12 +32,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -50,6 +41,7 @@ import {
 import { DateAvatar, EmptyState } from "@/components/ds";
 import { PageContainer } from "@/components/layout";
 import { AttendeeAvatarStack } from "@/components/meetings/attendee-avatar-stack";
+import { MeetingTasksManager } from "@/components/meetings/meeting-tasks-manager";
 import { useProjects } from "@/hooks/use-projects";
 import { apiFetch } from "@/lib/api-client";
 import type { Database } from "@/types/database.types";
@@ -127,6 +119,8 @@ export interface MeetingDetailContentProps {
   allOpportunities: string[];
   meetingTasks?: MeetingTask[];
   transcriptContent: string | null;
+  /** True when a stored transcript existed but the fetch failed (vs. never processed) */
+  transcriptLoadFailed?: boolean;
   backHref: string;
   backLabel: string;
   relatedMeetings?: RelatedMeeting[];
@@ -265,56 +259,6 @@ function ActionItemsByAssignee({ content }: { content: string }) {
   );
 }
 
-// ─── Tasks Section ──────────────────────────────────────────────────────────
-
-const PRIORITY_CLASSES: Record<string, string> = {
-  high: "text-destructive",
-  medium: "text-amber-600 dark:text-amber-400",
-  low: "text-muted-foreground",
-};
-
-function TaskStatusIcon({ status }: { status: string }) {
-  if (status === "completed" || status === "done") {
-    return <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600 dark:text-green-500" />;
-  }
-  return <Circle className="h-4 w-4 shrink-0 text-muted-foreground/50" />;
-}
-
-function MeetingTasksList({ tasks }: { tasks: MeetingTask[] }) {
-  return (
-    <ul className="space-y-3">
-      {tasks.map((task) => (
-        <li key={task.id} className="flex items-start gap-3">
-          <TaskStatusIcon status={task.status} />
-          <div className="min-w-0 flex-1 space-y-0.5">
-            <p className="text-sm leading-snug text-foreground">
-              {task.title || task.description}
-            </p>
-            {task.title && task.description !== task.title && (
-              <p className="text-xs text-muted-foreground line-clamp-2">{task.description}</p>
-            )}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 pt-0.5">
-              {task.assignee_name && (
-                <span className="text-xs text-muted-foreground">{task.assignee_name}</span>
-              )}
-              {task.priority && task.priority !== "normal" && (
-                <span className={`text-xs font-medium capitalize ${PRIORITY_CLASSES[task.priority.toLowerCase()] ?? "text-muted-foreground"}`}>
-                  {task.priority}
-                </span>
-              )}
-              {task.due_date && (
-                <span className="text-xs text-muted-foreground">
-                  Due {format(new Date(task.due_date), "MMM d")}
-                </span>
-              )}
-            </div>
-          </div>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 // ─── Markdown preprocessing ─────────────────────────────────────────────────
 
 /**
@@ -436,6 +380,7 @@ function ProjectAssignmentDialog({
   isLoadingProjects,
   projectLoadError,
   isSaving,
+  hasProject,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -447,12 +392,13 @@ function ProjectAssignmentDialog({
   isLoadingProjects: boolean;
   projectLoadError: Error | null;
   isSaving: boolean;
+  hasProject: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Assign to project</DialogTitle>
+          <DialogTitle>{hasProject ? "Change project" : "Assign to project"}</DialogTitle>
           <DialogDescription>{meetingTitle}</DialogDescription>
         </DialogHeader>
         <div className="space-y-2 py-2">
@@ -514,6 +460,7 @@ export function MeetingDetailContent({
   allOpportunities,
   meetingTasks = [],
   transcriptContent,
+  transcriptLoadFailed = false,
   backHref,
   backLabel,
   relatedMeetings = [],
@@ -599,41 +546,44 @@ export function MeetingDetailContent({
   const shorthandBullet =
     meaningfulText(parsedSections?.shorthandBullet) ||
     meaningfulText(meeting.bullet_points);
-  const hasActionItems =
+  const hasActionSnapshot =
     allRisks.length > 0 ||
     allOpportunities.length > 0;
 
+  const keywordList = React.useMemo(
+    () =>
+      (parsedSections?.keywords ?? "")
+        .split(/[,\n]/)
+        .map((k) => k.replace(/^[-*•]\s*/, "").trim())
+        .filter(Boolean),
+    [parsedSections?.keywords],
+  );
+  const KEYWORD_LIMIT = 8;
+  const [showAllKeywords, setShowAllKeywords] = React.useState(false);
+  const visibleKeywords = showAllKeywords
+    ? keywordList
+    : keywordList.slice(0, KEYWORD_LIMIT);
+  const hiddenKeywordCount = keywordList.length - visibleKeywords.length;
+
   return (
     <PageContainer maxWidth="xl" className="pb-12">
-      {backHref ? (
-        <div className="mb-4">
-          <Button asChild size="sm" variant="ghost" className="-ml-2 h-auto px-2 py-1 text-muted-foreground hover:text-foreground">
-            <Link href={backHref}>
-              <ArrowLeft className="mr-1.5 h-4 w-4" />
-              {backLabel || "Back"}
+      {/* Page header — back arrow sits inline left of the title, no dedicated row */}
+      <div className="mb-6 flex items-start gap-2">
+        {backHref ? (
+          <Button
+            asChild
+            size="icon"
+            variant="ghost"
+            className="-ml-2 mt-0.5 h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+          >
+            <Link href={backHref} aria-label={backLabel ? `Back to ${backLabel}` : "Back"}>
+              <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-        </div>
-      ) : null}
-      {/* Page header */}
-      <div className="mb-6 flex items-start justify-between gap-4">
-        { }
+        ) : null}
         <h1 className="text-2xl font-semibold text-foreground">
           {meeting.title || "Untitled Meeting"}
         </h1>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-              <MoreVertical className="h-4 w-4" />
-              <span className="sr-only">Meeting actions</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setAssignmentDialogOpen(true)}>
-              Edit
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
 
       {/* Meta bar */}
@@ -650,23 +600,20 @@ export function MeetingDetailContent({
             {meeting.duration_minutes} min
           </span>
         ) : null}
-        {projectLabel ? (
-          <span className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <FolderOpen className="h-3.5 w-3.5" />
-            {projectLabel}
-          </span>
-        ) : (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground/60 hover:text-muted-foreground h-auto px-0"
-            onClick={() => setAssignmentDialogOpen(true)}
-          >
-            <FolderOpen className="h-3.5 w-3.5" />
-            Assign to project
-          </Button>
-        )}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className={`inline-flex items-center gap-2 text-xs font-medium h-auto px-0 transition-colors ${
+            projectLabel
+              ? "text-muted-foreground hover:text-foreground"
+              : "text-muted-foreground/60 hover:text-muted-foreground"
+          }`}
+          onClick={() => setAssignmentDialogOpen(true)}
+        >
+          <FolderOpen className="h-3.5 w-3.5" />
+          {projectLabel ?? "Assign to project"}
+        </Button>
         {meeting.fireflies_link ? (
           <a
             href={meeting.fireflies_link}
@@ -710,14 +657,20 @@ export function MeetingDetailContent({
             </section>
           ) : null}
 
-          {/* Tasks — AI-extracted tasks from the transcript */}
-          {meetingTasks.length > 0 ? (
-            <section className="border-t border-border pt-6">
-              <AccordionSection label={`Tasks (${meetingTasks.length})`}>
-                <MeetingTasksList tasks={meetingTasks} />
-              </AccordionSection>
-            </section>
-          ) : null}
+          {/* Tasks — AI-extracted action items, managed inline (status,
+              assignee, priority, due date), with create + delete. */}
+          <section className="border-t border-border pt-6">
+            <AccordionSection label={`Tasks (${meetingTasks.length})`}>
+              <MeetingTasksManager
+                meetingId={meeting.id}
+                initialTasks={meetingTasks}
+                projectId={assignedProjectId}
+                allTasksHref={
+                  assignedProjectId ? `/${assignedProjectId}/tasks` : "/tasks"
+                }
+              />
+            </AccordionSection>
+          </section>
 
           {/* Action Items — grouped by the person Fireflies assigned them to */}
           {actionItemsContent ? (
@@ -768,22 +721,19 @@ export function MeetingDetailContent({
               >
                 <div className="space-y-6">
                   {segments.map((segment, index) => (
-                    <div
-                      key={segment.id}
-                      className="space-y-2 border-l-2 border-border pl-4"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-muted-foreground">
-                          {segment.segment_index + 1}
-                        </span>
+                    <div key={segment.id} className="flex gap-2.5">
+                      <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-medium tabular-nums text-muted-foreground">
+                        {segment.segment_index + 1}
+                      </span>
+                      <div className="min-w-0 flex-1 space-y-2">
                         {/* eslint-disable-next-line design-system/no-raw-heading */}
                         <h3 className="text-sm font-medium text-foreground">
                           {segment.title || `Topic ${index + 1}`}
                         </h3>
+                        {segment.summary && (
+                          <FirefliesSectionContent value={segment.summary} />
+                        )}
                       </div>
-                      {segment.summary && (
-                        <FirefliesSectionContent value={segment.summary} />
-                      )}
                     </div>
                   ))}
                 </div>
@@ -798,12 +748,20 @@ export function MeetingDetailContent({
             </section>
           ) : null}
 
-          {/* Empty state */}
+          {/* Empty state — distinguishes a failed fetch from "never processed" */}
           {!transcriptContent && segments.length === 0 && (
             <EmptyState
               icon={<FileText />}
-              title="No transcript available"
-              description="This meeting has not been processed yet."
+              title={
+                transcriptLoadFailed
+                  ? "Transcript could not be loaded"
+                  : "No transcript available"
+              }
+              description={
+                transcriptLoadFailed
+                  ? "A transcript exists for this meeting but failed to load. Refresh to try again."
+                  : "This meeting has not been processed yet."
+              }
             />
           )}
         </div>
@@ -822,7 +780,7 @@ export function MeetingDetailContent({
           )}
 
           {/* Action Snapshot */}
-          {hasActionItems && (
+          {hasActionSnapshot && (
             <div className="space-y-4">
               <div className="text-xs font-semibold uppercase tracking-widest text-primary">
                 Action Snapshot
@@ -867,7 +825,7 @@ export function MeetingDetailContent({
                     {rm.date ? (
                       <DateAvatar date={rm.date} size="sm" />
                     ) : (
-                      <div className="w-9 h-9 shrink-0 rounded-full border border-border bg-muted/50 flex items-center justify-center text-xs text-muted-foreground">
+                      <div className="w-9 h-9 shrink-0 rounded-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
                         ?
                       </div>
                     )}
@@ -886,24 +844,42 @@ export function MeetingDetailContent({
           )}
 
           {/* Keywords */}
-          {parsedSections?.keywords && (
+          {keywordList.length > 0 && (
             <div className="space-y-3 border-t border-border pt-6">
               <div className="text-xs font-semibold uppercase tracking-widest text-primary">
                 Keywords
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {parsedSections.keywords
-                  .split(/[,\n]/)
-                  .map((k) => k.replace(/^[-*•]\s*/, "").trim())
-                  .filter(Boolean)
-                  .map((keyword) => (
-                    <span
-                      key={keyword}
-                      className="inline-flex items-center rounded-full border border-border/60 bg-muted/50 px-2.5 py-1 text-xs font-medium text-muted-foreground"
-                    >
-                      {keyword}
-                    </span>
-                  ))}
+                {visibleKeywords.map((keyword) => (
+                  <span
+                    key={keyword}
+                    className="inline-flex items-center rounded-full bg-muted/60 px-2.5 py-1 text-xs font-medium text-muted-foreground"
+                  >
+                    {keyword}
+                  </span>
+                ))}
+                {hiddenKeywordCount > 0 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto rounded-full px-2.5 py-1 text-xs font-medium text-muted-foreground/70 hover:text-foreground"
+                    onClick={() => setShowAllKeywords(true)}
+                  >
+                    +{hiddenKeywordCount} more
+                  </Button>
+                )}
+                {showAllKeywords && keywordList.length > KEYWORD_LIMIT && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto rounded-full px-2.5 py-1 text-xs font-medium text-muted-foreground/70 hover:text-foreground"
+                    onClick={() => setShowAllKeywords(false)}
+                  >
+                    Show less
+                  </Button>
+                )}
               </div>
             </div>
           )}
@@ -920,6 +896,7 @@ export function MeetingDetailContent({
         isLoadingProjects={isLoadingProjects}
         projectLoadError={projectLoadError}
         isSaving={isSavingProject}
+        hasProject={Boolean(assignedProjectId)}
       />
     </PageContainer>
   );
