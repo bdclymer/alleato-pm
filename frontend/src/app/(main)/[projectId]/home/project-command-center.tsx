@@ -813,7 +813,7 @@ function SidebarTeamSection({
               group: classifyTeamSlot({
                 roleName: role.role_name,
                 email: person?.email || null,
-                companyName: person?.company || null,
+                companyName: person?.company_name || null,
               }),
             };
           }),
@@ -1169,6 +1169,7 @@ export function ProjectCommandCenter({
   changeOrders,
   rfis,
   contracts,
+  contractLineItems,
   homeAlerts,
   pendingSsovReviews = [],
   team,

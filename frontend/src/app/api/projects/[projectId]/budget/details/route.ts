@@ -393,7 +393,7 @@ export const GET = withApiGuardrails(
     let subcontractCompanyNames: Map<string, string>;
     try {
       subcontractCompanyNames = await loadCompanyNameMap(
-        supabase,
+        supabase as unknown as CompanyLookupClient,
         subcontractCompanyIds,
       );
     } catch (error) {
@@ -456,7 +456,7 @@ export const GET = withApiGuardrails(
     let purchaseOrderCompanyNames: Map<string, string>;
     try {
       purchaseOrderCompanyNames = await loadCompanyNameMap(
-        supabase,
+        supabase as unknown as CompanyLookupClient,
         purchaseOrderCompanyIds,
       );
     } catch (error) {
