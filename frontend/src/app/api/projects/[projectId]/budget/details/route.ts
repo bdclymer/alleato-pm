@@ -3,6 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import { requirePermission } from "@/lib/permissions-guard";
+import { normalizeBudgetCodeLookupKey } from "@/lib/budget/compute-grand-totals";
 import type {
   BudgetDetailLineItem,
   DetailType,
@@ -38,6 +39,36 @@ interface RuntimePendingChangeOrderLinesClient {
       };
     };
   };
+}
+
+interface CompanyLookupClient {
+  from: (tableName: "companies") => {
+    select: (selectedColumns: "id, name") => {
+      in: (
+        column: "id",
+        values: string[],
+      ) => Promise<{
+        data: Array<{ id: string; name: string | null }> | null;
+        error: unknown;
+      }>;
+    };
+  };
+}
+
+async function loadCompanyNameMap(
+  supabase: CompanyLookupClient,
+  companyIds: string[],
+) {
+  const uniqueCompanyIds = Array.from(new Set(companyIds.filter(Boolean)));
+  if (uniqueCompanyIds.length === 0) return new Map<string, string>();
+
+  const { data, error } = await supabase
+    .from("companies")
+    .select("id, name")
+    .in("id", uniqueCompanyIds);
+
+  if (error) throw error;
+  return new Map((data ?? []).map((company) => [company.id, company.name ?? ""]));
 }
 
 /**
@@ -100,6 +131,23 @@ export const GET = withApiGuardrails(
         { status: 500 },
       );
     }
+
+    const canonicalBudgetCodeByLookupKey = new Map<string, string>();
+    for (const line of budgetLines ?? []) {
+      if (line.cost_code_id) {
+        canonicalBudgetCodeByLookupKey.set(
+          normalizeBudgetCodeLookupKey(line.cost_code_id),
+          line.cost_code_id,
+        );
+      }
+    }
+    const canonicalBudgetCode = (budgetCode: string | null | undefined) => {
+      if (!budgetCode) return "";
+      return (
+        canonicalBudgetCodeByLookupKey.get(normalizeBudgetCodeLookupKey(budgetCode)) ??
+        budgetCode
+      );
+    };
 
     if (!budgetError && budgetLines) {
       budgetLines.forEach((line) => {
@@ -323,27 +371,48 @@ export const GET = withApiGuardrails(
           status,
           contract_number,
           project_id,
-          companies (
-            name
-          )
+          contract_company_id
         )
       `,
         )
-        .in("subcontracts.status", ["approved", "complete"])
+        .in("subcontracts.status", ["approved", "Approved", "complete", "Complete"])
         .eq("subcontracts.project_id", projectIdNum);
+
+    if (subcontractsError) {
+      return apiErrorResponse(subcontractsError);
+    }
+
+    const subcontractCompanyIds = (subcontractSovItems ?? [])
+      .map((line) => {
+        const subcontract = Array.isArray(line.subcontracts)
+          ? line.subcontracts[0]
+          : line.subcontracts;
+        return subcontract?.contract_company_id ?? "";
+      })
+      .filter(Boolean);
+    let subcontractCompanyNames: Map<string, string>;
+    try {
+      subcontractCompanyNames = await loadCompanyNameMap(
+        supabase,
+        subcontractCompanyIds,
+      );
+    } catch (error) {
+      return apiErrorResponse(error);
+    }
 
     if (!subcontractsError && subcontractSovItems) {
       subcontractSovItems.forEach((line) => {
-        const subcontract = line.subcontracts as unknown as {
-          contract_number: string;
-          companies: { name: string } | null;
-        };
+        const subcontract = Array.isArray(line.subcontracts)
+          ? line.subcontracts[0]
+          : line.subcontracts;
 
         details.push({
           id: `subcontract-${line.id}`,
-          budgetCode: line.budget_code || "",
+          budgetCode: canonicalBudgetCode(line.budget_code),
           budgetCodeDescription: "",
-          vendor: subcontract?.companies?.name || "",
+          vendor: subcontract?.contract_company_id
+            ? (subcontractCompanyNames.get(subcontract.contract_company_id) ?? "")
+            : "",
           item: subcontract ? subcontract.contract_number : "",
           detailType: "commitments" as DetailType,
           description: line.description || "",
@@ -365,27 +434,48 @@ export const GET = withApiGuardrails(
           status,
           contract_number,
           project_id,
-          companies (
-            name
-          )
+          contract_company_id
         )
       `,
       )
-      .in("purchase_orders.status", ["approved", "complete"])
+      .in("purchase_orders.status", ["approved", "Approved", "complete", "Complete"])
       .eq("purchase_orders.project_id", projectIdNum);
+
+    if (poError) {
+      return apiErrorResponse(poError);
+    }
+
+    const purchaseOrderCompanyIds = (poSovItems ?? [])
+      .map((line) => {
+        const purchaseOrder = Array.isArray(line.purchase_orders)
+          ? line.purchase_orders[0]
+          : line.purchase_orders;
+        return purchaseOrder?.contract_company_id ?? "";
+      })
+      .filter(Boolean);
+    let purchaseOrderCompanyNames: Map<string, string>;
+    try {
+      purchaseOrderCompanyNames = await loadCompanyNameMap(
+        supabase,
+        purchaseOrderCompanyIds,
+      );
+    } catch (error) {
+      return apiErrorResponse(error);
+    }
 
     if (!poError && poSovItems) {
       poSovItems.forEach((line) => {
-        const purchaseOrder = line.purchase_orders as unknown as {
-          contract_number: string;
-          companies: { name: string } | null;
-        };
+        const purchaseOrder = Array.isArray(line.purchase_orders)
+          ? line.purchase_orders[0]
+          : line.purchase_orders;
 
         details.push({
           id: `po-${line.id}`,
-          budgetCode: line.budget_code || "",
+          budgetCode: canonicalBudgetCode(line.budget_code),
           budgetCodeDescription: "",
-          vendor: purchaseOrder?.companies?.name || "",
+          vendor: purchaseOrder?.contract_company_id
+            ? (purchaseOrderCompanyNames.get(purchaseOrder.contract_company_id) ?? "")
+            : "",
           item: purchaseOrder ? purchaseOrder.contract_number : "",
           detailType: "commitments" as DetailType,
           description: line.description || "",

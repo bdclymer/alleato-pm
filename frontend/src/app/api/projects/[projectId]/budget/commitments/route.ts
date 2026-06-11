@@ -2,6 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/permissions-guard";
+import { normalizeBudgetCodeLookupKey } from "@/lib/budget/compute-grand-totals";
 
 type CommitmentStatusFilter = Set<string>;
 
@@ -26,6 +27,39 @@ async function resolveCostCodeId(
 
   if (error || !budgetLine) return null;
   return budgetLine.cost_code_id ?? null;
+}
+
+async function resolveMatchingBudgetCodes(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  projectIdNum: number,
+  costCodeId: string,
+): Promise<string[]> {
+  const { data: budgetLines, error } = await supabase
+    .from("budget_lines")
+    .select("cost_code_id")
+    .eq("project_id", projectIdNum);
+
+  if (error) throw error;
+
+  const lookupKey = normalizeBudgetCodeLookupKey(costCodeId);
+  const matchingCodes = new Set<string>([costCodeId]);
+
+  for (const line of budgetLines ?? []) {
+    const lineCostCode = line.cost_code_id;
+    if (
+      lineCostCode &&
+      normalizeBudgetCodeLookupKey(lineCostCode) === lookupKey
+    ) {
+      matchingCodes.add(lineCostCode);
+    }
+  }
+
+  for (const code of Array.from(matchingCodes)) {
+    const normalized = normalizeBudgetCodeLookupKey(code);
+    if (normalized) matchingCodes.add(normalized);
+  }
+
+  return Array.from(matchingCodes);
 }
 
 /**
@@ -66,6 +100,23 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       return NextResponse.json({ commitments: [] });
     }
 
+    let matchingBudgetCodes: string[];
+    try {
+      matchingBudgetCodes = await resolveMatchingBudgetCodes(
+        supabase,
+        projectIdNum,
+        costCodeId,
+      );
+    } catch (error) {
+      return NextResponse.json(
+        {
+          error: "Failed to resolve matching budget codes",
+          details: error instanceof Error ? error.message : "Unknown error",
+        },
+        { status: 500 },
+      );
+    }
+
     const [subcontractsRes, purchaseOrdersRes] = await Promise.all([
       supabase
         .from("subcontract_sov_items")
@@ -86,7 +137,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         `,
         )
         .eq("subcontracts.project_id", projectIdNum)
-        .eq("budget_code", costCodeId),
+        .in("budget_code", matchingBudgetCodes),
       supabase
         .from("purchase_order_sov_items")
         .select(
@@ -106,7 +157,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         `,
         )
         .eq("purchase_orders.project_id", projectIdNum)
-        .eq("budget_code", costCodeId),
+        .in("budget_code", matchingBudgetCodes),
     ]);
 
     if (subcontractsRes.error || purchaseOrdersRes.error) {

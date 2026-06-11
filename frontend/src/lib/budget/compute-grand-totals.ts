@@ -431,6 +431,19 @@ export function normalizeBudgetCode(budgetCode: string): string {
   return dotIndex === -1 ? budgetCode : budgetCode.substring(0, dotIndex).trim();
 }
 
+/**
+ * Returns a comparison-only key for budget/cost code matching.
+ *
+ * External commitment imports can store `09-9723` as `099723`, while local
+ * budget lines keep the formatted code. Use this only for lookup keys; keep
+ * displaying the formatted source code.
+ */
+export function normalizeBudgetCodeLookupKey(budgetCode: string): string {
+  return normalizeBudgetCode(budgetCode)
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .toUpperCase();
+}
+
 // ---------------------------------------------------------------------------
 // Pure reducers — tested directly, no DB dependency
 // ---------------------------------------------------------------------------
@@ -749,6 +762,25 @@ export async function computeBudgetGrandTotals(
     }
   }
 
+  const costCodeIdByLookupKey = new Map<string, string>();
+  for (const row of budgetRowsResult.data || []) {
+    const costCodeId = row.cost_code_id;
+    if (typeof costCodeId !== "string" || costCodeId.length === 0) continue;
+    costCodeIdByLookupKey.set(normalizeBudgetCodeLookupKey(costCodeId), costCodeId);
+  }
+
+  const resolveBudgetCodeToCostCodeId = (budgetCode: string | null) => {
+    if (!budgetCode) return null;
+    const mappedProjectBudgetCode = pccToCostCodeId[budgetCode];
+    if (mappedProjectBudgetCode) return mappedProjectBudgetCode;
+
+    const normalizedBudgetCode = normalizeBudgetCode(budgetCode);
+    return (
+      costCodeIdByLookupKey.get(normalizeBudgetCodeLookupKey(normalizedBudgetCode)) ??
+      normalizedBudgetCode
+    );
+  };
+
   // Direct costs (approved only) → JTD + Direct Costs
   for (const cost of (directCostsRes.data || []) as DirectCostWithRelations[]) {
     const codeId = cost.budget_code_id
@@ -772,13 +804,13 @@ export async function computeBudgetGrandTotals(
 
   // Pending Cost Changes: subcontracts, POs, commitment COs
   for (const item of (subcontractSovRes.data || []) as SOVItem[]) {
-    const codeId = item.budget_code ? normalizeBudgetCode(item.budget_code) : null;
+    const codeId = resolveBudgetCodeToCostCodeId(item.budget_code);
     if (!codeId) continue;
     ensureCostEntry(codeId);
     costsByCode[codeId].pendingCostChanges += item.amount || 0;
   }
   for (const item of (poSovRes.data || []) as SOVItem[]) {
-    const codeId = item.budget_code ? normalizeBudgetCode(item.budget_code) : null;
+    const codeId = resolveBudgetCodeToCostCodeId(item.budget_code);
     if (!codeId) continue;
     ensureCostEntry(codeId);
     costsByCode[codeId].pendingCostChanges += item.amount || 0;
@@ -818,13 +850,13 @@ export async function computeBudgetGrandTotals(
 
   // Committed Costs: executed subs + POs + approved commitment COs
   for (const item of (executedSubcontractSovRes.data || []) as SOVItem[]) {
-    const codeId = item.budget_code ? normalizeBudgetCode(item.budget_code) : null;
+    const codeId = resolveBudgetCodeToCostCodeId(item.budget_code);
     if (!codeId) continue;
     ensureCostEntry(codeId);
     costsByCode[codeId].committedCosts += item.amount || 0;
   }
   for (const item of (executedPoSovRes.data || []) as SOVItem[]) {
-    const codeId = item.budget_code ? normalizeBudgetCode(item.budget_code) : null;
+    const codeId = resolveBudgetCodeToCostCodeId(item.budget_code);
     if (!codeId) continue;
     ensureCostEntry(codeId);
     costsByCode[codeId].committedCosts += item.amount || 0;

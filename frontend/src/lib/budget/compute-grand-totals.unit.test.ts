@@ -1,6 +1,7 @@
 import {
   EMPTY_GRAND_TOTALS,
   normalizeBudgetCode,
+  normalizeBudgetCodeLookupKey,
   reduceGrandTotals,
   type BudgetLineItem,
   type GrandTotals,
@@ -51,6 +52,18 @@ describe("normalizeBudgetCode", () => {
 
   it("handles codes that are only a suffix (edge case)", () => {
     expect(normalizeBudgetCode(".L")).toBe("");
+  });
+});
+
+describe("normalizeBudgetCodeLookupKey", () => {
+  it("matches formatted Alleato budget codes to unformatted imported commitment codes", () => {
+    expect(normalizeBudgetCodeLookupKey("09-9723")).toBe("099723");
+    expect(normalizeBudgetCodeLookupKey("099723")).toBe("099723");
+  });
+
+  it("ignores cost-type suffixes while building comparison keys", () => {
+    expect(normalizeBudgetCodeLookupKey("03 00 00.L")).toBe("030000");
+    expect(normalizeBudgetCodeLookupKey("03-00-00")).toBe("030000");
   });
 });
 
