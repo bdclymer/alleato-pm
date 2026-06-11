@@ -86,12 +86,13 @@ function niceTickStep(maxValue: number): number {
   return 10 * magnitude;
 }
 
-function splitChartLabel(label: string): string[] {
-  const words = label.split(" ");
-  if (label.length <= 16 || words.length < 2) return [label];
+function getDivisionCode(label: string): string {
+  const match = label.match(/^(\d{1,2})\b/);
+  return match?.[1] ?? label.slice(0, 2);
+}
 
-  const midpoint = Math.ceil(words.length / 2);
-  return [words.slice(0, midpoint).join(" "), words.slice(midpoint).join(" ")];
+function getDivisionTitle(label: string): string {
+  return label.replace(/^\d{1,2}\s*/, "").trim();
 }
 
 function BudgetDivisionChart({
@@ -108,19 +109,23 @@ function BudgetDivisionChart({
     return null;
   }
 
-  const chartWidth = 680;
-  const labelWidth = 150;
-  const plotWidth = 500;
-  const topPadding = 12;
-  const rowHeight = 42;
-  const axisHeight = 28;
-  const legendHeight = 28;
-  const chartHeight = topPadding + chartRows.length * rowHeight + axisHeight + legendHeight;
+  const leftPadding = 52;
+  const rightPadding = 20;
+  const topPadding = 18;
+  const plotHeight = 230;
+  const axisHeight = 68;
+  const legendHeight = 24;
+  const groupWidth = 70;
+  const chartWidth = Math.max(680, leftPadding + rightPadding + chartRows.length * groupWidth);
+  const chartHeight = topPadding + plotHeight + axisHeight + legendHeight;
+  const plotWidth = chartWidth - leftPadding - rightPadding;
   const maxValue = Math.max(...chartRows.flatMap((division) => [division.budget, division.committed]), 1);
   const tickStep = niceTickStep(maxValue);
   const axisMax = tickStep * 4;
   const ticks = Array.from({ length: 5 }, (_, index) => index * tickStep);
-  const xForValue = (value: number) => labelWidth + (Math.max(0, value) / axisMax) * plotWidth;
+  const baselineY = topPadding + plotHeight;
+  const yForValue = (value: number) =>
+    baselineY - (Math.max(0, value) / axisMax) * plotHeight;
 
   return (
     <div className="min-h-0 w-full overflow-x-auto">
@@ -132,21 +137,21 @@ function BudgetDivisionChart({
       >
         <title>Budget and committed costs by division</title>
         {ticks.map((tick) => {
-          const x = xForValue(tick);
+          const y = yForValue(tick);
           return (
             <g key={tick}>
               <line
-                x1={x}
-                x2={x}
-                y1={topPadding}
-                y2={topPadding + chartRows.length * rowHeight}
+                x1={leftPadding}
+                x2={leftPadding + plotWidth}
+                y1={y}
+                y2={y}
                 className="stroke-border"
                 strokeOpacity={0.65}
               />
               <text
-                x={x}
-                y={topPadding + chartRows.length * rowHeight + 18}
-                textAnchor="middle"
+                x={leftPadding - 8}
+                y={y + 4}
+                textAnchor="end"
                 className="fill-muted-foreground tabular-nums"
               >
                 {fmtCompact(tick)}
@@ -155,49 +160,62 @@ function BudgetDivisionChart({
           );
         })}
         {chartRows.map((division, index) => {
-          const rowTop = topPadding + index * rowHeight;
-          const labelLines = splitChartLabel(division.label);
-          const labelY = rowTop + 19 - (labelLines.length - 1) * 6;
-          const budgetWidth = Math.max(2, xForValue(division.budget) - labelWidth);
-          const committedWidth = Math.max(2, xForValue(division.committed) - labelWidth);
+          const groupX = leftPadding + index * groupWidth + groupWidth / 2;
+          const budgetY = yForValue(division.budget);
+          const committedY = yForValue(division.committed);
+          const budgetHeight = Math.max(2, baselineY - budgetY);
+          const committedHeight = Math.max(2, baselineY - committedY);
+          const divisionCode = getDivisionCode(division.label);
+          const divisionTitle = getDivisionTitle(division.label);
 
           return (
             <g key={division.id}>
               <title>
                 {division.label}: Budget {fmtFull(division.budget)}, Committed {fmtFull(division.committed)}
               </title>
-              <text
-                x={labelWidth - 8}
-                y={labelY}
-                textAnchor="end"
-                className="fill-foreground"
-              >
-                {labelLines.map((line, lineIndex) => (
-                  <tspan key={line} x={labelWidth - 8} dy={lineIndex === 0 ? 0 : 12}>
-                    {line}
-                  </tspan>
-                ))}
-              </text>
               <rect
-                x={labelWidth}
-                y={rowTop + 8}
-                width={budgetWidth}
-                height={8}
+                x={groupX - 13}
+                y={budgetY}
+                width={10}
+                height={budgetHeight}
                 rx={3}
                 className="fill-muted-foreground/35"
               />
               <rect
-                x={labelWidth}
-                y={rowTop + 22}
-                width={committedWidth}
-                height={8}
+                x={groupX + 3}
+                y={committedY}
+                width={10}
+                height={committedHeight}
                 rx={3}
                 className="fill-primary"
               />
+              <text
+                x={groupX}
+                y={baselineY + 18}
+                textAnchor="middle"
+                className="fill-foreground font-medium"
+              >
+                {divisionCode}
+              </text>
+              <text
+                x={groupX}
+                y={baselineY + 34}
+                textAnchor="middle"
+                className="fill-muted-foreground"
+              >
+                {divisionTitle.slice(0, 10)}
+              </text>
             </g>
           );
         })}
-        <g transform={`translate(${labelWidth}, ${topPadding + chartRows.length * rowHeight + axisHeight + 12})`}>
+        <line
+          x1={leftPadding}
+          x2={leftPadding + plotWidth}
+          y1={baselineY}
+          y2={baselineY}
+          className="stroke-border"
+        />
+        <g transform={`translate(${leftPadding}, ${baselineY + axisHeight + 8})`}>
           <rect width={8} height={8} rx={2} className="fill-muted-foreground/35" />
           <text x={16} y={8} className="fill-muted-foreground">
             Budget
