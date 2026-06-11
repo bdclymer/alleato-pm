@@ -107,7 +107,11 @@ type ProjectDocument = Pick<
   | "reviewed_at"
   | "file_size"
   | "storage_path"
->;
+  | "source_metadata"
+> & {
+  preview_text?: string | null;
+  preview_status?: "ready" | "unavailable" | null;
+};
 type ProjectTeamMember = Database["public"]["Functions"]["get_project_team"]["Returns"][number];
 interface BudgetLineSummary {
   id: string;
@@ -481,6 +485,40 @@ function DocumentTypePreview({
     </div>
   );
 }
+
+function DocumentTextPreview({
+  text,
+  status,
+  title,
+}: {
+  text: string | null | undefined;
+  status: ProjectDocument["preview_status"];
+  title: string;
+}) {
+  if (status === "unavailable" || !text) {
+    return (
+      <div className="flex h-full w-full flex-col justify-between bg-muted/60 p-3">
+        <FileText className="h-4 w-4 text-muted-foreground" />
+        <div className="space-y-1">
+          <p className="text-[11px] font-medium text-foreground">Preview unavailable</p>
+          <p className="line-clamp-2 text-[10px] leading-snug text-muted-foreground">
+            Open the file to view the source document.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full w-full overflow-hidden bg-background p-3 text-left">
+      <p className="line-clamp-6 text-[10px] leading-relaxed text-foreground/80">
+        {text}
+      </p>
+    </div>
+  );
+}
+
+
 function isClosedStatus(status: string | null | undefined): boolean {
   return ["approved", "cancelled", "closed", "complete", "completed", "done", "paid", "rejected", "void"].includes(
     (status ?? "").toLowerCase(),
@@ -1401,6 +1439,7 @@ export function ProjectCommandCenter({
           const updated = formatMonthDay(document.updated_at ?? document.created_at);
           const inlineHref = documentInlineHref(projectId, document.id);
           const imagePreview = isImageDocument(document);
+          const textPreview = document.preview_status != null;
 
           return (
             <Link
@@ -1410,12 +1449,18 @@ export function ProjectCommandCenter({
               className="group min-w-0 overflow-hidden rounded-md bg-background transition-colors hover:bg-muted/20"
             >
               <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-muted/50 text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
-                {imagePreview ? (
+                {textPreview ? (
+                  <DocumentTextPreview
+                    text={document.preview_text}
+                    status={document.preview_status}
+                    title={title}
+                  />
+                ) : previewable && imagePreview ? (
                   <img src={inlineHref} alt="" loading="lazy" className="h-full w-full object-cover" />
                 ) : (
                   <DocumentTypePreview document={document} title={title} />
                 )}
-                {imagePreview && (
+                {(previewable || textPreview) && (
                   <span className="absolute bottom-1.5 right-1.5 rounded-sm bg-background/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-foreground shadow-xs">
                     {documentExtension(document.file_name)}
                   </span>

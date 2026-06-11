@@ -188,11 +188,17 @@ function SortableColumnHead({
   onContextMenu?: React.MouseEventHandler<HTMLTableCellElement>;
   children: (handleProps: SortableHandleProps) => React.ReactNode;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({
-      id,
-      disabled,
-    });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id,
+    disabled,
+  });
 
   const resolvedStyle: React.CSSProperties = {
     ...style,
@@ -1997,109 +2003,111 @@ export function UnifiedTablePage<T>({
                 : undefined
             }
           >
-            <Table
-              className={cn(
-                density === "compact" &&
-                  "[&_thead_tr]:h-8 [&_th]:py-1 [&_th]:px-3 [&_td]:py-1 [&_td]:px-3 [&_td]:text-xs [&_th:has([role=checkbox])]:pl-0 [&_td:has([role=checkbox])]:pl-0",
-                density === "comfortable" &&
-                  "[&_thead_tr]:h-14 [&_th]:py-4 [&_th]:px-4 [&_td]:py-4 [&_td]:px-4 [&_th:has([role=checkbox])]:pl-0 [&_td:has([role=checkbox])]:pl-0",
-                isFullBleedTable &&
-                  !hasRowSelection &&
-                  "[&_th:first-child]:pl-0 [&_td:first-child]:pl-0 [&_th:last-child]:pr-0 [&_td:last-child]:pr-0",
-              )}
-              style={
-                layout?.minWidth ? { minWidth: layout.minWidth } : undefined
-              }
+            <DndContext
+              sensors={columnDndSensors}
+              collisionDetection={closestCenter}
+              modifiers={[restrictToHorizontalAxis]}
+              onDragEnd={handleColumnDragEnd}
             >
-              <TableHeader
+              <Table
                 className={cn(
-                  table.stickyHeader !== false && "sticky top-0 z-20 bg-card",
+                  density === "compact" &&
+                    "[&_thead_tr]:h-8 [&_th]:py-1 [&_th]:px-3 [&_td]:py-1 [&_td]:px-3 [&_td]:text-xs [&_th:has([role=checkbox])]:pl-0 [&_td:has([role=checkbox])]:pl-0",
+                  density === "comfortable" &&
+                    "[&_thead_tr]:h-14 [&_th]:py-4 [&_th]:px-4 [&_td]:py-4 [&_td]:px-4 [&_th:has([role=checkbox])]:pl-0 [&_td:has([role=checkbox])]:pl-0",
+                  isFullBleedTable &&
+                    !hasRowSelection &&
+                    "[&_th:first-child]:pl-0 [&_td:first-child]:pl-0 [&_th:last-child]:pr-0 [&_td:last-child]:pr-0",
                 )}
+                style={
+                  layout?.minWidth ? { minWidth: layout.minWidth } : undefined
+                }
               >
-                {columnGroups && columnGroups.length > 0 && (
-                  <TableRow className="border-b-0">
+                <TableHeader
+                  className={cn(
+                    table.stickyHeader !== false && "sticky top-0 z-20 bg-card",
+                  )}
+                >
+                  {columnGroups && columnGroups.length > 0 && (
+                    <TableRow className="border-b-0">
+                      {hasRowSelection && (
+                        <TableHead
+                          style={{
+                            width: selectionColumnWidth,
+                            minWidth: selectionColumnWidth,
+                            maxWidth: selectionColumnWidth,
+                          }}
+                          className=""
+                        />
+                      )}
+                      {columnGroups.map((group, index) => {
+                        const visibleCount = group.columnIds.filter((id) =>
+                          orderedVisibleColumns.some((col) => col.id === id),
+                        ).length;
+                        if (visibleCount === 0) return null;
+                        return (
+                          <TableHead
+                            key={`group-${group.label}-${group.columnIds.join("-")}`}
+                            colSpan={visibleCount}
+                            className={cn(
+                              "text-left text-[11px] font-medium text-muted-foreground py-0 px-2 leading-tight border-b border-border/70 normal-case",
+                              index > 0 && "border-l",
+                            )}
+                          >
+                            {group.label}
+                          </TableHead>
+                        );
+                      })}
+                      {hasRowActions && (
+                        <TableHead
+                          className={cn(
+                            "w-[56px] pl-2",
+                            sidePanel ? "pr-4" : "pr-2",
+                          )}
+                        />
+                      )}
+                    </TableRow>
+                  )}
+                  <TableRow className="border-border/80">
                     {hasRowSelection && (
                       <TableHead
+                        className="pl-0 pr-2"
                         style={{
                           width: selectionColumnWidth,
                           minWidth: selectionColumnWidth,
                           maxWidth: selectionColumnWidth,
                         }}
-                        className=""
-                      />
+                      >
+                        <div className="flex items-center justify-center">
+                          <Checkbox
+                            checked={
+                              allSelected
+                                ? true
+                                : someSelected
+                                  ? "indeterminate"
+                                  : false
+                            }
+                            onCheckedChange={(checked) =>
+                              handleSelectAll(Boolean(checked))
+                            }
+                            aria-label="Select all rows"
+                          />
+                        </div>
+                      </TableHead>
                     )}
-                    {columnGroups.map((group, index) => {
-                      const visibleCount = group.columnIds.filter((id) =>
-                        orderedVisibleColumns.some((col) => col.id === id),
-                      ).length;
-                      if (visibleCount === 0) return null;
-                      return (
-                        <TableHead
-                          key={`group-${group.label}-${group.columnIds.join("-")}`}
-                          colSpan={visibleCount}
-                          className={cn(
-                            "text-left text-[11px] font-medium text-muted-foreground py-0 px-2 leading-tight border-b border-border/70 normal-case",
-                            index > 0 && "border-l",
-                          )}
-                        >
-                          {group.label}
-                        </TableHead>
-                      );
-                    })}
-                    {hasRowActions && (
-                      <TableHead
-                        className={cn(
-                          "w-[56px] pl-2",
-                          sidePanel ? "pr-4" : "pr-2",
-                        )}
-                      />
-                    )}
-                  </TableRow>
-                )}
-                <TableRow className="border-border/80">
-                  {hasRowSelection && (
-                    <TableHead
-                      className="pl-0 pr-2"
-                      style={{
-                        width: selectionColumnWidth,
-                        minWidth: selectionColumnWidth,
-                        maxWidth: selectionColumnWidth,
-                      }}
-                    >
-                      <div className="flex items-center justify-center">
-                        <Checkbox
-                          checked={
-                            allSelected
-                              ? true
-                              : someSelected
-                                ? "indeterminate"
-                                : false
-                          }
-                          onCheckedChange={(checked) =>
-                            handleSelectAll(Boolean(checked))
-                          }
-                          aria-label="Select all rows"
-                        />
-                      </div>
-                    </TableHead>
-                  )}
-                  <DndContext
-                    sensors={columnDndSensors}
-                    collisionDetection={closestCenter}
-                    modifiers={[restrictToHorizontalAxis]}
-                    onDragEnd={handleColumnDragEnd}
-                  >
                     <SortableContext
                       items={columnSortableIds}
                       strategy={horizontalListSortingStrategy}
                     >
                       {orderedVisibleColumns.map((column) => {
                         const isSortable =
-                          column.sortable !== false && Boolean(effectiveSorting);
+                          column.sortable !== false &&
+                          Boolean(effectiveSorting);
                         const isHideable = !column.alwaysVisible;
                         const columnAlignment = column.align ?? headerAlignment;
                         const width = columnWidths[column.id] ?? column.width;
-                        const headerPinnedStyle = getPinnedStyle(column.id) ?? undefined;
+                        const headerPinnedStyle =
+                          getPinnedStyle(column.id) ?? undefined;
                         const columnStyle =
                           width || headerPinnedStyle
                             ? ({
@@ -2129,7 +2137,8 @@ export function UnifiedTablePage<T>({
                                 : columnAlignment === "center"
                                   ? "text-center"
                                   : "text-left",
-                              isSortable && "cursor-pointer select-none group/th",
+                              isSortable &&
+                                "cursor-pointer select-none group/th",
                             )}
                             ariaSort={
                               isSortable
@@ -2157,21 +2166,22 @@ export function UnifiedTablePage<T>({
                             }}
                           >
                             {({ attributes, listeners }) => {
-                              const dragHandle = resolvedFeatures.enableColumnReorder ? (
-                                <span
-                                  {...attributes}
-                                  {...listeners}
-                                  aria-label={`Drag ${column.label} column`}
-                                  title="Drag to reorder column"
-                                  className="ml-1 inline-flex h-4 w-4 shrink-0 cursor-grab items-center justify-center rounded-sm text-muted-foreground/40 opacity-0 transition-[color,opacity] hover:text-muted-foreground group-hover/th:opacity-100 group-focus-within/th:opacity-100 active:cursor-grabbing"
-                                  onClick={(event) => event.stopPropagation()}
-                                >
-                                  <GripVertical
-                                    className="h-3.5 w-3.5"
-                                    aria-hidden="true"
-                                  />
-                                </span>
-                              ) : null;
+                              const dragHandle =
+                                resolvedFeatures.enableColumnReorder ? (
+                                  <span
+                                    {...attributes}
+                                    {...listeners}
+                                    aria-label={`Drag ${column.label} column`}
+                                    title="Drag to reorder column"
+                                    className="ml-1 inline-flex h-4 w-4 shrink-0 cursor-grab items-center justify-center rounded-sm text-muted-foreground/40 opacity-0 transition-[color,opacity] hover:text-muted-foreground group-hover/th:opacity-100 group-focus-within/th:opacity-100 active:cursor-grabbing"
+                                    onClick={(event) => event.stopPropagation()}
+                                  >
+                                    <GripVertical
+                                      className="h-3.5 w-3.5"
+                                      aria-hidden="true"
+                                    />
+                                  </span>
+                                ) : null;
 
                               return (
                                 <>
@@ -2200,79 +2210,84 @@ export function UnifiedTablePage<T>({
                                           <span className="min-w-0 truncate">
                                             {column.label}
                                           </span>
-                                          {isSortable && renderSortIcon(column.id)}
+                                          {isSortable &&
+                                            renderSortIcon(column.id)}
                                           {dragHandle}
                                         </Button>
                                       </DropdownMenuTrigger>
                                       <DropdownMenuContent align="start">
-                              {isSortable && (
-                                <>
-                                  <DropdownMenuItem
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      effectiveSorting?.onSortChange(
-                                        column.id,
-                                        "asc",
-                                      );
-                                    }}
-                                  >
-                                    <ArrowUp className="mr-2 h-3.5 w-3.5" />
-                                    Sort ascending
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      effectiveSorting?.onSortChange(
-                                        column.id,
-                                        "desc",
-                                      );
-                                    }}
-                                  >
-                                    <ArrowDown className="mr-2 h-3.5 w-3.5" />
-                                    Sort descending
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                              {resolvedFeatures.enableColumnPinning && (
-                                <>
-                                  {isSortable && <DropdownMenuSeparator />}
-                                  <DropdownMenuItem
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      pinColumn(column.id);
-                                    }}
-                                  >
-                                    {columnPinning.left.includes(column.id) ? (
-                                      <>
-                                        <PinOff className="mr-2 h-3.5 w-3.5" />
-                                        Unpin column
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Pin className="mr-2 h-3.5 w-3.5" />
-                                        Pin column
-                                      </>
-                                    )}
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                              {isHideable && (
-                                <>
-                                  {(isSortable ||
-                                    resolvedFeatures.enableColumnPinning) && (
-                                    <DropdownMenuSeparator />
-                                  )}
-                                  <DropdownMenuItem
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      hideColumn(column.id);
-                                    }}
-                                  >
-                                    <EyeOff className="mr-2 h-3.5 w-3.5" />
-                                    Hide column
-                                  </DropdownMenuItem>
-                                </>
-                              )}
+                                        {isSortable && (
+                                          <>
+                                            <DropdownMenuItem
+                                              onClick={(event) => {
+                                                event.stopPropagation();
+                                                effectiveSorting?.onSortChange(
+                                                  column.id,
+                                                  "asc",
+                                                );
+                                              }}
+                                            >
+                                              <ArrowUp className="mr-2 h-3.5 w-3.5" />
+                                              Sort ascending
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                              onClick={(event) => {
+                                                event.stopPropagation();
+                                                effectiveSorting?.onSortChange(
+                                                  column.id,
+                                                  "desc",
+                                                );
+                                              }}
+                                            >
+                                              <ArrowDown className="mr-2 h-3.5 w-3.5" />
+                                              Sort descending
+                                            </DropdownMenuItem>
+                                          </>
+                                        )}
+                                        {resolvedFeatures.enableColumnPinning && (
+                                          <>
+                                            {isSortable && (
+                                              <DropdownMenuSeparator />
+                                            )}
+                                            <DropdownMenuItem
+                                              onClick={(event) => {
+                                                event.stopPropagation();
+                                                pinColumn(column.id);
+                                              }}
+                                            >
+                                              {columnPinning.left.includes(
+                                                column.id,
+                                              ) ? (
+                                                <>
+                                                  <PinOff className="mr-2 h-3.5 w-3.5" />
+                                                  Unpin column
+                                                </>
+                                              ) : (
+                                                <>
+                                                  <Pin className="mr-2 h-3.5 w-3.5" />
+                                                  Pin column
+                                                </>
+                                              )}
+                                            </DropdownMenuItem>
+                                          </>
+                                        )}
+                                        {isHideable && (
+                                          <>
+                                            {(isSortable ||
+                                              resolvedFeatures.enableColumnPinning) && (
+                                              <DropdownMenuSeparator />
+                                            )}
+                                            <DropdownMenuItem
+                                              onClick={(event) => {
+                                                event.stopPropagation();
+                                                hideColumn(column.id);
+                                              }}
+                                            >
+                                              <EyeOff className="mr-2 h-3.5 w-3.5" />
+                                              Hide column
+                                            </DropdownMenuItem>
+                                          </>
+                                        )}
                                       </DropdownMenuContent>
                                     </DropdownMenu>
                                   ) : (
@@ -2307,386 +2322,392 @@ export function UnifiedTablePage<T>({
                         );
                       })}
                     </SortableContext>
-                  </DndContext>
-                  {hasRowActions && (
-                    <TableHead
-                      className={cn(
-                        "w-[56px] pl-2",
-                        sidePanel ? "pr-4" : "pr-2",
-                      )}
-                    />
-                  )}
-                </TableRow>
-              </TableHeader>
-              <TableBody
-                style={
-                  resolvedFeatures.enableVirtualization
-                    ? ({
-                        position: "relative",
-                        height: `${rowVirtualizer.getTotalSize()}px`,
-                      } as React.CSSProperties)
-                    : undefined
-                }
-              >
-                {(resolvedFeatures.enableVirtualization
-                  ? rowVirtualizer.getVirtualItems().map((virtualRow) => ({
-                      item: paginatedItems[virtualRow.index],
-                      key: table.getRowId(paginatedItems[virtualRow.index]!),
-                      style: {
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        width: "100%",
-                        transform: `translateY(${virtualRow.start}px)`,
-                        height: `${virtualRow.size}px`,
-                      } as React.CSSProperties,
-                    }))
-                  : paginatedItems.map((item) => ({
-                      item,
-                      key: table.getRowId(item),
-                      style: undefined,
-                    }))
-                ).map(({ item, key, style }) => (
-                  <React.Fragment key={key}>
-                    <TableRow
-                      ref={(element) => {
-                        rowRefs.current[key] = element;
-                      }}
-                      className={cn(
-                        "group/row cursor-pointer transition-colors duration-150",
-                        "hover:bg-muted/40",
-                        table.activeRowId === table.getRowId(item) &&
-                          "bg-muted",
-                        selectedIds.includes(table.getRowId(item)) &&
-                          "bg-muted/50",
-                      )}
-                      style={style}
-                      draggable={
-                        resolvedFeatures.enableRowReorder &&
-                        !effectiveSorting?.sortBy &&
-                        !resolvedFeatures.enableVirtualization
-                      }
-                      onDragStart={() => setDraggedRowId(table.getRowId(item))}
-                      onDragOver={(event) => {
-                        if (
-                          !(
-                            resolvedFeatures.enableRowReorder &&
-                            !effectiveSorting?.sortBy
-                          )
-                        )
-                          return;
-                        event.preventDefault();
-                      }}
-                      onDrop={() => {
-                        if (
-                          !(
-                            resolvedFeatures.enableRowReorder &&
-                            !effectiveSorting?.sortBy
-                          )
-                        )
-                          return;
-                        handleRowDrop(table.getRowId(item));
-                        setDraggedRowId(null);
-                      }}
-                      onDragEnd={() => setDraggedRowId(null)}
-                      onClick={(event) => {
-                        if (isInteractiveRowTarget(event.target)) {
-                          return;
+                    {hasRowActions && (
+                      <TableHead
+                        className={cn(
+                          "w-[56px] pl-2",
+                          sidePanel ? "pr-4" : "pr-2",
+                        )}
+                      />
+                    )}
+                  </TableRow>
+                </TableHeader>
+                <TableBody
+                  style={
+                    resolvedFeatures.enableVirtualization
+                      ? ({
+                          position: "relative",
+                          height: `${rowVirtualizer.getTotalSize()}px`,
+                        } as React.CSSProperties)
+                      : undefined
+                  }
+                >
+                  {(resolvedFeatures.enableVirtualization
+                    ? rowVirtualizer.getVirtualItems().map((virtualRow) => ({
+                        item: paginatedItems[virtualRow.index],
+                        key: table.getRowId(paginatedItems[virtualRow.index]!),
+                        style: {
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          width: "100%",
+                          transform: `translateY(${virtualRow.start}px)`,
+                          height: `${virtualRow.size}px`,
+                        } as React.CSSProperties,
+                      }))
+                    : paginatedItems.map((item) => ({
+                        item,
+                        key: table.getRowId(item),
+                        style: undefined,
+                      }))
+                  ).map(({ item, key, style }) => (
+                    <React.Fragment key={key}>
+                      <TableRow
+                        ref={(element) => {
+                          rowRefs.current[key] = element;
+                        }}
+                        className={cn(
+                          "group/row cursor-pointer transition-colors duration-150",
+                          "hover:bg-muted/40",
+                          table.activeRowId === table.getRowId(item) &&
+                            "bg-muted",
+                          selectedIds.includes(table.getRowId(item)) &&
+                            "bg-muted/50",
+                        )}
+                        style={style}
+                        draggable={
+                          resolvedFeatures.enableRowReorder &&
+                          !effectiveSorting?.sortBy &&
+                          !resolvedFeatures.enableVirtualization
                         }
-                        activateRow(item);
-                      }}
-                      tabIndex={table.onRowClick ? 0 : undefined}
-                      onKeyDown={
-                        table.onRowClick
-                          ? (event) => {
+                        onDragStart={() =>
+                          setDraggedRowId(table.getRowId(item))
+                        }
+                        onDragOver={(event) => {
+                          if (
+                            !(
+                              resolvedFeatures.enableRowReorder &&
+                              !effectiveSorting?.sortBy
+                            )
+                          )
+                            return;
+                          event.preventDefault();
+                        }}
+                        onDrop={() => {
+                          if (
+                            !(
+                              resolvedFeatures.enableRowReorder &&
+                              !effectiveSorting?.sortBy
+                            )
+                          )
+                            return;
+                          handleRowDrop(table.getRowId(item));
+                          setDraggedRowId(null);
+                        }}
+                        onDragEnd={() => setDraggedRowId(null)}
+                        onClick={(event) => {
+                          if (isInteractiveRowTarget(event.target)) {
+                            return;
+                          }
+                          activateRow(item);
+                        }}
+                        tabIndex={table.onRowClick ? 0 : undefined}
+                        onKeyDown={
+                          table.onRowClick
+                            ? (event) => {
+                                if (isInteractiveRowTarget(event.target)) {
+                                  return;
+                                }
+                                if (
+                                  event.key === "Enter" ||
+                                  event.key === " "
+                                ) {
+                                  event.preventDefault();
+                                  activateRow(item);
+                                }
+                              }
+                            : undefined
+                        }
+                      >
+                        {hasRowSelection && (
+                          <TableCell
+                            className="pl-0 pr-2"
+                            style={{
+                              width: selectionColumnWidth,
+                              minWidth: selectionColumnWidth,
+                              maxWidth: selectionColumnWidth,
+                            }}
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            <div className="flex items-center justify-center">
+                              <Checkbox
+                                checked={selectedIds.includes(
+                                  table.getRowId(item),
+                                )}
+                                onCheckedChange={(checked) =>
+                                  handleSelectRow(
+                                    table.getRowId(item),
+                                    Boolean(checked),
+                                  )
+                                }
+                                aria-label="Select row"
+                              />
+                            </div>
+                          </TableCell>
+                        )}
+                        {orderedVisibleColumns.map((column) => (
+                          <TableCell
+                            key={column.id}
+                            data-editable-cell={
+                              resolvedFeatures.enableInlineEditing &&
+                              column.editable &&
+                              column.editValue
+                                ? "true"
+                                : undefined
+                            }
+                            style={
+                              columnWidths[column.id] ||
+                              column.width ||
+                              getPinnedStyle(column.id)
+                                ? ({
+                                    width:
+                                      columnWidths[column.id] ?? column.width,
+                                    minWidth:
+                                      columnWidths[column.id] ?? undefined,
+                                    maxWidth:
+                                      column.width && !columnWidths[column.id]
+                                        ? column.width
+                                        : undefined,
+                                    ...getPinnedStyle(column.id),
+                                  } as React.CSSProperties)
+                                : undefined
+                            }
+                            className={cn(
+                              "group/cell relative align-middle",
+                              resolvedFeatures.enableInlineEditing &&
+                                column.editable &&
+                                column.editValue
+                                ? "cursor-text hover:bg-muted/50 transition-colors focus-within:bg-muted/40"
+                                : "",
+                            )}
+                            onClick={(event) => {
+                              if (
+                                !(
+                                  resolvedFeatures.enableInlineEditing &&
+                                  column.editable &&
+                                  column.editValue
+                                )
+                              ) {
+                                return;
+                              }
                               if (isInteractiveRowTarget(event.target)) {
                                 return;
                               }
-                              if (event.key === "Enter" || event.key === " ") {
-                                event.preventDefault();
-                                activateRow(item);
-                              }
-                            }
-                          : undefined
-                      }
-                    >
-                      {hasRowSelection && (
-                        <TableCell
-                          className="pl-0 pr-2"
-                          style={{
-                            width: selectionColumnWidth,
-                            minWidth: selectionColumnWidth,
-                            maxWidth: selectionColumnWidth,
-                          }}
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          <div className="flex items-center justify-center">
-                            <Checkbox
-                              checked={selectedIds.includes(
-                                table.getRowId(item),
-                              )}
-                              onCheckedChange={(checked) =>
-                                handleSelectRow(
-                                  table.getRowId(item),
-                                  Boolean(checked),
-                                )
-                              }
-                              aria-label="Select row"
-                            />
-                          </div>
-                        </TableCell>
-                      )}
-                      {orderedVisibleColumns.map((column) => (
-                        <TableCell
-                          key={column.id}
-                          data-editable-cell={
+                              event.stopPropagation();
+                              startInlineEdit(item, column);
+                            }}
+                          >
+                            {editingCell?.rowId === table.getRowId(item) &&
+                            editingCell.columnId === column.id &&
                             resolvedFeatures.enableInlineEditing &&
-                            column.editable &&
-                            column.editValue
-                              ? "true"
-                              : undefined
-                          }
-                          style={
-                            columnWidths[column.id] ||
-                            column.width ||
-                            getPinnedStyle(column.id)
-                              ? ({
-                                  width:
-                                    columnWidths[column.id] ?? column.width,
-                                  minWidth:
-                                    columnWidths[column.id] ?? undefined,
-                                  maxWidth:
-                                    column.width && !columnWidths[column.id]
-                                      ? column.width
-                                      : undefined,
-                                  ...getPinnedStyle(column.id),
-                                } as React.CSSProperties)
-                              : undefined
-                          }
-                          className={cn(
-                            "group/cell relative align-middle",
-                            resolvedFeatures.enableInlineEditing &&
-                              column.editable &&
-                              column.editValue
-                              ? "cursor-text hover:bg-muted/50 transition-colors focus-within:bg-muted/40"
-                              : "",
-                          )}
-                          onClick={(event) => {
-                            if (
-                              !(
-                                resolvedFeatures.enableInlineEditing &&
-                                column.editable &&
-                                column.editValue
-                              )
-                            ) {
-                              return;
-                            }
-                            if (isInteractiveRowTarget(event.target)) {
-                              return;
-                            }
-                            event.stopPropagation();
-                            startInlineEdit(item, column);
-                          }}
-                        >
-                          {editingCell?.rowId === table.getRowId(item) &&
-                          editingCell.columnId === column.id &&
-                          resolvedFeatures.enableInlineEditing &&
-                          column.editable &&
-                          column.editValue ? (
-                            column.renderEditor ? (
-                              column.renderEditor({
-                                item,
-                                value: editingValue,
-                                onChange: setEditingValue,
-                                onCommit: (nextValue) =>
-                                  void commitInlineEdit(
-                                    item,
-                                    column,
-                                    table.getRowId(item),
-                                    nextValue ?? editingValue,
-                                  ),
-                                onCancel: () => {
-                                  setEditingCell(null);
-                                  setEditingValue("");
-                                },
-                              })
-                            ) : (
-                              <Input
-                                type={column.editInputType}
-                                variant="inline"
-                                className="h-8 w-full px-0 text-sm"
-                                value={editingValue}
-                                autoFocus
-                                disabled={
-                                  savingCell?.rowId === table.getRowId(item) &&
-                                  savingCell.columnId === column.id
-                                }
-                                onChange={(event) =>
-                                  setEditingValue(event.target.value)
-                                }
-                                onClick={(event) => event.stopPropagation()}
-                                onBlur={() =>
-                                  commitInlineEdit(
-                                    item,
-                                    column,
-                                    table.getRowId(item),
-                                    editingValue,
-                                  )
-                                }
-                                onKeyDown={(event) => {
-                                  if (event.key === "Enter") {
-                                    event.preventDefault();
-                                    void commitInlineEdit(
-                                      item,
-                                      column,
-                                      table.getRowId(item),
-                                      editingValue,
-                                    );
-                                  }
-                                  if (event.key === "Escape") {
-                                    event.preventDefault();
-                                    setEditingCell(null);
-                                    setEditingValue("");
-                                  }
-                                  if (event.key === "Tab") {
-                                    void commitInlineEdit(
-                                      item,
-                                      column,
-                                      table.getRowId(item),
-                                      editingValue,
-                                    );
-                                  }
-                                }}
-                              />
-                            )
-                          ) : resolvedFeatures.enableInlineEditing &&
                             column.editable &&
                             column.editValue ? (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              className="flex h-auto min-h-8 w-full min-w-0 items-center justify-between gap-2 px-0 py-0 text-left font-normal hover:bg-transparent focus-visible:ring-1 focus-visible:ring-ring"
-                              data-row-interactive="true"
-                              aria-label={`Edit ${column.label}`}
-                              title={`Edit ${column.label}`}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                startInlineEdit(item, column);
-                              }}
+                              column.renderEditor ? (
+                                column.renderEditor({
+                                  item,
+                                  value: editingValue,
+                                  onChange: setEditingValue,
+                                  onCommit: (nextValue) =>
+                                    void commitInlineEdit(
+                                      item,
+                                      column,
+                                      table.getRowId(item),
+                                      nextValue ?? editingValue,
+                                    ),
+                                  onCancel: () => {
+                                    setEditingCell(null);
+                                    setEditingValue("");
+                                  },
+                                })
+                              ) : (
+                                <Input
+                                  type={column.editInputType}
+                                  variant="inline"
+                                  className="h-8 w-full px-0 text-sm"
+                                  value={editingValue}
+                                  autoFocus
+                                  disabled={
+                                    savingCell?.rowId ===
+                                      table.getRowId(item) &&
+                                    savingCell.columnId === column.id
+                                  }
+                                  onChange={(event) =>
+                                    setEditingValue(event.target.value)
+                                  }
+                                  onClick={(event) => event.stopPropagation()}
+                                  onBlur={() =>
+                                    commitInlineEdit(
+                                      item,
+                                      column,
+                                      table.getRowId(item),
+                                      editingValue,
+                                    )
+                                  }
+                                  onKeyDown={(event) => {
+                                    if (event.key === "Enter") {
+                                      event.preventDefault();
+                                      void commitInlineEdit(
+                                        item,
+                                        column,
+                                        table.getRowId(item),
+                                        editingValue,
+                                      );
+                                    }
+                                    if (event.key === "Escape") {
+                                      event.preventDefault();
+                                      setEditingCell(null);
+                                      setEditingValue("");
+                                    }
+                                    if (event.key === "Tab") {
+                                      void commitInlineEdit(
+                                        item,
+                                        column,
+                                        table.getRowId(item),
+                                        editingValue,
+                                      );
+                                    }
+                                  }}
+                                />
+                              )
+                            ) : resolvedFeatures.enableInlineEditing &&
+                              column.editable &&
+                              column.editValue ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                className="flex h-auto min-h-8 w-full min-w-0 items-center justify-between gap-2 px-0 py-0 text-left font-normal hover:bg-transparent focus-visible:ring-1 focus-visible:ring-ring"
+                                data-row-interactive="true"
+                                aria-label={`Edit ${column.label}`}
+                                title={`Edit ${column.label}`}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  startInlineEdit(item, column);
+                                }}
+                              >
+                                <span className="min-w-0 flex-1 truncate">
+                                  {column.render(item)}
+                                </span>
+                                <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50 opacity-0 transition-opacity group-hover/cell:opacity-100 group-focus-within/cell:opacity-100" />
+                              </Button>
+                            ) : (
+                              column.render(item)
+                            )}
+                          </TableCell>
+                        ))}
+                        {hasRowActions && (
+                          <TableCell
+                            className={cn("pl-2", sidePanel ? "pr-4" : "pr-2")}
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            {table.rowActions ? (
+                              table.rowActions(item)
+                            ) : table.onDelete || table.onEdit ? (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    aria-label="Row actions"
+                                  >
+                                    <MoreHorizontal />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  {table.onEdit && (
+                                    <DropdownMenuItem
+                                      onClick={() => table.onEdit!(item)}
+                                    >
+                                      Edit
+                                    </DropdownMenuItem>
+                                  )}
+                                  {table.onEdit && table.onDelete && (
+                                    <DropdownMenuSeparator />
+                                  )}
+                                  {table.onDelete && (
+                                    <DropdownMenuItem
+                                      className="text-destructive"
+                                      onClick={() => handleDeleteIntent(item)}
+                                    >
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            ) : null}
+                          </TableCell>
+                        )}
+                      </TableRow>
+                      {!resolvedFeatures.enableVirtualization &&
+                        table.renderExpandedRow?.(
+                          item,
+                          orderedVisibleColumns.length +
+                            (hasRowSelection ? 1 : 0) +
+                            (hasRowActions ? 1 : 0),
+                          {
+                            columns: orderedVisibleColumns.map((c) => ({
+                              id: c.id,
+                              width: columnWidths[c.id] ?? c.width,
+                            })),
+                            hasSelection: hasRowSelection,
+                            hasActions: hasRowActions,
+                          },
+                        )}
+                    </React.Fragment>
+                  ))}
+                </TableBody>
+                {footerTotals && (
+                  <TableFooter>
+                    <TableRow className={cn("font-medium", "bg-transparent")}>
+                      {hasRowSelection && <TableCell />}
+                      {orderedVisibleColumns.map((column, index) => {
+                        const width = columnWidths[column.id];
+                        const columnStyle = width
+                          ? ({
+                              width,
+                              minWidth: width,
+                              ...getPinnedStyle(column.id),
+                            } as React.CSSProperties)
+                          : undefined;
+                        const value = footerTotals.values[column.id];
+                        if (index === 0 && !value) {
+                          return (
+                            <TableCell
+                              key={column.id}
+                              className="font-semibold"
+                              style={columnStyle}
                             >
-                              <span className="min-w-0 flex-1 truncate">
-                                {column.render(item)}
-                              </span>
-                              <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50 opacity-0 transition-opacity group-hover/cell:opacity-100 group-focus-within/cell:opacity-100" />
-                            </Button>
-                          ) : (
-                            column.render(item)
-                          )}
-                        </TableCell>
-                      ))}
-                      {hasRowActions && (
-                        <TableCell
-                          className={cn("pl-2", sidePanel ? "pr-4" : "pr-2")}
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          {table.rowActions ? (
-                            table.rowActions(item)
-                          ) : table.onDelete || table.onEdit ? (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  aria-label="Row actions"
-                                >
-                                  <MoreHorizontal />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                {table.onEdit && (
-                                  <DropdownMenuItem
-                                    onClick={() => table.onEdit!(item)}
-                                  >
-                                    Edit
-                                  </DropdownMenuItem>
-                                )}
-                                {table.onEdit && table.onDelete && (
-                                  <DropdownMenuSeparator />
-                                )}
-                                {table.onDelete && (
-                                  <DropdownMenuItem
-                                    className="text-destructive"
-                                    onClick={() => handleDeleteIntent(item)}
-                                  >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete
-                                  </DropdownMenuItem>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          ) : null}
-                        </TableCell>
-                      )}
-                    </TableRow>
-                    {!resolvedFeatures.enableVirtualization &&
-                      table.renderExpandedRow?.(
-                        item,
-                        orderedVisibleColumns.length +
-                          (hasRowSelection ? 1 : 0) +
-                          (hasRowActions ? 1 : 0),
-                        {
-                          columns: orderedVisibleColumns.map((c) => ({
-                            id: c.id,
-                            width: columnWidths[c.id] ?? c.width,
-                          })),
-                          hasSelection: hasRowSelection,
-                          hasActions: hasRowActions,
-                        },
-                      )}
-                  </React.Fragment>
-                ))}
-              </TableBody>
-              {footerTotals && (
-                <TableFooter>
-                  <TableRow className={cn("font-medium", "bg-transparent")}>
-                    {hasRowSelection && <TableCell />}
-                    {orderedVisibleColumns.map((column, index) => {
-                      const width = columnWidths[column.id];
-                      const columnStyle = width
-                        ? ({
-                            width,
-                            minWidth: width,
-                            ...getPinnedStyle(column.id),
-                          } as React.CSSProperties)
-                        : undefined;
-                      const value = footerTotals.values[column.id];
-                      if (index === 0 && !value) {
+                              {footerTotals.label ?? "Totals"}
+                            </TableCell>
+                          );
+                        }
                         return (
                           <TableCell
                             key={column.id}
                             className="font-semibold"
                             style={columnStyle}
                           >
-                            {footerTotals.label ?? "Totals"}
+                            {value ?? null}
                           </TableCell>
                         );
-                      }
-                      return (
-                        <TableCell
-                          key={column.id}
-                          className="font-semibold"
-                          style={columnStyle}
-                        >
-                          {value ?? null}
-                        </TableCell>
-                      );
-                    })}
-                    {hasRowActions && <TableCell />}
-                  </TableRow>
-                </TableFooter>
-              )}
-            </Table>
+                      })}
+                      {hasRowActions && <TableCell />}
+                    </TableRow>
+                  </TableFooter>
+                )}
+              </Table>
+            </DndContext>
           </div>
         </div>
       )}
@@ -2883,9 +2904,7 @@ export function UnifiedTablePage<T>({
               className={cn(
                 "relative grid grid-cols-1",
                 isFullBleedTable &&
-                  (sidePanel
-                    ? "mx-0"
-                    : "-mx-1 sm:-mx-6 lg:-mx-8"),
+                  (sidePanel ? "mx-0" : "-mx-1 sm:-mx-6 lg:-mx-8"),
                 !panelMounted &&
                   isSidePanelOpen &&
                   "lg:grid-cols-[minmax(0,1fr)_35rem]",
