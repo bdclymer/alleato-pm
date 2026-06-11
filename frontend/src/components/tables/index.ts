@@ -27,6 +27,3 @@ export type {
 // Note: SimpleTablePage is a Server Component and should be imported directly:
 // import { SimpleTablePage } from '@/components/tables/simple-table-page'
 // Do NOT export it from this barrel file as it breaks client component imports.
-
-// Specialized data tables
-export { EmployeesDataTable } from "./employees-data-table";
