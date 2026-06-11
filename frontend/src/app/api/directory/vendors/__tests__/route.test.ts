@@ -66,7 +66,14 @@ describe("GET /api/directory/vendors", () => {
     const body = await response.json();
 
     expect(supabase.from).toHaveBeenCalledWith("companies");
-    expect(query.select).toHaveBeenCalledWith("*", { count: "exact" });
+    expect(query.select).toHaveBeenCalledWith(
+      expect.stringContaining("id, name, legal_name"),
+      { count: "exact" },
+    );
+    expect(query.select).toHaveBeenCalledWith(
+      expect.not.stringContaining("*"),
+      { count: "exact" },
+    );
     expect(query.eq).toHaveBeenCalledWith("is_vendor", true);
     expect(query.eq).toHaveBeenCalledWith("status", "active");
     expect(query.eq).toHaveBeenCalledWith("vendor_class", "Subcontractor");

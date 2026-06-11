@@ -61,6 +61,7 @@ export const companyColumns: ColumnConfig[] = [
   { id: "company_name", label: "Name", alwaysVisible: true },
   { id: "company_type", label: "Type", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
+  { id: "data_quality", label: "Data Quality", defaultVisible: true },
   { id: "contact_count", label: "Contacts", defaultVisible: true },
   { id: "project_count", label: "Projects", defaultVisible: true },
   { id: "business_phone", label: "Phone", defaultVisible: true },
@@ -120,18 +121,6 @@ export const companyFilters = [
     label: "Status",
     type: "select" as const,
     options: COMPANY_STATUS_FILTER_OPTIONS,
-  },
-  {
-    id: "contact_count_min",
-    label: "Contacts",
-    type: "number" as const,
-    placeholder: "Minimum",
-  },
-  {
-    id: "project_count_min",
-    label: "Projects",
-    type: "number" as const,
-    placeholder: "Minimum",
   },
   {
     id: "business_phone",

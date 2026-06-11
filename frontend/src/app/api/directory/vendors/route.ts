@@ -38,6 +38,30 @@ const SORTABLE_COLUMNS = new Set([
   "updated_at",
 ]);
 
+const VENDOR_SELECT_COLUMNS = [
+  "id",
+  "name",
+  "legal_name",
+  "contact_name",
+  "contact_email",
+  "contact_phone",
+  "address",
+  "city",
+  "state",
+  "zip_code",
+  "status",
+  "vendor_class",
+  "payment_method",
+  "terms",
+  "is_1099_vendor",
+  "acumatica_vendor_id",
+  "acumatica_sync_at",
+  "tax_id",
+  "notes",
+  "created_at",
+  "updated_at",
+].join(", ");
+
 function parsePositiveInteger(value: string | null, fallback: number): number {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
@@ -88,7 +112,7 @@ export const GET = withApiGuardrails(
 
     let query = supabase
       .from("companies")
-      .select("*", { count: "exact" })
+      .select(VENDOR_SELECT_COLUMNS, { count: "exact" })
       .eq("is_vendor", true);
 
     if (search) {

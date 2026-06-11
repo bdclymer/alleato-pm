@@ -23,6 +23,7 @@ import {
   CellBadge,
   CellText,
   CellLink,
+  DataQualityCell,
   TableDateValue,
   TablePageActions,
   InlineSelectEditor,
@@ -39,6 +40,10 @@ import {
   type CompanyFilterState,
   type CompanyRow,
 } from "@/features/companies/directory-companies-table-definition";
+import {
+  formatDataQualitySummary,
+  getCompanyDataQualityIssues,
+} from "@/features/directory/data-quality";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api-client";
 
@@ -115,6 +120,14 @@ function buildCompanyTableColumns(
           onCommit={onCommit}
         />
       ),
+    },
+    {
+      ...col("data_quality"),
+      sortable: false,
+      render: (item) => (
+        <DataQualityCell issues={getCompanyDataQualityIssues(item)} />
+      ),
+      csvValue: (item) => formatDataQualitySummary(getCompanyDataQualityIssues(item)),
     },
     {
       ...col("contact_count"),
@@ -483,22 +496,6 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
     handleFilterChange(mergedFilters);
   };
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      tableState.setSelectedIds(companies.map((company) => company.id));
-      return;
-    }
-    tableState.setSelectedIds([]);
-  };
-
-  const handleSelectRow = (id: string, checked: boolean) => {
-    if (checked) {
-      tableState.setSelectedIds((prev) => [...prev, id]);
-      return;
-    }
-    tableState.setSelectedIds((prev) => prev.filter((itemId) => itemId !== id));
-  };
-
   const handleTableKeyDown = (
     event: React.KeyboardEvent<HTMLDivElement>,
     visibleItems: CompanyRow[],
@@ -573,7 +570,6 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
       toolbar={{
         totalItems,
         filteredItems: totalItems,
-        selectedCount: tableState.selectedIds.length,
         searchValue: tableState.searchInput,
         onSearchChange: tableState.setSearchInput,
         searchPlaceholder: definition.searchPlaceholder,
@@ -632,11 +628,6 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
         sortDirection: tableState.sortDirection,
         onSortChange: handleSortChange,
       }}
-      selection={{
-        selectedIds: tableState.selectedIds,
-        onSelectAll: handleSelectAll,
-        onSelectRow: handleSelectRow,
-      }}
       emptyState={{
         title: isClientsRoute ? "No clients found" : "No companies found",
         description: isClientsRoute
@@ -655,6 +646,7 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
       features={{
         enableExport: false,
         enableBulkDelete: false,
+        enableRowSelection: false,
         enableInlineEditing: true,
       }}
       layout={{

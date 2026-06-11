@@ -61,3 +61,4 @@ export {
   InlineSelectEditor,
   type InlineSelectOption,
 } from "./inline-select-editor";
+export { DataQualityCell } from "./data-quality-cell";

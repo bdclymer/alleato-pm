@@ -21,6 +21,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getDirectoryTabs } from "@/config/directory-tabs";
 import type { Database } from "@/types/database.types";
 import {
+  DataQualityCell,
   UnifiedTablePage,
   useUnifiedTableState,
   type FilterValue,
@@ -35,6 +36,10 @@ import {
 } from "@/components/ui/tooltip";
 import { StatusBadge } from "@/components/ds";
 import { apiFetch } from "@/lib/api-client";
+import {
+  formatDataQualitySummary,
+  getVendorDataQualityIssues,
+} from "@/features/directory/data-quality";
 
 type Vendor = Database["public"]["Tables"]["companies"]["Row"];
 
@@ -55,6 +60,7 @@ const vendorColumns: ColumnConfig[] = [
   { id: "city", label: "City", defaultVisible: true },
   { id: "state", label: "State", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
+  { id: "data_quality", label: "Data Quality", defaultVisible: true },
   { id: "vendor_class", label: "Class", defaultVisible: true },
   { id: "payment_method", label: "Payment Method", defaultVisible: false },
   { id: "terms", label: "Terms", defaultVisible: false },
@@ -212,33 +218,41 @@ function buildVendorTableColumns(): TableColumn<Vendor>[] {
     },
     {
       ...vendorColumns[8],
+      sortable: false,
+      render: (item) => (
+        <DataQualityCell issues={getVendorDataQualityIssues(item)} />
+      ),
+      csvValue: (item) => formatDataQualitySummary(getVendorDataQualityIssues(item)),
+    },
+    {
+      ...vendorColumns[9],
       render: (item) => <span>{item.vendor_class || "-"}</span>,
       sortValue: (item) => item.vendor_class || "",
     },
     {
-      ...vendorColumns[9],
+      ...vendorColumns[10],
       render: (item) => <span>{item.payment_method || "-"}</span>,
       sortValue: (item) => item.payment_method || "",
     },
     {
-      ...vendorColumns[10],
+      ...vendorColumns[11],
       render: (item) => <span>{item.terms || "-"}</span>,
       sortValue: (item) => item.terms || "",
     },
     {
-      ...vendorColumns[11],
+      ...vendorColumns[12],
       render: (item) => <span>{item.is_1099_vendor ? "Yes" : "No"}</span>,
       sortValue: (item) => (item.is_1099_vendor ? "Yes" : "No"),
     },
     {
-      ...vendorColumns[12],
+      ...vendorColumns[13],
       render: (item) => (
         <span className="font-mono text-xs">{item.acumatica_vendor_id || "-"}</span>
       ),
       sortValue: (item) => item.acumatica_vendor_id || "",
     },
     {
-      ...vendorColumns[13],
+      ...vendorColumns[14],
       render: (item) => <span>{formatDate(item.created_at)}</span>,
       sortValue: (item) => (item.created_at ? new Date(item.created_at).getTime() : 0),
     },
@@ -397,7 +411,6 @@ export default function DirectoryVendorsPage(): ReactElement {
   const pathname = usePathname()! ?? "";
   const router = useRouter();
   const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
-  const initialSearch = searchParams.get("search") ?? "";
 
   const initialFilters: VendorFilterState = {
     status: searchParams.get("status") || undefined,
@@ -424,8 +437,6 @@ export default function DirectoryVendorsPage(): ReactElement {
   });
 
   const [vendors, setVendors] = React.useState<Vendor[]>([]);
-  const [searchInput, setSearchInput] = React.useState(initialSearch);
-  const [debouncedSearch, setDebouncedSearch] = React.useState(initialSearch);
   const [pagination, setPagination] = React.useState({
     page: 1,
     per_page: 50,
@@ -440,13 +451,6 @@ export default function DirectoryVendorsPage(): ReactElement {
   const latestRequestIdRef = React.useRef(0);
   const abortControllerRef = React.useRef<AbortController | null>(null);
   const activeFilters = tableState.activeFilters as VendorFilterState;
-
-  React.useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      setDebouncedSearch(searchInput);
-    }, 250);
-    return () => window.clearTimeout(timeout);
-  }, [searchInput]);
 
   const fetchVendors = React.useCallback(async () => {
     const requestId = ++latestRequestIdRef.current;
@@ -468,8 +472,8 @@ export default function DirectoryVendorsPage(): ReactElement {
         sort_dir: tableState.sortDirection,
       });
 
-      if (debouncedSearch.trim()) {
-        params.set("search", debouncedSearch.trim());
+      if (tableState.debouncedSearch.trim()) {
+        params.set("search", tableState.debouncedSearch.trim());
       }
 
       if (typeof activeFilters.status === "string" && activeFilters.status) {
@@ -522,7 +526,7 @@ export default function DirectoryVendorsPage(): ReactElement {
     activeFilters.status,
     activeFilters.payment_method,
     activeFilters.vendor_class,
-    debouncedSearch,
+    tableState.debouncedSearch,
     tableState.page,
     tableState.perPage,
     tableState.sortBy,
@@ -624,7 +628,7 @@ export default function DirectoryVendorsPage(): ReactElement {
     selectedVendorId ? vendors.find((vendor) => vendor.id === selectedVendorId) ?? null : null;
   const activeVendorId = selectedVendor?.id ?? null;
   const isFiltered =
-    Boolean(searchInput) ||
+    Boolean(tableState.searchInput) ||
     Boolean(activeFilters.status) ||
     Boolean(activeFilters.vendor_class) ||
     Boolean(activeFilters.payment_method);
@@ -688,8 +692,8 @@ export default function DirectoryVendorsPage(): ReactElement {
         totalItems: pagination.total,
         filteredItems: pagination.total,
         selectedCount: tableState.selectedIds.length,
-        searchValue: searchInput,
-        onSearchChange: setSearchInput,
+        searchValue: tableState.searchInput,
+        onSearchChange: tableState.setSearchInput,
         searchPlaceholder: "Search name, contact, email, city, Acumatica ID...",
         currentView: tableState.currentView,
         onViewChange: (view) => {
