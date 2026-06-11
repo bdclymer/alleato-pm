@@ -753,7 +753,9 @@ services:
         value: true
       - key: DATABASE_URL
         sync: false
-      - key: CORS_ORIGINS
+      - key: ADMIN_API_KEY
+        sync: false
+      - key: FRONTEND_CORS_ORIGINS
         value: https://alleato-procore.vercel.app,https://www.alleato-procore.vercel.app,https://alleato-backend-rbnj.onrender.com
     # Persistent disk for deep-agent artifacts. A disk pins the service to a
     # single instance and switches deploys to recreate (acceptable for this API).
