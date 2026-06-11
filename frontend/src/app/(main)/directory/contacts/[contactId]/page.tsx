@@ -1,18 +1,17 @@
 "use client";
-import { PageShell } from "@/components/layout";
+import { PageShell, SectionRuleHeading } from "@/components/layout";
 
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ds/text";
 import { EmptyState } from "@/components/ds";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Edit, Mail, Phone, Building, User, Shield } from "lucide-react";
+import { ArrowLeft, Edit } from "lucide-react";
 import type { Database } from "@/types/database.types";
 import { ContactFormDialog } from "@/components/domain/contacts/ContactFormDialog";
 
@@ -131,241 +130,185 @@ export default function ContactDetailsPage() {
     <PageShell
       variant="detail"
       title={fullName}
-      description={contact.email || "No email provided"}
       onBack={() => router.back()}
       actions={
         <Button
-          className="bg-primary hover:bg-primary/90"
           onClick={() => setIsEditDialogOpen(true)}
         >
-          <Edit />
-          Edit Contact
+          <Edit className="h-4 w-4" />
+          Edit
         </Button>
       }
     >
-        <div className="grid gap-6">
-          {/* Contact Information Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Contact Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <Text tone="muted" className="text-sm mb-1">Name</Text>
-                    <Text className="font-medium">{fullName}</Text>
-                  </div>
-
-                  {contact.email && (
-                    <div>
-                      <Text tone="muted" className="text-sm mb-1">Email</Text>
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        <a
-                          href={`mailto:${contact.email}`}
-                          className="text-blue-600 hover:underline"
-                        >
-                          {contact.email}
-                        </a>
-                      </div>
-                    </div>
-                  )}
-
-                  {(contact.phone_business || contact.phone_mobile) && (
-                    <div>
-                      <Text tone="muted" className="text-sm mb-1">Phone</Text>
-                      <div className="space-y-1">
-                        {contact.phone_business && (
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-muted-foreground" />
-                            <Text>{contact.phone_business} (Business)</Text>
-                          </div>
-                        )}
-                        {contact.phone_mobile && (
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-muted-foreground" />
-                            <Text>{contact.phone_mobile} (Mobile)</Text>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-4">
-                  {contact.company && (
-                    <div>
-                      <Text tone="muted" className="text-sm mb-1">Company</Text>
-                      <div className="flex items-center gap-2">
-                        <Building className="h-4 w-4 text-muted-foreground" />
-                        <Link
-                          href={`/directory/companies/${contact.company.id}`}
-                          className="font-medium text-blue-600 hover:underline"
-                        >
-                          {contact.company.name}
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-
-                  {contact.person_type && (
-                    <div>
-                      <Text tone="muted" className="text-sm mb-1">Type</Text>
-                      <Badge variant="secondary">{contact.person_type}</Badge>
-                    </div>
-                  )}
-
-                  {contact.status && (
-                    <div>
-                      <Text tone="muted" className="text-sm mb-1">Status</Text>
-                      <Badge variant={contact.status === "active" ? "default" : "secondary"}>
-                        {contact.status}
-                      </Badge>
-                    </div>
-                  )}
-                </div>
+      <div className="space-y-8">
+        {/* Contact Information */}
+        <section>
+          <div className="space-y-6">
+            <div className="grid md:grid-cols-3 gap-8">
+              <div>
+                <Text tone="muted" className="text-xs uppercase tracking-wide mb-2">Email</Text>
+                {contact.email ? (
+                  <a href={`mailto:${contact.email}`} className="text-primary hover:underline break-all">
+                    {contact.email}
+                  </a>
+                ) : (
+                  <Text tone="muted">—</Text>
+                )}
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Project Permissions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                Project Permissions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="active" className="w-full">
-                <TabsList variant="line">
-                  <TabsTrigger value="active">Active Projects</TabsTrigger>
-                  <TabsTrigger value="all">All Projects</TabsTrigger>
-                </TabsList>
+              <div>
+                <Text tone="muted" className="text-xs uppercase tracking-wide mb-2">Phone</Text>
+                {contact.phone_business || contact.phone_mobile ? (
+                  <div className="space-y-1">
+                    {contact.phone_business && <div>{contact.phone_business}</div>}
+                    {contact.phone_mobile && contact.phone_business && <div className="text-sm text-muted-foreground">{contact.phone_mobile}</div>}
+                    {contact.phone_mobile && !contact.phone_business && <div>{contact.phone_mobile}</div>}
+                  </div>
+                ) : (
+                  <Text tone="muted">—</Text>
+                )}
+              </div>
 
-                <TabsContent value="active" className="mt-4">
-                  {contact.memberships && contact.memberships.length > 0 ? (
-                    <div className="space-y-4">
-                      {contact.memberships
-                        .filter(m => m.status === "active")
-                        .map((membership) => (
-                          <div
-                            key={membership.id}
-                            className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                          >
-                            <div className="flex justify-between items-start">
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                  <Text className="font-medium">
-                                    {membership.project?.name || "Unknown Project"}
-                                  </Text>
-                                  <Badge variant="outline" className="text-xs">
-                                    {membership.role || "Member"}
-                                  </Badge>
-                                </div>
+              <div>
+                <Text tone="muted" className="text-xs uppercase tracking-wide mb-2">Company</Text>
+                {contact.company ? (
+                  <Link href={`/directory/companies/${contact.company.id}`} className="text-primary hover:underline">
+                    {contact.company.name}
+                  </Link>
+                ) : (
+                  <Text tone="muted">—</Text>
+                )}
+              </div>
+            </div>
 
-                                {membership.permission_template && (
-                                  <div>
-                                    <Text tone="muted" className="text-sm">
-                                      Permission Template: {membership.permission_template.name}
-                                    </Text>
-                                    {membership.permission_template.rules_json && (
-                                      <div className="mt-2 flex flex-wrap gap-2">
-                                        {Object.entries(membership.permission_template.rules_json as Record<string, string[]>).map(
-                                          ([module, permissions]) => (
-                                            <Badge key={module} variant="secondary" className="text-xs">
-                                              {module}: {Array.isArray(permissions) ? permissions.join(", ") : ""}
-                                            </Badge>
-                                          )
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
+            {(contact.job_title || contact.person_type) && (
+              <div className="flex flex-wrap gap-4 pt-2 border-t border-border/50">
+                {contact.job_title && (
+                  <div>
+                    <Text tone="muted" className="text-xs mb-1">Job Title</Text>
+                    <Text className="text-sm">{contact.job_title}</Text>
+                  </div>
+                )}
+                {contact.person_type && (
+                  <div>
+                    <Text tone="muted" className="text-xs mb-1">Type</Text>
+                    <Badge variant="secondary" className="text-xs">{contact.person_type}</Badge>
+                  </div>
+                )}
+                {contact.status && (
+                  <div>
+                    <Text tone="muted" className="text-xs mb-1">Status</Text>
+                    <Badge variant={contact.status === "active" ? "default" : "secondary"} className="text-xs">
+                      {contact.status}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
 
-                              <Badge variant={membership.status === "active" ? "default" : "secondary"}>
-                                {membership.status}
-                              </Badge>
-                            </div>
-                          </div>
-                        ))}
-                      {contact.memberships.filter(m => m.status === "active").length === 0 && (
-                        <EmptyState
-                          title="No active project memberships"
-                          description="This contact has no active memberships on any project."
-                        />
-                      )}
-                    </div>
-                  ) : (
-                    <EmptyState
-                      title="No project memberships found"
-                      description="This contact has not been added to any projects."
-                    />
+        {/* Project Access */}
+        {contact.memberships && contact.memberships.length > 0 && (
+          <section>
+            <SectionRuleHeading>Project Access</SectionRuleHeading>
+            <Tabs defaultValue="active" className="w-full">
+              <TabsList variant="line" className="mb-6">
+                <TabsTrigger value="active">
+                  Active
+                  {contact.memberships.filter(m => m.status === "active").length > 0 && (
+                    <span className="ml-2 text-xs bg-accent px-2 py-1 rounded">
+                      {contact.memberships.filter(m => m.status === "active").length}
+                    </span>
                   )}
-                </TabsContent>
+                </TabsTrigger>
+                <TabsTrigger value="all">
+                  All
+                  <span className="ml-2 text-xs bg-accent px-2 py-1 rounded">
+                    {contact.memberships.length}
+                  </span>
+                </TabsTrigger>
+              </TabsList>
 
-                <TabsContent value="all" className="mt-4">
-                  {contact.memberships && contact.memberships.length > 0 ? (
-                    <div className="space-y-4">
-                      {contact.memberships.map((membership) => (
+              <TabsContent value="active">
+                {contact.memberships.filter(m => m.status === "active").length > 0 ? (
+                  <div className="space-y-3">
+                    {contact.memberships
+                      .filter(m => m.status === "active")
+                      .map((membership) => (
                         <div
                           key={membership.id}
-                          className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                          className="p-4 bg-muted/30 rounded hover:bg-muted/50 transition-colors group"
                         >
-                          <div className="flex justify-between items-start">
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-2">
-                                <Text className="font-medium">
+                          <div className="flex justify-between items-start gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Text className="font-medium truncate">
                                   {membership.project?.name || "Unknown Project"}
                                 </Text>
-                                <Badge variant="outline" className="text-xs">
-                                  {membership.role || "Member"}
-                                </Badge>
+                                {membership.role && (
+                                  <Badge variant="outline" className="text-xs flex-shrink-0">
+                                    {membership.role}
+                                  </Badge>
+                                )}
                               </div>
-
                               {membership.permission_template && (
-                                <div>
-                                  <Text tone="muted" className="text-sm">
-                                    Permission Template: {membership.permission_template.name}
-                                  </Text>
-                                  {membership.permission_template.rules_json && (
-                                    <div className="mt-2 flex flex-wrap gap-2">
-                                      {Object.entries(membership.permission_template.rules_json as Record<string, string[]>).map(
-                                        ([module, permissions]) => (
-                                          <Badge key={module} variant="secondary" className="text-xs">
-                                            {module}: {Array.isArray(permissions) ? permissions.join(", ") : ""}
-                                          </Badge>
-                                        )
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
+                                <Text tone="muted" className="text-sm">
+                                  {membership.permission_template.name}
+                                </Text>
                               )}
                             </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  <EmptyState
+                    title="No active projects"
+                    description="This contact has no active memberships."
+                  />
+                )}
+              </TabsContent>
 
-                            <Badge variant={membership.status === "active" ? "default" : "secondary"}>
+              <TabsContent value="all">
+                <div className="space-y-3">
+                  {contact.memberships.map((membership) => (
+                    <div
+                      key={membership.id}
+                      className="p-4 bg-muted/30 rounded hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Text className="font-medium truncate">
+                              {membership.project?.name || "Unknown Project"}
+                            </Text>
+                            {membership.role && (
+                              <Badge variant="outline" className="text-xs flex-shrink-0">
+                                {membership.role}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {membership.permission_template && (
+                              <Text tone="muted" className="text-sm">
+                                {membership.permission_template.name}
+                              </Text>
+                            )}
+                            <Badge variant={membership.status === "active" ? "default" : "secondary"} className="text-xs">
                               {membership.status}
                             </Badge>
                           </div>
                         </div>
-                      ))}
+                      </div>
                     </div>
-                  ) : (
-                    <EmptyState
-                      title="No project memberships found"
-                      description="This contact has not been added to any projects."
-                    />
-                  )}
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-        </div>
+                  ))}
+                </div>
+              </TabsContent>
+            </Tabs>
+          </section>
+        )}
+      </div>
       <ContactFormDialog
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
