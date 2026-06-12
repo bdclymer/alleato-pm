@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { POST } from "../route";
+import { GET, POST } from "../route";
 
 process.env.NEXT_PUBLIC_SUPABASE_URL ??= "https://example.supabase.co";
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??= "test-anon-key";
@@ -164,6 +164,148 @@ describe("subcontractor invoices POST", () => {
         work_retainage_released: 500,
         materials_retainage_released: 100,
         retainage_released: 600,
+      }),
+    ]);
+  });
+});
+
+describe("subcontractor invoices GET", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("uses Acumatica commitment payments for paid amount and payment status", async () => {
+    const queues = new Map<string, MockQuery[]>([
+      [
+        "subcontractor_invoices",
+        [
+          createQuery({
+            data: [
+              {
+                id: 483,
+                project_id: 25125,
+                invoice_number: "003244",
+                status: "pending",
+                subcontract_id: "sub-1",
+                purchase_order_id: null,
+                billing_period_id: null,
+                period_start: null,
+                period_end: "2026-04-30",
+                subcontracts: {
+                  contract_number: "SC-1",
+                  title: "Roofing",
+                  contract_company_id: "company-1",
+                },
+                purchase_orders: null,
+                billing_periods: null,
+              },
+            ],
+            error: null,
+          }),
+        ],
+      ],
+      [
+        "subcontractor_invoice_line_items",
+        [
+          createQuery({
+            data: [
+              {
+                invoice_id: 483,
+                work_completed_period: 10000,
+                materials_stored: 0,
+                total_completed_stored: 10000,
+                retainage_amount: 1000,
+                materials_retainage_amount: 0,
+                net_amount_this_period: 9000,
+                scheduled_value: 10000,
+              },
+            ],
+            error: null,
+          }),
+        ],
+      ],
+      [
+        "commitment_payments",
+        [
+          createQuery({
+            data: [
+              {
+                subcontractor_invoice_id: 483,
+                amount: 7024.05,
+              },
+            ],
+            error: null,
+          }),
+        ],
+      ],
+      [
+        "subcontract_sov_items",
+        [
+          createQuery({
+            data: [
+              {
+                subcontract_id: "sub-1",
+                amount: 10000,
+              },
+            ],
+            error: null,
+          }),
+        ],
+      ],
+      [
+        "contract_change_orders",
+        [
+          createQuery({
+            data: [],
+            error: null,
+          }),
+        ],
+      ],
+      [
+        "companies",
+        [
+          createQuery({
+            data: [
+              {
+                id: "company-1",
+                name: "Bul-Tec Roofing",
+              },
+            ],
+            error: null,
+          }),
+        ],
+      ],
+    ]);
+
+    createClientMock.mockResolvedValue({
+      auth: {
+        getUser: jest.fn(async () => ({
+          data: { user: { id: "user-1", email: "pm@example.com" } },
+          error: null,
+        })),
+      },
+      from: jest.fn((table: string) => {
+        const queue = queues.get(table);
+        if (!queue?.length) throw new Error(`Unexpected table call: ${table}`);
+        return queue.shift();
+      }),
+    });
+
+    const request = new NextRequest(
+      "http://localhost/api/projects/25125/invoicing/subcontractor/invoices",
+    );
+
+    const response = await GET(request, { params: { projectId: "25125" } });
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.data).toEqual([
+      expect.objectContaining({
+        id: 483,
+        invoice_number: "003244",
+        paid_amount: 7024.05,
+        payment_status: "partially_paid",
+        contract_company_name: "Bul-Tec Roofing",
       }),
     ]);
   });

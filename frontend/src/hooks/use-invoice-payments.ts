@@ -22,7 +22,7 @@ export type PaymentMethod =
   | "other";
 
 export interface InvoicePayment {
-  id: number;
+  id: string;
   project_id: number;
   owner_invoice_id: number | null;
   subcontractor_invoice_id: number | null;

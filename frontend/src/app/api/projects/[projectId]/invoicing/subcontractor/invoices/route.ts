@@ -327,6 +327,34 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       }
     }
 
+    // Batch: Acumatica AP check payments projected onto subcontractor invoices.
+    const paymentsByInvoice = new Map<number, number>();
+    if (invoiceIds.length > 0) {
+      const { data: paymentRows, error: paymentsError } = await supabase
+        .from("commitment_payments")
+        .select("subcontractor_invoice_id, amount")
+        .in("subcontractor_invoice_id", invoiceIds);
+
+      if (paymentsError) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "projects/[projectId]/invoicing/subcontractor/invoices#GET",
+          message: "Failed to load Acumatica subcontractor payment records.",
+          details: paymentsError.message,
+          cause: paymentsError,
+        });
+      }
+
+      for (const payment of paymentRows ?? []) {
+        if (!payment.subcontractor_invoice_id) continue;
+        paymentsByInvoice.set(
+          payment.subcontractor_invoice_id,
+          (paymentsByInvoice.get(payment.subcontractor_invoice_id) ?? 0) +
+            (Number(payment.amount) || 0),
+        );
+      }
+    }
+
     // Collect contract ids (subcontract or PO) + company ids
     const subIds = new Set<string>();
     const poIds = new Set<string>();
@@ -445,8 +473,20 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       const contractCompanyId =
         sc?.contract_company_id ?? po?.contract_company_id ?? null;
 
-      // Paid amount: approved invoices counted as paid until payments table lands
-      const paidAmount = invoice.status === "paid" ? grossAmount - totalRetainage : 0;
+      const syncedPaidAmount = paymentsByInvoice.get(invoice.id as number) ?? 0;
+      // Legacy fallback for manually marked paid invoices that predate Acumatica payment projection.
+      const paidAmount =
+        syncedPaidAmount > 0
+          ? syncedPaidAmount
+          : invoice.status === "paid"
+            ? grossAmount - totalRetainage
+            : 0;
+      let paymentStatus: "unpaid" | "partially_paid" | "paid" = "unpaid";
+      if (netAmount > 0 && paidAmount >= netAmount) {
+        paymentStatus = "paid";
+      } else if (paidAmount > 0) {
+        paymentStatus = "partially_paid";
+      }
 
       return {
         ...invoiceData,
@@ -474,7 +514,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         total_contract_amount: totalContractAmount,
         percent_complete: percentComplete,
         erp_status: null as string | null,
-        payment_status: invoice.status === "paid" ? "paid" : "unpaid",
+        payment_status: paymentStatus,
       };
     });
 
