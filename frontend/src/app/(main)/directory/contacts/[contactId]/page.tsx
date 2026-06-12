@@ -105,8 +105,8 @@ function InlineTextField({ label, value, onSave, type = "text", placeholder, hre
 
   if (editing) {
     return (
-      <div className="py-2.5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-1.5">{label}</p>
+      <div className="flex items-center py-2 gap-4 border-b border-border/20">
+        <p className="w-32 shrink-0 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{label}</p>
         <Input
           autoFocus
           type={type}
@@ -118,7 +118,7 @@ function InlineTextField({ label, value, onSave, type = "text", placeholder, hre
             if (e.key === "Escape") { setEditing(false); setDraft(value ?? ""); }
           }}
           placeholder={placeholder}
-          className="h-7 text-sm"
+          className="flex-1 h-7 text-sm"
           disabled={saving}
         />
       </div>
@@ -126,16 +126,16 @@ function InlineTextField({ label, value, onSave, type = "text", placeholder, hre
   }
 
   return (
-    <div className="group flex items-start justify-between py-2.5 gap-3">
-      <div className="flex-1 min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-0.5">{label}</p>
+    <div className="group flex items-center py-2 gap-4 border-b border-border/20">
+      <p className="w-32 shrink-0 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{label}</p>
+      <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
         {value ? (
           href ? (
             <a
               href={href}
               target={href.startsWith("http") ? "_blank" : undefined}
               rel="noopener noreferrer"
-              className="text-sm text-primary hover:underline inline-flex items-center gap-1 truncate max-w-full"
+              className="text-sm text-primary hover:underline inline-flex items-center gap-1 truncate"
             >
               <span className="truncate">{value}</span>
               {href.startsWith("http") && <ExternalLink className="h-2.5 w-2.5 flex-shrink-0 opacity-60" />}
@@ -144,18 +144,18 @@ function InlineTextField({ label, value, onSave, type = "text", placeholder, hre
             <p className="text-sm text-foreground truncate">{value}</p>
           )
         ) : (
-          <p className="text-sm text-muted-foreground/40 italic">—</p>
+          <p className="text-sm text-muted-foreground/30">—</p>
         )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+          onClick={() => { setDraft(value ?? ""); setEditing(true); }}
+          aria-label={`Edit ${label}`}
+        >
+          <Pencil className="h-3 w-3" />
+        </Button>
       </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5"
-        onClick={() => { setDraft(value ?? ""); setEditing(true); }}
-        aria-label={`Edit ${label}`}
-      >
-        <Pencil className="h-3 w-3" />
-      </Button>
     </div>
   );
 }
@@ -189,48 +189,50 @@ function InlineTextareaField({ label, value, onSave, placeholder }: InlineTextar
 
   if (editing) {
     return (
-      <div className="py-2.5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-1.5">{label}</p>
-        <Textarea
-          autoFocus
-          value={draft}
-          onChange={e => setDraft(e.target.value)}
-          onKeyDown={e => { if (e.key === "Escape") { setEditing(false); setDraft(value ?? ""); } }}
-          placeholder={placeholder}
-          className="text-sm min-h-20 resize-none"
-          disabled={saving}
-        />
-        <div className="flex gap-2 mt-2">
-          <Button size="sm" onClick={commit} disabled={saving} className="h-7 text-xs px-3">
-            {saving ? "Saving…" : "Save"}
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setDraft(value ?? ""); }} className="h-7 text-xs">
-            Cancel
-          </Button>
+      <div className="flex items-start py-2 gap-4 border-b border-border/20">
+        <p className="w-32 shrink-0 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground pt-1.5">{label}</p>
+        <div className="flex-1">
+          <Textarea
+            autoFocus
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            onKeyDown={e => { if (e.key === "Escape") { setEditing(false); setDraft(value ?? ""); } }}
+            placeholder={placeholder}
+            className="text-sm min-h-20 resize-none"
+            disabled={saving}
+          />
+          <div className="flex gap-2 mt-2">
+            <Button size="sm" onClick={commit} disabled={saving} className="h-7 text-xs px-3">
+              {saving ? "Saving…" : "Save"}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setDraft(value ?? ""); }} className="h-7 text-xs">
+              Cancel
+            </Button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="group flex items-start justify-between py-2.5 gap-3">
-      <div className="flex-1 min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-0.5">{label}</p>
+    <div className="group flex items-center py-2 gap-4 border-b border-border/20">
+      <p className="w-32 shrink-0 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{label}</p>
+      <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
         {value ? (
           <p className="text-sm text-foreground whitespace-pre-wrap">{value}</p>
         ) : (
-          <p className="text-sm text-muted-foreground/40 italic">—</p>
+          <p className="text-sm text-muted-foreground/30">—</p>
         )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+          onClick={() => { setDraft(value ?? ""); setEditing(true); }}
+          aria-label={`Edit ${label}`}
+        >
+          <Pencil className="h-3 w-3" />
+        </Button>
       </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5"
-        onClick={() => { setDraft(value ?? ""); setEditing(true); }}
-        aria-label={`Edit ${label}`}
-      >
-        <Pencil className="h-3 w-3" />
-      </Button>
     </div>
   );
 }
@@ -264,8 +266,8 @@ function InlineSelectField({ label, value, onSave, options, placeholder }: Inlin
 
   if (editing) {
     return (
-      <div className="py-2.5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-1.5">{label}</p>
+      <div className="flex items-center py-2 gap-4 border-b border-border/20">
+        <p className="w-32 shrink-0 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{label}</p>
         <Select
           defaultOpen
           value={value ?? ""}
@@ -273,7 +275,7 @@ function InlineSelectField({ label, value, onSave, options, placeholder }: Inlin
           onOpenChange={open => { if (!open) setEditing(false); }}
           disabled={saving}
         >
-          <SelectTrigger className="h-7 text-sm w-full">
+          <SelectTrigger className="flex-1 h-7 text-sm">
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
           <SelectContent>
@@ -287,24 +289,24 @@ function InlineSelectField({ label, value, onSave, options, placeholder }: Inlin
   }
 
   return (
-    <div className="group flex items-start justify-between py-2.5 gap-3">
-      <div className="flex-1 min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-0.5">{label}</p>
+    <div className="group flex items-center py-2 gap-4 border-b border-border/20">
+      <p className="w-32 shrink-0 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{label}</p>
+      <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
         {(displayLabel ?? value) ? (
           <p className="text-sm text-foreground capitalize">{displayLabel ?? value}</p>
         ) : (
-          <p className="text-sm text-muted-foreground/40 italic">—</p>
+          <p className="text-sm text-muted-foreground/30">—</p>
         )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+          onClick={() => setEditing(true)}
+          aria-label={`Edit ${label}`}
+        >
+          <Pencil className="h-3 w-3" />
+        </Button>
       </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5"
-        onClick={() => setEditing(true)}
-        aria-label={`Edit ${label}`}
-      >
-        <Pencil className="h-3 w-3" />
-      </Button>
     </div>
   );
 }
@@ -349,14 +351,14 @@ function InlineCompanyField({ label, company, onSave }: InlineCompanyProps) {
 
   if (editing) {
     return (
-      <div className="py-2.5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-1.5">{label}</p>
+      <div className="flex items-center py-2 gap-4 border-b border-border/20">
+        <p className="w-32 shrink-0 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{label}</p>
         <Popover open={popoverOpen} onOpenChange={open => { setPopoverOpen(open); if (!open) setEditing(false); }}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               role="combobox"
-              className="w-full justify-between h-7 text-sm font-normal"
+              className="flex-1 justify-between h-7 text-sm font-normal"
               disabled={saving}
             >
               {saving ? "Saving…" : (company?.name ?? "Select company")}
@@ -389,29 +391,29 @@ function InlineCompanyField({ label, company, onSave }: InlineCompanyProps) {
   }
 
   return (
-    <div className="group flex items-start justify-between py-2.5 gap-3">
-      <div className="flex-1 min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground mb-0.5">{label}</p>
+    <div className="group flex items-center py-2 gap-4 border-b border-border/20">
+      <p className="w-32 shrink-0 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{label}</p>
+      <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
         {company ? (
           <Link
             href={`/directory/companies/${company.id}`}
-            className="text-sm text-primary hover:underline truncate block"
+            className="text-sm text-primary hover:underline truncate"
           >
             {company.name}
           </Link>
         ) : (
-          <p className="text-sm text-muted-foreground/40 italic">—</p>
+          <p className="text-sm text-muted-foreground/30">—</p>
         )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+          onClick={() => setEditing(true)}
+          aria-label={`Edit ${label}`}
+        >
+          <Pencil className="h-3 w-3" />
+        </Button>
       </div>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5"
-        onClick={() => setEditing(true)}
-        aria-label={`Edit ${label}`}
-      >
-        <Pencil className="h-3 w-3" />
-      </Button>
     </div>
   );
 }
@@ -433,7 +435,7 @@ function FieldSection({
         {Icon && <Icon className="h-3 w-3 text-muted-foreground" />}
         <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">{title}</p>
       </div>
-      <div className="divide-y divide-border/20">{children}</div>
+      <div>{children}</div>
     </div>
   );
 }
