@@ -41,6 +41,39 @@ type CompanyNameRow = {
   name: string | null;
 };
 
+const PROJECT_FIELD_MAP: Record<string, string> = {
+  id: "id",
+  name: "name",
+  project_number: "project_number",
+  projectNumber: "project_number",
+  "job number": "\"job number\"",
+  job_number: "\"job number\"",
+  jobNumber: "\"job number\"",
+  phase: "phase",
+  state: "state",
+  archived: "archived",
+  company_id: "company_id",
+  companyId: "company_id",
+  created_at: "created_at",
+  createdAt: "created_at",
+};
+
+function getProjectSelect(fieldsParam: string | null, includeClientResolution: boolean): string {
+  if (!fieldsParam) return "*";
+
+  const selectedFields = fieldsParam
+    .split(",")
+    .map((field) => field.trim())
+    .filter(Boolean)
+    .map((field) => PROJECT_FIELD_MAP[field])
+    .filter((field): field is string => Boolean(field));
+
+  if (selectedFields.length === 0) return "*";
+
+  const requiredFields = includeClientResolution ? ["id", "company_id"] : ["id"];
+  return Array.from(new Set([...requiredFields, ...selectedFields])).join(",");
+}
+
 function cleanClientName(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
@@ -195,10 +228,13 @@ export const GET = withApiGuardrails("/api/projects#GET", async ({ request }) =>
   const excludeState = searchParams.get("excludeState");
   const phase = searchParams.get("phase");
   const archived = searchParams.get("archived");
+  const fields = searchParams.get("fields");
+  const skipClientResolution = searchParams.get("includeClient") === "false";
+  const projectSelect = getProjectSelect(fields, !skipClientResolution);
 
   let query = supabase
     .from("projects")
-    .select("*", { count: "exact" })
+    .select(projectSelect, { count: "exact" })
     .order("name", { ascending: true })
     .range(offset, offset + limit - 1);
 
@@ -250,13 +286,13 @@ export const GET = withApiGuardrails("/api/projects#GET", async ({ request }) =>
     });
   }
 
-  const projectsWithResolvedClients = await applyResolvedClientNames(
-    supabase,
-    (data ?? []) as ProjectApiRow[],
-  );
+  const projects = (data ?? []) as ProjectApiRow[];
+  const responseProjects = skipClientResolution
+    ? projects
+    : await applyResolvedClientNames(supabase, projects);
 
   return NextResponse.json({
-    data: projectsWithResolvedClients,
+    data: responseProjects,
     meta: {
       page,
       limit,

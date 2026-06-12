@@ -111,6 +111,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(false);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
+  const projectsLoadedRef = useRef(false);
+  const projectsFetchPromiseRef = useRef<Promise<void> | null>(null);
   const [meetingTitle, setMeetingTitle] = useState<string | null>(null);
   const [globalMeetingTitle, setGlobalMeetingTitle] = useState<string | null>(null);
   const [primeContractTitle, setPrimeContractTitle] = useState<string | null>(
@@ -1621,8 +1623,14 @@ export function useHeaderNav(): UseHeaderNavReturn {
 
   // Fetch projects for the selector dropdown
   const fetchProjects = useCallback(async () => {
+    if (projectsLoadedRef.current) return;
+    if (projectsFetchPromiseRef.current) {
+      await projectsFetchPromiseRef.current;
+      return;
+    }
+
     setLoadingProjects(true);
-    try {
+    const request = (async () => {
       const allProjects: Project[] = [];
       let page = 1;
       let totalPages = 1;
@@ -1632,7 +1640,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
           data?: Project[];
           meta?: { totalPages?: number };
         }>(
-          `/api/projects?limit=100&page=${page}&archived=false&phase=Current`,
+          `/api/projects?fields=id,name,job_number,phase&includeClient=false&limit=100&page=${page}&archived=false&phase=Current`,
         );
         const pageProjects = Array.isArray(result?.data) ? result.data : [];
         allProjects.push(...pageProjects);
@@ -1646,9 +1654,17 @@ export function useHeaderNav(): UseHeaderNavReturn {
       }
 
       setProjects(allProjects);
+      projectsLoadedRef.current = true;
+    })();
+
+    projectsFetchPromiseRef.current = request;
+
+    try {
+      await request;
     } catch (error) {
       reportHeaderNavFailure("load-project-switcher-options", error);
     } finally {
+      projectsFetchPromiseRef.current = null;
       setLoadingProjects(false);
     }
   }, []);

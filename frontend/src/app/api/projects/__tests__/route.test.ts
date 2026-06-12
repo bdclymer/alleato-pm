@@ -97,9 +97,23 @@ describe("/api/projects", () => {
           }
           if (table === "projects") {
             return createMockQuery({
-              data: [mockProject],
+              data: [{ ...mockProject, company_id: "company-test-client" }],
               error: null,
               count: 1,
+            });
+          }
+          if (table === "prime_contracts") {
+            return createMockQuery({
+              data: [],
+              error: null,
+              count: null,
+            });
+          }
+          if (table === "companies") {
+            return createMockQuery({
+              data: [{ id: "company-test-client", name: "Test Client" }],
+              error: null,
+              count: null,
             });
           }
           return createMockQuery({ data: null, error: null, count: null });
@@ -112,7 +126,7 @@ describe("/api/projects", () => {
 
       expect(response.status).toBe(200);
       expect(data).toEqual({
-        data: [mockProject],
+        data: [{ ...mockProject, company_id: "company-test-client" }],
         meta: {
           page: 1,
           limit: 100,
@@ -200,6 +214,69 @@ describe("/api/projects", () => {
           client: "Hillsdale Holdings",
         }),
       );
+    });
+
+    it("supports lightweight project option fields without resolving clients", async () => {
+      const projectsQuery = createMockQuery({
+        data: [
+          {
+            id: 67,
+            name: "Vermillion Rise Warehouse",
+            "job number": "24013",
+            phase: "Current",
+          },
+        ],
+        error: null,
+        count: 1,
+      });
+
+      mockServiceClient = {
+        from: jest.fn((table: string) => {
+          if (table === "users_auth") {
+            return createMockQuery({
+              data: { person_id: "person-123" },
+              error: null,
+              count: null,
+            });
+          }
+          if (table === "user_profiles") {
+            return createMockQuery({
+              data: { is_admin: true },
+              error: null,
+              count: null,
+            });
+          }
+          if (table === "projects") {
+            return projectsQuery;
+          }
+          if (table === "prime_contracts" || table === "companies") {
+            throw new Error(`${table} should not be queried for lightweight project options`);
+          }
+          return createMockQuery({ data: null, error: null, count: null });
+        }),
+      };
+
+      const request = new NextRequest(
+        "http://localhost:3000/api/projects?fields=id,name,job_number,phase&includeClient=false&limit=100&archived=false&phase=Current",
+      );
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(projectsQuery.select).toHaveBeenCalledWith(
+        "id,name,\"job number\",phase",
+        { count: "exact" },
+      );
+      expect(mockServiceClient.from).not.toHaveBeenCalledWith("prime_contracts");
+      expect(mockServiceClient.from).not.toHaveBeenCalledWith("companies");
+      expect(data.data).toEqual([
+        {
+          id: 67,
+          name: "Vermillion Rise Warehouse",
+          "job number": "24013",
+          phase: "Current",
+        },
+      ]);
     });
 
     it("handles pagination parameters", async () => {
