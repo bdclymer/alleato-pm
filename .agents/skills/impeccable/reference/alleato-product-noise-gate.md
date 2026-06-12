@@ -102,6 +102,23 @@ When a page surfaces information from meetings, email, documents, or AI extracti
 
 If the backend or API cannot support the needed action, fail loudly in implementation notes with cause, detection gap, and prevention step. Add the smallest guardrail or follow-up needed. Do not silently ship a read-only UI that looks like it should be actionable.
 
+## Redundant Descriptions And Subtitles
+
+Page descriptions, section subtitles, card subtitles, helper text, and dialog descriptions are content. They spend attention and must earn their place like any other element. A subtitle that restates the title or states the obvious is pure noise — delete it.
+
+Kill any description or subtitle that fails this test:
+
+- It paraphrases the title. Title `Edit Subcontract` + description `Update subcontract details` says nothing new. Remove the description.
+- It restates what the control already says. A `Save` dialog titled `Delete invoice?` does not need `Are you sure you want to delete this invoice?` as a body when a one-line consequence would do.
+- It describes the obvious mechanics of the page instead of giving the user information they lack. `This page lets you edit the form below` is noise.
+- It is a generic template subtitle (`Manage your X`, `View and edit X`, `X details`, `Update X`) with no project-, record-, or state-specific content.
+
+A description earns its place only when it adds information the title cannot: a constraint, a consequence, a scope clarification, a non-obvious source, a count, or a state. `Editing the signed subcontract — changes require re-approval` earns its place. `Update subcontract details` does not.
+
+Default for create/edit/detail headers: title only, no description, unless the description carries real, non-obvious information. When in doubt, remove the subtitle and let the title and form stand alone.
+
+During audit, treat every `description`, `subtitle`, `subheading`, and dialog body string as a removal candidate. For each, name the specific information it adds beyond the title. If you cannot, remove it.
+
 ## Default Alleato Page Shape
 
 Normal project pages should use the established app shell and shared layout primitives:
@@ -164,6 +181,7 @@ Use the lowest sufficient tool. Do not jump to containers or decoration.
 - No mixed accent palettes.
 - No emojis in production UI.
 - No duplicate primary CTAs.
+- No descriptions or subtitles that restate the title, paraphrase it, or state the obvious. Title-only headers are the default.
 - No dashboards unless monitoring many simultaneous variables is the actual task.
 - No motion unless it clarifies state, continuity, reveal, or feedback.
 - No one-off visual overrides when a shared primitive owns the problem.

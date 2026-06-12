@@ -309,14 +309,12 @@ export default function EditCommitmentPage() {
   };
 
   const title = isSubcontract ? "Edit Subcontract" : "Edit Purchase Order";
-  const description = isSubcontract ? "Update subcontract details" : "Update purchase order details";
 
   if (isLoading || (isSubcontract && attachmentsLoading)) {
     return (
       <PageShell
         variant="form"
         title={title}
-        description={description}
         onBack={handleCancel}
         backLabel="Cancel"
       >
@@ -336,7 +334,6 @@ export default function EditCommitmentPage() {
     <PageShell
       variant="form"
       title={title}
-      description={description}
       onBack={handleCancel}
       backLabel="Cancel"
     >

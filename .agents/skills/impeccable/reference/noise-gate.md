@@ -75,6 +75,7 @@ Challenge these first:
 - Insight strips.
 - Duplicate CTAs.
 - Duplicate summaries.
+- Redundant descriptions or subtitles that restate the title, paraphrase it, or state the obvious (e.g. title "Edit Subcontract" + description "Update subcontract details"). For each `description`/`subtitle`/dialog body, name the specific information it adds beyond the title; if you cannot, remove it.
 - Extra filters or search boxes.
 - Charts that do not support a decision.
 - Gradients, glows, glass, heavy shadows, or animated decoration.
