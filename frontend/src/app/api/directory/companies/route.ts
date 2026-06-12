@@ -151,6 +151,7 @@ export const POST = withApiGuardrails(
       .from("companies")
       .insert({
         name: body.name.trim(),
+        title: body.title || null,
         address: body.address || null,
         city: body.city || null,
         state: body.state || null,

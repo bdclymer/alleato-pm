@@ -46,6 +46,8 @@ import {
 } from "@/features/directory/data-quality";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api-client";
+import { CompanyFormDialog } from "@/components/domain/companies/CompanyFormDialog";
+import type { CompanyFormData } from "@/lib/schemas/financial-schemas";
 
 const STATUS_COLORS: CellColorMap = {
   active: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
@@ -409,6 +411,30 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
   });
 
   const [isSyncing, setIsSyncing] = React.useState(false);
+  const [isAddCompanyOpen, setIsAddCompanyOpen] = React.useState(false);
+
+  const handleCreateCompany = React.useCallback(
+    async (data: CompanyFormData): Promise<{ error?: string } | void> => {
+      try {
+        await apiFetch("/api/directory/companies", {
+          method: "POST",
+          body: JSON.stringify({
+            name: data.name,
+            title: data.title || undefined,
+            address: data.address,
+            city: data.city,
+            state: data.state,
+            website: data.website,
+            company_type: forcedCompanyType ?? "vendor",
+          }),
+        });
+        await refresh();
+      } catch (err) {
+        return { error: err instanceof Error ? err.message : "Failed to create company" };
+      }
+    },
+    [refresh, forcedCompanyType],
+  );
 
   const handleInlineCompanyEdit = React.useCallback(
     async (company: CompanyRow, field: string, value: string) => {
@@ -543,6 +569,12 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
     });
 
   return (
+    <>
+    <CompanyFormDialog
+      open={isAddCompanyOpen}
+      onOpenChange={setIsAddCompanyOpen}
+      onCreate={handleCreateCompany}
+    />
     <UnifiedTablePage
       header={{
         title: isClientsRoute ? "Clients" : "Companies",
@@ -551,7 +583,7 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
         actions: (
           <TablePageActions
             addOptions={[
-              { label: "Add New Company", icon: <Building2 /> },
+              { label: "Add New Company", icon: <Building2 />, onClick: () => setIsAddCompanyOpen(true) },
               { label: "Import from CSV", icon: <FileSpreadsheet /> },
               { label: "Bulk Operations", icon: <Upload /> },
             ]}
@@ -652,5 +684,6 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
         removeTableFrame: true,
       }}
     />
+    </>
   );
 }
