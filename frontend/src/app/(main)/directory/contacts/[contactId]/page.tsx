@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/popover";
 import {
   Pencil,
+  Mail,
   Building2,
   ExternalLink,
   MapPin,
@@ -40,7 +41,6 @@ import {
   Layers,
   User,
   FileText,
-  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -583,15 +583,18 @@ export default function ContactDetailsPage() {
             >
               <Pencil className="h-3.5 w-3.5" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-muted-foreground hover:bg-transparent hover:text-foreground"
-              onClick={() => { void load(); }}
-              aria-label="Refresh"
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-            </Button>
+            {contact.email && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:bg-transparent hover:text-foreground"
+                asChild
+              >
+                <a href={`mailto:${contact.email}`} aria-label="Send email">
+                  <Mail className="h-3.5 w-3.5" />
+                </a>
+              </Button>
+            )}
           </div>
         </div>
 
