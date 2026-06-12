@@ -3,7 +3,6 @@
 import type { ReactElement } from "react";
 import { useEffect, useRef, useState } from "react";
 import { FileText, MoreHorizontal, QrCode } from "lucide-react";
-import { pdfjs } from "react-pdf";
 
 import { formatDate } from "@/lib/format";
 import { StatusBadge } from "@/components/ds";
@@ -28,10 +27,6 @@ import {
   DRAWING_TYPES,
   type DrawingLogTableRow,
 } from "@/types/drawings.types";
-
-if (typeof window !== "undefined") {
-  pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
-}
 
 // ─── Status formatting helpers ──────────────────────────────────────────────
 
@@ -103,7 +98,8 @@ export function buildDrawingTableColumns(): TableColumn<DrawingLogTableRow>[] {
         const identity = getDrawingDisplayIdentity(item);
         return <span className="font-medium">{identity.number || "-"}</span>;
       },
-      sortValue: (item) => getDrawingDisplayIdentity(item).number || item.drawingNumber,
+      sortValue: (item) =>
+        getDrawingDisplayIdentity(item).number || item.drawingNumber,
     },
     {
       ...drawingColumns[1],
@@ -345,7 +341,8 @@ function DrawingPdfThumbnail({
     let cancelled = false;
     let renderTask: { cancel: () => void; promise: Promise<unknown> } | null =
       null;
-    let loadingTask: ReturnType<typeof pdfjs.getDocument> | null = null;
+    let loadingTask: { destroy: () => void; promise: Promise<unknown> } | null =
+      null;
     let renderTimeout: number | null = null;
 
     const renderPreview = () => {
@@ -362,8 +359,22 @@ function DrawingPdfThumbnail({
           renderTask?.cancel();
           loadingTask?.destroy();
 
+          const { pdfjs } = await import("react-pdf");
+          pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
           loadingTask = pdfjs.getDocument(fileUrl);
-          const pdf = await loadingTask.promise;
+          const pdf = (await loadingTask.promise) as {
+            getPage: (pageNumber: number) => Promise<{
+              getViewport: (options: { scale: number }) => {
+                width: number;
+                height: number;
+              };
+              render: (options: {
+                canvas: HTMLCanvasElement;
+                canvasContext: CanvasRenderingContext2D;
+                viewport: { width: number; height: number };
+              }) => { cancel: () => void; promise: Promise<unknown> };
+            }>;
+          };
           const page = await pdf.getPage(1);
           if (cancelled) return;
 
@@ -442,7 +453,12 @@ function DrawingPdfThumbnail({
   );
 }
 
-function DrawingGridCard({ item, onClick, selected, onSelect }: DrawingGridCardProps) {
+function DrawingGridCard({
+  item,
+  onClick,
+  selected,
+  onSelect,
+}: DrawingGridCardProps) {
   const isPdf =
     item.fileType?.toLowerCase().includes("pdf") ||
     item.fileUrl?.toLowerCase().endsWith(".pdf");
@@ -452,7 +468,8 @@ function DrawingGridCard({ item, onClick, selected, onSelect }: DrawingGridCardP
 
   const dimmed = item.isObsolete || !item.isPublished;
   const identity = getDrawingDisplayIdentity(item);
-  const primaryLabel = identity.number || identity.title || item.fileName || "Untitled";
+  const primaryLabel =
+    identity.number || identity.title || item.fileName || "Untitled";
   const pdfPreviewUrl = `/api/projects/${item.projectId}/drawings/${item.id}/pdf-proxy`;
 
   return (
@@ -466,18 +483,34 @@ function DrawingGridCard({ item, onClick, selected, onSelect }: DrawingGridCardP
       {onSelect && (
         <div
           className={`absolute top-1.5 left-1.5 z-20 transition-opacity ${selected ? "opacity-100" : "opacity-0 group-hover/card:opacity-100"}`}
-          onClick={(e) => { e.stopPropagation(); onSelect(item.id, !selected); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect(item.id, !selected);
+          }}
         >
-          <div className={`flex h-4.5 w-4.5 items-center justify-center rounded border-2 text-primary-foreground transition-colors ${selected ? "border-primary bg-primary" : "border-muted-foreground/40 bg-background/80 backdrop-blur-sm"}`}>
+          <div
+            className={`flex h-4.5 w-4.5 items-center justify-center rounded border-2 text-primary-foreground transition-colors ${selected ? "border-primary bg-primary" : "border-muted-foreground/40 bg-background/80 backdrop-blur-sm"}`}
+          >
             {selected && (
-              <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                <path
+                  d="M1 4L3.5 6.5L9 1"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             )}
           </div>
         </div>
       )}
 
       {/* Landscape thumbnail (PDF proportions ~11:8.5) */}
-      <div className="relative w-full bg-muted" style={{ aspectRatio: "11 / 8.5" }}>
+      <div
+        className="relative w-full bg-muted"
+        style={{ aspectRatio: "11 / 8.5" }}
+      >
         {isPdf ? (
           <DrawingPdfThumbnail fileUrl={pdfPreviewUrl} title={item.title} />
         ) : item.fileUrl && isImage ? (
@@ -493,9 +526,16 @@ function DrawingGridCard({ item, onClick, selected, onSelect }: DrawingGridCardP
         {(item.isObsolete || !item.isPublished) && (
           <div className="absolute top-1.5 right-1.5">
             {item.isObsolete ? (
-              <Badge variant="secondary" className="text-[10px] px-1 py-0">Obsolete</Badge>
+              <Badge variant="secondary" className="text-[10px] px-1 py-0">
+                Obsolete
+              </Badge>
             ) : (
-              <Badge variant="outline" className="text-[10px] px-1 py-0 bg-card">Unpublished</Badge>
+              <Badge
+                variant="outline"
+                className="text-[10px] px-1 py-0 bg-card"
+              >
+                Unpublished
+              </Badge>
             )}
           </div>
         )}
@@ -520,13 +560,19 @@ export function renderDrawingCard(
   item: DrawingLogTableRow,
   onClick: (item: DrawingLogTableRow) => void,
   onDelete?: (item: DrawingLogTableRow) => void,
-  options?: { selected?: boolean; onSelect?: (id: string, checked: boolean) => void },
+  options?: {
+    selected?: boolean;
+    onSelect?: (id: string, checked: boolean) => void;
+  },
   onQrCode?: () => void,
 ): ReactElement {
   return (
     <div className="relative group/wrapper">
       {(onDelete || onQrCode) && (
-        <div className="absolute right-1.5 top-1.5 z-20 opacity-0 group-hover/wrapper:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="absolute right-1.5 top-1.5 z-20 opacity-0 group-hover/wrapper:opacity-100 transition-opacity"
+          onClick={(e) => e.stopPropagation()}
+        >
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -591,7 +637,10 @@ export function renderDrawingList(
   return (
     <div className={`relative${dimmed ? " opacity-60" : ""}`}>
       {onDelete && (
-        <div className="absolute right-2 top-1/2 z-20 -translate-y-1/2" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="absolute right-2 top-1/2 z-20 -translate-y-1/2"
+          onClick={(e) => e.stopPropagation()}
+        >
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -626,9 +675,7 @@ export function renderDrawingList(
         onClick={() => onClick(item)}
       >
         <div>
-          <p className="text-sm font-medium">
-            {label}
-          </p>
+          <p className="text-sm font-medium">{label}</p>
           <p className="text-xs text-muted-foreground">
             {item.revisionNumber ? `Rev. ${item.revisionNumber}` : "No rev."}
             {item.discipline ? ` · ${item.discipline}` : ""}
@@ -649,15 +696,11 @@ export function renderDrawingList(
               <span className="sr-only">QR Code</span>
             </Button>
           )}
-          {item.isObsolete && (
-            <Badge variant="secondary">Obsolete</Badge>
-          )}
+          {item.isObsolete && <Badge variant="secondary">Obsolete</Badge>}
           {!item.isPublished && !item.isObsolete && (
             <Badge variant="outline">Unpublished</Badge>
           )}
-          {item.status && (
-            <StatusBadge status={formatStatus(item.status)} />
-          )}
+          {item.status && <StatusBadge status={formatStatus(item.status)} />}
         </div>
       </Button>
     </div>

@@ -1,185 +1,321 @@
 "use client";
 
 import * as React from "react";
-import { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "@/components/tables/DataTable";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Plus } from "lucide-react";
+import { toast } from "sonner";
+
+import { PageShell } from "@/components/layout";
+import {
+  UnifiedTablePage,
+  useUnifiedTableState,
+  type FilterValue,
+} from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
-  Plus,
-  MoreHorizontal,
-  Eye,
-  Edit,
-  Trash2,
-  Download,
-} from "lucide-react";
+  useDeleteDrawing,
+  useDrawings,
+  useObsoleteDrawing,
+  usePublishDrawing,
+} from "@/hooks/use-drawings";
+import { apiFetch } from "@/lib/api-client";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useDrawings } from "@/hooks/use-drawings";
+  buildDrawingRowActions,
+  buildDrawingTableColumns,
+  drawingDefaultVisibleColumns,
+  drawingFilters,
+  renderDrawingCard,
+  renderDrawingList,
+} from "@/features/drawings/drawings-table-config";
 import type { DrawingLogTableRow } from "@/types/drawings.types";
 
+type DrawingFilterState = Record<string, FilterValue>;
+
+const DEFAULT_TABLE_PROJECT_ID = "31";
+const EMPTY_FILTERS: DrawingFilterState = {
+  discipline: undefined,
+  drawingType: undefined,
+  status: undefined,
+};
+
+function normalizeFilter(value: FilterValue): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
 export default function DrawingsPage() {
-  // Use project 31 as default for tables view (standalone page, no projectId in route)
-  const { data: drawingsData, isLoading } = useDrawings("31");
-  const drawings = drawingsData?.drawings || [];
+  const pathname = usePathname()!;
+  const router = useRouter();
+  const searchParams = useSearchParams()!;
 
-  const columns: ColumnDef<DrawingLogTableRow>[] = [
-    {
-      accessorKey: "drawingNumber",
-      header: "Number",
-      cell: ({ row }) => (
-        <button
-          type="button"
-          className="font-medium text-[hsl(var(--procore-orange))] hover:underline"
-        >
-          {row.getValue("drawingNumber")}
-        </button>
-      ),
+  const tableState = useUnifiedTableState({
+    entityKey: "drawings-table",
+    searchParams,
+    pathname,
+    router,
+    defaults: {
+      view: "table",
+      allowedViews: ["table", "card", "list"],
+      page: 1,
+      perPage: 25,
+      search: "",
+      sortBy: "drawingNumber",
+      sortDirection: "asc",
+      visibleColumns: drawingDefaultVisibleColumns,
+      filters: EMPTY_FILTERS,
     },
-    {
-      accessorKey: "title",
-      header: "Title",
-    },
-    {
-      accessorKey: "discipline",
-      header: "Discipline",
-      cell: ({ row }) => {
-        const discipline = row.getValue("discipline") as string | null;
-        if (!discipline) return null;
-        const disciplineColors: Record<string, string> = {
-          Architectural: "bg-blue-100 text-blue-700",
-          Structural: "bg-green-100 text-green-700",
-          Mechanical: "bg-purple-100 text-purple-700",
-          Electrical: "bg-yellow-100 text-yellow-700",
-          Plumbing: "bg-cyan-100 text-cyan-700",
-        };
-        return (
-          <Badge
-            className={
-              disciplineColors[discipline] || "bg-muted text-foreground"
-            }
-          >
-            {discipline}
-          </Badge>
-        );
-      },
-    },
-    {
-      accessorKey: "revisionNumber",
-      header: "Rev",
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => {
-        const status = row.getValue("status") as string | null;
-        if (!status) return null;
-        const statusColors: Record<string, string> = {
-          approved: "bg-green-100 text-green-700",
-          under_review: "bg-yellow-100 text-yellow-700",
-          superseded: "bg-muted text-foreground",
-          void: "bg-red-100 text-red-700",
-          draft: "bg-blue-100 text-blue-700",
-        };
-        return (
-          <Badge
-            className={statusColors[status] || "bg-muted text-foreground"}
-          >
-            {status.replace(/_/g, " ")}
-          </Badge>
-        );
-      },
-    },
-    {
-      accessorKey: "uploadedByEmail",
-      header: "Uploaded By",
-    },
-    {
-      accessorKey: "receivedDate",
-      header: "Received",
-      cell: ({ row }) => {
-        const date = row.getValue("receivedDate") as string | null;
-        return date ? new Date(date).toLocaleDateString() : "";
-      },
-    },
-    {
-      accessorKey: "fileSize",
-      header: "Size",
-      cell: ({ row }) => {
-        const size = row.getValue("fileSize") as number | null;
-        if (!size) return "";
-        if (size < 1024) return `${size} B`;
-        if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
-        return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-      },
-    },
-    {
-      id: "actions",
-      cell: () => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <MoreHorizontal />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>
-              <Eye className="mr-2 h-4 w-4" />
-              View
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Download className="mr-2 h-4 w-4" />
-              Download
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-red-600">
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
-    },
-  ];
+  });
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-muted-foreground">Loading drawings...</div>
-      </div>
+  const activeFilters = tableState.activeFilters as DrawingFilterState;
+  const disciplineFilter = normalizeFilter(activeFilters.discipline);
+  const drawingTypeFilter = normalizeFilter(activeFilters.drawingType);
+  const statusFilter = normalizeFilter(activeFilters.status);
+
+  const {
+    data: drawingsData,
+    isLoading,
+    isFetching,
+    error,
+  } = useDrawings(DEFAULT_TABLE_PROJECT_ID, {
+    page: tableState.page,
+    page_size: tableState.perPage,
+    search: tableState.debouncedSearch || undefined,
+    discipline: disciplineFilter,
+    status: statusFilter,
+  });
+  const deleteDrawing = useDeleteDrawing(DEFAULT_TABLE_PROJECT_ID);
+  const publishDrawing = usePublishDrawing(DEFAULT_TABLE_PROJECT_ID);
+  const obsoleteDrawing = useObsoleteDrawing(DEFAULT_TABLE_PROJECT_ID);
+
+  const drawings = React.useMemo(
+    () => drawingsData?.drawings ?? [],
+    [drawingsData],
+  );
+
+  const filteredItems = React.useMemo(() => {
+    if (!drawingTypeFilter) return drawings;
+
+    return drawings.filter(
+      (drawing) => drawing.drawingType === drawingTypeFilter,
     );
-  }
+  }, [drawingTypeFilter, drawings]);
+
+  const tableColumns = React.useMemo(() => buildDrawingTableColumns(), []);
+
+  const getDrawingProjectId = React.useCallback(
+    (item: DrawingLogTableRow) => item.projectId || DEFAULT_TABLE_PROJECT_ID,
+    [],
+  );
+
+  const handleOpenDrawing = React.useCallback(
+    (item: DrawingLogTableRow) => {
+      router.push(`/${getDrawingProjectId(item)}/drawings/viewer/${item.id}`);
+    },
+    [getDrawingProjectId, router],
+  );
+
+  const handleEditDrawing = React.useCallback(
+    (item: DrawingLogTableRow) => {
+      router.push(`/${getDrawingProjectId(item)}/drawings/${item.id}`);
+    },
+    [getDrawingProjectId, router],
+  );
+
+  const handleEmailDrawing = React.useCallback(
+    (item: DrawingLogTableRow) => {
+      const label = [item.drawingNumber, item.title]
+        .filter(Boolean)
+        .join(" - ");
+      const drawingUrl = `${window.location.origin}/${getDrawingProjectId(
+        item,
+      )}/drawings/viewer/${item.id}`;
+
+      window.location.href = `mailto:?subject=${encodeURIComponent(
+        label || "Drawing",
+      )}&body=${encodeURIComponent(drawingUrl)}`;
+    },
+    [getDrawingProjectId],
+  );
+
+  const handleDownloadDrawing = React.useCallback(
+    async (item: DrawingLogTableRow) => {
+      try {
+        const data = await apiFetch<{
+          downloadUrl?: string;
+          fileName?: string;
+        }>(
+          `/api/projects/${getDrawingProjectId(item)}/drawings/${item.id}/download`,
+        );
+
+        if (!data.downloadUrl) {
+          toast.error("No downloadable file found for this drawing");
+          return;
+        }
+
+        const anchor = document.createElement("a");
+        anchor.href = data.downloadUrl;
+        anchor.download =
+          data.fileName ??
+          `${item.drawingNumber || item.title || "drawing"}.pdf`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+      } catch (downloadError) {
+        toast.error("Could not download drawing", {
+          description:
+            downloadError instanceof Error
+              ? downloadError.message
+              : "The drawing download request failed.",
+        });
+      }
+    },
+    [getDrawingProjectId],
+  );
+
+  const handleDeleteDrawing = React.useCallback(
+    (item: DrawingLogTableRow) => {
+      deleteDrawing.mutate(item.id);
+    },
+    [deleteDrawing],
+  );
+
+  const handleFilterChange = React.useCallback(
+    (nextFilters: DrawingFilterState) => {
+      tableState.setActiveFilters(nextFilters);
+      tableState.setSearchParams({
+        discipline: normalizeFilter(nextFilters.discipline) ?? null,
+        drawingType: normalizeFilter(nextFilters.drawingType) ?? null,
+        status: normalizeFilter(nextFilters.status) ?? null,
+        page: "1",
+      });
+      tableState.setPage(1);
+    },
+    [tableState],
+  );
+
+  const isFiltered =
+    Boolean(tableState.searchInput) ||
+    Boolean(disciplineFilter) ||
+    Boolean(drawingTypeFilter) ||
+    Boolean(statusFilter);
 
   return (
-    <div className="flex flex-col h-full p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Drawings</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Construction drawings and blueprints
-          </p>
-        </div>
-        <Button className="bg-primary hover:bg-primary/90">
-          <Plus />
-          Upload Drawing
-        </Button>
-      </div>
-
-      <div className="flex-1 bg-background rounded-lg border overflow-hidden">
-        <DataTable
-          columns={columns}
-          data={drawings}
-          searchKey="title"
-          searchPlaceholder="Search drawings..."
-        />
-      </div>
-    </div>
+    <PageShell variant="table" title="Drawings" showHeader={false}>
+      <UnifiedTablePage<DrawingLogTableRow>
+        header={{
+          title: "Drawings",
+          description: "Construction drawings and blueprints",
+          actions: (
+            <Button
+              size="sm"
+              onClick={() =>
+                router.push(`/${DEFAULT_TABLE_PROJECT_ID}/drawings`)
+              }
+            >
+              <Plus className="h-4 w-4" />
+              Upload Drawing
+            </Button>
+          ),
+        }}
+        toolbar={{
+          totalItems: drawings.length,
+          filteredItems: filteredItems.length,
+          searchValue: tableState.searchInput,
+          onSearchChange: tableState.setSearchInput,
+          searchPlaceholder: "Search drawings...",
+          currentView: tableState.currentView,
+          onViewChange: tableState.setCurrentView,
+          filters: drawingFilters,
+          activeFilters,
+          onFilterChange: handleFilterChange,
+          onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
+          selectedCount: tableState.selectedIds.length,
+        }}
+        data={{
+          items: filteredItems,
+          isLoading,
+          isFetching,
+          error: error instanceof Error ? error : null,
+        }}
+        table={{
+          columns: tableColumns,
+          getRowId: (item) => item.id,
+          onRowClick: handleOpenDrawing,
+          onDelete: handleDeleteDrawing,
+          rowActions: buildDrawingRowActions({
+            onEdit: handleEditDrawing,
+            onEmail: handleEmailDrawing,
+            onDownload: handleDownloadDrawing,
+            onPublish: (drawingId, publish) =>
+              publishDrawing.mutate({ drawingId, publish }),
+            onObsolete: (drawingId, obsolete) =>
+              obsoleteDrawing.mutate({ drawingId, obsolete }),
+            onDelete: handleDeleteDrawing,
+          }),
+        }}
+        sorting={{
+          sortBy: tableState.sortBy,
+          sortDirection: tableState.sortDirection,
+          onSortChange: (sortBy, sortDirection) => {
+            tableState.setSortBy(sortBy);
+            tableState.setSortDirection(sortDirection);
+            tableState.setSearchParams({
+              sort: sortBy,
+              sort_dir: sortDirection,
+              page: "1",
+            });
+            tableState.setPage(1);
+          },
+        }}
+        selection={{
+          selectedIds: tableState.selectedIds,
+          onSelectAll: (checked) =>
+            tableState.setSelectedIds(
+              checked ? filteredItems.map((item) => item.id) : [],
+            ),
+          onSelectRow: (id, checked) =>
+            tableState.setSelectedIds((current) =>
+              checked
+                ? current.includes(id)
+                  ? current
+                  : [...current, id]
+                : current.filter((selectedId) => selectedId !== id),
+            ),
+        }}
+        pagination={{
+          page: tableState.page,
+          totalPages: Math.max(
+            1,
+            Math.ceil(filteredItems.length / tableState.perPage),
+          ),
+          perPage: tableState.perPage,
+          onPageChange: (page) => {
+            tableState.setPage(page);
+            tableState.setSearchParams({ page: String(page) });
+          },
+          onPerPageChange: (perPage) => {
+            const nextPerPage = Number(perPage);
+            tableState.setPerPage(nextPerPage);
+            tableState.setPage(1);
+            tableState.setSearchParams({
+              per_page: String(nextPerPage),
+              page: "1",
+            });
+          },
+          clientSide: true,
+        }}
+        views={{
+          card: (item) => renderDrawingCard(item, handleOpenDrawing),
+          list: (item) => renderDrawingList(item, handleOpenDrawing),
+        }}
+        emptyState={{
+          title: "No drawings",
+          description:
+            "Upload drawings to make them searchable and available from the project record.",
+          filteredDescription:
+            "No drawings match the current search or filters.",
+          isFiltered,
+        }}
+      />
+    </PageShell>
   );
 }
