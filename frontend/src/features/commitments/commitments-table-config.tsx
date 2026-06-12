@@ -273,10 +273,11 @@ export function buildCommitmentTableColumns(
           href={`/${projectId}/commitments/${item.id}`}
           className="text-primary hover:underline underline-offset-2"
         >
-          {item.title ?? "-"}
+          <span className="font-medium text-foreground">{item.number}</span>
+          {item.title ? <span className="text-muted-foreground"> {item.title}</span> : null}
         </Link>
       ),
-      csvValue: (item) => item.title ?? "",
+      csvValue: (item) => [item.number, item.title].filter(Boolean).join(" "),
       sortValue: (item) => item.title ?? "",
     },
     type: {
