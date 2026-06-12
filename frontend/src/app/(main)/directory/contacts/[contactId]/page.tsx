@@ -57,7 +57,7 @@ type PermissionTemplate = Database["public"]["Tables"]["permission_templates"]["
 type Project = Database["public"]["Tables"]["projects"]["Row"];
 type ContactUpdateData = Database["public"]["Tables"]["people"]["Update"];
 
-interface ContactWithRelations extends Omit<Contact, "company"> {
+interface ContactWithRelations extends Contact {
   company?: Company | null;
   memberships?: (Membership & {
     project?: Project | null;
