@@ -245,7 +245,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
           .insert({
             [sovFk]: created.id,
             line_number: 1,
-            description: row.title,
+            description: row.description || row.title,
             amount: row.originalAmount,
             ...(row.costCode ? { budget_code: row.costCode } : {}),
           });
