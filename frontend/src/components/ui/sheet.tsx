@@ -62,7 +62,7 @@ function SheetContent({
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(
-          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-sm transition-[transform,opacity] ease-[cubic-bezier(0.22,1,0.36,1)] data-[state=closed]:duration-[250ms] data-[state=open]:duration-[400ms]",
+          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 overflow-y-auto shadow-sm transition-[transform,opacity] ease-[cubic-bezier(0.22,1,0.36,1)] data-[state=closed]:duration-[250ms] data-[state=open]:duration-[400ms]",
           side === "right" && [
             "data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right",
             "inset-y-0 right-0 h-dvh max-h-dvh w-full border-l sm:max-w-sm md:w-[60%] md:max-w-none",
@@ -105,7 +105,7 @@ function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="sheet-footer"
-      className={cn("mt-auto flex flex-col gap-2 px-8 pb-8 pt-6", className)}
+      className={cn("mt-auto flex flex-row gap-2 justify-end px-8 pb-8 pt-6", className)}
       {...props}
     />
   )

@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetFooter,
   SheetHeader,
   SheetTitle,
@@ -227,17 +226,12 @@ export function ContactFormSheet({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="flex flex-col p-0">
+        <SheetContent side="right" className="p-0">
           <SheetHeader>
             <SheetTitle>{isEdit ? "Edit Contact" : "New Contact"}</SheetTitle>
-            <SheetDescription>
-              {isEdit
-                ? "Update the contact information below."
-                : "Fill in the details to create a new contact."}
-            </SheetDescription>
           </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto px-8 py-2">
+          <div className="px-8 py-2">
             <Form {...form}>
               <form
                 id={FORM_ID}
@@ -273,68 +267,71 @@ export function ContactFormSheet({
                   />
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="email@example.com"
-                          type="email"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="(555) 123-4567"
-                          type="tel"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="person_type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Person Type</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select person type" />
-                          </SelectTrigger>
+                          <Input
+                            placeholder="email@example.com"
+                            type="email"
+                            {...field}
+                          />
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="contact">contact</SelectItem>
-                          <SelectItem value="employee">employee</SelectItem>
-                          <SelectItem value="user">user</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="company_id"
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="(555) 123-4567"
+                            type="tel"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="person_type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Person Type</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select person type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="contact">contact</SelectItem>
+                            <SelectItem value="employee">employee</SelectItem>
+                            <SelectItem value="user">user</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="company_id"
                   render={({ field }) => {
                     const selectedCompany = companies.find((c) => c.id === field.value);
                     return (
@@ -407,7 +404,8 @@ export function ContactFormSheet({
                       </FormItem>
                     );
                   }}
-                />
+                  />
+                </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
@@ -598,7 +596,7 @@ export function ContactFormSheet({
               {isSubmitting
                 ? "Saving..."
                 : isEdit
-                  ? "Save Changes"
+                  ? "Save"
                   : "Create Contact"}
             </Button>
           </SheetFooter>

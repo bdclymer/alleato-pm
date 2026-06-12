@@ -11,7 +11,6 @@ import {
   Sheet,
   SheetClose,
   SheetContent,
-  SheetDescription,
   SheetFooter,
   SheetHeader,
   SheetTitle,
@@ -44,15 +43,11 @@ export function ContactDetailsSheet({
   return (
     <Sheet>
       <SheetTrigger asChild>{trigger}</SheetTrigger>
-      <SheetContent
-        side="right"
-        className="flex flex-col"
-      >
+      <SheetContent side="right">
         <SheetHeader className="gap-1">
           <SheetTitle>{fullName}</SheetTitle>
-          <SheetDescription>Contact Details</SheetDescription>
         </SheetHeader>
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto py-4 text-sm">
+        <div className="flex flex-col gap-4 py-4 text-sm">
           <div className="space-y-4">
             {/* Contact Information */}
             <div>
@@ -154,13 +149,11 @@ export function ContactDetailsSheet({
             </form>
           </div>
         </div>
-        <SheetFooter className="mt-auto flex flex-col gap-2 sm:flex-row">
-          <Button className="w-full">Save Changes</Button>
+        <SheetFooter>
           <SheetClose asChild>
-            <Button variant="outline" className="w-full">
-              Close
-            </Button>
+            <Button variant="outline">Close</Button>
           </SheetClose>
+          <Button>Save</Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>

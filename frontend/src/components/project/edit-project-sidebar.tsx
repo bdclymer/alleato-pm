@@ -4,9 +4,9 @@ import * as React from "react";
 import {
   Sheet,
   SheetContent,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -307,12 +307,11 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="overflow-hidden p-0 flex flex-col">
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+      <SheetContent side="right">
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-6">
             <SheetHeader className="px-0 pt-0 pb-2">
               <SheetTitle className="text-xl font-semibold text-left">Edit Project</SheetTitle>
-              <SheetDescription className="sr-only">Edit project details</SheetDescription>
             </SheetHeader>
 
             {/* General Information */}
@@ -555,15 +554,14 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
             </section>
           </div>
 
-          {/* Footer */}
-          <div className="border-t border-border px-6 py-4 flex items-center justify-end gap-3 flex-shrink-0 bg-background">
+          <SheetFooter className="px-0">
             <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={saving}>
               Cancel
             </Button>
             <Button type="submit" size="sm" disabled={saving}>
-              {saving ? "Saving…" : "Save Changes"}
+              {saving ? "Saving…" : "Save"}
             </Button>
-          </div>
+          </SheetFooter>
         </form>
       </SheetContent>
     </Sheet>

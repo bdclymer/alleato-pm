@@ -241,38 +241,17 @@ export function EntityAttachments({
   }
 
   const content = (
-    <div className={cn('space-y-4', className)}>
-      {documentTypes.length > 0 && (
-        <div className="flex flex-col gap-1.5 sm:max-w-xs">
-          <span className="text-xs text-muted-foreground">Type for new uploads</span>
-          <Select value={selectedDocumentType} onValueChange={setSelectedDocumentType}>
-            <SelectTrigger size="sm">
-              <SelectValue placeholder="Select document type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={NO_DOCUMENT_TYPE}>Uncategorized</SelectItem>
-              {documentTypes.map((option) => (
-                <SelectItem key={option.type_key} value={option.type_key}>
-                  {option.display_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {/* Drop zone — using <label> so clicking opens the file picker without JS */}
+    <div className={cn('space-y-3', className)}>
+      {/* Compact upload trigger */}
       <label
         htmlFor={fileInputId.current}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
         className={cn(
-          'flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed px-6 py-8 text-center transition-colors',
-          isDragging
-            ? 'border-primary bg-primary/5'
-            : 'border-border hover:border-primary/40 hover:bg-muted/30',
-          isUploadingAny && 'pointer-events-none opacity-60'
+          'inline-flex cursor-pointer items-center gap-1.5 text-sm text-primary hover:underline',
+          isDragging && 'opacity-80',
+          isUploadingAny && 'pointer-events-none opacity-50',
         )}
       >
         <Input
@@ -286,20 +265,13 @@ export function EntityAttachments({
         />
         {isUploadingAny ? (
           <>
-            <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              Uploading {uploading.join(', ')}…
-            </p>
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Uploading {uploading.join(', ')}…
           </>
         ) : (
           <>
-            <Upload className="h-7 w-7 text-muted-foreground" />
-            <p className="text-sm font-medium">
-              {isDragging ? 'Drop files here' : 'Drag & drop or click to upload'}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              PDF, Word, Excel, images, DWG — max 50 MB
-            </p>
+            <Upload className="h-3.5 w-3.5" />
+            {isDragging ? 'Drop to upload' : 'Upload file'}
           </>
         )}
       </label>

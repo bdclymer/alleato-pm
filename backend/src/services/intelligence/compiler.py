@@ -1466,22 +1466,24 @@ def promote_signal_candidate(
         .execute()
     ) or candidate
 
-    refresh_job = enqueue_packet_refresh(
-        supabase,
-        candidate["target_id"],
-        reason="insight card promoted from source signal",
-        trigger_source_document_id=candidate.get("source_document_id"),
-        trigger_insight_card_id=card["id"],
-        priority=10,
-        compiler_version=compiler_version,
-    )
+    refresh_job = None
+    if _source_category(document.get("category") or document.get("source") or "") == "meeting":
+        refresh_job = enqueue_packet_refresh(
+            supabase,
+            candidate["target_id"],
+            reason="insight card promoted from source signal",
+            trigger_source_document_id=candidate.get("source_document_id"),
+            trigger_insight_card_id=card["id"],
+            priority=10,
+            compiler_version=compiler_version,
+        )
     return {
         "status": "promoted",
         "signal_candidate_id": updated_candidate.get("id"),
         "insight_card_id": card.get("id"),
         "target_link_id": target_link.get("id"),
         "evidence_id": evidence.get("id"),
-        "packet_refresh_job_id": refresh_job.get("id"),
+        "packet_refresh_job_id": refresh_job.get("id") if refresh_job else None,
     }
 
 
@@ -2006,7 +2008,7 @@ def process_source_document(
                 compiler_version=compiler_version,
             )
 
-            if confidence_score >= 0.85:
+            if confidence_score >= 0.85 and _source_category(document.get("category") or document.get("source") or "") == "meeting":
                 packet_refresh_job = enqueue_packet_refresh(
                     supabase,
                     target["id"],

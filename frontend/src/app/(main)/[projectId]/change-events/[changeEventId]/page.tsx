@@ -46,7 +46,6 @@ import { Text } from "@/components/ds/text";
 import { PageShell } from "@/components/layout";
 import { StatusBadge, EmptyState } from "@/components/ds";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
-import type { ChangeEventFormData } from "@/components/domain/change-events/ChangeEventForm";
 import { apiFetch, apiFetchBlob } from "@/lib/api-client";
 
 import { useChangeEventDetail } from "@/hooks/use-change-event-detail";
@@ -55,7 +54,6 @@ import { AddToCommitmentCODialog } from "@/components/domain/change-events/AddTo
 import { AddToPrimePCODialog } from "@/components/domain/change-events/AddToPrimePCODialog";
 import { AddToBudgetChangeDialog } from "@/components/domain/change-events/AddToBudgetChangeDialog";
 import { ChangeEventEmailDialog } from "@/components/domain/change-events/ChangeEventEmailDialog";
-import { ChangeEventForm } from "@/components/domain/change-events/ChangeEventForm";
 import { ChangeEventGeneralInfoPanel } from "@/components/domain/change-events/ChangeEventGeneralInfoPanel";
 import { ChangeEventLineagePanel } from "@/components/domain/change-events/ChangeEventLineagePanel";
 import { ChangeEventLineItemsTable } from "@/components/domain/change-events/ChangeEventLineItemsTable";
@@ -75,35 +73,6 @@ import type { ProjectEmail } from "@/hooks/use-emails";
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 
-function mapApiOriginToFormOrigin(origin?: string | null): string | undefined {
-  if (!origin) return undefined;
-  const key = origin.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_");
-  const map: Record<string, string> = {
-    emails: "emails",
-    meetings: "meetings",
-    rfis: "rfis",
-    rfi_s: "rfis",
-    rfi: "rfis",
-    internal: "Internal",
-    field: "Field",
-  };
-  return map[key] ?? origin.trim();
-}
-
-function mapApiTypeToFormType(type?: string | null): string | undefined {
-  if (!type) return undefined;
-  return type.trim();
-}
-
-function mapApiReasonToFormReason(reason?: string | null): string | undefined {
-  if (!reason) return undefined;
-  return reason.trim();
-}
-
-function mapApiStatusToFormStatus(status?: string | null): string {
-  if (!status) return "Open";
-  return status.trim();
-}
 
 function formatEmailDate(value: string | null): string {
   if (!value) return "-";
@@ -226,7 +195,6 @@ export default function ChangeEventDetailPage() {
   const { markupRows } = useVerticalMarkup(projectId);
 
   const [activeTab, setActiveTab] = useState("general");
-  const [isEditing, setIsEditing] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showCommitmentCODialog, setShowCommitmentCODialog] = useState(false);
   const [showPrimePCODialog, setShowPrimePCODialog] = useState(false);
@@ -351,13 +319,12 @@ export default function ChangeEventDetailPage() {
 
   const normalizedStatus = (changeEvent?.status || "").toLowerCase().replace(/\s+/g, "_");
 
-  // Auto-enter edit mode from ?edit=1
+  // Auto-scroll to general tab from ?edit=1
   useEffect(() => {
-    if (searchParams.get("edit") === "1" && canEdit) {
+    if (searchParams.get("edit") === "1") {
       setActiveTab("general");
-      setIsEditing(true);
     }
-  }, [searchParams, canEdit]);
+  }, [searchParams]);
 
   /* ── Navigation ─────────────────────────────────────────────────── */
 
@@ -423,70 +390,6 @@ export default function ChangeEventDetailPage() {
     }
   }, [changeEvent, projectId, changeEventId]);
 
-  const handleEditSubmit = useCallback(
-    async (data: ChangeEventFormData) => {
-      await actions.submitEdit(data);
-      setIsEditing(false);
-    },
-    [actions],
-  );
-
-  /* ── Edit mode initial data ─────────────────────────────────────── */
-
-  const initialEditData = useMemo<Partial<ChangeEventFormData> | null>(() => {
-    if (!changeEvent) return null;
-    return {
-      number: changeEvent.number || "",
-      contractNumber: changeEvent.number || "",
-      title: changeEvent.title || "",
-      status: mapApiStatusToFormStatus(changeEvent.status),
-      origin: mapApiOriginToFormOrigin(changeEvent.origin),
-      originId: changeEvent.originId || changeEvent.origin_id || undefined,
-      type: mapApiTypeToFormType(changeEvent.type),
-      changeReason: mapApiReasonToFormReason(changeEvent.reason),
-      scope: changeEvent.scope || undefined,
-      expectingRevenue: changeEvent.expectingRevenue ?? changeEvent.expecting_revenue ?? true,
-      lineItemRevenueSource:
-        changeEvent.lineItemRevenueSource || changeEvent.line_item_revenue_source || "",
-      primeContractId: changeEvent.primeContractId != null
-        ? String(changeEvent.primeContractId)
-        : changeEvent.prime_contract_id != null
-          ? String(changeEvent.prime_contract_id)
-          : "",
-      description: changeEvent.description || undefined,
-      attachments: [],
-      lineItems:
-        lineItems.length > 0
-          ? lineItems.map((item, index) => ({
-              id: item.id || undefined,
-              budgetCode: item.projectBudgetCodeId || item.budgetCodeId || "",
-              description: item.description || "",
-              vendor:
-                item.formVendorId ||
-                item.vendorId ||
-                (typeof item.vendor === "string" ? item.vendor : item.vendor?.id) ||
-                "",
-              contract:
-                item.commitmentId && item.commitmentType
-                  ? `${item.commitmentType === "purchase_order" ? "po" : "sub"}-${item.commitmentId}`
-                  : item.contractId?.toString() || "",
-              commitmentId:
-                item.commitmentId && item.commitmentType
-                  ? `${item.commitmentType === "purchase_order" ? "po" : "sub"}-${item.commitmentId}`
-                  : undefined,
-              commitmentLineItemId: item.commitmentLineItemId || "",
-              revenueUnitOfMeasure: item.unitOfMeasure || "",
-              revenueQuantity: Number(item.quantity || 1) || 1,
-              revenueUnitCost: Number(item.unitCost || 0) || 0,
-              revenueRom: Number(item.revenueRom || 0) || 0,
-              costQuantity: Number(item.quantity || 1) || 1,
-              costUnitCost: Number(item.unitCost || 0) || 0,
-              costRom: Number(item.costRom || 0) || 0,
-              nonCommittedCost: Number(item.nonCommittedCost || 0) || 0,
-            }))
-          : [],
-    };
-  }, [changeEvent, lineItems]);
 
   /* ── Loading state ──────────────────────────────────────────────── */
 
@@ -522,36 +425,6 @@ export default function ChangeEventDetailPage() {
     );
   }
 
-  /* ── Edit mode ──────────────────────────────────────────────────── */
-
-  if (isEditing && initialEditData) {
-    return (
-      <PageShell
-        variant="dashboard"
-        title={`Edit ${changeEvent.title}`}
-        actions={
-          <Inline gap="sm">
-            <Button variant="ghost" size="sm" onClick={handleBack}>
-              <ArrowLeft className="mr-1 h-4 w-4" />
-              Back
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
-              Cancel Edit
-            </Button>
-          </Inline>
-        }
-      >
-        <ChangeEventForm
-          initialData={initialEditData}
-          onSubmit={handleEditSubmit}
-          onCancel={() => setIsEditing(false)}
-          mode="edit"
-          projectId={projectId}
-        />
-      </PageShell>
-    );
-  }
-
   /* ── Header actions ─────────────────────────────────────────────── */
 
   const ceNumber = changeEvent.number || `CE-${changeEvent.id}`;
@@ -571,17 +444,6 @@ export default function ChangeEventDetailPage() {
         disabled={!canEdit}
       >
         Create Prime PCO
-      </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => {
-          setActiveTab("general");
-          setIsEditing(true);
-        }}
-        disabled={!canEdit}
-      >
-        Edit
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -763,6 +625,7 @@ export default function ChangeEventDetailPage() {
             <ChangeEventGeneralInfoPanel
               changeEvent={changeEvent}
               projectId={projectId}
+              onFieldSaved={() => void actions.refetch()}
             />
             <div className="mt-10">
               <ChangeEventLineItemsTable

@@ -6,7 +6,6 @@ import { UserPlus, Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
@@ -140,9 +139,6 @@ export function LinkExistingContactSheet({
             <UserPlus className="h-4 w-4" />
             Add Existing Contact
           </SheetTitle>
-          <SheetDescription>
-            Link an existing contact to this vendor
-          </SheetDescription>
         </SheetHeader>
 
         <div className="space-y-4 py-6">

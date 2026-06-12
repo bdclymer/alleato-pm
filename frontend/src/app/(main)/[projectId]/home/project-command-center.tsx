@@ -1138,9 +1138,9 @@ function ProjectSetupSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="flex flex-col gap-0 p-0">
-        <SheetHeader className="px-4 pt-6 pb-4 border-b border-border">
-          <SheetTitle className="text-base font-semibold">Project Setup</SheetTitle>
+      <SheetContent side="right">
+        <SheetHeader>
+          <SheetTitle>Project Setup</SheetTitle>
           <p className="text-sm text-muted-foreground">Complete these steps to get your project running.</p>
           <div className="mt-3">
             <p className="text-xs text-muted-foreground mb-2">{completedCount} of {trackableIds.length} complete</p>
@@ -1151,8 +1151,7 @@ function ProjectSetupSheet({
             </div>
           </div>
         </SheetHeader>
-        <div className="flex-1 overflow-y-auto px-4 py-4">
-          <div className="space-y-1">
+        <div className="space-y-1">
             {SETUP_ITEMS.map((item) => {
               const Icon = item.icon;
               const done = completionMap[item.id] ?? false;
@@ -1175,12 +1174,12 @@ function ProjectSetupSheet({
                 </Link>
               );
             })}
-          </div>
         </div>
       </SheetContent>
     </Sheet>
   );
 }
+
 
 /* ─────────────────────────────────────────────────────────────
    ReadinessIndicator
