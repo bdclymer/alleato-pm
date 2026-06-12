@@ -14,6 +14,7 @@ interface ImportRow {
   companyId: string;
   originalAmount: number;
   costCode: string | null;
+  costCodeDescription: string | null;
   accountingMethod: string;
   description: string | null;
   retentionPercentage: number | null;
@@ -35,6 +36,7 @@ const COLUMN_ALIASES: Record<keyof ImportRow, string[]> = {
   companyId: ["company id", "company_id", "vendor id", "contractor id"],
   originalAmount: ["original amount", "amount", "contract amount", "original contract amount"],
   costCode: ["cost code", "cost_code", "budget code", "budget_code", "csi code", "csi"],
+  costCodeDescription: ["cost code description", "cost_code_description", "csi description", "code description"],
   accountingMethod: ["accounting method", "accounting_method"],
   description: ["description", "desc"],
   retentionPercentage: ["retention percentage", "retainage", "retention", "retainage %", "retention %"],
@@ -115,6 +117,7 @@ function parseRow(rawRow: Record<string, unknown>): ImportRow | null {
     companyId: getCellString(rawRow, COLUMN_ALIASES.companyId),
     originalAmount: amount,
     costCode: getCellString(rawRow, COLUMN_ALIASES.costCode) || null,
+    costCodeDescription: getCellString(rawRow, COLUMN_ALIASES.costCodeDescription) || null,
     accountingMethod: getCellString(rawRow, COLUMN_ALIASES.accountingMethod) || "amount",
     description: getCellString(rawRow, COLUMN_ALIASES.description) || null,
     retentionPercentage: getCellNumber(rawRow, COLUMN_ALIASES.retentionPercentage),
@@ -245,7 +248,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
           .insert({
             [sovFk]: created.id,
             line_number: 1,
-            description: row.description || row.title,
+            description: row.costCodeDescription || row.description || row.title,
             amount: row.originalAmount,
             ...(row.costCode ? { budget_code: row.costCode } : {}),
           });
