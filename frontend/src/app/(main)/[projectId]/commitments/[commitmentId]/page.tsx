@@ -718,14 +718,13 @@ export default function CommitmentDetailPage() {
   }, []);
 
   const isPO = commitment?.type === "purchase_order";
-  const contractType = isPO ? "Purchase Order" : "Subcontract";
 
   const displayNumber = safeNumber(commitment?.number);
 
   // ── Loading ──
   if (isLoading) {
     return (
-      <PageShell variant="detailWide" title="Commitment Details" description="Loading…" onBack={() => router.back()}>
+      <PageShell variant="detailWide" title="Commitment Details" onBack={() => router.back()}>
         <div className="space-y-6">
           <Skeleton className="h-24 w-full rounded-lg" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
@@ -744,7 +743,7 @@ export default function CommitmentDetailPage() {
   // ── Error ──
   if (error || !commitment) {
     return (
-      <PageShell variant="detailWide" title="Commitment Details" description="Not found" onBack={() => router.back()}>
+      <PageShell variant="detailWide" title="Commitment Details" onBack={() => router.back()}>
         <ErrorState error={error ?? "Commitment not found"} onRetry={() => void fetchCommitment()} />
       </PageShell>
     );
@@ -824,19 +823,10 @@ export default function CommitmentDetailPage() {
     </>
   );
 
-  const description = [
-    capitalizeWords(commitment.title),
-    contractType,
-    commitment.contract_company?.name,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-
   return (
     <PageShell
       variant="detailWide"
       title={capitalizeWords(commitment.title) || (displayNumber ? `#${displayNumber}` : "Commitment")}
-      description={description}
       actions={headerActions}
       onBack={() => router.back()}
       contentClassName="space-y-0"
