@@ -62,6 +62,7 @@
     "verify:live-db-incident": "node scripts/verify/verify-live-db-incident.mjs",
     "verify:db-pg-net-suspensions": "node scripts/verify/verify-db-pg-net-suspensions.mjs",
     "verify:active-backend-url": "node scripts/verify/verify-active-backend-url.mjs",
+    "verify:jobplanner-api": "node scripts/verify/smoke_jobplanner_api.mjs",
     "ops:suspend-db-pressure-crons": "node scripts/ops/suspend-render-db-pressure-crons.mjs",
     "verify:estimate-template-contract": "node scripts/check-estimate-template-contract.mjs",
     "verify:project-attribution": "node scripts/verify/verify_project_attribution_rules.mjs",
