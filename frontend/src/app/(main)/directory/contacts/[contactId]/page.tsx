@@ -32,17 +32,15 @@ import {
 } from "@/components/ui/popover";
 import {
   Pencil,
-  Mail,
   Building2,
   ExternalLink,
   MapPin,
-  Linkedin,
-  Phone,
   Check,
   ChevronsUpDown,
   Layers,
   User,
   FileText,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -149,11 +147,11 @@ function InlineTextField({ label, value, onSave, type = "text", placeholder, hre
         <Button
           variant="ghost"
           size="icon"
-          className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+          className="h-4 w-4 opacity-0 group-hover:opacity-30 hover:bg-transparent transition-opacity flex-shrink-0"
           onClick={() => { setDraft(value ?? ""); setEditing(true); }}
           aria-label={`Edit ${label}`}
         >
-          <Pencil className="h-3 w-3" />
+          <Pencil className="h-2.5 w-2.5" />
         </Button>
       </div>
     </div>
@@ -226,11 +224,11 @@ function InlineTextareaField({ label, value, onSave, placeholder }: InlineTextar
         <Button
           variant="ghost"
           size="icon"
-          className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+          className="h-4 w-4 opacity-0 group-hover:opacity-30 hover:bg-transparent transition-opacity flex-shrink-0"
           onClick={() => { setDraft(value ?? ""); setEditing(true); }}
           aria-label={`Edit ${label}`}
         >
-          <Pencil className="h-3 w-3" />
+          <Pencil className="h-2.5 w-2.5" />
         </Button>
       </div>
     </div>
@@ -300,11 +298,11 @@ function InlineSelectField({ label, value, onSave, options, placeholder }: Inlin
         <Button
           variant="ghost"
           size="icon"
-          className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+          className="h-4 w-4 opacity-0 group-hover:opacity-30 hover:bg-transparent transition-opacity flex-shrink-0"
           onClick={() => setEditing(true)}
           aria-label={`Edit ${label}`}
         >
-          <Pencil className="h-3 w-3" />
+          <Pencil className="h-2.5 w-2.5" />
         </Button>
       </div>
     </div>
@@ -407,11 +405,11 @@ function InlineCompanyField({ label, company, onSave }: InlineCompanyProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+          className="h-4 w-4 opacity-0 group-hover:opacity-30 hover:bg-transparent transition-opacity flex-shrink-0"
           onClick={() => setEditing(true)}
           aria-label={`Edit ${label}`}
         >
-          <Pencil className="h-3 w-3" />
+          <Pencil className="h-2.5 w-2.5" />
         </Button>
       </div>
     </div>
@@ -499,8 +497,8 @@ export default function ContactDetailsPage() {
 
   if (isLoading) {
     return (
-      <PageShell variant="detail" onBack={() => router.back()} title="Contact">
-        <div className="max-w-3xl mx-auto space-y-10 pt-4">
+      <PageShell variant="content">
+        <div className="space-y-10 pt-4">
           <div className="flex gap-5">
             <Skeleton className="h-16 w-16 rounded-full flex-shrink-0" />
             <div className="space-y-2 pt-1 flex-1">
@@ -540,17 +538,8 @@ export default function ContactDetailsPage() {
   const activeCount = contact.memberships?.filter(m => m.status === "active").length ?? 0;
 
   return (
-    <PageShell
-      variant="detail"
-      onBack={() => router.back()}
-      title={fullName}
-      actions={
-        <Button variant="outline" size="sm" onClick={() => setEditSheetOpen(true)}>
-          Edit All
-        </Button>
-      }
-    >
-      <div className="max-w-3xl mx-auto space-y-10 pb-16">
+    <PageShell variant="content">
+      <div className="space-y-10 pb-16">
 
         {/* ── Identity header ─────────────────────────────────── */}
         <div className="flex items-start gap-5 pt-1">
@@ -584,30 +573,25 @@ export default function ContactDetailsPage() {
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 flex-shrink-0 pt-0.5">
-            {contact.email && (
-              <Button variant="outline" size="sm" asChild>
-                <a href={`mailto:${contact.email}`}>
-                  <Mail className="h-3.5 w-3.5" />
-                  Email
-                </a>
-              </Button>
-            )}
-            {(contact.phone_mobile ?? contact.phone_business) && (
-              <Button variant="outline" size="sm" asChild>
-                <a href={`tel:${contact.phone_mobile ?? contact.phone_business}`}>
-                  <Phone className="h-3.5 w-3.5" />
-                  Call
-                </a>
-              </Button>
-            )}
-            {contact.linkedin && (
-              <Button variant="outline" size="icon" className="h-8 w-8" asChild>
-                <a href={contact.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
-                  <Linkedin className="h-3.5 w-3.5" />
-                </a>
-              </Button>
-            )}
+          <div className="flex items-center gap-0.5 flex-shrink-0 pt-0.5">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:bg-transparent hover:text-foreground"
+              onClick={() => setEditSheetOpen(true)}
+              aria-label="Edit contact"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:bg-transparent hover:text-foreground"
+              onClick={() => { void load(); }}
+              aria-label="Refresh"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+            </Button>
           </div>
         </div>
 
