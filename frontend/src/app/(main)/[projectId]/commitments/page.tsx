@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement, ReactNode } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, FileSignature, FileText, MoreHorizontal, Plus, RefreshCw, RotateCcw, ShoppingCart, Trash2, Trash } from "lucide-react";
+import { ChevronDown, FileSignature, FileText, MoreHorizontal, Plus, RefreshCw, RotateCcw, ShoppingCart, Trash2, Trash, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
@@ -32,6 +32,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ExportDialog } from "@/components/commitments/ExportDialog";
+import { CommitmentsImportDialog } from "@/components/commitments/CommitmentsImportDialog";
 import {
   TableExpandedRow,
   UnifiedTablePage,
@@ -275,6 +276,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
   const queryClient = useQueryClient();
 
   const [isExportDialogOpen, setIsExportDialogOpen] = React.useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = React.useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
@@ -724,6 +726,10 @@ export default function ProjectCommitmentsPage(): ReactElement {
                     <ShoppingCart className="mr-2 h-4 w-4 text-muted-foreground" />
                     Purchase Order
                   </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setIsImportDialogOpen(true)}>
+                    <Upload className="mr-2 h-4 w-4 text-muted-foreground" />
+                    Import
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </PermissionGate>
@@ -992,6 +998,15 @@ export default function ProjectCommitmentsPage(): ReactElement {
         onOpenChange={setIsExportDialogOpen}
         projectId={projectId}
         selectedCommitmentIds={tableState.selectedIds}
+      />
+
+      <CommitmentsImportDialog
+        open={isImportDialogOpen}
+        onOpenChange={setIsImportDialogOpen}
+        projectId={projectId}
+        onImported={() => {
+          void refetch();
+        }}
       />
     </>
   );
