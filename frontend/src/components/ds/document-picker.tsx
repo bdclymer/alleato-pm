@@ -96,6 +96,7 @@ export interface EntityAttachmentsProps {
   projectId: string | number;
   defaultDocumentType?: string;
   className?: string;
+  hideIfEmpty?: boolean;
 }
 
 export function EntityAttachments({
@@ -104,6 +105,7 @@ export function EntityAttachments({
   projectId,
   defaultDocumentType,
   className,
+  hideIfEmpty = false,
 }: EntityAttachmentsProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState<string[]>([]);
@@ -234,7 +236,11 @@ export function EntityAttachments({
 
   const isUploadingAny = uploading.length > 0;
 
-  return (
+  if (hideIfEmpty && !isLoading && docs.length === 0) {
+    return null;
+  }
+
+  const content = (
     <div className={cn('space-y-4', className)}>
       {documentTypes.length > 0 && (
         <div className="flex flex-col gap-1.5 sm:max-w-xs">
@@ -400,6 +406,13 @@ export function EntityAttachments({
         </ul>
       )}
     </div>
+  );
+
+  return (
+    <section className="space-y-4">
+      <h2 className="text-sm font-semibold text-foreground">Files</h2>
+      {content}
+    </section>
   );
 }
 
