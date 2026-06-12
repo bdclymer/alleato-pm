@@ -33,7 +33,7 @@ export default async function ProjectDailyLogPage({
     ...new Set(logs.map((l) => l.created_by).filter(Boolean) as string[]),
   ];
 
-  let profileMap: Record<string, string> = {};
+  const profileMap: Record<string, string> = {};
   if (creatorIds.length > 0) {
     const { data: profiles } = await supabase
       .from("user_profiles")

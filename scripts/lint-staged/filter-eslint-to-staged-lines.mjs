@@ -26,7 +26,7 @@ function stagedLinesFor(frontendRelativeFile) {
     diff = execFileSync(
       "git",
       ["diff", "--cached", "--unified=0", "--", repoRelativeFile],
-      { cwd: repoRoot, encoding: "utf8" }
+      { cwd: repoRoot, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 }
     );
   } catch (error) {
     console.error(`Failed to read staged diff for ${repoRelativeFile}`);

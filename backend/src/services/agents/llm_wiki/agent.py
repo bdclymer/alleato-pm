@@ -315,9 +315,11 @@ def _parse_query_answer(raw: str) -> tuple[str, bool]:
     return answer or raw or "No answer returned.", should_file
 
 
-def _collect_artifacts(workspace: Path) -> list[WikiArtifact]:
+def _collect_artifacts(workspace: Path, *, include_content: bool = True) -> list[WikiArtifact]:
     artifacts: list[WikiArtifact] = []
     for path in sorted(workspace.rglob("*")):
+        if path.is_symlink():
+            continue
         if not path.is_file():
             continue
         relative = path.relative_to(workspace).as_posix()
@@ -330,7 +332,7 @@ def _collect_artifacts(workspace: Path) -> list[WikiArtifact]:
         elif path.suffix.lower() == ".md":
             kind = "markdown"
         content = None
-        if path.suffix.lower() in {".md", ".txt", ".json", ".yaml", ".yml", ".csv"} and size <= 100_000:
+        if include_content and path.suffix.lower() in {".md", ".txt", ".json", ".yaml", ".yml", ".csv"} and size <= 100_000:
             content = path.read_text(encoding="utf-8", errors="replace")
         artifacts.append(WikiArtifact(path=relative, kind=kind, bytes=size, content=content))  # type: ignore[arg-type]
     return artifacts
@@ -360,8 +362,11 @@ def _archive_project_from_workspace(workspace: Path) -> Optional[WikiArchiveProj
     if len(relative.parts) != 3 or not (workspace / "wiki").is_dir():
         return None
 
-    artifacts = _collect_artifacts(workspace)
-    latest_mtime = max((path.stat().st_mtime for path in workspace.rglob("*") if path.is_file()), default=workspace.stat().st_mtime)
+    artifacts = _collect_artifacts(workspace, include_content=False)
+    latest_mtime = max(
+        (path.stat().st_mtime for path in workspace.rglob("*") if path.is_file() and not path.is_symlink()),
+        default=workspace.stat().st_mtime,
+    )
     user_id, topic_slug, session_id = relative.parts
     index_path = workspace / "wiki" / "index.md"
     index_content = index_path.read_text(encoding="utf-8", errors="replace") if index_path.exists() else ""
@@ -375,7 +380,6 @@ def _archive_project_from_workspace(workspace: Path) -> Optional[WikiArchiveProj
         topic=topic,
         topicSlug=topic_slug,
         sessionId=session_id,
-        wikiPath=str(workspace),
         title=title,
         updatedAt=datetime.fromtimestamp(latest_mtime, UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         artifactCount=len(artifacts),
@@ -399,7 +403,10 @@ def list_llm_wiki_archive(
     root = OUTPUT_BASE_DIR
     projects: list[WikiArchiveProject] = []
     if root.exists():
-        workspace_candidates = [path for path in root.glob("*/*/*") if path.is_dir()]
+        workspace_candidates = [
+            path for path in root.glob("*/*/*")
+            if path.is_dir() and not path.is_symlink()
+        ]
         for workspace in workspace_candidates:
             project = _archive_project_from_workspace(workspace)
             if project is None:
@@ -413,14 +420,15 @@ def list_llm_wiki_archive(
             projects.append(project)
 
     projects.sort(key=lambda project: project.updated_at, reverse=True)
-    selected_project = projects[0] if topic_slug and session_id and projects else None
+    selected_project = projects[0] if user_id and topic_slug and session_id and projects else None
     artifacts: list[WikiArtifact] = []
     if selected_project:
-        selected_path = Path(selected_project.wiki_path).resolve()
+        selected_path = (root / selected_project.user_id / selected_project.topic_slug / selected_project.session_id).resolve()
         root_path = root.resolve()
         if root_path not in selected_path.parents:
-            raise RuntimeError("Selected archive workspace is outside the configured wiki output root.")
-        artifacts = _collect_artifacts(selected_path)
+            selected_project = None
+        else:
+            artifacts = _collect_artifacts(selected_path)
 
     return WikiArchiveResponse(
         projects=projects[:limit],

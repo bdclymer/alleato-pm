@@ -20,7 +20,6 @@ type WikiArchiveProject = {
   topic: string;
   topicSlug: string;
   sessionId: string;
-  wikiPath: string;
   title: string;
   updatedAt: string;
   artifactCount: number;
@@ -72,16 +71,6 @@ function previewText(content: string | null | undefined): string {
   return content;
 }
 
-function buildArchiveUrl(project?: WikiArchiveProject | null): string {
-  const params = new URLSearchParams({ limit: "100" });
-  if (project) {
-    params.set("userId", project.userId);
-    params.set("topicSlug", project.topicSlug);
-    params.set("sessionId", project.sessionId);
-  }
-  return `/api/admin/deep-research/archive?${params.toString()}`;
-}
-
 export default function DeepResearchArchivePage() {
   const router = useRouter();
   const pathname = usePathname();
@@ -94,45 +83,68 @@ export default function DeepResearchArchivePage() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  const loadArchive = React.useCallback(async (project?: WikiArchiveProject | null) => {
+  // Loads the full project list without filtering — never collapses the left panel
+  const loadProjects = React.useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await apiFetch<WikiArchiveResponse>(buildArchiveUrl(project));
+      const response = await apiFetch<WikiArchiveResponse>("/api/admin/deep-research/archive?limit=100");
       setProjects(response.projects);
-      setSelectedProject(response.selectedProject ?? project ?? null);
-      setArtifacts(response.artifacts);
-      setSelectedArtifactPath(response.artifacts[0]?.path ?? null);
-    } catch (loadError) {
-      console.error("Failed to load Deep Agents research archive", loadError);
-      setError(loadError instanceof Error ? loadError.message : "Deep Agents research archive could not be loaded.");
+    } catch (err) {
+      console.error("Failed to load Deep Research archive", err);
+      setError(err instanceof Error ? err.message : `Archive load failed: ${JSON.stringify(err)}`);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
+  // Loads artifacts for a specific project without touching the project list
+  const loadArtifacts = React.useCallback(async (project: WikiArchiveProject) => {
+    const params = new URLSearchParams({
+      userId: project.userId,
+      topicSlug: project.topicSlug,
+      sessionId: project.sessionId,
+      limit: "1",
+    });
+    try {
+      const response = await apiFetch<WikiArchiveResponse>(`/api/admin/deep-research/archive?${params.toString()}`);
+      setSelectedProject(response.selectedProject ?? project);
+      setArtifacts(response.artifacts);
+      setSelectedArtifactPath(response.artifacts[0]?.path ?? null);
+    } catch (err) {
+      console.error("Failed to load project artifacts", err);
+    }
+  }, []);
+
+  // Load projects once on initial mount
+  React.useEffect(() => {
+    void loadProjects();
+  }, [loadProjects]);
+
+  // Load artifacts when URL params change (e.g. project selection or deep-linked URL)
   React.useEffect(() => {
     const userId = searchParams?.get("userId");
     const topicSlug = searchParams?.get("topicSlug");
     const sessionId = searchParams?.get("sessionId");
     if (userId && topicSlug && sessionId) {
-      void loadArchive({
+      void loadArtifacts({
         userId,
         topicSlug,
         sessionId,
         topic: topicSlug.replace(/-/g, " "),
         title: topicSlug.replace(/-/g, " "),
-        wikiPath: "",
         updatedAt: new Date(0).toISOString(),
         artifactCount: 0,
         markdownCount: 0,
         sourceCount: 0,
         logSummary: null,
       });
-      return;
+    } else {
+      setSelectedProject(null);
+      setArtifacts([]);
+      setSelectedArtifactPath(null);
     }
-    void loadArchive(null);
-  }, [loadArchive, searchParams]);
+  }, [searchParams, loadArtifacts]);
 
   const filteredProjects = React.useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -147,6 +159,7 @@ export default function DeepResearchArchivePage() {
 
   const selectedArtifact = artifacts.find((artifact) => artifact.path === selectedArtifactPath) ?? artifacts[0] ?? null;
 
+  // Update URL only — the searchParams effect handles loading artifacts (no double fetch)
   function selectProject(project: WikiArchiveProject) {
     const params = new URLSearchParams({
       userId: project.userId,
@@ -154,7 +167,6 @@ export default function DeepResearchArchivePage() {
       sessionId: project.sessionId,
     });
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    void loadArchive(project);
   }
 
   return (
@@ -163,7 +175,7 @@ export default function DeepResearchArchivePage() {
       title="Deep Research Archive"
       description="Browse prior Deep Agents LLM wiki research projects, saved source files, durable answers, and change logs."
       actions={
-        <Button variant="outline" onClick={() => void loadArchive(selectedProject)} disabled={isLoading}>
+        <Button variant="outline" onClick={() => void loadProjects()} disabled={isLoading}>
           <RefreshCw className={cn("mr-2 size-4", isLoading && "animate-spin")} />
           Refresh
         </Button>
@@ -235,11 +247,11 @@ export default function DeepResearchArchivePage() {
             <>
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-3">
-                  <h2 className="text-lg font-semibold text-foreground">{selectedProject.title}</h2>
+                  <p className="text-lg font-semibold text-foreground">{selectedProject.title}</p>
                   <StatusBadge status="active" />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {selectedProject.artifactCount} files saved in {selectedProject.wikiPath || "the selected backend workspace"}
+                  {selectedProject.artifactCount} files · session {selectedProject.sessionId}
                 </p>
               </div>
 
@@ -268,7 +280,7 @@ export default function DeepResearchArchivePage() {
                       </Button>
                     );
                   })}
-                  {!isLoading && artifacts.length === 0 ? (
+                  {artifacts.length === 0 ? (
                     <div className="p-4 text-sm text-muted-foreground">No saved files in this workspace.</div>
                   ) : null}
                 </div>

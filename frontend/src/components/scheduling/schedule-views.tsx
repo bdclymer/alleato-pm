@@ -14,6 +14,7 @@
  */
 
 import { useMemo, useState, useCallback } from "react";
+import { InfoAlert } from "@/components/ds";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, addMonths, subMonths, startOfWeek, endOfWeek, isToday, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
@@ -1158,13 +1159,10 @@ export function ScheduleCalendarView({
       </div>
 
       {undatedTaskCount > 0 && tasksByDate.size === 0 && (
-        <div className="mb-4 rounded-md border bg-muted/30 px-3 py-2.5 text-sm text-muted-foreground flex items-center gap-2">
-          <Calendar className="h-4 w-4 shrink-0" />
-          <span>
-            {undatedTaskCount} task{undatedTaskCount !== 1 ? "s" : ""} have no start or finish date and cannot be shown on the calendar.
-            Open each task to set dates, or use the <span className="font-medium text-foreground">Table</span> or <span className="font-medium text-foreground">Board</span> view to see all tasks.
-          </span>
-        </div>
+        <InfoAlert variant="info" className="mb-4">
+          {undatedTaskCount} task{undatedTaskCount !== 1 ? "s" : ""} have no start or finish date and cannot be shown on the calendar.
+          Open each task to set dates, or use the <span className="font-medium text-foreground">Table</span> or <span className="font-medium text-foreground">Board</span> view to see all tasks.
+        </InfoAlert>
       )}
 
       {/* Week day headers */}
