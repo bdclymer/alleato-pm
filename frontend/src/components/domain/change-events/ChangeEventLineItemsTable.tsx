@@ -4,7 +4,7 @@ import React, { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 
-import { Columns2, MoreVertical, Plus, Search, SlidersHorizontal, Trash2, X } from "lucide-react";
+import { Columns2, MoreVertical, Pencil, Plus, Search, SlidersHorizontal, Trash2, X } from "lucide-react";
 
 import {
   InlineTable,
@@ -149,7 +149,7 @@ const DEFAULT_COL_WIDTHS: Record<ColWidthKey, number> = {
   rev_qty: 50, rev_unitCost: 85, rev_rom: 95, rev_primePco: 85, rev_latestPrice: 90,
   cost_qty: 50, cost_unitCost: 85, cost_rom: 85, cost_rfq: 65,
   cost_commitment: 90, cost_nonCommitted: 95, cost_latestCost: 85,
-  overUnder: 85, budgetMod: 80, action: 40,
+  overUnder: 85, budgetMod: 80, action: 92,
 };
 
 export function ChangeEventLineItemsTable({
@@ -353,7 +353,9 @@ export function ChangeEventLineItemsTable({
       setDialogOpen(false);
       onLineItemsChange?.();
     } catch (err) {
-      toast.error("Failed to save line item");
+      toast.error("Line item was not saved", {
+        description: err instanceof Error ? err.message : "The server did not return a usable error.",
+      });
     } finally {
       setIsSaving(false);
     }
@@ -390,7 +392,7 @@ export function ChangeEventLineItemsTable({
             className={cn(
               "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
               isFiltered
-                ? "bg-primary/10 text-primary"
+                ? "bg-muted text-foreground"
                 : "bg-muted text-muted-foreground",
             )}
           >
@@ -930,36 +932,45 @@ export function ChangeEventLineItemsTable({
                         </InlineTableCell>
                       )}
                       {(onDeleteLineItem || changeEventId) && (
-                        <InlineTableCell className="px-1 py-1 text-center">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
+                        <InlineTableCell className="px-1 py-1">
+                          <div className="flex items-center justify-end gap-1">
+                            {changeEventId && (
                               <Button
                                 type="button"
                                 variant="ghost"
                                 size="sm"
-                                className="h-7 w-7 p-0 text-muted-foreground"
-                                aria-label="Row actions"
+                                className="h-7 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                onClick={() => openEdit(li)}
                               >
-                                <MoreVertical className="h-3.5 w-3.5" />
+                                <Pencil className="h-3 w-3" />
+                                Edit
                               </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {changeEventId && (
-                                <DropdownMenuItem onClick={() => openEdit(li)}>
-                                  Edit
-                                </DropdownMenuItem>
-                              )}
-                              {onDeleteLineItem && (
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => onDeleteLineItem(li.id)}
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                            )}
+                            {onDeleteLineItem && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 w-7 p-0 text-muted-foreground"
+                                    aria-label="More line item actions"
+                                  >
+                                    <MoreVertical className="h-3.5 w-3.5" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={() => onDeleteLineItem(li.id)}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </div>
                         </InlineTableCell>
                       )}
                     </InlineTableRow>

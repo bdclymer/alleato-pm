@@ -117,7 +117,7 @@ function EditShell({ editing, onStartEdit, display, input, missing }: EditShellP
         if (e.key === "Enter" || e.key === " ") onStartEdit();
       }}
       className={cn(
-        "inline-flex cursor-text rounded px-1 -mx-1 transition-colors hover:bg-muted/70 focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/50",
+        "inline-flex cursor-text rounded px-1 -mx-1 transition-colors hover:text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-primary/50",
         missing && "text-muted-foreground/50 italic",
       )}
     >
@@ -352,8 +352,10 @@ export function ChangeEventGeneralInfoPanel({
         );
         toast.success("Saved");
         onFieldSaved?.();
-      } catch {
-        toast.error("Failed to save");
+      } catch (error) {
+        toast.error("Change event field was not saved", {
+          description: error instanceof Error ? error.message : "The server did not return a usable error.",
+        });
       }
     },
     [projectId, changeEventId, onFieldSaved],

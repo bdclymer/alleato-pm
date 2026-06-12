@@ -90,7 +90,7 @@ export function LineItemsSection({
       />
 
       <TooltipProvider>
-        <div className="overflow-x-auto overflow-hidden rounded-lg border border-border/70 bg-muted/20">
+        <div className="overflow-x-auto overflow-hidden rounded-lg border border-border/70">
           <Table>
             <LineItemsTableHeader />
             <TableBody>
@@ -138,7 +138,7 @@ function LineItemsTableHeader() {
   return (
     <TableHeader className="border-y-0 [&_tr]:border-b-0">
       {/* Group headers */}
-      <TableRow className="border-b-0 bg-muted/70 hover:bg-muted/70">
+      <TableRow className="border-b-0 bg-muted/30 hover:bg-muted/30">
         <TableHead className="w-[40px] px-1.5 py-1.5" />
         <TableHead colSpan={4} className="px-1 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground">
           Detail
@@ -154,7 +154,7 @@ function LineItemsTableHeader() {
         <TableHead className="w-12 px-1 py-1" />
       </TableRow>
       {/* Column headers */}
-      <TableRow className="border-b-0 bg-muted/50 hover:bg-muted/50">
+      <TableRow className="border-b-0 bg-muted/20 hover:bg-muted/20">
         <TableHead className="w-[36px] px-1 py-1.5" />
         <TableHead className="min-w-52 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Budget Code</TableHead>
         <TableHead className="min-w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Description</TableHead>
@@ -200,7 +200,7 @@ function LineItemsTableHeader() {
 
 function LineItemsTotalsRow({ lineItems }: { lineItems: ChangeEventLineItem[] }) {
   return (
-    <TableRow className="hover:bg-muted">
+    <TableRow className="hover:bg-transparent">
       <TableCell className="px-1.5 py-2" />
       <TableCell colSpan={4} className="px-1.5 py-3 text-xs font-semibold text-foreground">
         Totals

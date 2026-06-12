@@ -117,7 +117,7 @@ export function InlineTableHeaderRow({
     <tr
       className={cn(
         type === "group"
-          ? "bg-primary/5 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/50"
+          ? "bg-muted/30 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground"
           : variant === "edit"
             ? "border-0"
             : "border-b border-border",
@@ -208,8 +208,8 @@ export function InlineTableRow({
         type === "group"
           ? "bg-muted/40"
           : type === "markup"
-            ? "border-l-2 border-l-primary/40 bg-muted/25 text-muted-foreground"
-            : "group transition-colors hover:bg-muted/30",
+            ? "border-l-2 border-l-border bg-muted/25 text-muted-foreground"
+            : "group transition-colors hover:bg-transparent",
         className,
       )}
       {...props}

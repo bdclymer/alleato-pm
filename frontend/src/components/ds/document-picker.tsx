@@ -283,7 +283,7 @@ export function EntityAttachments({
           Loading…
         </div>
       ) : docs.length === 0 && !isUploadingAny ? (
-        <p className="text-sm text-muted-foreground">No documents attached yet.</p>
+        null
       ) : (
         <ul className="divide-y divide-border/50">
           {docs.map((doc) => {

@@ -71,10 +71,10 @@ export function LineItemRow({
     !revenueSourceLower.includes("manual entry");
 
   return (
-    <TableRow className="group border-b border-border/60 bg-background transition-colors hover:bg-muted/20">
+    <TableRow className="group border-b border-border/60 bg-background transition-colors hover:bg-transparent">
       {/* Drag handle */}
       <TableCell className="w-9 px-1 py-1.5 align-top">
-        <div className="mt-1 cursor-grab rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted active:cursor-grabbing">
+        <div className="mt-1 cursor-grab rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground active:cursor-grabbing">
           <GripVertical className="h-4 w-4" />
         </div>
       </TableCell>

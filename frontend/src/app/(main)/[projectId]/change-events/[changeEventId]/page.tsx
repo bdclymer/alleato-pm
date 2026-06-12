@@ -12,6 +12,7 @@ import {
   FileText,
   Mail,
   MoreHorizontal,
+  Pencil,
   Trash2,
   X,
   XCircle,
@@ -452,6 +453,11 @@ export default function ChangeEventDetailPage() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => router.push(`/${projectId}/change-events/${changeEventId}/edit`)}>
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit Change Event
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           {/* Status actions */}
           {normalizedStatus === "open" && (
             <DropdownMenuItem
