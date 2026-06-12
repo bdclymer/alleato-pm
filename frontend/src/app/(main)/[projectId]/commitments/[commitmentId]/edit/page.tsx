@@ -257,6 +257,12 @@ export default function EditCommitmentPage() {
         issued_on_date: data.dates?.issuedOnDate || null,
         default_retainage_percent: data.defaultRetainagePercent ?? null,
         invoice_contact_ids: data.invoiceContactIds || [],
+        sov_lines: (data.sov ?? []).map((line) => ({
+          line_number: line.lineNumber,
+          budget_code: line.budgetCode ?? null,
+          description: line.description ?? null,
+          amount: line.amount ?? 0,
+        })),
       }),
     });
 

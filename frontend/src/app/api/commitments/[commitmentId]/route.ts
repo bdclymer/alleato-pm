@@ -467,6 +467,60 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
       return apiErrorResponse(error);
     }
 
+    // Update SOV line items (budget_code, description, amount) if provided.
+    // The edit form sends sov_lines when the user modifies SOV fields — budget_code
+    // lives on the SOV item, not on the subcontract/PO record itself.
+    const rawBody = validatedData as Record<string, unknown>;
+    const sovLines = Array.isArray(rawBody.sov_lines)
+      ? (rawBody.sov_lines as Array<{
+          line_number: number;
+          budget_code: string | null;
+          description: string | null;
+          amount: number;
+        }>)
+      : null;
+
+    if (sovLines && sovLines.length > 0) {
+      const sovTable =
+        unifiedData.commitment_type === "subcontract"
+          ? "subcontract_sov_items"
+          : "purchase_order_sov_items";
+      const sovFk =
+        unifiedData.commitment_type === "subcontract"
+          ? "subcontract_id"
+          : "purchase_order_id";
+
+      for (const line of sovLines) {
+        const { data: existing } = await supabase
+          .from(sovTable as "subcontract_sov_items")
+          .select("id")
+          .eq(sovFk as "subcontract_id", commitmentId)
+          .eq("line_number", line.line_number)
+          .maybeSingle();
+
+        if (existing) {
+          await supabase
+            .from(sovTable as "subcontract_sov_items")
+            .update({
+              budget_code: line.budget_code,
+              description: line.description,
+              amount: line.amount,
+            })
+            .eq("id", existing.id);
+        } else {
+          await supabase
+            .from(sovTable as "subcontract_sov_items")
+            .insert({
+              [sovFk]: commitmentId,
+              line_number: line.line_number,
+              budget_code: line.budget_code,
+              description: line.description,
+              amount: line.amount,
+            });
+        }
+      }
+    }
+
     return NextResponse.json({ data });
     },
 );
