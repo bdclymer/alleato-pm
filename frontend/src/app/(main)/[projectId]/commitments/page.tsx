@@ -705,7 +705,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
       <UnifiedTablePage
         header={{
           title: "Commitments",
-          description: "Manage purchase orders and subcontracts",
+
           mobileActionsInline: true,
           actions: (
             <PermissionGate projectId={projectId} module="contracts" level="write">
