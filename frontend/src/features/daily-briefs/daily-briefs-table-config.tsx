@@ -111,7 +111,7 @@ export function buildDailyBriefTableColumns(): TableColumn<DailyBriefHistoryItem
       sortValue: (item) => item.recapDate,
       render: (item) => (
         <Link
-          href="/executive"
+          href={`/daily-briefs/${item.id}`}
           className="font-medium text-foreground underline-offset-4 hover:underline"
         >
           {item.recapDate}

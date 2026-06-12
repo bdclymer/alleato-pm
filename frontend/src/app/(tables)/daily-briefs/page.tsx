@@ -158,6 +158,7 @@ export default function DailyBriefsTablePage() {
       table={{
         columns: tableColumns,
         getRowId: (item) => item.id,
+        onRowClick: (item) => router.push(`/daily-briefs/${item.id}`),
         stickyHeader: true,
         density: "compact",
       }}
