@@ -510,7 +510,6 @@ export function ScheduleOfValuesTab({
           <InlineTableFooterRow type="totals">
             <InlineTableFooterCell align="right" colSpan={accountingMethod === "unit" ? 6 : 3}>Totals</InlineTableFooterCell>
             <InlineTableFooterCell align="right" numeric>{formatCurrency(totals.amount)}</InlineTableFooterCell>
-            <InlineTableFooterCell />
             <InlineTableFooterCell align="right" numeric>{formatCurrency(totals.billed)}</InlineTableFooterCell>
             <InlineTableFooterCell align="right" numeric>{formatCurrency(amountRemaining)}</InlineTableFooterCell>
             <InlineTableFooterCell />
