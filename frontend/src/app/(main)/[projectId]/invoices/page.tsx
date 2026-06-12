@@ -7,7 +7,7 @@ import { Plus, Eye, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
-import { KpiRow, StatusBadge } from "@/components/ds";
+import { KpiStrip, StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -615,7 +615,7 @@ export default function ProjectInvoicesPage(): ReactElement {
   }, [ownerRawInvoices]);
 
   const ownerKpiRow = (
-    <KpiRow
+    <KpiStrip
       metrics={[
         { label: "Under Review", value: formatCurrency(ownerKpiTotals.underReview) },
         { label: "Approved", value: formatCurrency(ownerKpiTotals.approved) },
@@ -650,7 +650,7 @@ export default function ProjectInvoicesPage(): ReactElement {
   }, [subInvoicesRaw]);
 
   const subKpiRow = (
-    <KpiRow
+    <KpiStrip
       metrics={[
         { label: "Under Review", value: formatCurrency(subKpiTotals.underReview) },
         { label: "Approved", value: formatCurrency(subKpiTotals.approved) },
@@ -757,9 +757,9 @@ export default function ProjectInvoicesPage(): ReactElement {
           actions: createInvoiceAction,
         }}
         tabs={tabs}
-        topContent={subKpiRow}
         toolbar={{
           totalItems: subInvoicesRaw.length,
+          leftContent: subKpiRow,
           filteredItems: subcontractorTotalItems,
           selectedCount: tableState.selectedIds.length,
           searchValue: tableState.searchInput,
@@ -1234,9 +1234,9 @@ export default function ProjectInvoicesPage(): ReactElement {
         actions: createInvoiceAction,
       }}
       tabs={tabs}
-      topContent={ownerKpiRow}
       toolbar={{
         totalItems: ownerTotalItems,
+        leftContent: ownerKpiRow,
         filteredItems: ownerTotalItems,
         selectedCount: tableState.selectedIds.length,
         searchValue: tableState.searchInput,

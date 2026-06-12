@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -125,6 +126,22 @@ export function KpiBlock({
 // ---------------------------------------------------------------------------
 // KpiRow — Shared container for 2-4 KpiBlocks with dividers
 // ---------------------------------------------------------------------------
+
+export function KpiStrip({ metrics }: { metrics: Pick<KpiBlockProps, "label" | "value">[] }) {
+  return (
+    <div className="flex items-center gap-4 py-2 text-sm">
+      {metrics.map((metric, i) => (
+        <React.Fragment key={i}>
+          {i > 0 && <span className="h-3 w-px bg-border" aria-hidden />}
+          <span className="flex items-baseline gap-1.5">
+            <span className="text-muted-foreground">{metric.label}</span>
+            <span className="font-semibold text-foreground tabular-nums">{metric.value}</span>
+          </span>
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
 
 export function KpiRow({
   metrics,

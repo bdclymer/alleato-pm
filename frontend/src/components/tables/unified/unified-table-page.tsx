@@ -329,6 +329,8 @@ export interface UnifiedTablePageProps<T> {
     mobilePanelActions?: ReactNode;
     /** Extra action buttons rendered in the toolbar icon row (e.g. ERP sync) */
     customActions?: ReactNode;
+    /** Content rendered on the left of the toolbar row, with icons pushed to the right */
+    leftContent?: ReactNode;
     /**
      * Stable identifier for this table when saving views (e.g. "meetings").
      * Set this to enable the per-user "Saved views" picker. Project-agnostic —
@@ -1809,6 +1811,7 @@ export function UnifiedTablePage<T>({
       onBulkDelete={effectiveBulkDelete}
       mobilePanelActions={toolbar.mobilePanelActions}
       customActions={toolbar.customActions}
+      leftContent={toolbar.leftContent}
       density={density}
       onDensityChange={handleDensityChange}
       enableSearch={resolvedFeatures.enableSearch}

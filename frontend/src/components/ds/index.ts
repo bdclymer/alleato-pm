@@ -21,7 +21,7 @@
 export { StatusBadge, StatusDot, StatusText } from "./status-badge";
 export type { StatusVariant } from "./status-badge";
 
-export { KpiBlock, KpiRow } from "./kpi";
+export { KpiBlock, KpiRow, KpiStrip } from "./kpi";
 export type { KpiBlockProps } from "./kpi";
 
 export { SectionHeader } from "./section-header";

@@ -152,6 +152,8 @@ export interface TableToolbarProps {
   mobilePanelActions?: ReactNode;
   /** Extra action buttons rendered in the toolbar icon row (e.g. ERP sync) */
   customActions?: ReactNode;
+  /** Content rendered on the left of the toolbar row, with icons pushed to the right */
+  leftContent?: ReactNode;
   density?: TableDensity;
   onDensityChange?: (density: TableDensity) => void;
   /** Feature flags. Omitted flags default to enabled. */
@@ -864,6 +866,7 @@ export function TableToolbar({
   onBulkDelete,
   mobilePanelActions,
   customActions,
+  leftContent,
   density = "default",
   onDensityChange,
   features,
@@ -1356,6 +1359,8 @@ export function TableToolbar({
   return (
     <div className={cn("py-2", className)}>
       <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {leftContent ? <div className="shrink-0 pr-2">{leftContent}</div> : null}
+
         {savedViewsScope ? (
           <div className="shrink-0">
             <TableViewsMenu
