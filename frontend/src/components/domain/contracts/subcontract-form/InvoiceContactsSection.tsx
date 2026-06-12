@@ -29,6 +29,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { ContactFormSheet } from "@/components/domain/contacts/ContactFormSheet";
+import { LinkExistingContactSheet } from "@/components/domain/contacts/LinkExistingContactSheet";
 import type { CreateSubcontractInput } from "@/lib/schemas/create-subcontract-schema";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 
@@ -54,6 +55,8 @@ export function InvoiceContactsSection({
   const selectedContactIds = useWatch({ control, name: "invoiceContactIds" }) || [];
   const [open, setOpen] = React.useState(false);
   const [extraLabels, setExtraLabels] = React.useState<Record<string, string>>({});
+  const [showLinkExistingSheet, setShowLinkExistingSheet] = React.useState(false);
+  const [showContactSheet, setShowContactSheet] = React.useState(false);
 
   // Resolve labels for selected contacts that aren't in the current vendor's options
   // (e.g. contacts saved before the contract company changed).
@@ -80,7 +83,6 @@ export function InvoiceContactsSection({
         });
       });
   }, [selectedContactIds, invoiceContactOptions, extraLabels]);
-  const [showContactSheet, setShowContactSheet] = React.useState(false);
 
   const handleContactCreated = async (created: { id: string }) => {
     const vendorCompanyLinkId = vendorCompanyId || vendorId;
@@ -94,6 +96,14 @@ export function InvoiceContactsSection({
     await refetchContacts?.();
     const current = getValues("invoiceContactIds") || [];
     setValue("invoiceContactIds", [...current, created.id]);
+  };
+
+  const handleContactLinked = async (personId: string) => {
+    await refetchContacts?.();
+    const current = getValues("invoiceContactIds") || [];
+    if (!current.includes(personId)) {
+      setValue("invoiceContactIds", [...current, personId]);
+    }
   };
 
   return (
@@ -220,11 +230,21 @@ export function InvoiceContactsSection({
                                     className="min-h-11"
                                     onSelect={() => {
                                       setOpen(false);
+                                      setShowLinkExistingSheet(true);
+                                    }}
+                                  >
+                                    <UserPlus className="mr-2 h-4 w-4" />
+                                    Add existing contact
+                                  </CommandItem>
+                                  <CommandItem
+                                    className="min-h-11"
+                                    onSelect={() => {
+                                      setOpen(false);
                                       setShowContactSheet(true);
                                     }}
                                   >
                                     <UserPlus className="mr-2 h-4 w-4" />
-                                    Add contact to vendor
+                                    Create new contact
                                   </CommandItem>
                                 </CommandGroup>
                               </>
@@ -235,6 +255,14 @@ export function InvoiceContactsSection({
                     </Popover>
                     <FormMessage />
                   </FormItem>
+
+                  <LinkExistingContactSheet
+                    open={showLinkExistingSheet}
+                    onOpenChange={setShowLinkExistingSheet}
+                    vendorId={vendorCompanyId || vendorId || ""}
+                    excludeContactIds={selectedContactIds}
+                    onContactLinked={handleContactLinked}
+                  />
 
                   <ContactFormSheet
                     open={showContactSheet}
