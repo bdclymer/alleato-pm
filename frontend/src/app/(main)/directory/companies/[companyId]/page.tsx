@@ -1064,16 +1064,12 @@ export default function CompanyDetailsPage() {
                 </div>
               </section>
 
-              <section className="rounded-lg border border-border bg-background p-4">
-                <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Attachments</p>
-                <div className="mt-4">
-                  <EntityAttachments
-                    entityType="company"
-                    entityId={companyId}
-                    projectId="0"
-                  />
-                </div>
-              </section>
+              <EntityAttachments
+                entityType="company"
+                entityId={companyId}
+                projectId="0"
+                hideIfEmpty={true}
+              />
 
             </div>
           </aside>
