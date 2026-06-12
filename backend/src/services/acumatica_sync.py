@@ -20,6 +20,14 @@ DEFAULT_BASE_URL = os.getenv("ACUMATICA_BASE_URL", "https://alleatogroup.acumati
 ENTITY_BASE = f"{DEFAULT_BASE_URL}/entity/Default/24.200.001"
 PAGE_SIZE = max(25, int(os.getenv("ACUMATICA_SYNC_PAGE_SIZE", "100")))
 
+PAYMENT_APPLICATION_REMEDIATION = (
+    "Acumatica Payment.ApplicationHistory is not readable from the current Default endpoint, "
+    "and the safe DocumentsToApply probe did not return historical application lines. "
+    "Expose a Generic Inquiry or endpoint with payment type/ref, customer, applied invoice "
+    "type/ref, amount applied, balance, project, and last modified timestamp, then wire "
+    "payment_applications to that source."
+)
+
 
 @dataclass
 class EntitySyncResult:
@@ -709,6 +717,45 @@ class AcumaticaFinancialSyncService:
             if value
         ]
         return max(values) if values else None
+
+    def _fetch_payment_application_records(self, last_cursor: Optional[str]) -> List[Dict[str, Any]]:
+        try:
+            return self.session.fetch_entity(
+                "Payment",
+                top=100,
+                expand="ApplicationHistory",
+                select="ReferenceNbr,Type,CustomerID,LastModifiedDateTime,ApplicationHistory",
+                modified_after=last_cursor,
+            )
+        except RuntimeError as exc:
+            application_history_error = str(exc)
+
+        documents_to_apply_records = self.session.fetch_entity(
+            "Payment",
+            top=100,
+            expand="DocumentsToApply",
+            select="ReferenceNbr,Type,CustomerID,LastModifiedDateTime,DocumentsToApply",
+            modified_after=last_cursor,
+        )
+        if any(self._payment_application_lines(payment) for payment in documents_to_apply_records):
+            logger.warning(
+                "[AcumaticaSync] Payment.ApplicationHistory failed; using DocumentsToApply fallback for applications: %s",
+                application_history_error,
+            )
+            return documents_to_apply_records
+
+        raise RuntimeError(
+            f"{PAYMENT_APPLICATION_REMEDIATION} ApplicationHistory error: {application_history_error}"
+        )
+
+    @staticmethod
+    def _payment_application_lines(payment: Dict[str, Any]) -> List[Dict[str, Any]]:
+        lines: List[Dict[str, Any]] = []
+        for key in ("ApplicationHistory", "DocumentsToApply"):
+            value = payment.get(key)
+            if isinstance(value, list):
+                lines.extend(item for item in value if isinstance(item, dict))
+        return lines
 
     def _sync_vendors(self, last_cursor: Optional[str]) -> EntitySyncResult:
         result = EntitySyncResult(entity="vendors")
@@ -2231,13 +2278,7 @@ class AcumaticaFinancialSyncService:
                              invoice_reference_nbr, invoice_type)
         """
         result = EntitySyncResult(entity="payment_applications")
-        records = self.session.fetch_entity(
-            "Payment",
-            top=100,
-            expand="ApplicationHistory",
-            select="ReferenceNbr,Type,CustomerID,ApplicationHistory",
-            modified_after=last_cursor,
-        )
+        records = self._fetch_payment_application_records(last_cursor)
         result.fetched = len(records)
         result.cursor = self._max_cursor(records) or _now_iso()
 
@@ -2249,11 +2290,23 @@ class AcumaticaFinancialSyncService:
             payment_ref = payment.get("ReferenceNbr")
             payment_type = payment.get("Type") or "Payment"
             customer_id = payment.get("CustomerID") or payment.get("Customer")
-            payment_external_key = f"Payment:{payment_type}:{payment_ref}"
+            payment_external_key = f"{payment_type}|{payment_ref}"
 
-            for app in payment.get("ApplicationHistory") or []:
-                invoice_ref = app.get("AdjRefNbr") or app.get("DocRefNbr")
-                invoice_type = app.get("AdjDocType") or app.get("DocType") or "Invoice"
+            for app in self._payment_application_lines(payment):
+                invoice_ref = (
+                    app.get("AdjRefNbr")
+                    or app.get("DocRefNbr")
+                    or app.get("ReferenceNbr")
+                    or app.get("AppliedToDocRef")
+                    or app.get("DocumentRefNbr")
+                )
+                invoice_type = (
+                    app.get("AdjDocType")
+                    or app.get("DocType")
+                    or app.get("Type")
+                    or app.get("DocumentType")
+                    or "Invoice"
+                )
                 if not invoice_ref:
                     result.skipped += 1
                     continue
@@ -2280,7 +2333,12 @@ class AcumaticaFinancialSyncService:
                         "invoice_reference_nbr": invoice_ref,
                         "invoice_type": invoice_type,
                         "customer_id": customer_id,
-                        "amount_applied": _num(app.get("AmountApplied") or app.get("AdjAmt")),
+                        "amount_applied": _num(
+                            app.get("AmountApplied")
+                            or app.get("AdjAmt")
+                            or app.get("AmountPaid")
+                            or app.get("AppliedAmount")
+                        ),
                         "balance": _num(app.get("Balance") or app.get("CuryAdjdBilledAmt")),
                         "resolved_project_code": resolved_project_code,
                         "resolution_method": resolution_method,

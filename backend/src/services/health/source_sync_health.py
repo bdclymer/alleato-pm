@@ -15,6 +15,7 @@ from src.services.supabase_helpers import get_rag_read_client, get_rag_write_cli
 
 
 STALE_SYNC_MINUTES = 120
+STALE_ACUMATICA_SYNC_MINUTES = 24 * 60
 STALE_FIREFLIES_MINUTES = 240
 STALE_EXTRACTION_MINUTES = 24 * 60
 EMBEDDING_BACKLOG_WARNING = 25
@@ -49,6 +50,7 @@ LEGACY_GRAPH_STATE_SOURCES = {
 DOCUMENT_SOURCE_LABELS = {
     "fireflies": "Fireflies meetings",
     "microsoft_graph": "Microsoft Graph documents",
+    "acumatica_financial_sync": "Acumatica financial sync",
 }
 
 GRAPH_DOCUMENT_TYPE_SOURCE_KEYS = {
@@ -381,6 +383,90 @@ def _source_row(
         "uncompiledCount": uncompiled_count,
         "metadata": metadata or {},
     }
+
+
+def _acumatica_sync_source(sync_states: Sequence[Dict[str, Any]], now: datetime) -> Optional[Dict[str, Any]]:
+    if not sync_states:
+        return None
+
+    parsed_states: List[Dict[str, Any]] = []
+    for state in sync_states:
+        last_success = _parse_datetime(state.get("last_success_at"))
+        updated_at = _parse_datetime(state.get("updated_at"))
+        last_started = _parse_datetime(state.get("last_started_at"))
+        parsed_states.append(
+            {
+                **state,
+                "_last_success": last_success,
+                "_updated_at": updated_at,
+                "_last_started": last_started,
+            }
+        )
+
+    failed_states = [
+        state
+        for state in parsed_states
+        if state.get("status") == "failed" or state.get("last_error")
+    ]
+    latest_success = max(
+        (state["_last_success"] for state in parsed_states if state.get("_last_success")),
+        default=None,
+    )
+    latest_seen = max(
+        (
+            value
+            for state in parsed_states
+            for value in (state.get("_updated_at"), state.get("_last_started"), state.get("_last_success"))
+            if value
+        ),
+        default=None,
+    )
+    stale = _age_minutes(latest_success or latest_seen, now)
+    last_error = None
+    last_error_at = None
+    if failed_states:
+        latest_failed = max(
+            failed_states,
+            key=lambda state: state.get("_updated_at") or state.get("_last_started") or datetime.min.replace(tzinfo=timezone.utc),
+        )
+        last_error = latest_failed.get("last_error") or f"{latest_failed.get('entity_name')} failed"
+        last_error_at = latest_failed.get("_updated_at") or latest_failed.get("_last_started")
+
+    items_synced = 0
+    entity_statuses: Dict[str, str] = {}
+    failed_entities: List[str] = []
+    for state in parsed_states:
+        entity = str(state.get("entity_name") or "unknown")
+        entity_statuses[entity] = str(state.get("status") or "unknown")
+        if state in failed_states:
+            failed_entities.append(entity)
+        stats = _metadata_dict(state.get("last_stats"))
+        items_synced += int(stats.get("upserted") or 0) + int(stats.get("projected") or 0)
+
+    return _source_row(
+        source="acumatica_financial_sync",
+        resource_id="acumatica_sync_state",
+        resource_name="Acumatica financial sync",
+        status=_health_status(
+            stale_minutes=stale,
+            stale_threshold=STALE_ACUMATICA_SYNC_MINUTES,
+            last_error=last_error,
+        ),
+        last_sync_at=latest_seen,
+        last_success_at=latest_success,
+        last_error_at=last_error_at,
+        last_error_message=last_error,
+        items_synced=items_synced,
+        stale_minutes=stale,
+        unprocessed_count=0,
+        unembedded_count=0,
+        uncompiled_count=0,
+        metadata={
+            "source": "acumatica_sync_state",
+            "failedEntities": failed_entities,
+            "entityStatuses": entity_statuses,
+        },
+    )
 
 
 def record_sync_run(
@@ -902,6 +988,11 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
         "graph_subscriptions",
         "source,resource_id,resource_name,status,expiration_at,last_notification_at,last_error_message",
     )
+    acumatica_sync_states = _table_rows(
+        supabase,
+        "acumatica_sync_state",
+        "entity_name,status,last_started_at,last_success_at,last_error,last_stats,updated_at",
+    )
     sync_runs = _table_rows(
         get_rag_read_client(),
         "source_sync_runs",
@@ -960,6 +1051,10 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
         )
 
     sources.extend(document_sources)
+
+    acumatica_source = _acumatica_sync_source(acumatica_sync_states, now)
+    if acumatica_source:
+        sources.append(acumatica_source)
 
     latest_fireflies = max(
         (

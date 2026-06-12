@@ -112,6 +112,7 @@ def _seed_empty_tables(supabase):
         "source_sync_runs",
         "graph_subscriptions",
         "project_documents",
+        "acumatica_sync_state",
         "system_alerts",
     ]:
         supabase.tables.setdefault(table, [])
@@ -354,6 +355,40 @@ def test_get_source_sync_health_reports_task_extraction_freshness():
     assert task_source["status"] == "healthy"
     assert task_source["itemsSynced"] == 1
     assert health["pipeline"]["tasksBySourceSystem"]["fireflies"] == 1
+
+
+def test_get_source_sync_health_surfaces_acumatica_payment_application_failure():
+    supabase = _FakeSupabase()
+    _seed_empty_tables(supabase)
+    now = datetime.now(timezone.utc).isoformat()
+    supabase.tables["acumatica_sync_state"] = [
+        {
+            "entity_name": "ar_payments",
+            "status": "success",
+            "last_started_at": now,
+            "last_success_at": now,
+            "last_error": None,
+            "last_stats": {"upserted": 31},
+            "updated_at": now,
+        },
+        {
+            "entity_name": "payment_applications",
+            "status": "failed",
+            "last_started_at": now,
+            "last_success_at": None,
+            "last_error": "Expose a Generic Inquiry or endpoint with applied invoice fields.",
+            "last_stats": None,
+            "updated_at": now,
+        },
+    ]
+
+    health = get_source_sync_health(supabase)
+
+    row = next(source for source in health["sources"] if source["source"] == "acumatica_financial_sync")
+    assert health["status"] == "degraded"
+    assert row["status"] == "critical"
+    assert row["lastErrorMessage"] == "Expose a Generic Inquiry or endpoint with applied invoice fields."
+    assert row["metadata"]["failedEntities"] == ["payment_applications"]
 
 
 def test_get_source_sync_health_alerts_when_graph_docs_missing_project_documents():
