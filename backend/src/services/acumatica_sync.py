@@ -5,6 +5,7 @@ import os
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional, Sequence
+from urllib.parse import quote
 
 import httpx
 
@@ -255,6 +256,37 @@ class AcumaticaSession:
 
         return records
 
+    def fetch_odata_entity(self, entity_set_name: str, *, top: int = 1000) -> List[Dict[str, Any]]:
+        username = os.getenv("ACCOUNTING_USER")
+        password = os.getenv("ACCOUNTING_PASSWORD")
+        if not username or not password:
+            raise RuntimeError("ACCOUNTING_USER and ACCOUNTING_PASSWORD are required for Acumatica OData sync")
+
+        records: List[Dict[str, Any]] = []
+        skip = 0
+        company_path = quote(DEFAULT_COMPANY_NAME, safe="")
+        entity_set_path = quote(entity_set_name, safe="")
+        while True:
+            response = self.client.get(
+                f"{self.base_url}/odata/{company_path}/{entity_set_path}",
+                params={"$top": str(top), "$skip": str(skip)},
+                headers={"Accept": "application/json"},
+                auth=(username, password),
+            )
+            if not response.is_success:
+                raise RuntimeError(
+                    f"Acumatica OData {entity_set_name} fetch failed "
+                    f"(HTTP {response.status_code}): {response.text[:300]}"
+                )
+
+            page = response.json().get("value") or []
+            records.extend(page)
+            if len(page) < top:
+                break
+            skip += top
+
+        return records
+
 
 class AcumaticaFinancialSyncService:
     def __init__(self) -> None:
@@ -290,6 +322,7 @@ class AcumaticaFinancialSyncService:
             ("commitments_projection", self._sync_commitments_projection),
             ("ar_invoices", self._sync_ar_invoices),
             ("ar_payments", self._sync_payments),
+            ("ap_payment_applications", self._sync_ap_payment_applications),
             ("payment_applications", self._sync_payment_applications),
             ("ap_checks", self._sync_checks),
             ("project_budgets", self._sync_project_budgets),
@@ -1245,13 +1278,21 @@ class AcumaticaFinancialSyncService:
         return None
 
     def _project_commitment_payments_from_checks(self) -> int:
-        invoices_response = (
-            self.supabase.table("subcontractor_invoices")
-            .select("id, project_id, subcontract_id, purchase_order_id, acumatica_ref_nbr, acumatica_doc_type, acumatica_ap_bill_id")
-            .not_.is_("acumatica_ref_nbr", "null")
-            .execute()
-        )
-        invoices = invoices_response.data or []
+        invoices: List[Dict[str, Any]] = []
+        invoice_offset = 0
+        while True:
+            invoice_page = (
+                self.supabase.table("subcontractor_invoices")
+                .select("id, project_id, subcontract_id, purchase_order_id, acumatica_ref_nbr, acumatica_doc_type, acumatica_ap_bill_id")
+                .not_.is_("acumatica_ref_nbr", "null")
+                .range(invoice_offset, invoice_offset + 999)
+                .execute()
+            ).data or []
+            invoices.extend(invoice_page)
+            if len(invoice_page) < 1000:
+                break
+            invoice_offset += 1000
+
         if not invoices:
             return 0
 
@@ -1271,9 +1312,20 @@ class AcumaticaFinancialSyncService:
             .range(0, 9999)
             .execute()
         )
+        checks = checks_response.data or []
+        check_by_external_key = {
+            check.get("external_key"): check
+            for check in checks
+            if check.get("external_key")
+        }
+        check_by_ref = {
+            check.get("reference_nbr"): check
+            for check in checks
+            if check.get("reference_nbr")
+        }
 
-        rows: List[Dict[str, Any]] = []
-        for check in checks_response.data or []:
+        rows_by_external_key: Dict[str, Dict[str, Any]] = {}
+        for check in checks:
             raw_payload = check.get("raw_payload") or {}
             if not isinstance(raw_payload, dict):
                 continue
@@ -1299,35 +1351,107 @@ class AcumaticaFinancialSyncService:
                 if amount is None:
                     continue
 
-                rows.append(
-                    {
-                        "external_key": f"{check.get('external_key')}|{doc_type}|{ref}",
-                        "project_id": invoice["project_id"],
-                        "subcontract_id": invoice.get("subcontract_id"),
-                        "purchase_order_id": invoice.get("purchase_order_id"),
-                        "subcontractor_invoice_id": invoice["id"],
-                        "acumatica_check_id": check.get("id"),
-                        "acumatica_ap_bill_id": invoice.get("acumatica_ap_bill_id"),
-                        "payment_number": check.get("reference_nbr"),
-                        "payment_ref": check.get("payment_ref"),
-                        "payment_method": check.get("payment_method"),
-                        "payment_date": check.get("application_date"),
-                        "vendor_id": check.get("vendor_id"),
-                        "vendor_name": check.get("vendor_name"),
-                        "amount": amount,
-                        "status": check.get("status"),
-                        "source": "acumatica",
-                        "raw_payload": application,
-                        "acumatica_sync_at": check.get("acumatica_sync_at"),
-                        "updated_at": _now_iso(),
-                    }
-                )
+                external_key = f"{check.get('external_key')}|{doc_type}|{ref}"
+                rows_by_external_key[external_key] = {
+                    "external_key": external_key,
+                    "project_id": invoice["project_id"],
+                    "subcontract_id": invoice.get("subcontract_id"),
+                    "purchase_order_id": invoice.get("purchase_order_id"),
+                    "subcontractor_invoice_id": invoice["id"],
+                    "acumatica_check_id": check.get("id"),
+                    "acumatica_ap_bill_id": invoice.get("acumatica_ap_bill_id"),
+                    "payment_number": check.get("reference_nbr"),
+                    "payment_ref": check.get("payment_ref"),
+                    "payment_method": check.get("payment_method"),
+                    "payment_date": check.get("application_date"),
+                    "vendor_id": check.get("vendor_id"),
+                    "vendor_name": check.get("vendor_name"),
+                    "amount": amount,
+                    "status": check.get("status"),
+                    "source": "acumatica",
+                    "raw_payload": application,
+                    "acumatica_sync_at": check.get("acumatica_sync_at"),
+                    "updated_at": _now_iso(),
+                }
 
+        payment_applications: List[Dict[str, Any]] = []
+        application_offset = 0
+        while True:
+            application_page = (
+                self.supabase.table("acumatica_payment_applications")
+                .select("payment_external_key, payment_reference_nbr, payment_type, invoice_reference_nbr, invoice_type, amount_applied, resolved_project_code, resolution_method")
+                .eq("invoice_type", "Bill")
+                .range(application_offset, application_offset + 999)
+                .execute()
+            ).data or []
+            payment_applications.extend(application_page)
+            if len(application_page) < 1000:
+                break
+            application_offset += 1000
+
+        for application in payment_applications:
+            ref = application.get("invoice_reference_nbr")
+            if not ref:
+                continue
+            invoice = invoice_by_ref.get(str(ref))
+            if not invoice:
+                continue
+            payment_external_key = application.get("payment_external_key")
+            payment_ref = application.get("payment_reference_nbr")
+            check = (
+                check_by_external_key.get(payment_external_key)
+                if payment_external_key
+                else None
+            ) or check_by_ref.get(payment_ref)
+            amount = _num(application.get("amount_applied"))
+            if amount is None:
+                continue
+
+            doc_type = application.get("invoice_type") or invoice.get("acumatica_doc_type") or "Bill"
+            external_key = f"{payment_external_key or f'Payment|{payment_ref}'}|{doc_type}|{ref}"
+            rows_by_external_key[external_key] = {
+                "external_key": external_key,
+                "project_id": invoice["project_id"],
+                "subcontract_id": invoice.get("subcontract_id"),
+                "purchase_order_id": invoice.get("purchase_order_id"),
+                "subcontractor_invoice_id": invoice["id"],
+                "acumatica_check_id": check.get("id") if check else None,
+                "acumatica_ap_bill_id": invoice.get("acumatica_ap_bill_id"),
+                "payment_number": check.get("reference_nbr") if check else payment_ref,
+                "payment_ref": check.get("payment_ref") if check else payment_ref,
+                "payment_method": check.get("payment_method") if check else application.get("payment_type"),
+                "payment_date": check.get("application_date") if check else None,
+                "vendor_id": check.get("vendor_id") if check else None,
+                "vendor_name": check.get("vendor_name") if check else None,
+                "amount": amount,
+                "status": check.get("status") if check else None,
+                "source": "acumatica",
+                "raw_payload": application,
+                "acumatica_sync_at": check.get("acumatica_sync_at") if check else _now_iso(),
+                "updated_at": _now_iso(),
+            }
+
+        rows = list(rows_by_external_key.values())
         if not rows:
             return 0
 
         for chunk in _chunked(rows):
             self.supabase.table("commitment_payments").upsert(list(chunk), on_conflict="external_key").execute()
+
+        ambiguous_legacy_keys = sorted(
+            {
+                f"Payment|{row.get('payment_number')}"
+                for row in rows
+                if row.get("payment_number")
+                and str(row.get("external_key") or "").startswith("Payment|")
+                and str(row.get("external_key") or "").count("|") >= 3
+            }
+        )
+        if ambiguous_legacy_keys:
+            self.supabase.table("commitment_payments").delete().in_(
+                "external_key",
+                ambiguous_legacy_keys,
+            ).execute()
 
         return len(rows)
 
@@ -2265,6 +2389,72 @@ class AcumaticaFinancialSyncService:
             ).execute()
 
         result.upserted = len(rows)
+        return result
+
+    def _sync_ap_payment_applications(self, last_cursor: Optional[str]) -> EntitySyncResult:
+        """Sync AP bill-to-payment application rows from the APBillsToPayments OData inquiry."""
+        _ = last_cursor
+        result = EntitySyncResult(entity="ap_payment_applications")
+        records = self.session.fetch_odata_entity("APBillsToPayments", top=1000)
+        result.fetched = len(records)
+        result.cursor = _now_iso()
+
+        if not records:
+            return result
+
+        bill_refs = sorted({row.get("ReferenceNbr") for row in records if row.get("ReferenceNbr")})
+        bill_by_ref: Dict[str, Dict[str, Any]] = {}
+        for chunk in _chunked([{"reference_nbr": ref} for ref in bill_refs], size=500):
+            refs = [row["reference_nbr"] for row in chunk]
+            rows = (
+                self.supabase.table("acumatica_ap_bills")
+                .select("reference_nbr,project_code")
+                .in_("reference_nbr", refs)
+                .execute()
+            ).data or []
+            bill_by_ref.update({row["reference_nbr"]: row for row in rows if row.get("reference_nbr")})
+
+        rows_to_upsert: List[Dict[str, Any]] = []
+        seen_keys: set[tuple[str, str, str, str]] = set()
+        for row in records:
+            payment_ref = row.get("ReferenceNbr_2") or row.get("ReferenceNbr_3")
+            invoice_ref = row.get("ReferenceNbr") or row.get("ReferenceNbr_4") or row.get("ReferenceNbr_5")
+            payment_type = row.get("Type") or "Payment"
+            invoice_type = row.get("DocumentType") or row.get("Type_3") or row.get("Type_4") or "Bill"
+            if not payment_ref or not invoice_ref:
+                result.skipped += 1
+                continue
+
+            unique_key = (payment_ref, payment_type, invoice_ref, invoice_type)
+            if unique_key in seen_keys:
+                result.skipped += 1
+                continue
+            seen_keys.add(unique_key)
+
+            bill = bill_by_ref.get(invoice_ref) or {}
+            rows_to_upsert.append(
+                {
+                    "payment_external_key": f"{payment_type}|{payment_ref}",
+                    "payment_reference_nbr": payment_ref,
+                    "payment_type": payment_type,
+                    "invoice_reference_nbr": invoice_ref,
+                    "invoice_type": invoice_type,
+                    "customer_id": None,
+                    "amount_applied": _num(row.get("APAdjust_curyAdjdAmt") or row.get("AmountPaid")),
+                    "balance": None,
+                    "resolved_project_code": bill.get("project_code"),
+                    "resolution_method": "ap_bill_lookup" if bill.get("project_code") else "ap_bills_to_payments_odata",
+                }
+            )
+
+        for chunk in _chunked(rows_to_upsert):
+            self.supabase.table("acumatica_payment_applications").upsert(
+                list(chunk),
+                on_conflict="payment_reference_nbr,payment_type,invoice_reference_nbr,invoice_type",
+            ).execute()
+
+        result.upserted = len(rows_to_upsert)
+        result.projected = self._project_commitment_payments_from_checks()
         return result
 
     def _sync_payment_applications(self, last_cursor: Optional[str]) -> EntitySyncResult:

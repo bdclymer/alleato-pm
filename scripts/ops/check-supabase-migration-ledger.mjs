@@ -47,6 +47,30 @@ function assertNoDuplicateLocalMigrationVersions(files) {
   process.exit(1);
 }
 
+function hydrateEnvFromFile(filePath) {
+  if (!fs.existsSync(filePath)) return;
+  const contents = fs.readFileSync(filePath, "utf8");
+  for (const line of contents.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#") || !trimmed.includes("=")) continue;
+    const index = trimmed.indexOf("=");
+    const key = trimmed.slice(0, index).trim();
+    const rawValue = trimmed.slice(index + 1).trim();
+    if (!key || process.env[key]) continue;
+    process.env[key] = rawValue.replace(/^['"]|['"]$/g, "");
+  }
+}
+
+function hydrateEnvFromStandardFiles() {
+  for (const filePath of [
+    path.join(process.cwd(), ".env"),
+    path.join(process.cwd(), "frontend", ".env.local"),
+    path.join(process.cwd(), "backend", ".env"),
+  ]) {
+    hydrateEnvFromFile(filePath);
+  }
+}
+
 function changedMigrationVersions() {
   const status = run("git", ["status", "--porcelain", "--", "supabase/migrations"]);
   return status
@@ -128,10 +152,31 @@ async function loadRemoteVersionsViaManagementApi() {
   );
 }
 
+function loadRemoteVersionsViaDatabaseUrl() {
+  if (!process.env.DATABASE_URL) {
+    throw new Error("Database URL fallback is unavailable: missing DATABASE_URL.");
+  }
+
+  const output = run("psql", [
+    process.env.DATABASE_URL,
+    "-At",
+    "-c",
+    "select version from supabase_migrations.schema_migrations order by version",
+  ]);
+
+  return new Set(
+    output
+      .split(/\r?\n/)
+      .map((value) => value.trim())
+      .filter((value) => /^\d{14}$/.test(value))
+  );
+}
+
 const args = process.argv.slice(2);
 const assertClean = args.includes("--all") || args.includes("--assert-clean");
 const localFiles = localMigrationFiles();
 assertNoDuplicateLocalMigrationVersions(localFiles);
+hydrateEnvFromStandardFiles();
 hydrateSupabaseDbPasswordFromDatabaseUrl();
 
 const explicitVersions = args.map(versionFromInput).filter(Boolean);
@@ -167,17 +212,27 @@ try {
   }
 } catch (error) {
   try {
-    remoteVersions = await loadRemoteVersionsViaManagementApi();
+    remoteVersions = loadRemoteVersionsViaDatabaseUrl();
     localRows = new Set(localVersions);
     console.warn(
-      "Supabase CLI linked migration list failed; used Management API fallback for remote migration ledger."
+      "Supabase CLI linked migration list failed; used DATABASE_URL fallback for remote migration ledger."
     );
   } catch (fallbackError) {
-    process.stderr.write(error.stderr || error.message);
-    process.stderr.write("\n");
-    process.stderr.write(fallbackError.message);
-    process.stderr.write("\n");
-    process.exit(1);
+    try {
+      remoteVersions = await loadRemoteVersionsViaManagementApi();
+      localRows = new Set(localVersions);
+      console.warn(
+        "Supabase CLI linked migration list failed; used Management API fallback for remote migration ledger."
+      );
+    } catch (managementFallbackError) {
+      process.stderr.write(error.stderr || error.message);
+      process.stderr.write("\n");
+      process.stderr.write(fallbackError.message);
+      process.stderr.write("\n");
+      process.stderr.write(managementFallbackError.message);
+      process.stderr.write("\n");
+      process.exit(1);
+    }
   }
 }
 
