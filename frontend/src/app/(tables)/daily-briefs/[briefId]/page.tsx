@@ -3,6 +3,12 @@ import { notFound } from "next/navigation";
 
 import { AppCapabilityAccessDenied } from "@/components/guards/app-capability-access-denied";
 import { PageShell, SectionRuleHeading } from "@/components/layout";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { canCurrentUserAccessAppCapability } from "@/lib/app-capabilities";
 import { CEO_EXECUTIVE_BRIEFING_RECAP_KIND } from "@/lib/executive/executive-briefing-workflow";
@@ -64,6 +70,44 @@ type HistoricalBriefPacket = {
   importantUpdates: HistoricalBriefItem[];
   sourceCoverage: HistoricalSourceCoverage[];
   retrievalNotes: string[];
+};
+
+type BriefSectionKey = "needsBrandon" | "waitingOnOthers" | "importantUpdates";
+
+type ProjectBriefItem = HistoricalBriefItem & {
+  section: BriefSectionKey;
+  sectionLabel: string;
+  sectionRank: number;
+};
+
+type ProjectBriefGroup = {
+  project: string;
+  items: ProjectBriefItem[];
+  counts: Record<BriefSectionKey, number>;
+};
+
+const BRIEF_SECTIONS: Array<{
+  key: BriefSectionKey;
+  label: string;
+}> = [
+  {
+    key: "needsBrandon",
+    label: "Needs Brandon",
+  },
+  {
+    key: "waitingOnOthers",
+    label: "Waiting on Others",
+  },
+  {
+    key: "importantUpdates",
+    label: "Important Updates",
+  },
+];
+
+const SECTION_RANK: Record<BriefSectionKey, number> = {
+  needsBrandon: 0,
+  waitingOnOthers: 1,
+  importantUpdates: 2,
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -173,6 +217,80 @@ function deliveryLabel(row: DailyRecapRow) {
   return "Not ready";
 }
 
+function formatItemCount(count: number) {
+  return `${count} ${count === 1 ? "item" : "items"}`;
+}
+
+function sectionCountLabel(count: number, label: string) {
+  if (count === 0) return null;
+  return `${count} ${label.toLowerCase()}`;
+}
+
+function buildProjectGroups(
+  packet: HistoricalBriefPacket,
+): ProjectBriefGroup[] {
+  const groups = new Map<string, ProjectBriefGroup>();
+
+  for (const section of BRIEF_SECTIONS) {
+    for (const item of packet[section.key]) {
+      const project = item.project ?? "Unassigned project";
+      const existing =
+        groups.get(project) ??
+        ({
+          project,
+          items: [],
+          counts: {
+            needsBrandon: 0,
+            waitingOnOthers: 0,
+            importantUpdates: 0,
+          },
+        } satisfies ProjectBriefGroup);
+
+      existing.items.push({
+        ...item,
+        section: section.key,
+        sectionLabel: section.label,
+        sectionRank: SECTION_RANK[section.key],
+      });
+      existing.counts[section.key] += 1;
+      groups.set(project, existing);
+    }
+  }
+
+  return Array.from(groups.values()).sort((left, right) => {
+    const priorityDelta =
+      right.counts.needsBrandon - left.counts.needsBrandon ||
+      right.items.length - left.items.length;
+    if (priorityDelta !== 0) return priorityDelta;
+    return left.project.localeCompare(right.project);
+  });
+}
+
+function projectGroupSummary(group: ProjectBriefGroup) {
+  const nonZeroSections = [
+    sectionCountLabel(group.counts.needsBrandon, "needs Brandon"),
+    sectionCountLabel(group.counts.waitingOnOthers, "waiting"),
+    sectionCountLabel(group.counts.importantUpdates, "updates"),
+  ].filter(Boolean);
+
+  if (nonZeroSections.length <= 1) return "";
+  return nonZeroSections.join(" · ");
+}
+
+function projectGroupCount(group: ProjectBriefGroup) {
+  return (
+    sectionCountLabel(group.counts.needsBrandon, "needs Brandon") ??
+    formatItemCount(group.items.length)
+  );
+}
+
+function firstAction(group: ProjectBriefGroup) {
+  return group.items
+    .slice()
+    .sort((left, right) => left.sectionRank - right.sectionRank)
+    .find((item) => item.recommendedAction || item.summary);
+}
+
 function BriefFact({
   label,
   value,
@@ -230,106 +348,189 @@ function BriefSummary({
   );
 }
 
-function BriefItemSection({
-  title,
-  items,
-  empty,
-  priority = false,
-}: {
-  title: string;
-  items: HistoricalBriefItem[];
-  empty: string;
-  priority?: boolean;
-}) {
+function BriefItemRow({ item }: { item: ProjectBriefItem }) {
+  const hasHiddenContext =
+    item.bullets.length > 0 ||
+    Boolean(item.whyItMatters) ||
+    Boolean(item.sourceDetail) ||
+    Boolean(item.source) ||
+    Boolean(item.evidence);
+
   return (
-    <section className={priority ? "space-y-5" : "space-y-4"}>
+    <article className="space-y-3 py-4 first:pt-0 last:pb-0">
+      <div className="space-y-2">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold leading-6 text-foreground">
+              {item.title}
+            </div>
+            {item.date && (
+              <p className="text-xs text-muted-foreground">
+                {formatDate(item.date)}
+              </p>
+            )}
+          </div>
+          {item.section !== "needsBrandon" && (
+            <span className="text-xs font-medium text-muted-foreground">
+              {item.sectionLabel}
+            </span>
+          )}
+        </div>
+
+        {(item.recommendedAction || item.summary) && (
+          <p className="max-w-3xl text-sm leading-6 text-foreground">
+            {item.recommendedAction ?? item.summary}
+          </p>
+        )}
+      </div>
+
+      {hasHiddenContext && (
+        <details className="group">
+          <summary className="cursor-pointer text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+            Context and evidence
+          </summary>
+          <div className="mt-3 space-y-3">
+            {item.whyItMatters && (
+              <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+                <span className="font-medium text-foreground">
+                  Why it matters:
+                </span>{" "}
+                {item.whyItMatters}
+              </p>
+            )}
+
+            {item.bullets.length > 0 && (
+              <ul className="max-w-3xl list-disc space-y-1.5 pl-5 text-sm leading-6 text-muted-foreground">
+                {item.bullets.map((bullet) => (
+                  <li key={bullet}>{bullet}</li>
+                ))}
+              </ul>
+            )}
+
+            <p className="text-xs leading-5 text-muted-foreground">
+              {item.sourceUrl ? (
+                <Link
+                  href={item.sourceUrl}
+                  className="font-medium text-foreground underline-offset-4 hover:underline"
+                >
+                  {item.sourceDetail ?? item.source ?? "Source"}
+                </Link>
+              ) : (
+                <span>
+                  {item.sourceDetail ?? item.source ?? "Source not linked"}
+                </span>
+              )}
+              {item.evidence ? <span> · {item.evidence}</span> : null}
+            </p>
+          </div>
+        </details>
+      )}
+    </article>
+  );
+}
+
+function ProjectSection({
+  label,
+  items,
+}: {
+  label: string;
+  items: ProjectBriefItem[];
+}) {
+  if (items.length === 0) return null;
+
+  return (
+    <section className="space-y-3">
       <SectionRuleHeading
-        label={title}
+        className="mb-0"
+        label={label}
         actions={
           <span className="text-xs font-medium text-muted-foreground">
-            {items.length} {items.length === 1 ? "item" : "items"}
+            {formatItemCount(items.length)}
           </span>
         }
       />
-      {items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{empty}</p>
-      ) : (
-        <div className="divide-y">
-          {items.map((item, index) => (
-            <article
-              key={`${item.title}-${item.sourceDetail ?? index}`}
-              className="grid gap-4 py-5 first:pt-0 last:pb-0 lg:grid-cols-12"
-            >
-              <div className="space-y-3 lg:col-span-8">
-                <div className="space-y-1">
-                  <div
-                    className={
-                      priority
-                        ? "text-base font-semibold leading-6 text-foreground"
-                        : "text-sm font-semibold leading-6 text-foreground"
-                    }
-                  >
-                    {item.title}
+      <div className="divide-y divide-border/50">
+        {items.map((item, index) => (
+          <BriefItemRow
+            key={`${item.section}-${item.title}-${item.sourceDetail ?? index}`}
+            item={item}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ProjectBriefAccordion({ groups }: { groups: ProjectBriefGroup[] }) {
+  if (groups.length === 0) {
+    return (
+      <section className="space-y-2">
+        <SectionRuleHeading label="Brief items" />
+        <p className="text-sm text-muted-foreground">
+          No project-scoped brief items were stored in this packet.
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="space-y-4">
+      <SectionRuleHeading
+        label="Review by project"
+        actions={
+          <span className="text-xs font-medium text-muted-foreground">
+            {groups.length} {groups.length === 1 ? "project" : "projects"}
+          </span>
+        }
+      />
+      <Accordion
+        type="multiple"
+        defaultValue={[groups[0]?.project ?? ""]}
+        className="divide-y divide-border/50"
+      >
+        {groups.map((group) => {
+          const primary = firstAction(group);
+          return (
+            <AccordionItem key={group.project} value={group.project}>
+              <AccordionTrigger className="py-4 hover:no-underline">
+                <div className="min-w-0 flex-1 space-y-2 pr-4">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+                    <span className="text-base font-semibold leading-6 text-foreground">
+                      {group.project}
+                    </span>
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {projectGroupCount(group)}
+                    </span>
                   </div>
-                  {item.project && (
-                    <p className="text-xs text-muted-foreground">
-                      {item.project}
+                  {projectGroupSummary(group) && (
+                    <div className="text-xs text-muted-foreground">
+                      {projectGroupSummary(group)}
+                    </div>
+                  )}
+                  {primary && (
+                    <p className="max-w-3xl text-sm font-normal leading-6 text-muted-foreground">
+                      {primary.recommendedAction ?? primary.summary}
                     </p>
                   )}
                 </div>
-
-                {item.recommendedAction && (
-                  <p className="text-sm leading-6 text-foreground">
-                    <span className="font-medium">Recommended action:</span>{" "}
-                    {item.recommendedAction}
-                  </p>
-                )}
-
-                {item.summary && item.bullets.length === 0 && (
-                  <p className="text-sm leading-6 text-muted-foreground">
-                    {item.summary}
-                  </p>
-                )}
-
-                {item.bullets.length > 0 && (
-                  <ul className="list-disc space-y-1.5 pl-5 text-sm leading-6 text-muted-foreground">
-                    {item.bullets.map((bullet) => (
-                      <li key={bullet}>{bullet}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              <div className="space-y-2 text-xs leading-5 text-muted-foreground lg:col-span-4">
-                {item.whyItMatters && (
-                  <p>
-                    <span className="font-medium text-foreground">
-                      Why it matters:
-                    </span>{" "}
-                    {item.whyItMatters}
-                  </p>
-                )}
-                <p>
-                  {item.sourceUrl ? (
-                    <Link
-                      href={item.sourceUrl}
-                      className="font-medium text-foreground underline-offset-4 hover:underline"
-                    >
-                      {item.sourceDetail ?? item.source ?? "Source"}
-                    </Link>
-                  ) : (
-                    <span>
-                      {item.sourceDetail ?? item.source ?? "Source not linked"}
-                    </span>
-                  )}
-                  {item.date ? <span> · {formatDate(item.date)}</span> : null}
-                  {item.evidence ? <span> · {item.evidence}</span> : null}
-                </p>
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
+              </AccordionTrigger>
+              <AccordionContent className="pb-6">
+                <div className="space-y-8">
+                  {BRIEF_SECTIONS.map((section) => (
+                    <ProjectSection
+                      key={`${group.project}-${section.key}`}
+                      label={section.label}
+                      items={group.items.filter(
+                        (item) => item.section === section.key,
+                      )}
+                    />
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
+      </Accordion>
     </section>
   );
 }
@@ -339,55 +540,67 @@ function SourceCoverageSection({
 }: {
   sources: HistoricalSourceCoverage[];
 }) {
+  const warningCount = sources.filter((source) => source.warning).length;
+  const summary = `${sources.length} ${
+    sources.length === 1 ? "source" : "sources"
+  }${warningCount > 0 ? `, ${warningCount} warning${warningCount === 1 ? "" : "s"}` : ""}`;
+
   return (
-    <section className="space-y-4">
-      <SectionRuleHeading label="Source coverage" />
+    <section className="space-y-3">
       {sources.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          This stored packet did not include source coverage.
-        </p>
+        <>
+          <SectionRuleHeading label="Source coverage" />
+          <p className="text-sm text-muted-foreground">
+            This stored packet did not include source coverage.
+          </p>
+        </>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="border-b text-xs uppercase text-muted-foreground">
-              <tr>
-                <th className="py-2 pr-4 text-left font-medium">Source</th>
-                <th className="py-2 pr-4 text-left font-medium">Count</th>
-                <th className="py-2 pr-4 text-left font-medium">Latest</th>
-                <th className="py-2 text-left font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {sources.map((source) => (
-                <tr key={`${source.label}-${source.detail ?? ""}`}>
-                  <td className="py-3 pr-4">
-                    <div className="font-medium text-foreground">
-                      {source.label}
-                    </div>
-                    {source.detail && (
-                      <div className="text-xs text-muted-foreground">
-                        {source.detail}
-                      </div>
-                    )}
-                  </td>
-                  <td className="py-3 pr-4 tabular-nums">
-                    {source.count ?? "Not recorded"}
-                  </td>
-                  <td className="py-3 pr-4">{formatDate(source.latest)}</td>
-                  <td className="py-3">
-                    {source.warning ? (
-                      <span className="text-warning">{source.warning}</span>
-                    ) : (
-                      <span className="text-muted-foreground">
-                        {source.status ?? "Loaded"}
-                      </span>
-                    )}
-                  </td>
+        <details open={warningCount > 0}>
+          <summary className="cursor-pointer text-sm font-medium text-foreground">
+            Source coverage: {summary}
+          </summary>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b text-xs uppercase text-muted-foreground">
+                <tr>
+                  <th className="py-2 pr-4 text-left font-medium">Source</th>
+                  <th className="py-2 pr-4 text-left font-medium">Count</th>
+                  <th className="py-2 pr-4 text-left font-medium">Latest</th>
+                  <th className="py-2 text-left font-medium">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y">
+                {sources.map((source) => (
+                  <tr key={`${source.label}-${source.detail ?? ""}`}>
+                    <td className="py-3 pr-4">
+                      <div className="font-medium text-foreground">
+                        {source.label}
+                      </div>
+                      {source.detail && (
+                        <div className="text-xs text-muted-foreground">
+                          {source.detail}
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-3 pr-4 tabular-nums">
+                      {source.count ?? "Not recorded"}
+                    </td>
+                    <td className="py-3 pr-4">{formatDate(source.latest)}</td>
+                    <td className="py-3">
+                      {source.warning ? (
+                        <span className="text-warning">{source.warning}</span>
+                      ) : (
+                        <span className="text-muted-foreground">
+                          {source.status ?? "Loaded"}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
       )}
     </section>
   );
@@ -435,13 +648,13 @@ export default async function DailyBriefDetailPage({ params }: PageProps) {
       packet.waitingOnOthers.length +
       packet.importantUpdates.length
     : 0;
+  const projectGroups = packet ? buildProjectGroups(packet) : [];
 
   return (
     <PageShell
-      variant="detailWide"
+      variant="detail"
       eyebrow="Daily Brief history"
       title={`Daily Brief - ${row.recap_date}`}
-      description={`Stored packet for ${formatDateRange(row)}.`}
       statusBadge={<Badge variant="outline">{row.workflow_status}</Badge>}
       breadcrumbs={[
         { label: "Daily Briefs", href: "/daily-briefs" },
@@ -462,22 +675,7 @@ export default async function DailyBriefDetailPage({ params }: PageProps) {
         </section>
       ) : (
         <>
-          <BriefItemSection
-            title="Needs Brandon"
-            items={packet.needsBrandon}
-            empty="No decision items were stored in this section."
-            priority
-          />
-          <BriefItemSection
-            title="Waiting on Others"
-            items={packet.waitingOnOthers}
-            empty="No waiting-on-others items were stored in this section."
-          />
-          <BriefItemSection
-            title="Important Updates"
-            items={packet.importantUpdates}
-            empty="No important updates were stored in this section."
-          />
+          <ProjectBriefAccordion groups={projectGroups} />
           <SourceCoverageSection sources={packet.sourceCoverage} />
           {packet.retrievalNotes.length > 0 && (
             <section className="space-y-3">
