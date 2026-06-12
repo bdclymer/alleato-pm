@@ -107,6 +107,9 @@ const ENDPOINTS = [
   ["PUT", `/api/commitments/${FAKE_UUID}`, "Commitment update unauthorized (retainage guard)", [401]],
   ["POST", `/api/projects/${PROJECT_ID}/commitments/export`, "Commitments export (auth + schema check)", [400, 401]],
   ["POST", "/api/sync/acumatica/commitments", "Commitments Acumatica sync (unauthenticated)", [401]],
+  // Regression guard: this endpoint returns { deprecated: true } with 200 (no auth required).
+  // A 500 here would mean the stub was accidentally removed or the handler was broken.
+  ["POST", "/api/sync/acumatica/vendors", "Vendors Acumatica sync (deprecated notice)", [200]],
 
   // Direct Costs — export route is POST-only (large CSV with body params)
   ["POST", `/api/projects/${PROJECT_ID}/direct-costs/export`, "Direct costs export (auth check)", [400, 401]],

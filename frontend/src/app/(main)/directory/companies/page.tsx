@@ -451,21 +451,32 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
     setIsSyncing(true);
     try {
       const data = await apiFetch<{
-        result: {
+        result?: {
           created: number;
           updated: number;
           companiesCreated?: number;
           companiesUpdated?: number;
           errors: unknown[];
         };
+        deprecated?: boolean;
+        message?: string;
       }>("/api/sync/acumatica/vendors", { method: "POST" });
-      const { result } = data;
-      toast.success(
-        `ERP sync complete: ${result.created} vendors created, ${result.updated} vendors updated, ` +
-          `${result.companiesCreated ?? 0} companies created, ${result.companiesUpdated ?? 0} companies updated` +
-          (result.errors.length > 0 ? ` (${result.errors.length} errors)` : ""),
-      );
-      await refresh();
+
+      if (data.deprecated) {
+        toast.info(data.message ?? "ERP sync runs automatically on schedule — no manual action needed.");
+      } else {
+        if (data.result) {
+          const { result } = data;
+          toast.success(
+            `ERP sync complete: ${result.created} vendors created, ${result.updated} vendors updated, ` +
+              `${result.companiesCreated ?? 0} companies created, ${result.companiesUpdated ?? 0} companies updated` +
+              (result.errors.length > 0 ? ` (${result.errors.length} errors)` : ""),
+          );
+        } else {
+          toast.success("ERP sync triggered successfully.");
+        }
+        await refresh();
+      }
     } catch (err) {
       toast.error("ERP sync failed");
     } finally {
