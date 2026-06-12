@@ -18,7 +18,8 @@ Read the output. If the component you are about to write is in that list — **u
 | "No X yet" / empty list state | `<EmptyState>` from `@/components/ds/empty-state` |
 | Status-colored badge/pill | `<StatusBadge>` from `@/components/ds/status-badge` |
 | Error/failed load state | `<ErrorState>` from `@/components/ds/error-state` |
-| Label + value pair in detail view | `<DetailField>` from `@/components/ds/DetailField` |
+| Label + value pair in detail view (read-only) | `<DetailField>` from `@/components/ds/DetailField` |
+| Label + input pair in detail view (editable) | horizontal layout — label left, input right (see below) |
 | Delete confirmation modal | `<ConfirmDeleteDialog>` from `@/components/ds/ConfirmDeleteDialog` |
 | Save/cancel action bar | `<EditModeActions>` from `@/components/ds/EditModeActions` |
 | KPI / metric number display | `<KpiBlock>` / `<KpiRow>` from `@/components/ds/kpi` |
@@ -77,6 +78,58 @@ Examples:
 - `PageTabs` should NOT own spacing between itself and page content it doesn't control
 
 Rule: spacing that is *always the same* belongs in the component. Spacing that *varies by context* belongs at the callsite.
+
+## Detail page field layout (MANDATORY)
+
+Detail pages — both read-only and editable — always use **horizontal** label + value/input alignment. Never stack label above input on a detail page.
+
+**Read-only fields:** use `<DetailField>` — it enforces horizontal layout automatically.
+
+**Editable fields (inline editing on a detail page):**
+
+```tsx
+// Correct — label left, input right
+<div className="flex items-center gap-4">
+  <label className="w-32 shrink-0 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+    Field Name
+  </label>
+  <div className="flex-1">
+    <Input ... />
+  </div>
+</div>
+```
+
+**Never on a detail page:**
+```tsx
+// Wrong — stacked layout belongs on create/edit FORM pages, not detail pages
+<div className="space-y-2">
+  <label>Field Name</label>
+  <Input ... />
+</div>
+```
+
+The rule: `PageShell variant="form"` → stacked fields are acceptable. `PageShell variant="detail"` → horizontal fields, always.
+
+## Contact and communication actions
+
+When a field value is an email address, phone number, or URL, render it as an icon-link — not a `<Button>`.
+
+```tsx
+// Correct — icon link, zero visual weight
+<a href={`mailto:${email}`} className="text-foreground hover:text-primary">
+  <Mail className="h-4 w-4" />
+</a>
+
+// Correct — text link for inline context
+<a href={`mailto:${email}`} className="text-sm text-foreground hover:text-primary hover:underline">
+  {email}
+</a>
+
+// Wrong — full button for a contact action is pure noise
+<Button variant="outline" size="sm"><Mail className="h-4 w-4 mr-2" />Send Email</Button>
+```
+
+The same rule applies to phone (`tel:`), external links, and copy-to-clipboard actions on contact fields. Use an icon at `h-4 w-4` in `text-muted-foreground`. No label unless the icon is genuinely ambiguous. No `<Button>` wrapper.
 
 ## The design system docs
 

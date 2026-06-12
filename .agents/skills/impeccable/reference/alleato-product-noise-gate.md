@@ -185,6 +185,8 @@ Use the lowest sufficient tool. Do not jump to containers or decoration.
 - No dashboards unless monitoring many simultaneous variables is the actual task.
 - No motion unless it clarifies state, continuity, reveal, or feedback.
 - No one-off visual overrides when a shared primitive owns the problem.
+- No `<Button>` for email, phone, or URL contact actions — use an icon-link (`<a href="mailto:...">`) or a plain text link. A button with a mail icon adds five times the visual weight of an icon-link for the same action.
+- No stacked label-above-input layout on detail pages (`PageShell variant="detail"`). Labels and their inputs/values must be horizontally aligned — label fixed-width on the left, value or input stretches on the right.
 
 ## Cards
 
