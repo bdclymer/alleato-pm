@@ -884,6 +884,7 @@ export default function CommitmentDetailPage() {
             commitmentId={commitment.id}
             commitmentType={commitment.type}
             accountingMethod={commitment.accounting_method}
+            showHeader={false}
             onImportComplete={() => void fetchCommitment()}
           />
         )}
