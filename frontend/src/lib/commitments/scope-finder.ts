@@ -32,6 +32,7 @@ export interface CommitmentScopeRecord {
   companyName: string | null;
   contractNumber: string | null;
   title: string | null;
+  costCodes: string[];
   tradeNames: string[];
   scopeSummary: string | null;
   primaryScopeText: string | null;
@@ -230,6 +231,7 @@ export function buildCommitmentScopeRecords(
     });
 
     const tradeNames = buildTradeNames(orderedLines, costCodeByBudgetCode);
+    const costCodes = uniqueStrings(orderedLines.map((line) => cleanText(line.budgetCode)));
     const scopeSummary = buildScopeSummary(source, orderedLines, costCodeByBudgetCode);
     const lineDescriptions = uniqueStrings(
       orderedLines.map((line) => {
@@ -250,6 +252,7 @@ export function buildCommitmentScopeRecords(
       companyName: source.companyName,
       contractNumber: source.contractNumber,
       title: source.title,
+      costCodes,
       tradeNames,
       scopeSummary: scopeSummary.scopeSummary,
       primaryScopeText: scopeSummary.primaryScopeText,

@@ -120,6 +120,7 @@ export interface Commitment {
   payments_issued: number;
   percent_paid: number;
   remaining_balance: number;
+  cost_codes: string[];
   trade_names: string[];
   scope_summary: string | null;
   is_private: boolean;

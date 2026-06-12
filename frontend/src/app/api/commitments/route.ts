@@ -114,6 +114,7 @@ function mapRowToCommitment(
   erpStatus: string | null,
   ssovStatus: string | null,
   scopeRecord?: {
+    costCodes: string[];
     tradeNames: string[];
     scopeSummary: string | null;
   },
@@ -165,6 +166,7 @@ function mapRowToCommitment(
     payments_issued: paymentsIssued,
     percent_paid: percentPaid,
     remaining_balance: remainingBalance,
+    cost_codes: scopeRecord?.costCodes ?? [],
     trade_names: scopeRecord?.tradeNames ?? [],
     scope_summary: scopeRecord?.scopeSummary ?? null,
     is_private: row.is_private ?? true,
