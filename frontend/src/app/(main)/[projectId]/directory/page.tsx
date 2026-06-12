@@ -20,12 +20,6 @@ import {
   Button,
   Avatar,
   AvatarFallback,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -55,12 +49,17 @@ import {
   SelectValue,
 } from "@/components/ds";
 import { PageShell } from "@/components/layout";
-import { DataTable } from "@/components/tables/DataTable";
+import {
+  UnifiedTablePage,
+  type FilterConfig,
+  type FilterValue,
+  type TableColumn,
+  type ViewMode,
+} from "@/components/tables/unified";
 import { AssignMemberDialog } from "@/components/domain/directory/AssignMemberDialog";
 import { CompanyDetailSheet } from "@/components/domain/directory/CompanyDetailSheet";
 import { ProjectTeamDialog } from "@/components/domain/directory/ProjectTeamDialog";
 import { ContactFormSheet } from "@/components/domain/contacts/ContactFormSheet";
-import { type ColumnDef } from "@tanstack/react-table";
 import { useProjectRoles, type ProjectRole } from "@/hooks/use-project-roles";
 import { useProjectUsers } from "@/hooks/use-project-users";
 import { useProjectVendors } from "@/hooks/use-project-vendors";
@@ -88,7 +87,11 @@ import type { PersonWithDetails } from "@/services/directoryService";
 
 // ─── Types ───────────────────────────────────────────────────────
 
-type RoleRow = { id: string; role: ProjectRole; member: ProjectRole["members"][0] | null };
+type RoleRow = {
+  id: string;
+  role: ProjectRole;
+  member: ProjectRole["members"][0] | null;
+};
 
 interface PersonOption {
   id: string;
@@ -98,7 +101,6 @@ interface PersonOption {
   job_title: string | null;
   company_name: string | null;
 }
-
 
 interface VendorOption {
   id: string;
@@ -114,7 +116,7 @@ interface VendorOption {
 // ─── Helpers ─────────────────────────────────────────────────────
 
 function memberStatusLabel(
-  membership: PersonWithDetails["membership"]
+  membership: PersonWithDetails["membership"],
 ): string {
   const status = membership?.status || "inactive";
   const invite = membership?.invite_status;
@@ -124,16 +126,12 @@ function memberStatusLabel(
   return "Active";
 }
 
-function accessLevelLabel(
-  permission?: { name: string } | null
-): string {
+function accessLevelLabel(permission?: { name: string } | null): string {
   return permission?.name ?? "Standard";
 }
 
 function initials(first?: string | null, last?: string | null): string {
-  return (
-    `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase() || "?"
-  );
+  return `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase() || "?";
 }
 
 // ─── Skeleton ────────────────────────────────────────────────────
@@ -142,10 +140,7 @@ function SectionSkeleton({ rows = 3 }: { rows?: number }) {
   return (
     <div className="space-y-3">
       {Array.from({ length: rows }).map((_, i) => (
-        <div
-          key={i}
-          className="flex items-center gap-4 px-4 py-3"
-        >
+        <div key={i} className="flex items-center gap-4 px-4 py-3">
           <div className="h-8 w-8 rounded-full animate-pulse bg-muted shrink-0" />
           <div className="flex-1 space-y-1.5">
             <div className="h-3.5 w-36 animate-pulse rounded bg-muted" />
@@ -157,6 +152,111 @@ function SectionSkeleton({ rows = 3 }: { rows?: number }) {
   );
 }
 
+function DirectoryUnifiedTable<T>({
+  title,
+  action,
+  items,
+  columns,
+  getRowId,
+  search,
+  onSearch,
+  searchPlaceholder,
+  totalItems,
+  filters,
+  activeFilters,
+  onFilterChange,
+  onClearFilters,
+  rowActions,
+  onRowClick,
+  emptyTitle,
+  emptyDescription,
+  filteredDescription,
+  isFiltered,
+  enablePagination = false,
+}: {
+  title: string;
+  action?: React.ReactNode;
+  items: T[];
+  columns: TableColumn<T>[];
+  getRowId: (item: T) => string;
+  search?: string;
+  onSearch?: (value: string) => void;
+  searchPlaceholder?: string;
+  totalItems?: number;
+  filters?: FilterConfig[];
+  activeFilters?: Record<string, FilterValue>;
+  onFilterChange?: (filters: Record<string, FilterValue>) => void;
+  onClearFilters?: () => void;
+  rowActions?: (item: T) => React.ReactNode;
+  onRowClick?: (item: T) => void;
+  emptyTitle: string;
+  emptyDescription: string;
+  filteredDescription: string;
+  isFiltered: boolean;
+  enablePagination?: boolean;
+}) {
+  const [currentView, setCurrentView] = React.useState<ViewMode>("table");
+
+  return (
+    <UnifiedTablePage<T>
+      header={{
+        title,
+        actions: action,
+        mobileActionsInline: false,
+      }}
+      toolbar={{
+        totalItems: totalItems ?? items.length,
+        filteredItems: items.length,
+        searchValue: search ?? "",
+        onSearchChange: onSearch ?? (() => {}),
+        searchPlaceholder:
+          searchPlaceholder ?? `Search ${title.toLowerCase()}...`,
+        currentView,
+        onViewChange: (view) => {
+          if (view === "table") setCurrentView(view);
+        },
+        filters,
+        activeFilters,
+        onFilterChange,
+        onClearFilters,
+      }}
+      data={{
+        items,
+        isLoading: false,
+        error: null,
+      }}
+      table={{
+        columns,
+        getRowId,
+        rowActions,
+        onRowClick,
+        density: "compact",
+      }}
+      features={{
+        enableSearch: Boolean(onSearch),
+        enableFilters: Boolean(filters?.length),
+        enableViews: false,
+        enableColumnToggle: true,
+        enableExport: true,
+        enablePagination,
+        enableBulkDelete: false,
+        enableRowSelection: false,
+      }}
+      layout={{
+        containerPadding: false,
+        containerClassName: "pb-0",
+        toolbarInlineWithHeader: true,
+        minWidth: 880,
+      }}
+      emptyState={{
+        title: emptyTitle,
+        description: emptyDescription,
+        filteredDescription,
+        isFiltered,
+      }}
+    />
+  );
+}
 
 // ─── Local: Expandable search ─────────────────────────────────────
 
@@ -203,7 +303,9 @@ function ExpandableSearch({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        onBlur={() => { if (!value) setExpanded(false); }}
+        onBlur={() => {
+          if (!value) setExpanded(false);
+        }}
         placeholder={placeholder}
         className="h-8 w-44 pl-8 pr-7 text-sm"
         aria-label="Search"
@@ -213,7 +315,10 @@ function ExpandableSearch({
           type="button"
           variant="ghost"
           size="icon"
-          onClick={() => { onChange(""); inputRef.current?.focus(); }}
+          onClick={() => {
+            onChange("");
+            inputRef.current?.focus();
+          }}
           className="absolute right-0 h-7 w-7 text-muted-foreground"
           aria-label="Clear search"
         >
@@ -250,7 +355,9 @@ function SectionRow({
       {/* Left: title */}
       <div className="flex items-center gap-3 min-w-0">
         {/* eslint-disable-next-line design-system/no-raw-heading */}
-        <h2 className="text-lg font-semibold text-foreground shrink-0">{title}</h2>
+        <h2 className="text-lg font-semibold text-foreground shrink-0">
+          {title}
+        </h2>
       </div>
 
       {/* Right: search + filter + count + action */}
@@ -259,7 +366,9 @@ function SectionRow({
           <ExpandableSearch
             value={search ?? ""}
             onChange={onSearch}
-            placeholder={searchPlaceholder ?? `Search ${title.toLowerCase()}...`}
+            placeholder={
+              searchPlaceholder ?? `Search ${title.toLowerCase()}...`
+            }
           />
         )}
 
@@ -325,7 +434,7 @@ function AddMemberDialog({
     supabase
       .from("people")
       .select(
-        "id, first_name, last_name, email, job_title, company:companies!people_company_id_fkey(name)"
+        "id, first_name, last_name, email, job_title, company:companies!people_company_id_fkey(name)",
       )
       .order("first_name")
       .then(({ data }) => {
@@ -339,7 +448,7 @@ function AddMemberDialog({
               job_title: p.job_title,
               company_name:
                 (p.company as { name?: string } | null)?.name ?? null,
-            }))
+            })),
           );
         }
       });
@@ -367,7 +476,9 @@ function AddMemberDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="gap-0 p-0 w-full sm:max-w-lg border-border/60 overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-4 space-y-1">
-          <DialogTitle className="text-lg tracking-tight">Add member</DialogTitle>
+          <DialogTitle className="text-lg tracking-tight">
+            Add member
+          </DialogTitle>
           <DialogDescription>
             Add an existing person from your directory to this project.
           </DialogDescription>
@@ -405,7 +516,9 @@ function AddMemberDialog({
                             : "border-muted-foreground/25 bg-transparent",
                         )}
                       >
-                        {isSelected && <Check className="h-3 w-3" strokeWidth={3} />}
+                        {isSelected && (
+                          <Check className="h-3 w-3" strokeWidth={3} />
+                        )}
                       </div>
                       <div className="min-w-0 flex-1 flex items-baseline gap-2">
                         <span className="truncate text-sm text-foreground">
@@ -459,7 +572,7 @@ function AddVendorDialog({
     supabase
       .from("companies")
       .select(
-        "id, name, legal_name, vendor_class, contact_name, city, state, status"
+        "id, name, legal_name, vendor_class, contact_name, city, state, status",
       )
       .eq("is_vendor", true)
       .order("name")
@@ -468,9 +581,7 @@ function AddVendorDialog({
       });
   }, [open]);
 
-  const available = allVendors.filter(
-    (v) => !existingVendorIds.includes(v.id)
-  );
+  const available = allVendors.filter((v) => !existingVendorIds.includes(v.id));
 
   const handleAdd = async () => {
     if (!selected) return;
@@ -487,7 +598,9 @@ function AddVendorDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="gap-0 p-0 sm:max-w-md border-border/60 overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-4 space-y-1">
-          <DialogTitle className="text-lg tracking-tight">Add vendor</DialogTitle>
+          <DialogTitle className="text-lg tracking-tight">
+            Add vendor
+          </DialogTitle>
           <DialogDescription>
             Select a vendor from the company directory.
           </DialogDescription>
@@ -530,7 +643,9 @@ function AddVendorDialog({
                             : "border-muted-foreground/25 bg-transparent",
                         )}
                       >
-                        {isSelected && <Check className="h-3 w-3" strokeWidth={3} />}
+                        {isSelected && (
+                          <Check className="h-3 w-3" strokeWidth={3} />
+                        )}
                       </div>
                       <div className="min-w-0 flex-1 flex items-baseline gap-2">
                         <span className="truncate text-sm text-foreground">
@@ -602,7 +717,9 @@ function AssignExistingCompanyDialog({
       });
   }, [open]);
 
-  const available = allCompanies.filter((c) => !existingCompanyIds.includes(c.id));
+  const available = allCompanies.filter(
+    (c) => !existingCompanyIds.includes(c.id),
+  );
 
   const handleAssign = async () => {
     if (!selected) return;
@@ -626,14 +743,22 @@ function AssignExistingCompanyDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] gap-0 overflow-hidden border-border/60 p-0 sm:max-w-2xl">
         <DialogHeader className="px-6 pt-6 pb-4 space-y-1">
-          <DialogTitle className="text-lg tracking-tight">Add company</DialogTitle>
+          <DialogTitle className="text-lg tracking-tight">
+            Add company
+          </DialogTitle>
           <DialogDescription>
             Search and select an existing company to add to this project.
           </DialogDescription>
         </DialogHeader>
         <div className="px-6 pb-2">
-          <Command className="overflow-visible bg-transparent" shouldFilter={true}>
-            <CommandInput className="bg-muted" placeholder="Search companies…" />
+          <Command
+            className="overflow-visible bg-transparent"
+            shouldFilter={true}
+          >
+            <CommandInput
+              className="bg-muted"
+              placeholder="Search companies…"
+            />
             <CommandList className="mt-3 max-h-72 -mx-1">
               <CommandEmpty>
                 <div className="px-4 py-6 text-center text-sm text-muted-foreground">
@@ -669,7 +794,9 @@ function AssignExistingCompanyDialog({
                             : "border-muted-foreground/25 bg-transparent",
                         )}
                       >
-                        {isSelected && <Check className="h-3 w-3" strokeWidth={3} />}
+                        {isSelected && (
+                          <Check className="h-3 w-3" strokeWidth={3} />
+                        )}
                       </div>
                       <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5">
                         <span className="min-w-0 truncate text-sm text-foreground">
@@ -689,10 +816,20 @@ function AssignExistingCompanyDialog({
           </Command>
         </div>
         <DialogFooter className="px-6 pb-6 pt-2 gap-2">
-          <Button variant="ghost" size="sm" className="w-full sm:w-auto" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full sm:w-auto"
+            onClick={() => onOpenChange(false)}
+          >
             Cancel
           </Button>
-          <Button size="sm" className="w-full sm:w-auto" onClick={handleAssign} disabled={!selected || saving}>
+          <Button
+            size="sm"
+            className="w-full sm:w-auto"
+            onClick={handleAssign}
+            disabled={!selected || saving}
+          >
             {saving ? "Adding..." : "Add company"}
           </Button>
         </DialogFooter>
@@ -714,7 +851,8 @@ function ProjectTeamSection({
 }) {
   const { roles, isLoading, updateRoleMembers, createRole, deleteRole } =
     useProjectRoles(projectId);
-  const { confirm: confirmTeam, ConfirmDialog: TeamConfirmDialog } = useConfirm();
+  const { confirm: confirmTeam, ConfirmDialog: TeamConfirmDialog } =
+    useConfirm();
   const [search, setSearch] = React.useState("");
   const [assignDialog, setAssignDialog] = React.useState<{
     open: boolean;
@@ -728,15 +866,19 @@ function ProjectTeamSection({
   const rows: RoleRow[] = roles.flatMap((role): RoleRow[] =>
     role.members.length > 0
       ? role.members.map((member) => ({ id: member.id, role, member }))
-      : [{ id: role.id, role, member: null }]
+      : [{ id: role.id, role, member: null }],
   );
 
   const filteredRows = search
     ? rows.filter(
         (r) =>
           r.role.role_name.toLowerCase().includes(search.toLowerCase()) ||
-          (r.member?.person?.full_name ?? "").toLowerCase().includes(search.toLowerCase()) ||
-          (r.member?.person?.company_name ?? "").toLowerCase().includes(search.toLowerCase()),
+          (r.member?.person?.full_name ?? "")
+            .toLowerCase()
+            .includes(search.toLowerCase()) ||
+          (r.member?.person?.company_name ?? "")
+            .toLowerCase()
+            .includes(search.toLowerCase()),
       )
     : rows;
 
@@ -755,20 +897,24 @@ function ProjectTeamSection({
     }
   };
 
-  const teamColumns: ColumnDef<RoleRow>[] = [
+  const teamColumns: TableColumn<RoleRow>[] = [
     {
       id: "role",
-      header: "Role",
-      size: 240,
-      cell: ({ row }) => (
-        <span className="block truncate text-sm text-muted-foreground">{row.original.role.role_name}</span>
+      label: "Role",
+      width: 240,
+      render: (item) => (
+        <span className="block truncate text-sm text-muted-foreground">
+          {item.role.role_name}
+        </span>
       ),
+      sortValue: (item) => item.role.role_name,
+      csvValue: (item) => item.role.role_name,
     },
     {
       id: "name",
-      header: "Name",
-      cell: ({ row }) => {
-        const { member, role } = row.original;
+      label: "Name",
+      render: (item) => {
+        const { member, role } = item;
         if (!member) {
           return (
             <Button
@@ -797,43 +943,63 @@ function ProjectTeamSection({
                 {p.full_name}
               </Link>
             ) : (
-              <span className="text-sm font-medium text-muted-foreground">Unknown</span>
+              <span className="text-sm font-medium text-muted-foreground">
+                Unknown
+              </span>
             )}
           </div>
         );
       },
+      sortValue: (item) => item.member?.person?.full_name ?? "",
+      csvValue: (item) => item.member?.person?.full_name ?? "",
     },
     {
       id: "company",
-      header: "Company",
-      cell: ({ row }) => (
+      label: "Company",
+      render: (item) => (
         <span className="text-sm text-muted-foreground">
-          {row.original.member?.person?.company_name ?? "—"}
+          {item.member?.person?.company_name ?? "—"}
         </span>
       ),
+      sortValue: (item) => item.member?.person?.company_name ?? "",
+      csvValue: (item) => item.member?.person?.company_name ?? "",
     },
     {
       id: "email",
-      header: "Email",
-      cell: ({ row }) => (
-        <span className="text-sm text-muted-foreground">{row.original.member?.person?.email ?? "—"}</span>
+      label: "Email",
+      render: (item) => (
+        <span className="text-sm text-muted-foreground">
+          {item.member?.person?.email ?? "—"}
+        </span>
       ),
+      sortValue: (item) => item.member?.person?.email ?? "",
+      csvValue: (item) => item.member?.person?.email ?? "",
     },
     {
       id: "phone",
-      header: "Phone",
-      cell: ({ row }) => {
-        const p = row.original.member?.person;
+      label: "Phone",
+      render: (item) => {
+        const p = item.member?.person;
         return (
-          <span className="text-sm text-muted-foreground">{p?.phone_mobile || p?.phone_business || "—"}</span>
+          <span className="text-sm text-muted-foreground">
+            {p?.phone_mobile || p?.phone_business || "—"}
+          </span>
         );
+      },
+      sortValue: (item) => {
+        const p = item.member?.person;
+        return p?.phone_mobile || p?.phone_business || "";
+      },
+      csvValue: (item) => {
+        const p = item.member?.person;
+        return p?.phone_mobile || p?.phone_business || "";
       },
     },
     {
       id: "actions",
-      header: "",
-      cell: ({ row }) => {
-        const { role, member } = row.original;
+      label: "",
+      render: (item) => {
+        const { role, member } = item;
         const handleRemoveOne = async () => {
           if (!member) return;
           try {
@@ -845,7 +1011,9 @@ function ProjectTeamSection({
             );
             toast.success("Removed from role");
           } catch {
-            toast.error("Failed to remove from role");
+            toast.error("Could not remove person from role", {
+              description: `${member.person?.full_name ?? "This person"} could not be removed from ${role.role_name}.`,
+            });
           }
         };
         return (
@@ -856,7 +1024,9 @@ function ProjectTeamSection({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setAssignDialog({ open: true, role })}>
+              <DropdownMenuItem
+                onClick={() => setAssignDialog({ open: true, role })}
+              >
                 <UserPlus className="mr-2 h-3.5 w-3.5" />
                 {member ? "Add another person" : "Assign someone"}
               </DropdownMenuItem>
@@ -866,8 +1036,12 @@ function ProjectTeamSection({
                   Remove this person
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteRole(role)}>
-                <Trash2 className="mr-2 h-3.5 w-3.5" />Delete role
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={() => handleDeleteRole(role)}
+              >
+                <Trash2 className="mr-2 h-3.5 w-3.5" />
+                Delete role
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -878,25 +1052,38 @@ function ProjectTeamSection({
 
   return (
     <>
-      <SectionRow
-        title="Project Team"
-        action={
-          <Button
-            size="xs"
-            onClick={() => setCreateRoleOpen(true)}
-          >
-            Manage Roles
-          </Button>
-        }
-        search={search}
-        onSearch={setSearch}
-        searchPlaceholder="Search roles or members..."
-      />
-
-      <div className="mt-4">
-        {isLoading ? (
-          <SectionSkeleton rows={3} />
-        ) : roles.length === 0 ? (
+      {isLoading ? (
+        <>
+          <SectionRow
+            title="Project Team"
+            action={
+              <Button
+                size="xs"
+                data-keep-text
+                onClick={() => setCreateRoleOpen(true)}
+              >
+                Manage Roles
+              </Button>
+            }
+          />
+          <div className="mt-4">
+            <SectionSkeleton rows={3} />
+          </div>
+        </>
+      ) : roles.length === 0 ? (
+        <>
+          <SectionRow
+            title="Project Team"
+            action={
+              <Button
+                size="xs"
+                data-keep-text
+                onClick={() => setCreateRoleOpen(true)}
+              >
+                Manage Roles
+              </Button>
+            }
+          />
           <p className="py-6 text-center text-sm text-muted-foreground">
             No roles defined yet.{" "}
             <Button
@@ -908,10 +1095,32 @@ function ProjectTeamSection({
               Add a role
             </Button>
           </p>
-        ) : (
-          <DataTable columns={teamColumns} data={filteredRows} showToolbar={false} showPagination={false} />
-        )}
-      </div>
+        </>
+      ) : (
+        <DirectoryUnifiedTable
+          title="Project Team"
+          action={
+            <Button
+              size="xs"
+              data-keep-text
+              onClick={() => setCreateRoleOpen(true)}
+            >
+              Manage Roles
+            </Button>
+          }
+          items={filteredRows}
+          columns={teamColumns}
+          getRowId={(item) => item.id}
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder="Search roles or members..."
+          totalItems={rows.length}
+          emptyTitle="No project team matches"
+          emptyDescription="Assign project roles to keep responsibilities clear."
+          filteredDescription="No roles or members match the current search."
+          isFiltered={Boolean(search)}
+        />
+      )}
 
       <AssignMemberDialog
         open={assignDialog.open}
@@ -937,19 +1146,19 @@ function ProjectTeamSection({
 // ─── Effective Permissions Dialog ────────────────────────────────
 
 const MODULE_LABELS: Record<PermissionModule, string> = {
-  directory:     "Directory",
-  budget:        "Budget",
-  contracts:     "Contracts",
-  documents:     "Documents",
-  schedule:      "Schedule",
-  submittals:    "Submittals",
-  rfis:          "RFIs",
+  directory: "Directory",
+  budget: "Budget",
+  contracts: "Contracts",
+  documents: "Documents",
+  schedule: "Schedule",
+  submittals: "Submittals",
+  rfis: "RFIs",
   change_orders: "Change Orders",
 };
 
 const LEVEL_LABELS: Record<PermissionLevel, string> = {
-  none:  "None",
-  read:  "Read",
+  none: "None",
+  read: "Read",
   write: "Write",
   admin: "Admin",
 };
@@ -966,8 +1175,11 @@ function EffectivePermissionsDialog({
   if (!person) return null;
 
   const template = person.permission_template;
-  const rules = (template?.rules_json ?? {}) as Record<PermissionModule, PermissionLevel[]>;
-  const granularFlags = ((template?.granular_flags ?? []) as GranularFlag[]);
+  const rules = (template?.rules_json ?? {}) as Record<
+    PermissionModule,
+    PermissionLevel[]
+  >;
+  const granularFlags = (template?.granular_flags ?? []) as GranularFlag[];
 
   const getHighestLevel = (levels: PermissionLevel[]): PermissionLevel => {
     if (levels.includes("admin")) return "admin";
@@ -993,7 +1205,10 @@ function EffectivePermissionsDialog({
             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Template
             </span>
-            <Badge variant={template ? "secondary" : "outline"} className="rounded-full">
+            <Badge
+              variant={template ? "secondary" : "outline"}
+              className="rounded-full"
+            >
               {template?.name ?? "No template assigned"}
             </Badge>
           </div>
@@ -1018,9 +1233,12 @@ function EffectivePermissionsDialog({
                       variant={highest === "none" ? "outline" : "secondary"}
                       className={cn(
                         "rounded-full px-2.5 text-[11px] font-medium",
-                        highest === "admin" && "bg-primary/10 text-primary border-primary/20",
-                        highest === "write" && "bg-blue-500/10 text-blue-600 border-blue-500/20",
-                        highest === "read" && "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+                        highest === "admin" &&
+                          "bg-primary/10 text-primary border-primary/20",
+                        highest === "write" &&
+                          "bg-blue-500/10 text-blue-600 border-blue-500/20",
+                        highest === "read" &&
+                          "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
                         highest === "none" && "text-muted-foreground",
                       )}
                     >
@@ -1044,7 +1262,10 @@ function EffectivePermissionsDialog({
                     className="flex items-center gap-2 text-sm text-foreground"
                   >
                     <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/10">
-                      <Check className="h-2.5 w-2.5 text-primary" strokeWidth={3} />
+                      <Check
+                        className="h-2.5 w-2.5 text-primary"
+                        strokeWidth={3}
+                      />
                     </span>
                     {GRANULAR_FLAG_LABELS[flag] ?? flag}
                   </li>
@@ -1108,16 +1329,34 @@ function TemplateSelector({
   );
 }
 
-// ─── Members DataTable (stable component — avoids hook-in-render) ──
+// ─── Members Unified Table (stable component — avoids hook-in-render) ──
 
-function MembersDataTable({
+function MembersUnifiedTable({
   filtered,
+  totalItems,
+  action,
+  search,
+  onSearch,
+  filters,
+  activeFilters,
+  onFilterChange,
+  onClearFilters,
+  isFiltered,
   removingPersonId,
   handleRemoveMember,
   projectId,
   onRefetch,
 }: {
   filtered: PersonWithDetails[];
+  totalItems: number;
+  action: React.ReactNode;
+  search: string;
+  onSearch: (value: string) => void;
+  filters?: FilterConfig[];
+  activeFilters: Record<string, FilterValue>;
+  onFilterChange: (filters: Record<string, FilterValue>) => void;
+  onClearFilters: () => void;
+  isFiltered: boolean;
   removingPersonId: string | null;
   handleRemoveMember: (id: string) => Promise<void>;
   projectId: string;
@@ -1128,13 +1367,12 @@ function MembersDataTable({
     person: PersonWithDetails | null;
   }>({ open: false, person: null });
 
-  const columns = React.useMemo<ColumnDef<PersonWithDetails>[]>(
+  const columns = React.useMemo<TableColumn<PersonWithDetails>[]>(
     () => [
       {
         id: "name",
-        header: "Name",
-        cell: ({ row }) => {
-          const person = row.original;
+        label: "Name",
+        render: (person) => {
           return (
             <div className="flex items-center gap-2.5">
               <Avatar className="h-8 w-8 shrink-0">
@@ -1148,37 +1386,46 @@ function MembersDataTable({
             </div>
           );
         },
+        sortValue: (person) => `${person.first_name} ${person.last_name}`,
+        csvValue: (person) => `${person.first_name} ${person.last_name}`,
       },
       {
         id: "type",
-        header: "Type",
-        cell: ({ row }) => (
+        label: "Type",
+        render: (person) => (
           <span className="text-sm text-muted-foreground capitalize">
-            {row.original.person_type ?? "—"}
+            {person.person_type ?? "—"}
           </span>
         ),
+        sortValue: (person) => person.person_type ?? "",
+        csvValue: (person) => person.person_type ?? "",
       },
       {
         id: "role",
-        header: "Job Title",
-        cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground">{row.original.job_title ?? "—"}</span>
+        label: "Job Title",
+        render: (person) => (
+          <span className="text-sm text-muted-foreground">
+            {person.job_title ?? "—"}
+          </span>
         ),
+        sortValue: (person) => person.job_title ?? "",
+        csvValue: (person) => person.job_title ?? "",
       },
       {
         id: "company",
-        header: "Company",
-        cell: ({ row }) => (
+        label: "Company",
+        render: (person) => (
           <span className="text-sm text-muted-foreground">
-            {row.original.company?.name ?? "—"}
+            {person.company?.name ?? "—"}
           </span>
         ),
+        sortValue: (person) => person.company?.name ?? "",
+        csvValue: (person) => person.company?.name ?? "",
       },
       {
         id: "permission_template",
-        header: "Permission Template",
-        cell: ({ row }) => {
-          const person = row.original;
+        label: "Permission Template",
+        render: (person) => {
           const templateId = person.membership?.permission_template_id ?? null;
           return (
             <TemplateSelector
@@ -1189,27 +1436,40 @@ function MembersDataTable({
             />
           );
         },
+        sortValue: (person) => person.membership?.permission_template_id ?? "",
+        csvValue: (person) => accessLevelLabel(person.permission_template),
       },
       {
         id: "email",
-        header: "Email",
-        cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground">{row.original.email ?? "—"}</span>
+        label: "Email",
+        render: (person) => (
+          <span className="text-sm text-muted-foreground">
+            {person.email ?? "—"}
+          </span>
         ),
+        sortValue: (person) => person.email ?? "",
+        csvValue: (person) => person.email ?? "",
       },
       {
         id: "phone",
-        header: "Phone",
-        cell: ({ row }) => {
-          const phone = row.original.phone_mobile || row.original.phone_business;
-          return <span className="text-sm text-muted-foreground">{phone ?? "—"}</span>;
+        label: "Phone",
+        render: (person) => {
+          const phone = person.phone_mobile || person.phone_business;
+          return (
+            <span className="text-sm text-muted-foreground">
+              {phone ?? "—"}
+            </span>
+          );
         },
+        sortValue: (person) =>
+          person.phone_mobile || person.phone_business || "",
+        csvValue: (person) =>
+          person.phone_mobile || person.phone_business || "",
       },
       {
         id: "actions",
-        header: "Actions",
-        cell: ({ row }) => {
-          const person = row.original;
+        label: "Actions",
+        render: (person) => {
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -1218,14 +1478,19 @@ function MembersDataTable({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setPermDialog({ open: true, person })}>
-                  <ShieldCheck className="mr-2 h-3.5 w-3.5" />View Permissions
+                <DropdownMenuItem
+                  onClick={() => setPermDialog({ open: true, person })}
+                >
+                  <ShieldCheck className="mr-2 h-3.5 w-3.5" />
+                  View Permissions
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Pencil className="mr-2 h-3.5 w-3.5" />Edit
+                  <Pencil className="mr-2 h-3.5 w-3.5" />
+                  Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <Mail className="mr-2 h-3.5 w-3.5" />Send Email
+                  <Mail className="mr-2 h-3.5 w-3.5" />
+                  Send Email
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-destructive"
@@ -1246,11 +1511,25 @@ function MembersDataTable({
 
   return (
     <>
-      <DataTable
+      <DirectoryUnifiedTable
+        title="All Project Members"
+        action={action}
         columns={columns}
-        data={filtered}
-        showToolbar={false}
-        showPagination={filtered.length > 15}
+        items={filtered}
+        getRowId={(person) => person.id}
+        search={search}
+        onSearch={onSearch}
+        searchPlaceholder="Search by name, role or company..."
+        totalItems={totalItems}
+        filters={filters}
+        activeFilters={activeFilters}
+        onFilterChange={onFilterChange}
+        onClearFilters={onClearFilters}
+        emptyTitle="No members"
+        emptyDescription="Add project members to manage access and assignments."
+        filteredDescription="No project members match the current filters."
+        isFiltered={isFiltered}
+        enablePagination={filtered.length > 15}
       />
       <EffectivePermissionsDialog
         open={permDialog.open}
@@ -1278,11 +1557,16 @@ function ExternalMembersSection({
     error,
     refetch,
   } = useProjectUsers(projectId, { type: "all" });
-  const { confirm: confirmMember, ConfirmDialog: MemberConfirmDialog } = useConfirm();
+  const { confirm: confirmMember, ConfirmDialog: MemberConfirmDialog } =
+    useConfirm();
   const [search, setSearch] = React.useState("");
   const deferredSearch = React.useDeferredValue(search);
-  const [activeFilters, setActiveFilters] = React.useState<Record<string, string | undefined>>({});
-  const [removingPersonId, setRemovingPersonId] = React.useState<string | null>(null);
+  const [activeFilters, setActiveFilters] = React.useState<
+    Record<string, string | undefined>
+  >({});
+  const [removingPersonId, setRemovingPersonId] = React.useState<string | null>(
+    null,
+  );
 
   const allMembers = React.useMemo(() => {
     return filterProjectMembers(members);
@@ -1305,7 +1589,12 @@ function ExternalMembersSection({
       await refetch();
       toast.success("Member removed");
     } catch (err) {
-      toast.error("Failed to remove member");
+      toast.error("Could not remove member", {
+        description:
+          err instanceof Error
+            ? err.message
+            : "The project directory did not confirm the removal.",
+      });
     } finally {
       setRemovingPersonId(null);
     }
@@ -1313,11 +1602,45 @@ function ExternalMembersSection({
 
   const companies = React.useMemo(() => {
     const names = new Set<string>();
-    allMembers.forEach((p) => { if (p.company?.name) names.add(p.company.name); });
+    allMembers.forEach((p) => {
+      if (p.company?.name) names.add(p.company.name);
+    });
     return Array.from(names).sort();
   }, [allMembers]);
 
   const companyFilter = activeFilters.company;
+
+  const memberFilters = React.useMemo<FilterConfig[] | undefined>(
+    () =>
+      companies.length > 0
+        ? [
+            {
+              id: "company",
+              label: "Company",
+              type: "select",
+              options: companies.map((company) => ({
+                value: company,
+                label: company,
+              })),
+            },
+          ]
+        : undefined,
+    [companies],
+  );
+
+  const handleMemberFilterChange = React.useCallback(
+    (nextFilters: Record<string, FilterValue>) => {
+      const nextCompany = nextFilters.company;
+      setActiveFilters({
+        company: typeof nextCompany === "string" ? nextCompany : undefined,
+      });
+    },
+    [],
+  );
+
+  const handleClearMemberFilters = React.useCallback(() => {
+    setActiveFilters({});
+  }, []);
 
   const filtered = React.useMemo(() => {
     const q = deferredSearch.trim().toLowerCase();
@@ -1328,79 +1651,43 @@ function ExternalMembersSection({
         (p.email ?? "").toLowerCase().includes(q) ||
         (p.company?.name ?? "").toLowerCase().includes(q) ||
         (p.job_title ?? "").toLowerCase().includes(q);
-      const matchesCompany = !companyFilter || p.company?.name === companyFilter;
+      const matchesCompany =
+        !companyFilter || p.company?.name === companyFilter;
       return matchesSearch && matchesCompany;
     });
   }, [allMembers, companyFilter, deferredSearch]);
 
-  const filterContent = companies.length > 0 ? (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-foreground">Company</span>
-        <Select
-          value={companyFilter ?? "all"}
-          onValueChange={(v) =>
-            setActiveFilters((prev) => ({ ...prev, company: v === "all" ? undefined : v }))
-          }
-        >
-          <SelectTrigger className="h-8 w-40 text-xs">
-            <SelectValue placeholder="All" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            {companies.map((c) => (
-              <SelectItem key={c} value={c}>{c}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-    </div>
-  ) : undefined;
-
   if (isLoading) return <SectionSkeleton rows={5} />;
-  if (error) return <p className="text-sm text-destructive py-6">Failed to load members.</p>;
+  if (error)
+    return (
+      <p className="text-sm text-destructive py-6">Failed to load members.</p>
+    );
 
   return (
     <>
-      <SectionRow
-        title="All Project Members"
+      <MembersUnifiedTable
+        filtered={filtered}
+        totalItems={allMembers.length}
         action={
-          <Button
-            size="xs"
-            onClick={onAddClick}
-          >
+          <Button size="xs" data-keep-text onClick={onAddClick}>
             Add Members
           </Button>
         }
         search={search}
         onSearch={setSearch}
-        searchPlaceholder="Search by name, role or company..."
-        filterContent={filterContent}
+        filters={memberFilters}
+        activeFilters={activeFilters}
+        onFilterChange={handleMemberFilterChange}
+        onClearFilters={handleClearMemberFilters}
+        isFiltered={Boolean(search || companyFilter)}
+        removingPersonId={removingPersonId}
+        handleRemoveMember={handleRemoveMember}
+        projectId={projectId}
+        onRefetch={() => {
+          refetch();
+          externalRefetch?.();
+        }}
       />
-
-      <div className="mt-4">
-        {allMembers.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">
-            No members yet.{" "}
-            <Button
-              variant="link"
-              size="sm"
-              className="h-auto p-0 text-primary"
-              onClick={onAddClick}
-            >
-              Add one
-            </Button>
-          </p>
-        ) : (
-          <MembersDataTable
-            filtered={filtered}
-            removingPersonId={removingPersonId}
-            handleRemoveMember={handleRemoveMember}
-            projectId={projectId}
-            onRefetch={() => { refetch(); externalRefetch?.(); }}
-          />
-        )}
-      </div>
       {MemberConfirmDialog}
     </>
   );
@@ -1421,28 +1708,124 @@ function VendorsSection({
   onAddVendorClick: () => void;
   onRemoveVendor: (id: string) => Promise<void>;
 }) {
-  const { confirm: confirmVendor, ConfirmDialog: VendorConfirmDialog } = useConfirm();
+  const { confirm: confirmVendor, ConfirmDialog: VendorConfirmDialog } =
+    useConfirm();
   const [removingId, setRemovingId] = React.useState<string | null>(null);
 
-  const handleRemove = async (pv: (typeof vendors)[0]) => {
-    const name = pv.companies?.name ?? "this vendor";
-    const ok = await confirmVendor({
-      description: `Remove "${name}" from this project?`,
-      variant: "destructive",
-      confirmLabel: "Remove",
-    });
-    if (!ok) return;
+  const handleRemove = React.useCallback(
+    async (pv: (typeof vendors)[0]) => {
+      const name = pv.companies?.name ?? "this vendor";
+      const ok = await confirmVendor({
+        description: `Remove "${name}" from this project?`,
+        variant: "destructive",
+        confirmLabel: "Remove",
+      });
+      if (!ok) return;
 
-    try {
-      setRemovingId(pv.id);
-      await onRemoveVendor(pv.id);
-      toast.success(`${name} removed`);
-    } catch (err) {
-      toast.error("Failed to remove vendor");
-    } finally {
-      setRemovingId(null);
-    }
-  };
+      try {
+        setRemovingId(pv.id);
+        await onRemoveVendor(pv.id);
+        toast.success(`${name} removed`);
+      } catch (err) {
+        toast.error("Could not remove vendor", {
+          description:
+            err instanceof Error
+              ? err.message
+              : `${name} could not be removed from this project.`,
+        });
+      } finally {
+        setRemovingId(null);
+      }
+    },
+    [confirmVendor, onRemoveVendor],
+  );
+
+  const vendorColumns = React.useMemo<TableColumn<(typeof vendors)[0]>[]>(
+    () => [
+      {
+        id: "name",
+        label: "Name",
+        render: (projectVendor) => {
+          const vendor = projectVendor.companies;
+          return (
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted">
+                <Package className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+              <span className="truncate text-sm font-medium text-foreground">
+                {vendor?.name ?? "—"}
+              </span>
+            </div>
+          );
+        },
+        sortValue: (projectVendor) => projectVendor.companies?.name ?? "",
+        csvValue: (projectVendor) => projectVendor.companies?.name ?? "",
+      },
+      {
+        id: "class",
+        label: "Class",
+        render: (projectVendor) => (
+          <span className="text-sm text-muted-foreground">
+            {projectVendor.companies?.vendor_class ?? "—"}
+          </span>
+        ),
+        sortValue: (projectVendor) =>
+          projectVendor.companies?.vendor_class ?? "",
+        csvValue: (projectVendor) =>
+          projectVendor.companies?.vendor_class ?? "",
+      },
+      {
+        id: "location",
+        label: "Location",
+        render: (projectVendor) => {
+          const vendor = projectVendor.companies;
+          const location =
+            vendor?.city && vendor?.state
+              ? `${vendor.city}, ${vendor.state}`
+              : (vendor?.city ?? vendor?.state ?? "—");
+          return (
+            <span className="text-sm text-muted-foreground">{location}</span>
+          );
+        },
+        sortValue: (projectVendor) => {
+          const vendor = projectVendor.companies;
+          return vendor?.city && vendor?.state
+            ? `${vendor.city}, ${vendor.state}`
+            : (vendor?.city ?? vendor?.state ?? "");
+        },
+        csvValue: (projectVendor) => {
+          const vendor = projectVendor.companies;
+          return vendor?.city && vendor?.state
+            ? `${vendor.city}, ${vendor.state}`
+            : (vendor?.city ?? vendor?.state ?? "");
+        },
+      },
+      {
+        id: "actions",
+        label: "",
+        render: (projectVendor) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                className="text-destructive"
+                disabled={removingId === projectVendor.id}
+                onClick={() => void handleRemove(projectVendor)}
+              >
+                <Trash2 className="mr-2 h-3.5 w-3.5" />
+                {removingId === projectVendor.id ? "Removing..." : "Remove"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
+      },
+    ],
+    [handleRemove, removingId],
+  );
 
   if (isLoading) return <SectionSkeleton rows={3} />;
   if (error) {
@@ -1469,64 +1852,28 @@ function VendorsSection({
 
   return (
     <>
-    <div className="rounded-md border border-border/50 overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead className="hidden md:table-cell">Class</TableHead>
-            <TableHead className="hidden lg:table-cell">Location</TableHead>
-            <TableHead className="w-12" />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {vendors.map((pv) => {
-            const v = pv.companies;
-            const location = v?.city && v?.state ? `${v.city}, ${v.state}` : (v?.city ?? v?.state ?? "—");
-            return (
-              <TableRow key={pv.id}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted">
-                      <Package className="h-3.5 w-3.5 text-muted-foreground" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground truncate">
-                      {v?.name ?? "—"}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                  {v?.vendor_class ?? "—"}
-                </TableCell>
-                <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                  {location}
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        disabled={removingId === pv.id}
-                        onClick={() => void handleRemove(pv)}
-                      >
-                        <Trash2 className="mr-2 h-3.5 w-3.5" />
-                        {removingId === pv.id ? "Removing..." : "Remove"}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-    </div>
-    {VendorConfirmDialog}
+      <DirectoryUnifiedTable
+        title="Vendors"
+        action={
+          <Button
+            type="button"
+            size="xs"
+            data-keep-text
+            onClick={onAddVendorClick}
+          >
+            Add Vendor
+          </Button>
+        }
+        items={vendors}
+        columns={vendorColumns}
+        getRowId={(projectVendor) => projectVendor.id}
+        emptyTitle="No vendors"
+        emptyDescription="Add vendors to keep project purchasing contacts available."
+        filteredDescription="No vendors match the current filters."
+        isFiltered={false}
+        enablePagination={vendors.length > 10}
+      />
+      {VendorConfirmDialog}
     </>
   );
 }
@@ -1621,7 +1968,11 @@ function ContactPickerCell({
             <ChevronsUpDown className="h-3 w-3 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-72 p-0" align="start" onClick={(e) => e.stopPropagation()}>
+        <PopoverContent
+          className="w-72 p-0"
+          align="start"
+          onClick={(e) => e.stopPropagation()}
+        >
           <Command>
             <CommandInput placeholder="Search contacts..." />
             <CommandList className="max-h-64">
@@ -1639,7 +1990,9 @@ function ContactPickerCell({
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4 shrink-0",
-                          currentContactId === p.id ? "opacity-100" : "opacity-0",
+                          currentContactId === p.id
+                            ? "opacity-100"
+                            : "opacity-0",
                         )}
                       />
                       <div className="min-w-0 flex flex-col">
@@ -1694,7 +2047,9 @@ function ContactPickerCell({
           const supabase = createClient();
           supabase
             .from("people")
-            .select("id, first_name, last_name, email, phone_business, phone_mobile")
+            .select(
+              "id, first_name, last_name, email, phone_business, phone_mobile",
+            )
             .eq("company_id", companyId)
             .order("first_name", { ascending: true })
             .then(({ data }) => {
@@ -1720,9 +2075,7 @@ function CompaniesSection({
   companies: Array<{
     id: string;
     company_id: string;
-    company?:
-      | { name: string | null; vendor_class?: string | null }
-      | null;
+    company?: { name: string | null; vendor_class?: string | null } | null;
     user_count?: number | null;
     primary_contact_id?: string | null;
     primary_contact?: SubcontractorContact | null;
@@ -1734,12 +2087,18 @@ function CompaniesSection({
   onRefetch: () => void;
   onCompanyClick: (companyId: string) => void;
 }) {
-  const { confirm: confirmCompany, ConfirmDialog: CompanyConfirmDialog } = useConfirm();
+  const { confirm: confirmCompany, ConfirmDialog: CompanyConfirmDialog } =
+    useConfirm();
   const [search, setSearch] = React.useState("");
   const deferredSearch = React.useDeferredValue(search);
-  const [removingCompanyId, setRemovingCompanyId] = React.useState<string | null>(null);
+  const [removingCompanyId, setRemovingCompanyId] = React.useState<
+    string | null
+  >(null);
 
-  const handleRemoveCompany = async (companyId: string, companyName: string) => {
+  const handleRemoveCompany = async (
+    companyId: string,
+    companyName: string,
+  ) => {
     if (removingCompanyId) return;
     const ok = await confirmCompany({
       description: `Remove ${companyName} from this project directory?`,
@@ -1782,7 +2141,8 @@ function CompaniesSection({
         .map((projectCompany) => {
           const vendorClass = projectCompany.company?.vendor_class ?? null;
           const isOwner =
-            ownerCompanyId !== null && projectCompany.company_id === ownerCompanyId;
+            ownerCompanyId !== null &&
+            projectCompany.company_id === ownerCompanyId;
           const typeLabel = isOwner
             ? "Owner"
             : vendorClass === "SUB"
@@ -1792,7 +2152,8 @@ function CompaniesSection({
             id: projectCompany.company_id,
             projectCompanyId: projectCompany.id,
             name: projectCompany.company?.name || "Untitled Company",
-            contact: (projectCompany.primary_contact ?? null) as SubcontractorContact | null,
+            contact: (projectCompany.primary_contact ??
+              null) as SubcontractorContact | null,
             typeLabel,
           };
         })
@@ -1814,54 +2175,60 @@ function CompaniesSection({
     });
   }, [companyRows, deferredSearch]);
 
-  const companiesColumns = React.useMemo<ColumnDef<SubcontractorRow>[]>(
+  const companiesColumns = React.useMemo<TableColumn<SubcontractorRow>[]>(
     () => [
       {
         id: "name",
-        header: "Company Name",
-        cell: ({ row }) => (
+        label: "Company Name",
+        render: (company) => (
           <Button
             type="button"
             variant="ghost"
             onClick={(e) => {
               e.stopPropagation();
-              onCompanyClick(row.original.id);
+              onCompanyClick(company.id);
             }}
             className="h-auto -ml-2 px-2 py-1 text-left font-medium text-foreground hover:bg-transparent hover:underline"
           >
-            {row.original.name}
+            {company.name}
           </Button>
         ),
+        sortValue: (company) => company.name,
+        csvValue: (company) => company.name,
       },
       {
         id: "type",
-        header: "Type",
-        cell: ({ row }) => (
+        label: "Type",
+        render: (company) => (
           <span className="text-sm text-muted-foreground">
-            {row.original.typeLabel}
+            {company.typeLabel}
           </span>
         ),
+        sortValue: (company) => company.typeLabel,
+        csvValue: (company) => company.typeLabel,
       },
       {
         id: "contact",
-        header: "Contact Name",
-        cell: ({ row }) => (
+        label: "Contact Name",
+        render: (company) => (
           <ContactPickerCell
             projectId={projectId}
-            companyId={row.original.id}
-            projectCompanyId={row.original.projectCompanyId}
-            companyName={row.original.name}
-            currentContactId={row.original.contact?.id ?? null}
-            currentContactName={contactDisplayName(row.original.contact)}
+            companyId={company.id}
+            projectCompanyId={company.projectCompanyId}
+            companyName={company.name}
+            currentContactId={company.contact?.id ?? null}
+            currentContactName={contactDisplayName(company.contact)}
             onChanged={onRefetch}
           />
         ),
+        sortValue: (company) => contactDisplayName(company.contact),
+        csvValue: (company) => contactDisplayName(company.contact),
       },
       {
         id: "email",
-        header: "Email",
-        cell: ({ row }) => {
-          const email = row.original.contact?.email;
+        label: "Email",
+        render: (company) => {
+          const email = company.contact?.email;
           return email ? (
             <a
               href={`mailto:${email}`}
@@ -1874,30 +2241,35 @@ function CompaniesSection({
             <span className="text-sm text-muted-foreground">—</span>
           );
         },
+        sortValue: (company) => company.contact?.email ?? "",
+        csvValue: (company) => company.contact?.email ?? "",
       },
       {
         id: "phone",
-        header: "Phone",
-        cell: ({ row }) => (
+        label: "Phone",
+        render: (company) => (
           <span className="text-sm text-muted-foreground">
-            {row.original.contact?.phone_business || "—"}
+            {company.contact?.phone_business || "—"}
           </span>
         ),
+        sortValue: (company) => company.contact?.phone_business ?? "",
+        csvValue: (company) => company.contact?.phone_business ?? "",
       },
       {
         id: "phone_mobile",
-        header: "Cell Phone",
-        cell: ({ row }) => (
+        label: "Cell Phone",
+        render: (company) => (
           <span className="text-sm text-muted-foreground">
-            {row.original.contact?.phone_mobile || "—"}
+            {company.contact?.phone_mobile || "—"}
           </span>
         ),
+        sortValue: (company) => company.contact?.phone_mobile ?? "",
+        csvValue: (company) => company.contact?.phone_mobile ?? "",
       },
       {
         id: "actions",
-        header: "",
-        cell: ({ row }) => {
-          const company = row.original;
+        label: "",
+        render: (company) => {
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -1910,19 +2282,30 @@ function CompaniesSection({
                   <MoreHorizontal />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuContent
+                align="end"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <DropdownMenuItem asChild>
                   <Link href={`/directory/companies/${company.id}?edit=1`}>
-                    <Pencil className="mr-2 h-3.5 w-3.5" />Edit
+                    <Pencil className="mr-2 h-3.5 w-3.5" />
+                    Edit
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-destructive"
                   disabled={removingCompanyId === company.projectCompanyId}
-                  onClick={() => void handleRemoveCompany(company.projectCompanyId, company.name)}
+                  onClick={() =>
+                    void handleRemoveCompany(
+                      company.projectCompanyId,
+                      company.name,
+                    )
+                  }
                 >
                   <Trash2 className="mr-2 h-3.5 w-3.5" />
-                  {removingCompanyId === company.projectCompanyId ? "Removing..." : "Remove"}
+                  {removingCompanyId === company.projectCompanyId
+                    ? "Removing..."
+                    : "Remove"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -1930,44 +2313,67 @@ function CompaniesSection({
         },
       },
     ],
-    [removingCompanyId, projectId, onRefetch],
+    [
+      handleRemoveCompany,
+      onCompanyClick,
+      onRefetch,
+      projectId,
+      removingCompanyId,
+    ],
   );
 
   return (
     <>
-      <SectionRow
-        title="Subcontractors"
-        action={
-          <Button
-            size="xs"
-            onClick={onAssignClick}
-          >
-            Add Company
-          </Button>
-        }
-        search={search}
-        onSearch={setSearch}
-        searchPlaceholder="Search subcontractors..."
-      />
-
-      <div className="mt-4">
-        {isLoading ? (
-          <SectionSkeleton rows={3} />
-        ) : error ? (
-          <p className="text-sm text-destructive py-4">Failed to load companies.</p>
-        ) : filteredRows.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">
-            {search ? "No subcontractors match your search." : "No subcontractors found."}
-          </p>
-        ) : (
-          <DataTable
-            columns={companiesColumns}
-            data={filteredRows}
-            showToolbar={false}
-            showPagination={filteredRows.length > 10}
+      {isLoading ? (
+        <>
+          <SectionRow
+            title="Subcontractors"
+            action={
+              <Button size="xs" data-keep-text onClick={onAssignClick}>
+                Add Company
+              </Button>
+            }
           />
-        )}
-      </div>
+          <div className="mt-4">
+            <SectionSkeleton rows={3} />
+          </div>
+        </>
+      ) : error ? (
+        <>
+          <SectionRow
+            title="Subcontractors"
+            action={
+              <Button size="xs" data-keep-text onClick={onAssignClick}>
+                Add Company
+              </Button>
+            }
+          />
+          <p className="text-sm text-destructive py-4">
+            Failed to load companies.
+          </p>
+        </>
+      ) : (
+        <DirectoryUnifiedTable
+          title="Subcontractors"
+          action={
+            <Button size="xs" data-keep-text onClick={onAssignClick}>
+              Add Company
+            </Button>
+          }
+          items={filteredRows}
+          columns={companiesColumns}
+          getRowId={(company) => company.projectCompanyId}
+          search={search}
+          onSearch={setSearch}
+          searchPlaceholder="Search subcontractors..."
+          totalItems={companyRows.length}
+          emptyTitle="No subcontractors"
+          emptyDescription="Assign companies to this project directory."
+          filteredDescription="No subcontractors match your search."
+          isFiltered={Boolean(search)}
+          enablePagination={filteredRows.length > 10}
+        />
+      )}
       {CompanyConfirmDialog}
     </>
   );
@@ -1980,7 +2386,9 @@ export default function ProjectDirectoryPage() {
   const projectId = params.projectId as string;
 
   const [clientName, setClientName] = React.useState<string | null>(null);
-  const [ownerCompanyId, setOwnerCompanyId] = React.useState<string | null>(null);
+  const [ownerCompanyId, setOwnerCompanyId] = React.useState<string | null>(
+    null,
+  );
   React.useEffect(() => {
     if (!projectId) return;
     const supabase = createClient();
@@ -1990,7 +2398,9 @@ export default function ProjectDirectoryPage() {
       .eq("id", parseInt(projectId, 10))
       .single()
       .then(({ data }) => {
-        const companyName = (data as { companies?: { name?: string } | null } | null)?.companies?.name;
+        const companyName = (
+          data as { companies?: { name?: string } | null } | null
+        )?.companies?.name;
         if (companyName) setClientName(companyName);
       });
   }, [projectId]);
@@ -2008,7 +2418,8 @@ export default function ProjectDirectoryPage() {
       .maybeSingle()
       .then(({ data }) => {
         setOwnerCompanyId(
-          (data as { contract_company_id?: string | null } | null)?.contract_company_id ?? null,
+          (data as { contract_company_id?: string | null } | null)
+            ?.contract_company_id ?? null,
         );
       });
   }, [projectId]);
@@ -2030,8 +2441,13 @@ export default function ProjectDirectoryPage() {
     sort: "name",
     per_page: 150,
   });
-  const { vendors, isLoading: vendorsLoading, error: vendorsError, addVendor, removeVendor } =
-    useProjectVendors(projectId);
+  const {
+    vendors,
+    isLoading: vendorsLoading,
+    error: vendorsError,
+    addVendor,
+    removeVendor,
+  } = useProjectVendors(projectId);
 
   const existingVendorIds = vendors
     .map((v) => v.companies?.id)
@@ -2056,14 +2472,17 @@ export default function ProjectDirectoryPage() {
           metadata: { projectId },
         });
       });
-   
   }, [projectId]);
 
   return (
     <PageShell
       variant="dashboard"
       title="Project Directory"
-      statusBadge={clientName ? <span className="text-sm text-muted-foreground">{clientName}</span> : undefined}
+      statusBadge={
+        clientName ? (
+          <span className="text-sm text-muted-foreground">{clientName}</span>
+        ) : undefined
+      }
       contentClassName="space-y-12"
       actions={
         <Button variant="outline" size="sm">
@@ -2081,7 +2500,9 @@ export default function ProjectDirectoryPage() {
           error={companiesError}
           ownerCompanyId={ownerCompanyId}
           onAssignClick={() => setAddCompanyOpen(true)}
-          onRefetch={() => { void refetchCompanies(); }}
+          onRefetch={() => {
+            void refetchCompanies();
+          }}
           onCompanyClick={(companyId) =>
             setCompanySheet({ open: true, companyId })
           }
@@ -2102,7 +2523,9 @@ export default function ProjectDirectoryPage() {
         onOpenChange={setAddCompanyOpen}
         existingCompanyIds={projectCompanies.map((c) => c.company_id)}
         projectId={projectId}
-        onSuccess={() => { void refetchCompanies(); }}
+        onSuccess={() => {
+          void refetchCompanies();
+        }}
       />
       <AddVendorDialog
         open={addVendorOpen}
@@ -2116,9 +2539,7 @@ export default function ProjectDirectoryPage() {
       <CompanyDetailSheet
         companyId={companySheet.companyId}
         open={companySheet.open}
-        onOpenChange={(open) =>
-          setCompanySheet((prev) => ({ ...prev, open }))
-        }
+        onOpenChange={(open) => setCompanySheet((prev) => ({ ...prev, open }))}
         projectId={projectId}
       />
     </PageShell>
