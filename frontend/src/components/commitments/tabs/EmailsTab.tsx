@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ds/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ds/text";
 import { DataTable } from "@/components/tables/DataTable";
+import { apiFetch, ApiError } from "@/lib/api-client";
 import { formatDate } from "@/lib/table-config/formatters";
 
 interface ProjectEmail {
@@ -48,24 +49,16 @@ export const EmailsTab = memo(function EmailsTab({
       setError(null);
 
       try {
-        const response = await fetch(
-          `/api/commitments/${commitmentId}/emails`,
-        );
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            setEmails([]);
-            return;
-          }
-          throw new Error("Failed to fetch emails");
-        }
-
-        const payload = (await response.json()) as {
+        const payload = await apiFetch<{
           data: ProjectEmail[];
           meta: { total_count: number };
-        };
+        }>(`/api/commitments/${commitmentId}/emails`);
         setEmails(payload.data ?? []);
       } catch (err) {
+        if (err instanceof ApiError && err.status === 404) {
+          setEmails([]);
+          return;
+        }
         setError(
           err instanceof Error ? err.message : "Failed to load emails",
         );
@@ -83,7 +76,7 @@ export const EmailsTab = memo(function EmailsTab({
         accessorKey: "subject",
         header: "Subject",
         cell: ({ row }) => (
-          <Text size="sm" weight="medium" className="max-w-[240px] truncate">
+          <Text size="sm" weight="medium" className="max-w-60 truncate">
             {row.original.subject || "—"}
           </Text>
         ),
@@ -119,7 +112,7 @@ export const EmailsTab = memo(function EmailsTab({
         cell: ({ row }) => {
           const snippet = stripHtml(row.original.body).slice(0, 100);
           return (
-            <Text size="sm" tone="muted" className="max-w-[280px] truncate">
+            <Text size="sm" tone="muted" className="max-w-72 truncate">
               {snippet || "—"}
             </Text>
           );

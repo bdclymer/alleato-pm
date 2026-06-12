@@ -2,8 +2,9 @@
 
 import { memo } from "react";
 import { History } from "lucide-react";
-import useSWR from "swr";
+import { useQuery } from "@tanstack/react-query";
 
+import { apiFetch } from "@/lib/api-client";
 import { EmptyState } from "@/components/ds/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ds/text";
@@ -37,12 +38,9 @@ const HIDDEN_FIELDS = new Set([
   "project_id",
 ]);
 
-const fetcher = async (url: string): Promise<AuditEntry[]> => {
-  const res = await fetch(url);
-  const json = await res.json();
-  if (!res.ok) throw new Error(json?.error ?? "Failed to load change history");
-  return json.data ?? [];
-};
+interface HistoryResponse {
+  data?: AuditEntry[];
+}
 
 function formatValue(value: unknown): string {
   if (value === null || value === undefined) return "—";
@@ -70,10 +68,17 @@ function actionBadgeVariant(action: AuditEntry["action"]) {
 export const ChangeHistoryTab = memo(function ChangeHistoryTab({
   commitmentId,
 }: ChangeHistoryTabProps) {
-  const { data, error, isLoading } = useSWR<AuditEntry[]>(
-    commitmentId ? `/api/commitments/${commitmentId}/history` : null,
-    fetcher,
-  );
+  const { data, error, isLoading } = useQuery<AuditEntry[]>({
+    queryKey: ["commitment-history", commitmentId],
+    queryFn: async ({ signal }) => {
+      const payload = await apiFetch<HistoryResponse>(
+        `/api/commitments/${commitmentId}/history`,
+        { signal },
+      );
+      return payload.data ?? [];
+    },
+    enabled: !!commitmentId,
+  });
 
   if (isLoading) {
     return (
@@ -118,7 +123,7 @@ export const ChangeHistoryTab = memo(function ChangeHistoryTab({
         return (
           <div
             key={entry.id}
-            className="rounded-md border border-border bg-card p-3"
+            className="rounded-md bg-card p-3"
           >
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">

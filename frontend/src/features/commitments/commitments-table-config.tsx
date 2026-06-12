@@ -1,7 +1,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import Link from "next/link";
-import { ChevronRight, ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ChevronRight, MoreHorizontal, Trash2 } from "lucide-react";
 
 import { formatDate } from "@/lib/format";
 
@@ -31,13 +31,14 @@ export const commitmentColumns: ColumnConfig[] = [
   { id: "number", label: "Number", alwaysVisible: true },
   { id: "title", label: "Title", defaultVisible: true },
   { id: "contract_company", label: "Company", defaultVisible: true },
-  { id: "trade_names", label: "Trade / Division", defaultVisible: true },
-  { id: "scope_summary", label: "Scope Summary", defaultVisible: true },
+  { id: "cost_codes", label: "Cost Code", defaultVisible: true },
+  { id: "trade_names", label: "Division", defaultVisible: true },
+  { id: "scope_summary", label: "Description", defaultVisible: true },
   { id: "type", label: "Type", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
-  { id: "original_amount", label: "Original Contract Amount", defaultVisible: true },
-  { id: "revised_contract_amount", label: "Revised Contract Amount", defaultVisible: true },
-  { id: "approved_change_orders", label: "Approved Change Orders", defaultVisible: true },
+  { id: "original_amount", label: "Original Amount", defaultVisible: true },
+  { id: "revised_contract_amount", label: "Revised Contract", defaultVisible: true },
+  { id: "approved_change_orders", label: "Approved COs", defaultVisible: true },
   { id: "invoiced_amount", label: "Invoiced", defaultVisible: true },
   { id: "remaining_balance", label: "Balance", defaultVisible: true },
   { id: "executed", label: "Executed", defaultVisible: true },
@@ -242,6 +243,18 @@ export function buildCommitmentTableColumns(
       csvValue: (item) => item.trade_names.join(", "),
       sortValue: (item) => item.trade_names.join(", "),
     },
+    cost_codes: {
+      render: (item) => {
+        const value = item.cost_codes.length > 0 ? item.cost_codes.join(", ") : "-";
+        return (
+          <span className="block max-w-40 truncate text-sm text-muted-foreground" title={value}>
+            {value}
+          </span>
+        );
+      },
+      csvValue: (item) => item.cost_codes.join(", "),
+      sortValue: (item) => item.cost_codes.join(", "),
+    },
     scope_summary: {
       render: (item) => (
         <span
@@ -332,7 +345,6 @@ export function buildCommitmentTableColumns(
             title={`Open ${item.number} in Acumatica`}
           >
             View
-            <ExternalLink className="h-3.5 w-3.5" />
           </a>
         ) : (
           <span className="text-muted-foreground">-</span>
@@ -420,7 +432,6 @@ export function renderCommitmentRowActions(
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => onEdit(item)}>
-          <Pencil className="mr-2 h-4 w-4" />
           Edit
         </DropdownMenuItem>
         <DropdownMenuItem
@@ -441,14 +452,13 @@ export function renderCommitmentCard(
 ): ReactElement {
   return (
     <div
-      className="border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+      className="bg-card rounded-md p-4 cursor-pointer hover:bg-muted/50 transition-colors"
       onClick={() => onClick(item)}
     >
       <div className="flex items-start justify-between mb-2">
         <div>
           <p className="text-xs uppercase text-muted-foreground">{item.number}</p>
-          {/* eslint-disable-next-line design-system/no-raw-heading */}
-          <h3 className="font-medium">{item.title ?? "Untitled Commitment"}</h3>
+          <p className="font-medium">{item.title ?? "Untitled Commitment"}</p>
         </div>
         <StatusBadge status={statusLabel(item.status)} />
       </div>

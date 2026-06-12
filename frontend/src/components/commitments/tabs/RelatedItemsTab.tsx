@@ -29,6 +29,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Stack } from "@/components/layout/stack";
 import { StatusBadge } from "@/components/ds/status-badge";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
+import { apiFetch } from "@/lib/api-client";
 
 const RELATED_ITEM_TYPE_OPTIONS = [
   { value: "change_event", label: "Change Events" },
@@ -86,9 +87,7 @@ async function fetchSearchOptions(
   const url = `${endpoints[type]}${search ? `?search=${encodeURIComponent(search)}` : ""}`;
 
   try {
-    const res = await fetch(url);
-    if (!res.ok) return [];
-    const payload = await res.json() as { data?: unknown[] } | unknown[];
+    const payload = await apiFetch<{ data?: unknown[] } | unknown[]>(url);
     const rows = Array.isArray(payload) ? payload : (payload as { data?: unknown[] }).data ?? [];
 
     return (rows as Record<string, unknown>[]).map((row) => ({
@@ -122,10 +121,8 @@ export function RelatedItemsTab({
 
   const fetchItems = useCallback(async () => {
     try {
-      const res = await fetch(resolvedApiBasePath);
-      if (!res.ok) return;
-      const payload = await res.json() as { data?: RelatedItem[] };
-      setItems(payload.data ?? []);
+      const payload = await apiFetch<{ data?: RelatedItem[] }>(resolvedApiBasePath);
+      setItems(payload?.data ?? []);
     } catch (error) {
       reportNonCriticalFailure({
         area: "commitment-related-items",
@@ -174,9 +171,8 @@ export function RelatedItemsTab({
 
     setIsLinking(true);
     try {
-      const res = await fetch(resolvedApiBasePath, {
+      await apiFetch(resolvedApiBasePath, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           relatedType: linkType,
           relatedId: selectedId,
@@ -184,11 +180,6 @@ export function RelatedItemsTab({
           commitmentType,
         }),
       });
-
-      if (!res.ok) {
-        const err = await res.json() as { error?: string };
-        throw new Error(err.error ?? "Failed to link item");
-      }
 
       toast.success("Related item linked");
       setShowDialog(false);
@@ -203,8 +194,7 @@ export function RelatedItemsTab({
   const handleUnlink = async (itemId: string) => {
     setDeletingIds((prev) => new Set(prev).add(itemId));
     try {
-      const res = await fetch(`${resolvedApiBasePath}?id=${encodeURIComponent(itemId)}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to unlink");
+      await apiFetch(`${resolvedApiBasePath}?id=${encodeURIComponent(itemId)}`, { method: "DELETE" });
       setItems((prev) => prev.filter((i) => i.id !== itemId));
       toast.success("Related item removed");
     } catch {
@@ -236,7 +226,7 @@ export function RelatedItemsTab({
           <Spinner />
         </div>
       ) : items.length > 0 ? (
-        <div className="divide-y divide-border rounded-md border border-border">
+        <div className="divide-y divide-border rounded-md">
           {items.map((item) => {
             const isDeleting = deletingIds.has(item.id);
             const label = item.relatedNumber

@@ -19,13 +19,12 @@ import { formatDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import { useConfirm } from "@/hooks/use-confirm";
 import { createContact, updateContact } from "@/app/(main)/actions/table-actions";
-import { PageShell } from "@/components/layout";
+import { PageShell, SectionRuleHeading } from "@/components/layout";
 import {
   DataTable as DsDataTable,
   EntityAttachments,
   ErrorState,
   EmptyState as DsEmptyState,
-  SectionHeader as DsSectionHeader,
 } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -656,9 +655,17 @@ export default function CompanyDetailsPage() {
           <main className="min-w-0">
             <div className="space-y-10">
               <section className="space-y-4">
-                <DsSectionHeader
-                  title="Contacts"
-                  action={{ label: "Add contact", onClick: () => void openAddContactModal() }}
+                <SectionRuleHeading
+                  label="Contacts"
+                  actions={
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => void openAddContactModal()}
+                    >
+                      Add contact
+                    </Button>
+                  }
                 />
                 {contacts.length === 0 ? (
                   <DsEmptyState title="No contacts yet" description="Add contacts to track people associated with this company." />
@@ -744,17 +751,22 @@ export default function CompanyDetailsPage() {
               </section>
 
               <section className="space-y-4">
-                <DsSectionHeader
-                  title="Projects"
-                  action={{
-                    label: "Add project",
-                    onClick: () => {
-                      setAddToProjectOpen(true);
-                      setProjectQuery("");
-                      setProjectComboboxOpen(false);
-                      void loadProjects();
-                    },
-                  }}
+                <SectionRuleHeading
+                  label="Projects"
+                  actions={
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setAddToProjectOpen(true);
+                        setProjectQuery("");
+                        setProjectComboboxOpen(false);
+                        void loadProjects();
+                      }}
+                    >
+                      Add project
+                    </Button>
+                  }
                 />
                 {associatedProjects.length === 0 ? (
                   <DsEmptyState title="No projects yet" description="Add this company to a project to get started." />
@@ -793,7 +805,7 @@ export default function CompanyDetailsPage() {
 
               <section className="space-y-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <DsSectionHeader title="Commitments" />
+                  <SectionRuleHeading label="Commitments" />
                   <div className="w-full sm:w-72">
                     <Input
                       value={commitmentQuery}
@@ -865,7 +877,7 @@ export default function CompanyDetailsPage() {
 
               <section className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <DsSectionHeader title="Invoices" />
+                  <SectionRuleHeading label="Invoices" />
                   <Tabs
                     value={invoiceFilter}
                     onValueChange={(value) => setInvoiceFilter(value as "open" | "all")}
@@ -923,7 +935,7 @@ export default function CompanyDetailsPage() {
               </section>
 
               <section className="space-y-4">
-                <DsSectionHeader title="Meetings" />
+                <SectionRuleHeading label="Meetings" />
                 {meetingsByProject.length === 0 ? (
                   <DsEmptyState title="No meetings found" description="No meetings have been recorded for this company's projects." />
                 ) : (

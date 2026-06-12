@@ -725,7 +725,7 @@ export default function CommitmentDetailPage() {
   // ── Loading ──
   if (isLoading) {
     return (
-      <PageShell variant="dashboard" title="Commitment Details" description="Loading…" onBack={() => router.back()}>
+      <PageShell variant="detailWide" title="Commitment Details" description="Loading…" onBack={() => router.back()}>
         <div className="space-y-6">
           <Skeleton className="h-24 w-full rounded-lg" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
@@ -744,7 +744,7 @@ export default function CommitmentDetailPage() {
   // ── Error ──
   if (error || !commitment) {
     return (
-      <PageShell variant="dashboard" title="Commitment Details" description="Not found" onBack={() => router.back()}>
+      <PageShell variant="detailWide" title="Commitment Details" description="Not found" onBack={() => router.back()}>
         <ErrorState error={error ?? "Commitment not found"} onRetry={() => void fetchCommitment()} />
       </PageShell>
     );

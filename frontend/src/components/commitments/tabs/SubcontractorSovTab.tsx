@@ -12,7 +12,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TableHead, TableHeader } from "@/components/ui/table";
+import {
+  InlineTable,
+  InlineTableBody,
+  InlineTableCell,
+  InlineTableFooter,
+  InlineTableFooterCell,
+  InlineTableFooterRow,
+  InlineTableHeader,
+  InlineTableHeaderCell,
+  InlineTableHeaderRow,
+  InlineTableRow,
+} from "@/components/ds/inline-table";
 import { cn } from "@/lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -337,178 +348,178 @@ export function SubcontractorSovTab({
       </div>
 
       {/* Grouped SOV → SSOV table */}
-      <div className="overflow-x-auto rounded-md border">
-        <table className="w-full text-sm">
-          <TableHeader>
-            <tr>
-              <TableHead className="w-16 px-4 py-2.5">#</TableHead>
-              <TableHead className="px-4 py-2.5">Budget Code</TableHead>
-              <TableHead className="px-4 py-2.5">Description</TableHead>
-              <TableHead className="px-4 py-2.5 text-right">Billed To Date</TableHead>
-              <TableHead className="px-4 py-2.5 text-right">Amount</TableHead>
-              {!isLocked && <TableHead className="px-4 py-2.5 w-px" />}
-            </tr>
-          </TableHeader>
-          <tbody>
-            {groups.length === 0 && orphans.length === 0 && (
-              <tr>
-                <td className="px-4 py-8 text-center text-muted-foreground" colSpan={colSpanFull}>
-                  No SOV line items on this commitment. Add SOV lines first.
-                </td>
-              </tr>
-            )}
+      <InlineTable variant="edit">
+        <InlineTableHeader>
+          <InlineTableHeaderRow>
+            <InlineTableHeaderCell className="w-16">#</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Budget Code</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Description</InlineTableHeaderCell>
+            <InlineTableHeaderCell align="right">Billed To Date</InlineTableHeaderCell>
+            <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+            {!isLocked && <InlineTableHeaderCell className="w-px" />}
+          </InlineTableHeaderRow>
+        </InlineTableHeader>
+        <InlineTableBody>
+          {groups.length === 0 && orphans.length === 0 && (
+            <InlineTableRow>
+              <InlineTableCell className="py-8 text-center text-muted-foreground" colSpan={colSpanFull}>
+                No SOV line items on this commitment. Add SOV lines first.
+              </InlineTableCell>
+            </InlineTableRow>
+          )}
 
-            {groups.map(({ parent, children, allocated, remaining }) => (
-              <React.Fragment key={parent.id}>
-                {/* Parent SOV row */}
-                <tr className="border-t bg-muted/40">
-                  <td className="px-4 py-2.5 font-semibold tabular-nums">{parent.line_number ?? "—"}</td>
-                  <td className="px-4 py-2.5 font-medium">{parent.budget_code || "—"}</td>
-                  <td className="px-4 py-2.5 font-medium">{parent.description || "—"}</td>
-                  <td className="px-4 py-2.5 text-right tabular-nums text-muted-foreground">
-                    {formatCurrency(parent.billed_to_date ?? 0)}
-                  </td>
-                  <td className="px-4 py-2.5 text-right font-semibold tabular-nums">
-                    {formatCurrency(parent.amount ?? 0)}
-                  </td>
-                  {!isLocked && <td className="px-4 py-2.5" />}
-                </tr>
+          {groups.map(({ parent, children, allocated, remaining }) => (
+            <React.Fragment key={parent.id}>
+              {/* Parent SOV row */}
+              <InlineTableRow type="group">
+                <InlineTableCell className="font-semibold tabular-nums">{parent.line_number ?? "—"}</InlineTableCell>
+                <InlineTableCell className="font-medium">{parent.budget_code || "—"}</InlineTableCell>
+                <InlineTableCell className="font-medium">{parent.description || "—"}</InlineTableCell>
+                <InlineTableCell align="right" numeric className="text-muted-foreground">
+                  {formatCurrency(parent.billed_to_date ?? 0)}
+                </InlineTableCell>
+                <InlineTableCell align="right" numeric className="font-semibold">
+                  {formatCurrency(parent.amount ?? 0)}
+                </InlineTableCell>
+                {!isLocked && <InlineTableCell />}
+              </InlineTableRow>
 
-                {/* SSOV child rows */}
-                {children.map((child) => (
-                  <tr key={child.id} className="border-t">
-                    <td className="px-4 py-2" />
-                    <td className="px-4 py-2 pl-8 text-xs text-muted-foreground">↳</td>
-                    <td className="px-4 py-2 min-w-56">
-                      <Input
-                        value={child.description || ""}
-                        onChange={(e) => updateItem(child.id, "description", e.target.value)}
-                        placeholder="Line item description"
-                        disabled={isLocked}
-                      />
-                    </td>
-                    <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">
-                      {formatCurrency(child.billed_to_date ?? 0)}
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      <MoneyField
-                        label="Amount"
-                        inline
-                        showCurrency={false}
-                        value={child.amount ?? undefined}
-                        onChange={(value) => updateItem(child.id, "amount", value ?? 0)}
-                        disabled={isLocked}
-                      />
-                    </td>
-                    {!isLocked && (
-                      <td className="px-4 py-2 text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => deleteLine(child.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-
-                {/* Per-parent footer: Add line + Remaining to Allocate */}
-                <tr className="border-t">
-                  <td className="px-4 py-2" colSpan={3}>
-                    {!isLocked && (
+              {/* SSOV child rows */}
+              {children.map((child) => (
+                <InlineTableRow key={child.id}>
+                  <InlineTableCell />
+                  <InlineTableCell className="pl-8 text-xs text-muted-foreground">↳</InlineTableCell>
+                  <InlineTableCell className="min-w-56">
+                    <Input
+                      value={child.description || ""}
+                      onChange={(e) => updateItem(child.id, "description", e.target.value)}
+                      placeholder="Line item description"
+                      disabled={isLocked}
+                    />
+                  </InlineTableCell>
+                  <InlineTableCell align="right" numeric className="text-muted-foreground">
+                    {formatCurrency(child.billed_to_date ?? 0)}
+                  </InlineTableCell>
+                  <InlineTableCell align="right">
+                    <MoneyField
+                      label="Amount"
+                      inline
+                      showCurrency={false}
+                      value={child.amount ?? undefined}
+                      onChange={(value) => updateItem(child.id, "amount", value ?? 0)}
+                      disabled={isLocked}
+                    />
+                  </InlineTableCell>
+                  {!isLocked && (
+                    <InlineTableCell align="right">
                       <Button
-                        type="button"
-                        variant="link"
-                        size="sm"
-                        onClick={() => addChildLine(parent)}
-                        className="h-auto p-0"
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => deleteLine(child.id)}
                       >
-                        <Plus className="h-3.5 w-3.5" /> Add line item
+                        <Trash2 className="h-4 w-4" />
                       </Button>
-                    )}
-                  </td>
-                  <td className="px-4 py-2 text-right text-xs text-muted-foreground">Remaining to Allocate</td>
-                  <td
-                    className={cn(
-                      "px-4 py-2 text-right font-semibold tabular-nums",
-                      remaining === 0 ? "text-status-success" : "text-status-warning",
-                    )}
-                  >
-                    {formatCurrency(remaining)}
-                  </td>
-                  {!isLocked && <td className="px-4 py-2" />}
-                </tr>
-              </React.Fragment>
-            ))}
+                    </InlineTableCell>
+                  )}
+                </InlineTableRow>
+              ))}
 
-            {/* Orphans (SSOV rows with no matching parent — shouldn't happen post-backfill, but render defensively) */}
-            {orphans.length > 0 && (
-              <>
-                <tr className="border-t bg-status-warning/10">
-                  <td className="px-4 py-2 text-xs font-semibold text-status-warning" colSpan={colSpanFull}>
-                    Unlinked line items (no matching SOV parent)
-                  </td>
-                </tr>
-                {orphans.map((child) => (
-                  <tr key={child.id} className="border-t">
-                    <td className="px-4 py-2 tabular-nums">{child.line_number ?? "—"}</td>
-                    <td className="px-4 py-2">{child.budget_code || "—"}</td>
-                    <td className="px-4 py-2 min-w-56">
-                      <Input
-                        value={child.description || ""}
-                        onChange={(e) => updateItem(child.id, "description", e.target.value)}
-                        disabled={isLocked}
-                      />
-                    </td>
-                    <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">
-                      {formatCurrency(child.billed_to_date ?? 0)}
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      <MoneyField
-                        label="Amount"
-                        inline
-                        showCurrency={false}
-                        value={child.amount ?? undefined}
-                        onChange={(value) => updateItem(child.id, "amount", value ?? 0)}
-                        disabled={isLocked}
-                      />
-                    </td>
-                    {!isLocked && (
-                      <td className="px-4 py-2 text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => deleteLine(child.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </>
-            )}
-          </tbody>
-          <tfoot>
-            <tr>
-              <td className="px-4 py-3 text-right font-semibold" colSpan={3}>
-                Grand Total
-              </td>
-              <td className="px-4 py-3 text-right font-semibold tabular-nums">
-                {formatCurrency(billedToDateTotal)}
-              </td>
-              <td className="px-4 py-3 text-right font-semibold tabular-nums">
-                {formatCurrency(allocatedTotal)}
-              </td>
-              {!isLocked && <td className="px-4 py-3" />}
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+              {/* Per-parent footer: Add line + Remaining to Allocate */}
+              <InlineTableRow>
+                <InlineTableCell colSpan={3}>
+                  {!isLocked && (
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      onClick={() => addChildLine(parent)}
+                      className="h-auto p-0"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> Add line item
+                    </Button>
+                  )}
+                </InlineTableCell>
+                <InlineTableCell align="right" className="text-xs text-muted-foreground">Remaining to Allocate</InlineTableCell>
+                <InlineTableCell
+                  align="right"
+                  numeric
+                  className={cn(
+                    "font-semibold",
+                    remaining === 0 ? "text-status-success" : "text-status-warning",
+                  )}
+                >
+                  {formatCurrency(remaining)}
+                </InlineTableCell>
+                {!isLocked && <InlineTableCell />}
+              </InlineTableRow>
+            </React.Fragment>
+          ))}
+
+          {/* Orphans (SSOV rows with no matching parent — shouldn't happen post-backfill, but render defensively) */}
+          {orphans.length > 0 && (
+            <>
+              <InlineTableRow className="bg-status-warning/10">
+                <InlineTableCell className="text-xs font-semibold text-status-warning" colSpan={colSpanFull}>
+                  Unlinked line items (no matching SOV parent)
+                </InlineTableCell>
+              </InlineTableRow>
+              {orphans.map((child) => (
+                <InlineTableRow key={child.id}>
+                  <InlineTableCell numeric>{child.line_number ?? "—"}</InlineTableCell>
+                  <InlineTableCell>{child.budget_code || "—"}</InlineTableCell>
+                  <InlineTableCell className="min-w-56">
+                    <Input
+                      value={child.description || ""}
+                      onChange={(e) => updateItem(child.id, "description", e.target.value)}
+                      disabled={isLocked}
+                    />
+                  </InlineTableCell>
+                  <InlineTableCell align="right" numeric className="text-muted-foreground">
+                    {formatCurrency(child.billed_to_date ?? 0)}
+                  </InlineTableCell>
+                  <InlineTableCell align="right">
+                    <MoneyField
+                      label="Amount"
+                      inline
+                      showCurrency={false}
+                      value={child.amount ?? undefined}
+                      onChange={(value) => updateItem(child.id, "amount", value ?? 0)}
+                      disabled={isLocked}
+                    />
+                  </InlineTableCell>
+                  {!isLocked && (
+                    <InlineTableCell align="right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => deleteLine(child.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </InlineTableCell>
+                  )}
+                </InlineTableRow>
+              ))}
+            </>
+          )}
+        </InlineTableBody>
+        <InlineTableFooter>
+          <InlineTableFooterRow type="totals">
+            <InlineTableFooterCell align="right" colSpan={3}>
+              Grand Total
+            </InlineTableFooterCell>
+            <InlineTableFooterCell align="right" numeric>
+              {formatCurrency(billedToDateTotal)}
+            </InlineTableFooterCell>
+            <InlineTableFooterCell align="right" numeric>
+              {formatCurrency(allocatedTotal)}
+            </InlineTableFooterCell>
+            {!isLocked && <InlineTableFooterCell />}
+          </InlineTableFooterRow>
+        </InlineTableFooter>
+      </InlineTable>
 
       {hasUnsavedChanges && !isLocked && (
         <div className="flex justify-end">
