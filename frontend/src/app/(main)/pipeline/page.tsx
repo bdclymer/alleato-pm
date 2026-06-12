@@ -1,7 +1,7 @@
 "use client";
 import { ProjectPageHeader } from "@/components/layout";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,14 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   RefreshCw,
   PlayCircle,
@@ -34,7 +26,11 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { apiFetch } from "@/lib/api-client";
-
+import {
+  UnifiedTablePage,
+  type TableColumn,
+  type ViewMode,
+} from "@/components/tables/unified";
 
 interface Document {
   id: string;
@@ -118,15 +114,28 @@ export default function DocumentPipelinePage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [phaseCounts, setPhaseCounts] = useState<PhaseCount[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<Error | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [triggering, setTriggering] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [currentView, setCurrentView] = useState<ViewMode>("table");
 
   const fetchDocuments = async () => {
     try {
-      const data = await apiFetch<{ documents: Document[] }>("/api/documents/status");
+      setLoadError(null);
+      const data = await apiFetch<{ documents: Document[] }>(
+        "/api/documents/status",
+      );
       setDocuments(data.documents);
     } catch (error) {
-      toast.error("Failed to fetch documents");
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Document status could not be loaded.";
+      setLoadError(new Error(message));
+      toast.error("Could not load document status", {
+        description: message,
+      });
     }
   };
 
@@ -137,7 +146,12 @@ export default function DocumentPipelinePage() {
       );
       setPhaseCounts(data.phaseCounts);
     } catch (error) {
-      console.error("Failed to process pipeline data:", error);
+      toast.error("Could not load pipeline phase counts", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "The pipeline phase summary could not be loaded.",
+      });
     }
   };
 
@@ -166,10 +180,13 @@ export default function DocumentPipelinePage() {
     );
 
     try {
-      const data = await apiFetch<{ message?: string }>("/api/documents/trigger-pipeline", {
-        method: "POST",
-        body: JSON.stringify({ phase }),
-      });
+      const data = await apiFetch<{ message?: string }>(
+        "/api/documents/trigger-pipeline",
+        {
+          method: "POST",
+          body: JSON.stringify({ phase }),
+        },
+      );
 
       toast.success(data.message || "Pipeline triggered successfully", {
         id: `trigger-${phase}`, // Replaces the loading toast
@@ -177,8 +194,12 @@ export default function DocumentPipelinePage() {
       // Refresh data to show updated status
       await loadData();
     } catch (error) {
-      toast.error("Failed to trigger pipeline phase", {
+      toast.error("Could not trigger pipeline phase", {
         id: `trigger-${phase}`, // Replaces the loading toast
+        description:
+          error instanceof Error
+            ? error.message
+            : "The pipeline endpoint did not accept the request.",
       });
     } finally {
       setTriggering(null);
@@ -205,6 +226,135 @@ export default function DocumentPipelinePage() {
     return phaseCounts.find((pc) => pc.phase === phase)?.ready || 0;
   };
 
+  const documentColumns = useMemo<TableColumn<Document>[]>(
+    () => [
+      {
+        id: "title",
+        label: "Title",
+        alwaysVisible: true,
+        sortable: true,
+        render: (doc) => (
+          <div className="min-w-0">
+            <div
+              className="truncate text-sm font-medium text-foreground"
+              title={doc.title}
+            >
+              {doc.title}
+            </div>
+            <div className="truncate text-xs text-muted-foreground">
+              {doc.fireflies_id}
+            </div>
+          </div>
+        ),
+        sortValue: (doc) => doc.title,
+        csvValue: (doc) => doc.title,
+        width: 280,
+      },
+      {
+        id: "type",
+        label: "Type",
+        sortable: true,
+        render: (doc) => <Badge variant="outline">{doc.type}</Badge>,
+        sortValue: (doc) => doc.type,
+        csvValue: (doc) => doc.type,
+        width: 120,
+      },
+      {
+        id: "status",
+        label: "Status",
+        sortable: true,
+        render: (doc) => getStatusBadge(doc.status, doc.pipeline_stage),
+        sortValue: (doc) => doc.status,
+        csvValue: (doc) => doc.status,
+        width: 150,
+      },
+      {
+        id: "pipeline_stage",
+        label: "Pipeline Stage",
+        sortable: true,
+        render: (doc) => (
+          <code className="rounded bg-muted px-1 py-0.5 text-xs">
+            {doc.pipeline_stage}
+          </code>
+        ),
+        sortValue: (doc) => doc.pipeline_stage,
+        csvValue: (doc) => doc.pipeline_stage,
+        width: 150,
+      },
+      {
+        id: "attempt_count",
+        label: "Attempts",
+        sortable: true,
+        render: (doc) => (
+          <span className="text-sm tabular-nums text-muted-foreground">
+            {doc.attempt_count}
+          </span>
+        ),
+        sortValue: (doc) => doc.attempt_count,
+        csvValue: (doc) => String(doc.attempt_count),
+        width: 100,
+      },
+      {
+        id: "last_updated",
+        label: "Last Updated",
+        sortable: true,
+        render: (doc) => (
+          <span className="text-sm text-muted-foreground">
+            {doc.last_attempt_at
+              ? format(new Date(doc.last_attempt_at), "MMM d, h:mm a")
+              : format(new Date(doc.created_at), "MMM d, h:mm a")}
+          </span>
+        ),
+        sortValue: (doc) =>
+          new Date(doc.last_attempt_at || doc.created_at).getTime(),
+        csvValue: (doc) =>
+          doc.last_attempt_at
+            ? format(new Date(doc.last_attempt_at), "yyyy-MM-dd HH:mm")
+            : format(new Date(doc.created_at), "yyyy-MM-dd HH:mm"),
+        width: 150,
+      },
+      {
+        id: "error",
+        label: "Error",
+        render: (doc) =>
+          doc.error_message ? (
+            <div
+              className="flex min-w-0 items-center gap-1 text-destructive"
+              title={doc.error_message}
+            >
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span className="truncate text-xs">{doc.error_message}</span>
+            </div>
+          ) : (
+            <span className="text-sm text-muted-foreground">-</span>
+          ),
+        csvValue: (doc) => doc.error_message ?? "",
+        width: 220,
+      },
+    ],
+    [],
+  );
+
+  const filteredDocuments = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return documents;
+    return documents.filter((doc) =>
+      [
+        doc.title,
+        doc.fireflies_id,
+        doc.status,
+        doc.type,
+        doc.source,
+        doc.pipeline_stage,
+        doc.error_message,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(query),
+    );
+  }, [documents, search]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -225,154 +375,119 @@ export default function DocumentPipelinePage() {
             size="sm"
             disabled={refreshing}
           >
-            <RefreshCw
-              className={refreshing ? "animate-spin" : undefined}
-            />
+            <RefreshCw className={refreshing ? "animate-spin" : undefined} />
             Refresh
           </Button>
         }
       />
       <PageContainer>
-      {/* Pipeline Phase Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {Object.entries(phaseConfig).map(([phase, config]) => {
-          const Icon = config.icon;
-          const count = getPhaseCount(phase);
-          const isProcessing = triggering === phase;
-          return (
-            <Card
-              key={phase}
-              className={
-                isProcessing ? "ring-2 ring-primary/50" : ""
-              }
-            >
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Icon
-                      className={`h-5 w-5 ${phaseIconClass[phase] ?? "text-muted-foreground"} ${isProcessing ? "animate-pulse" : ""}`}
-                    />
-                    <CardTitle className="text-lg">{config.label}</CardTitle>
+        {/* Pipeline Phase Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {Object.entries(phaseConfig).map(([phase, config]) => {
+            const Icon = config.icon;
+            const count = getPhaseCount(phase);
+            const isProcessing = triggering === phase;
+            return (
+              <Card
+                key={phase}
+                className={isProcessing ? "ring-2 ring-primary/50" : ""}
+              >
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Icon
+                        className={`h-5 w-5 ${phaseIconClass[phase] ?? "text-muted-foreground"} ${isProcessing ? "animate-pulse" : ""}`}
+                      />
+                      <CardTitle className="text-lg">{config.label}</CardTitle>
+                    </div>
+                    {isProcessing ? (
+                      <Badge variant="default" className="bg-primary">
+                        <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                        Processing
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary">{count} ready</Badge>
+                    )}
                   </div>
-                  {isProcessing ? (
-                    <Badge variant="default" className="bg-primary">
-                      <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-                      Processing
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary">{count} ready</Badge>
-                  )}
-                </div>
-                <CardDescription className="text-sm">
-                  {config.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  className="w-full"
-                  variant={count > 0 ? "default" : "secondary"}
-                  disabled={count === 0 || triggering !== null}
-                  onClick={() => triggerPhase(phase)}
-                >
-                  {isProcessing ? (
-                    <>
-                      <RefreshCw className="animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <PlayCircle />
-                      Trigger {config.label}
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                  <CardDescription className="text-sm">
+                    {config.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    className="w-full"
+                    variant={count > 0 ? "default" : "secondary"}
+                    disabled={count === 0 || triggering !== null}
+                    onClick={() => triggerPhase(phase)}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <RefreshCw className="animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <PlayCircle />
+                        Trigger {config.label}
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
 
-      {/* Documents Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Document Status</CardTitle>
-          <CardDescription>
-            {documents.length} documents in the system
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Pipeline Stage</TableHead>
-                  <TableHead>Attempts</TableHead>
-                  <TableHead>Last Updated</TableHead>
-                  <TableHead>Error</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {documents.map((doc) => (
-                  <TableRow key={doc.id}>
-                    <TableCell className="font-medium">
-                      <div className="max-w-xs truncate" title={doc.title}>
-                        {doc.title}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {doc.fireflies_id}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{doc.type}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {getStatusBadge(doc.status, doc.pipeline_stage)}
-                    </TableCell>
-                    <TableCell>
-                      <code className="text-xs bg-muted px-1 py-0.5 rounded">
-                        {doc.pipeline_stage}
-                      </code>
-                    </TableCell>
-                    <TableCell>{doc.attempt_count}</TableCell>
-                    <TableCell className="text-sm text-foreground">
-                      {doc.last_attempt_at
-                        ? format(new Date(doc.last_attempt_at), "MMM d, h:mm a")
-                        : format(new Date(doc.created_at), "MMM d, h:mm a")}
-                    </TableCell>
-                    <TableCell>
-                      {doc.error_message && (
-                        <div
-                          className="flex items-center gap-1 text-destructive"
-                          title={doc.error_message}
-                        >
-                          <AlertCircle className="h-4 w-4" />
-                          <span className="text-xs truncate max-w-[200px]">
-                            {doc.error_message}
-                          </span>
-                        </div>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {documents.length === 0 && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={7}
-                      className="text-center text-muted-foreground py-8"
-                    >
-                      No documents found
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
+        <UnifiedTablePage
+          header={{
+            title: "Document Status",
+            description:
+              "Monitor document processing state and pipeline errors.",
+            variant: "compact",
+          }}
+          toolbar={{
+            totalItems: documents.length,
+            filteredItems: filteredDocuments.length,
+            searchValue: search,
+            onSearchChange: setSearch,
+            searchPlaceholder: "Search documents...",
+            currentView,
+            onViewChange: (view) => {
+              if (view === "table") setCurrentView(view);
+            },
+            enabledViews: ["table"],
+          }}
+          data={{
+            items: filteredDocuments,
+            isLoading: loading,
+            error: loadError,
+          }}
+          table={{
+            columns: documentColumns,
+            getRowId: (doc) => doc.id,
+            density: "compact",
+            stickyHeader: true,
+          }}
+          features={{
+            enableViews: false,
+            enableColumnToggle: true,
+            enableExport: true,
+            enablePagination: true,
+            enableBulkDelete: false,
+            enableRowSelection: false,
+          }}
+          layout={{
+            containerPadding: false,
+            toolbarInlineWithHeader: true,
+            minWidth: 980,
+          }}
+          emptyState={{
+            title: "No documents found",
+            description: "Documents will appear here after ingestion starts.",
+            filteredDescription: "No documents match your search.",
+            isFiltered: Boolean(search),
+          }}
+        />
       </PageContainer>
     </>
   );
