@@ -401,7 +401,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
       <section>
         <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
           <div className="space-y-6">
-            <DetailPanel>
+            <section className="space-y-6">
               <SectionRuleHeading label="General Information" className="mb-6 pb-0" />
               <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-x-10 gap-y-4">
                 <dl className="space-y-4 text-sm">
@@ -519,9 +519,9 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                   projectId={projectId}
                 />
               </LabelValueRow>
-            </DetailPanel>
+            </section>
 
-            <DetailPanel>
+            <section className="space-y-6">
               <Collapsible defaultOpen>
                 <div className="mb-6 flex items-center justify-between">
                   <SectionRuleHeading label="Inclusions + Exclusions" className="pb-0" />
@@ -564,7 +564,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                   </div>
                 </CollapsibleContent>
               </Collapsible>
-            </DetailPanel>
+            </section>
           </div>
 
           <aside>
