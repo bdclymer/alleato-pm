@@ -84,7 +84,8 @@ function arrayValue(value: unknown): unknown[] {
 
 function stringArray(value: unknown): string[] {
   return arrayValue(value).filter(
-    (item): item is string => typeof item === "string" && item.trim().length > 0,
+    (item): item is string =>
+      typeof item === "string" && item.trim().length > 0,
   );
 }
 
@@ -172,29 +173,84 @@ function deliveryLabel(row: DailyRecapRow) {
   return "Not ready";
 }
 
-function MetadataRow({ label, value }: { label: string; value: React.ReactNode }) {
+function BriefFact({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) {
   return (
-    <div className="space-y-1">
-      <dt className="text-xs font-medium uppercase text-muted-foreground">
+    <div className="flex items-baseline gap-2">
+      <dt className="shrink-0 text-xs font-medium uppercase text-muted-foreground">
         {label}
       </dt>
-      <dd className="text-sm text-foreground">{value}</dd>
+      <dd className="text-sm font-medium text-foreground">{value}</dd>
     </div>
   );
 }
 
-function BriefItemList({
+function BriefSummary({
+  row,
+  packet,
+  itemCount,
+}: {
+  row: DailyRecapRow;
+  packet: HistoricalBriefPacket | null;
+  itemCount: number;
+}) {
+  return (
+    <section className="space-y-3">
+      <dl className="flex flex-wrap gap-x-6 gap-y-2">
+        <BriefFact label="Delivery" value={deliveryLabel(row)} />
+        <BriefFact label="Items" value={itemCount} />
+        <BriefFact
+          label="Generated"
+          value={formatDateTime(packet?.generatedAt ?? row.created_at)}
+        />
+        <BriefFact
+          label="Window"
+          value={
+            packet?.windowDays
+              ? `${packet.windowDays} days`
+              : formatDateRange(row)
+          }
+        />
+      </dl>
+      <dl className="flex flex-wrap gap-x-6 gap-y-2 text-muted-foreground">
+        <BriefFact label="Approved" value={formatDateTime(row.approved_at)} />
+        <BriefFact label="Sent" value={formatDateTime(row.sent_at)} />
+      </dl>
+      {row.approval_notes && (
+        <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+          {row.approval_notes}
+        </p>
+      )}
+    </section>
+  );
+}
+
+function BriefItemSection({
   title,
   items,
   empty,
+  priority = false,
 }: {
   title: string;
   items: HistoricalBriefItem[];
   empty: string;
+  priority?: boolean;
 }) {
   return (
-    <section className="space-y-4">
-      <SectionRuleHeading label={title} />
+    <section className={priority ? "space-y-5" : "space-y-4"}>
+      <SectionRuleHeading
+        label={title}
+        actions={
+          <span className="text-xs font-medium text-muted-foreground">
+            {items.length} {items.length === 1 ? "item" : "items"}
+          </span>
+        }
+      />
       {items.length === 0 ? (
         <p className="text-sm text-muted-foreground">{empty}</p>
       ) : (
@@ -202,73 +258,73 @@ function BriefItemList({
           {items.map((item, index) => (
             <article
               key={`${item.title}-${item.sourceDetail ?? index}`}
-              className="space-y-3 py-5 first:pt-0 last:pb-0"
+              className="grid gap-4 py-5 first:pt-0 last:pb-0 lg:grid-cols-12"
             >
-              <div className="space-y-1">
-                <div className="text-base font-semibold text-foreground">
-                  {item.title}
+              <div className="space-y-3 lg:col-span-8">
+                <div className="space-y-1">
+                  <div
+                    className={
+                      priority
+                        ? "text-base font-semibold leading-6 text-foreground"
+                        : "text-sm font-semibold leading-6 text-foreground"
+                    }
+                  >
+                    {item.title}
+                  </div>
+                  {item.project && (
+                    <p className="text-xs text-muted-foreground">
+                      {item.project}
+                    </p>
+                  )}
                 </div>
-                {item.project && (
-                  <p className="text-xs text-muted-foreground">{item.project}</p>
+
+                {item.recommendedAction && (
+                  <p className="text-sm leading-6 text-foreground">
+                    <span className="font-medium">Recommended action:</span>{" "}
+                    {item.recommendedAction}
+                  </p>
+                )}
+
+                {item.summary && item.bullets.length === 0 && (
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    {item.summary}
+                  </p>
+                )}
+
+                {item.bullets.length > 0 && (
+                  <ul className="list-disc space-y-1.5 pl-5 text-sm leading-6 text-muted-foreground">
+                    {item.bullets.map((bullet) => (
+                      <li key={bullet}>{bullet}</li>
+                    ))}
+                  </ul>
                 )}
               </div>
 
-              {item.summary && item.bullets.length === 0 && (
-                <p className="text-sm leading-6 text-foreground">{item.summary}</p>
-              )}
-
-              {item.bullets.length > 0 && (
-                <ul className="space-y-1.5">
-                  {item.bullets.map((bullet) => (
-                    <li
-                      key={bullet}
-                      className="flex gap-2 text-sm leading-6 text-foreground"
-                    >
-                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/40" />
-                      <span>{bullet}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              {(item.recommendedAction || item.whyItMatters) && (
-                <div className="space-y-1 text-sm leading-6">
-                  {item.recommendedAction && (
-                    <p>
-                      <span className="font-medium text-foreground">
-                        Recommended action:
-                      </span>{" "}
-                      <span className="text-muted-foreground">
-                        {item.recommendedAction}
-                      </span>
-                    </p>
-                  )}
-                  {item.whyItMatters && (
-                    <p>
-                      <span className="font-medium text-foreground">
-                        Why it matters:
-                      </span>{" "}
-                      <span className="text-muted-foreground">
-                        {item.whyItMatters}
-                      </span>
-                    </p>
-                  )}
-                </div>
-              )}
-
-              <div className="text-xs text-muted-foreground">
-                {item.sourceUrl ? (
-                  <Link
-                    href={item.sourceUrl}
-                    className="font-medium text-foreground underline-offset-4 hover:underline"
-                  >
-                    {item.sourceDetail ?? item.source ?? "Source"}
-                  </Link>
-                ) : (
-                  <span>{item.sourceDetail ?? item.source ?? "Source not linked"}</span>
+              <div className="space-y-2 text-xs leading-5 text-muted-foreground lg:col-span-4">
+                {item.whyItMatters && (
+                  <p>
+                    <span className="font-medium text-foreground">
+                      Why it matters:
+                    </span>{" "}
+                    {item.whyItMatters}
+                  </p>
                 )}
-                {item.date ? <span> · {formatDate(item.date)}</span> : null}
-                {item.evidence ? <span> · {item.evidence}</span> : null}
+                <p>
+                  {item.sourceUrl ? (
+                    <Link
+                      href={item.sourceUrl}
+                      className="font-medium text-foreground underline-offset-4 hover:underline"
+                    >
+                      {item.sourceDetail ?? item.source ?? "Source"}
+                    </Link>
+                  ) : (
+                    <span>
+                      {item.sourceDetail ?? item.source ?? "Source not linked"}
+                    </span>
+                  )}
+                  {item.date ? <span> · {formatDate(item.date)}</span> : null}
+                  {item.evidence ? <span> · {item.evidence}</span> : null}
+                </p>
               </div>
             </article>
           ))}
@@ -393,32 +449,7 @@ export default async function DailyBriefDetailPage({ params }: PageProps) {
       ]}
       contentClassName="pb-16"
     >
-      <section className="space-y-5">
-        <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-4">
-          <MetadataRow label="Delivery" value={deliveryLabel(row)} />
-          <MetadataRow label="Approved" value={formatDateTime(row.approved_at)} />
-          <MetadataRow label="Sent" value={formatDateTime(row.sent_at)} />
-          <MetadataRow
-            label="Generated"
-            value={formatDateTime(packet?.generatedAt ?? row.created_at)}
-          />
-          <MetadataRow label="Items" value={itemCount} />
-          <MetadataRow
-            label="Window"
-            value={packet?.windowDays ? `${packet.windowDays} days` : formatDateRange(row)}
-          />
-          <MetadataRow label="Model" value={row.model_used ?? "Not recorded"} />
-          <MetadataRow
-            label="Packet"
-            value={packet ? "Stored packet available" : "Missing packet"}
-          />
-        </dl>
-        {row.approval_notes && (
-          <p className="text-sm leading-6 text-muted-foreground">
-            {row.approval_notes}
-          </p>
-        )}
-      </section>
+      <BriefSummary row={row} packet={packet} itemCount={itemCount} />
 
       {!packet ? (
         <section className="space-y-2">
@@ -431,30 +462,35 @@ export default async function DailyBriefDetailPage({ params }: PageProps) {
         </section>
       ) : (
         <>
-          <BriefItemList
+          <BriefItemSection
             title="Needs Brandon"
             items={packet.needsBrandon}
             empty="No decision items were stored in this section."
+            priority
           />
-          <BriefItemList
+          <BriefItemSection
             title="Waiting on Others"
             items={packet.waitingOnOthers}
             empty="No waiting-on-others items were stored in this section."
           />
-          <BriefItemList
+          <BriefItemSection
             title="Important Updates"
             items={packet.importantUpdates}
             empty="No important updates were stored in this section."
           />
           <SourceCoverageSection sources={packet.sourceCoverage} />
           {packet.retrievalNotes.length > 0 && (
-            <section className="space-y-4">
-              <SectionRuleHeading label="Retrieval notes" />
-              <ul className="space-y-1.5 text-sm leading-6 text-muted-foreground">
-                {packet.retrievalNotes.map((note) => (
-                  <li key={note}>{note}</li>
-                ))}
-              </ul>
+            <section className="space-y-3">
+              <details className="group">
+                <summary className="cursor-pointer text-sm font-medium text-foreground">
+                  Retrieval notes
+                </summary>
+                <ul className="mt-3 space-y-1.5 text-sm leading-6 text-muted-foreground">
+                  {packet.retrievalNotes.map((note) => (
+                    <li key={note}>{note}</li>
+                  ))}
+                </ul>
+              </details>
             </section>
           )}
         </>
