@@ -661,7 +661,7 @@ export default function CompanyDetailsPage() {
                   action={{ label: "Add contact", onClick: () => void openAddContactModal() }}
                 />
                 {contacts.length === 0 ? (
-                  <DsEmptyState title="No contacts associated with this company" description="Add contacts to track people associated with this company." />
+                  <DsEmptyState title="No contacts yet" description="Add contacts to track people associated with this company." />
                 ) : (
                   <ul className="divide-y divide-border">
                     {contacts.map((contact) => {
@@ -757,14 +757,14 @@ export default function CompanyDetailsPage() {
                   }}
                 />
                 {associatedProjects.length === 0 ? (
-                  <DsEmptyState title="No projects associated with this company" description="Projects will appear here once this company is added to a project." />
+                  <DsEmptyState title="No projects yet" description="Add this company to a project to get started." />
                 ) : (
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {associatedProjects.map((project) => (
                       <Link
                         key={project.id}
                         href={`/${project.id}/home`}
-                        className="group rounded-xl bg-muted/40 p-4 transition-colors hover:bg-muted/70"
+                        className="group rounded-lg border border-border/50 bg-background hover:border-border transition-colors p-4"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <p className="font-medium text-foreground leading-snug group-hover:underline underline-offset-4">
@@ -792,7 +792,7 @@ export default function CompanyDetailsPage() {
               </section>
 
               <section className="space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <DsSectionHeader title="Commitments" />
                   <div className="w-full sm:w-72">
                     <Input
@@ -973,9 +973,9 @@ export default function CompanyDetailsPage() {
 
           <aside className="min-w-0">
             <div className="space-y-6 lg:sticky lg:top-6">
-              <section className="rounded-2xl border border-border bg-background p-5">
-	                <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Company file</p>
-	                <div className="mt-5 space-y-4 text-sm">
+              <section className="rounded-lg bg-muted/25 p-4">
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Company file</p>
+                <div className="mt-4 space-y-3 text-sm">
                   <div className="flex items-center justify-between gap-4">
                     <p className="shrink-0 text-muted-foreground">Status</p>
                     <p className="text-right font-medium text-foreground">{company.status || "—"}</p>
@@ -985,24 +985,8 @@ export default function CompanyDetailsPage() {
                     <p className="text-right font-medium text-foreground">{company.type || "—"}</p>
                   </div>
                   <div className="flex items-center justify-between gap-4">
-                    <p className="shrink-0 text-muted-foreground">ERP Vendor ID</p>
+                    <p className="shrink-0 text-muted-foreground">Vendor ID</p>
                     <p className="text-right font-medium text-foreground">{company.acumatica_vendor_id || "—"}</p>
-                  </div>
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="shrink-0 text-muted-foreground">Email</p>
-                    <p className="text-right font-medium text-foreground">{company.contact_email || "—"}</p>
-                  </div>
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="shrink-0 text-muted-foreground">Phone</p>
-                    <p className="text-right font-medium text-foreground">{company.contact_phone || "—"}</p>
-                  </div>
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="shrink-0 text-muted-foreground">Address</p>
-                    <p className="text-right font-medium text-foreground">{company.address || "—"}</p>
-                  </div>
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="shrink-0 text-muted-foreground">Location</p>
-                    <p className="text-right font-medium text-foreground">{companyLocation || "—"}</p>
                   </div>
                   <div className="flex items-center justify-between gap-4">
                     <p className="shrink-0 text-muted-foreground">Website</p>
@@ -1023,7 +1007,7 @@ export default function CompanyDetailsPage() {
                 </div>
               </section>
 
-              <section className="rounded-2xl border border-border bg-background p-5">
+              <section className="rounded-lg border border-border bg-background p-4">
                 <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Primary contact</p>
                 {primaryContact ? (
                   <div className="mt-4 flex items-center gap-3">
@@ -1049,7 +1033,7 @@ export default function CompanyDetailsPage() {
                 )}
               </section>
 
-              <section className="rounded-2xl border border-border bg-background p-5">
+              <section className="rounded-lg border border-border bg-background p-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Next signal</p>
                   <FileText className="h-4 w-4 text-muted-foreground" />
@@ -1068,7 +1052,7 @@ export default function CompanyDetailsPage() {
                 </div>
               </section>
 
-              <section className="rounded-2xl border border-border bg-background p-5">
+              <section className="rounded-lg border border-border bg-background p-4">
                 <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Attachments</p>
                 <div className="mt-4">
                   <EntityAttachments
