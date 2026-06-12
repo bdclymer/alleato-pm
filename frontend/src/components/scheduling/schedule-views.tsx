@@ -27,6 +27,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -445,14 +451,15 @@ export function ScheduleGridView({
     <div className="overflow-x-auto">
       {/* Header */}
       <div
-        className="grid gap-2 px-4 py-2.5 border-b bg-muted/40 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+        className="grid gap-1.5 px-3 py-1.5 border-b bg-muted/40 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
         style={{ gridTemplateColumns }}
       >
-        <div className="flex items-center">
+        <div className="flex items-center justify-center">
           <Checkbox
             checked={isAllSelected}
             onCheckedChange={handleSelectAll}
             aria-label="Select all"
+            className="h-3.5 w-3.5"
           />
         </div>
         {columns.map((column) => (
@@ -489,7 +496,7 @@ export function ScheduleGridView({
               key={task.id}
               draggable
               className={cn(
-                "grid gap-2 px-4 py-4 hover:bg-accent cursor-pointer group transition-colors duration-150",
+                "grid gap-1.5 px-3 py-2.5 hover:bg-accent cursor-pointer group transition-colors duration-150",
                 selectedIds.has(task.id) && "bg-primary/10",
                 dropTargetTaskId === task.id && "ring-1 ring-primary/50 bg-primary/5"
               )}
@@ -516,41 +523,51 @@ export function ScheduleGridView({
                 await onUpdateTask(draggedTaskId, { parent_task_id: task.id });
               }}
             >
-              <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                 <Checkbox
                   checked={selectedIds.has(task.id)}
                   onCheckedChange={(checked) => handleToggleSelect(task.id, !!checked)}
                   aria-label={`Select ${task.name}`}
+                  className="h-3.5 w-3.5"
                 />
               </div>
 
               {columns.map((column) => (
                 <div key={column.id} className="flex items-center">
                   {column.id === "name" && (
-                    <div className="flex items-center gap-2 min-w-0 w-full">
-                      {task.is_milestone && <Flag className="h-4 w-4 text-amber-500 shrink-0" />}
-                      <Input
-                        value={nameDrafts[task.id] ?? task.name}
-                        onChange={(event) =>
-                          setNameDrafts((prev) => ({ ...prev, [task.id]: event.target.value }))
-                        }
-                        onBlur={() => void saveName(task)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") {
-                            event.preventDefault();
-                            void saveName(task);
-                          }
-                          if (event.key === "Escape") {
-                            setNameDrafts((prev) => {
-                              const next = { ...prev };
-                              delete next[task.id];
-                              return next;
-                            });
-                          }
-                        }}
-                        className="h-8 text-sm"
-                      />
-                    </div>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-1.5 min-w-0 w-full">
+                            {task.is_milestone && <Flag className="h-3.5 w-3.5 text-destructive shrink-0" />}
+                            <Input
+                              value={nameDrafts[task.id] ?? task.name}
+                              onChange={(event) =>
+                                setNameDrafts((prev) => ({ ...prev, [task.id]: event.target.value }))
+                              }
+                              onBlur={() => void saveName(task)}
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                  event.preventDefault();
+                                  void saveName(task);
+                                }
+                                if (event.key === "Escape") {
+                                  setNameDrafts((prev) => {
+                                    const next = { ...prev };
+                                    delete next[task.id];
+                                    return next;
+                                  });
+                                }
+                              }}
+                              className="h-7 text-xs px-2 py-1 truncate"
+                            />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-xs">
+                          {nameDrafts[task.id] ?? task.name}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   )}
 
                   {column.id === "start_date" && (
@@ -561,7 +578,7 @@ export function ScheduleGridView({
                         setStartDateDrafts((prev) => ({ ...prev, [task.id]: event.target.value }))
                       }
                       onBlur={() => void saveDate(task, "start_date")}
-                      className="h-8 text-xs"
+                      className="h-7 text-xs px-2 py-1"
                     />
                   )}
 
@@ -573,7 +590,7 @@ export function ScheduleGridView({
                         setFinishDateDrafts((prev) => ({ ...prev, [task.id]: event.target.value }))
                       }
                       onBlur={() => void saveDate(task, "finish_date")}
-                      className="h-8 text-xs"
+                      className="h-7 text-xs px-2 py-1"
                     />
                   )}
 
@@ -591,7 +608,7 @@ export function ScheduleGridView({
                                 : 0,
                         })
                       }
-                      className="h-8 w-full rounded-md border border-input bg-background px-2 text-sm"
+                      className="h-7 w-full rounded-md border border-input bg-background px-2 py-1 text-xs"
                     >
                       <option value="not_started">Not Started</option>
                       <option value="in_progress">In Progress</option>
@@ -600,7 +617,7 @@ export function ScheduleGridView({
                   )}
 
                   {column.id === "duration_days" && (
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-xs text-muted-foreground">
                       {task.duration_days !== null ? `${task.duration_days}d` : "-"}
                     </span>
                   )}
@@ -615,20 +632,20 @@ export function ScheduleGridView({
                         setPercentDrafts((prev) => ({ ...prev, [task.id]: event.target.value }))
                       }
                       onBlur={() => void savePercent(task)}
-                      className="h-8 text-xs"
+                      className="h-7 text-xs px-2 py-1"
                     />
                   )}
 
                   {column.id === "assigned_to" && (
-                    <span className="text-sm text-muted-foreground">-</span>
+                    <span className="text-xs text-muted-foreground">-</span>
                   )}
 
                   {column.id === "wbs_code" && (
-                    <span className="text-sm text-muted-foreground">{task.wbs_code || "-"}</span>
+                    <span className="text-xs text-muted-foreground truncate">{task.wbs_code || "-"}</span>
                   )}
 
                   {column.id === "constraint_type" && (
-                    <span className="text-sm text-muted-foreground">{task.constraint_type || "-"}</span>
+                    <span className="text-xs text-muted-foreground truncate">{task.constraint_type || "-"}</span>
                   )}
                 </div>
               ))}
