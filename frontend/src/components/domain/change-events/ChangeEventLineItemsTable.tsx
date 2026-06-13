@@ -4,7 +4,7 @@ import React, { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 
-import { Columns2, MoreVertical, Pencil, Plus, Search, SlidersHorizontal, Trash2, X } from "lucide-react";
+import { Columns2, Edit, MoreVertical, Plus, Search, SlidersHorizontal, Trash2, X } from "lucide-react";
 
 import {
   InlineTable,
@@ -31,32 +31,56 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { formatCurrency } from "@/lib/format";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
+import { MoneyField } from "@/components/forms/MoneyField";
 import type { VerticalMarkup } from "@/hooks/use-vertical-markup";
 import type { ChangeEventDetailLineItem } from "@/types/change-events";
 import { SectionRuleHeading } from "@/components/layout/spacing";
+import { useDropdownData } from "./change-event-form/useDropdownData";
+import { VendorCombobox } from "./change-event-form/VendorCombobox";
+import { ContractCombobox } from "./change-event-form/ContractCombobox";
+import { UOM_OPTIONS } from "./change-event-form/types";
 
 interface LineItemFormState {
   description: string;
-  revenueRom: string;
-  costRom: string;
-  quantity: string;
-  unitCost: string;
+  budgetCodeId: string;
+  vendorId: string;
+  contractValue: string; // "po-{id}" or "sub-{id}"
+  unitOfMeasure: string;
+  costQuantity: string;
+  costUnitCost: string;
+  revenueQuantity: string;
+  revenueUnitCost: string;
+  nonCommittedCost: string;
 }
 
 const EMPTY_FORM: LineItemFormState = {
   description: "",
-  revenueRom: "",
-  costRom: "",
-  quantity: "",
-  unitCost: "",
+  budgetCodeId: "",
+  vendorId: "",
+  contractValue: "",
+  unitOfMeasure: "",
+  costQuantity: "1",
+  costUnitCost: "",
+  revenueQuantity: "1",
+  revenueUnitCost: "",
+  nonCommittedCost: "",
 };
 
 interface ChangeEventLineItemsTableProps {
@@ -168,6 +192,8 @@ export function ChangeEventLineItemsTable({
   const [editingItem, setEditingItem] = useState<ChangeEventDetailLineItem | null>(null);
   const [formState, setFormState] = useState<LineItemFormState>(EMPTY_FORM);
   const [isSaving, setIsSaving] = useState(false);
+
+  const { vendors, contracts, budgetCodes } = useDropdownData({ projectId });
   const [groupBy, setGroupBy] = useState<GroupBy>("none");
   const [filterVendorOnly, setFilterVendorOnly] = useState(false);
   const [filterNonZero, setFilterNonZero] = useState(false);
@@ -316,12 +342,23 @@ export function ChangeEventLineItemsTable({
 
   const openEdit = (li: ChangeEventDetailLineItem) => {
     setEditingItem(li);
+    const qty = li.quantity ?? 1;
+    const uc = li.unitCost ?? 0;
+    const contractValue =
+      li.commitmentId
+        ? `${li.commitmentType === "purchase_order" ? "po" : "sub"}-${li.commitmentId}`
+        : "";
     setFormState({
       description: li.description ?? "",
-      revenueRom: li.revenueRom != null ? String(li.revenueRom) : "",
-      costRom: li.costRom != null ? String(li.costRom) : "",
-      quantity: li.quantity != null ? String(li.quantity) : "",
-      unitCost: li.unitCost != null ? String(li.unitCost) : "",
+      budgetCodeId: li.projectBudgetCodeId ?? "",
+      vendorId: li.vendor?.id ?? li.vendorId ?? "",
+      contractValue,
+      unitOfMeasure: li.unitOfMeasure ?? "",
+      costQuantity: String(qty),
+      costUnitCost: uc !== 0 ? String(uc) : li.costRom != null ? String(li.costRom) : "",
+      revenueQuantity: String(qty),
+      revenueUnitCost: uc !== 0 ? String(uc) : li.revenueRom != null ? String(li.revenueRom) : "",
+      nonCommittedCost: li.nonCommittedCost != null && li.nonCommittedCost !== 0 ? String(li.nonCommittedCost) : "",
     });
     setDialogOpen(true);
   };
@@ -330,13 +367,35 @@ export function ChangeEventLineItemsTable({
     if (!changeEventId || !formState.description.trim()) return;
     setIsSaving(true);
     try {
-      const payload = {
+      const costQty = parseFloat(formState.costQuantity) || 1;
+      const costUc = parseFloat(formState.costUnitCost) || 0;
+      const revQty = parseFloat(formState.revenueQuantity) || 1;
+      const revUc = parseFloat(formState.revenueUnitCost) || 0;
+      const costRom = costQty * costUc;
+      const revenueRom = revQty * revUc;
+
+      // Parse commitment from contractValue ("po-{id}" or "sub-{id}")
+      let commitmentId: string | undefined;
+      let commitmentType: string | undefined;
+      if (formState.contractValue) {
+        const isPo = formState.contractValue.startsWith("po-");
+        commitmentType = isPo ? "purchase_order" : "subcontract";
+        commitmentId = formState.contractValue.replace(/^(po|sub)-/, "");
+      }
+
+      const payload: Record<string, unknown> = {
         description: formState.description.trim(),
-        revenueRom: formState.revenueRom ? parseFloat(formState.revenueRom) : undefined,
-        costRom: formState.costRom ? parseFloat(formState.costRom) : undefined,
-        quantity: formState.quantity ? parseFloat(formState.quantity) : undefined,
-        unitCost: formState.unitCost ? parseFloat(formState.unitCost) : undefined,
+        quantity: revQty,
+        unitCost: revUc,
+        costRom,
+        revenueRom,
       };
+      if (formState.budgetCodeId) payload.budgetCodeId = formState.budgetCodeId;
+      if (formState.vendorId) payload.vendorId = formState.vendorId;
+      if (formState.unitOfMeasure) payload.unitOfMeasure = formState.unitOfMeasure;
+      if (commitmentId) { payload.commitmentId = commitmentId; payload.commitmentType = commitmentType; }
+      if (formState.nonCommittedCost) payload.nonCommittedCost = parseFloat(formState.nonCommittedCost) || 0;
+
       if (editingItem) {
         await apiFetch(
           `/api/projects/${projectId}/change-events/${changeEventId}/line-items/${editingItem.id}`,
@@ -933,33 +992,28 @@ export function ChangeEventLineItemsTable({
                       )}
                       {(onDeleteLineItem || changeEventId) && (
                         <InlineTableCell className="px-1 py-1">
-                          <div className="flex items-center justify-end gap-1">
-                            {changeEventId && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground"
-                                onClick={() => openEdit(li)}
-                              >
-                                <Pencil className="h-3 w-3" />
-                                Edit
-                              </Button>
-                            )}
-                            {onDeleteLineItem && (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-7 w-7 p-0 text-muted-foreground"
-                                    aria-label="More line item actions"
-                                  >
-                                    <MoreVertical className="h-3.5 w-3.5" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
+                          <div className="flex items-center justify-end">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 text-muted-foreground"
+                                  aria-label="More line item actions"
+                                >
+                                  <MoreVertical className="h-3.5 w-3.5" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {changeEventId && (
+                                  <DropdownMenuItem onClick={() => openEdit(li)}>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                )}
+                                {changeEventId && onDeleteLineItem && <DropdownMenuSeparator />}
+                                {onDeleteLineItem && (
                                   <DropdownMenuItem
                                     className="text-destructive"
                                     onClick={() => onDeleteLineItem(li.id)}
@@ -967,9 +1021,9 @@ export function ChangeEventLineItemsTable({
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     Delete
                                   </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            )}
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </InlineTableCell>
                       )}
@@ -1109,11 +1163,25 @@ export function ChangeEventLineItemsTable({
 
       {/* Add / Edit dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{editingItem ? "Edit Line Item" : "Add Line Item"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
+            {/* Budget Code */}
+            <div className="space-y-1.5">
+              <Label>Budget Code</Label>
+              <BudgetCodeSelector
+                value={formState.budgetCodeId}
+                onValueChange={(id) => setFormState((s) => ({ ...s, budgetCodeId: id }))}
+                budgetCodes={budgetCodes}
+                onCreateNew={() => {}}
+                placeholder="Select budget code..."
+                disabled={!!(editingItem?.commitmentId)}
+              />
+            </div>
+
+            {/* Description */}
             <div className="space-y-1.5">
               <Label htmlFor="li-description">Description *</Label>
               <Input
@@ -1123,48 +1191,133 @@ export function ChangeEventLineItemsTable({
                 placeholder="Enter description"
               />
             </div>
+
+            {/* Vendor + Contract */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="li-qty">Quantity</Label>
-                <Input
-                  id="li-qty"
-                  type="number"
-                  value={formState.quantity}
-                  onChange={(e) => setFormState((s) => ({ ...s, quantity: e.target.value }))}
-                  placeholder="1"
+                <Label>Vendor</Label>
+                <VendorCombobox
+                  value={formState.vendorId}
+                  onChange={(v) => setFormState((s) => ({ ...s, vendorId: v }))}
+                  vendors={vendors}
+                  onAddCompany={() => {}}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="li-unitCost">Unit Cost</Label>
-                <Input
-                  id="li-unitCost"
-                  type="number"
-                  value={formState.unitCost}
-                  onChange={(e) => setFormState((s) => ({ ...s, unitCost: e.target.value }))}
-                  placeholder=""
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="li-revenueRom">Revenue ROM</Label>
-                <Input
-                  id="li-revenueRom"
-                  type="number"
-                  value={formState.revenueRom}
-                  onChange={(e) => setFormState((s) => ({ ...s, revenueRom: e.target.value }))}
-                  placeholder=""
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="li-costRom">Cost ROM</Label>
-                <Input
-                  id="li-costRom"
-                  type="number"
-                  value={formState.costRom}
-                  onChange={(e) => setFormState((s) => ({ ...s, costRom: e.target.value }))}
-                  placeholder=""
+                <Label>Commitment</Label>
+                <ContractCombobox
+                  value={formState.contractValue}
+                  onChange={(v) => setFormState((s) => ({ ...s, contractValue: v }))}
+                  contracts={contracts}
+                  disabled={!!(editingItem?.commitmentId)}
                 />
               </div>
             </div>
+
+            {/* UOM */}
+            <div className="w-40 space-y-1.5">
+              <Label>Unit of Measure</Label>
+              <Select
+                value={formState.unitOfMeasure}
+                onValueChange={(v) => setFormState((s) => ({ ...s, unitOfMeasure: v }))}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  {UOM_OPTIONS.map((u) => (
+                    <SelectItem key={u} value={u}>{u}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Cost section */}
+            <div>
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Cost</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="li-costQty">Quantity</Label>
+                  <Input
+                    id="li-costQty"
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    value={formState.costQuantity}
+                    onChange={(e) => setFormState((s) => ({ ...s, costQuantity: e.target.value }))}
+                    placeholder="1"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="li-costUc">Unit Cost</Label>
+                  <MoneyField
+                    inline
+                    label="Cost Unit Cost"
+                    value={parseFloat(formState.costUnitCost) || undefined}
+                    onChange={(v) => setFormState((s) => ({ ...s, costUnitCost: v != null ? String(v) : "" }))}
+                    showCurrency={false}
+                    className="h-9"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Cost ROM</Label>
+                  <div className="flex h-9 items-center rounded-md border border-border bg-muted px-3 text-sm font-medium">
+                    {formatCurrency((parseFloat(formState.costQuantity) || 0) * (parseFloat(formState.costUnitCost) || 0))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Revenue section */}
+            <div>
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Revenue</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="li-revQty">Quantity</Label>
+                  <Input
+                    id="li-revQty"
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    value={formState.revenueQuantity}
+                    onChange={(e) => setFormState((s) => ({ ...s, revenueQuantity: e.target.value }))}
+                    placeholder="1"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="li-revUc">Unit Cost</Label>
+                  <MoneyField
+                    inline
+                    label="Revenue Unit Cost"
+                    value={parseFloat(formState.revenueUnitCost) || undefined}
+                    onChange={(v) => setFormState((s) => ({ ...s, revenueUnitCost: v != null ? String(v) : "" }))}
+                    showCurrency={false}
+                    className="h-9"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Revenue ROM</Label>
+                  <div className="flex h-9 items-center rounded-md border border-border bg-muted px-3 text-sm font-medium">
+                    {formatCurrency((parseFloat(formState.revenueQuantity) || 0) * (parseFloat(formState.revenueUnitCost) || 0))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Non-committed cost (only shown when a commitment is selected) */}
+            {formState.contractValue && (
+              <div className="w-48 space-y-1.5">
+                <Label>Non-committed Cost</Label>
+                <MoneyField
+                  inline
+                  label="Non-committed Cost"
+                  value={parseFloat(formState.nonCommittedCost) || undefined}
+                  onChange={(v) => setFormState((s) => ({ ...s, nonCommittedCost: v != null ? String(v) : "" }))}
+                  showCurrency={false}
+                  className="h-9"
+                />
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={isSaving}>
