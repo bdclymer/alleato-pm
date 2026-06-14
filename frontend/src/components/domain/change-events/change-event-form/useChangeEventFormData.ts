@@ -113,6 +113,34 @@ export function useChangeEventFormData({
     fetchBudgetCodes,
   } = useDropdownData({ projectId });
 
+  // On mount (edit mode): fetch SOV items for any committed line items that are
+  // missing a budget code and don't yet have cached SOV data. This ensures the
+  // re-resolve effect below can run once the data arrives.
+  const fetchedOnMountRef = React.useRef<Set<string>>(new Set());
+  const initialLineItems = initialData?.lineItems;
+  React.useEffect(() => {
+    if (!initialLineItems) return;
+    const ids = initialLineItems
+      .filter((item) => item.commitmentId && !item.budgetCode)
+      .map((item) => String(item.contract || item.commitmentId))
+      .filter((id) => id && !fetchedOnMountRef.current.has(id));
+    if (ids.length === 0) return;
+    ids.forEach((commitmentId) => {
+      fetchedOnMountRef.current.add(commitmentId);
+      const rawId = commitmentId.replace(/^(po|sub)-/, "");
+      apiFetch<{ data: CommitmentSovLineItem[] }>(
+        `/api/projects/${projectId}/commitments/${rawId}/line-items`,
+      )
+        .then((data) => {
+          const items: CommitmentSovLineItem[] = data.data || [];
+          setCommitmentLineItemsMap((prev) => ({ ...prev, [commitmentId]: items }));
+        })
+        .catch(() => {
+          setCommitmentLineItemsMap((prev) => ({ ...prev, [commitmentId]: [] }));
+        });
+    });
+  }, [initialLineItems, projectId]);
+
   // Re-resolve budget codes for committed line items that are still missing one.
   // Handles two failure modes:
   //   1. Race condition — budgetCodes loaded after commitment was selected

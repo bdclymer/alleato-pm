@@ -123,24 +123,28 @@ export default function EditChangeEventPage() {
         changeEvent.primeContractId ?? changeEvent.prime_contract_id ?? "",
       ),
       attachments: [],
-      lineItems: (lineItems ?? []).map((li) => ({
-        id: li.id,
-        budgetCode: li.projectBudgetCodeId ?? "",
-        description: li.description ?? "",
-        vendor: li.vendorId ?? li.vendor?.id ?? li.commitment?.contract_company_id ?? "",
-        contract: li.commitmentId
+      lineItems: (lineItems ?? []).map((li) => {
+        const prefixedCommitmentId = li.commitmentId
           ? `${li.commitmentType === "purchase_order" ? "po" : "sub"}-${li.commitmentId}`
-          : "",
-        commitmentLineItemId: li.commitmentLineItemId ?? "",
-        revenueUnitOfMeasure: li.unitOfMeasure ?? "",
-        revenueQuantity: li.quantity ?? 1,
-        revenueUnitCost: li.unitCost ?? 0,
-        revenueRom: li.revenueRom ?? 0,
-        costQuantity: li.quantity ?? 1,
-        costUnitCost: li.unitCost ?? 0,
-        costRom: li.costRom ?? 0,
-        nonCommittedCost: li.nonCommittedCost ?? 0,
-      })),
+          : "";
+        return {
+          id: li.id,
+          budgetCode: li.projectBudgetCodeId ?? "",
+          description: li.description ?? "",
+          vendor: li.vendorId ?? li.vendor?.id ?? li.commitment?.contract_company_id ?? "",
+          contract: prefixedCommitmentId,
+          commitmentId: prefixedCommitmentId || undefined,
+            commitmentLineItemId: li.commitmentLineItemId ?? "",
+          revenueUnitOfMeasure: li.unitOfMeasure ?? "",
+          revenueQuantity: li.quantity ?? 1,
+          revenueUnitCost: li.unitCost ?? 0,
+          revenueRom: li.revenueRom ?? 0,
+          costQuantity: li.quantity ?? 1,
+          costUnitCost: li.unitCost ?? 0,
+          costRom: li.costRom ?? 0,
+          nonCommittedCost: li.nonCommittedCost ?? 0,
+        };
+      }),
     };
   }, [changeEvent, lineItems]);
 
