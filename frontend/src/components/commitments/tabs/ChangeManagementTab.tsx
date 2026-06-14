@@ -14,7 +14,7 @@ import { Text } from '@/components/ds/text'
 import { DataTable } from '@/components/tables/DataTable'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, cn } from '@/lib/utils'
 import { formatDate } from '@/lib/table-config/formatters'
 
 // ---------------------------------------------------------------------------
@@ -157,6 +157,93 @@ function ChangeEventsSection({ commitmentId, projectId }: ChangeManagementTabPro
 // Change Orders Section
 // ---------------------------------------------------------------------------
 
+const APPROVED_STATUSES = new Set(['approved', 'executed'])
+const PENDING_STATUSES = new Set(['pending', 'out_for_signature'])
+const DRAFT_STATUSES = new Set(['draft'])
+
+interface ChangeRollup {
+  approvedCount: number
+  pendingCount: number
+  draftCount: number
+  approvedTotal: number
+  pendingTotal: number
+  draftTotal: number
+  netTotal: number
+}
+
+function summarizeChangeOrders(changeOrders: ChangeOrder[]): ChangeRollup {
+  return changeOrders.reduce<ChangeRollup>(
+    (acc, co) => {
+      const status = (co.status ?? '').toLowerCase()
+      const amount = Number(co.amount) || 0
+      if (APPROVED_STATUSES.has(status)) {
+        acc.approvedCount += 1
+        acc.approvedTotal += amount
+      } else if (PENDING_STATUSES.has(status)) {
+        acc.pendingCount += 1
+        acc.pendingTotal += amount
+      } else if (DRAFT_STATUSES.has(status)) {
+        acc.draftCount += 1
+        acc.draftTotal += amount
+      }
+      return acc
+    },
+    {
+      approvedCount: 0,
+      pendingCount: 0,
+      draftCount: 0,
+      approvedTotal: 0,
+      pendingTotal: 0,
+      draftTotal: 0,
+      netTotal: 0,
+    },
+  )
+}
+
+function ChangeRollupStrip({ rollup }: { rollup: ChangeRollup }) {
+  const metrics = [
+    {
+      label: 'Net change to contract',
+      value: formatCurrency(rollup.approvedTotal),
+      caption: `${rollup.approvedCount} approved`,
+      primary: true,
+    },
+    {
+      label: 'Pending',
+      value: formatCurrency(rollup.pendingTotal),
+      caption: `${rollup.pendingCount} change order${rollup.pendingCount === 1 ? '' : 's'}`,
+    },
+    {
+      label: 'Draft',
+      value: formatCurrency(rollup.draftTotal),
+      caption: `${rollup.draftCount} change order${rollup.draftCount === 1 ? '' : 's'}`,
+    },
+  ]
+
+  return (
+    <div className="rounded-md bg-muted/30 p-5 shadow-panel">
+      <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-3">
+        {metrics.map((metric) => (
+          <div key={metric.label} className="min-w-0">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+              {metric.label}
+            </p>
+            <p
+              className={cn(
+                'mt-1 truncate font-semibold tabular-nums text-foreground',
+                metric.primary ? 'text-2xl' : 'text-lg',
+              )}
+            >
+              {metric.value}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{metric.caption}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function ChangeOrdersSection({ commitmentId, projectId }: ChangeManagementTabProps) {
   const router = useRouter()
   const [changeOrders, setChangeOrders] = useState<ChangeOrder[]>([])
@@ -184,6 +271,12 @@ function ChangeOrdersSection({ commitmentId, projectId }: ChangeManagementTabPro
     }
     fetchCOs()
   }, [commitmentId])
+
+  const rollup = useMemo(() => summarizeChangeOrders(changeOrders), [changeOrders])
+  const grandTotal = useMemo(
+    () => changeOrders.reduce((sum, co) => sum + (Number(co.amount) || 0), 0),
+    [changeOrders],
+  )
 
   const columns: ColumnDef<ChangeOrder>[] = useMemo(
     () => [
@@ -214,8 +307,21 @@ function ChangeOrdersSection({ commitmentId, projectId }: ChangeManagementTabPro
       },
       {
         accessorKey: 'amount',
-        header: 'Amount',
-        cell: ({ row }) => <Text>{formatCurrency(row.original.amount)}</Text>,
+        header: () => <div className="text-right">Amount</div>,
+        cell: ({ row }) => (
+          <div className="text-right font-medium tabular-nums text-foreground">
+            {formatCurrency(row.original.amount)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'approved_date',
+        header: 'Approved',
+        cell: ({ row }) => (
+          <Text tone="muted">
+            {row.original.approved_date ? formatDate(row.original.approved_date) : '—'}
+          </Text>
+        ),
       },
       {
         accessorKey: 'created_at',
@@ -241,7 +347,7 @@ function ChangeOrdersSection({ commitmentId, projectId }: ChangeManagementTabPro
   return (
     <section className="space-y-4">
       <SectionHeader
-        title="Commitment Change Orders"
+        title="Change Orders"
         count={changeOrders.length}
         action={{
           label: '+ Create',
@@ -256,12 +362,25 @@ function ChangeOrdersSection({ commitmentId, projectId }: ChangeManagementTabPro
           description="Change orders will appear here when created for this commitment."
         />
       ) : (
-        <DataTable
-          columns={columns}
-          data={changeOrders}
-          showToolbar={false}
-          showPagination={changeOrders.length > 10}
-        />
+        <>
+          <ChangeRollupStrip rollup={rollup} />
+          <DataTable
+            columns={columns}
+            data={changeOrders}
+            showToolbar={false}
+            showPagination={changeOrders.length > 10}
+            footerRow={[
+              {
+                value: 'Total',
+                colSpan: 3,
+                align: 'left',
+                className: 'font-medium text-muted-foreground',
+              },
+              { value: formatCurrency(grandTotal), align: 'right' },
+              { value: '', colSpan: 2 },
+            ]}
+          />
+        </>
       )}
     </section>
   )
