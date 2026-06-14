@@ -634,6 +634,49 @@ services:
       - key: DOMAIN_PACKET_MODEL
         value: "gpt-5.4-mini"
 
+  # Project communications intelligence sweep — incrementally extracts evidence-
+  # backed timeline cards + tasks from NEW (un-synthesized) emails/Teams across
+  # active projects via project_synthesizer.run_synthesis_sweep. Self-limiting:
+  # docs marked synthesized (source_metadata.synthesized_at_v1) are skipped, so
+  # steady-state cost = only new docs. Per-run LLM ceiling = MAX_PROJECTS x
+  # MAX_EXTRACTIONS deep extractions (default 10 x 4 = 40). Tune the env vars to
+  # control spend / backlog-drain speed.
+  - type: cron
+    name: alleato-project-synthesis-sweep
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "0 */2 * * *"
+    dockerCommand: >-
+      python3 -m src.services.intelligence.project_synthesizer
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SYNTHESIS_SWEEP_MAX_PROJECTS
+        value: "10"
+      - key: SYNTHESIS_SWEEP_MAX_EXTRACTIONS
+        value: "4"
+      - key: SYNTHESIS_SWEEP_SINCE_DAYS
+        value: "14"
+
   # DEACTIVATED 2026-05-18 — Executive Daily Brief Teams delivery turned off
   # at user request. Both crons (morning + evening) are suspended in Render and
   # removed from this file so they will not be re-created on deploy. The

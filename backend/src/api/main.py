@@ -1212,6 +1212,7 @@ class ProjectSynthesizeRequest(BaseModel):
     since: Optional[str] = None
     max_docs: int = 40
     max_extractions: Optional[int] = None
+    skip_synthesized: bool = True
     dry_run: bool = False
 
 
@@ -1356,6 +1357,7 @@ async def project_synthesize(
             since=request.since,
             max_docs=request.max_docs,
             max_extractions=request.max_extractions,
+            skip_synthesized=request.skip_synthesized,
             dry_run=request.dry_run,
         )
     except Exception as exc:

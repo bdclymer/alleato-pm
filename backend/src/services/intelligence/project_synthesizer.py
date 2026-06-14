@@ -282,6 +282,7 @@ def synthesize_project_intelligence(
     since: Optional[str] = None,
     max_docs: int = 40,
     max_extractions: Optional[int] = None,
+    skip_synthesized: bool = True,
     dry_run: bool = False,
 ) -> dict:
     """Run deep communication-intelligence extraction over a project's recent
@@ -377,6 +378,15 @@ def synthesize_project_intelligence(
             logger.info("[ProjectSynthesizer] skipping meeting doc %s (handled by meeting extractor)", doc_id)
             continue
 
+        # Skip docs already synthesized by this version (lets cron/repeat runs
+        # drain a backlog instead of re-extracting the same recent docs). Set
+        # skip_synthesized=False to force re-processing a specific window.
+        if skip_synthesized:
+            sm = doc.get("source_metadata")
+            if isinstance(sm, dict) and sm.get("synthesized_at_v1"):
+                result["skipped"] += 1
+                continue
+
         try:
             # (a) Idempotency — clear prior candidates for this doc + version.
             rag_write.table("source_signal_candidates").delete().eq(
@@ -470,6 +480,16 @@ def synthesize_project_intelligence(
                 )
                 result["tasks_written"] += 1
 
+            # Mark the doc synthesized so cron/repeat runs skip it next time.
+            try:
+                merged_sm = dict(doc.get("source_metadata") or {}) if isinstance(doc.get("source_metadata"), dict) else {}
+                merged_sm["synthesized_at_v1"] = datetime.now(timezone.utc).isoformat()
+                client.table("document_metadata").update(
+                    {"source_metadata": merged_sm}
+                ).eq("id", doc_id).execute()
+            except Exception as mark_exc:  # noqa: BLE001 — marking is best-effort
+                logger.warning("[ProjectSynthesizer] could not mark doc %s synthesized: %s", doc_id, mark_exc)
+
             if comm_type == "email":
                 result["emails"] += 1
             elif comm_type == "teams":
@@ -491,3 +511,84 @@ def synthesize_project_intelligence(
         len(result["errors"]),
     )
     return result
+
+
+def run_synthesis_sweep(
+    *,
+    project_ids: Optional[List[int]] = None,
+    max_projects: int = 10,
+    max_extractions_per_project: int = 4,
+    since_days: int = 14,
+) -> dict:
+    """Incremental cron driver: synthesize recent un-synthesized email/Teams docs
+    across active projects, bounded so total LLM spend per run stays predictable.
+
+    Cost ceiling per run = max_projects x max_extractions_per_project deep
+    extractions. Projects whose recent docs are all already synthesized do a cheap
+    no-op doc-scan (no LLM calls) thanks to the skip_synthesized marker.
+    """
+    client = get_supabase_client()
+    since = (datetime.now(timezone.utc) - timedelta(days=since_days)).isoformat()
+
+    if project_ids is None:
+        rows = (
+            client.table("document_metadata")
+            .select("project_id")
+            .not_.is_("project_id", "null")
+            .gte("date", since)
+            .limit(3000)
+            .execute()
+            .data
+            or []
+        )
+        project_ids = sorted({int(r["project_id"]) for r in rows if r.get("project_id")})
+
+    project_ids = project_ids[:max_projects]
+
+    summary: Dict[str, Any] = {
+        "projects": len(project_ids),
+        "emails": 0,
+        "teams": 0,
+        "cards_written": 0,
+        "tasks_written": 0,
+        "errors": [],
+        "per_project": [],
+    }
+    for pid in project_ids:
+        try:
+            r = synthesize_project_intelligence(
+                pid,
+                since=since,
+                max_docs=200,
+                max_extractions=max_extractions_per_project,
+                skip_synthesized=True,
+            )
+            summary["emails"] += r.get("emails", 0)
+            summary["teams"] += r.get("teams", 0)
+            summary["cards_written"] += r.get("cards_written", 0)
+            summary["tasks_written"] += r.get("tasks_written", 0)
+            summary["per_project"].append({"project_id": pid, "emails": r.get("emails"), "teams": r.get("teams"), "cards": r.get("cards_written")})
+        except Exception as exc:  # noqa: BLE001 — one project must not abort the sweep
+            logger.error("[ProjectSynthesizer] sweep failed for project %s: %s", pid, exc, exc_info=True)
+            summary["errors"].append({"project_id": pid, "error": str(exc)})
+
+    logger.info(
+        "[ProjectSynthesizer] sweep done: projects=%d emails=%d teams=%d cards=%d tasks=%d errors=%d",
+        summary["projects"], summary["emails"], summary["teams"],
+        summary["cards_written"], summary["tasks_written"], len(summary["errors"]),
+    )
+    return summary
+
+
+if __name__ == "__main__":  # cron entrypoint
+    import json
+    import os
+
+    out = run_synthesis_sweep(
+        max_projects=int(os.getenv("SYNTHESIS_SWEEP_MAX_PROJECTS", "10")),
+        max_extractions_per_project=int(os.getenv("SYNTHESIS_SWEEP_MAX_EXTRACTIONS", "4")),
+        since_days=int(os.getenv("SYNTHESIS_SWEEP_SINCE_DAYS", "14")),
+    )
+    print(json.dumps(out, indent=2, default=str))
+    # Non-zero exit if every project errored (surfaces a broken sweep in Render).
+    raise SystemExit(1 if out["errors"] and not out["per_project"] else 0)
