@@ -342,6 +342,13 @@ INSIGHT_CARD_TYPES = {
     "schedule_risk",
     "sentiment",
     "initiative_signal",
+    # Predictive + timeline card types (migration 20260614140000 widened the
+    # insight_cards.card_type CHECK to allow these). flag = AI prediction
+    # (e.g. potential change event); solution = resolution of an issue/risk;
+    # milestone = notable project event.
+    "flag",
+    "solution",
+    "milestone",
 }
 
 

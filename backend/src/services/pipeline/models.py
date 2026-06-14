@@ -71,6 +71,9 @@ class RiskItem(StructuredItem):
     likelihood: Optional[str] = None
     impact: Optional[str] = None
     owner: Optional[str] = None
+    # Calibrated 1 (minor) – 5 (critical) severity emitted by the deep
+    # communication-intelligence pass. None on the legacy/shallow paths.
+    severity: Optional[int] = None
 
 
 @dataclass
@@ -97,12 +100,26 @@ class InsightItem(StructuredItem):
 
 
 @dataclass
+class FlagItem(StructuredItem):
+    """A forward-looking PREDICTION surfaced by the deep communication pass —
+    something that may happen but has not yet (a potential change event or an
+    emerging risk). ``description`` carries the prediction text. Routed to an
+    insight_card of signal_type ``flag``."""
+    flag_type: Optional[str] = None  # "potential_change_event" | "emerging_risk"
+    severity: Optional[int] = None   # 1 (minor) – 5 (critical)
+    owner: Optional[str] = None
+
+
+@dataclass
 class StructuredData:
     decisions: List[DecisionItem] = field(default_factory=list)
     risks: List[RiskItem] = field(default_factory=list)
     tasks: List[TaskItem] = field(default_factory=list)
     opportunities: List[OpportunityItem] = field(default_factory=list)
     insights: List[InsightItem] = field(default_factory=list)
+    # Forward-looking predictions (potential change events / emerging risks).
+    # Populated only by the deep communication-intelligence pass; empty otherwise.
+    flags: List[FlagItem] = field(default_factory=list)
     # Optional one-paragraph "what changed since last meeting" narrative the deep
     # pass can emit for the project intelligence page. None on the shallow path.
     what_changed: Optional[str] = None

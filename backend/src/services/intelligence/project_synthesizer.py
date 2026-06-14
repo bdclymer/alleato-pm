@@ -1,0 +1,439 @@
+"""Project-level communications intelligence synthesizer.
+
+Generalizes the meeting deep-extractor (``pipeline.extractor.run_extractor``) so
+that EMAILS and TEAMS conversations also receive full-context, evidence-backed
+intelligence extraction. Their old shallow compilers were deleted in the
+2026-05-15 migration and never replaced — this module fills that gap.
+
+Meetings are intentionally SKIPPED here: they are already processed by the live
+meeting extractor. Processing them again would double-write signals/tasks.
+
+Pipeline per email/teams doc:
+  1. Idempotently clear prior candidates for (doc, this compiler version).
+  2. Read raw text from the RAG DB (PM-APP document_metadata.content is stale).
+  3. Run :func:`extract_deep_communication_intelligence` against the project's
+     real tracked state.
+  4. Stage + promote each decision/risk/opportunity/insight/flag as a
+     source_signal_candidate -> insight_card.
+  5. Upsert tasks into ``tasks``.
+
+Reuses, never duplicates:
+  - pipeline.extractor._fetch_project_state / ._upsert_task
+  - pipeline.llm.extract_deep_communication_intelligence
+  - intelligence.compiler.ensure_client_project_target /
+    .write_source_signal_candidate / .promote_signal_candidate
+"""
+
+from __future__ import annotations
+
+import logging
+import re
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional
+
+from ..supabase_helpers import (
+    fetch_optional_row,
+    get_rag_read_client,
+    get_rag_write_client,
+    get_supabase_client,
+)
+from ..pipeline import llm
+from ..pipeline.extractor import _fetch_project_state, _upsert_task
+from .compiler import (
+    ensure_client_project_target,
+    promote_signal_candidate,
+    write_source_signal_candidate,
+)
+
+logger = logging.getLogger(__name__)
+
+COMMS_COMPILER_VERSION = "project_synthesizer_v1"
+
+# How far back to look when no explicit `since` is given. Kept simple and
+# deterministic — a 30-day window of recent communications.
+DEFAULT_LOOKBACK_DAYS = 30
+
+# Reuse the meeting extractor's risk-category -> signal_type mapping so cards
+# from emails/teams land in the same buckets as cards from meetings.
+_RISK_CATEGORY_SIGNAL_TYPE = {
+    "schedule": "schedule_risk",
+    "cost": "financial_exposure",
+    "budget": "financial_exposure",
+    "cash_flow": "financial_exposure",
+    "financial": "financial_exposure",
+}
+
+_MEETING_TOKENS = ("fireflies", "meeting", "transcript")
+_TEAMS_TOKENS = ("teams", "chat")
+_EMAIL_TOKENS = ("outlook", "email", "mail")
+
+
+def _classify_comm_type(doc: Dict[str, Any]) -> Optional[str]:
+    """Return "meeting" | "teams" | "email" | None for a document_metadata row.
+
+    Checks source_system / source / category / type. Meeting is detected first
+    (so a Teams *meeting* chat doesn't get miscategorized), then teams, then
+    email. Anything else returns None (not a communication we synthesize).
+    """
+    haystack = " ".join(
+        str(doc.get(field) or "")
+        for field in ("source_system", "source", "category", "type")
+    ).lower()
+    if any(token in haystack for token in _MEETING_TOKENS):
+        return "meeting"
+    if any(token in haystack for token in _TEAMS_TOKENS):
+        return "teams"
+    if any(token in haystack for token in _EMAIL_TOKENS):
+        return "email"
+    return None
+
+
+def _slug(*parts: Any, max_len: int = 180) -> str:
+    raw = ":".join(str(part).strip().lower() for part in parts if str(part or "").strip())
+    return re.sub(r"[^a-z0-9]+", "-", raw).strip("-")[:max_len] or "comms-signal"
+
+
+def _participants(doc: Dict[str, Any]) -> List[str]:
+    arr = doc.get("participants_array")
+    if isinstance(arr, list) and arr:
+        return [str(p) for p in arr if str(p or "").strip()]
+    raw = doc.get("participants")
+    if isinstance(raw, list):
+        return [str(p) for p in raw if str(p or "").strip()]
+    if isinstance(raw, str) and raw.strip():
+        return [p.strip() for p in re.split(r"[;,]", raw) if p.strip()]
+    return []
+
+
+def _build_signal_payloads(structured: "Any") -> List[Dict[str, Any]]:
+    """Convert extracted decisions/risks/opportunities/insights/flags into
+    write_source_signal_candidate kwargs. Mirrors the meeting extractor's
+    _build_meeting_signal_payloads but adds severity passthrough + flags."""
+    payloads: List[Dict[str, Any]] = []
+
+    def _title(description: str) -> str:
+        return (description or "").strip()[:180] or "Untitled signal"
+
+    def _conf(item: Any) -> float:
+        value = getattr(item, "confidence", None)
+        return value if value is not None else 0.7
+
+    def _status(item: Any) -> str:
+        return "resolved" if getattr(item, "status_hint", None) == "resolved" else "open"
+
+    def _excerpt(item: Any, description: str) -> str:
+        return (getattr(item, "evidence_quote", None) or description)[:900]
+
+    for decision in structured.decisions:
+        description = (decision.description or "").strip()
+        if not description:
+            continue
+        title = _title(description)
+        payloads.append({
+            "signal_type": "decision",
+            "title": title,
+            "summary": description,
+            "why_it_matters": decision.rationale or None,
+            "suggested_owner_label": decision.owner or None,
+            "current_status": _status(decision),
+            "confidence_score": _conf(decision),
+            "excerpt": _excerpt(decision, description),
+            "normalized_signal_key": _slug("decision", title),
+            "extraction_json": {
+                "source": "project_synthesizer",
+                "kind": "decision",
+                "rationale": decision.rationale,
+                "owner": decision.owner,
+                "evidence_quote": decision.evidence_quote,
+                "status_hint": decision.status_hint,
+            },
+        })
+
+    for risk in structured.risks:
+        description = (risk.description or "").strip()
+        if not description:
+            continue
+        title = _title(description)
+        signal_type = _RISK_CATEGORY_SIGNAL_TYPE.get(
+            (risk.category or "").strip().lower(), "risk"
+        )
+        payloads.append({
+            "signal_type": signal_type,
+            "title": title,
+            "summary": description,
+            "why_it_matters": f"Risk impact: {risk.impact or 'unspecified'}, likelihood: {risk.likelihood or 'unspecified'}.",
+            "suggested_owner_label": risk.owner or None,
+            "current_status": _status(risk),
+            "confidence_score": _conf(risk),
+            "excerpt": _excerpt(risk, description),
+            "normalized_signal_key": _slug(signal_type, title),
+            "extraction_json": {
+                "source": "project_synthesizer",
+                "kind": "risk",
+                "category": risk.category,
+                "likelihood": risk.likelihood,
+                "impact": risk.impact,
+                "severity": risk.severity,
+                "owner": risk.owner,
+                "evidence_quote": risk.evidence_quote,
+                "status_hint": risk.status_hint,
+            },
+        })
+
+    for opportunity in structured.opportunities:
+        description = (opportunity.description or "").strip()
+        if not description:
+            continue
+        title = _title(description)
+        payloads.append({
+            "signal_type": "initiative_signal",
+            "title": title,
+            "summary": description,
+            "why_it_matters": "Opportunity surfaced from a project communication.",
+            "suggested_owner_label": opportunity.owner or None,
+            "current_status": _status(opportunity),
+            "confidence_score": _conf(opportunity),
+            "excerpt": _excerpt(opportunity, description),
+            "normalized_signal_key": _slug("initiative_signal", title),
+            "extraction_json": {
+                "source": "project_synthesizer",
+                "kind": "opportunity",
+                "opportunity_type": opportunity.type,
+                "owner": opportunity.owner,
+                "evidence_quote": opportunity.evidence_quote,
+                "status_hint": opportunity.status_hint,
+            },
+        })
+
+    for insight in structured.insights:
+        description = (insight.description or "").strip()
+        if not description:
+            continue
+        title = _title(description)
+        category = (insight.category or "").strip().lower()
+        signal_type = "open_question" if category == "open_question" else "project_update"
+        payloads.append({
+            "signal_type": signal_type,
+            "title": title,
+            "summary": description,
+            "why_it_matters": "Surfaced from a project communication.",
+            "suggested_owner_label": insight.owner or None,
+            "current_status": _status(insight),
+            "confidence_score": _conf(insight),
+            "excerpt": _excerpt(insight, description),
+            "normalized_signal_key": _slug(signal_type, title),
+            "extraction_json": {
+                "source": "project_synthesizer",
+                "kind": "insight",
+                "category": insight.category,
+                "owner": insight.owner,
+                "evidence_quote": insight.evidence_quote,
+                "status_hint": insight.status_hint,
+            },
+        })
+
+    for flag in getattr(structured, "flags", []) or []:
+        description = (flag.description or "").strip()
+        if not description:
+            continue
+        title = _title(description)
+        payloads.append({
+            "signal_type": "flag",
+            "title": title,
+            "summary": description,
+            "why_it_matters": "Forward-looking prediction surfaced from a project communication.",
+            "suggested_owner_label": flag.owner or None,
+            "current_status": _status(flag),
+            "confidence_score": _conf(flag),
+            "excerpt": _excerpt(flag, description),
+            "normalized_signal_key": _slug("flag", title),
+            "extraction_json": {
+                "source": "project_synthesizer",
+                "kind": "flag",
+                "flag_type": flag.flag_type,
+                "severity": flag.severity,
+                "owner": flag.owner,
+                "evidence_quote": flag.evidence_quote,
+                "status_hint": flag.status_hint,
+            },
+        })
+
+    return payloads
+
+
+def _resolve_since(target_id: Optional[str], since: Optional[str]) -> str:
+    """Determine the lower-bound timestamp for documents to (re)process.
+
+    If an explicit `since` is given, use it. Otherwise default to
+    DEFAULT_LOOKBACK_DAYS ago (ISO). We keep this simple and deterministic
+    rather than deriving from the last intelligence_packets.covered_end_at —
+    the candidate/card dedup (idempotent delete + normalized_signal_key) makes
+    re-processing a recent window safe and cheap.
+    """
+    if since:
+        return since
+    cutoff = datetime.now(timezone.utc) - timedelta(days=DEFAULT_LOOKBACK_DAYS)
+    return cutoff.isoformat()
+
+
+def synthesize_project_intelligence(
+    project_id: int,
+    *,
+    since: Optional[str] = None,
+    max_docs: int = 40,
+) -> dict:
+    """Run deep communication-intelligence extraction over a project's recent
+    emails + Teams conversations and write evidence-backed insight cards + tasks.
+
+    Returns a summary dict; never raises for a single bad document (errors are
+    collected so one bad doc doesn't abort the batch).
+    """
+    client = get_supabase_client()
+    rag_read = get_rag_read_client()
+    rag_write = get_rag_write_client()
+
+    target = ensure_client_project_target(
+        client, int(project_id), compiler_version=COMMS_COMPILER_VERSION
+    )
+    target_id = target.get("id")
+
+    effective_since = _resolve_since(target_id, since)
+
+    result: Dict[str, Any] = {
+        "project_id": int(project_id),
+        "since": effective_since,
+        "docs_seen": 0,
+        "emails": 0,
+        "teams": 0,
+        "skipped": 0,
+        "cards_written": 0,
+        "tasks_written": 0,
+        "errors": [],
+    }
+
+    if not target_id:
+        result["errors"].append("missing intelligence target")
+        return result
+
+    # Fetch recent communications for this project. document_metadata.date can be
+    # null for some sources, so we widen the window with an OR over captured_at.
+    try:
+        rows = (
+            client.table("document_metadata")
+            .select(
+                "id,title,type,category,source,source_system,date,captured_at,"
+                "participants,participants_array,client_id,source_metadata"
+            )
+            .eq("project_id", int(project_id))
+            .or_(f"date.gte.{effective_since},captured_at.gte.{effective_since}")
+            .order("date", desc=True)
+            .limit(max_docs)
+            .execute()
+            .data
+            or []
+        )
+    except Exception as exc:  # noqa: BLE001 — surface as a batch-level error
+        logger.error("[ProjectSynthesizer] document fetch failed (project=%s): %s", project_id, exc)
+        result["errors"].append(f"document fetch failed: {exc}")
+        return result
+
+    # Project ground truth is the same for every doc in this batch — fetch once.
+    try:
+        project_state = _fetch_project_state(client, int(project_id))
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("[ProjectSynthesizer] project state fetch failed (project=%s): %s", project_id, exc)
+        project_state = ""
+
+    for doc in rows:
+        result["docs_seen"] += 1
+        doc_id = doc.get("id")
+        comm_type = _classify_comm_type(doc)
+
+        if comm_type is None:
+            result["skipped"] += 1
+            continue
+        if comm_type == "meeting":
+            # Meetings are handled by the live meeting extractor — never double-process.
+            result["skipped"] += 1
+            logger.info("[ProjectSynthesizer] skipping meeting doc %s (handled by meeting extractor)", doc_id)
+            continue
+
+        try:
+            # (a) Idempotency — clear prior candidates for this doc + version.
+            rag_write.table("source_signal_candidates").delete().eq(
+                "source_document_id", doc_id
+            ).eq("compiler_version", COMMS_COMPILER_VERSION).execute()
+
+            # (b) Raw text lives in the RAG DB; PM-APP content is stale.
+            rag_row = fetch_optional_row(
+                rag_read, "rag_document_metadata", "content,raw_text", "id", doc_id
+            )
+            full_text = (rag_row.get("content") or rag_row.get("raw_text") or "").strip()
+            if not full_text:
+                result["skipped"] += 1
+                logger.info("[ProjectSynthesizer] skipping doc %s — no raw text in RAG DB", doc_id)
+                continue
+
+            # (d) Deep extraction.
+            structured = llm.extract_deep_communication_intelligence(
+                comm_type=comm_type,
+                title=doc.get("title") or "Untitled",
+                date=doc.get("date") or doc.get("captured_at"),
+                participants=_participants(doc),
+                full_text=full_text,
+                project_state=project_state,
+            )
+
+            source_occurred_at = doc.get("date") or doc.get("captured_at")
+
+            # (f) Signals -> candidates -> promotion.
+            payloads = _build_signal_payloads(structured)
+            for payload in payloads:
+                candidate = write_source_signal_candidate(
+                    client,
+                    source_document_id=doc_id,
+                    target_id=target_id,
+                    project_id=int(project_id),
+                    source_occurred_at=source_occurred_at,
+                    compiler_version=COMMS_COMPILER_VERSION,
+                    **payload,
+                )
+                result["cards_written"] += 1
+                if candidate.get("status") == "candidate":
+                    promote_signal_candidate(
+                        client, candidate["id"], compiler_version=COMMS_COMPILER_VERSION
+                    )
+
+            # (g) Tasks — tagged with the real source system (email/teams), not fireflies.
+            for task in structured.tasks:
+                _upsert_task(
+                    client,
+                    task,
+                    metadata_id=doc_id,
+                    project_id=int(project_id),
+                    client_id=doc.get("client_id"),
+                    source_system=comm_type,
+                )
+                result["tasks_written"] += 1
+
+            if comm_type == "email":
+                result["emails"] += 1
+            elif comm_type == "teams":
+                result["teams"] += 1
+
+        except Exception as exc:  # noqa: BLE001 — one bad doc must not abort batch
+            logger.error("[ProjectSynthesizer] doc %s failed: %s", doc_id, exc, exc_info=True)
+            result["errors"].append({"doc_id": doc_id, "error": str(exc)})
+
+    logger.info(
+        "[ProjectSynthesizer] project=%s seen=%d emails=%d teams=%d skipped=%d cards=%d tasks=%d errors=%d",
+        project_id,
+        result["docs_seen"],
+        result["emails"],
+        result["teams"],
+        result["skipped"],
+        result["cards_written"],
+        result["tasks_written"],
+        len(result["errors"]),
+    )
+    return result

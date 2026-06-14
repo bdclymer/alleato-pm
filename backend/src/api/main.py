@@ -1207,6 +1207,12 @@ class IntelligenceCompilerRunRequest(BaseModel):
     max_processing_time_ms: Optional[int] = None
 
 
+class ProjectSynthesizeRequest(BaseModel):
+    project_id: int
+    since: Optional[str] = None
+    max_docs: int = 40
+
+
 class OperatingSummaryRefreshRequest(BaseModel):
     project_id: int
     model: Optional[str] = None
@@ -1324,6 +1330,40 @@ async def run_intelligence_compiler(
         raise HTTPException(
             status_code=500,
             detail=f"Intelligence compiler run failed for job {job_id}: {exc}",
+        ) from exc
+
+
+@app.post(
+    "/api/intelligence/project-synthesize",
+    tags=["Intelligence"],
+    summary="Synthesize project communications intelligence (emails + Teams)",
+)
+async def project_synthesize(
+    request: ProjectSynthesizeRequest,
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Run deep, evidence-backed intelligence extraction over a project's recent
+    emails and Teams conversations (meetings are handled by the meeting extractor)."""
+    try:
+        from src.services.intelligence.project_synthesizer import (
+            synthesize_project_intelligence,
+        )
+
+        return synthesize_project_intelligence(
+            request.project_id,
+            since=request.since,
+            max_docs=request.max_docs,
+        )
+    except Exception as exc:
+        logger.error(
+            "[ProjectSynthesizeAPI] run failed project_id=%s: %s",
+            request.project_id,
+            exc,
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=f"Project synthesize failed for project {request.project_id}: {exc}",
         ) from exc
 
 

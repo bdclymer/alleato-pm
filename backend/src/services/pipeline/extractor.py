@@ -1011,6 +1011,7 @@ def _upsert_task(
     project_id: int | None = None,
     client_id: int | None = None,
     rewriter_match: Any = None,
+    source_system: str = "fireflies",
 ) -> None:
     resolved_project_id = project_id
     if resolved_project_id is None and project_ids:
@@ -1107,7 +1108,7 @@ def _upsert_task(
         "priority": task.priority,
         "embedding": task.embedding,
         "status": "open",
-        "source_system": "fireflies",
+        "source_system": source_system,
         "project_ids": project_ids or [],
         "project_id": resolved_project_id,
         "client_id": client_id,

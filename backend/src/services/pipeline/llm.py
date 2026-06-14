@@ -15,6 +15,7 @@ from ..ai_transport import retry_ai_call
 from .config import EMBEDDING_MODEL, EMBEDDING_DIMENSIONS
 from .models import (
     DecisionItem,
+    FlagItem,
     InsightItem,
     MeetingSegment,
     OpportunityItem,
@@ -369,6 +370,17 @@ def _coerce_status_hint(raw: Any) -> Optional[str]:
     return value if value in {"new", "update", "resolved"} else None
 
 
+def _coerce_severity(raw: Any) -> Optional[int]:
+    """Clamp a model-provided severity into the integer range [1, 5]; None if absent/invalid."""
+    if raw is None or raw == "":
+        return None
+    try:
+        value = int(float(raw))
+    except (TypeError, ValueError):
+        return None
+    return max(1, min(5, value))
+
+
 def extract_deep_meeting_intelligence(
     *,
     title: str,
@@ -564,6 +576,235 @@ Output ONLY the JSON object."""
         tasks=tasks,
         opportunities=opportunities,
         insights=insights,
+        what_changed=what_changed,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Deep, full-context communication intelligence extraction (generalized)
+# ---------------------------------------------------------------------------
+
+_COMM_LABELS = {
+    "meeting": "meeting transcript",
+    "email": "email thread",
+    "teams": "Teams conversation",
+}
+
+
+def extract_deep_communication_intelligence(
+    *,
+    comm_type: str,
+    title: str,
+    date: Optional[str],
+    participants: List[str],
+    full_text: str,
+    project_state: str,
+    prior_context: str = "",
+    speaker_email_map: Optional[Dict[str, str]] = None,
+) -> StructuredData:
+    """Deep extraction generalized to any communication (meeting | email | teams).
+
+    Mirrors :func:`extract_deep_meeting_intelligence` but adds risk ``severity``
+    (1-5) and a forward-looking ``flags`` array (predicted change events /
+    emerging risks). Uses the SAME large-context compiler model, timeout, and
+    parse machinery. The meeting path keeps its own dedicated function unchanged.
+    """
+    comm_label = _COMM_LABELS.get(comm_type, "communication")
+
+    full_text = full_text or ""
+    if len(full_text) > DEEP_TRANSCRIPT_MAX_CHARS:
+        logger.warning(
+            "[LLM] deep communication extraction text truncated from %d to %d chars (safety ceiling)",
+            len(full_text),
+            DEEP_TRANSCRIPT_MAX_CHARS,
+        )
+        full_text = full_text[:DEEP_TRANSCRIPT_MAX_CHARS]
+
+    email_map_text = ""
+    if speaker_email_map:
+        mappings = [f"  {name} → {email}" for name, email in speaker_email_map.items()]
+        email_map_text = "\n\nSpeaker Email Mapping (use for task owner emails):\n" + "\n".join(mappings)
+
+    prior_block = ""
+    if prior_context.strip():
+        prior_block = (
+            "\n\nRELATED HISTORY (semantic prior context — supporting only, may be "
+            "noisy; do NOT invent items from it):\n" + prior_context.strip()
+        )
+
+    participants_joined = ", ".join(participants) if participants else "Unknown"
+
+    prompt = f"""You are the senior project intelligence analyst for a construction project-management firm. Read the ENTIRE communication below — a {comm_label} — and compare it against the project's CURRENT TRACKED STATE. Extract the new or changed decisions, risks, opportunities, insights, predictive flags, and tasks that matter to running this project.
+
+For EVERY item you MUST:
+- ground it with a short verbatim `evidence_quote` (<= 240 chars, copied exactly from the text — never paraphrased or invented),
+- assign a calibrated `confidence` in [0,1] (1 = explicitly stated and unambiguous; 0.5 = reasonably implied; below 0.4 = speculative),
+- set `status_hint`: "new" (not in current state), "update" (changes/expands a tracked item), or "resolved" (a tracked item this closes out).
+
+Do NOT fabricate. If the text does not support an item, omit it. Prefer fewer, higher-confidence items over many weak ones.
+
+TASKS — capture who must do what:
+- A task can be directed at ANYONE. If a manager (e.g. Brandon) tells a specific person to do something, the task belongs to that person.
+- If a client or external party asks a question or makes a request, create a task for the responsible internal owner to respond or act.
+- Capture IMPLIED commitments and action items, not just explicit "to-do" statements.
+
+FLAGS — forward-looking predictions (this is high-value):
+- Surface things you predict MAY happen but have NOT yet: an owner/client hinting at a scope change (a potential change event), or a condition that could become a delay or cost overrun (an emerging risk).
+- Each flag is a PREDICTION about the future, not a current fact.
+
+Communication type: {comm_type}
+Subject/Title: {title}
+Date: {date or "Unknown"}
+Participants: {participants_joined}{email_map_text}
+
+CURRENT TRACKED PROJECT STATE (ground truth — use to decide new vs update vs resolved):
+{project_state or "(no tracked state available)"}{prior_block}
+
+FULL COMMUNICATION:
+{full_text}
+
+Return JSON in EXACTLY this shape (include keys even when arrays are empty):
+{{
+  "what_changed": "One short paragraph on what materially changed for this project, or empty string.",
+  "decisions": [{{"description":"...","rationale":"...","owner":"Name or null","evidence_quote":"...","confidence":0.0,"status_hint":"new|update|resolved"}}],
+  "risks": [{{"description":"...","category":"schedule|budget|cost|resource|technical|external","likelihood":"low|medium|high","impact":"low|medium|high","severity":1,"owner":"Name or null","evidence_quote":"...","confidence":0.0,"status_hint":"new|update|resolved"}}],
+  "opportunities": [{{"description":"...","type":"efficiency|revenue|relationship|innovation","owner":"Name or null","evidence_quote":"...","confidence":0.0,"status_hint":"new|update|resolved"}}],
+  "insights": [{{"description":"...","category":"status|open_question|context","owner":"Name or null","evidence_quote":"...","confidence":0.0,"status_hint":"new|update|resolved"}}],
+  "flags": [{{"prediction":"What may happen","flag_type":"potential_change_event|emerging_risk","severity":1,"owner":"Name or null","evidence_quote":"...","confidence":0.0,"status_hint":"new"}}],
+  "tasks": [{{"description":"Imperative action","assignee":"Name or null","assigneeEmail":"email or null","dueDate":"YYYY-MM-DD or null","priority":"low|medium|high|urgent","evidence_quote":"...","confidence":0.0,"status_hint":"new|update|resolved"}}]
+}}
+severity is 1 (minor) to 5 (critical: safety/inspection/major cost/schedule-killer). Owners must be real participants; resolve due dates against the communication date. Output ONLY the JSON object."""
+
+    # Lazy import: the intelligence package eagerly loads the compiler at startup,
+    # so a top-level import risks a circular load order under FastAPI/pytest.
+    from ..intelligence.client import COMPILER_MODEL, extract_with_retry
+
+    logger.info(
+        "[LLM] Deep communication extraction (%s) via %s (text=%d chars, state=%d chars)",
+        comm_type,
+        COMPILER_MODEL,
+        len(full_text),
+        len(project_state or ""),
+    )
+    data = extract_with_retry(
+        [{"role": "user", "content": prompt}],
+        model=COMPILER_MODEL,
+        timeout=DEEP_EXTRACTION_TIMEOUT_SECONDS,
+    )
+    if data.get("_extraction_failed"):
+        logger.error("[LLM] Deep communication extraction failed: %s", data.get("_errors"))
+        return StructuredData()
+
+    _email_map = speaker_email_map or {}
+
+    decisions = [
+        DecisionItem(
+            description=d.get("description", ""),
+            rationale=d.get("rationale"),
+            owner=d.get("owner"),
+            evidence_quote=d.get("evidence_quote"),
+            confidence=_coerce_confidence(d.get("confidence")),
+            status_hint=_coerce_status_hint(d.get("status_hint")),
+        )
+        for d in data.get("decisions", [])
+        if d.get("description")
+    ]
+    risks = [
+        RiskItem(
+            description=r.get("description", ""),
+            category=r.get("category"),
+            likelihood=r.get("likelihood"),
+            impact=r.get("impact"),
+            severity=_coerce_severity(r.get("severity")),
+            owner=r.get("owner"),
+            evidence_quote=r.get("evidence_quote"),
+            confidence=_coerce_confidence(r.get("confidence")),
+            status_hint=_coerce_status_hint(r.get("status_hint")),
+        )
+        for r in data.get("risks", [])
+        if r.get("description")
+    ]
+    opportunities = [
+        OpportunityItem(
+            description=o.get("description", ""),
+            type=o.get("type"),
+            owner=o.get("owner"),
+            evidence_quote=o.get("evidence_quote"),
+            confidence=_coerce_confidence(o.get("confidence")),
+            status_hint=_coerce_status_hint(o.get("status_hint")),
+        )
+        for o in data.get("opportunities", [])
+        if o.get("description")
+    ]
+    insights = [
+        InsightItem(
+            description=i.get("description", ""),
+            category=i.get("category"),
+            owner=i.get("owner"),
+            evidence_quote=i.get("evidence_quote"),
+            confidence=_coerce_confidence(i.get("confidence")),
+            status_hint=_coerce_status_hint(i.get("status_hint")),
+        )
+        for i in data.get("insights", [])
+        if i.get("description")
+    ]
+    flags: List[FlagItem] = []
+    for f in data.get("flags", []):
+        # Flags carry their prediction text under `prediction`; map it onto the
+        # base `description` field (fall back to `description` if the model used it).
+        prediction = f.get("prediction") or f.get("description") or ""
+        if not prediction:
+            continue
+        flags.append(
+            FlagItem(
+                description=prediction,
+                flag_type=f.get("flag_type"),
+                severity=_coerce_severity(f.get("severity")),
+                owner=f.get("owner"),
+                evidence_quote=f.get("evidence_quote"),
+                confidence=_coerce_confidence(f.get("confidence")),
+                status_hint=_coerce_status_hint(f.get("status_hint")),
+            )
+        )
+    tasks: List[TaskItem] = []
+    for t in data.get("tasks", []):
+        if not t.get("description"):
+            continue
+        assignee = t.get("assignee")
+        assignee_email = t.get("assigneeEmail")
+        if not assignee_email and assignee and assignee in _email_map:
+            assignee_email = _email_map[assignee]
+        tasks.append(
+            TaskItem(
+                description=t.get("description", ""),
+                assignee=assignee,
+                assignee_email=assignee_email,
+                due_date=_parse_date(t.get("dueDate")),
+                priority=t.get("priority"),
+                evidence_quote=t.get("evidence_quote"),
+                confidence=_coerce_confidence(t.get("confidence")),
+                status_hint=_coerce_status_hint(t.get("status_hint")),
+            )
+        )
+
+    what_changed = str(data.get("what_changed") or "").strip() or None
+    logger.info(
+        "[LLM] Deep communication extraction (%s): %d decisions, %d risks, %d opportunities, %d insights, %d flags, %d tasks",
+        comm_type,
+        len(decisions),
+        len(risks),
+        len(opportunities),
+        len(insights),
+        len(flags),
+        len(tasks),
+    )
+    return StructuredData(
+        decisions=decisions,
+        risks=risks,
+        tasks=tasks,
+        opportunities=opportunities,
+        insights=insights,
+        flags=flags,
         what_changed=what_changed,
     )
 
