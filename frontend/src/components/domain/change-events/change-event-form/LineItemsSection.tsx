@@ -156,10 +156,10 @@ function LineItemsTableHeader() {
       {/* Column headers */}
       <TableRow className="border-b-0 bg-muted/20 hover:bg-muted/20">
         <TableHead className="w-[36px] px-1 py-1.5" />
+        <TableHead className="min-w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Commitment</TableHead>
         <TableHead className="min-w-52 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Budget Code</TableHead>
         <TableHead className="min-w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Description</TableHead>
         <TableHead className="min-w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Vendor</TableHead>
-        <TableHead className="min-w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Commitment</TableHead>
         <TableHead className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
           <Tooltip>
             <TooltipTrigger asChild>

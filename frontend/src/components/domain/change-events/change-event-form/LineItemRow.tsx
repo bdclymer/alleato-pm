@@ -79,37 +79,6 @@ export function LineItemRow({
         </div>
       </TableCell>
 
-      {/* Budget Code */}
-      <TableCell className="min-w-52 px-1 py-1.5 align-top">
-        <BudgetCodeSelector
-          value={item.budgetCode || ""}
-          onValueChange={(value) => updateLineItem(index, "budgetCode", value)}
-          budgetCodes={budgetCodes}
-          onCreateNew={() => onCreateBudgetCode(index)}
-          placeholder="Select budget code..."
-          disabled={isLinkedToCommitment}
-        />
-      </TableCell>
-
-      {/* Description */}
-      <TableCell className="min-w-40 px-1 py-1.5 align-top">
-        <Input
-          value={item.description}
-          onChange={(e) => updateLineItem(index, "description", e.target.value)}
-          placeholder="Enter description"
-        />
-      </TableCell>
-
-      {/* Vendor */}
-      <TableCell className="min-w-40 px-1 py-1.5 align-top">
-        <VendorCombobox
-          value={item.vendor}
-          onChange={(value) => updateLineItem(index, "vendor", value)}
-          vendors={vendors}
-          onAddCompany={onAddCompany}
-        />
-      </TableCell>
-
       {/* Commitment */}
       <TableCell className="min-w-40 px-1 py-1.5 align-top">
         <ContractCombobox
@@ -140,6 +109,37 @@ export function LineItemRow({
               </SelectContent>
             </Select>
           )}
+      </TableCell>
+
+      {/* Budget Code */}
+      <TableCell className="min-w-52 px-1 py-1.5 align-top">
+        <BudgetCodeSelector
+          value={item.budgetCode || ""}
+          onValueChange={(value) => updateLineItem(index, "budgetCode", value)}
+          budgetCodes={budgetCodes}
+          onCreateNew={() => onCreateBudgetCode(index)}
+          placeholder="Select budget code..."
+          disabled={isLinkedToCommitment}
+        />
+      </TableCell>
+
+      {/* Description */}
+      <TableCell className="min-w-40 px-1 py-1.5 align-top">
+        <Input
+          value={item.description}
+          onChange={(e) => updateLineItem(index, "description", e.target.value)}
+          placeholder="Enter description"
+        />
+      </TableCell>
+
+      {/* Vendor */}
+      <TableCell className="min-w-40 px-1 py-1.5 align-top">
+        <VendorCombobox
+          value={item.vendor}
+          onChange={(value) => updateLineItem(index, "vendor", value)}
+          vendors={vendors}
+          onAddCompany={onAddCompany}
+        />
       </TableCell>
 
       {/* Cost: Quantity */}
