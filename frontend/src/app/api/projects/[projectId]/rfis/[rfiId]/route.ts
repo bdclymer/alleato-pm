@@ -203,8 +203,11 @@ export const PATCH = withApiGuardrails(
       return apiErrorResponse(error);
     }
 
-    // Closing an RFI is a user-visible notification action. Do not let it
-    // silently succeed without a traceable email send.
+    // Closing an RFI is a user-visible notification action. The status change
+    // has already been persisted above — a notification-email failure must NOT
+    // fail the whole request (that would show the user a failure toast for an
+    // operation that actually succeeded). Instead, attempt the email separately
+    // and surface a non-blocking warning if it fails.
     const newStatus = updateData.status as string | undefined;
     if (newStatus === "closed" || newStatus === "closed-draft") {
       const { projectId } = await params;
@@ -215,13 +218,16 @@ export const PATCH = withApiGuardrails(
       });
 
       if (notificationResult.failed.length > 0) {
-        return NextResponse.json(
-          {
-            error: "RFI was closed, but one or more close notification emails failed.",
-            details: notificationResult.failed,
-          },
-          { status: 502 },
-        );
+        logger.warn({
+          msg: "RFI closed but close-notification email(s) failed",
+          rfiId,
+          failed: notificationResult.failed,
+        });
+        return NextResponse.json({
+          ...data,
+          _emailWarning:
+            "RFI closed, but one or more close-notification emails could not be sent.",
+        });
       }
     }
 

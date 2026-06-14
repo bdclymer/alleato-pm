@@ -163,6 +163,11 @@ const ENDPOINTS = [
   ["GET", `/api/projects/${PROJECT_ID}/rfis`, "RFIs list", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/rfis/${FAKE_UUID}`, "RFI detail (fake id)", [200, 401, 404]],
   // Regression: drawing_number must be included in POST insertData (was silently dropped — fixed 2026-04-20)
+  // Regression (2026-06-14): closing an RFI must NOT fail the request when the close-notification
+  // email fails. The status change is persisted first, then the route returns 200 with a
+  // non-blocking `_emailWarning` instead of a 502. An unauthenticated PATCH must return 401
+  // (auth runs before any status/email work) — a 500 means the close handler crashed before auth.
+  ["PATCH", `/api/projects/${PROJECT_ID}/rfis/${FAKE_UUID}`, "RFI close — email failure is non-blocking (auth check)", [401]],
 
   // Submittals
   ["GET", `/api/projects/${PROJECT_ID}/submittals`, "Submittals list", [200, 401]],

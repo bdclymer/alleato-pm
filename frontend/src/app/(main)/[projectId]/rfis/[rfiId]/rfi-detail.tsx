@@ -302,6 +302,18 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
                   disabled={isLoadingManagerOptions}
                 />
               </div>
+              <div className="sm:col-span-2">
+                <RHFMultiComboboxField
+                  control={form.control}
+                  name="distribution_list"
+                  label="Distribution List"
+                  options={rfiManagerOptions}
+                  placeholder="Select from directory"
+                  searchPlaceholder="Search project members..."
+                  emptyMessage="No matching project member found."
+                  disabled={isLoadingManagerOptions}
+                />
+              </div>
             </div>
           </div>
 

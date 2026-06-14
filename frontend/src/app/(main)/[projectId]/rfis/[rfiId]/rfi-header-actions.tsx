@@ -35,11 +35,18 @@ export function RfiHeaderActions({ rfi, projectId }: RfiHeaderActionsProps) {
   const [isCreatingCE, setIsCreatingCE] = useState(false);
 
   const handleStatusChange = async (newStatus: string) => {
-    await updateRfi.mutateAsync({
-      rfiId: rfi.id,
-      data: { status: newStatus } as Record<string, unknown> & RfiEditValues,
-    });
-    router.refresh();
+    try {
+      await updateRfi.mutateAsync({
+        rfiId: rfi.id,
+        data: { status: newStatus } as Record<string, unknown> & RfiEditValues,
+      });
+      router.refresh();
+    } catch {
+      // Genuine failures are surfaced by useUpdateRfi's onError (handleFormError).
+      // Caught here so a rejected mutation doesn't become an unhandled rejection.
+      // Note: a close-notification email failure is NOT an error — the route now
+      // returns 200 with a non-blocking _emailWarning instead of a 502.
+    }
   };
 
   const handleDelete = async () => {
