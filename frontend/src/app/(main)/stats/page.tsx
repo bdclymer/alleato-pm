@@ -27,8 +27,6 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Collapsible,
@@ -36,30 +34,24 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  UnifiedTablePage,
+  type TableColumn,
+  type ViewMode,
+} from "@/components/tables/unified";
 
 // Icons
 import {
   Calendar,
   Clock,
   Users,
-  Search,
   ChevronDown,
   ChevronRight,
   ExternalLink,
   Video,
-  FileText,
   Folder,
   CalendarDays,
   ArrowRight,
   Play,
-  ListFilter,
   LayoutGrid,
   LayoutList,
   Sun,
@@ -128,13 +120,12 @@ function MeetingCard({
   showDate?: boolean;
   compact?: boolean;
 }) {
-  const participantCount =
-    meeting.participants_array?.length || 0;
+  const participantCount = meeting.participants_array?.length || 0;
 
   return (
     <Link href={`/meetings/${meeting.id}`}>
       <Card
-        className={`group hover:shadow-sm hover:border-primary/20 transition-all cursor-pointer ${compact ? "p-4" : ""}`}
+        className={`group hover:shadow-sm transition-all cursor-pointer ${compact ? "p-4" : ""}`}
       >
         <CardHeader className={compact ? "p-0 pb-2" : "pb-4"}>
           <div className="flex items-start justify-between gap-2">
@@ -220,8 +211,8 @@ function TodaysMeetings({ meetings }: { meetings: Meeting[] }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="rounded-full bg-amber-500/10 p-1.5">
-            <Sun className="h-4 w-4 text-amber-500" />
+          <div className="rounded-full bg-status-warning/10 p-1.5">
+            <Sun className="h-4 w-4 text-status-warning" />
           </div>
           <h2 className="font-semibold">Today</h2>
           <Badge variant="secondary" className="ml-1">
@@ -410,13 +401,10 @@ function ProjectGroupedView({ groups }: { groups: ProjectGroup[] }) {
 }
 
 // All Meetings Table View
-function AllMeetingsTable({
-  meetings,
-  searchQuery,
-}: {
-  meetings: Meeting[];
-  searchQuery: string;
-}) {
+function AllMeetingsTable({ meetings }: { meetings: Meeting[] }) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentView, setCurrentView] = useState<ViewMode>("table");
+
   const filteredMeetings = useMemo(() => {
     if (!searchQuery) return meetings;
     const query = searchQuery.toLowerCase();
@@ -429,101 +417,166 @@ function AllMeetingsTable({
     );
   }, [meetings, searchQuery]);
 
-  return (
-    <div className="rounded-lg border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[300px]">Meeting</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Duration</TableHead>
-            <TableHead>Participants</TableHead>
-            <TableHead>Project</TableHead>
-            <TableHead className="w-[50px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredMeetings.length === 0 ? (
-            <TableRow>
-              <TableCell
-                colSpan={6}
-                className="text-center py-8 text-muted-foreground"
-              >
-                {searchQuery
-                  ? "No meetings match your search"
-                  : "No meetings found"}
-              </TableCell>
-            </TableRow>
+  const columns = useMemo<TableColumn<Meeting>[]>(
+    () => [
+      {
+        id: "meeting",
+        label: "Meeting",
+        alwaysVisible: true,
+        sortable: true,
+        render: (meeting) => (
+          <Link href={`/meetings/${meeting.id}`} className="block min-w-0">
+            <div className="line-clamp-1 text-sm font-medium text-foreground transition-colors hover:text-primary">
+              {meeting.title || "Untitled Meeting"}
+            </div>
+            {meeting.summary && (
+              <div className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                {meeting.summary}
+              </div>
+            )}
+          </Link>
+        ),
+        sortValue: (meeting) => meeting.title ?? "",
+        csvValue: (meeting) => meeting.title || "Untitled Meeting",
+        width: 320,
+      },
+      {
+        id: "date",
+        label: "Date",
+        sortable: true,
+        render: (meeting) =>
+          meeting.date ? (
+            <div className="text-sm">
+              <div>{format(parseISO(meeting.date), "MMM d, yyyy")}</div>
+              <div className="text-xs text-muted-foreground">
+                {getTimeFromDate(meeting.date)}
+              </div>
+            </div>
           ) : (
-            filteredMeetings.map((meeting) => (
-              <TableRow
-                key={meeting.id}
-                className="group cursor-pointer hover:bg-muted/50"
-              >
-                <TableCell>
-                  <Link href={`/meetings/${meeting.id}`} className="block">
-                    <div className="font-medium line-clamp-1 group-hover:text-primary transition-colors">
-                      {meeting.title || "Untitled Meeting"}
-                    </div>
-                    {meeting.summary && (
-                      <div className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                        {meeting.summary}
-                      </div>
-                    )}
-                  </Link>
-                </TableCell>
-                <TableCell>
-                  {meeting.date ? (
-                    <div className="text-sm">
-                      <div>{format(parseISO(meeting.date), "MMM d, yyyy")}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {getTimeFromDate(meeting.date)}
-                      </div>
-                    </div>
-                  ) : (
-                    <span className="text-muted-foreground">-</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <span className="text-sm">
-                    {formatDuration(meeting.duration_minutes)}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <div className="text-sm line-clamp-1 max-w-[150px]">
-                    {meeting.participants || "-"}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {meeting.project ? (
-                    <Badge variant="outline" className="text-xs">
-                      {meeting.project}
-                    </Badge>
-                  ) : (
-                    <span className="text-muted-foreground text-xs">
-                      Unassigned
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {meeting.fireflies_link && (
-                    <a
-                      href={meeting.fireflies_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-muted-foreground hover:text-primary"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+            <span className="text-sm text-muted-foreground">-</span>
+          ),
+        sortValue: (meeting) =>
+          meeting.date ? parseISO(meeting.date).getTime() : 0,
+        csvValue: (meeting) =>
+          meeting.date
+            ? format(parseISO(meeting.date), "yyyy-MM-dd HH:mm")
+            : "",
+        width: 160,
+      },
+      {
+        id: "duration",
+        label: "Duration",
+        sortable: true,
+        render: (meeting) => (
+          <span className="text-sm text-muted-foreground">
+            {formatDuration(meeting.duration_minutes)}
+          </span>
+        ),
+        sortValue: (meeting) => meeting.duration_minutes ?? 0,
+        csvValue: (meeting) => formatDuration(meeting.duration_minutes),
+        width: 120,
+      },
+      {
+        id: "participants",
+        label: "Participants",
+        render: (meeting) => (
+          <div className="line-clamp-1 max-w-44 text-sm text-muted-foreground">
+            {meeting.participants || "-"}
+          </div>
+        ),
+        csvValue: (meeting) => meeting.participants ?? "",
+        width: 180,
+      },
+      {
+        id: "project",
+        label: "Project",
+        sortable: true,
+        render: (meeting) =>
+          meeting.project ? (
+            <Badge variant="outline" className="text-xs">
+              {meeting.project}
+            </Badge>
+          ) : (
+            <span className="text-xs text-muted-foreground">Unassigned</span>
+          ),
+        sortValue: (meeting) => meeting.project ?? "",
+        csvValue: (meeting) => meeting.project ?? "Unassigned",
+        width: 180,
+      },
+      {
+        id: "recording",
+        label: "",
+        render: (meeting) =>
+          meeting.fireflies_link ? (
+            <a
+              href={meeting.fireflies_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-primary"
+              onClick={(event) => event.stopPropagation()}
+              aria-label="Open recording"
+            >
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          ) : null,
+        csvValue: (meeting) => meeting.fireflies_link ?? "",
+        width: 56,
+      },
+    ],
+    [],
+  );
+
+  return (
+    <UnifiedTablePage
+      header={{
+        title: "All Meetings",
+        description:
+          "Search recordings, transcripts, projects, and participants.",
+        variant: "compact",
+      }}
+      toolbar={{
+        totalItems: meetings.length,
+        filteredItems: filteredMeetings.length,
+        searchValue: searchQuery,
+        onSearchChange: setSearchQuery,
+        searchPlaceholder: "Search meetings...",
+        currentView,
+        onViewChange: (view) => {
+          if (view === "table") setCurrentView(view);
+        },
+        enabledViews: ["table"],
+      }}
+      data={{
+        items: filteredMeetings,
+        isLoading: false,
+        error: null,
+      }}
+      table={{
+        columns,
+        getRowId: (meeting) => meeting.id,
+        density: "compact",
+        stickyHeader: true,
+      }}
+      features={{
+        enableViews: false,
+        enableColumnToggle: true,
+        enableExport: true,
+        enablePagination: true,
+        enableBulkDelete: false,
+        enableRowSelection: false,
+      }}
+      layout={{
+        containerPadding: false,
+        toolbarInlineWithHeader: true,
+        minWidth: 980,
+      }}
+      emptyState={{
+        title: "No meetings found",
+        description: "Meetings will appear here after recordings are synced.",
+        filteredDescription: "No meetings match your search.",
+        isFiltered: Boolean(searchQuery),
+      }}
+    />
   );
 }
 
@@ -607,7 +660,6 @@ function LoadingSkeleton() {
 
 // Main Page Component
 export default function MeetingsPage() {
-  const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
   const supabase = createClient();
 
@@ -705,17 +757,6 @@ export default function MeetingsPage() {
             Review and manage your meeting recordings and transcripts
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search meetings..."
-              className="pl-10 w-[250px]"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </div>
       </div>
 
       {isLoading ? (
@@ -812,7 +853,7 @@ export default function MeetingsPage() {
             </TabsContent>
 
             <TabsContent value="all">
-              <AllMeetingsTable meetings={meetings} searchQuery={searchQuery} />
+              <AllMeetingsTable meetings={meetings} />
             </TabsContent>
           </Tabs>
         </>
