@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { apiFetch } from "@/lib/api-client";
+
 import { LabelValueRow, PageShell } from "@/components/layout";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { Button } from "@/components/ui/button";
@@ -151,19 +153,12 @@ export default function EditPrimeContractPcoPage() {
   const loadPco = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/projects/${projectId}/prime-contract-pcos/${pcoId}`);
-      if (!response.ok) {
-        const errorPayload = await response.json().catch(() => ({}));
-        throw new Error(
-          typeof errorPayload?.error === "string"
-            ? errorPayload.error
-            : "Failed to load prime contract PCO",
-        );
-      }
-      const data: PrimeContractPcoResponse = await response.json();
+      const data = await apiFetch<PrimeContractPcoResponse>(
+        `/api/projects/${projectId}/prime-contract-pcos/${pcoId}`,
+      );
       setFormData(toFormData(data));
     } catch (error) {
-      toast.error("Failed to load prime contract PCO");
+      toast.error(error instanceof Error ? error.message : "Failed to load prime contract PCO");
       router.push(`/${projectId}/prime-contract-pcos`);
     } finally {
       setIsLoading(false);
@@ -200,25 +195,15 @@ export default function EditPrimeContractPcoPage() {
         paid_in_full: formData.paid_in_full,
       };
 
-      const response = await fetch(`/api/projects/${projectId}/prime-contract-pcos/${pcoId}`, {
+      await apiFetch(`/api/projects/${projectId}/prime-contract-pcos/${pcoId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
-      if (!response.ok) {
-        const errorPayload = await response.json().catch(() => ({}));
-        throw new Error(
-          typeof errorPayload?.error === "string"
-            ? errorPayload.error
-            : "Failed to save prime contract PCO",
-        );
-      }
 
       toast.success("Prime Contract PCO updated");
       router.push(buildDetailPath(formData.prime_contract_id));
     } catch (error) {
-      toast.error("Failed to save prime contract PCO");
+      toast.error(error instanceof Error ? error.message : "Failed to save prime contract PCO");
     } finally {
       setIsSaving(false);
     }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { BaseModal, ModalBody, ModalFooter } from "./BaseModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Plus, Trash2 } from "lucide-react";
 import {
   InlineTable,
@@ -57,6 +66,7 @@ export function CreateBudgetLineItemsModal({
 }: CreateBudgetLineItemsModalProps) {
   const [items, setItems] = useState<BudgetLineItem[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
   const addLine = () => {
     setItems([
@@ -94,7 +104,7 @@ export function CreateBudgetLineItemsModal({
     );
 
     if (invalidItems.length > 0) {
-      alert(
+      toast.error(
         "Please fill in all required fields. Quantity must be greater than 0.",
       );
       return;
@@ -106,7 +116,11 @@ export function CreateBudgetLineItemsModal({
       setItems([]);
       onClose();
     } catch (error) {
-      alert("Failed to create budget items. Please try again.");
+      toast.error(
+        `Failed to create budget items: ${
+          error instanceof Error ? error.message : "Please try again."
+        }`,
+      );
     } finally {
       setIsSaving(false);
     }
@@ -114,17 +128,16 @@ export function CreateBudgetLineItemsModal({
 
   const handleClose = () => {
     if (items.length > 0) {
-      if (
-        confirm(
-          "You have unsaved Budget Line Items. Are you sure you want to close?",
-        )
-      ) {
-        setItems([]);
-        onClose();
-      }
+      setShowDiscardDialog(true);
     } else {
       onClose();
     }
+  };
+
+  const handleDiscardConfirm = () => {
+    setItems([]);
+    setShowDiscardDialog(false);
+    onClose();
   };
 
   const isValid =
@@ -134,6 +147,7 @@ export function CreateBudgetLineItemsModal({
     );
 
   return (
+    <>
     <BaseModal
       isOpen={open}
       onClose={handleClose}
@@ -387,5 +401,29 @@ export function CreateBudgetLineItemsModal({
         </Button>
       </ModalFooter>
     </BaseModal>
+
+      <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard unsaved line items?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have {items.length} unsaved budget line item
+              {items.length === 1 ? "" : "s"}. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDiscardDialog(false)}
+            >
+              Keep editing
+            </Button>
+            <Button variant="destructive" onClick={handleDiscardConfirm}>
+              Discard
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

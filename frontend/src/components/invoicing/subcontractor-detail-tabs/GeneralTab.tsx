@@ -282,7 +282,7 @@ export function GeneralTab({
       toast.success("Invoice updated");
       await onSave?.();
     } catch (err) {
-      toast.error("Failed to save");
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to save");
     } finally {
       setSavingSummary(false);
     }
@@ -453,7 +453,7 @@ export function GeneralTab({
       setEdits({});
       await onRefetch();
     } catch (err) {
-      toast.error("Failed to save");
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to save");
     } finally {
       setSavingSOV(false);
     }

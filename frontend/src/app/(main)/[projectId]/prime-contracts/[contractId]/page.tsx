@@ -210,14 +210,14 @@ export default function ProjectContractDetailPage() {
   // ── Change orders ───────────────────────────────────────────────────────
   const [changeOrders, setChangeOrders] = useState<PrimeContractCO[]>([]);
   const [showNewCoDialog, setShowNewCoDialog] = useState(false);
-  const [coForm, setCoForm] = useState<ChangeOrderFormState>({ change_order_number: "", description: "", amount: "", status: "pending" });
+  const [coForm, setCoForm] = useState<ChangeOrderFormState>({ change_order_number: "", description: "", amount: "" });
   const [isSubmittingCo, setIsSubmittingCo] = useState(false);
   const [showRejectCoDialog, setShowRejectCoDialog] = useState(false);
   const [rejectingCoId, setRejectingCoId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [isRejectingCo, setIsRejectingCo] = useState(false);
   const [editingCo, setEditingCo] = useState<PrimeContractCO | null>(null);
-  const [editCoForm, setEditCoForm] = useState<ChangeOrderFormState>({ change_order_number: "", description: "", amount: "", status: "pending" });
+  const [editCoForm, setEditCoForm] = useState<ChangeOrderFormState>({ change_order_number: "", description: "", amount: "" });
   const [isUpdatingCo, setIsUpdatingCo] = useState(false);
   const [deletingCo, setDeletingCo] = useState<PrimeContractCO | null>(null);
   const [isDeletingCo, setIsDeletingCo] = useState(false);
@@ -583,18 +583,18 @@ export default function ProjectContractDetailPage() {
     try {
       const newCo = await apiFetch<PrimeContractCO>(`/api/projects/${projectId}/prime-contract-change-orders`, {
         method: "POST",
-        body: JSON.stringify({ contract_id: contractId, prime_contract_id: contractId, title: coForm.description, description: coForm.description, total_amount: parseFloat(coForm.amount), status: coForm.status }),
+        body: JSON.stringify({ contract_id: contractId, prime_contract_id: contractId, title: coForm.description, description: coForm.description, total_amount: parseFloat(coForm.amount) }),
       });
       setChangeOrders((prev) => [...prev, newCo]);
       setShowNewCoDialog(false);
-      setCoForm({ change_order_number: "", description: "", amount: "", status: "pending" });
+      setCoForm({ change_order_number: "", description: "", amount: "" });
       toast.success("Change order created successfully");
     } catch { toast.error("Failed to create change order"); } finally { setIsSubmittingCo(false); }
   };
 
   const handleStartEditCo = (co: PrimeContractCO) => {
     setEditingCo(co);
-    setEditCoForm({ change_order_number: co.change_order_number || "", description: co.description || "", amount: String(co.amount ?? ""), status: "pending" });
+    setEditCoForm({ change_order_number: co.change_order_number || "", description: co.description || "", amount: String(co.amount ?? "") });
   };
 
   const handleUpdateCo = async () => {
@@ -959,7 +959,6 @@ export default function ProjectContractDetailPage() {
         </span>
       }
       title={contract.title}
-      description={contract.contractor ? `Contractor: ${contract.contractor.name}` : contract.vendor ? `Contractor: ${contract.vendor.name}` : "No contractor assigned"}
       onBack={() => router.push(`/${projectId}/prime-contracts`)}
       actions={
         <div className="flex items-center gap-2">

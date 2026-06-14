@@ -282,7 +282,7 @@ export function DetailTab({
       setEdits({});
       await onRefetch();
     } catch (err) {
-      toast.error("Failed to save");
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to save");
     } finally {
       setBusy(false);
     }

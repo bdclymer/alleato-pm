@@ -6,6 +6,7 @@ import { useParams, usePathname, useRouter, useSearchParams } from "next/navigat
 import { Plus, ArrowUpRight, Eye, SquarePen, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { apiFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { useConfirmationDialog } from "@/components/common/ConfirmationDialog";
 import {
@@ -244,15 +245,8 @@ export default function PrimeContractPcosPage(): ReactElement {
     try {
       const queryParams = new URLSearchParams();
       if (statusParam) queryParams.set("status", statusParam);
-
-      const res = await fetch(
-        `/api/projects/${projectId}/prime-contract-pcos${queryParams.toString() ? `?${queryParams.toString()}` : ""}`,
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to load PCOs");
-      }
-      const data = await res.json();
+      const url = `/api/projects/${projectId}/prime-contract-pcos${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+      const data = await apiFetch<PrimeContractPco[]>(url);
       setPcos(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load PCOs");
@@ -325,18 +319,14 @@ export default function PrimeContractPcosPage(): ReactElement {
     (item: PrimeContractPco) => {
       deleteDialog.confirm(async () => {
         try {
-          const response = await fetch(
+          await apiFetch(
             `/api/projects/${projectId}/prime-contract-pcos/${item.id}`,
             { method: "DELETE" },
           );
-          if (!response.ok) {
-            const err = await response.json().catch(() => ({}));
-            throw new Error(err.error || "Failed to delete PCO");
-          }
           toast.success("PCO deleted");
           fetchPcos();
         } catch (err) {
-          toast.error("Failed to delete PCO");
+          toast.error(err instanceof Error ? err.message : "Failed to delete PCO");
         }
       });
     },
@@ -347,19 +337,14 @@ export default function PrimeContractPcosPage(): ReactElement {
     (item: PrimeContractPco) => {
       promoteDialog.confirm(async () => {
         try {
-          const response = await fetch(
+          const result = await apiFetch<{ message?: string }>(
             `/api/projects/${projectId}/prime-contract-pcos/${item.id}/promote`,
             { method: "POST" },
           );
-          if (!response.ok) {
-            const err = await response.json().catch(() => ({}));
-            throw new Error(err.error || "Failed to promote PCO");
-          }
-          const result = await response.json();
-          toast.success(result.message || "PCO promoted to change order");
+          toast.success(result?.message || "PCO promoted to change order");
           fetchPcos();
         } catch (err) {
-          toast.error("Failed to promote PCO");
+          toast.error(err instanceof Error ? err.message : "Failed to promote PCO");
         }
       });
     },
@@ -377,14 +362,10 @@ export default function PrimeContractPcosPage(): ReactElement {
       try {
         const results = await Promise.allSettled(
           selectedIds.map(async (id) => {
-            const response = await fetch(
+            await apiFetch(
               `/api/projects/${projectId}/prime-contract-pcos/${id}`,
               { method: "DELETE" },
             );
-            if (!response.ok) {
-              const err = await response.json().catch(() => ({}));
-              throw new Error(err.error || `Failed to delete PCO ${id}`);
-            }
           }),
         );
 
@@ -424,25 +405,19 @@ export default function PrimeContractPcosPage(): ReactElement {
 
     bulkPromoteDialog.confirm(async () => {
       try {
-        const response = await fetch(
+        const payload = await apiFetch<{ message?: string }>(
           `/api/projects/${projectId}/prime-contract-pcos/promote-bulk`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ pco_ids: selectedIds }),
           },
         );
 
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(payload.error || "Failed to promote selected PCOs");
-        }
-
-        toast.success(payload.message || "Selected PCOs promoted");
+        toast.success(payload?.message || "Selected PCOs promoted");
         tableState.setSelectedIds([]);
         fetchPcos();
       } catch (err) {
-        toast.error("Failed to promote selected PCOs");
+        toast.error(err instanceof Error ? err.message : "Failed to promote selected PCOs");
       }
     });
   }, [bulkPromoteDialog, fetchPcos, projectId, tableState]);

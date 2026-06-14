@@ -690,18 +690,24 @@ function CoordinationIssueContent({
 
   const handleCreate = () => {
     if (!position || !title.trim()) return;
-    // Coordination issues are stored as pins with draft_data until a dedicated table exists
+    // Coordination issues are stored as pin metadata only — no dedicated table exists yet.
+    // The pin is persisted to drawing_markup_pins; the issue itself is NOT backed by a record.
     onConfirm({
       ...posToPin(position),
       pin_type: "coordination_issue",
       entity_label: title.trim(),
-      entity_status: "open",
+      entity_status: "draft",
       color,
     });
   };
 
   return (
     <div className="space-y-3">
+      <div className="rounded-md bg-muted px-3 py-2">
+        <p className="text-xs text-muted-foreground">
+          <strong className="text-foreground">Draft pin only.</strong> A Coordination Issues module is not yet available. The title and description are saved on the pin — no separate record is created.
+        </p>
+      </div>
       <div>
         <Label htmlFor="ci-title">Title *</Label>
         <Input
@@ -722,12 +728,9 @@ function CoordinationIssueContent({
           className="mt-1"
         />
       </div>
-      <p className="text-xs text-muted-foreground">
-        Places a pin on the drawing. Future: sync with Coordination Issues module.
-      </p>
       <ModalFooter>
         <Button variant="outline" onClick={onCancel}>Cancel</Button>
-        <Button onClick={handleCreate} disabled={!title.trim()}>Place Pin</Button>
+        <Button onClick={handleCreate} disabled={!title.trim()}>Place Draft Pin</Button>
       </ModalFooter>
     </div>
   );
@@ -750,17 +753,25 @@ function TaskContent({
 
   const handleCreate = () => {
     if (!position || !title.trim()) return;
+    // Tasks created here are stored as pin metadata only — no task record is created in the
+    // tasks table (which is reserved for AI-extracted tasks from communications).
+    // The pin is persisted to drawing_markup_pins with the title as entity_label.
     onConfirm({
       ...posToPin(position),
       pin_type: "task",
       entity_label: title.trim(),
-      entity_status: "open",
+      entity_status: "draft",
       color,
     });
   };
 
   return (
     <div className="space-y-3">
+      <div className="rounded-md bg-muted px-3 py-2">
+        <p className="text-xs text-muted-foreground">
+          <strong className="text-foreground">Draft pin only.</strong> A drawing-linked task module is not yet available. The title is saved on the pin — no separate task record is created.
+        </p>
+      </div>
       <div>
         <Label htmlFor="task-title">Task Title *</Label>
         <Input
@@ -773,7 +784,7 @@ function TaskContent({
       </div>
       <ModalFooter>
         <Button variant="outline" onClick={onCancel}>Cancel</Button>
-        <Button onClick={handleCreate} disabled={!title.trim()}>Place Pin</Button>
+        <Button onClick={handleCreate} disabled={!title.trim()}>Place Draft Pin</Button>
       </ModalFooter>
     </div>
   );

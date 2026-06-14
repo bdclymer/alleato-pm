@@ -492,7 +492,7 @@ function AddLineItemDialog({ open, onOpenChange, projectId, invoiceId, onSuccess
       onOpenChange(false);
       onSuccess(body.data);
     } catch (err) {
-      toast.error("Failed to add line item");
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to add line item");
     } finally {
       setIsSaving(false);
     }
@@ -618,7 +618,9 @@ function InvoiceEditForm({
         : "",
       period_end: invoice.period_end ? invoice.period_end.slice(0, 10) : "",
       status: invoice.status as InvoiceEditValues["status"],
-      notes: "",
+      // Load the existing notes value so an unchanged field does NOT send ""
+      // and wipe notes already saved on the invoice.
+      notes: invoice.notes ?? "",
     },
   });
   const control = form.control as Control<InvoiceEditValues>;
@@ -631,7 +633,9 @@ function InvoiceEditForm({
         period_start: values.period_start || null,
         period_end: values.period_end || null,
         status: values.status,
-        notes: values.notes || null,
+        // Only send notes when the user has actually changed the field;
+        // fall back to the original value so we never overwrite with "".
+        notes: values.notes !== undefined ? (values.notes || null) : (invoice.notes ?? null),
       };
 
       const body = await apiFetch<{ data: OwnerInvoice }>(
@@ -644,7 +648,8 @@ function InvoiceEditForm({
       toast.success("Invoice updated successfully");
       onSuccess(body.data);
     } catch (err) {
-      toast.error("Failed to update invoice");
+      const message = err instanceof Error && err.message ? err.message : "Failed to update invoice";
+      toast.error(message);
     } finally {
       setIsSaving(false);
     }
@@ -819,7 +824,8 @@ export default function InvoiceDetailPage() {
       // Refresh invoice to get server-computed values
       await fetchInvoice();
     } catch (err) {
-      toast.error("Failed to save changes");
+      const message = err instanceof Error && err.message ? err.message : "Failed to save changes";
+      toast.error(message);
     } finally {
       setIsSavingSOV(false);
     }
@@ -869,7 +875,7 @@ export default function InvoiceDetailPage() {
       toast.success("Invoice submitted successfully");
       await fetchInvoice();
     } catch (err) {
-      toast.error("Failed to submit invoice");
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to submit invoice");
     }
   };
 
@@ -885,7 +891,7 @@ export default function InvoiceDetailPage() {
       toast.success("Invoice returned for revision");
       await fetchInvoice();
     } catch (err) {
-      toast.error("Failed to request revision");
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to request revision");
     }
   };
 
@@ -903,7 +909,7 @@ export default function InvoiceDetailPage() {
       toast.success("Invoice approved successfully");
       await fetchInvoice();
     } catch (err) {
-      toast.error("Failed to approve invoice");
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to approve invoice");
     }
   };
 
@@ -919,7 +925,7 @@ export default function InvoiceDetailPage() {
       setApproveAsNotedDialogOpen(false);
       await fetchInvoice();
     } catch (err) {
-      toast.error("Failed to approve invoice as noted");
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to approve invoice as noted");
     } finally {
       setIsApprovingAsNoted(false);
     }
@@ -941,7 +947,7 @@ export default function InvoiceDetailPage() {
       setVoidReason("");
       await fetchInvoice();
     } catch (err) {
-      toast.error("Failed to void invoice");
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to void invoice");
     } finally {
       setIsVoiding(false);
     }
@@ -962,7 +968,7 @@ export default function InvoiceDetailPage() {
       toast.success("Invoice deleted successfully");
       router.push(`/${projectId}/invoices`);
     } catch (err) {
-      toast.error("Failed to delete invoice");
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to delete invoice");
     } finally {
       setIsDeleting(false);
       setDeleteDialogOpen(false);

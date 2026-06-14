@@ -246,7 +246,7 @@ export default function NewBudgetLineItemPage() {
         (cc) => cc.id === newCodeData.costCodeId,
       );
       if (!selectedCostCode) {
-        alert("Please select a cost code");
+        toast.error("Please select a cost code");
         return;
       }
 
@@ -359,7 +359,7 @@ export default function NewBudgetLineItemPage() {
       );
 
       if (invalidRows.length > 0) {
-        alert("All rows must have a budget code and a non-zero amount.");
+        toast.error("All rows must have a budget code and a non-zero amount.");
         setLoading(false);
         return;
       }

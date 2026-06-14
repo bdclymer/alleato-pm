@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ds";
 import { DataTable, type DataTableFooterCell } from "@/components/tables/DataTable";
 import { apiFetch } from "@/lib/api-client";
+import { handleFormError } from "@/lib/handle-form-error";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { formatDate } from "@/lib/format";
 import type {
@@ -57,8 +58,7 @@ export function PrimeContractPaymentsTab({
       setContract(result.contract);
       toast.success("Payments synced from Acumatica");
     } catch (error) {
-      console.error("Failed to sync payments from ERP:", error);
-      toast.error("Failed to sync payments from Acumatica. Please try again.");
+      handleFormError(error, { entity: "payments", action: "save" });
     } finally {
       setIsSyncing(false);
     }

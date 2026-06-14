@@ -5,6 +5,7 @@ import { format, isValid, parse } from "date-fns";
 import { Calendar as CalendarIcon, Paperclip, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
+import { apiFetch } from "@/lib/api-client";
 import { InvoiceStatusBadge } from "@/components/invoicing/InvoiceStatusBadge";
 import { LabelValueRow } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -206,22 +207,18 @@ export function SummaryTab({
         period_end: displayToIso(fields.period_end),
         billing_date: displayToIso(fields.billing_date),
       };
-      const res = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         },
       );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Failed to save");
-      }
       toast.success("Invoice updated");
       await onSave?.();
     } catch (err) {
-      toast.error("Failed to save");
+      const message = err instanceof Error && err.message ? err.message : "Failed to save";
+      toast.error(message);
     } finally {
       setSaving(false);
     }

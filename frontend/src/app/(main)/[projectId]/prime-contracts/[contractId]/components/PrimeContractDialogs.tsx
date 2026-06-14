@@ -291,17 +291,6 @@ export function PrimeContractDialogs(props: PrimeContractDialogsProps) {
                 placeholder=""
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="co-status">Status</Label>
-              <select
-                id="co-status"
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-4 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                value={coForm.status}
-                onChange={(e) => setCoForm((prev) => ({ ...prev, status: e.target.value as "pending" }))}
-              >
-                <option value="pending">Pending</option>
-              </select>
-            </div>
           </div>
           <ModalFooter>
             <Button variant="outline" onClick={() => setShowNewCoDialog(false)} disabled={isSubmittingCo}>

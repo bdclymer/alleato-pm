@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { DateField } from "@/components/forms/DateField";
 import { MoneyField } from "@/components/forms/MoneyField";
+import { apiFetch } from "@/lib/api-client";
 import {
   Table,
   TableBody,
@@ -145,27 +146,31 @@ export default function NewSubcontractorInvoicePage() {
   useEffect(() => {
     if (urlCommitmentId || !projectId) return;
     setPicklistLoading(true);
+    type PicklistItem = {
+      id: string;
+      contract_number?: string | null;
+      title?: string | null;
+      company_name?: string | null;
+      companies?: { name?: string | null } | null;
+    };
+    type PicklistResponse = { data?: PicklistItem[] } | PicklistItem[];
     Promise.all([
-      fetch(`/api/projects/${projectId}/subcontracts`).then((r) => r.json()),
-      fetch(`/api/projects/${projectId}/purchase-orders`).then((r) => r.json()),
+      apiFetch<PicklistResponse>(`/api/projects/${projectId}/subcontracts`),
+      apiFetch<PicklistResponse>(`/api/projects/${projectId}/purchase-orders`),
     ])
       .then(([scJson, poJson]) => {
-        const mapOption = (item: {
-          id: string;
-          contract_number?: string | null;
-          title?: string | null;
-          company_name?: string | null;
-          companies?: { name?: string | null } | null;
-        }): CommitmentOption => ({
+        const mapOption = (item: PicklistItem): CommitmentOption => ({
           id: item.id,
           contract_number: item.contract_number ?? null,
           title: item.title ?? null,
           company_name: item.company_name ?? item.companies?.name ?? null,
         });
-        setSubcontracts((scJson.data ?? scJson ?? []).map(mapOption));
-        setPurchaseOrders((poJson.data ?? poJson ?? []).map(mapOption));
+        const toList = (json: PicklistResponse): PicklistItem[] =>
+          Array.isArray(json) ? json : (json as { data?: PicklistItem[] }).data ?? [];
+        setSubcontracts(toList(scJson).map(mapOption));
+        setPurchaseOrders(toList(poJson).map(mapOption));
       })
-      .catch(() => toast.error("Failed to load commitments"))
+      .catch((err: unknown) => toast.error(err instanceof Error && err.message ? err.message : "Failed to load commitments"))
       .finally(() => setPicklistLoading(false));
   }, [projectId, urlCommitmentId]);
 
@@ -187,100 +192,88 @@ export default function NewSubcontractorInvoicePage() {
 
     async function load() {
       try {
-        const [detailRes, invoicesRes, cosRes] = await Promise.all([
-          fetch(`/api/commitments/${commitmentId}`),
-          fetch(`/api/commitments/${commitmentId}/invoices`),
-          fetch(`/api/commitments/${commitmentId}/change-orders`),
+        const [detailJson, invoicesJson, cosJson] = await Promise.all([
+          apiFetch<Record<string, unknown>>(`/api/commitments/${commitmentId}`),
+          apiFetch<Record<string, unknown>>(`/api/commitments/${commitmentId}/invoices`),
+          apiFetch<Record<string, unknown>>(`/api/commitments/${commitmentId}/change-orders`),
         ]);
 
         // Commitment details
-        if (detailRes.ok) {
-          const json = await detailRes.json();
-          const d = json.data ?? json;
-          setContractInfo({
-            number: d?.contract_number ?? "",
-            title: d?.title ?? "",
-            company:
-              d?.contract_company_name ??
-              d?.company_name ??
-              d?.companies?.name ??
-              "",
-          });
-        }
+        const d = (detailJson as { data?: Record<string, unknown> }).data ?? detailJson;
+        setContractInfo({
+          number: (d?.contract_number as string) ?? "",
+          title: (d?.title as string) ?? "",
+          company:
+            (d?.contract_company_name as string) ??
+            (d?.company_name as string) ??
+            ((d?.companies as { name?: string } | null)?.name) ??
+            "",
+        });
 
         // SOV items (with previous billing amounts)
-        if (invoicesRes.ok) {
-          const json = await invoicesRes.json();
-          const items: SovItem[] = (json.line_items ?? []).map(
-            (li: {
-              id: string;
-              budget_code?: string | null;
-              description?: string;
-              scheduled_value?: number;
-              gross_billed_to_date?: number;
-              retainage_percentage?: number;
-              line_number?: number | null;
-            }) => ({
-              id: li.id,
-              budget_code: li.budget_code ?? null,
-              description: li.description ?? "",
-              scheduled_value: Number(li.scheduled_value ?? 0),
-              from_previous: Number(li.gross_billed_to_date ?? 0),
-              retainage_pct: Number(li.retainage_percentage ?? 0),
-              line_number: li.line_number ?? null,
-            }),
-          );
-          setSovItems(items);
+        const invoiceData = invoicesJson as { line_items?: Array<{
+          id: string;
+          budget_code?: string | null;
+          description?: string;
+          scheduled_value?: number;
+          gross_billed_to_date?: number;
+          retainage_percentage?: number;
+          line_number?: number | null;
+        }> };
+        const items: SovItem[] = (invoiceData.line_items ?? []).map((li) => ({
+          id: li.id,
+          budget_code: li.budget_code ?? null,
+          description: li.description ?? "",
+          scheduled_value: Number(li.scheduled_value ?? 0),
+          from_previous: Number(li.gross_billed_to_date ?? 0),
+          retainage_pct: Number(li.retainage_percentage ?? 0),
+          line_number: li.line_number ?? null,
+        }));
+        setSovItems(items);
 
-          // Seed edits at zero
-          const edits: Record<string, SovEdit> = {};
-          for (const item of items) {
-            edits[item.id] = {
-              work_completed_period: "",
-              materials_stored: "",
-            };
-          }
-          setSovEdits(edits);
+        // Seed edits at zero
+        const edits: Record<string, SovEdit> = {};
+        for (const item of items) {
+          edits[item.id] = {
+            work_completed_period: "",
+            materials_stored: "",
+          };
         }
+        setSovEdits(edits);
 
         // Approved change orders only
-        if (cosRes.ok) {
-          const json = await cosRes.json();
-          const approved: ApprovedCO[] = (json.data ?? [])
-            .filter(
-              (co: { status?: string }) =>
-                co.status?.toLowerCase() === "approved",
-            )
-            .map(
-              (co: {
-                id: string;
-                change_order_number?: string;
-                title?: string | null;
-                amount?: number;
-                description?: string | null;
-              }) => ({
-                id: co.id,
-                change_order_number: co.change_order_number ?? "",
-                title: co.title ?? null,
-                amount: Number(co.amount ?? 0),
-                description: co.description ?? null,
-              }),
-            );
-          setApprovedCOs(approved);
-          setCoEdits(
-            Object.fromEntries(
-              approved.map((co) => [
-                co.id,
-                {
-                  work_completed_period: "",
-                  materials_stored: "",
-                },
-              ]),
-            ),
-          );
-        }
-      } catch {
-        toast.error("Failed to load commitment data");
+        const cosData = cosJson as { data?: Array<{
+          id: string;
+          status?: string;
+          change_order_number?: string;
+          title?: string | null;
+          amount?: number;
+          description?: string | null;
+        }> };
+        const approved: ApprovedCO[] = (cosData.data ?? [])
+          .filter((co) => co.status?.toLowerCase() === "approved")
+          .map((co) => ({
+            id: co.id,
+            change_order_number: co.change_order_number ?? "",
+            title: co.title ?? null,
+            amount: Number(co.amount ?? 0),
+            description: co.description ?? null,
+          }));
+        setApprovedCOs(approved);
+        setCoEdits(
+          Object.fromEntries(
+            approved.map((co) => [
+              co.id,
+              {
+                work_completed_period: "",
+                materials_stored: "",
+              },
+            ]),
+          ),
+        );
+      } catch (err) {
+        const message = err instanceof Error && err.message ? err.message : "Failed to load commitment data";
+        toast.error(message);
       } finally {
         setLoading(false);
       }
@@ -398,29 +391,23 @@ export default function NewSubcontractorInvoicePage() {
         line_items: [...lineItems, ...coLineItems],
       };
 
-      const res = await fetch(
+      const result = await apiFetch<{ data: { id: string | number } }>(
         `/api/projects/${projectId}/invoicing/subcontractor/invoices`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         },
       );
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error ?? `Server returned ${res.status}`);
-      }
-
-      const { data } = await res.json();
       toast.success(
         status === "under_review"
           ? "Invoice submitted for approval"
           : "Draft saved",
       );
-      router.push(`/${projectId}/invoicing/subcontractor/${data.id}`);
+      router.push(`/${projectId}/invoicing/subcontractor/${result.data.id}`);
     } catch (err) {
-      toast.error("Failed to save invoice");
+      const message = err instanceof Error && err.message ? err.message : "Failed to save invoice";
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }

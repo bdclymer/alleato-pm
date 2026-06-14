@@ -171,7 +171,7 @@ export default function NewChangeEventPage() {
           .map((r) => (r as PromiseRejectedResult).reason?.message)
           .filter(Boolean)
           .join("; ");
-        toast.warning(`Change event created but ${failedLineItems.length} line item(s) failed to save: ${reasons}`);
+        toast.error(`Change event created but ${failedLineItems.length} line item(s) failed to save: ${reasons}`);
       }
 
       await Promise.all(

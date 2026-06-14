@@ -256,7 +256,7 @@ export default function EditChangeEventPage() {
           .map((r) => (r as PromiseRejectedResult).reason?.message)
           .filter(Boolean)
           .join("; ");
-        toast.warning(
+        toast.error(
           `Change event saved but ${failed.length} line item(s) failed: ${reasons}`,
         );
       } else {

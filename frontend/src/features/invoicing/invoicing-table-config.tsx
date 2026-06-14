@@ -81,6 +81,8 @@ export interface OwnerInvoice {
   // Payment status (computed from invoice_payments)
   total_paid?: number | null;
   payment_status?: "unpaid" | "partially_paid" | "paid" | null;
+  // Notes
+  notes?: string | null;
   // Line items (joined)
   owner_invoice_line_items?: OwnerInvoiceLineItem[];
   created_at: string;

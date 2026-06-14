@@ -23,6 +23,8 @@ import {
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { apiFetch } from "@/lib/api-client";
+import { useConfirmationDialog } from "@/components/common/ConfirmationDialog";
 
 interface ApprovalRecord {
   id: string;
@@ -55,22 +57,31 @@ export function ChangeEventApprovalWorkflow({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAvailable, setIsAvailable] = useState(false);
 
+  const approveDialog = useConfirmationDialog({
+    title: "Approve Change Event",
+    description: "Confirm your approval for this change event. This action will be recorded.",
+    confirmLabel: "Approve",
+  });
+
+  const rejectDialog = useConfirmationDialog({
+    title: "Reject Change Event",
+    description: "Confirm your rejection for this change event. This action will be recorded.",
+    confirmLabel: "Reject",
+    variant: "destructive",
+  });
+
   // Load approvals on mount to check if feature is available
   useEffect(() => {
     const checkApprovalEndpoint = async () => {
       try {
-        const response = await fetch(
-          `/api/projects/${projectId}/change-events/${changeEventId}/approvals`
+        const data = await apiFetch<{ data?: ApprovalRecord[] } | ApprovalRecord[]>(
+          `/api/projects/${projectId}/change-events/${changeEventId}/approvals`,
         );
-
-        if (response.status === 404) {
-          setIsAvailable(false);
-        } else if (response.ok) {
-          const data = await response.json();
-          setApprovals(data.data || data || []);
-          setIsAvailable(true);
-        }
+        const records = Array.isArray(data) ? data : (data as { data?: ApprovalRecord[] }).data ?? [];
+        setApprovals(records);
+        setIsAvailable(true);
       } catch (error) {
+        // 404 means feature not yet available; other errors also treated as unavailable
         setIsAvailable(false);
       } finally {
         setIsLoading(false);
@@ -94,7 +105,7 @@ export function ChangeEventApprovalWorkflow({
       await onStatusChange("pending_approval");
 
       // Create approval request
-      const response = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/change-events/${changeEventId}/approvals`,
         {
           method: "POST",
@@ -108,23 +119,20 @@ export function ChangeEventApprovalWorkflow({
         },
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to submit for approval");
-      }
-
       toast.success("Change event submitted for approval");
     } catch (error) {
-      toast.error("Failed to submit for approval");
+      const message = error instanceof Error ? error.message : "Failed to submit for approval";
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleApproval = async (approved: boolean) => {
+  const performApproval = async (approved: boolean) => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/change-events/${changeEventId}/approvals/${currentUserId}`,
         {
           method: "PUT",
@@ -137,10 +145,6 @@ export function ChangeEventApprovalWorkflow({
           }),
         },
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to update approval");
-      }
 
       // Check if all approvals are complete
       const allApproved =
@@ -158,20 +162,29 @@ export function ChangeEventApprovalWorkflow({
         toast.success("Your response has been recorded");
       }
     } catch (error) {
-      toast.error("Failed to update approval");
+      const message = error instanceof Error ? error.message : "Failed to update approval";
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleApprove = () => {
+    approveDialog.confirm(() => performApproval(true));
+  };
+
+  const handleReject = () => {
+    rejectDialog.confirm(() => performApproval(false));
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "approved":
-        return <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />;
+        return <CheckCircle2 className="h-5 w-5 text-status-success" />;
       case "rejected":
         return <XCircle className="h-5 w-5 text-destructive" />;
       default:
-        return <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />;
+        return <Clock className="h-5 w-5 text-status-warning" />;
     }
   };
 
@@ -233,6 +246,7 @@ export function ChangeEventApprovalWorkflow({
   }
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle>Approval Workflow</CardTitle>
@@ -307,7 +321,7 @@ export function ChangeEventApprovalWorkflow({
               />
               <div className="flex gap-2">
                 <Button
-                  onClick={() => handleApproval(true)}
+                  onClick={handleApprove}
                   disabled={isSubmitting}
                   className="flex-1"
                 >
@@ -315,7 +329,7 @@ export function ChangeEventApprovalWorkflow({
                   Approve
                 </Button>
                 <Button
-                  onClick={() => handleApproval(false)}
+                  onClick={handleReject}
                   disabled={isSubmitting}
                   variant="destructive"
                   className="flex-1"
@@ -347,5 +361,8 @@ export function ChangeEventApprovalWorkflow({
         </div>
       </CardContent>
     </Card>
+    {approveDialog.dialog}
+    {rejectDialog.dialog}
+    </>
   );
 }

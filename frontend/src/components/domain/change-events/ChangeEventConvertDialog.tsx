@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { FileCheck, ArrowRight } from "lucide-react";
 import { Text } from "@/components/ds/text";
+import { apiFetch } from "@/lib/api-client";
 import type { VerticalMarkup } from "@/hooks/use-vertical-markup";
 
 interface ChangeEventConvertDialogProps {
@@ -108,53 +109,56 @@ export function ChangeEventConvertDialog({
       setIsLoadingContracts(true);
       try {
         // Fetch both prime contracts and commitments in parallel
-        const [primeContractsRes, commitmentsRes] = await Promise.all([
-          fetch(`/api/projects/${projectId}/contracts`),
-          fetch(`/api/commitments?projectId=${projectId}&limit=500`),
+        const [primeContracts, commitmentsData] = await Promise.all([
+          apiFetch<Array<Record<string, unknown>>>(`/api/projects/${projectId}/contracts`),
+          apiFetch<unknown>(`/api/commitments?projectId=${projectId}&limit=500`),
         ]);
 
         const allContracts: typeof contracts = [];
 
         // Process prime contracts
-        if (primeContractsRes.ok) {
-          const primeContracts = await primeContractsRes.json();
-          primeContracts.forEach((contract: any) => {
-            allContracts.push({
-              id: contract.id,
-              contract_number: contract.contract_number,
-              title: contract.title,
-              company_name: contract.vendor?.name || contract.client?.name || null,
-              type: "prime_contract",
-              label: `${contract.contract_number} - ${contract.vendor?.name || contract.client?.name || "Unknown"}`,
-            });
+        (Array.isArray(primeContracts) ? primeContracts : []).forEach((contract) => {
+          const vendor = contract.vendor as Record<string, unknown> | undefined;
+          const client = contract.client as Record<string, unknown> | undefined;
+          const companyName = (vendor?.name ?? client?.name ?? null) as string | null;
+          allContracts.push({
+            id: String(contract.id),
+            contract_number: String(contract.contract_number ?? ""),
+            title: (contract.title as string | null) ?? null,
+            company_name: companyName,
+            type: "prime_contract",
+            label: `${contract.contract_number} - ${companyName ?? "Unknown"}`,
           });
-        }
+        });
 
-        // Process commitments
-        if (commitmentsRes.ok) {
-          const commitmentsData = await commitmentsRes.json();
-          // Handle both array and paginated response
-          const commitments = Array.isArray(commitmentsData)
-            ? commitmentsData
-            : commitmentsData.data || commitmentsData.items || [];
+        // Handle both array and paginated response
+        const commitments = Array.isArray(commitmentsData)
+          ? commitmentsData
+          : (commitmentsData as Record<string, unknown>)?.data ||
+            (commitmentsData as Record<string, unknown>)?.items ||
+            [];
 
-          commitments.forEach((commitment: any) => {
-            allContracts.push({
-              id: commitment.id,
-              contract_number: commitment.number || commitment.contract_number || "N/A",
-              title: commitment.title,
-              company_name: commitment.contract_company?.name || null,
-              type: "commitment",
-              commitment_type: commitment.commitment_type === "purchase_order" ? "purchase_order" : "subcontract",
-              label: `${commitment.number || commitment.contract_number || "N/A"} - ${commitment.contract_company?.name || "Unknown"}`,
-            });
+        (commitments as Array<Record<string, unknown>>).forEach((commitment) => {
+          const contractCompany = commitment.contract_company as Record<string, unknown> | undefined;
+          const contractNum = String(commitment.number ?? commitment.contract_number ?? "N/A");
+          allContracts.push({
+            id: String(commitment.id),
+            contract_number: contractNum,
+            title: (commitment.title as string | null) ?? null,
+            company_name: (contractCompany?.name as string | null) ?? null,
+            type: "commitment",
+            commitment_type:
+              commitment.commitment_type === "purchase_order"
+                ? "purchase_order"
+                : "subcontract",
+            label: `${contractNum} - ${(contractCompany?.name as string | undefined) ?? "Unknown"}`,
           });
-        }
+        });
 
         setContracts(allContracts);
       } catch (error) {
-        console.error("Failed to load contracts:", error);
-        toast.error("Failed to load contracts");
+        const message = error instanceof Error ? error.message : "Failed to load contracts";
+        toast.error(message);
       } finally {
         setIsLoadingContracts(false);
       }
@@ -189,43 +193,40 @@ export function ChangeEventConvertDialog({
         ? `PCO for change event — ${selectedContract.title || selectedContract.contract_number}`
         : "PCO for change event";
 
-      const response = await fetch(`/api/projects/${projectId}/change-events/add-to-pco`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const result = await apiFetch<Record<string, unknown>>(
+        `/api/projects/${projectId}/change-events/add-to-pco`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            change_event_ids: [changeEventId],
+            pco_type: conversionType === "prime_pco" ? "prime" : "commitment",
+            create_new:
+              conversionType === "prime_pco"
+                ? {
+                    title: pcoTitle,
+                    prime_contract_id: targetContractId,
+                  }
+                : {
+                    title: pcoTitle,
+                    commitment_id: targetContractId,
+                    commitment_type: selectedContract?.commitment_type ?? "subcontract",
+                  },
+          }),
         },
-        body: JSON.stringify({
-          change_event_ids: [changeEventId],
-          pco_type: conversionType === "prime_pco" ? "prime" : "commitment",
-          create_new:
-            conversionType === "prime_pco"
-              ? {
-                  title: pcoTitle,
-                  prime_contract_id: targetContractId,
-                }
-              : {
-                  title: pcoTitle,
-                  commitment_id: targetContractId,
-                  commitment_type: selectedContract?.commitment_type ?? "subcontract",
-                },
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create potential change order");
-      }
-
-      const result = await response.json();
+      );
       toast.success("Successfully created potential change order");
       onOpenChange(false);
 
-      if (result?.pco?.id) {
-        const path =
-          `/${projectId}/commitment-pcos/${result.pco.id}`;
-        router.push(path);
+      const pco = result?.pco as Record<string, unknown> | undefined;
+      if (pco?.id) {
+        router.push(`/${projectId}/commitment-pcos/${pco.id}`);
       }
-    } catch {
-      toast.error("Failed to create potential change order");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to create potential change order";
+      toast.error(message);
     } finally {
       setIsConverting(false);
     }

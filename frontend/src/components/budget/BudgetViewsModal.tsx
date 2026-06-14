@@ -3,7 +3,7 @@
 import * as React from "react";
 import { X, Plus, Trash2, GripVertical, Eye, EyeOff, Lock } from "lucide-react";
 import { toast } from "sonner";
-import { apiFetch } from "@/lib/api-client";
+import { apiFetch, ApiError } from "@/lib/api-client";
 
 import {
   BudgetOverlay,
@@ -223,7 +223,13 @@ export function BudgetViewsModal({
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      toast.error("Failed to save view");
+      toast.error(
+        error instanceof ApiError
+          ? `Failed to save view: ${error.message}`
+          : error instanceof Error
+            ? `Failed to save view: ${error.message}`
+            : "Failed to save view",
+      );
     } finally {
       setLoading(false);
     }

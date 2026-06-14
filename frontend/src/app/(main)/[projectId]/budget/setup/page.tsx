@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { PageShell } from "@/components/layout";
 import { BudgetLineItemTable } from "@/components/budget/BudgetLineItemTable";
 import { createClient } from "@/lib/supabase/client";
-import { apiFetch } from "@/lib/api-client";
+import { apiFetch, ApiError } from "@/lib/api-client";
 import { CreateBudgetCodeModal } from "./components";
 import {
   type BudgetLineItem,
@@ -235,7 +235,13 @@ export default function BudgetSetupPage() {
       toast.success(`Successfully created ${lineItems.length} budget line(s)`);
       router.push(`/${projectId}/budget`);
     } catch (error) {
-      toast.error("Failed to create budget lines");
+      toast.error(
+        error instanceof ApiError
+          ? `Failed to create budget lines: ${error.message}`
+          : error instanceof Error
+            ? `Failed to create budget lines: ${error.message}`
+            : "Failed to create budget lines",
+      );
     } finally {
       setLoading(false);
     }

@@ -204,6 +204,12 @@ export default function ProjectChangeEventsPage(): ReactElement {
     variant: "destructive",
   });
 
+  const restoreDialog = useConfirmationDialog({
+    title: "Restore Change Event",
+    description: "Restore this change event to the active list?",
+    confirmLabel: "Restore",
+  });
+
   const bulkDeleteDialog = useConfirmationDialog({
     title: "Delete Change Events",
     description: "Move the selected change events to the recycle bin? You can restore them later manually.",
@@ -248,18 +254,20 @@ export default function ProjectChangeEventsPage(): ReactElement {
 
   const handleRestore = React.useCallback(
     (item: ChangeEvent) => {
-      apiFetch(`/api/projects/${projectId}/change-events/${item.id}/restore`, {
-        method: "POST",
-      })
-        .then(() => {
+      restoreDialog.confirm(async () => {
+        try {
+          await apiFetch(`/api/projects/${projectId}/change-events/${item.id}/restore`, {
+            method: "POST",
+          });
           toast.success("Change event restored");
           refetchChangeEvents();
-        })
-        .catch((err: unknown) => {
-          toast.error("Failed to restore change event");
-        });
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Failed to restore change event";
+          toast.error(message);
+        }
+      });
     },
-    [projectId, refetchChangeEvents],
+    [projectId, refetchChangeEvents, restoreDialog],
   );
 
   const handleSendRfqsForItem = React.useCallback(
@@ -315,45 +323,67 @@ export default function ProjectChangeEventsPage(): ReactElement {
     async (values: ChangeEventRfqFormValues) => {
       setIsCreatingRfq(true);
       try {
-        const selectedId = tableState.selectedIds[0];
-        if (!selectedId) {
-          throw new Error("Select a change event before sending an RFQ.");
+        const selectedIds = tableState.selectedIds;
+        if (selectedIds.length === 0) {
+          throw new Error("Select at least one change event before sending an RFQ.");
         }
 
-        const selectedChangeEvent = tabFilteredEvents.find((event) => String(event.id) === selectedId);
-        if (!selectedChangeEvent) {
-          throw new Error("Selected change event could not be found.");
+        const selectedChangeEvents = tabFilteredEvents.filter((event) =>
+          selectedIds.includes(String(event.id)),
+        );
+        if (selectedChangeEvents.length === 0) {
+          throw new Error("Selected change event(s) could not be found.");
         }
 
-        const payload = await apiFetch(`/api/projects/${projectId}/change-events/rfqs`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            changeEventId: String(selectedChangeEvent.id),
-            title: values.title.trim() || undefined,
-            dueDate: values.dueDate || undefined,
-            includeAttachments: values.includeAttachments,
-            notes: values.requestDetails.trim() || undefined,
-          }),
-        });
+        const results = await Promise.allSettled(
+          selectedChangeEvents.map((changeEvent) =>
+            apiFetch<unknown>(`/api/projects/${projectId}/change-events/rfqs`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                changeEventId: String(changeEvent.id),
+                title: values.title.trim() || undefined,
+                dueDate: values.dueDate || undefined,
+                includeAttachments: values.includeAttachments,
+                notes: values.requestDetails.trim() || undefined,
+                assignedContactId: values.distributionPersonId || undefined,
+              }),
+            }),
+          ),
+        );
 
-        const rfqNumber =
-          payload &&
-          typeof payload === "object" &&
-          "data" in payload &&
-          payload.data &&
-          typeof payload.data === "object" &&
-          "rfq_number" in payload.data
-            ? String((payload.data as Record<string, unknown>).rfq_number)
-            : null;
+        const succeeded = results.filter((r) => r.status === "fulfilled");
+        const failed = results.filter((r) => r.status === "rejected");
 
-        toast.success(rfqNumber ? `RFQ ${rfqNumber} sent successfully` : "RFQ sent successfully");
-        setShowRfqSheet(false);
-        tableState.setSelectedIds([]);
+        if (succeeded.length > 0) {
+          toast.success(
+            succeeded.length === 1
+              ? "RFQ sent successfully"
+              : `${succeeded.length} RFQs sent successfully`,
+          );
+        }
+
+        if (failed.length > 0) {
+          const reasons = failed
+            .map((r) => (r as PromiseRejectedResult).reason?.message)
+            .filter(Boolean)
+            .join("; ");
+          toast.error(
+            failed.length === 1
+              ? `Failed to send RFQ: ${reasons}`
+              : `Failed to send ${failed.length} RFQ(s): ${reasons}`,
+          );
+        }
+
+        if (failed.length === 0) {
+          setShowRfqSheet(false);
+          tableState.setSelectedIds([]);
+        }
       } catch (err) {
-        toast.error("Failed to send RFQ");
+        const message = err instanceof Error ? err.message : "Failed to send RFQ";
+        toast.error(message);
       } finally {
         setIsCreatingRfq(false);
       }
@@ -930,6 +960,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
       }}
     />
     {deleteDialog.dialog}
+    {restoreDialog.dialog}
     {bulkDeleteDialog.dialog}
     <AddToBudgetChangeDialog
       open={showBudgetChangeDialog}

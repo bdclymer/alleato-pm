@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import { apiFetch, ApiError } from "@/lib/api-client";
 import { COST_TYPES, getCostTypeLabel } from "@/constants/budget";
 import { DivisionTree, toggleDivisionInSet } from "./DivisionTree";
 import type { AvailableCostCode, NewBudgetCodeData } from "../types";
@@ -140,27 +141,27 @@ export function CreateBudgetCodeModal({
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/projects/${projectId}/budget-codes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cost_code_id: formData.costCodeId,
-          cost_type_id: formData.costType,
-          description: selectedCostCode?.title || null,
-        }),
-      });
+      const result = await apiFetch<{ budgetCode?: { id: string } }>(
+        `/api/projects/${projectId}/budget-codes`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            cost_code_id: formData.costCodeId,
+            cost_type_id: formData.costType,
+            description: selectedCostCode?.title || null,
+          }),
+        },
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData?.error || "Failed to create budget code");
-      }
-
-      const result = await response.json();
-      onSuccess(result.budgetCode?.id);
+      onSuccess(result.budgetCode?.id ?? "");
       onOpenChange(false);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to create budget code",
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "Failed to create budget code",
       );
     } finally {
       setLoading(false);

@@ -6,6 +6,14 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalDescription,
+  ModalFooter,
+} from "@/components/ui/unified-modal";
 import { apiFetch } from "@/lib/api-client";
 
 interface AddCompanyModalProps {
@@ -57,28 +65,32 @@ export function AddCompanyModal({
         toast.success(`${trimmed} added to project directory.`);
       }
     } catch (error) {
-      // apiFetch throws ApiError with the real server message. Surface it
-      // instead of swallowing the failure silently (per CLAUDE.md Rule 2).
-      toast.error("Failed to add company to project directory.");
+      const message =
+        error instanceof Error ? error.message : "Failed to add company to project directory.";
+      toast.error(message);
     } finally {
       setSaving(false);
     }
   };
 
-  if (!open) return null;
+  const handleCancel = () => {
+    setCompanyName("");
+    onOpenChange(false);
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90">
-      <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-sm">
-        {/* eslint-disable-next-line design-system/no-raw-heading */}
-        <h3 className="text-lg font-semibold">Add Company to Directory</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Add a new company to the project directory so it can be selected as a vendor.
-        </p>
-        <div className="mt-4 space-y-2">
-          <Label htmlFor="companyName">Company Name</Label>
+    <Modal open={open} onOpenChange={onOpenChange}>
+      <ModalContent size="sm">
+        <ModalHeader>
+          <ModalTitle>Add Company to Directory</ModalTitle>
+          <ModalDescription>
+            Add a new company to the project directory so it can be selected as a vendor.
+          </ModalDescription>
+        </ModalHeader>
+        <div className="space-y-2">
+          <Label htmlFor="add-company-name">Company Name</Label>
           <Input
-            id="companyName"
+            id="add-company-name"
             value={companyName}
             onChange={(e) => setCompanyName(e.target.value)}
             placeholder="Enter company name"
@@ -90,14 +102,12 @@ export function AddCompanyModal({
             }}
           />
         </div>
-        <div className="mt-6 flex justify-end gap-3">
+        <ModalFooter>
           <Button
             type="button"
             variant="outline"
-            onClick={() => {
-              setCompanyName("");
-              onOpenChange(false);
-            }}
+            onClick={handleCancel}
+            disabled={saving}
           >
             Cancel
           </Button>
@@ -108,8 +118,8 @@ export function AddCompanyModal({
           >
             {saving ? "Adding..." : "Add Company"}
           </Button>
-        </div>
-      </div>
-    </div>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   );
 }

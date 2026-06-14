@@ -377,24 +377,43 @@ export default function NewInvoicePage() {
           },
         );
 
+        // Line items are written sequentially after the invoice header is
+        // already created. If this loop fails mid-way the invoice header and
+        // payment application are already persisted (partial write).
+        // Detect that and report it loudly so the user knows what happened
+        // instead of receiving a silent generic error.
+        const failedLineItems: number[] = [];
         for (const [index, item] of lineItems.entries()) {
-          await apiFetch(
-            `/api/projects/${projectId}/invoicing/owner/${ownerInvoice.data.id}/line-items`,
-            {
-              method: "POST",
-              body: JSON.stringify({
-                category: item.costCode.trim() || null,
-                description: item.description.trim() || null,
-                scheduled_value: parseAmount(item.contractAmount),
-                work_completed_previous: parseAmount(item.previouslyBilled),
-                work_completed_period: parseAmount(item.thisMonthAmount),
-                retainage_pct: includeRetention ? retentionPercentValue : 0,
-                retainage_amount: parseAmount(item.retention),
-                approved_amount: parseAmount(item.netDue),
-                sort_order: index,
-              }),
-            },
-          );
+          try {
+            await apiFetch(
+              `/api/projects/${projectId}/invoicing/owner/${ownerInvoice.data.id}/line-items`,
+              {
+                method: "POST",
+                body: JSON.stringify({
+                  category: item.costCode.trim() || null,
+                  description: item.description.trim() || null,
+                  scheduled_value: parseAmount(item.contractAmount),
+                  work_completed_previous: parseAmount(item.previouslyBilled),
+                  work_completed_period: parseAmount(item.thisMonthAmount),
+                  retainage_pct: includeRetention ? retentionPercentValue : 0,
+                  retainage_amount: parseAmount(item.retention),
+                  approved_amount: parseAmount(item.netDue),
+                  sort_order: index,
+                }),
+              },
+            );
+          } catch (lineItemErr) {
+            failedLineItems.push(index + 1);
+            console.error(`Line item ${index + 1} failed on invoice ${ownerInvoice.data.id}`, lineItemErr);
+          }
+        }
+
+        if (failedLineItems.length > 0) {
+          const partialMsg = `Invoice #${formData.invoiceNumber} was created (id ${ownerInvoice.data.id}) but line item${failedLineItems.length > 1 ? "s" : ""} ${failedLineItems.join(", ")} failed to save. Open the invoice and add the missing line items manually.`;
+          setFormError(partialMsg);
+          toast.error(partialMsg);
+          setIsSubmitting(false);
+          return;
         }
       } else {
         await apiFetch("/api/invoices", {

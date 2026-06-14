@@ -3,11 +3,10 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { MoreHorizontal, Plus, RefreshCw } from "lucide-react";
+import { MoreHorizontal, RefreshCw } from "lucide-react";
 import { appToast as toast } from "@/lib/toast/app-toast";
 import { UnifiedTablePage, useUnifiedTableState, type FilterValue } from "@/components/tables/unified";
 import { Badge } from "@/components/ui/badge";
-import { apiFetchRaw } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -29,7 +28,6 @@ import { CostCodeHierarchyView } from "./cost-code-hierarchy-view";
 import { DirectCostPreviewPane } from "./direct-cost-preview-pane";
 
 import { ExportDialog } from "@/components/direct-costs/ExportDialog";
-import type { DirectCostUpdate } from "@/lib/schemas/direct-costs";
 import { apiFetch } from "@/lib/api-client";
 
 export type DirectCostRow = {
@@ -131,14 +129,6 @@ export function DirectCostsClient({
   // Start as null = "not yet detected". Treated as mobile until first measurement to
   // prevent the desktop fallback (auto-selecting first row) from briefly firing on mobile.
   const [isMobileViewport, setIsMobileViewport] = React.useState<boolean | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
-  const [directCostToDelete, setDirectCostToDelete] = React.useState<DirectCostRow | null>(null);
-  const [editingCostId, setEditingCostId] = React.useState<string | null>(null);
-  const [isEditSheetOpen, setIsEditSheetOpen] = React.useState(false);
-  const [isEditLoading, setIsEditLoading] = React.useState(false);
-  const [editingInitialData, setEditingInitialData] = React.useState<DirectCostUpdate | undefined>(undefined);
-  const [updatingStatusId, setUpdatingStatusId] = React.useState<string | null>(null);
-  const [bulkAction, setBulkAction] = React.useState<"approve" | "revise" | "delete" | null>(null);
 
   React.useEffect(() => {
     if (summaryTab !== "summary") return;
@@ -329,165 +319,6 @@ export function DirectCostsClient({
 
   const handleFilterChange = (nextFilters: DirectCostFilterState): void => {
     applyFilters(nextFilters);
-  };
-
-  const handleDeleteConfirm = async (): Promise<void> => {
-    if (!directCostToDelete) return;
-
-    try {
-      await apiFetch(`/api/projects/${projectId}/direct-costs/${directCostToDelete.id}`, {
-        method: "DELETE",
-      });
-    } catch (err) {
-      toast.error("Failed to delete direct cost");
-      return;
-    }
-
-    toast.success("Direct cost deleted successfully");
-    setDeleteDialogOpen(false);
-    setDirectCostToDelete(null);
-    router.refresh();
-  };
-
-  const handleOpenEdit = async (costId: string): Promise<void> => {
-    setEditingCostId(costId);
-    setIsEditSheetOpen(true);
-    setIsEditLoading(true);
-    setEditingInitialData(undefined);
-
-    try {
-      const payload = await apiFetch<DirectCostUpdate>(
-        `/api/projects/${projectId}/direct-costs/${costId}`,
-      );
-      setEditingInitialData(payload);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to load direct cost";
-      toast.error(message);
-      setIsEditSheetOpen(false);
-      setEditingCostId(null);
-    } finally {
-      setIsEditLoading(false);
-    }
-  };
-
-  const handleCloseEditSheet = React.useCallback((): void => {
-    setIsEditSheetOpen(false);
-    setEditingCostId(null);
-    setEditingInitialData(undefined);
-  }, []);
-
-  const handleEditSuccess = React.useCallback((): void => {
-    handleCloseEditSheet();
-    router.refresh();
-  }, [handleCloseEditSheet, router]);
-
-  const handleInlineStatusChange = async (costId: string, nextStatus: string): Promise<void> => {
-    setUpdatingStatusId(costId);
-    try {
-      await apiFetch(`/api/projects/${projectId}/direct-costs/${costId}`, {
-        method: "PUT",
-        body: JSON.stringify({ status: nextStatus }),
-      });
-
-      toast.success(`Status updated to ${nextStatus}`);
-      router.refresh();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to update status";
-      toast.error(message);
-    } finally {
-      setUpdatingStatusId(null);
-    }
-  };
-
-  const runBulkStatusUpdate = async (status: "Approved" | "Revise and Resubmit"): Promise<void> => {
-    if (tableState.selectedIds.length === 0) return;
-
-    // Note: bulk endpoint returns HTTP 207 (Multi-Status) for partial success.
-    // apiFetchRaw is used here so the caller can inspect the 207 status directly.
-    const response = await apiFetchRaw(`/api/projects/${projectId}/direct-costs/bulk`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        operation: "status-update",
-        ids: tableState.selectedIds,
-        status,
-      }),
-    });
-
-    const payload = (await response.json().catch(() => ({}))) as {
-      error?: string;
-      success_count?: number;
-      failed_count?: number;
-      total?: number;
-    };
-
-    if (!response.ok && response.status !== 207) {
-      toast.error(payload.error || `Failed to ${status === "Approved" ? "approve" : "revise"} selected costs`);
-      return;
-    }
-
-    if ((payload.failed_count ?? 0) > 0) {
-      toast.warning(
-        `Updated ${payload.success_count ?? 0} of ${payload.total ?? tableState.selectedIds.length} costs.`,
-      );
-    } else {
-      toast.success(`${status === "Approved" ? "Approved" : "Revised"} ${payload.success_count ?? tableState.selectedIds.length} cost(s).`);
-    }
-
-    tableState.setSelectedIds([]);
-    router.refresh();
-  };
-
-  const runBulkDelete = async (): Promise<void> => {
-    if (tableState.selectedIds.length === 0) return;
-
-    const response = await apiFetchRaw(`/api/projects/${projectId}/direct-costs/bulk`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        operation: "delete",
-        ids: tableState.selectedIds,
-      }),
-    });
-
-    const payload = (await response.json().catch(() => ({}))) as {
-      error?: string;
-      success_count?: number;
-      failed_count?: number;
-      total?: number;
-    };
-
-    if (!response.ok && response.status !== 207) {
-      toast.error(payload.error || "Failed to delete selected costs");
-      return;
-    }
-
-    if ((payload.failed_count ?? 0) > 0) {
-      toast.warning(`Deleted ${payload.success_count ?? 0} of ${payload.total ?? tableState.selectedIds.length} costs.`);
-    } else {
-      toast.success(`Deleted ${payload.success_count ?? tableState.selectedIds.length} cost(s).`);
-    }
-
-    tableState.setSelectedIds([]);
-    router.refresh();
-  };
-
-  const executeBulkAction = async (): Promise<void> => {
-    if (!bulkAction) return;
-
-    if (bulkAction === "approve") {
-      await runBulkStatusUpdate("Approved");
-    }
-
-    if (bulkAction === "revise") {
-      await runBulkStatusUpdate("Revise and Resubmit");
-    }
-
-    if (bulkAction === "delete") {
-      await runBulkDelete();
-    }
-
-    setBulkAction(null);
   };
 
   const handleOpenDetailPage = React.useCallback(
@@ -709,16 +540,6 @@ export function DirectCostsClient({
       <UnifiedTablePage
         header={{
           title: "Direct Costs",
-          actions: (
-            <Button
-              onClick={() => router.push(`/${projectId}/direct-costs/new`)}
-              size="sm"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">Add Direct Cost</span>
-              <span className="sm:hidden">Add</span>
-            </Button>
-          ),
         }}
         layout={{
           headerAlignment: "left",

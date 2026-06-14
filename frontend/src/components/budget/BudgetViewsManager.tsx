@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-import { apiFetch } from "@/lib/api-client";
+import { apiFetch, ApiError } from "@/lib/api-client";
 import type { BudgetViewDefinition } from "@/types/budget-views";
 import { BudgetViewsModal } from "./BudgetViewsModal";
 
@@ -105,7 +105,13 @@ export function BudgetViewsManager({
       toast.success("View cloned successfully");
       fetchViews();
     } catch (error) {
-      toast.error("Failed to clone view");
+      toast.error(
+        error instanceof ApiError
+          ? `Failed to clone view: ${error.message}`
+          : error instanceof Error
+            ? `Failed to clone view: ${error.message}`
+            : "Failed to clone view",
+      );
     }
   };
 
@@ -137,7 +143,13 @@ export function BudgetViewsManager({
 
       fetchViews();
     } catch (error) {
-      toast.error("Failed to delete view");
+      toast.error(
+        error instanceof ApiError
+          ? `Failed to delete view: ${error.message}`
+          : error instanceof Error
+            ? `Failed to delete view: ${error.message}`
+            : "Failed to delete view",
+      );
     } finally {
       setDeleteDialogOpen(false);
       setViewToDelete(null);
@@ -155,7 +167,13 @@ export function BudgetViewsManager({
       toast.success("Default view updated");
       fetchViews();
     } catch (error) {
-      toast.error("Failed to set default view");
+      toast.error(
+        error instanceof ApiError
+          ? `Failed to set default view: ${error.message}`
+          : error instanceof Error
+            ? `Failed to set default view: ${error.message}`
+            : "Failed to set default view",
+      );
     }
   };
 

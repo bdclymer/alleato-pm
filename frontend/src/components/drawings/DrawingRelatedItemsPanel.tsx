@@ -44,6 +44,9 @@ import {
   useRemoveRelatedItem,
 } from "@/hooks/use-drawings";
 
+// UUID v4 validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 interface DrawingRelatedItemsPanelProps {
   projectId: string;
   drawingId: string;
@@ -71,17 +74,39 @@ export function DrawingRelatedItemsPanel({
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [linkType, setLinkType] = useState("rfi");
   const [linkId, setLinkId] = useState("");
+  const [linkIdError, setLinkIdError] = useState<string | null>(null);
   const [removeItemId, setRemoveItemId] = useState<string | null>(null);
 
   const { data: items, isLoading } = useDrawingRelatedItems(projectId, drawingId);
   const addItem = useAddRelatedItem(projectId, drawingId);
   const removeItem = useRemoveRelatedItem(projectId, drawingId);
 
-  const handleAdd = async () => {
-    if (!linkId.trim()) return;
-    await addItem.mutateAsync({ related_id: linkId.trim(), related_type: linkType });
-    setLinkId("");
-    setShowLinkDialog(false);
+  const validateAndAdd = async () => {
+    const trimmed = linkId.trim();
+    if (!trimmed) {
+      setLinkIdError("Item ID is required.");
+      return;
+    }
+    if (!UUID_REGEX.test(trimmed)) {
+      setLinkIdError("Must be a valid UUID (e.g. 550e8400-e29b-41d4-a716-446655440000).");
+      return;
+    }
+    setLinkIdError(null);
+    try {
+      await addItem.mutateAsync({ related_id: trimmed, related_type: linkType });
+      setLinkId("");
+      setShowLinkDialog(false);
+    } catch {
+      // error is surfaced via useAddRelatedItem onError toast — no additional action needed
+    }
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setShowLinkDialog(open);
+    if (!open) {
+      setLinkId("");
+      setLinkIdError(null);
+    }
   };
 
   const handleRemove = async () => {
@@ -197,7 +222,7 @@ export function DrawingRelatedItemsPanel({
       )}
 
       {/* Link Item Dialog */}
-      <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
+      <Dialog open={showLinkDialog} onOpenChange={handleDialogOpenChange}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>Link Related Item</DialogTitle>
@@ -205,7 +230,7 @@ export function DrawingRelatedItemsPanel({
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Item Type</label>
-              <Select value={linkType} onValueChange={setLinkType}>
+              <Select value={linkType} onValueChange={(v) => { setLinkType(v); setLinkIdError(null); }}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -219,23 +244,32 @@ export function DrawingRelatedItemsPanel({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium">Item ID</label>
+              <label className="text-sm font-medium">Item ID (UUID)</label>
               <Input
-                placeholder="Enter the item UUID"
+                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 value={linkId}
-                onChange={(e) => setLinkId(e.target.value)}
+                onChange={(e) => {
+                  setLinkId(e.target.value);
+                  setLinkIdError(null);
+                }}
+                aria-invalid={!!linkIdError}
+                className={linkIdError ? "border-destructive focus-visible:ring-destructive" : ""}
               />
-              <p className="text-xs text-muted-foreground">
-                Paste the UUID of the {RELATED_TYPE_LABELS[linkType]} to link
-              </p>
+              {linkIdError ? (
+                <p className="text-xs text-destructive">{linkIdError}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Paste the UUID of the {RELATED_TYPE_LABELS[linkType] ?? linkType} to link. The server will verify the item exists.
+                </p>
+              )}
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowLinkDialog(false)}>
+            <Button variant="outline" onClick={() => handleDialogOpenChange(false)}>
               Cancel
             </Button>
             <Button
-              onClick={handleAdd}
+              onClick={() => void validateAndAdd()}
               disabled={!linkId.trim() || addItem.isPending}
             >
               {addItem.isPending ? "Linking..." : "Link Item"}

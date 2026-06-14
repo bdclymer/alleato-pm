@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 
 import { formatDate } from "@/lib/format";
+import { apiFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -199,14 +200,9 @@ export default function PrimeContractPcoDetailPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await fetch(
+      const data = await apiFetch<PcoDetail>(
         `/api/projects/${projectId}/prime-contract-pcos/${pcoId}`,
       );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to load PCO");
-      }
-      const data = await res.json();
       setPco(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load PCO");
@@ -238,14 +234,10 @@ export default function PrimeContractPcoDetailPage() {
 
   const handleDelete = useCallback(async () => {
     try {
-      const response = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/prime-contract-pcos/${pcoId}`,
         { method: "DELETE" },
       );
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to delete PCO");
-      }
       toast.success("PCO deleted");
       setShowDeleteDialog(false);
       if (contractIdFromRoute) {
@@ -254,27 +246,22 @@ export default function PrimeContractPcoDetailPage() {
         router.push(`/${projectId}/prime-contract-pcos`);
       }
     } catch (err) {
-      toast.error("Failed to delete PCO");
+      toast.error(err instanceof Error ? err.message : "Failed to delete PCO");
     }
   }, [projectId, pcoId, router, contractIdFromRoute]);
 
   const handlePromote = useCallback(async () => {
     setIsPromoting(true);
     try {
-      const response = await fetch(
+      const result = await apiFetch<{ message?: string }>(
         `/api/projects/${projectId}/prime-contract-pcos/${pcoId}/promote`,
         { method: "POST" },
       );
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to promote PCO");
-      }
-      const result = await response.json();
-      toast.success(result.message || "PCO promoted to change order");
+      toast.success(result?.message || "PCO promoted to change order");
       setShowPromoteDialog(false);
       fetchPco();
     } catch (err) {
-      toast.error("Failed to promote PCO");
+      toast.error(err instanceof Error ? err.message : "Failed to promote PCO");
     } finally {
       setIsPromoting(false);
     }
