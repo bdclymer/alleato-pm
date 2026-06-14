@@ -26,14 +26,11 @@ def test_run_graph_sync_can_skip_heavy_embedding_and_compiler(monkeypatch):
     result = sync.run_graph_sync(
         _FakeSupabase(),
         run_embedding=False,
-        run_teams_compiler=False,
     )
 
     assert result["status"] == "complete"
     assert result["phases"]["embedding"] == "skipped"
-    assert result["phases"]["teams_compiler"] == "skipped"
     assert result["embed"]["status"] == "skipped"
-    assert result["teams_compiler"]["status"] == "skipped"
 
 
 class _FakeQuery:

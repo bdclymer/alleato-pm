@@ -87,7 +87,6 @@ def test_scheduled_graph_sync_defaults_to_fetch_only(monkeypatch):
     result = scheduler._run_graph_sync()
 
     assert result["run_embedding"] is False
-    assert result["run_teams_compiler"] is False
     assert result["project_backfill"] == {"client_matches": True}
 
 

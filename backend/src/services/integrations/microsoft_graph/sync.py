@@ -287,11 +287,9 @@ def run_graph_sync(
     run_onedrive: bool = True,
     run_embedding: bool = True,
     run_ocr: bool = True,
-    run_teams_compiler: bool = True,
     run_attachment_promotion: bool = True,
     embed_limit: int = 25,
     ocr_batch_size: int = 20,
-    teams_compiler_batch_size: int = 25,
     attachment_promotion_limit: int = 50,
     outlook_users: Optional[list[str]] = None,
     verify_outlook_persisted_count: bool = True,
@@ -321,7 +319,6 @@ def run_graph_sync(
             "source_sync": "enabled",
             "embedding": "enabled" if run_embedding else "skipped",
             "ocr": "enabled" if run_ocr else "skipped",
-            "teams_compiler": "enabled" if run_teams_compiler else "skipped",
             "attachment_promotion": "enabled" if run_attachment_promotion else "skipped",
         },
     }
@@ -695,27 +692,6 @@ def run_graph_sync(
         except Exception as e:
             logger.warning("[GraphSync] Fireflies meeting embedding failed (non-fatal): %s", e)
             summary["embed_fireflies"] = {"error": str(e)}
-
-    # ── Compile Teams DM conversations into structured intelligence ───────────
-    # Runs after embed so newly embedded conversations are picked up immediately.
-    # Batch capped at 25 per sync run; compiler has its own internal time limit.
-    if run_teams_compiler:
-        try:
-            from src.services.intelligence.teams_compiler import run_compiler_batch
-            compiler_result = run_compiler_batch(supabase, batch_size=teams_compiler_batch_size)
-            summary["teams_compiler"] = compiler_result
-            logger.info(
-                "[GraphSync] Teams compiler complete — processed: %d, succeeded: %d, failed: %d",
-                compiler_result.get("total_processed", 0),
-                compiler_result.get("succeeded", 0),
-                compiler_result.get("failed", 0),
-            )
-        except Exception as e:
-            logger.error("[GraphSync] Teams compiler step failed: %s", e)
-            summary["errors"].append(f"Teams compiler failed: {e}")
-            summary["teams_compiler"] = {"error": str(e)}
-    else:
-        summary["teams_compiler"] = {"status": "skipped", "reason": "run_teams_compiler=false"}
 
     # ── Promote pending Outlook intake attachments ────────────────────────────
     # Runs after embedding so newly-promoted docs are picked up by the NEXT

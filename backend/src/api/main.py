@@ -234,9 +234,7 @@ class GraphSyncRequest(BaseModel):
     run_teams: bool = True
     run_onedrive: bool = True
     run_embedding: bool = True
-    run_teams_compiler: bool = True
     embed_limit: int = 25
-    teams_compiler_batch_size: int = 25
     outlook_users: Optional[List[str]] = None
     verify_outlook_persisted_count: bool = True
 
@@ -888,7 +886,6 @@ async def graph_sync_endpoint(
     client = get_supabase_client()
     options = payload or GraphSyncRequest()
     embed_limit = max(1, min(int(options.embed_limit or 25), 25))
-    teams_compiler_batch_size = max(1, min(int(options.teams_compiler_batch_size or 25), 100))
 
     def _run():
         return run_graph_sync(
@@ -897,9 +894,7 @@ async def graph_sync_endpoint(
             run_teams=options.run_teams,
             run_onedrive=options.run_onedrive,
             run_embedding=options.run_embedding,
-            run_teams_compiler=options.run_teams_compiler,
             embed_limit=embed_limit,
-            teams_compiler_batch_size=teams_compiler_batch_size,
             outlook_users=options.outlook_users,
             verify_outlook_persisted_count=options.verify_outlook_persisted_count,
         )
@@ -1204,11 +1199,6 @@ class PipelineProcessRequest(BaseModel):
     metadataId: str
 
 
-class TeamsCompilerRunRequest(BaseModel):
-    batch_size: int = 25
-    dry_run: bool = False
-
-
 class IntelligenceCompilerRunRequest(BaseModel):
     source_limit: int = 10
     packet_limit: int = 10
@@ -1249,36 +1239,6 @@ async def pipeline_process_endpoint(
     """
     background_tasks.add_task(_run_pipeline_limited, payload.metadataId)
     return {"status": "queued", "metadataId": payload.metadataId}
-
-
-@app.post("/api/intelligence/teams-compiler/run", tags=["Intelligence"], summary="Run Teams conversation compiler")
-async def run_teams_compiler(
-    request: TeamsCompilerRunRequest,
-    background_tasks: BackgroundTasks,
-    _: None = Depends(require_admin_api_key),
-) -> Dict[str, Any]:
-    """Compile a bounded batch of Teams DM conversations into structured intelligence."""
-    import uuid
-
-    job_id = str(uuid.uuid4())
-    if request.batch_size < 1 or request.batch_size > 50:
-        raise HTTPException(status_code=422, detail="batch_size must be between 1 and 50")
-    if request.dry_run:
-        return {"job_id": job_id, "status": "dry_run", "results": {"batch_size": request.batch_size}}
-
-    try:
-        from src.services.intelligence.teams_compiler import run_compiler_batch
-        from src.services.supabase_helpers import get_supabase_client
-
-        client = get_supabase_client()
-        results = run_compiler_batch(client, batch_size=request.batch_size)
-        return {"job_id": job_id, "status": "completed", "results": results}
-    except Exception as exc:
-        logger.error("[TeamsCompilerAPI] run failed job_id=%s: %s", job_id, exc, exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Teams compiler run failed for job {job_id}: {exc}",
-        ) from exc
 
 
 @app.get("/api/intelligence/teams-compiler/status", tags=["Intelligence"], summary="Teams compiler status")

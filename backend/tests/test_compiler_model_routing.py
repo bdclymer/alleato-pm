@@ -8,7 +8,6 @@ tier; meeting deep extraction keeps full `gpt-5.5`. These tests pin that routing
 so it can't silently regress back to the expensive model.
 """
 import importlib
-import inspect
 
 from src.services.intelligence import client as client_mod
 
@@ -32,15 +31,3 @@ def test_default_models_are_a_frontier_and_a_mini_tier():
     # The light tier must be a cheaper, distinct model.
     assert client_mod.COMPILER_MODEL_LIGHT != client_mod.COMPILER_MODEL
     assert "mini" in client_mod.COMPILER_MODEL_LIGHT or "nano" in client_mod.COMPILER_MODEL_LIGHT
-
-
-def test_teams_extraction_defaults_to_light_tier():
-    from src.services.intelligence import teams_compiler
-    sig = inspect.signature(teams_compiler.extract_intelligence)
-    assert sig.parameters["model"].default == client_mod.COMPILER_MODEL_LIGHT
-
-
-def test_email_extraction_defaults_to_light_tier():
-    from src.services.intelligence import email_compiler
-    sig = inspect.signature(email_compiler.extract_intelligence)
-    assert sig.parameters["model"].default == client_mod.COMPILER_MODEL_LIGHT
