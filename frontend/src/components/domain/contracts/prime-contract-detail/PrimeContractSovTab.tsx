@@ -202,10 +202,7 @@ export function PrimeContractSovTab({
 
       <div className="space-y-4">
         {isSovEditing && (
-          <div className="rounded-md border-l-4 border-primary bg-muted p-4 text-sm">
-            <p className="font-semibold">Any changes will only apply to future invoices</p>
-            <p className="text-muted-foreground">Existing invoices will not be affected.</p>
-          </div>
+          <p className="text-xs text-muted-foreground">Changes apply to future invoices only — existing invoices will not be affected.</p>
         )}
 
         {lineItemsLoading ? (
