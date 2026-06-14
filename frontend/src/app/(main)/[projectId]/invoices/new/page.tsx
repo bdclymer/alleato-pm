@@ -120,14 +120,12 @@ const toErrorMessage = (error: unknown): string => {
   return "Invoice creation failed because the request did not return a usable error message.";
 };
 
-interface OwnerInvoiceCreateResponse {
+interface AtomicOwnerInvoiceResponse {
   data: {
-    id: number;
+    invoice_id: number;
+    payment_application_id: string;
+    invoice_number: string;
   };
-}
-
-interface PaymentApplicationCreateResponse {
-  id: string;
 }
 
 const toDateOnly = (date: Date): string => date.toISOString().slice(0, 10);
@@ -337,12 +335,19 @@ export default function NewInvoicePage() {
           totals.contractAmount > 0
             ? (totals.totalCompleted / totals.contractAmount) * 100
             : null;
-        const paymentApplication =
-          await apiFetch<PaymentApplicationCreateResponse>(
-            `/api/projects/${projectId}/contracts/${formData.contractId}/payment-applications`,
-            {
-              method: "POST",
-              body: JSON.stringify({
+
+        // Single transactional write: payment application + invoice header +
+        // all line items are committed together by the create_owner_invoice_atomic
+        // RPC. If any step fails the entire transaction rolls back, so a failure
+        // can no longer leave an orphaned payment application or a header invoice
+        // with missing line items.
+        await apiFetch<AtomicOwnerInvoiceResponse>(
+          `/api/projects/${projectId}/invoicing/owner/atomic`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              prime_contract_id: formData.contractId,
+              payment_application: {
                 application_number: formData.invoiceNumber.trim(),
                 amount: totals.thisMonthBilling,
                 retention_amount: totals.retentionAmount,
@@ -352,69 +357,33 @@ export default function NewInvoicePage() {
                 period_to: periodEnd,
                 billing_date: toDateOnly(formData.invoiceDate),
                 notes: formData.description.trim() || null,
-              }),
-            },
-          );
-
-        const ownerInvoice = await apiFetch<OwnerInvoiceCreateResponse>(
-          `/api/projects/${projectId}/invoicing/owner`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              prime_contract_id: formData.contractId,
-              invoice_number: formData.invoiceNumber.trim(),
-              period_start: periodStart,
-              period_end: periodEnd,
-              billing_date: toDateOnly(formData.invoiceDate),
-              due_date: formData.dueDate ? toDateOnly(formData.dueDate) : null,
-              status: toOwnerInvoiceStatus(formData.status),
-              payment_application_id: paymentApplication.id,
-              gross_amount: totals.thisMonthBilling,
-              net_amount: totals.netDue,
-              percent_complete: percentComplete,
-              notes: formData.description.trim() || null,
+              },
+              invoice: {
+                invoice_number: formData.invoiceNumber.trim(),
+                period_start: periodStart,
+                period_end: periodEnd,
+                billing_date: toDateOnly(formData.invoiceDate),
+                due_date: formData.dueDate ? toDateOnly(formData.dueDate) : null,
+                status: toOwnerInvoiceStatus(formData.status),
+                gross_amount: totals.thisMonthBilling,
+                net_amount: totals.netDue,
+                percent_complete: percentComplete,
+                notes: formData.description.trim() || null,
+              },
+              line_items: lineItems.map((item, index) => ({
+                category: item.costCode.trim() || null,
+                description: item.description.trim() || null,
+                scheduled_value: parseAmount(item.contractAmount),
+                work_completed_previous: parseAmount(item.previouslyBilled),
+                work_completed_period: parseAmount(item.thisMonthAmount),
+                retainage_pct: includeRetention ? retentionPercentValue : 0,
+                retainage_amount: parseAmount(item.retention),
+                approved_amount: parseAmount(item.netDue),
+                sort_order: index,
+              })),
             }),
           },
         );
-
-        // Line items are written sequentially after the invoice header is
-        // already created. If this loop fails mid-way the invoice header and
-        // payment application are already persisted (partial write).
-        // Detect that and report it loudly so the user knows what happened
-        // instead of receiving a silent generic error.
-        const failedLineItems: number[] = [];
-        for (const [index, item] of lineItems.entries()) {
-          try {
-            await apiFetch(
-              `/api/projects/${projectId}/invoicing/owner/${ownerInvoice.data.id}/line-items`,
-              {
-                method: "POST",
-                body: JSON.stringify({
-                  category: item.costCode.trim() || null,
-                  description: item.description.trim() || null,
-                  scheduled_value: parseAmount(item.contractAmount),
-                  work_completed_previous: parseAmount(item.previouslyBilled),
-                  work_completed_period: parseAmount(item.thisMonthAmount),
-                  retainage_pct: includeRetention ? retentionPercentValue : 0,
-                  retainage_amount: parseAmount(item.retention),
-                  approved_amount: parseAmount(item.netDue),
-                  sort_order: index,
-                }),
-              },
-            );
-          } catch (lineItemErr) {
-            failedLineItems.push(index + 1);
-            console.error(`Line item ${index + 1} failed on invoice ${ownerInvoice.data.id}`, lineItemErr);
-          }
-        }
-
-        if (failedLineItems.length > 0) {
-          const partialMsg = `Invoice #${formData.invoiceNumber} was created (id ${ownerInvoice.data.id}) but line item${failedLineItems.length > 1 ? "s" : ""} ${failedLineItems.join(", ")} failed to save. Open the invoice and add the missing line items manually.`;
-          setFormError(partialMsg);
-          toast.error(partialMsg);
-          setIsSubmitting(false);
-          return;
-        }
       } else {
         await apiFetch("/api/invoices", {
           method: "POST",

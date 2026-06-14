@@ -25,7 +25,10 @@
 ## Deferrals
 
 - **`useUpdatePCOLineItem` hook's `onError` calls `toast.error(error.message)`** — violates `no-raw-error-message-toast`. Pre-existing, in `hooks/use-pcos.ts`, out of scope for this wave. Flag for a hooks cleanup pass.
-- **`pco_edit` partial-write hazard** — the sequential mutation chain (PATCH PCO → group/ungroup CEs → create/update/delete line items) remains non-transactional. If a mid-chain step fails, `handleFormError` now surfaces it loudly, but the PCO may be left half-updated. Full fix requires a server-side batch endpoint. Flagged as tech debt.
+- **`pco_edit` partial-write hazard** — the sequential mutation chain (PATCH PCO → group/ungroup CEs → create/update/delete line items) remains non-transactional. Surfacing aside, the atomicity fix was investigated 2026-06-14 and found to be BLOCKED on a deeper data-model bug, not just a missing transaction:
+  - The `/pcos/new` + `/pcos/[pcoId]/edit` pages write the header to the numeric `potential_change_orders` table (id `bigint`), but `pco_line_items.pco_id` is `uuid` and belongs to the `commitment_pcos` / `prime_contract_pcos` model. The line-item route inserts a numeric id into a uuid column, so **line items have never persisted for these pages** (and the edit page PUTs to a `/line-items/[lineItemId]` route that doesn't exist).
+  - The form's fields (`change_reason`, `location`, `reference`, `requested_by`/`request_received_from`, `field_change`, `paid_in_full`, `is_private`) exist on `commitment_pcos` — NOT on `potential_change_orders`, where they are silently dropped on save.
+  - Conclusion: wrapping the current flow in a transaction would atomically write a broken shape. The correct fix is to re-point these pages at `commitment_pcos` + `pco_line_items` (uuid) — including the list/detail reads and hooks — then add a transactional create/update RPC. That is a separate, larger change tracked as its own task (spawned 2026-06-14), deliberately NOT bundled with the owner-invoice atomicity fix.
 - **`commitment_pco_edit` (stub)** — Edit button remains disabled ("coming soon"). Out of scope per wave boundaries; requires a new form implementation.
 
 ## Verification

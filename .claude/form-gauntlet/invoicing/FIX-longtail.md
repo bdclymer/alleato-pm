@@ -46,5 +46,5 @@ Generated: 2026-06-14
 8. `frontend/src/features/invoicing/invoicing-table-config.tsx` (added missing `notes` field to `OwnerInvoice`)
 
 ## Deferrals
-- **owner_invoice_create atomic write**: a true rollback requires a backend DB-level transaction RPC (e.g. Supabase stored procedure wrapping all three INSERTs). The partial-failure detection added here is the max fix possible without a migration. Recommend a `POST /api/projects/:id/invoicing/owner/atomic` endpoint in a future backend sprint.
+- **owner_invoice_create atomic write**: ✅ RESOLVED 2026-06-14. Implemented the `create_owner_invoice_atomic` Postgres function (migration `20260614120000_atomic_owner_invoice_create.sql`) wrapping payment application + invoice header + all line items in one transaction (SECURITY INVOKER, RLS preserved; approved-contract + duplicate-app# rules preserved). New route `POST /api/projects/[projectId]/invoicing/owner/atomic` calls it; the prime branch of `invoices/new/page.tsx` now makes a single call instead of three sequential ones. Verified: success writes all rows; induced mid-write failures (bad numeric line item, duplicate app #) leave ZERO orphaned rows. Regression guard: `scripts/db/verify-owner-invoice-atomic.mjs`.
 - **`/billing-periods/new` missing route** and **billing_period_delete no-op**: out of scope per task instructions (billing-periods page already fixed).

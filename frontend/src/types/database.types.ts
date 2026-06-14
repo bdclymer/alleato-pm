@@ -33664,6 +33664,16 @@ export type Database = {
         }
         Returns: string
       }
+      create_owner_invoice_atomic: {
+        Args: {
+          p_contract_id: string
+          p_invoice: Json
+          p_line_items?: Json
+          p_payment_application: Json
+          p_project_id: number
+        }
+        Returns: Json
+      }
       create_specification_revision: {
         Args: {
           p_content?: string
