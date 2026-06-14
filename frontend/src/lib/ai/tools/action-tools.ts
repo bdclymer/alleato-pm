@@ -9,7 +9,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { createHash, randomUUID } from "crypto";
 import type { CommitmentDraftWidgetPayload } from "@/lib/ai/assistant-widgets";
-import type { Json } from "@/types/database.types";
+import type { Database, Json } from "@/types/database.types";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createToolGuardrails } from "./guardrails";
 import { type ToolTracePayload, getOpenAI, withWriteTrace } from "./tool-utils";
@@ -74,6 +74,16 @@ const outlookMailRecipientSchema = z.object({
   name: z.string().optional(),
 });
 
+const commitmentLineItemSchema = z.object({
+  budgetCode: z.string().optional(),
+  description: z.string().describe("SOV line item description"),
+  amount: z.number().describe("Line item amount in dollars"),
+  quantity: z.number().optional(),
+  unitCost: z.number().optional(),
+  uom: z.string().optional(),
+  retainagePercent: z.number().optional(),
+});
+
 const BRANDON_EMAIL_VOICE_PROFILE = {
   path: "docs/ai-plan/brandon-email-voice-profile.md",
   version: "2026-05-19",
@@ -116,13 +126,96 @@ type CommitmentDraftPreviewInput = {
   startDate?: string | null;
   estimatedCompletionDate?: string | null;
   defaultRetainagePercent?: number | null;
+  lineItems?: CommitmentLineItemInput[];
 };
+
+type CommitmentLineItemInput = z.infer<typeof commitmentLineItemSchema>;
+type Tables = Database["public"]["Tables"];
+type SubcontractSovInsert = Tables["subcontract_sov_items"]["Insert"];
+type PurchaseOrderSovInsert = Tables["purchase_order_sov_items"]["Insert"];
+type CommitmentSovInsert = SubcontractSovInsert | PurchaseOrderSovInsert;
+
+function normalizeCommitmentLineItems(
+  lineItems?: CommitmentLineItemInput[] | null,
+): CommitmentLineItemInput[] {
+  return (lineItems ?? []).map((item) => ({
+    ...item,
+    budgetCode: item.budgetCode?.trim() || undefined,
+    description: item.description.trim(),
+    uom: item.uom?.trim() || undefined,
+  }));
+}
+
+export function validateCommitmentLineItems(
+  lineItems?: CommitmentLineItemInput[] | null,
+): string[] {
+  const errors: string[] = [];
+  normalizeCommitmentLineItems(lineItems).forEach((item, index) => {
+    const label = `Line ${index + 1}`;
+    if (!item.description) {
+      errors.push(`${label}: description is required.`);
+    }
+    if (!Number.isFinite(item.amount) || item.amount < 0) {
+      errors.push(`${label}: amount must be zero or greater.`);
+    }
+    if (item.quantity != null && (!Number.isFinite(item.quantity) || item.quantity < 0)) {
+      errors.push(`${label}: quantity must be zero or greater.`);
+    }
+    if (item.unitCost != null && (!Number.isFinite(item.unitCost) || item.unitCost < 0)) {
+      errors.push(`${label}: unit cost must be zero or greater.`);
+    }
+    if (item.retainagePercent != null && (!Number.isFinite(item.retainagePercent) || item.retainagePercent < 0)) {
+      errors.push(`${label}: retainage percent must be zero or greater.`);
+    }
+  });
+  return errors;
+}
+
+export function buildCommitmentSovInserts(params: {
+  commitmentId: string;
+  type: "subcontract" | "purchase_order";
+  lineItems?: CommitmentLineItemInput[] | null;
+}): CommitmentSovInsert[] {
+  const now = new Date().toISOString();
+  return normalizeCommitmentLineItems(params.lineItems).map((item, index) => {
+    const lineNumber = index + 1;
+    const base = {
+      line_number: lineNumber,
+      budget_code: item.budgetCode ?? null,
+      description: item.description,
+      amount: item.amount,
+      billed_to_date: 0,
+      quantity: item.quantity ?? null,
+      unit_cost: item.unitCost ?? null,
+      created_at: now,
+      updated_at: now,
+    };
+
+    if (params.type === "subcontract") {
+      return {
+        ...base,
+        subcontract_id: params.commitmentId,
+        unit_of_measure: item.uom ?? null,
+        retainage_percent: item.retainagePercent ?? null,
+      } satisfies SubcontractSovInsert;
+    }
+
+    return {
+      ...base,
+      purchase_order_id: params.commitmentId,
+      uom: item.uom ?? null,
+    } satisfies PurchaseOrderSovInsert;
+  });
+}
 
 export function buildCommitmentDraftWidget(
   input: CommitmentDraftPreviewInput,
 ): CommitmentDraftWidgetPayload {
   const vendorResolved = Boolean(input.contractCompanyId);
   const commitmentLabel = input.type === "subcontract" ? "Subcontract" : "Purchase order";
+  const lineItems = normalizeCommitmentLineItems(input.lineItems);
+  const lineItemErrors = validateCommitmentLineItems(lineItems);
+  const totalAmount = lineItems.reduce((sum, item) => sum + item.amount, 0);
   const validation: CommitmentDraftWidgetPayload["validation"] = [
     {
       label: "Project",
@@ -142,6 +235,15 @@ export function buildCommitmentDraftWidget(
       label: "Contract number",
       status: input.contractNumber ? "pass" : "warning",
       message: input.contractNumber || "Contract number will need to be assigned.",
+    },
+    {
+      label: "SOV lines",
+      status: lineItemErrors.length > 0 ? "fail" : lineItems.length > 0 ? "pass" : "warning",
+      message:
+        lineItemErrors[0] ??
+        (lineItems.length > 0
+          ? `${lineItems.length} line item${lineItems.length === 1 ? "" : "s"} totaling ${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(totalAmount)}.`
+          : "No SOV lines provided; the commitment will be created without a contract value."),
     },
   ];
 
@@ -172,8 +274,16 @@ export function buildCommitmentDraftWidget(
       },
     ],
     validation,
-    lineItems: [],
-    totalAmount: 0,
+    lineItems: lineItems.map((item, index) => ({
+      id: `line-${index + 1}`,
+      costCode: item.budgetCode ?? null,
+      description: item.description,
+      amount: item.amount,
+      quantity: item.quantity ?? null,
+      unitCost: item.unitCost ?? null,
+      uom: item.uom ?? null,
+    })),
+    totalAmount,
     confirmPrompt:
       "Create this commitment with createCommitment. Use confirmed: false for any revised preview, and confirmed: true only after I explicitly confirm.",
   };
@@ -2758,6 +2868,12 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           .number()
           .optional()
           .describe("Default retainage percentage, e.g. 10 for 10%"),
+        lineItems: z
+          .array(commitmentLineItemSchema)
+          .optional()
+          .describe(
+            "Optional SOV line items to create with the commitment after confirmation",
+          ),
         confirmed: z
           .boolean()
           .default(false)
@@ -2780,6 +2896,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           startDate,
           estimatedCompletionDate,
           defaultRetainagePercent,
+          lineItems,
           confirmed,
         } = input;
         const access = await enforceProjectWriteAccess(projectId);
@@ -2838,6 +2955,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
             startDate: startDate ?? null,
             estimatedCompletionDate: estimatedCompletionDate ?? null,
             defaultRetainagePercent: defaultRetainagePercent ?? null,
+            lineItems,
           });
           return {
             action: "preview",
@@ -2858,6 +2976,7 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
                 start_date: startDate ?? null,
                 estimated_completion_date: estimatedCompletionDate ?? null,
                 default_retainage_percent: defaultRetainagePercent ?? null,
+                line_items: lineItems ?? [],
               },
             },
           };
@@ -2874,6 +2993,24 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
               vendorName
                 ? `Cannot create the commitment because "${vendorName}" was not found in the vendor directory.`
                 : "Cannot create the commitment without a vendor company.",
+          };
+          await recordWriteAudit({
+            toolName: "createCommitment",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
+
+        const lineItemErrors = validateCommitmentLineItems(lineItems);
+        if (lineItemErrors.length > 0) {
+          const failure = {
+            success: false,
+            error: "Cannot create the commitment because one or more SOV lines are invalid.",
+            details: lineItemErrors,
           };
           await recordWriteAudit({
             toolName: "createCommitment",
@@ -2936,13 +3073,59 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
 
         const label = type === "subcontract" ? "Subcontract" : "Purchase Order";
         const record = data as { id: string; contract_number: string; title: string; status: string };
+        const sovInserts = buildCommitmentSovInserts({
+          commitmentId: record.id,
+          type,
+          lineItems,
+        });
+
+        if (sovInserts.length > 0) {
+          const sovResult =
+            type === "subcontract"
+              ? await supabase.from("subcontract_sov_items").insert(
+                  sovInserts as SubcontractSovInsert[],
+                )
+              : await supabase.from("purchase_order_sov_items").insert(
+                  sovInserts as PurchaseOrderSovInsert[],
+                );
+
+          if (sovResult.error) {
+            const rollback =
+              type === "subcontract"
+                ? await supabase.from("subcontracts").delete().eq("id", record.id)
+                : await supabase.from("purchase_orders").delete().eq("id", record.id);
+            const failure = {
+              success: false,
+              error: `Commitment line items failed to save: ${sovResult.error.message}`,
+              rollback: rollback.error
+                ? `Base commitment rollback failed: ${rollback.error.message}`
+                : "Base commitment rollback succeeded.",
+            };
+            await recordWriteAudit({
+              toolName: "createCommitment",
+              idempotencyKey,
+              projectId: access.projectId,
+              input,
+              status: "error",
+              response: failure,
+            });
+            return failure;
+          }
+        }
 
         const responseOut = {
           success: true,
-          message: `${label} **${record.contract_number} — "${title}"** created successfully.`,
+          message:
+            `${label} **${record.contract_number} — "${title}"** created successfully` +
+            (sovInserts.length > 0
+              ? ` with ${sovInserts.length} SOV line item${sovInserts.length === 1 ? "" : "s"}.`
+              : "."),
           record: data,
+          lineItemsCreated: sovInserts.length,
           nextSteps: [
-            `Open the Commitments page to add SOV line items and set the contract value`,
+            sovInserts.length > 0
+              ? "Open the commitment detail page to review SOV line items"
+              : "Open the Commitments page to add SOV line items and set the contract value",
             vendorName && !contractCompanyId
               ? `Link the vendor "${vendorName}" in the commitment detail page — they weren't found in the project directory`
               : null,

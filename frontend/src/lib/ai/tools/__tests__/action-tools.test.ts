@@ -22,10 +22,12 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { createToolGuardrails } from "../guardrails";
 import {
   buildCommitmentDraftWidget,
+  buildCommitmentSovInserts,
   createActionTools,
   normalizeGeneratedTaskPriority,
   normalizeGeneratedTaskStatus,
   previewCreateRFI,
+  validateCommitmentLineItems,
 } from "../action-tools";
 
 const mockedCreateToolGuardrails = jest.mocked(createToolGuardrails);
@@ -296,6 +298,115 @@ describe("buildCommitmentDraftWidget", () => {
       ]),
     );
   });
+
+  it("includes SOV line items and total in the commitment draft", () => {
+    const widget = buildCommitmentDraftWidget({
+      projectId: 25125,
+      type: "subcontract",
+      title: "Electrical rough-in",
+      contractNumber: "SC-001",
+      status: "Draft",
+      vendorName: "Acme Electric",
+      contractCompanyId: "company-1",
+      lineItems: [
+        {
+          budgetCode: "26-0000",
+          description: "Electrical rough-in",
+          amount: 12500,
+          quantity: 1,
+          unitCost: 12500,
+          uom: "LS",
+          retainagePercent: 10,
+        },
+      ],
+    });
+
+    expect(widget.totalAmount).toBe(12500);
+    expect(widget.lineItems).toEqual([
+      expect.objectContaining({
+        costCode: "26-0000",
+        description: "Electrical rough-in",
+        amount: 12500,
+        quantity: 1,
+        unitCost: 12500,
+        uom: "LS",
+      }),
+    ]);
+    expect(widget.validation).toContainEqual(
+      expect.objectContaining({
+        label: "SOV lines",
+        status: "pass",
+      }),
+    );
+  });
+
+  it("maps commitment line items to the correct SOV table insert shapes", () => {
+    expect(
+      buildCommitmentSovInserts({
+        commitmentId: "commitment-1",
+        type: "subcontract",
+        lineItems: [
+          {
+            budgetCode: "26-0000",
+            description: "Electrical rough-in",
+            amount: 12500,
+            uom: "LS",
+            retainagePercent: 10,
+          },
+        ],
+      }),
+    ).toEqual([
+      expect.objectContaining({
+        subcontract_id: "commitment-1",
+        line_number: 1,
+        budget_code: "26-0000",
+        description: "Electrical rough-in",
+        amount: 12500,
+        billed_to_date: 0,
+        unit_of_measure: "LS",
+        retainage_percent: 10,
+      }),
+    ]);
+
+    expect(
+      buildCommitmentSovInserts({
+        commitmentId: "commitment-2",
+        type: "purchase_order",
+        lineItems: [
+          {
+            budgetCode: "22-0000",
+            description: "Plumbing fixtures",
+            amount: 8000,
+            uom: "EA",
+          },
+        ],
+      }),
+    ).toEqual([
+      expect.objectContaining({
+        purchase_order_id: "commitment-2",
+        line_number: 1,
+        budget_code: "22-0000",
+        description: "Plumbing fixtures",
+        amount: 8000,
+        billed_to_date: 0,
+        uom: "EA",
+      }),
+    ]);
+  });
+
+  it("fails validation for invalid SOV line items", () => {
+    expect(
+      validateCommitmentLineItems([
+        {
+          description: " ",
+          amount: -1,
+        },
+      ]),
+    ).toEqual([
+      "Line 1: description is required.",
+      "Line 1: amount must be zero or greater.",
+    ]);
+  });
 });
 
 describe("project directory action tools", () => {
@@ -378,5 +489,136 @@ describe("project directory action tools", () => {
         },
       },
     });
+  });
+});
+
+describe("createCommitment line-item writes", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockedCreateToolGuardrails.mockReturnValue({
+      enforceProjectAccess: jest.fn().mockResolvedValue({ ok: true, projectId: 43 }),
+      getScope: jest.fn(),
+      getScopedProjectIds: jest.fn(),
+      applyPinnedProject: jest.fn(),
+    });
+  });
+
+  it("creates SOV line items after a confirmed subcontract is created", async () => {
+    const auditInsert = jest.fn().mockResolvedValue({ error: null });
+    const subcontractInsert = jest.fn(() => ({
+      select: jest.fn(() => ({
+        single: jest.fn().mockResolvedValue({
+          data: {
+            id: "subcontract-1",
+            contract_number: "SC-001",
+            title: "Electrical rough-in",
+            status: "Draft",
+          },
+          error: null,
+        }),
+      })),
+    }));
+    const sovInsert = jest.fn().mockResolvedValue({ error: null });
+    const from = jest.fn((tableName: string) => {
+      if (tableName === "subcontracts") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              order: jest.fn(() => ({
+                limit: jest.fn().mockResolvedValue({ data: [], error: null }),
+              })),
+            })),
+          })),
+          insert: subcontractInsert,
+          delete: jest.fn(() => ({
+            eq: jest.fn().mockResolvedValue({ error: null }),
+          })),
+        };
+      }
+      if (tableName === "companies") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              ilike: jest.fn(() => ({
+                limit: jest.fn().mockResolvedValue({
+                  data: [{ id: "company-1", name: "Acme Electric" }],
+                  error: null,
+                }),
+              })),
+            })),
+          })),
+        };
+      }
+      if (tableName === "subcontract_sov_items") {
+        return {
+          insert: sovInsert,
+        };
+      }
+      if (tableName === "ai_tool_write_audits") {
+        return {
+          select: jest.fn(() => ({
+            eq: jest.fn(() => ({
+              eq: jest.fn(() => ({
+                eq: jest.fn(() => ({
+                  eq: jest.fn(() => ({
+                    order: jest.fn(() => ({
+                      limit: jest.fn(() => ({
+                        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+                      })),
+                    })),
+                  })),
+                })),
+              })),
+            })),
+          })),
+          insert: auditInsert,
+        };
+      }
+      throw new Error(`Unexpected table in commitment line-item test: ${tableName}`);
+    });
+
+    mockedCreateServiceClient.mockReturnValue({ from, rpc: jest.fn() } as never);
+
+    const tools = createActionTools("00000000-0000-0000-0000-000000000001");
+    const execute = tools.createCommitment.execute;
+    if (!execute) throw new Error("createCommitment execute was not registered");
+
+    const output = await execute({
+      projectId: 43,
+      type: "subcontract",
+      title: "Electrical rough-in",
+      vendorName: "Acme Electric",
+      status: "Draft",
+      lineItems: [
+        {
+          budgetCode: "26-0000",
+          description: "Electrical rough-in",
+          amount: 12500,
+          quantity: 1,
+          unitCost: 12500,
+          uom: "LS",
+          retainagePercent: 10,
+        },
+      ],
+      confirmed: true,
+    });
+
+    expect(output).toMatchObject({
+      success: true,
+      lineItemsCreated: 1,
+    });
+    expect(sovInsert).toHaveBeenCalledWith([
+      expect.objectContaining({
+        subcontract_id: "subcontract-1",
+        line_number: 1,
+        budget_code: "26-0000",
+        description: "Electrical rough-in",
+        amount: 12500,
+        quantity: 1,
+        unit_cost: 12500,
+        unit_of_measure: "LS",
+        retainage_percent: 10,
+      }),
+    ]);
   });
 });

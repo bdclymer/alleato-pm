@@ -522,6 +522,9 @@ export type CommitmentDraftWidgetPayload = {
     costCode?: string | null;
     description: string;
     amount: number;
+    quantity?: number | null;
+    unitCost?: number | null;
+    uom?: string | null;
   }>;
   totalAmount: number;
   confirmPrompt: string;
