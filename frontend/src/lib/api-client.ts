@@ -107,11 +107,9 @@ function stringifyErrorDetails(details: ApiErrorBody["details"]): string | undef
       if (joined) return joined;
     }
 
-    try {
-      return JSON.stringify(details);
-    } catch {
-      return undefined;
-    }
+    // Plain diagnostic object (e.g. { inputId }) — not a structured field-error.
+    // Return undefined so getApiErrorMessage falls through to body.message / body.error.
+    return undefined;
   }
 
   return undefined;

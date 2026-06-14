@@ -216,7 +216,7 @@ export default function EditChangeEventPage() {
       const lineItemResults = await Promise.allSettled(
         nonEmptyItems.map(async (li, index) => {
           const payload = {
-            description: li.description || `${li.budgetCode || "Line Item"} ${index + 1}`,
+            description: li.description || `Line Item ${index + 1}`,
             quantity: li.costQuantity || undefined,
             unitCost: li.costUnitCost || undefined,
             unitOfMeasure: li.revenueUnitOfMeasure || undefined,

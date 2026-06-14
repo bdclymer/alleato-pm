@@ -149,10 +149,13 @@ export const GET = withApiGuardrails<{ projectId: string }>(
       };
     });
 
-    // Deduplicate by cost_code_id + costType (keep first occurrence)
+    // Deduplicate by cost_code_id + costType (keep first occurrence).
+    // Codes without a costTypeId cannot be linked to budget_lines
+    // (budget_lines.cost_type_id NOT NULL) so filter them out of dropdowns.
     const seen = new Set<string>();
     const uniqueBudgetCodes = budgetCodes.filter((bc) => {
-      const key = `${bc.code}|${bc.costTypeId ?? ""}`;
+      if (!bc.costTypeId) return false;
+      const key = `${bc.code}|${bc.costTypeId}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
