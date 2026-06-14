@@ -2,8 +2,24 @@
 
 import * as React from "react";
 import type { ReactElement, ReactNode } from "react";
-import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, FileSignature, FileText, MoreHorizontal, Plus, RefreshCw, RotateCcw, ShoppingCart, Trash2, Trash, Upload } from "lucide-react";
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+import {
+  ChevronDown,
+  FileSignature,
+  MoreHorizontal,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  ShoppingCart,
+  Trash2,
+  Trash,
+  Upload,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
@@ -57,7 +73,6 @@ import {
   renderCommitmentList,
   renderCommitmentRowActions,
 } from "@/features/commitments/commitments-table-config";
-import { EmptyState } from "@/components/ds";
 import {
   InlineTable,
   InlineTableBody,
@@ -96,14 +111,18 @@ function CommitmentChangeOrdersRow({
   commitmentId,
   colSpan,
 }: CommitmentChangeOrdersRowProps): ReactNode {
-  const [changeOrders, setChangeOrders] = React.useState<CommitmentChangeOrder[]>([]);
+  const [changeOrders, setChangeOrders] = React.useState<
+    CommitmentChangeOrder[]
+  >([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
 
-    apiFetch<{ data?: CommitmentChangeOrder[] }>(`/api/commitments/${commitmentId}/change-orders`)
+    apiFetch<{ data?: CommitmentChangeOrder[] }>(
+      `/api/commitments/${commitmentId}/change-orders`,
+    )
       .then((json) => {
         if (!cancelled) {
           setChangeOrders(json.data ?? []);
@@ -154,7 +173,9 @@ function CommitmentChangeOrdersRow({
                 <InlineTableHeaderCell>#</InlineTableHeaderCell>
                 <InlineTableHeaderCell>Description</InlineTableHeaderCell>
                 <InlineTableHeaderCell>Status</InlineTableHeaderCell>
-                <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+                <InlineTableHeaderCell align="right">
+                  Amount
+                </InlineTableHeaderCell>
                 <InlineTableHeaderCell>Requested</InlineTableHeaderCell>
               </InlineTableHeaderRow>
             </InlineTableHeader>
@@ -164,13 +185,19 @@ function CommitmentChangeOrdersRow({
                   <InlineTableCell className="font-mono text-muted-foreground">
                     {co.number}
                   </InlineTableCell>
-                  <InlineTableCell className="max-w-xs truncate">{co.title}</InlineTableCell>
-                  <InlineTableCell className="capitalize">{co.status}</InlineTableCell>
+                  <InlineTableCell className="max-w-xs truncate">
+                    {co.title}
+                  </InlineTableCell>
+                  <InlineTableCell className="capitalize">
+                    {co.status}
+                  </InlineTableCell>
                   <InlineTableCell align="right" numeric>
                     {formatAmt(co.amount)}
                   </InlineTableCell>
                   <InlineTableCell className="text-muted-foreground">
-                    {co.requested_date ? new Date(co.requested_date).toLocaleDateString() : "—"}
+                    {co.requested_date
+                      ? new Date(co.requested_date).toLocaleDateString()
+                      : "—"}
                   </InlineTableCell>
                 </InlineTableRow>
               ))}
@@ -222,11 +249,9 @@ function ProjectChangeOrdersTable({
 
   if (changeOrders.length === 0) {
     return (
-      <EmptyState
-        icon={<FileText />}
-        title="No change orders for this project"
-        description="Commitment change orders will appear here once created."
-      />
+      <div className="py-8 text-sm text-muted-foreground">
+        No commitment change orders for this project.
+      </div>
     );
   }
 
@@ -248,8 +273,12 @@ function ProjectChangeOrdersTable({
             <InlineTableCell className="font-mono text-muted-foreground">
               {co.number}
             </InlineTableCell>
-            <InlineTableCell className="max-w-xs truncate">{co.title}</InlineTableCell>
-            <InlineTableCell className="capitalize">{co.status}</InlineTableCell>
+            <InlineTableCell className="max-w-xs truncate">
+              {co.title}
+            </InlineTableCell>
+            <InlineTableCell className="capitalize">
+              {co.status}
+            </InlineTableCell>
             <InlineTableCell className="text-muted-foreground">
               {co.commitment_number ?? "—"}
             </InlineTableCell>
@@ -257,7 +286,9 @@ function ProjectChangeOrdersTable({
               {formatAmt(co.amount)}
             </InlineTableCell>
             <InlineTableCell className="text-muted-foreground">
-              {co.requested_date ? new Date(co.requested_date).toLocaleDateString() : "—"}
+              {co.requested_date
+                ? new Date(co.requested_date).toLocaleDateString()
+                : "—"}
             </InlineTableCell>
           </InlineTableRow>
         ))}
@@ -272,7 +303,8 @@ export default function ProjectCommitmentsPage(): ReactElement {
   const params = useParams<{ projectId: string }>()! ?? { projectId: "" };
   const pathname = usePathname()!;
   const router = useRouter();
-  const searchParams = (useSearchParams() ?? new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
+  const searchParams = (useSearchParams() ??
+    new URLSearchParams()) as NonNullable<ReturnType<typeof useSearchParams>>;
   const projectId = params.projectId ?? "";
   const queryClient = useQueryClient();
 
@@ -282,13 +314,14 @@ export default function ProjectCommitmentsPage(): ReactElement {
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = React.useState(false);
-  const [commitmentToDelete, setCommitmentToDelete] = React.useState<CommitmentListItem | null>(
-    null,
-  );
+  const [commitmentToDelete, setCommitmentToDelete] =
+    React.useState<CommitmentListItem | null>(null);
   const [isSyncing, setIsSyncing] = React.useState(false);
 
   // ─── Project-level change orders (Change Orders tab) ──────────────────────
-  const [projectChangeOrders, setProjectChangeOrders] = React.useState<CommitmentChangeOrder[]>([]);
+  const [projectChangeOrders, setProjectChangeOrders] = React.useState<
+    CommitmentChangeOrder[]
+  >([]);
   const [isLoadingProjectCOs, setIsLoadingProjectCOs] = React.useState(false);
 
   const initialStatus = searchParams.get("status") ?? "";
@@ -335,7 +368,9 @@ export default function ProjectCommitmentsPage(): ReactElement {
     let cancelled = false;
     setIsLoadingProjectCOs(true);
 
-    apiFetch<{ data?: CommitmentChangeOrder[] }>(`/api/projects/${projectId}/commitment-change-orders`)
+    apiFetch<{ data?: CommitmentChangeOrder[] }>(
+      `/api/projects/${projectId}/commitment-change-orders`,
+    )
       .then((json) => {
         if (!cancelled) {
           setProjectChangeOrders(json.data ?? []);
@@ -357,7 +392,9 @@ export default function ProjectCommitmentsPage(): ReactElement {
   // Hide TYPE column when a type tab is active — it's redundant to show
   // "Subcontract" in every row when the tab already filters to subcontracts.
   const effectiveVisibleColumns = React.useMemo(() => {
-    const isTypeTab = activeFilters.type === "subcontract" || activeFilters.type === "purchase_order";
+    const isTypeTab =
+      activeFilters.type === "subcontract" ||
+      activeFilters.type === "purchase_order";
     if (!isTypeTab) return tableState.visibleColumns;
     return tableState.visibleColumns.filter((c) => c !== "type");
   }, [tableState.visibleColumns, activeFilters.type]);
@@ -365,7 +402,9 @@ export default function ProjectCommitmentsPage(): ReactElement {
   // Tab navigation sets type/tab in the URL — don't count those as user-applied
   // filters in the badge. Only count filters the user set via the filter panel.
   const toolbarActiveFilters = React.useMemo(() => {
-    const isTypeTab = activeFilters.type === "subcontract" || activeFilters.type === "purchase_order";
+    const isTypeTab =
+      activeFilters.type === "subcontract" ||
+      activeFilters.type === "purchase_order";
     const { tab: _tab, type, ...rest } = activeFilters;
     return isTypeTab ? rest : { ...rest, type };
   }, [activeFilters]);
@@ -379,8 +418,12 @@ export default function ProjectCommitmentsPage(): ReactElement {
   } = useCommitmentsList(projectId, {
     page: tableState.page,
     limit: tableState.perPage,
-    status: typeof activeFilters.status === "string" ? activeFilters.status : undefined,
-    type: typeof activeFilters.type === "string" ? activeFilters.type : undefined,
+    status:
+      typeof activeFilters.status === "string"
+        ? activeFilters.status
+        : undefined,
+    type:
+      typeof activeFilters.type === "string" ? activeFilters.type : undefined,
     search:
       (searchParams.get("search") ?? tableState.debouncedSearch) || undefined,
     deleted: isRecycleBinTab ? "only" : "exclude",
@@ -407,7 +450,9 @@ export default function ProjectCommitmentsPage(): ReactElement {
         // Must use the list key factory (["commitments","list",...]). A bare
         // ["commitments", projectId] never prefix-matches, so the cell would
         // silently show stale data until a manual reload.
-        await queryClient.invalidateQueries({ queryKey: commitmentKeys.lists() });
+        await queryClient.invalidateQueries({
+          queryKey: commitmentKeys.lists(),
+        });
       } catch (err) {
         toast.error("Failed to update status");
       }
@@ -421,7 +466,11 @@ export default function ProjectCommitmentsPage(): ReactElement {
   // throws on a non-2xx response, which is exactly the revert signal the table
   // wants.
   const handleInlineEdit = React.useCallback(
-    async (id: string, field: "title" | "description" | "executed", value: string | boolean) => {
+    async (
+      id: string,
+      field: "title" | "description" | "executed",
+      value: string | boolean,
+    ) => {
       await apiFetch(`/api/commitments/${id}`, {
         method: "PATCH",
         body: JSON.stringify({ [field]: value }),
@@ -462,10 +511,13 @@ export default function ProjectCommitmentsPage(): ReactElement {
     return commitments.reduce(
       (acc, item) => ({
         original_amount: acc.original_amount + item.original_amount,
-        approved_change_orders: acc.approved_change_orders + item.approved_change_orders,
-        pending_change_orders: acc.pending_change_orders + item.pending_change_orders,
+        approved_change_orders:
+          acc.approved_change_orders + item.approved_change_orders,
+        pending_change_orders:
+          acc.pending_change_orders + item.pending_change_orders,
         draft_change_orders: acc.draft_change_orders + item.draft_change_orders,
-        revised_contract_amount: acc.revised_contract_amount + item.revised_contract_amount,
+        revised_contract_amount:
+          acc.revised_contract_amount + item.revised_contract_amount,
         invoiced_amount: acc.invoiced_amount + item.invoiced_amount,
         billed_to_date: acc.billed_to_date + item.billed_to_date,
         payments_issued: acc.payments_issued + item.payments_issued,
@@ -511,11 +563,20 @@ export default function ProjectCommitmentsPage(): ReactElement {
         // No inline editing in the recycle bin — deleted rows are read-only.
         isRecycleBinTab ? undefined : handleInlineEdit,
       ),
-    [projectId, expandedIds, handleToggleExpand, handleStatusChange, handleInlineEdit, isRecycleBinTab],
+    [
+      projectId,
+      expandedIds,
+      handleToggleExpand,
+      handleStatusChange,
+      handleInlineEdit,
+      isRecycleBinTab,
+    ],
   );
   const sortedCommitments = React.useMemo(() => {
     if (!tableState.sortBy) return commitments;
-    const sortColumn = tableColumns.find((column) => column.id === tableState.sortBy);
+    const sortColumn = tableColumns.find(
+      (column) => column.id === tableState.sortBy,
+    );
     const getSortValue = sortColumn?.sortValue;
     if (!getSortValue) return commitments;
 
@@ -528,7 +589,9 @@ export default function ProjectCommitmentsPage(): ReactElement {
       if (valueB == null) return tableState.sortDirection === "asc" ? 1 : -1;
 
       if (typeof valueA === "number" && typeof valueB === "number") {
-        return tableState.sortDirection === "asc" ? valueA - valueB : valueB - valueA;
+        return tableState.sortDirection === "asc"
+          ? valueA - valueB
+          : valueB - valueA;
       }
 
       const comparison = String(valueA).localeCompare(String(valueB));
@@ -540,7 +603,8 @@ export default function ProjectCommitmentsPage(): ReactElement {
 
   const handleFilterChange = (nextFilters: FilterState) => {
     tableState.setSearchParams({
-      status: typeof nextFilters.status === "string" ? nextFilters.status : null,
+      status:
+        typeof nextFilters.status === "string" ? nextFilters.status : null,
       type: typeof nextFilters.type === "string" ? nextFilters.type : null,
       tab: typeof nextFilters.tab === "string" ? nextFilters.tab : null,
       page: "1",
@@ -560,16 +624,20 @@ export default function ProjectCommitmentsPage(): ReactElement {
     setCommitmentToDelete(item);
     setDeleteDialogOpen(true);
   };
-  const [recycleDeleteDialogOpen, setRecycleDeleteDialogOpen] = React.useState(false);
+  const [recycleDeleteDialogOpen, setRecycleDeleteDialogOpen] =
+    React.useState(false);
   const [recycleCommitmentToDelete, setRecycleCommitmentToDelete] =
     React.useState<CommitmentListItem | null>(null);
-  const [isPermanentlyDeleting, setIsPermanentlyDeleting] = React.useState(false);
+  const [isPermanentlyDeleting, setIsPermanentlyDeleting] =
+    React.useState(false);
 
   const handleRestoreIntent = async (item: CommitmentListItem) => {
     try {
       await apiFetch(`/api/commitments/${item.id}/restore`, { method: "POST" });
       toast.success(`"${item.number}" restored`);
-      tableState.setSelectedIds((prev) => prev.filter((selectedId) => selectedId !== item.id));
+      tableState.setSelectedIds((prev) =>
+        prev.filter((selectedId) => selectedId !== item.id),
+      );
       await refetch();
     } catch (err) {
       toast.error("Could not restore commitment", {
@@ -587,12 +655,19 @@ export default function ProjectCommitmentsPage(): ReactElement {
     if (!recycleCommitmentToDelete) return;
     setIsPermanentlyDeleting(true);
     try {
-      await apiFetch(`/api/commitments/${recycleCommitmentToDelete.id}/permanent-delete`, {
-        method: "DELETE",
-      });
-      toast.success(`"${recycleCommitmentToDelete.number}" permanently deleted`);
+      await apiFetch(
+        `/api/commitments/${recycleCommitmentToDelete.id}/permanent-delete`,
+        {
+          method: "DELETE",
+        },
+      );
+      toast.success(
+        `"${recycleCommitmentToDelete.number}" permanently deleted`,
+      );
       tableState.setSelectedIds((prev) =>
-        prev.filter((selectedId) => selectedId !== recycleCommitmentToDelete.id),
+        prev.filter(
+          (selectedId) => selectedId !== recycleCommitmentToDelete.id,
+        ),
       );
       await refetch();
     } catch (err) {
@@ -617,7 +692,8 @@ export default function ProjectCommitmentsPage(): ReactElement {
         area: "commitments",
         operation: "delete-commitment-confirm",
         error,
-        userVisibleFallback: "Commitment deletion failed and the row remains visible.",
+        userVisibleFallback:
+          "Commitment deletion failed and the row remains visible.",
         metadata: { commitmentId: commitmentToDelete.id, projectId },
       });
     } finally {
@@ -698,9 +774,13 @@ export default function ProjectCommitmentsPage(): ReactElement {
       // A duplicate in selectedIds causes bulk-delete to attempt the same commitment twice:
       // the first DELETE succeeds and sets deleted_at; the second hits the ALREADY_DELETED guard
       // and returns 400, creating a false "failed" toast even though both rows are gone.
-      tableState.setSelectedIds((prev) => prev.includes(id) ? prev : [...prev, id]);
+      tableState.setSelectedIds((prev) =>
+        prev.includes(id) ? prev : [...prev, id],
+      );
     } else {
-      tableState.setSelectedIds((prev) => prev.filter((itemId) => itemId !== id));
+      tableState.setSelectedIds((prev) =>
+        prev.filter((itemId) => itemId !== id),
+      );
     }
   };
 
@@ -736,10 +816,18 @@ export default function ProjectCommitmentsPage(): ReactElement {
 
           mobileActionsInline: true,
           actions: (
-            <PermissionGate projectId={projectId} module="contracts" level="write">
+            <PermissionGate
+              projectId={projectId}
+              module="contracts"
+              level="write"
+            >
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" className="max-sm:h-11 max-sm:w-11 max-sm:p-0" aria-label="Create commitment">
+                  <Button
+                    size="sm"
+                    className="max-sm:h-11 max-sm:w-11 max-sm:p-0"
+                    aria-label="Create commitment"
+                  >
                     <Plus />
                     <span className="max-sm:sr-only">Create</span>
                     <ChevronDown className="max-sm:hidden" />
@@ -754,7 +842,9 @@ export default function ProjectCommitmentsPage(): ReactElement {
                     <ShoppingCart className="mr-2 h-4 w-4 text-muted-foreground" />
                     Purchase Order
                   </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setIsImportDialogOpen(true)}>
+                  <DropdownMenuItem
+                    onSelect={() => setIsImportDialogOpen(true)}
+                  >
                     <Upload className="mr-2 h-4 w-4 text-muted-foreground" />
                     Import
                   </DropdownMenuItem>
@@ -766,6 +856,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
         tabs={tabs}
         layout={{
           fullBleedTable: true,
+          hideTableBody: isChangeOrdersTab,
         }}
         features={{
           // Click a cell to edit title / description / executed in place.
@@ -792,9 +883,10 @@ export default function ProjectCommitmentsPage(): ReactElement {
           visibleColumns: effectiveVisibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
           onExport: handleExport,
-          onBulkDelete: !isRecycleBinTab && tableState.selectedIds.length > 0
-            ? () => setBulkDeleteDialogOpen(true)
-            : undefined,
+          onBulkDelete:
+            !isRecycleBinTab && tableState.selectedIds.length > 0
+              ? () => setBulkDeleteDialogOpen(true)
+              : undefined,
           customActions: (
             <TooltipProvider>
               <Tooltip>
@@ -807,7 +899,9 @@ export default function ProjectCommitmentsPage(): ReactElement {
                     onClick={handleErpSync}
                     aria-label="Sync from ERP"
                   >
-                    <RefreshCw className={isSyncing ? "animate-spin" : undefined} />
+                    <RefreshCw
+                      className={isSyncing ? "animate-spin" : undefined}
+                    />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Sync commitments from Acumatica</TooltipContent>
@@ -851,12 +945,19 @@ export default function ProjectCommitmentsPage(): ReactElement {
             isRecycleBinTab ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Row actions">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    aria-label="Row actions"
+                  >
                     <MoreHorizontal />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => void handleRestoreIntent(item)}>
+                  <DropdownMenuItem
+                    onClick={() => void handleRestoreIntent(item)}
+                  >
                     <RotateCcw className="mr-2 h-4 w-4" />
                     Restore
                   </DropdownMenuItem>
@@ -874,7 +975,12 @@ export default function ProjectCommitmentsPage(): ReactElement {
             ),
           renderExpandedRow: (item, colSpan) => {
             if (isRecycleBinTab || !expandedIds.has(item.id)) return null;
-            return <CommitmentChangeOrdersRow commitmentId={item.id} colSpan={colSpan} />;
+            return (
+              <CommitmentChangeOrdersRow
+                commitmentId={item.id}
+                colSpan={colSpan}
+              />
+            );
           },
         }}
         sorting={{
@@ -897,11 +1003,21 @@ export default function ProjectCommitmentsPage(): ReactElement {
           onSelectRow: handleSelectRow,
         }}
         views={{
-          card: (item) => renderCommitmentCard(item, isRecycleBinTab ? () => undefined : handleRowClick),
-          list: (item) => renderCommitmentList(item, isRecycleBinTab ? () => undefined : handleRowClick),
+          card: (item) =>
+            renderCommitmentCard(
+              item,
+              isRecycleBinTab ? () => undefined : handleRowClick,
+            ),
+          list: (item) =>
+            renderCommitmentList(
+              item,
+              isRecycleBinTab ? () => undefined : handleRowClick,
+            ),
         }}
         emptyState={{
-          title: isRecycleBinTab ? "Recycle Bin is empty" : "No commitments found",
+          title: isRecycleBinTab
+            ? "Recycle Bin is empty"
+            : "No commitments found",
           description: isRecycleBinTab
             ? "Deleted commitments will appear here."
             : "You have not added any commitments yet.",
@@ -911,35 +1027,74 @@ export default function ProjectCommitmentsPage(): ReactElement {
         footerTotals={{
           label: "Totals",
           values: {
-            original_amount: <span className="font-semibold">{formatCurrency(financialTotals.original_amount)}</span>,
-            approved_change_orders: <span className="font-semibold">{formatCurrency(financialTotals.approved_change_orders)}</span>,
-            pending_change_orders: <span className="font-semibold">{formatCurrency(financialTotals.pending_change_orders)}</span>,
-            draft_change_orders: <span className="font-semibold">{formatCurrency(financialTotals.draft_change_orders)}</span>,
-            revised_contract_amount: <span className="font-semibold">{formatCurrency(financialTotals.revised_contract_amount)}</span>,
-            invoiced_amount: <span className="font-semibold">{formatCurrency(financialTotals.invoiced_amount)}</span>,
+            original_amount: (
+              <span className="font-semibold">
+                {formatCurrency(financialTotals.original_amount)}
+              </span>
+            ),
+            approved_change_orders: (
+              <span className="font-semibold">
+                {formatCurrency(financialTotals.approved_change_orders)}
+              </span>
+            ),
+            pending_change_orders: (
+              <span className="font-semibold">
+                {formatCurrency(financialTotals.pending_change_orders)}
+              </span>
+            ),
+            draft_change_orders: (
+              <span className="font-semibold">
+                {formatCurrency(financialTotals.draft_change_orders)}
+              </span>
+            ),
+            revised_contract_amount: (
+              <span className="font-semibold">
+                {formatCurrency(financialTotals.revised_contract_amount)}
+              </span>
+            ),
+            invoiced_amount: (
+              <span className="font-semibold">
+                {formatCurrency(financialTotals.invoiced_amount)}
+              </span>
+            ),
             // Note: billed_to_date is intentionally omitted — there is no column with that ID
             // in commitmentColumns, so the value would be silently dropped by UnifiedTablePage.
             // The invoiced_amount column above covers the "Invoiced" total shown in the table.
-            payments_issued: <span className="font-semibold">{formatCurrency(financialTotals.payments_issued)}</span>,
-            remaining_balance: <span className="font-semibold">{formatCurrency(financialTotals.remaining_balance)}</span>,
+            payments_issued: (
+              <span className="font-semibold">
+                {formatCurrency(financialTotals.payments_issued)}
+              </span>
+            ),
+            remaining_balance: (
+              <span className="font-semibold">
+                {formatCurrency(financialTotals.remaining_balance)}
+              </span>
+            ),
           },
         }}
-        pagination={isChangeOrdersTab ? undefined : {
-          page: tableState.page,
-          totalPages,
-          perPage: tableState.perPage,
-          onPageChange: (nextPage) => {
-            tableState.setPage(nextPage);
-            tableState.setSearchParams({ page: String(nextPage) });
-          },
-          onPerPageChange: (nextPerPage) => {
-            const parsed = Number(nextPerPage);
-            if (!Number.isFinite(parsed) || parsed <= 0) return;
-            tableState.setPerPage(parsed);
-            tableState.setSearchParams({ per_page: String(parsed), page: "1" });
-            tableState.setPage(1);
-          },
-        }}
+        pagination={
+          isChangeOrdersTab
+            ? undefined
+            : {
+                page: tableState.page,
+                totalPages,
+                perPage: tableState.perPage,
+                onPageChange: (nextPage) => {
+                  tableState.setPage(nextPage);
+                  tableState.setSearchParams({ page: String(nextPage) });
+                },
+                onPerPageChange: (nextPerPage) => {
+                  const parsed = Number(nextPerPage);
+                  if (!Number.isFinite(parsed) || parsed <= 0) return;
+                  tableState.setPerPage(parsed);
+                  tableState.setSearchParams({
+                    per_page: String(parsed),
+                    page: "1",
+                  });
+                  tableState.setPage(1);
+                },
+              }
+        }
         topContent={
           isChangeOrdersTab ? (
             <ProjectChangeOrdersTable
@@ -973,7 +1128,10 @@ export default function ProjectCommitmentsPage(): ReactElement {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+      <AlertDialog
+        open={bulkDeleteDialogOpen}
+        onOpenChange={setBulkDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
@@ -982,7 +1140,8 @@ export default function ProjectCommitmentsPage(): ReactElement {
             </AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete{" "}
-              <strong>{tableState.selectedIds.length}</strong> selected commitment
+              <strong>{tableState.selectedIds.length}</strong> selected
+              commitment
               {tableState.selectedIds.length === 1 ? "" : "s"}?
               <br />
               <br />
@@ -990,7 +1149,9 @@ export default function ProjectCommitmentsPage(): ReactElement {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isBulkDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isBulkDeleting}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleBulkDeleteConfirm}
               disabled={isBulkDeleting}
@@ -1004,17 +1165,23 @@ export default function ProjectCommitmentsPage(): ReactElement {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={recycleDeleteDialogOpen} onOpenChange={setRecycleDeleteDialogOpen}>
+      <AlertDialog
+        open={recycleDeleteDialogOpen}
+        onOpenChange={setRecycleDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Permanently Delete Commitment</AlertDialogTitle>
             <AlertDialogDescription>
-              Permanently delete <strong>{recycleCommitmentToDelete?.number}</strong>? This cannot be
-              undone.
+              Permanently delete{" "}
+              <strong>{recycleCommitmentToDelete?.number}</strong>? This cannot
+              be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPermanentlyDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isPermanentlyDeleting}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handlePermanentDeleteConfirm}
               disabled={isPermanentlyDeleting}
