@@ -123,3 +123,7 @@ class StructuredData:
     # Optional one-paragraph "what changed since last meeting" narrative the deep
     # pass can emit for the project intelligence page. None on the shallow path.
     what_changed: Optional[str] = None
+    # True when the LLM extraction call itself FAILED (returned _extraction_failed)
+    # rather than legitimately finding nothing. Lets callers distinguish a silent
+    # model failure from a genuinely empty communication. None/False = call succeeded.
+    extraction_failed: bool = False

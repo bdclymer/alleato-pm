@@ -395,6 +395,13 @@ def synthesize_project_intelligence(
                 project_state=project_state,
             )
 
+            # Distinguish a silent LLM failure from a genuinely empty communication.
+            if getattr(structured, "extraction_failed", False):
+                result["errors"].append({"doc_id": doc_id, "error": "extraction_failed (LLM call failed)"})
+                logger.error("[ProjectSynthesizer] extraction FAILED for doc %s (%s)", doc_id, comm_type)
+                if not dry_run:
+                    continue
+
             source_occurred_at = doc.get("date") or doc.get("captured_at")
             payloads = _build_signal_payloads(structured)
 
@@ -409,6 +416,7 @@ def synthesize_project_intelligence(
                     "comm_type": comm_type,
                     "title": doc.get("title"),
                     "text_chars": len(full_text),
+                    "extraction_failed": getattr(structured, "extraction_failed", False),
                     "what_changed": getattr(structured, "what_changed", None),
                     "signals": len(payloads),
                     "tasks": len(structured.tasks),
