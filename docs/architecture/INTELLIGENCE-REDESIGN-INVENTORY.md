@@ -7,6 +7,13 @@ compiler → insight_card → intelligence_packet → executive-brief path, trac
 **Status:** ✅ Step 1 COMPLETE. 🔨 Step 2 in progress — Slice 2.1 (schema) DONE (2026-06-14).
 
 ### Step 2 slice tracker
+> 🚨 **BLOCKED on external billing (2026-06-14):** backend AI is down — OpenAI account hit
+> `429 insufficient_quota` (all backend LLM calls fail; verified directly). 2.2b code is correct but
+> can't be live-verified, and 2.3–2.5 can't proceed, until the OpenAI account is funded (Megan's action)
+> or the backend is routed through the working AI Gateway. See memory `incident_openai_quota_backend_ai_down.md`.
+> Diagnosed via the synthesizer's own `extraction_failed`/`extraction_error` instrumentation — the silent
+> 429 surfaced loudly, which is exactly why that instrumentation was added.
+
 - ✅ **2.1 Schema** (migration `20260614140000_insight_cards_timeline_fields.sql`): added `occurred_at`,
   `severity` (1–5 check), `related_card_ids uuid[]` to `insight_cards`; widened `current_status`
   (+materialized/did_not_materialize/superseded) and `card_type` (+flag/solution/milestone); backfilled
