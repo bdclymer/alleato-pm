@@ -41,6 +41,7 @@ interface GeneralInfoSectionProps {
   primeContractSelectOptions: Array<{ value: string; label: string }>;
   hasPrimeContracts: boolean;
   projectId: number;
+  showDescription?: boolean;
 }
 
 export function GeneralInfoSection({
@@ -51,6 +52,7 @@ export function GeneralInfoSection({
   primeContractSelectOptions,
   hasPrimeContracts,
   projectId,
+  showDescription = true,
 }: GeneralInfoSectionProps) {
   const [originRecordOptions, setOriginRecordOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [loadingOriginRecords, setLoadingOriginRecords] = useState(false);
@@ -190,14 +192,16 @@ export function GeneralInfoSection({
             </RadioGroup>
           </div>
         </div>
-        <div className="md:col-span-3">
-          <RichTextField
-            label="Description"
-            value={formData.description || ""}
-            onChange={(value) => updateFormData({ description: value })}
-            placeholder="Describe the change event"
-          />
-        </div>
+        {showDescription && (
+          <div className="md:col-span-3">
+            <RichTextField
+              label="Description"
+              value={formData.description || ""}
+              onChange={(value) => updateFormData({ description: value })}
+              placeholder="Describe the change event"
+            />
+          </div>
+        )}
       </FormGrid>
     </FormSection>
   );
