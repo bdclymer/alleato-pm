@@ -58,6 +58,7 @@ import {
 } from "@/hooks/use-submittals";
 import { formatDate } from "@/lib/format";
 import { appToast as toast } from "@/lib/toast/app-toast";
+import { useConfirm } from "@/hooks/use-confirm";
 import { SubmittalFormPage } from "./submittal-form-page";
 import { SubmittalDistributeDialog } from "./submittal-distribute-dialog";
 
@@ -710,6 +711,7 @@ export function SubmittalDetailClient({
 }: SubmittalDetailClientProps) {
   const router = useRouter();
   const supabase = createClient();
+  const { confirm, ConfirmDialog } = useConfirm();
   const deleteMutation = useDeleteSubmittal(projectId);
   const duplicateMutation = useDuplicateSubmittal(projectId);
   const [respondingEntry, setRespondingEntry] = React.useState<{
@@ -740,7 +742,13 @@ export function SubmittalDetailClient({
   }, [supabase.auth]);
 
   async function handleDelete() {
-    if (!window.confirm("Move this submittal to the Recycle Bin?")) return;
+    const ok = await confirm({
+      title: "Move to Recycle Bin?",
+      description: "This submittal will be moved to the Recycle Bin. You can restore it later.",
+      confirmLabel: "Move to Bin",
+      variant: "destructive",
+    });
+    if (!ok) return;
     await deleteMutation.mutateAsync(submittal.id);
     router.push(`/${projectId}/submittals`);
   }
@@ -1223,6 +1231,7 @@ export function SubmittalDetailClient({
 
   return (
     <>
+      {ConfirmDialog}
       <SubmittalDistributeDialog
         projectId={projectId}
         submittalId={submittal.id}

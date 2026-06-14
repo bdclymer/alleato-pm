@@ -105,6 +105,11 @@ const ENDPOINTS = [
   // Issue #238: PUT must never silently drop retainage for purchase orders.
   // An unauthenticated PUT must return 401 — if it returns 500 the update handler is broken.
   ["PUT", `/api/commitments/${FAKE_UUID}`, "Commitment update unauthorized (retainage guard)", [401]],
+  // Regression guard: `executed` on subcontracts was previously inside the purchase_order-only
+  // block, silently dropping the field on subcontract edits. An unauthed PUT must return 401
+  // (auth runs before schema validation) — a 500 means the handler crashed before auth, which
+  // would indicate a schema regression stripping the `executed` field.
+  ["PUT", `/api/commitments/${FAKE_UUID}`, "Commitment subcontract PUT — executed field not stripped (auth check)", [401]],
   ["POST", `/api/projects/${PROJECT_ID}/commitments/export`, "Commitments export (auth + schema check)", [400, 401]],
   ["POST", "/api/sync/acumatica/commitments", "Commitments Acumatica sync (unauthenticated)", [401]],
   // Regression guard: this endpoint returns { deprecated: true } with 200 (no auth required).

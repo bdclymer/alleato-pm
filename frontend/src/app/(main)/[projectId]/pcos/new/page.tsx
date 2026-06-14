@@ -4,7 +4,7 @@ import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
+import { handleFormError } from "@/lib/handle-form-error";
 import { PageShell } from "@/components/layout";
 import {
   PCOWorkspace,
@@ -151,13 +151,7 @@ export default function NewPCOPage() {
       await createPCO.mutateAsync(buildPayload() as any);
       router.push(`/${projectId}/pcos`);
     } catch (error) {
-      reportNonCriticalFailure({
-        area: "pcos",
-        operation: "save-draft",
-        error,
-        userVisibleFallback: "PCO draft was not saved.",
-        metadata: { projectId },
-      });
+      handleFormError(error, { entity: "PCO draft", action: "save" });
     } finally {
       setIsSaving(false);
     }
@@ -183,18 +177,12 @@ export default function NewPCOPage() {
       await createPCO.mutateAsync({
         ...payload,
         status: "SUBMITTED",
-       
+
       } as any);
       toast.success("PCO created and submitted to client.");
       router.push(`/${projectId}/pcos`);
     } catch (error) {
-      reportNonCriticalFailure({
-        area: "pcos",
-        operation: "submit-new-pco",
-        error,
-        userVisibleFallback: "PCO was not submitted.",
-        metadata: { projectId },
-      });
+      handleFormError(error, { entity: "PCO", action: "create" });
     } finally {
       setIsSubmitting(false);
     }

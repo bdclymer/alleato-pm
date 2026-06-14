@@ -457,6 +457,10 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
     def(validatedData.invoice_contact_ids, "invoice_contact_ids");
     def(validatedData.contract_date, "contract_date");
     def(validatedData.issued_on_date, "issued_on_date");
+    // `executed` exists on both subcontracts and purchase_orders — apply for both types.
+    // Previously this was inside the purchase_order-only block, silently dropping any
+    // `executed` toggle made on a subcontract edit (field-loss bug).
+    def(validatedData.executed, "executed");
 
     // Subcontract-only columns
     if (unifiedData.commitment_type === "subcontract") {
@@ -469,6 +473,7 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
     }
 
     // Purchase-order-only columns
+    // `accounting_method` is a PO-only column (not present on subcontracts table).
     if (unifiedData.commitment_type === "purchase_order") {
       def(validatedData.delivery_date, "delivery_date");
       def(validatedData.accounting_method, "accounting_method");
@@ -478,7 +483,6 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
       def(validatedData.ship_via, "ship_via");
       def(validatedData.payment_terms, "payment_terms");
       def(validatedData.assigned_to, "assigned_to");
-      def(validatedData.executed, "executed");
     }
 
     // Update commitment

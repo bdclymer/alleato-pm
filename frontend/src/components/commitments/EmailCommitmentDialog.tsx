@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
+import { handleFormError } from "@/lib/handle-form-error";
 import { useCompanyContacts } from "@/hooks/use-company-contacts";
 
 /**
@@ -191,7 +192,7 @@ export function EmailCommitmentDialog({
       );
       onOpenChange(false);
     } catch (error) {
-      toast.error("Failed to send email");
+      handleFormError(error, { entity: "commitment email", action: "save" });
     } finally {
       setIsSending(false);
     }

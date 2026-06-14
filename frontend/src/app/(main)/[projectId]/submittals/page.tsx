@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { apiFetch } from "@/lib/api-client";
+import { handleFormError } from "@/lib/handle-form-error";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -670,14 +671,14 @@ export default function SubmittalsPage(): ReactElement {
 
   const handleRestore = React.useCallback(
     async (submittalId: string) => {
-      const res = await fetch(`/api/projects/${projectId}/submittals/${submittalId}/restore`, {
-        method: "PATCH",
-      });
-      if (res.ok) {
+      try {
+        await apiFetch(`/api/projects/${projectId}/submittals/${submittalId}/restore`, {
+          method: "PATCH",
+        });
         toast.success("Submittal restored");
         await qc.invalidateQueries({ queryKey: ["submittals", projectId] });
-      } else {
-        toast.error("Could not restore submittal");
+      } catch (error) {
+        handleFormError(error, { entity: "submittal", action: "save" });
       }
     },
     [projectId, qc],

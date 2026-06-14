@@ -1370,36 +1370,11 @@ export function EstimateDetailClientV2({
     setShowLoadConfirm(true);
   };
 
-  const insertGcTemplateItems = React.useCallback(
-    async (templateItems: GcTemplateItem[]): Promise<GcItem[]> => {
-      return apiFetch<GcItem[]>(
-        `/api/projects/${projectId}/estimates/${estimate.estimate_id}/gc-items`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            items: templateItems.map((item, idx) => ({
-              ...item,
-              sort_order: item.sort_order ?? idx + 1,
-            })),
-          }),
-        },
-      );
-    },
-    [projectId, estimate.estimate_id],
-  );
-
   const handleConfirmLoadTemplate = async () => {
     if (!pendingTemplate) return;
     setIsLoadingTemplate(true);
     try {
-      // Bulk-delete all existing GC items in one server-side query
-      await apiFetch(
-        `/api/projects/${projectId}/estimates/${estimate.estimate_id}/gc-items`,
-        {
-          method: "DELETE",
-        },
-      );
-      // Fetch full template to get items
+      // Fetch the full template data first (before touching anything in the DB)
       const allTemplates = await apiFetch<
         Array<GcTemplate & { items: GcTemplateItem[] }>
       >("/api/estimates/gc-templates");
@@ -1408,13 +1383,27 @@ export function EstimateDetailClientV2({
         (t) => t.template_id === pendingTemplate.template_id,
       );
       const templateItems = Array.isArray(full?.items) ? full.items : [];
-      const created = await insertGcTemplateItems(templateItems);
+
+      // Atomic replace: PUT inserts new rows first, then deletes old ones only
+      // on success — so a failure at any point leaves the original rows intact.
+      const created = await apiFetch<GcItem[]>(
+        `/api/projects/${projectId}/estimates/${estimate.estimate_id}/gc-items`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            items: templateItems.map((item, idx) => ({
+              ...item,
+              sort_order: item.sort_order ?? idx + 1,
+            })),
+          }),
+        },
+      );
       setGcItems(created);
       toast.success(`Loaded template "${pendingTemplate.name}"`);
     } catch (error) {
       console.error("Failed to load estimate GC template", error);
       showEstimateError(
-        "Template load issue",
+        "Template load failed",
         error,
         "estimate-gc-template-load",
       );
@@ -3086,8 +3075,11 @@ function SubListTab({
             s.id === item.id ? item : s,
           ),
         }));
-        const msg = err instanceof Error ? err.message : "Unknown error";
-        toast.error(`Failed to save scope item: ${msg}`);
+        showEstimateError(
+          "Scope item save failed",
+          err,
+          `estimate-scope-item-toggle-${item.id}`,
+        );
       }
     },
     [projectId, estimateId],
@@ -3851,8 +3843,11 @@ function SubListTab({
             );
             toast.success("Bid flowed into estimate");
           } catch (err) {
-            const msg = err instanceof Error ? err.message : "Unknown error";
-            toast.error(`Failed to flow bid into estimate: ${msg}`);
+            showEstimateError(
+              "Use bid failed",
+              err,
+              `estimate-use-bid-${sub.id}`,
+            );
           }
         })();
       }
@@ -5057,12 +5052,10 @@ function SubListTab({
                                                   "Bid flowed into estimate",
                                                 );
                                               } catch (err) {
-                                                const msg =
-                                                  err instanceof Error
-                                                    ? err.message
-                                                    : "Unknown error";
-                                                toast.error(
-                                                  `Failed to flow bid into estimate: ${msg}`,
+                                                showEstimateError(
+                                                  "Use bid failed",
+                                                  err,
+                                                  `estimate-use-bid-${sub.id}`,
                                                 );
                                               }
                                             })();

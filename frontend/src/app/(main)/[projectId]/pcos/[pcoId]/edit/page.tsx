@@ -4,7 +4,7 @@ import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
+import { handleFormError } from "@/lib/handle-form-error";
 import { PageShell } from "@/components/layout";
 import {
   PCOWorkspace,
@@ -12,6 +12,7 @@ import {
   type LocalLineItem,
   type PCOFormValues,
 } from "@/components/domain/pcos/PCOWorkspace";
+import { apiFetch } from "@/lib/api-client";
 import { useProjectChangeEvents } from "@/hooks/use-change-events";
 import {
   usePCO,
@@ -226,8 +227,10 @@ export default function EditPCOPage() {
         await ungroupCE.mutateAsync(ceId);
       }
 
-      // Handle line items — simple approach: sync by creating new / keeping existing
-      // For new line items (tempId is a UUID, not a numeric DB id)
+      // Handle line items:
+      // - New items (tempId is a UUID, not a numeric DB id) → POST
+      // - Existing items (tempId is a numeric DB id) → PUT to persist value edits
+      // - Removed items → DELETE
       for (const li of lineItems) {
         const isNew = isNaN(Number(li.tempId));
         if (isNew) {
@@ -239,6 +242,23 @@ export default function EditPCOPage() {
             line_amount: li.quantity * li.unitCost,
             category: li.category || null,
           });
+        } else {
+          // Existing line item — PUT to persist any edits to values.
+          // Use apiFetch directly to avoid double-toast from the hook's onError.
+          await apiFetch(
+            `/api/projects/${projectId}/pcos/${pcoId}/line-items/${li.tempId}`,
+            {
+              method: "PUT",
+              body: JSON.stringify({
+                description: li.description,
+                quantity: li.quantity,
+                uom: li.uom,
+                unit_cost: li.unitCost,
+                line_amount: li.quantity * li.unitCost,
+                category: li.category || null,
+              }),
+            },
+          );
         }
       }
 
@@ -259,13 +279,7 @@ export default function EditPCOPage() {
 
       router.push(`/${projectId}/pcos`);
     } catch (error) {
-      reportNonCriticalFailure({
-        area: "pcos",
-        operation: "save-existing-pco",
-        error,
-        userVisibleFallback: "PCO changes were not saved.",
-        metadata: { projectId, pcoId },
-      });
+      handleFormError(error, { entity: "PCO", action: "save" });
     } finally {
       setIsSaving(false);
       setIsSubmitting(false);
