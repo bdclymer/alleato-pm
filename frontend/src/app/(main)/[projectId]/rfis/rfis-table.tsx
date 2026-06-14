@@ -24,6 +24,11 @@ interface RfisTableProps {
   projectId: number;
 }
 
+function formatAssignees(assignees: string[] | null | undefined): string {
+  if (!assignees || assignees.length === 0) return "—";
+  return assignees.join(", ");
+}
+
 type ActiveTab = "all" | "open" | "closed";
 
 interface RfiListResponse {

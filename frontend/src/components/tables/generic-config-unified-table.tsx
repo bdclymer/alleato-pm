@@ -303,7 +303,12 @@ export function GenericConfigUnifiedTable<T extends GenericRow>({
         currentView: tableState.currentView,
         onViewChange: tableState.setCurrentView,
         enabledViews: ["table", "list"],
-        filters: config.filters,
+        filters: (config.filters ?? []).map((filter) => ({
+          id: filter.id,
+          label: filter.label,
+          type: "select" as const,
+          options: filter.options,
+        })),
         activeFilters,
         onFilterChange: handleFilterChange,
         onClearFilters: () => handleFilterChange({}),

@@ -465,6 +465,8 @@ services:
         value: 1
       - key: OPENAI_API_KEY
         sync: false
+      # Slack incoming webhook (set via Render API 2026-06-14). Posts an alert
+      # on quota/auth/rate_limit failure. Secret — value lives in Render only.
       - key: SLACK_WEBHOOK_URL
         sync: false
 
