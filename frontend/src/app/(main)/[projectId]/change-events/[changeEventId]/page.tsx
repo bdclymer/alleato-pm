@@ -11,7 +11,7 @@ import {
   FileCheck2,
   FileText,
   Mail,
-  MoreHorizontal,
+  MoreVertical,
   Trash2,
   X,
   XCircle,
@@ -42,7 +42,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Inline } from "@/components/layout/inline";
 import { Text } from "@/components/ds/text";
-import { PageShell } from "@/components/layout";
+import { ContentSectionStack, PageShell } from "@/components/layout";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { StatusBadge, EmptyState } from "@/components/ds";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
@@ -68,7 +68,6 @@ import { EntityRoom } from "@/components/comments/entity-room";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ChangeEventRfqForm } from "@/components/domain/change-events/ChangeEventRfqForm";
 import type { ChangeEventRfqFormValues } from "@/components/domain/change-events/ChangeEventRfqForm";
-import { ChangeEventEditSheet } from "@/components/domain/change-events/ChangeEventEditSheet";
 import { useDropdownData } from "@/components/domain/change-events/change-event-form/useDropdownData";
 import type { ProjectEmail } from "@/hooks/use-emails";
 
@@ -106,7 +105,6 @@ export default function ChangeEventDetailPage() {
     actions,
   } = useChangeEventDetail(projectId, changeEventId);
 
-  const [showEditSheet, setShowEditSheet] = useState(false);
   const [showRfqSheet, setShowRfqSheet] = useState(false);
   const [isCreatingRfq, setIsCreatingRfq] = useState(false);
   const [projectContacts, setProjectContacts] = useState<
@@ -397,13 +395,8 @@ export default function ChangeEventDetailPage() {
 
   if (isLoading) {
     return (
-      <PageShell variant="detail" title="Loading...">
-        <div className="space-y-4">
-          <Skeleton className="h-8 w-64" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-        </div>
+      <PageShell variant="detailXWide" title="Change Event" description="Loading...">
+        <Skeleton className="h-96" />
       </PageShell>
     );
   }
@@ -440,7 +433,7 @@ export default function ChangeEventDetailPage() {
   const headerActions = (
     <Inline gap="sm">
       <Button
-        variant="outline"
+        variant="default"
         size="sm"
         onClick={() => setShowPrimePCODialog(true)}
         disabled={!canEdit}
@@ -450,11 +443,11 @@ export default function ChangeEventDetailPage() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal />
+            <MoreVertical />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setShowEditSheet(true)}>
+          <DropdownMenuItem onClick={() => router.push(`/${projectId}/change-events/${changeEventId}/edit`)}>
             Edit Change Event
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -604,8 +597,9 @@ export default function ChangeEventDetailPage() {
 
   return (
     <PageShell
-      variant="dashboard"
-      title={ceTitle}
+      variant="detailXWide"
+      eyebrow={`#${ceNumber}`}
+      title={changeEvent.title || "Untitled"}
       actions={headerActions}
       onBack={handleBack}
     >
@@ -623,7 +617,7 @@ export default function ChangeEventDetailPage() {
         onTabClick={(href) => setActiveTab(href)}
       />
 
-      <div className="pt-2">
+      <ContentSectionStack className="pt-3">
         {activeTab === "general" && (
           <>
             <ChangeEventGeneralInfoPanel
@@ -750,18 +744,9 @@ export default function ChangeEventDetailPage() {
         {activeTab === "history" && (
           <ChangeEventHistoryTab entries={historyEntries} isLoading={false} />
         )}
-      </div>
+      </ContentSectionStack>
 
       {/* Dialogs */}
-      <ChangeEventEditSheet
-        open={showEditSheet}
-        onOpenChange={setShowEditSheet}
-        projectId={projectId}
-        changeEventId={changeEventId}
-        changeEvent={changeEvent}
-        onSaved={() => void actions.refetch()}
-      />
-
       <ChangeEventEmailDialog
         open={showEmailDialog}
         onOpenChange={handleEmailDialogOpenChange}
