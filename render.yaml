@@ -446,6 +446,30 @@ services:
       - key: SLACK_WEBHOOK_URL
         sync: false
 
+  # Backend AI provider canary. The intelligence pipeline (meeting extraction,
+  # synthesizer, compilers, task extraction) swallows LLM failures into empty
+  # results, so an OpenAI quota/auth outage is invisible — it looked like "no
+  # signal" for ~5 days ending 2026-06-14 (memory: incident-openai-quota-
+  # backend-ai-down). This issues a cheap 1-token completion every 2 hours and
+  # exits non-zero + posts to SLACK_WEBHOOK_URL on insufficient_quota / 401 /
+  # rate_limit, so a billing/key outage surfaces within hours, not days.
+  - type: cron
+    name: alleato-ai-provider-health
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "20 */2 * * *"
+    dockerCommand: python3 -m src.services.health.ai_provider_health
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SLACK_WEBHOOK_URL
+        sync: false
+
   # Checks source freshness, embedding backlog, compiler backlog, task extraction,
   # and persisted alerts for every RAG source multiple times per day.
   - type: cron
