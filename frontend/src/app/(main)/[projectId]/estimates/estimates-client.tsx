@@ -76,6 +76,7 @@ export function EstimatesClient({
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [estimateToDelete, setEstimateToDelete] =
     React.useState<EstimateRow | null>(null);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = React.useState(false);
   const [seedBudgetEstimate, setSeedBudgetEstimate] =
     React.useState<EstimateRow | null>(null);
 
@@ -149,23 +150,41 @@ export function EstimatesClient({
     }
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
+    if ((tableState.selectedIds?.length ?? 0) === 0) return;
+    setBulkDeleteDialogOpen(true);
+  };
+
+  const executeBulkDelete = async () => {
     const ids = tableState.selectedIds ?? [];
+    setBulkDeleteDialogOpen(false);
     if (ids.length === 0) return;
-    try {
-      await Promise.all(
-        ids.map((id) =>
-          apiFetch(`/api/projects/${projectId}/estimates/${id}`, {
-            method: "DELETE",
-          })
-        )
+
+    const results = await Promise.allSettled(
+      ids.map((id) =>
+        apiFetch(`/api/projects/${projectId}/estimates/${id}`, {
+          method: "DELETE",
+        })
+      )
+    );
+
+    const succeeded = results.filter((r) => r.status === "fulfilled").length;
+    const failed = results.filter((r) => r.status === "rejected").length;
+
+    if (failed === 0) {
+      toast.success(
+        `${succeeded} estimate${succeeded === 1 ? "" : "s"} deleted`
       );
-      toast.success(`${ids.length} estimate${ids.length === 1 ? "" : "s"} deleted`);
-      tableState.setSelectedIds([]);
-      router.refresh();
-    } catch {
+    } else if (succeeded === 0) {
       toast.error("Failed to delete selected estimates");
+    } else {
+      toast.warning(
+        `${succeeded} estimate${succeeded === 1 ? "" : "s"} deleted, ${failed} failed`
+      );
     }
+
+    tableState.setSelectedIds([]);
+    router.refresh();
   };
 
   const columns = React.useMemo(
@@ -445,6 +464,29 @@ export function EstimatesClient({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Estimates</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete{" "}
+              {tableState.selectedIds?.length ?? 0} estimate
+              {(tableState.selectedIds?.length ?? 0) === 1 ? "" : "s"}? This
+              action can be undone by an administrator.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void executeBulkDelete()}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete

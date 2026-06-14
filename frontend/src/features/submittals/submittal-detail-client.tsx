@@ -57,6 +57,7 @@ import {
   type WorkflowTemplateStep,
 } from "@/hooks/use-submittals";
 import { formatDate } from "@/lib/format";
+import { appToast as toast } from "@/lib/toast/app-toast";
 import { SubmittalFormPage } from "./submittal-form-page";
 import { SubmittalDistributeDialog } from "./submittal-distribute-dialog";
 
@@ -486,7 +487,7 @@ interface WorkflowBuilderProps {
   currentSteps: {
     step_type: string;
     required?: boolean;
-    responder_id?: string | null;
+    submittal_responses?: Array<{ responder_id: string; response_status: string }>;
   }[];
 }
 
@@ -534,11 +535,29 @@ function WorkflowBuilder({
   async function handleSaveTemplate(e: React.FormEvent) {
     e.preventDefault();
     if (!templateName.trim() || currentSteps.length === 0) return;
-    const steps: WorkflowTemplateStep[] = currentSteps.map((s) => ({
-      step_type: s.step_type,
-      required: s.required ?? true,
-      user_id: null,
-    }));
+    const steps: WorkflowTemplateStep[] = currentSteps.map((s) => {
+      // Resolve the assigned user from the first response row on this step.
+      // submittal_responses[0].responder_id is the auth user id for the assignee.
+      const assignedUserId =
+        s.submittal_responses?.[0]?.responder_id ?? null;
+      return {
+        step_type: s.step_type,
+        required: s.required ?? true,
+        user_id: assignedUserId,
+      };
+    });
+
+    const stepsWithUsers = steps.filter((s) => s.user_id !== null);
+    if (stepsWithUsers.length === 0) {
+      // All steps lack an assigned user — the template would be unapplyable.
+      // Surface a real error rather than saving a dead template.
+      toast.error("Cannot save template", {
+        description:
+          "No workflow steps have an assigned user. Add at least one step with a user before saving a template.",
+      });
+      return;
+    }
+
     await createTemplate.mutateAsync({ name: templateName.trim(), steps });
     setTemplateName("");
     setSavingTemplate(false);

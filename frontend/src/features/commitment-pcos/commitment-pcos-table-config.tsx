@@ -1,4 +1,4 @@
-import { ArrowRight, Eye, MoreHorizontal, SquarePen, Trash2 } from "lucide-react";
+import { ArrowRight, Eye, MoreHorizontal, Trash2 } from "lucide-react";
 import type { ReactElement } from "react";
 
 import { formatDate } from "@/lib/format";
@@ -219,11 +219,10 @@ export function buildPcoTableColumns(): TableColumn<CommitmentPco>[] {
 export function renderPcoRowActions(
   item: CommitmentPco,
   onView: (item: CommitmentPco) => void,
-  onEdit: (item: CommitmentPco) => void,
+  onEdit: (item: CommitmentPco) => void, // reserved — edit form not yet implemented
   onDelete: (item: CommitmentPco) => void,
   onPromote: (item: CommitmentPco) => void,
 ): ReactElement {
-  const canEdit = item.status === "draft" || item.status === "pending";
   const canDelete = item.status === "draft";
   const canPromote =
     (item.status === "pending" || item.status === "approved") &&
@@ -247,17 +246,10 @@ export function renderPcoRowActions(
             <Eye className="mr-2 h-4 w-4" />
             View
           </DropdownMenuItem>
-          {canEdit && (
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(item);
-              }}
-            >
-              <SquarePen className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
-          )}
+          {/* Edit action intentionally omitted — commitment PCO edit form is not yet
+              implemented. The detail page shows a disabled "Edit" button with a
+              "coming soon" tooltip. When the edit form ships, re-enable this action
+              and wire handleEdit back to `/${projectId}/commitment-pcos/${id}?edit=1`. */}
           {canPromote && (
             <>
               <DropdownMenuSeparator />

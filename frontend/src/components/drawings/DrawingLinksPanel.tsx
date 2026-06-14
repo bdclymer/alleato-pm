@@ -1,11 +1,13 @@
 "use client";
 
+import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, ExternalLink, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { DrawingMarkupPin } from "@/hooks/use-drawing-pins";
 import { useDeleteDrawingPin } from "@/hooks/use-drawing-pins";
+import { ConfirmDeleteDialog } from "@/components/ds/ConfirmDeleteDialog";
 import { PIN_TYPE_CONFIG } from "./LinkPinModal";
 
 // ── Status color map ─────────────────────────────────────────────────────────
@@ -48,6 +50,7 @@ export function DrawingLinksPanel({
 }: DrawingLinksPanelProps) {
   const router = useRouter();
   const deletePin = useDeleteDrawingPin(projectId, drawingId);
+  const [pendingDeletePin, setPendingDeletePin] = React.useState<DrawingMarkupPin | null>(null);
 
   // Group pins by type
   const grouped = pins.reduce<Record<string, DrawingMarkupPin[]>>((acc, pin) => {
@@ -92,94 +95,114 @@ export function DrawingLinksPanel({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto divide-y divide-border">
-      {Object.entries(grouped).map(([type, typePins]) => {
-        const config = PIN_TYPE_CONFIG[type as DrawingMarkupPin["pin_type"]];
-        if (!config) return null;
-        return (
-          <div key={type}>
-            <div className="px-3 py-1.5 flex items-center gap-2">
-              <span
-                className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: config.color }}
-              />
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-                {config.label}s ({typePins.length})
-              </span>
-            </div>
-            {typePins.map((pin) => (
-              <div
-                key={pin.id}
-                onMouseEnter={() => onPinHover?.(pin.id)}
-                onMouseLeave={() => onPinHover?.(null)}
-                className={cn(
-                  "group px-3 py-2 flex items-start gap-2 hover:bg-muted transition-colors cursor-default",
-                  pin.page !== currentPage && "opacity-50"
-                )}
-              >
-                {/* Color indicator */}
+    <>
+      <div className="flex-1 overflow-y-auto divide-y divide-border">
+        {Object.entries(grouped).map(([type, typePins]) => {
+          const config = PIN_TYPE_CONFIG[type as DrawingMarkupPin["pin_type"]];
+          if (!config) return null;
+          return (
+            <div key={type}>
+              <div className="px-3 py-1.5 flex items-center gap-2">
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: config.color }}
+                />
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
+                  {config.label}s ({typePins.length})
+                </span>
+              </div>
+              {typePins.map((pin) => (
                 <div
-                  className="h-5 w-5 rounded shrink-0 flex items-center justify-center text-white mt-0.5"
-                  style={{ backgroundColor: pin.color ?? config.color }}
-                >
-                  <span className="text-[9px] font-bold">
-                    {config.label[0]}
-                  </span>
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  {pin.entity_number && (
-                    <p className="text-[10px] text-muted-foreground leading-none mb-0.5">
-                      {pin.entity_number}
-                    </p>
+                  key={pin.id}
+                  onMouseEnter={() => onPinHover?.(pin.id)}
+                  onMouseLeave={() => onPinHover?.(null)}
+                  className={cn(
+                    "group px-3 py-2 flex items-start gap-2 hover:bg-muted transition-colors cursor-default",
+                    pin.page !== currentPage && "opacity-50"
                   )}
-                  <p className="text-xs text-foreground leading-snug truncate">
-                    {pin.entity_label ?? config.label}
-                  </p>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    {pin.entity_status && <StatusDot status={pin.entity_status} />}
-                    {pin.entity_status && (
-                      <span className="text-[10px] text-muted-foreground capitalize">
-                        {pin.entity_status.replace("_", " ")}
-                      </span>
-                    )}
-                    {pin.page !== currentPage && (
-                      <span className="text-[10px] text-muted-foreground">
-                        · Page {pin.page}
-                      </span>
-                    )}
+                >
+                  {/* Color indicator */}
+                  <div
+                    className="h-5 w-5 rounded shrink-0 flex items-center justify-center text-primary-foreground mt-0.5"
+                    style={{ backgroundColor: pin.color ?? config.color }}
+                  >
+                    <span className="text-[9px] font-bold">
+                      {config.label[0]}
+                    </span>
                   </div>
-                </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                  {pin.entity_id && (
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    {pin.entity_number && (
+                      <p className="text-[10px] text-muted-foreground leading-none mb-0.5">
+                        {pin.entity_number}
+                      </p>
+                    )}
+                    <p className="text-xs text-foreground leading-snug truncate">
+                      {pin.entity_label ?? config.label}
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      {pin.entity_status && <StatusDot status={pin.entity_status} />}
+                      {pin.entity_status && (
+                        <span className="text-[10px] text-muted-foreground capitalize">
+                          {pin.entity_status.replace("_", " ")}
+                        </span>
+                      )}
+                      {pin.page !== currentPage && (
+                        <span className="text-[10px] text-muted-foreground">
+                          · Page {pin.page}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                    {pin.entity_id && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground hover:bg-muted"
+                        onClick={() => navigateToEntity(pin)}
+                        title="Open in tool"
+                      >
+                        <ExternalLink />
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground hover:bg-muted"
-                      onClick={() => navigateToEntity(pin)}
-                      title="Open in tool"
+                      className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive hover:bg-muted"
+                      onClick={() => setPendingDeletePin(pin)}
+                      title="Remove link"
                     >
-                      <ExternalLink />
+                      <Trash2 className="h-3 w-3" />
                     </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive hover:bg-muted"
-                    onClick={() => deletePin.mutate(pin.id)}
-                    title="Remove link"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        );
-      })}
-    </div>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+
+      <ConfirmDeleteDialog
+        open={pendingDeletePin !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDeletePin(null);
+        }}
+        title="Remove this link?"
+        description="The pin will be removed from the drawing. The linked item (RFI, punch item, etc.) will not be deleted."
+        confirmLabel="Remove"
+        isDeleting={deletePin.isPending}
+        onConfirm={() => {
+          if (pendingDeletePin) {
+            deletePin.mutate(pendingDeletePin.id, {
+              onSettled: () => setPendingDeletePin(null),
+            });
+          }
+        }}
+      />
+    </>
   );
 }

@@ -32,6 +32,7 @@ import {
 import { PageActions } from "./page-actions";
 import { formatCurrency } from "@/lib/format";
 import { apiFetch } from "@/lib/api-client";
+import { useConfirmationDialog } from "@/components/common/ConfirmationDialog";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -182,6 +183,23 @@ export function ChangeOrdersClient({
     },
   });
 
+  // --- Delete confirmation dialogs -------------------------------------------
+  const primeDeleteDialog = useConfirmationDialog({
+    title: "Delete Change Order",
+    description:
+      "Are you sure you want to delete this prime contract change order? This action cannot be undone.",
+    confirmLabel: "Delete",
+    variant: "destructive",
+  });
+
+  const commitmentDeleteDialog = useConfirmationDialog({
+    title: "Delete Change Order",
+    description:
+      "Are you sure you want to delete this commitment change order? This action cannot be undone.",
+    confirmLabel: "Delete",
+    variant: "destructive",
+  });
+
   // Mobile viewport detection
   const [isMobileViewport, setIsMobileViewport] = React.useState(false);
   React.useEffect(() => {
@@ -294,17 +312,19 @@ export function ChangeOrdersClient({
   const handleEditPrime = (co: PrimeContractCO) => {
     router.push(`/${projectId}/change-orders/prime/${co.id}?edit=1`);
   };
-  const handleDeletePrime = async (co: PrimeContractCO) => {
-    try {
-      await apiFetch(
-        `/api/projects/${projectId}/prime-contract-change-orders/${co.id}`,
-        { method: "DELETE" },
-      );
-      toast.success("Change order deleted");
-      router.refresh();
-    } catch (err) {
-      toast.error("Could not delete change order", { description: err instanceof Error ? err.message : "an unexpected error occurred" });
-    }
+  const handleDeletePrime = (co: PrimeContractCO) => {
+    primeDeleteDialog.confirm(async () => {
+      try {
+        await apiFetch(
+          `/api/projects/${projectId}/prime-contract-change-orders/${co.id}`,
+          { method: "DELETE" },
+        );
+        toast.success("Change order deleted");
+        router.refresh();
+      } catch (err) {
+        toast.error("Could not delete change order", { description: err instanceof Error ? err.message : "an unexpected error occurred" });
+      }
+    });
   };
 
   const handleViewCommitment = (co: CommitmentCO) => {
@@ -313,21 +333,23 @@ export function ChangeOrdersClient({
   const handleEditCommitment = (co: CommitmentCO) => {
     router.push(`/${projectId}/change-orders/commitment/${co.id}?edit=1`);
   };
-  const handleDeleteCommitment = async (co: CommitmentCO) => {
+  const handleDeleteCommitment = (co: CommitmentCO) => {
     if (!co.contract_id) {
       toast.error("Missing contract reference");
       return;
     }
-    try {
-      await apiFetch(
-        `/api/commitments/${co.contract_id}/change-orders/${co.id}`,
-        { method: "DELETE" },
-      );
-      toast.success("Change order deleted");
-      router.refresh();
-    } catch (err) {
-      toast.error("Could not delete change order", { description: err instanceof Error ? err.message : "an unexpected error occurred" });
-    }
+    commitmentDeleteDialog.confirm(async () => {
+      try {
+        await apiFetch(
+          `/api/commitments/${co.contract_id}/change-orders/${co.id}`,
+          { method: "DELETE" },
+        );
+        toast.success("Change order deleted");
+        router.refresh();
+      } catch (err) {
+        toast.error("Could not delete change order", { description: err instanceof Error ? err.message : "an unexpected error occurred" });
+      }
+    });
   };
 
   // --- Selection handlers (shared pattern) -----------------------------------
@@ -458,6 +480,9 @@ export function ChangeOrdersClient({
       Boolean(primeTableState.searchInput) || Boolean(primeActiveFilters.status) || Boolean(primeActiveFilters.executed);
 
     return (
+      <>
+        {primeDeleteDialog.dialog}
+        {commitmentDeleteDialog.dialog}
       <UnifiedTablePage
         header={{
           title: "Change Orders",
@@ -546,6 +571,7 @@ export function ChangeOrdersClient({
         }}
         features={{ enableExport: false, enableBulkDelete: false }}
       />
+      </>
     );
   }
 
@@ -554,6 +580,9 @@ export function ChangeOrdersClient({
     Boolean(commitmentTableState.searchInput) || Boolean(commitmentActiveFilters.status);
 
   return (
+    <>
+      {primeDeleteDialog.dialog}
+      {commitmentDeleteDialog.dialog}
     <UnifiedTablePage
       header={{
         title: "Change Orders",
@@ -650,5 +679,6 @@ export function ChangeOrdersClient({
       }}
       features={{ enableExport: false, enableBulkDelete: false }}
     />
+    </>
   );
 }

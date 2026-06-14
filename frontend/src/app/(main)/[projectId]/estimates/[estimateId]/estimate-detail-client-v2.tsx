@@ -1293,8 +1293,6 @@ export function EstimateDetailClientV2({
   );
   const [hideEmptyDetailRows, setHideEmptyDetailRows] = React.useState(false);
 
-  const [isDirty, setIsDirty] = React.useState(false);
-  const [isSaving, setIsSaving] = React.useState(false);
 
   // Template state
   type GcTemplate = { template_id: string; name: string; created_at: string };
@@ -1427,14 +1425,6 @@ export function EstimateDetailClientV2({
     }
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    await new Promise((r) => setTimeout(r, 300));
-    setIsDirty(false);
-    setIsSaving(false);
-    toast.success("Changes saved");
-  };
-
   // Patch estimate helper
   const patchEstimate = React.useCallback(
     async (fields: Record<string, unknown>) => {
@@ -1449,7 +1439,7 @@ export function EstimateDetailClientV2({
             }),
           },
         );
-        setIsDirty(true);
+
       } catch (err) {
         console.error("Failed to save estimate fields", err);
         showEstimateError(
@@ -1485,7 +1475,6 @@ export function EstimateDetailClientV2({
       setGcItems((prev) =>
         prev.map((item) => (item.id === id ? updated : item)),
       );
-      setIsDirty(true);
     } catch (err) {
       console.error("Failed to save estimate GC row", err);
       showEstimateError(
@@ -1558,7 +1547,6 @@ export function EstimateDetailClientV2({
       setDetailItems((prev) =>
         prev.map((item) => (item.id === id ? updated : item)),
       );
-      setIsDirty(true);
     } catch (err) {
       console.error("Failed to save estimate detail row", err);
       showEstimateError(
@@ -1611,7 +1599,7 @@ export function EstimateDetailClientV2({
           },
         );
         setDetailItems((prev) => [...prev, created]);
-        setIsDirty(true);
+
       } catch (err) {
         console.error("Failed to create estimate detail row from catalog", err);
         showEstimateError(
@@ -1654,7 +1642,6 @@ export function EstimateDetailClientV2({
         { method: "PATCH", body: JSON.stringify(fields) },
       );
       setSublistSubs((prev) => prev.map((s) => (s.id === id ? updated : s)));
-      setIsDirty(true);
     } catch (err) {
       console.error("Failed to save estimate sublist sub", err);
       showEstimateError(
@@ -1676,7 +1663,7 @@ export function EstimateDetailClientV2({
           { method: "DELETE" },
         );
         setSublistSubs((prev) => prev.filter((item) => item.id !== sub.id));
-        setIsDirty(true);
+
         toast.success("Sub deleted");
         return true;
       } catch (error) {
@@ -1858,11 +1845,6 @@ export function EstimateDetailClientV2({
 
   const actionsMenu = (
     <div className="flex items-center gap-2">
-      {isDirty && (
-        <Button size="sm" onClick={() => void handleSave()} disabled={isSaving}>
-          {isSaving ? "Saving..." : "Save"}
-        </Button>
-      )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button size="sm" className="gap-1.5">
@@ -3096,14 +3078,16 @@ function SubListTab({
             body: JSON.stringify({ is_checked: updated.is_checked }),
           },
         );
-      } catch {
-        // revert
+      } catch (err) {
+        // revert optimistic update
         setScopeItemsByDiv((prev) => ({
           ...prev,
           [divCode]: (prev[divCode] ?? []).map((s) =>
             s.id === item.id ? item : s,
           ),
         }));
+        const msg = err instanceof Error ? err.message : "Unknown error";
+        toast.error(`Failed to save scope item: ${msg}`);
       }
     },
     [projectId, estimateId],
@@ -3859,10 +3843,18 @@ function SubListTab({
       }
 
       if (status.key === "awarded" && sub.price && sub.price > 0) {
-        void apiFetch(
-          `/api/projects/${projectId}/estimates/${estimateId}/sublist/${sub.id}/use-bid`,
-          { method: "POST" },
-        ).then(() => toast.success("Bid flowed into estimate"));
+        void (async () => {
+          try {
+            await apiFetch(
+              `/api/projects/${projectId}/estimates/${estimateId}/sublist/${sub.id}/use-bid`,
+              { method: "POST" },
+            );
+            toast.success("Bid flowed into estimate");
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : "Unknown error";
+            toast.error(`Failed to flow bid into estimate: ${msg}`);
+          }
+        })();
       }
     },
     [
@@ -5055,14 +5047,25 @@ function SubListTab({
                                           className="h-7 gap-1 px-2 text-[10px] text-muted-foreground hover:text-primary"
                                           title="Flow this bid into the estimate detail"
                                           onClick={() => {
-                                            void apiFetch(
-                                              `/api/projects/${projectId}/estimates/${estimateId}/sublist/${sub.id}/use-bid`,
-                                              { method: "POST" },
-                                            ).then(() =>
-                                              toast.success(
-                                                "Bid flowed into estimate",
-                                              ),
-                                            );
+                                            void (async () => {
+                                              try {
+                                                await apiFetch(
+                                                  `/api/projects/${projectId}/estimates/${estimateId}/sublist/${sub.id}/use-bid`,
+                                                  { method: "POST" },
+                                                );
+                                                toast.success(
+                                                  "Bid flowed into estimate",
+                                                );
+                                              } catch (err) {
+                                                const msg =
+                                                  err instanceof Error
+                                                    ? err.message
+                                                    : "Unknown error";
+                                                toast.error(
+                                                  `Failed to flow bid into estimate: ${msg}`,
+                                                );
+                                              }
+                                            })();
                                           }}
                                         >
                                           Use bid

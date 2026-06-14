@@ -5,6 +5,7 @@ import type { ReactElement } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MoreHorizontal, Plus } from "lucide-react";
 
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,18 +18,38 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/unified-modal";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
   type TableColumn,
 } from "@/components/tables/unified";
+import { PageTabs } from "@/components/layout/PageTabs";
 import {
   useBillingPeriodsList,
+  useCreateBillingPeriod,
+  useDeleteBillingPeriod,
   type BillingPeriod,
 } from "@/hooks/use-billing-periods";
 import { formatDate } from "@/lib/format";
@@ -62,6 +83,21 @@ export default function ProjectBillingPeriodsPage(): ReactElement {
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [periodToDelete, setPeriodToDelete] = React.useState<BillingPeriod | null>(null);
 
+  // ─── Create Dialog State ───────────────────────────────────────────────────
+  const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
+  const [bpMode, setBpMode] = React.useState<"manual" | "automatic">("manual");
+  const [bpFormStartDate, setBpFormStartDate] = React.useState("");
+  const [bpFormEndDate, setBpFormEndDate] = React.useState("");
+  const [bpFormBillingDate, setBpFormBillingDate] = React.useState("");
+  const [bpAutoFrequency, setBpAutoFrequency] = React.useState<"monthly" | "semi_monthly" | "weekly">("monthly");
+  const [bpAutoBasis, setBpAutoBasis] = React.useState<"by_date">("by_date");
+  const [bpAutoStartDay, setBpAutoStartDay] = React.useState("1");
+  const [bpAutoStartMonth, setBpAutoStartMonth] = React.useState<"previous" | "this" | "next">("this");
+  const [bpAutoEndDay, setBpAutoEndDay] = React.useState("30");
+  const [bpAutoEndMonth, setBpAutoEndMonth] = React.useState<"previous" | "this" | "next">("this");
+  const [bpAutoDueDay, setBpAutoDueDay] = React.useState("24");
+  const [bpAutoDueMonth, setBpAutoDueMonth] = React.useState<"previous" | "this" | "next">("next");
+
   // ─── Table State ───────────────────────────────────────────────────────────
 
   const tableState = useUnifiedTableState({
@@ -81,6 +117,11 @@ export default function ProjectBillingPeriodsPage(): ReactElement {
       filters: {},
     },
   });
+
+  // ─── Mutations ─────────────────────────────────────────────────────────────
+
+  const createBpMutation = useCreateBillingPeriod(projectId);
+  const deleteBpMutation = useDeleteBillingPeriod(projectId);
 
   // ─── Data ──────────────────────────────────────────────────────────────────
 
@@ -184,8 +225,13 @@ export default function ProjectBillingPeriodsPage(): ReactElement {
   }
 
   async function handleDeleteConfirm() {
+    if (!periodToDelete) return;
+    const id = String(periodToDelete.id);
     setDeleteDialogOpen(false);
     setPeriodToDelete(null);
+    await deleteBpMutation.mutateAsync(id).catch(() => {
+      // Error toast is handled by useDeleteBillingPeriod's onError with the real server message
+    });
   }
 
   // ─── Row Actions ───────────────────────────────────────────────────────────
@@ -236,7 +282,7 @@ export default function ProjectBillingPeriodsPage(): ReactElement {
           actions: (
             <Button
               size="sm"
-              onClick={() => router.push(`/${projectId}/billing-periods/new`)}
+              onClick={() => setCreateDialogOpen(true)}
             >
               <Plus />
               New Billing Period
@@ -305,7 +351,7 @@ export default function ProjectBillingPeriodsPage(): ReactElement {
           action: (
             <Button
               size="sm"
-              onClick={() => router.push(`/${projectId}/billing-periods/new`)}
+              onClick={() => setCreateDialogOpen(true)}
             >
               <Plus />
               New Billing Period
@@ -350,6 +396,295 @@ export default function ProjectBillingPeriodsPage(): ReactElement {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* ─── Create Billing Period Dialog ─────────────────────────────────── */}
+      <Modal open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <ModalContent size="md">
+          <ModalHeader>
+            <ModalTitle>Set Up Billing Period</ModalTitle>
+            <ModalDescription>
+              Add a billing period manually, or generate a recurring schedule
+              automatically.
+            </ModalDescription>
+          </ModalHeader>
+
+          <PageTabs
+            variant="inline"
+            onTabClick={(href) => setBpMode(href as "manual" | "automatic")}
+            tabs={[
+              { label: "Manual", href: "manual", isActive: bpMode === "manual" },
+              { label: "Automatic", href: "automatic", isActive: bpMode === "automatic" },
+            ]}
+          />
+
+          {bpMode === "manual" ? (
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bp-start">From</Label>
+                  <Input
+                    id="bp-start"
+                    type="date"
+                    value={bpFormStartDate}
+                    onChange={(e) => setBpFormStartDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bp-end">To</Label>
+                  <Input
+                    id="bp-end"
+                    type="date"
+                    value={bpFormEndDate}
+                    onChange={(e) => setBpFormEndDate(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bp-billing">Due Date</Label>
+                <Input
+                  id="bp-billing"
+                  type="date"
+                  value={bpFormBillingDate}
+                  onChange={(e) => setBpFormBillingDate(e.target.value)}
+                />
+              </div>
+            </div>
+          ) : (
+            (() => {
+              const dayOptions = Array.from({ length: 31 }, (_, i) => i + 1);
+              const ordinal = (n: number) => {
+                const s = ["th", "st", "nd", "rd"];
+                const v = n % 100;
+                return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
+              };
+              const monthOptions = [
+                { value: "previous", label: "previous month" },
+                { value: "this", label: "this month" },
+                { value: "next", label: "next month" },
+              ] as const;
+              return (
+                <div className="space-y-4 py-2">
+                  <div className="space-y-2">
+                    <Label>Frequency</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Select
+                        value={bpAutoFrequency}
+                        onValueChange={(v) =>
+                          setBpAutoFrequency(v as "monthly" | "semi_monthly" | "weekly")
+                        }
+                      >
+                        <SelectTrigger size="sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                          <SelectItem value="semi_monthly">Semi-monthly</SelectItem>
+                          <SelectItem value="weekly">Weekly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Select
+                        value={bpAutoBasis}
+                        onValueChange={(v) => setBpAutoBasis(v as "by_date")}
+                      >
+                        <SelectTrigger size="sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="by_date">By date</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Start Date</Label>
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                      <Select
+                        value={bpAutoStartDay}
+                        onValueChange={setBpAutoStartDay}
+                      >
+                        <SelectTrigger size="sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {dayOptions.map((d) => (
+                            <SelectItem key={d} value={String(d)}>{ordinal(d)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <span className="text-sm text-muted-foreground">of</span>
+                      <Select
+                        value={bpAutoStartMonth}
+                        onValueChange={(v) =>
+                          setBpAutoStartMonth(v as "previous" | "this" | "next")
+                        }
+                      >
+                        <SelectTrigger size="sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {monthOptions.map((o) => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>End Date</Label>
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                      <Select
+                        value={bpAutoEndDay}
+                        onValueChange={setBpAutoEndDay}
+                      >
+                        <SelectTrigger size="sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {dayOptions.map((d) => (
+                            <SelectItem key={d} value={String(d)}>{ordinal(d)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <span className="text-sm text-muted-foreground">of</span>
+                      <Select
+                        value={bpAutoEndMonth}
+                        onValueChange={(v) =>
+                          setBpAutoEndMonth(v as "previous" | "this" | "next")
+                        }
+                      >
+                        <SelectTrigger size="sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {monthOptions.map((o) => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Due Date</Label>
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                      <Select
+                        value={bpAutoDueDay}
+                        onValueChange={setBpAutoDueDay}
+                      >
+                        <SelectTrigger size="sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {dayOptions.map((d) => (
+                            <SelectItem key={d} value={String(d)}>{ordinal(d)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <span className="text-sm text-muted-foreground">of</span>
+                      <Select
+                        value={bpAutoDueMonth}
+                        onValueChange={(v) =>
+                          setBpAutoDueMonth(v as "previous" | "this" | "next")
+                        }
+                      >
+                        <SelectTrigger size="sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {monthOptions.map((o) => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()
+          )}
+
+          <ModalFooter>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={
+                createBpMutation.isPending ||
+                (bpMode === "manual" &&
+                  (!bpFormStartDate || !bpFormEndDate || !bpFormBillingDate))
+              }
+              onClick={async () => {
+                if (bpMode === "manual") {
+                  createBpMutation.mutate(
+                    {
+                      start_date: bpFormStartDate,
+                      end_date: bpFormEndDate,
+                      due_date: bpFormBillingDate || undefined,
+                    },
+                    {
+                      onSuccess: () => {
+                        setCreateDialogOpen(false);
+                        setBpFormStartDate("");
+                        setBpFormEndDate("");
+                        setBpFormBillingDate("");
+                      },
+                    },
+                  );
+                  return;
+                }
+
+                // Automatic: resolve day-of-month rule to a single period
+                const resolveDate = (
+                  dayStr: string,
+                  offset: "previous" | "this" | "next",
+                ) => {
+                  const today = new Date();
+                  const monthDelta =
+                    offset === "previous" ? -1 : offset === "next" ? 1 : 0;
+                  const target = new Date(
+                    today.getFullYear(),
+                    today.getMonth() + monthDelta,
+                    1,
+                  );
+                  const lastDay = new Date(
+                    target.getFullYear(),
+                    target.getMonth() + 1,
+                    0,
+                  ).getDate();
+                  const day = Math.min(
+                    Math.max(1, Number(dayStr) || 1),
+                    lastDay,
+                  );
+                  target.setDate(day);
+                  return target.toISOString().slice(0, 10);
+                };
+
+                try {
+                  await createBpMutation.mutateAsync({
+                    start_date: resolveDate(bpAutoStartDay, bpAutoStartMonth),
+                    end_date: resolveDate(bpAutoEndDay, bpAutoEndMonth),
+                    due_date: resolveDate(bpAutoDueDay, bpAutoDueMonth),
+                  });
+                  setCreateDialogOpen(false);
+                } catch (error) {
+                  reportNonCriticalFailure({
+                    area: "billing-periods",
+                    operation: "create-billing-period",
+                    error,
+                    userVisibleFallback:
+                      "Billing period creation failed and the dialog remains available.",
+                    metadata: { projectId },
+                  });
+                }
+              }}
+            >
+              {createBpMutation.isPending ? "Creating..." : "Create"}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </>
   );
 }
