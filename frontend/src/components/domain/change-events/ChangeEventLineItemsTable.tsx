@@ -1018,7 +1018,7 @@ export function ChangeEventLineItemsTable({
                                 {onDeleteLineItem && (
                                   <DropdownMenuItem
                                     className="text-destructive"
-                                    onClick={() => onDeleteLineItem(li.id)}
+                                    onSelect={() => void onDeleteLineItem(li.id)}
                                   >
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     Delete
