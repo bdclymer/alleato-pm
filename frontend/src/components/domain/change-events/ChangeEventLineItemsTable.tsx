@@ -1007,7 +1007,9 @@ export function ChangeEventLineItemsTable({
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 {changeEventId && (
-                                  <DropdownMenuItem onClick={() => openEdit(li)}>
+                                  <DropdownMenuItem
+                                    onSelect={(e) => { e.preventDefault(); openEdit(li); }}
+                                  >
                                     <Edit className="mr-2 h-4 w-4" />
                                     Edit
                                   </DropdownMenuItem>
