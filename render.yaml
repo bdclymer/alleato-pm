@@ -733,6 +733,12 @@ services:
         sync: false
       - key: AI_GATEWAY_API_KEY
         sync: false
+      # Backend Sentry DSN (set via Render API 2026-06-14). init_sentry() in
+      # src/services/sentry_monitoring.py reads SENTRY_BACKEND_DSN || SENTRY_DSN;
+      # without it backend exceptions go uncaptured — which is how the OpenAI
+      # quota outage stayed invisible. Declared here so a Blueprint sync keeps it.
+      - key: SENTRY_BACKEND_DSN
+        sync: false
       - key: TAVILY_API_KEY
         sync: false
       - key: GOOGLE_API_KEY
