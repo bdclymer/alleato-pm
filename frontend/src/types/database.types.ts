@@ -15444,7 +15444,10 @@ export type Database = {
           last_seen_at: string | null
           metadata: Json
           next_action: string | null
+          occurred_at: string | null
           primary_target_id: string
+          related_card_ids: string[]
+          severity: number | null
           source_count: number
           stale_after: string | null
           suggested_owner_label: string | null
@@ -15466,7 +15469,10 @@ export type Database = {
           last_seen_at?: string | null
           metadata?: Json
           next_action?: string | null
+          occurred_at?: string | null
           primary_target_id: string
+          related_card_ids?: string[]
+          severity?: number | null
           source_count?: number
           stale_after?: string | null
           suggested_owner_label?: string | null
@@ -15488,7 +15494,10 @@ export type Database = {
           last_seen_at?: string | null
           metadata?: Json
           next_action?: string | null
+          occurred_at?: string | null
           primary_target_id?: string
+          related_card_ids?: string[]
+          severity?: number | null
           source_count?: number
           stale_after?: string | null
           suggested_owner_label?: string | null

@@ -4,8 +4,28 @@
 compiler → insight_card → intelligence_packet → executive-brief path, traced by `grep`
 (not by docs), so we can rip out the broken path safely and rebuild on full-context synthesis.
 
-**Status:** Open questions RESOLVED (2026-06-14). Awaiting final go for Step 1 rip-out.
+**Status:** ✅ Step 1 COMPLETE. 🔨 Step 2 in progress — Slice 2.1 (schema) DONE (2026-06-14).
+
+### Step 2 slice tracker
+- ✅ **2.1 Schema** (migration `20260614140000_insight_cards_timeline_fields.sql`): added `occurred_at`,
+  `severity` (1–5 check), `related_card_ids uuid[]` to `insight_cards`; widened `current_status`
+  (+materialized/did_not_materialize/superseded) and `card_type` (+flag/solution/milestone); backfilled
+  `occurred_at` on all 10,618 rows; added timeline index. Applied to PM APP + verified (test flag/materialized
+  insert accepted & rolled back, 0 rows broken). Types regenerated.
+- ⬜ **2.2 Synthesizer** — generalize deep-extractor to all sources, rolling-state + delta.
+- ⬜ **2.3 Flag→outcome calibration loop.**
+- ⬜ **2.4 Trigger + staleness gate.**
+- ⬜ **2.5 Page + AM/PM brief wiring.**
 **Verified:** 2026-06-14 against live code AND live Render prod env.
+
+### Step 1 completion record (2026-06-14)
+- Commit `10a1af5f0` pushed to main; Render deploy `dep-d8n4t7jbc2fs73ejm5q0` reached `live`, booted clean
+  (`Application startup complete`), zero ImportError/deleted-module refs in startup logs.
+- Prod: `alleato-task-extraction` cron suspended; `DEEP_AGENTS_PROJECT_INTELLIGENCE_ENABLED=false`.
+- Deleted: `teams_compiler.py`, `email_compiler.py`, `task_extraction.py` + all wiring + 5 dead test files.
+- 3,795 line deletions, content-clean; all pre-commit gates passed.
+- ⚠️ Render auto-deploy was NOT tracking pushes (was stuck on 2026-06-12 commit `c5903f49`). Deploy was
+  triggered manually via API. **Follow-up: check why backend auto-deploy isn't firing on push to main.**
 
 ## Verified prod state (Render API, 2026-06-14)
 
