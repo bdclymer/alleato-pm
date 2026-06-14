@@ -33,39 +33,33 @@ export const GET = withApiGuardrails<{ projectId: string }>(
   const projectId = parseInt(projectIdStr, 10);
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("project_vendors")
-    .select("vendor_id, companies(id, name, legal_name)")
-    .eq("project_id", projectId);
-
-  if (error) {
-    return apiErrorResponse(error);
-  }
-
-  // If no project-specific vendors, return all vendor companies for the dropdown
-  if (!data || data.length === 0) {
-    const { data: allVendors, error: allError } = await supabase
+  const [projectVendorsResult, allVendorsResult] = await Promise.all([
+    supabase
+      .from("project_vendors")
+      .select("vendor_id, companies(id, name, legal_name)")
+      .eq("project_id", projectId),
+    supabase
       .from("companies")
       .select("id, name, legal_name")
       .eq("is_vendor", true)
-      .order("name");
+      .order("name"),
+  ]);
 
-    if (allError) {
-      return apiErrorResponse(allError);
-    }
-
-    return NextResponse.json(
-      (allVendors as VendorCompany[] | null)?.map((c) => ({
-        id: c.id,
-        vendor_name: c.name ?? "",
-        company_id: c.id,
-        company: c.name ?? "",
-      }))
-    );
+  if (projectVendorsResult.error) {
+    return apiErrorResponse(projectVendorsResult.error);
+  }
+  if (allVendorsResult.error) {
+    return apiErrorResponse(allVendorsResult.error);
   }
 
-  return NextResponse.json(
-    (data as ProjectVendorRow[] | null)?.map((row) => {
+  // Build a set of project-linked vendor IDs for dedup
+  const projectVendorIds = new Set(
+    (projectVendorsResult.data ?? []).map((row) => row.vendor_id),
+  );
+
+  // Project-linked vendors first, then all other is_vendor=true companies
+  const projectVendorRows = (projectVendorsResult.data as ProjectVendorRow[] ?? []).map(
+    (row) => {
       const company = normalizeCompany(row.companies);
       return {
         id: row.vendor_id,
@@ -73,8 +67,19 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         company_id: row.vendor_id,
         company: company?.name ?? "",
       };
-    })
+    },
   );
+
+  const globalVendorRows = (allVendorsResult.data as VendorCompany[] ?? [])
+    .filter((c) => !projectVendorIds.has(c.id))
+    .map((c) => ({
+      id: c.id,
+      vendor_name: c.name ?? "",
+      company_id: c.id,
+      company: c.name ?? "",
+    }));
+
+  return NextResponse.json([...projectVendorRows, ...globalVendorRows]);
   },
 );
 

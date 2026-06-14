@@ -146,6 +146,10 @@ export const POST = withApiGuardrails(
       );
     }
 
+    const companyType = body.company_type || body.type || "VENDOR";
+    const NON_VENDOR_TYPES = ["client", "CLIENT", "YOUR_COMPANY"];
+    const isVendor = !NON_VENDOR_TYPES.includes(companyType);
+
     // Insert company
     const { data: company, error } = await supabase
       .from("companies")
@@ -156,8 +160,9 @@ export const POST = withApiGuardrails(
         city: body.city || null,
         state: body.state || null,
         website: body.website || null,
-        type: body.company_type || body.type || "VENDOR",
+        type: companyType,
         status: body.status || "ACTIVE",
+        is_vendor: isVendor,
       })
       .select()
       .single();
