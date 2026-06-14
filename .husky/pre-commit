@@ -59,6 +59,17 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+# ── Phantom-table guard (docs) ───────────────────────────────────
+# Block staged Markdown that asserts a DB table not in database.types.ts.
+# Stale FK docs naming nonexistent tables (vendors, project_cost_codes)
+# self-propagate false "mismatches" to every agent session. See
+# scripts/audits/check-no-phantom-doc-tables.mjs.
+node scripts/audits/check-no-phantom-doc-tables.mjs --staged
+if [ $? -ne 0 ]; then
+  echo "Phantom table claim in docs. Fix before committing."
+  exit 1
+fi
+
 # ── Build crash guards ───────────────────────────────────────────
 # Prevent the two patterns that have caused production build failures:
 #   1. Server pages calling createServiceClient() without force-dynamic

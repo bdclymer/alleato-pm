@@ -5,13 +5,13 @@
 Change event edit form showed empty dropdowns for Budget Code and Vendor because:
 
 - `change_event_line_items.budget_line_id` → FK to `budget_lines.id`
-- `change_event_line_items.budget_code_id` → legacy alias for `budget_line_id`; it stores `budget_lines.id`, not `project_budget_codes.id`
-- `BudgetCodeSelector` dropdown → uses `project_cost_codes.id`
-- **Different tables, different UUIDs. Form can never match.**
+- `change_event_line_items.budget_code_id` → FK to `budget_lines.id` (legacy alias for `budget_line_id`; stores `budget_lines.id`, NOT `project_budget_codes.id`)
+- `BudgetCodeSelector` dropdown → returns `project_budget_codes.id` (via `/api/projects/[id]/budget-codes`, which queries the **`project_budget_codes`** table)
+- **Different tables, different UUIDs. Form can never match — for `change_event_line_items` specifically.**
 
-- `change_event_line_items.vendor_id` → FK to `companies.id`
-- `VendorCombobox` dropdown → uses `vendors.id`
-- **Different tables, different UUIDs. Form can never match.**
+> **Verified live 2026-06-14.** There is **no `project_cost_codes` table** — the dropdown source is **`project_budget_codes`**. And `budget_code_id` does NOT uniformly point to `budget_lines`: only `change_event_line_items.budget_code_id` does. `contract_line_items` (commitments), `direct_cost_line_items`, and `prime_contract_sovs` all have `budget_code_id` → `project_budget_codes.id`, which **matches the dropdown directly — no resolution needed there**. The single real mismatch (`change_event_line_items`) is already resolved in its line-items API.
+
+> **Vendor note (resolved — do NOT re-add as a mismatch):** There is **no `vendors` table**. It does not exist in the database. Every `vendor_id` column in every table is an FK to **`companies.id`** (verified live: `change_event_line_items`, `direct_costs`, `prime_contracts`, `project_vendors` all → `companies.id`). The vendor dropdown API (`/api/projects/[id]/vendors`) already returns `companies.id`. So the value the dropdown supplies IS the value stored — **no ID resolution is needed for vendor**. The original 2026-03 vendor mismatch is dead. The only real vendor concern left is the **scope mismatch** documented below (global FK vs project-scoped dropdown), not a table mismatch. `vendor_id` is a legacy column *name* only.
 
 This pattern will recur anywhere a form dropdown loads options from a different table than what the database column references.
 
@@ -27,7 +27,7 @@ This pattern will recur anywhere a form dropdown loads options from a different 
 
 | Column | FK Target | Form Dropdown Source | Resolution |
 |--------|-----------|---------------------|------------|
-| `change_event_line_items.budget_line_id` | `budget_lines` | `project_budget_codes` (via `/api/projects/[id]/budget-codes`) | Prefer `budget_lines.project_budget_code_id`; fallback through `cost_code_id` + `cost_type_id` |
+| `change_event_line_items.budget_code_id` / `budget_line_id` | `budget_lines` | `project_budget_codes` (via `/api/projects/[id]/budget-codes`) | **The only budget-code mismatch.** Resolve via `budget_lines.project_budget_code_id`; fallback through `cost_code_id` + `cost_type_id`. (`contract_line_items`, `direct_cost_line_items`, `prime_contract_sovs` need NO resolution — their `budget_code_id` already targets `project_budget_codes.id`.) |
 | `change_event_line_items.vendor_id` | `companies` | `/api/projects/[id]/vendors` (already returns `companies.id`) | No mapping needed — there is no separate `vendors` table; the API joins through `project_vendors` and exposes the underlying `companies.id` directly. (The original 2026-03 mismatch has been resolved at the API layer.) |
 | `*.commitment_id` | `subcontracts` or `purchase_orders` | Combined list with `sub-`/`po-` prefixes | Prefix-based parsing (already working) |
 | `direct_costs.vendor_id` | `companies` | `/api/projects/[id]/vendors` (project-scoped companies) | Form injects the record's existing `vendor:companies(*)` as a synthetic option + uses `selectedLabel` fallback so Edit always renders the saved vendor even if it's outside the scoped dropdown set |
@@ -67,12 +67,12 @@ stored FK is **global**. Example: `/api/projects/[id]/vendors` only returns vend
 The GET API maps stored IDs to form-compatible IDs:
 - `budgetLineId`: stored `budget_lines.id`
 - `projectBudgetCodeId`: budget_lines.id → project_budget_codes.id (via `budget_lines.project_budget_code_id`)
-- `formVendorId`: companies.id → vendors.id (via name matching)
+- Vendor: **no mapping** — stored `vendor_id` IS `companies.id`, and the dropdown already returns `companies.id`. (See the scope-mismatch section for the one defence vendor edit forms still need.)
 
 ### Write path (Form → API)
 The POST/PATCH line items API resolves form IDs back to FK-compatible IDs:
 - If `budgetCodeId` is not found in `budget_lines`, checks `project_budget_codes` and resolves or creates the matching `budget_lines` row
-- If `vendorId` not found in `companies`, checks `vendors` table and gets `company_id`
+- Vendor: **no resolution** — the dropdown value is already a `companies.id`; store it directly. There is no `vendors` table to look through.
 
 ## Audit history
 

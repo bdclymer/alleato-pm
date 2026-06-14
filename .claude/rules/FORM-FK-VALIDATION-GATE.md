@@ -23,8 +23,9 @@ You MUST add:
 
 | Form Field | DB Column FK Target | Dropdown Source | Fix |
 |-----------|-------------------|----------------|-----|
-| Budget Code | `budget_lines` | `project_cost_codes` | Map via `cost_code_id` + `cost_type_id` |
-| Vendor | `companies` | `vendors` | Map via name match |
+| Budget Code (**`change_event_line_items` ONLY**) | `budget_lines` | `project_budget_codes` | Map via `budget_lines.project_budget_code_id` (already done in change-events API). NOTE: there is no `project_cost_codes` table — the dropdown source is `project_budget_codes`. For commitments (`contract_line_items`), direct costs, and prime SOV, `budget_code_id` already targets `project_budget_codes.id` → **no resolution needed**. |
+
+> **Vendor is NOT a mismatch — do not add one.** There is **no `vendors` table** (it does not exist in the DB). Every `vendor_id` FK points to `companies.id`, and the vendor dropdown already returns `companies.id`. No resolution needed. The only vendor defence still required is the **scope** fix (global FK vs project-scoped dropdown): the edit form must inject the record's existing `vendor:companies(name,id)` as an option + pass `selectedLabel`. See `docs/patterns/form-id-mismatch-prevention.md`.
 
 ## Verification
 

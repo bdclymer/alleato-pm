@@ -134,7 +134,7 @@ Run `npm run db:types` before writing any query. Read `frontend/src/types/databa
 Use specific param names: `[projectId]`, `[contractId]`, `[commitmentId]`, `[invoiceId]`, `[companyId]`. Never `[id]`. Run `npm run check:routes` after creating any dynamic route.
 
 ### Form ↔ DB FK Validation
-Before building any form with dropdowns: check which table the dropdown fetches from vs. which table the FK column points to. If they differ, add ID resolution in both read and write paths. Known mismatches: `budget_code_id` (FK→budget_lines, dropdown→project_cost_codes), `vendor_id` (FK→companies, dropdown→vendors). Full reference: `docs/patterns/form-id-mismatch-prevention.md`.
+Before building any form with dropdowns: check which table the dropdown fetches from vs. which table the FK column points to. If they differ, add ID resolution in both read and write paths. Known mismatch (ONE, already resolved): `change_event_line_items.budget_code_id` → `budget_lines.id` while the dropdown returns `project_budget_codes.id` — resolved via `budget_lines.project_budget_code_id`. There is NO `project_cost_codes` table (it's `project_budget_codes`), and for commitments/direct-costs/prime-SOV `budget_code_id` already targets `project_budget_codes.id` (no resolution). `vendor_id` is NOT a mismatch — there is no `vendors` table; every `vendor_id` FK points to `companies.id` and the dropdown returns `companies.id` (vendor only needs the scope fix: inject the saved company as an option on edit). All verified live 2026-06-14. Full reference: `docs/patterns/form-id-mismatch-prevention.md`.
 
 ### Cache Clearing
 Before debugging any 404 or routing issue with new files:

@@ -41,6 +41,7 @@
     "db:migrations:verify-clean": "node scripts/ops/check-supabase-migration-ledger.mjs --all",
     "devtools:sync-schema-fk": "node scripts/dev-tools/generate-page-schema-fk-map.mjs",
     "check:routes": "bash scripts/check-route-conflicts.sh",
+    "check:doc-tables": "node scripts/audits/check-no-phantom-doc-tables.mjs --staged",
     "gen:playwright-prompt": "node scripts/generate-playwright-skill-prompt.cjs",
     "gen:playwright-prompt:all": "node scripts/generate-playwright-skill-prompts-batch.cjs",
     "dashboard:playwright": "node scripts/build-playwright-dashboard.cjs",
