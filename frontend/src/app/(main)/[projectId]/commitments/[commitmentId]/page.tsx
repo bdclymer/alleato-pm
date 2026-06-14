@@ -19,7 +19,8 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
-import { EntityAttachments } from "@/components/ds";
+import { EntityAttachments, InlineEditField } from "@/components/ds";
+import { COMMITMENT_STATUS_OPTIONS } from "@/features/commitments/commitments-table-config";
 import { ChangeHistoryTab } from "@/components/commitments/tabs/ChangeHistoryTab";
 import { ChangeManagementTab } from "@/components/commitments/tabs/ChangeManagementTab";
 import { EmailsTab } from "@/components/commitments/tabs/EmailsTab";
@@ -396,15 +397,19 @@ interface GeneralTabProps {
   projectId: number;
   commitmentId: string;
   onImportComplete: () => void | Promise<void>;
+  onSaveField: (field: string, value: string | number | boolean | null) => Promise<void>;
 }
 
-function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: GeneralTabProps) {
+function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onSaveField }: GeneralTabProps) {
   const isPO = commitment.type === "purchase_order";
   const displayStatus = commitment.status
     ? commitment.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
     : "Draft";
   const renderDateOrDash = (value?: string | null) =>
     value ? formatDate(value) : <span className="text-muted-foreground/60">—</span>;
+  // <input type="date"> needs YYYY-MM-DD, not a full ISO timestamp.
+  const dateInput = (value?: string | null) =>
+    typeof value === "string" && value.length >= 10 ? value.slice(0, 10) : "";
   const inclusionLines = parseTextLines(commitment.inclusions);
   const exclusionLines = parseTextLines(commitment.exclusions);
 
@@ -422,10 +427,22 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                     {safeNumber(commitment.number) || "—"}
                   </LabelValueRow>
                   <LabelValueRow label="Title" labelClassName="w-36" missing={!commitment.title}>
-                    {capitalizeWords(commitment.title) || "—"}
+                    <InlineEditField
+                      label="Title"
+                      value={commitment.title ?? ""}
+                      display={capitalizeWords(commitment.title) || undefined}
+                      onSave={(v) => onSaveField("title", v)}
+                    />
                   </LabelValueRow>
                   <LabelValueRow label="Status" labelClassName="w-36">
-                    <StatusBadge status={displayStatus} />
+                    <InlineEditField
+                      label="Status"
+                      type="select"
+                      options={COMMITMENT_STATUS_OPTIONS}
+                      value={displayStatus}
+                      display={<StatusBadge status={displayStatus} />}
+                      onSave={(v) => onSaveField("status", v)}
+                    />
                   </LabelValueRow>
                   <LabelValueRow
                     label="Contract Company"
@@ -469,29 +486,80 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                     </LabelValueRow>
                   )}
                   <LabelValueRow label="Default Retainage" labelClassName="w-36">
-                    {commitment.retention_percentage ?? 0}%
+                    <InlineEditField
+                      label="Default Retainage"
+                      type="number"
+                      value={String(commitment.retention_percentage ?? 0)}
+                      display={`${commitment.retention_percentage ?? 0}%`}
+                      onSave={(v) =>
+                        onSaveField("default_retainage_percent", v === "" ? null : Number(v))
+                      }
+                    />
                   </LabelValueRow>
                 </dl>
                 <dl className="space-y-4 text-sm">
                   {!isPO && (
                     <LabelValueRow label="Start Date" labelClassName="w-40">
-                      {renderDateOrDash(commitment.start_date)}
+                      <InlineEditField
+                        label="Start Date"
+                        type="date"
+                        value={dateInput(commitment.start_date)}
+                        display={renderDateOrDash(commitment.start_date)}
+                        onSave={(v) => onSaveField("start_date", v || null)}
+                      />
                     </LabelValueRow>
                   )}
                   <LabelValueRow label={isPO ? "Delivery Date" : "Est. Completion"} labelClassName="w-40">
-                    {renderDateOrDash(commitment.substantial_completion_date)}
+                    <InlineEditField
+                      label={isPO ? "Delivery Date" : "Est. Completion"}
+                      type="date"
+                      value={dateInput(commitment.substantial_completion_date)}
+                      display={renderDateOrDash(commitment.substantial_completion_date)}
+                      onSave={(v) =>
+                        onSaveField(isPO ? "delivery_date" : "estimated_completion_date", v || null)
+                      }
+                    />
                   </LabelValueRow>
                   <LabelValueRow label="Contract Date" labelClassName="w-40">
-                    {renderDateOrDash(commitment.executed_date)}
+                    <InlineEditField
+                      label="Contract Date"
+                      type="date"
+                      value={dateInput(commitment.executed_date)}
+                      display={renderDateOrDash(commitment.executed_date)}
+                      onSave={(v) => onSaveField("contract_date", v || null)}
+                    />
                   </LabelValueRow>
                   <LabelValueRow label="Signed Date" labelClassName="w-40">
-                    {renderDateOrDash(commitment.signed_received_date)}
+                    <InlineEditField
+                      label="Signed Date"
+                      type="date"
+                      value={dateInput(commitment.signed_received_date)}
+                      display={renderDateOrDash(commitment.signed_received_date)}
+                      onSave={(v) =>
+                        onSaveField(
+                          isPO ? "signed_po_received_date" : "signed_contract_received_date",
+                          v || null,
+                        )
+                      }
+                    />
                   </LabelValueRow>
                   <LabelValueRow label="Actual Completion" labelClassName="w-40">
-                    {renderDateOrDash(commitment.actual_completion_date)}
+                    <InlineEditField
+                      label="Actual Completion"
+                      type="date"
+                      value={dateInput(commitment.actual_completion_date)}
+                      display={renderDateOrDash(commitment.actual_completion_date)}
+                      onSave={(v) => onSaveField("actual_completion_date", v || null)}
+                    />
                   </LabelValueRow>
                   <LabelValueRow label="Issued On" labelClassName="w-40">
-                    {renderDateOrDash(commitment.issued_on_date)}
+                    <InlineEditField
+                      label="Issued On"
+                      type="date"
+                      value={dateInput(commitment.issued_on_date)}
+                      display={renderDateOrDash(commitment.issued_on_date)}
+                      onSave={(v) => onSaveField("issued_on_date", v || null)}
+                    />
                   </LabelValueRow>
                   <LabelValueRow label="Accounting Method" labelClassName="w-40">
                     {commitment.accounting_method === "unit"
@@ -504,7 +572,13 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                     {commitment.created_by_name || "—"}
                   </LabelValueRow>
                   <LabelValueRow label="Executed" labelClassName="w-40">
-                    {commitment.executed ? "Yes" : "No"}
+                    <InlineEditField
+                      label="Executed"
+                      type="boolean"
+                      value={commitment.executed ? "true" : "false"}
+                      display={commitment.executed ? "Yes" : "No"}
+                      onSave={(v) => onSaveField("executed", v === "true")}
+                    />
                   </LabelValueRow>
                 </dl>
               </div>
@@ -766,6 +840,24 @@ export default function CommitmentDetailPage() {
     }
   }, [commitment, commitmentId, projectId, router, queryClient, confirm]);
 
+  // Persist a single field edited inline on the detail page. PUT validates
+  // against the full edit schema and only writes the provided key; on success
+  // we refresh the detail (and list) so the page reflects the change.
+  const handleSaveField = useCallback(
+    async (field: string, value: string | number | boolean | null) => {
+      await apiFetch(`/api/commitments/${commitmentId}`, {
+        method: "PUT",
+        body: JSON.stringify({ [field]: value }),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: commitmentKeys.detail(commitmentId),
+      });
+      void queryClient.invalidateQueries({ queryKey: commitmentKeys.lists() });
+      await fetchCommitment();
+    },
+    [commitmentId, queryClient, fetchCommitment],
+  );
+
   const handleExport = useCallback(() => {
     setDocumentDialogTab("download");
     setIsExportDialogOpen(true);
@@ -923,6 +1015,7 @@ export default function CommitmentDetailPage() {
             projectId={projectId}
             commitmentId={commitment.id}
             onImportComplete={() => void fetchCommitment()}
+            onSaveField={handleSaveField}
           />
         )}
 

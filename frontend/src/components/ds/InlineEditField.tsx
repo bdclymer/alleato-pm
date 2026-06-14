@@ -1,0 +1,177 @@
+"use client";
+
+import * as React from "react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+
+export interface InlineEditFieldOption {
+  value: string;
+  label: string;
+}
+
+export interface InlineEditFieldProps {
+  /** Current value as a string (date → YYYY-MM-DD, boolean → "true"/"false"). */
+  value: string;
+  /** Optional rich read-mode display (e.g. a StatusBadge or formatted date). */
+  display?: React.ReactNode;
+  type?: "text" | "number" | "date" | "select" | "boolean";
+  /** Options for type="select". For "boolean" these override the Yes/No default. */
+  options?: InlineEditFieldOption[];
+  placeholder?: string;
+  emptyLabel?: string;
+  /** Used in the success/error toast, e.g. "Start Date". */
+  label?: string;
+  /** Persist the new value. Throw to signal failure (the field reverts). */
+  onSave: (value: string) => Promise<void>;
+  disabled?: boolean;
+  className?: string;
+}
+
+const BOOLEAN_OPTIONS: InlineEditFieldOption[] = [
+  { value: "true", label: "Yes" },
+  { value: "false", label: "No" },
+];
+
+/**
+ * Click-to-edit field for detail pages. Renders as a read-only value with a
+ * subtle hover affordance; clicking turns it into the matching editor
+ * (text/number/date/select/boolean) that commits on blur/Enter/change and
+ * reverts (with a toast) if the save throws. No pencil icons — the hover state
+ * is the affordance.
+ */
+export function InlineEditField({
+  value,
+  display,
+  type = "text",
+  options,
+  placeholder,
+  emptyLabel = "—",
+  label,
+  onSave,
+  disabled,
+  className,
+}: InlineEditFieldProps): React.ReactElement {
+  const [editing, setEditing] = React.useState(false);
+  const [draft, setDraft] = React.useState(value);
+  const [saving, setSaving] = React.useState(false);
+
+  // Keep the draft in sync with the source value when not actively editing.
+  React.useEffect(() => {
+    if (!editing) setDraft(value);
+  }, [value, editing]);
+
+  const isSelect = type === "select" || type === "boolean";
+  const selectOptions = type === "boolean" ? (options ?? BOOLEAN_OPTIONS) : (options ?? []);
+
+  const commit = React.useCallback(
+    async (next: string) => {
+      if (next === value) {
+        setEditing(false);
+        return;
+      }
+      setSaving(true);
+      try {
+        await onSave(next);
+        toast.success(`${label ? `${label} ` : ""}updated`);
+        setEditing(false);
+      } catch (err) {
+        toast.error(`Could not update${label ? ` ${label}` : ""}`, {
+          description: err instanceof Error ? err.message : undefined,
+        });
+        setDraft(value);
+        setEditing(false);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [value, onSave, label],
+  );
+
+  if (disabled) {
+    return <>{display ?? (value || emptyLabel)}</>;
+  }
+
+  if (!editing) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={() => {
+          setDraft(value);
+          setEditing(true);
+        }}
+        title="Click to edit"
+        className={cn(
+          "-mx-1.5 -my-0.5 flex h-auto w-full items-center justify-start rounded px-1.5 py-0.5 text-left text-sm font-medium hover:bg-muted/60",
+          className,
+        )}
+      >
+        <span className="min-w-0 flex-1 truncate">
+          {display ?? (value || <span className="text-muted-foreground/60">{emptyLabel}</span>)}
+        </span>
+      </Button>
+    );
+  }
+
+  if (isSelect) {
+    return (
+      <Select
+        value={draft}
+        open
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setEditing(false);
+        }}
+        onValueChange={(next) => {
+          setDraft(next);
+          void commit(next);
+        }}
+        disabled={saving}
+      >
+        <SelectTrigger className={cn("h-7 w-full", className)}>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {selectOptions.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  }
+
+  return (
+    <Input
+      type={type === "number" ? "number" : type === "date" ? "date" : "text"}
+      autoFocus
+      value={draft}
+      disabled={saving}
+      placeholder={placeholder}
+      className={cn("h-7 w-full", className)}
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={() => void commit(draft)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          void commit(draft);
+        }
+        if (event.key === "Escape") {
+          event.preventDefault();
+          setDraft(value);
+          setEditing(false);
+        }
+      }}
+    />
+  );
+}

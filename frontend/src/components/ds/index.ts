@@ -495,3 +495,8 @@ export type { PageShellVariant } from "@/components/layout";
 
 // Form field primitives
 export { MoneyField } from "@/components/forms/MoneyField";
+export {
+  InlineEditField,
+  type InlineEditFieldProps,
+  type InlineEditFieldOption,
+} from "@/components/ds/InlineEditField";
