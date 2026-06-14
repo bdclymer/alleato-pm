@@ -1560,6 +1560,7 @@ export function UnifiedTablePage<T>({
   );
   const lastLeftPinnedColumnId = visibleLeftPinnedColumnIds.at(-1);
   const firstRightPinnedColumnId = visibleRightPinnedColumnIds[0];
+  const columnDndContextId = React.useId();
   const columnDndSensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: { distance: 6 },
@@ -2007,6 +2008,7 @@ export function UnifiedTablePage<T>({
             }
           >
             <DndContext
+              id={columnDndContextId}
               sensors={columnDndSensors}
               collisionDetection={closestCenter}
               modifiers={[restrictToHorizontalAxis]}
