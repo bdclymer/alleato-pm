@@ -40,11 +40,11 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Inline } from "@/components/layout/inline";
 import { Text } from "@/components/ds/text";
 import { PageShell } from "@/components/layout";
+import { PageTabs } from "@/components/layout/PageTabs";
 import { StatusBadge, EmptyState } from "@/components/ds";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { apiFetch, apiFetchBlob } from "@/lib/api-client";
@@ -609,31 +609,29 @@ export default function ChangeEventDetailPage() {
       actions={headerActions}
       onBack={handleBack}
     >
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList variant="line">
-          <TabsTrigger value="general" data-testid="change-event-tab-general">
-            General
-          </TabsTrigger>
-          <TabsTrigger value="lineage">Lineage ({lineageCount})</TabsTrigger>
-          <TabsTrigger value="rfqs">RFQs ({rfqCount})</TabsTrigger>
-<TabsTrigger value="related-items">
-            Related Items ({relatedItems.length})
-          </TabsTrigger>
-          <TabsTrigger value="comments">Comments (0)</TabsTrigger>
-          <TabsTrigger value="emails">Emails ({changeEventEmails.length})</TabsTrigger>
-          <TabsTrigger value="history" data-testid="change-event-tab-history">
-            Change History ({historyEntries.length})
-          </TabsTrigger>
-        </TabsList>
+      <PageTabs
+        variant="inline"
+        tabs={[
+          { label: "General", href: "general", isActive: activeTab === "general", testId: "change-event-tab-general" },
+          { label: `Lineage (${lineageCount})`, href: "lineage", isActive: activeTab === "lineage" },
+          { label: `RFQs (${rfqCount})`, href: "rfqs", isActive: activeTab === "rfqs" },
+          { label: `Related Items (${relatedItems.length})`, href: "related-items", isActive: activeTab === "related-items" },
+          { label: "Comments (0)", href: "comments", isActive: activeTab === "comments" },
+          { label: `Emails (${changeEventEmails.length})`, href: "emails", isActive: activeTab === "emails" },
+          { label: `Change History (${historyEntries.length})`, href: "history", isActive: activeTab === "history", testId: "change-event-tab-history" },
+        ]}
+        onTabClick={(href) => setActiveTab(href)}
+      />
 
-        <div className="pt-4">
-          <TabsContent value="general">
+      <div className="pt-2">
+        {activeTab === "general" && (
+          <>
             <ChangeEventGeneralInfoPanel
               changeEvent={changeEvent}
               projectId={projectId}
               onFieldSaved={() => void actions.refetch()}
             />
-            <div className="mt-10">
+            <div className="mt-10 -mr-4 sm:-mr-6 lg:-mr-8">
               <ChangeEventLineItemsTable
                 projectId={projectId}
                 changeEventId={changeEventId}
@@ -657,102 +655,102 @@ export default function ChangeEventDetailPage() {
                 changeEventId={changeEventId}
               />
             </div>
-          </TabsContent>
+          </>
+        )}
 
-          <TabsContent value="lineage">
-            <ChangeEventLineagePanel
-              projectId={projectId}
-              changeEventId={changeEventId}
-              refreshSignal={lineageRefreshSignal}
-            />
-          </TabsContent>
+        {activeTab === "lineage" && (
+          <ChangeEventLineagePanel
+            projectId={projectId}
+            changeEventId={changeEventId}
+            refreshSignal={lineageRefreshSignal}
+          />
+        )}
 
-          <TabsContent value="rfqs">
-            <ChangeEventRfqsTab
-              projectId={projectId}
-              changeEventId={changeEventId}
-              lineItems={lineItems.map((item) => ({
-                id: item.id,
-                description: item.description,
-                quantity: item.quantity,
-              }))}
-              onSendRfq={() => setShowRfqSheet(true)}
-              onResponseRecorded={() => void actions.refetch()}
-            />
-          </TabsContent>
+        {activeTab === "rfqs" && (
+          <ChangeEventRfqsTab
+            projectId={projectId}
+            changeEventId={changeEventId}
+            lineItems={lineItems.map((item) => ({
+              id: item.id,
+              description: item.description,
+              quantity: item.quantity,
+            }))}
+            onSendRfq={() => setShowRfqSheet(true)}
+            onResponseRecorded={() => void actions.refetch()}
+          />
+        )}
 
-<TabsContent value="related-items">
-            <div className="space-y-6">
-              <RelatedItemsPanel
-                entityType="change_event"
-                entityId={changeEventId}
-                projectId={projectId}
-              />
-              <ChangeEventRelatedItemsTab
-                relatedItems={relatedItems}
-                isLoading={false}
-                onFetchOptions={actions.fetchRelatedItemOptions}
-                onLink={actions.linkRelatedItem}
-                onUnlink={actions.unlinkRelatedItem}
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="comments">
-            <EntityRoom
-              entityType="change-event"
+        {activeTab === "related-items" && (
+          <div className="space-y-6">
+            <RelatedItemsPanel
+              entityType="change_event"
               entityId={changeEventId}
               projectId={projectId}
-            >
-              <EntityComments title="Comments" />
-            </EntityRoom>
-          </TabsContent>
+            />
+            <ChangeEventRelatedItemsTab
+              relatedItems={relatedItems}
+              isLoading={false}
+              onFetchOptions={actions.fetchRelatedItemOptions}
+              onLink={actions.linkRelatedItem}
+              onUnlink={actions.unlinkRelatedItem}
+            />
+          </div>
+        )}
 
-          <TabsContent value="emails">
-            {isLoadingEmails ? (
-              <div className="space-y-3">
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
-              </div>
-            ) : changeEventEmails.length === 0 ? (
-              <EmptyState
-                icon={<Mail />}
-                title="No emails"
-                description="Emails related to this change event will appear here."
-              />
-            ) : (
-              <div className="divide-y rounded-md border">
-                {changeEventEmails.map((email) => (
-                  <div key={email.id} className="grid gap-2 p-4 md:grid-cols-[1fr_auto] md:items-start">
-                    <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Text weight="medium">{email.subject}</Text>
-                        <StatusBadge status={email.status} />
-                        {email.has_attachments ? (
-                          <span className="text-xs text-muted-foreground">Attachment</span>
-                        ) : null}
-                      </div>
-                      <Text size="sm" tone="muted">
-                        To {(email.to_list ?? []).join(", ") || "-"}
-                      </Text>
-                      <Text size="sm" tone="muted">
-                        From {email.from_email || email.from_name || "-"}
-                      </Text>
+        {activeTab === "comments" && (
+          <EntityRoom
+            entityType="change-event"
+            entityId={changeEventId}
+            projectId={projectId}
+          >
+            <EntityComments title="Comments" />
+          </EntityRoom>
+        )}
+
+        {activeTab === "emails" && (
+          isLoadingEmails ? (
+            <div className="space-y-3">
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-16 w-full" />
+            </div>
+          ) : changeEventEmails.length === 0 ? (
+            <EmptyState
+              icon={<Mail />}
+              title="No emails"
+              description="Emails related to this change event will appear here."
+            />
+          ) : (
+            <div className="divide-y rounded-md border">
+              {changeEventEmails.map((email) => (
+                <div key={email.id} className="grid gap-2 p-4 md:grid-cols-[1fr_auto] md:items-start">
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Text weight="medium">{email.subject}</Text>
+                      <StatusBadge status={email.status} />
+                      {email.has_attachments ? (
+                        <span className="text-xs text-muted-foreground">Attachment</span>
+                      ) : null}
                     </div>
                     <Text size="sm" tone="muted">
-                      {formatEmailDate(email.sent_at ?? email.created_at)}
+                      To {(email.to_list ?? []).join(", ") || "-"}
+                    </Text>
+                    <Text size="sm" tone="muted">
+                      From {email.from_email || email.from_name || "-"}
                     </Text>
                   </div>
-                ))}
-              </div>
-            )}
-          </TabsContent>
+                  <Text size="sm" tone="muted">
+                    {formatEmailDate(email.sent_at ?? email.created_at)}
+                  </Text>
+                </div>
+              ))}
+            </div>
+          )
+        )}
 
-          <TabsContent value="history">
-            <ChangeEventHistoryTab entries={historyEntries} isLoading={false} />
-          </TabsContent>
-        </div>
-      </Tabs>
+        {activeTab === "history" && (
+          <ChangeEventHistoryTab entries={historyEntries} isLoading={false} />
+        )}
+      </div>
 
       {/* Dialogs */}
       <ChangeEventEmailDialog

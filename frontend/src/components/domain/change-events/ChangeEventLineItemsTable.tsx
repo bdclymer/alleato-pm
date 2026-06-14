@@ -169,11 +169,11 @@ type ColWidthKey =
   | RevCol | CostCol | "overUnder" | "budgetMod" | "action";
 
 const DEFAULT_COL_WIDTHS: Record<ColWidthKey, number> = {
-  budgetCode: 140, description: 120, vendor: 90, contract: 90, uom: 55,
-  rev_qty: 50, rev_unitCost: 85, rev_rom: 95, rev_primePco: 85, rev_latestPrice: 90,
-  cost_qty: 50, cost_unitCost: 85, cost_rom: 85, cost_rfq: 65,
-  cost_commitment: 90, cost_nonCommitted: 95, cost_latestCost: 85,
-  overUnder: 85, budgetMod: 80, action: 92,
+  budgetCode: 180, description: 200, vendor: 140, contract: 140, uom: 60,
+  rev_qty: 55, rev_unitCost: 100, rev_rom: 110, rev_primePco: 100, rev_latestPrice: 110,
+  cost_qty: 55, cost_unitCost: 100, cost_rom: 100, cost_rfq: 80,
+  cost_commitment: 140, cost_nonCommitted: 120, cost_latestCost: 105,
+  overUnder: 100, budgetMod: 95, action: 48,
 };
 
 export function ChangeEventLineItemsTable({
@@ -703,7 +703,7 @@ export function ChangeEventLineItemsTable({
           </Button>
         </div>
       ) : filteredItems.length > 0 || computedMarkups.length > 0 ? (
-        <InlineTable variant="read">
+        <InlineTable variant="read" tableClassName="min-w-max">
           <colgroup>
             <col style={{ width: colWidths.budgetCode }} />
             <col style={{ width: colWidths.description }} />
