@@ -2,15 +2,18 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import type { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, ExternalLink, MessageSquare } from "lucide-react";
+import { ExternalLink, MessageSquare } from "lucide-react";
 
 import { EmptyState } from "@/components/ds/empty-state";
 import { StatusBadge } from "@/components/ds/status-badge";
 import { Text } from "@/components/ds/text";
-import { DataTable } from "@/components/tables/DataTable";
-import { Button } from "@/components/ui/button";
+import {
+  UnifiedTablePage,
+  type TableColumn,
+  type ViewMode,
+} from "@/components/tables/unified";
 import { Skeleton } from "@/components/ui/skeleton";
+import { apiFetch } from "@/lib/api-client";
 import { formatDate } from "@/lib/table-config/formatters";
 
 interface CommitmentRfq {
@@ -41,6 +44,8 @@ export function RfqsTab({ commitmentId, projectId }: RfqsTabProps) {
   const [rfqs, setRfqs] = useState<CommitmentRfq[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentView, setCurrentView] = useState<ViewMode>("table");
 
   useEffect(() => {
     let active = true;
@@ -49,18 +54,18 @@ export function RfqsTab({ commitmentId, projectId }: RfqsTabProps) {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch(`/api/commitments/${commitmentId}/rfqs`);
-        if (!response.ok) {
-          const payload = await response.json().catch(() => ({}));
-          throw new Error(payload.error || "Failed to load RFQs");
-        }
-
-        const payload = await response.json();
+        const payload = await apiFetch<{ data?: CommitmentRfq[] }>(
+          `/api/commitments/${commitmentId}/rfqs`,
+        );
         if (!active) return;
         setRfqs(Array.isArray(payload.data) ? payload.data : []);
       } catch (fetchError) {
         if (!active) return;
-        setError(fetchError instanceof Error ? fetchError.message : "Failed to load RFQs");
+        setError(
+          fetchError instanceof Error
+            ? fetchError.message
+            : "Failed to load RFQs",
+        );
       } finally {
         if (active) setIsLoading(false);
       }
@@ -72,78 +77,120 @@ export function RfqsTab({ commitmentId, projectId }: RfqsTabProps) {
     };
   }, [commitmentId]);
 
-  const columns: Array<ColumnDef<CommitmentRfq>> = useMemo(
+  const filteredRfqs = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return rfqs;
+
+    return rfqs.filter((rfq) =>
+      [
+        rfq.rfq_number,
+        rfq.title,
+        rfq.status,
+        rfq.due_date,
+        rfq.sent_at,
+        rfq.change_event_number,
+        rfq.change_event_title,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .includes(query),
+    );
+  }, [rfqs, searchQuery]);
+
+  const columns: Array<TableColumn<CommitmentRfq>> = useMemo(
     () => [
       {
-        accessorKey: "rfq_number",
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="h-8 px-2"
-          >
-            RFQ #
-            <ArrowUpDown />
-          </Button>
-        ),
-        cell: ({ row }) => (
+        id: "rfq_number",
+        label: "RFQ #",
+        alwaysVisible: true,
+        sortable: true,
+        sortValue: (rfq) => rfq.rfq_number,
+        render: (rfq) => (
           <Link
-            href={`/${projectId}/change-events/${row.original.change_event_id}`}
+            href={`/${projectId}/change-events/${rfq.change_event_id}`}
             className="inline-flex items-center gap-1 text-primary hover:underline"
           >
-            {row.original.rfq_number}
+            {rfq.rfq_number}
             <ExternalLink className="h-3 w-3" />
           </Link>
         ),
+        csvValue: (rfq) => rfq.rfq_number,
+        width: 140,
       },
       {
-        accessorKey: "title",
-        header: "Title",
-        cell: ({ row }) => (
-          <Text size="sm">{row.original.title}</Text>
-        ),
+        id: "title",
+        label: "Title",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (rfq) => rfq.title,
+        render: (rfq) => <Text size="sm">{rfq.title}</Text>,
+        csvValue: (rfq) => rfq.title,
+        width: 260,
       },
       {
-        accessorKey: "change_event_number",
-        header: "Change Event",
-        cell: ({ row }) => {
-          const number = row.original.change_event_number || "—";
+        id: "change_event_number",
+        label: "Change Event",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (rfq) => rfq.change_event_number ?? "",
+        render: (rfq) => {
+          const number = rfq.change_event_number || "—";
           return (
             <Text size="sm" className="text-muted-foreground">
               {number}
             </Text>
           );
         },
+        csvValue: (rfq) => rfq.change_event_number ?? "",
+        width: 150,
       },
       {
-        accessorKey: "status",
-        header: "Status",
-        cell: ({ row }) => (
-          <StatusBadge status={row.original.status || "Draft"} />
+        id: "status",
+        label: "Status",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (rfq) => rfq.status,
+        render: (rfq) => <StatusBadge status={rfq.status || "Draft"} />,
+        csvValue: (rfq) => rfq.status,
+        width: 130,
+      },
+      {
+        id: "due_date",
+        label: "Due",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (rfq) =>
+          rfq.due_date ? new Date(rfq.due_date).getTime() : 0,
+        render: (rfq) => (
+          <Text size="sm">{formatDateOrDash(rfq.due_date)}</Text>
         ),
+        csvValue: (rfq) => rfq.due_date ?? "",
+        width: 130,
       },
       {
-        accessorKey: "due_date",
-        header: "Due",
-        cell: ({ row }) => (
-          <Text size="sm">{formatDateOrDash(row.original.due_date)}</Text>
-        ),
-      },
-      {
-        accessorKey: "response_count",
-        header: "Responses",
-        cell: ({ row }) => (
+        id: "response_count",
+        label: "Responses",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (rfq) => rfq.response_count,
+        render: (rfq) => (
           <Text size="sm" className="tabular-nums">
-            {row.original.response_count}
+            {rfq.response_count}
           </Text>
         ),
+        csvValue: (rfq) => String(rfq.response_count),
+        width: 120,
       },
       {
-        accessorKey: "sent_at",
-        header: "Sent",
-        cell: ({ row }) => (
-          <Text size="sm">{formatDateOrDash(row.original.sent_at)}</Text>
-        ),
+        id: "sent_at",
+        label: "Sent",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (rfq) => (rfq.sent_at ? new Date(rfq.sent_at).getTime() : 0),
+        render: (rfq) => <Text size="sm">{formatDateOrDash(rfq.sent_at)}</Text>,
+        csvValue: (rfq) => rfq.sent_at ?? "",
+        width: 130,
       },
     ],
     [projectId],
@@ -174,11 +221,50 @@ export function RfqsTab({ commitmentId, projectId }: RfqsTabProps) {
   }
 
   return (
-    <DataTable
-      columns={columns}
-      data={rfqs}
-      showToolbar={false}
-      showPagination={rfqs.length > 10}
+    <UnifiedTablePage
+      header={{
+        title: "RFQs",
+        description: "Requests for quote tied to this commitment.",
+        variant: "compact",
+      }}
+      toolbar={{
+        totalItems: rfqs.length,
+        filteredItems: filteredRfqs.length,
+        searchValue: searchQuery,
+        onSearchChange: setSearchQuery,
+        searchPlaceholder: "Search RFQs...",
+        currentView,
+        onViewChange: (view) => {
+          if (view === "table") setCurrentView(view);
+        },
+        enabledViews: ["table"],
+      }}
+      data={{ items: filteredRfqs, isLoading: false, error: null }}
+      table={{
+        columns,
+        getRowId: (rfq) => rfq.id,
+        density: "compact",
+        stickyHeader: true,
+      }}
+      emptyState={{
+        title: "No RFQs",
+        description: "RFQs tied to this commitment will appear here.",
+        filteredDescription: "No RFQs match your search.",
+        isFiltered: Boolean(searchQuery),
+      }}
+      features={{
+        enableViews: false,
+        enableColumnToggle: true,
+        enableExport: true,
+        enablePagination: true,
+        enableBulkDelete: false,
+        enableRowSelection: false,
+      }}
+      layout={{
+        containerPadding: false,
+        toolbarInlineWithHeader: true,
+        minWidth: 900,
+      }}
     />
   );
 }

@@ -4,13 +4,10 @@ import * as React from "react";
 
 import { Badge } from "@/components/ui/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  UnifiedTablePage,
+  type TableColumn,
+  type ViewMode,
+} from "@/components/tables/unified";
 import {
   useInvoicePaymentsList,
   type InvoicePayment,
@@ -33,84 +30,183 @@ function paymentSourceLabel(payment: InvoicePayment): string {
 
 export function PaymentsTab({ projectId }: { projectId: string }) {
   const { data: payments = [], isLoading } = useInvoicePaymentsList(projectId);
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [currentView, setCurrentView] = React.useState<ViewMode>("table");
 
   const total = React.useMemo(
-    () => payments.reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0),
+    () =>
+      payments.reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0),
     [payments],
   );
 
-  return (
-    <div className="px-6 py-4 space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <p className="text-sm text-muted-foreground">
-          {isLoading
-            ? "Loading..."
-            : `${payments.length} payment${payments.length !== 1 ? "s" : ""}`}
-        </p>
-        {payments.length > 0 ? (
-          <p className="text-sm font-medium tabular-nums">
-            Total: {formatCurrency(total)}
-          </p>
-        ) : null}
-      </div>
+  const filteredPayments = React.useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return payments;
 
-      <div className="border border-border overflow-hidden">
-        {isLoading ? (
-          <p className="text-sm text-muted-foreground py-12 text-center">
-            Loading payments...
-          </p>
-        ) : payments.length === 0 ? (
-          <div className="py-16 text-center space-y-2">
-            <p className="text-base font-medium text-foreground">
-              No payments synced yet
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Payments received from Acumatica will appear here.
-            </p>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Payment #</TableHead>
-                <TableHead>Invoice</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Reference</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {payments.map((payment) => (
-                <TableRow key={payment.id}>
-                  <TableCell className="font-medium">
-                    {payment.payment_number ?? `PMT-${payment.id}`}
-                  </TableCell>
-                  <TableCell>{payment.invoice_number ?? "--"}</TableCell>
-                  <TableCell>
-                    {payment.invoice_type ? (
-                      <Badge variant="secondary">
-                        {paymentSourceLabel(payment)}
-                      </Badge>
-                    ) : (
-                      "--"
-                    )}
-                  </TableCell>
-                  <TableCell className="capitalize">
-                    {methodLabel(payment.payment_method)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatCurrency(payment.amount)}
-                  </TableCell>
-                  <TableCell>{formatDate(payment.payment_date)}</TableCell>
-                  <TableCell>{payment.check_number ?? "--"}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </div>
+    return payments.filter((payment) => {
+      const searchable = [
+        payment.payment_number ?? `PMT-${payment.id}`,
+        payment.invoice_number,
+        payment.invoice_type,
+        payment.payment_method,
+        payment.check_number,
+        payment.payment_date,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return searchable.includes(query);
+    });
+  }, [payments, searchQuery]);
+
+  const columns = React.useMemo<TableColumn<InvoicePayment>[]>(
+    () => [
+      {
+        id: "payment_number",
+        label: "Payment #",
+        alwaysVisible: true,
+        sortable: true,
+        sortValue: (payment) => payment.payment_number ?? `PMT-${payment.id}`,
+        render: (payment) => (
+          <span className="font-medium">
+            {payment.payment_number ?? `PMT-${payment.id}`}
+          </span>
+        ),
+        csvValue: (payment) => payment.payment_number ?? `PMT-${payment.id}`,
+        width: 140,
+      },
+      {
+        id: "invoice_number",
+        label: "Invoice",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (payment) => payment.invoice_number ?? "",
+        render: (payment) => payment.invoice_number ?? "--",
+        csvValue: (payment) => payment.invoice_number ?? "",
+        width: 140,
+      },
+      {
+        id: "source",
+        label: "Source",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (payment) => payment.invoice_type ?? "",
+        render: (payment) =>
+          payment.invoice_type ? (
+            <Badge variant="secondary">{paymentSourceLabel(payment)}</Badge>
+          ) : (
+            <span className="text-muted-foreground">--</span>
+          ),
+        csvValue: paymentSourceLabel,
+        width: 140,
+      },
+      {
+        id: "method",
+        label: "Method",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (payment) => payment.payment_method ?? "",
+        render: (payment) => (
+          <span className="capitalize">
+            {methodLabel(payment.payment_method)}
+          </span>
+        ),
+        csvValue: (payment) => methodLabel(payment.payment_method),
+        width: 140,
+      },
+      {
+        id: "amount",
+        label: "Amount",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (payment) => Number(payment.amount) || 0,
+        render: (payment) => (
+          <span className="block text-right tabular-nums">
+            {formatCurrency(payment.amount)}
+          </span>
+        ),
+        csvValue: (payment) => String(payment.amount ?? ""),
+        width: 130,
+      },
+      {
+        id: "payment_date",
+        label: "Date",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (payment) =>
+          payment.payment_date ? new Date(payment.payment_date).getTime() : 0,
+        render: (payment) => formatDate(payment.payment_date),
+        csvValue: (payment) => payment.payment_date ?? "",
+        width: 130,
+      },
+      {
+        id: "reference",
+        label: "Reference",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (payment) => payment.check_number ?? "",
+        render: (payment) => payment.check_number ?? "--",
+        csvValue: (payment) => payment.check_number ?? "",
+        width: 160,
+      },
+    ],
+    [],
+  );
+
+  return (
+    <div className="px-6 py-4">
+      <UnifiedTablePage
+        header={{
+          title: "Payments",
+          description: "Payments received from Acumatica.",
+          variant: "compact",
+        }}
+        toolbar={{
+          totalItems: payments.length,
+          filteredItems: filteredPayments.length,
+          leftContent:
+            payments.length > 0 ? (
+              <span className="text-sm font-medium tabular-nums">
+                Total: {formatCurrency(total)}
+              </span>
+            ) : undefined,
+          searchValue: searchQuery,
+          onSearchChange: setSearchQuery,
+          searchPlaceholder: "Search payments...",
+          currentView,
+          onViewChange: (view) => {
+            if (view === "table") setCurrentView(view);
+          },
+          enabledViews: ["table"],
+        }}
+        data={{ items: filteredPayments, isLoading, error: null }}
+        table={{
+          columns,
+          getRowId: (payment) => String(payment.id),
+          density: "compact",
+          stickyHeader: true,
+        }}
+        emptyState={{
+          title: "No payments synced yet",
+          description: "Payments received from Acumatica will appear here.",
+          filteredDescription: "No payments match your search.",
+          isFiltered: Boolean(searchQuery),
+        }}
+        features={{
+          enableViews: false,
+          enableColumnToggle: true,
+          enableExport: true,
+          enablePagination: true,
+          enableBulkDelete: false,
+          enableRowSelection: false,
+        }}
+        layout={{
+          containerPadding: false,
+          toolbarInlineWithHeader: true,
+          minWidth: 940,
+        }}
+      />
     </div>
   );
 }

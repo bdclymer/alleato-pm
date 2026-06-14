@@ -2,7 +2,12 @@
 
 import * as React from "react";
 import type { ReactElement } from "react";
-import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 import { Plus, Eye, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 
@@ -17,6 +22,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,7 +47,11 @@ import {
 } from "@/components/tables/unified";
 import { useOwnerInvoicesList } from "@/hooks/use-invoicing";
 import { useSubcontractorInvoicesList } from "@/hooks/use-subcontractor-invoices";
-import { useBillingPeriodsList, useCreateBillingPeriod, type BillingPeriod } from "@/hooks/use-billing-periods";
+import {
+  useBillingPeriodsList,
+  useCreateBillingPeriod,
+  type BillingPeriod,
+} from "@/hooks/use-billing-periods";
 import { PageTabs } from "@/components/layout/PageTabs";
 import {
   buildInvoiceTableColumns,
@@ -45,7 +61,7 @@ import {
   renderInvoiceRowActions,
   type OwnerInvoice,
 } from "@/features/invoicing/invoicing-table-config";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
 
 type TabKey = "owner" | "subcontractor" | "billing-periods";
 type FilterState = Record<string, FilterValue>;
@@ -98,7 +114,11 @@ const subcontractorColumnConfig: ColumnConfig[] = [
   { id: "paid_amount", label: "Paid Amount", defaultVisible: true },
   { id: "invoice_dates", label: "Invoice Dates", defaultVisible: true },
   { id: "contract", label: "Contract", defaultVisible: true },
-  { id: "total_contract_amount", label: "Total Contract", defaultVisible: true },
+  {
+    id: "total_contract_amount",
+    label: "Total Contract",
+    defaultVisible: true,
+  },
   { id: "percent_complete", label: "% Complete", defaultVisible: true },
   { id: "total_amount", label: "Total Amount", defaultVisible: false },
   { id: "erp_status", label: "ERP Status", defaultVisible: false },
@@ -198,9 +218,7 @@ function buildBillingPeriodColumns(
       defaultVisible: true,
       sortable: true,
       sortValue: (bp) => (bp.is_closed ? 1 : 0),
-      render: (bp) => (
-        <StatusBadge status={bp.is_closed ? "closed" : "open"} />
-      ),
+      render: (bp) => <StatusBadge status={bp.is_closed ? "closed" : "open"} />,
     },
     {
       id: "due_date",
@@ -209,7 +227,9 @@ function buildBillingPeriodColumns(
       sortable: true,
       sortValue: (bp) => bp.due_date ?? "",
       render: (bp) => (
-        <span className="text-sm text-muted-foreground">{formatDate(bp.due_date)}</span>
+        <span className="text-sm text-muted-foreground">
+          {formatDate(bp.due_date)}
+        </span>
       ),
     },
   ];
@@ -257,11 +277,13 @@ export default function ProjectInvoicesPage(): ReactElement {
   const activeFilters = tableState.activeFilters as FilterState;
   const statusFilter =
     searchParams.get("status") ||
-    (typeof activeFilters.status === "string" ? activeFilters.status : undefined);
+    (typeof activeFilters.status === "string"
+      ? activeFilters.status
+      : undefined);
 
-  const [ownerVisibleColumns, setOwnerVisibleColumns] = React.useState<string[]>(
-    invoiceDefaultVisibleColumns,
-  );
+  const [ownerVisibleColumns, setOwnerVisibleColumns] = React.useState<
+    string[]
+  >(invoiceDefaultVisibleColumns);
   const [subcontractorVisibleColumns, setSubcontractorVisibleColumns] =
     React.useState<string[]>(subcontractorDefaultVisibleColumns);
   const [bpVisibleColumns, setBpVisibleColumns] = React.useState<string[]>(
@@ -297,8 +319,12 @@ export default function ProjectInvoicesPage(): ReactElement {
     error: bpError,
   } = useBillingPeriodsList(projectId);
 
-  const { data: ownerRawInvoices = [], isLoading: ownerLoading, isFetching: ownerFetching, error: ownerError } =
-    useOwnerInvoicesList(projectId);
+  const {
+    data: ownerRawInvoices = [],
+    isLoading: ownerLoading,
+    isFetching: ownerFetching,
+    error: ownerError,
+  } = useOwnerInvoicesList(projectId);
 
   const {
     data: subInvoicesRaw = [] as SubcontractorInvoiceRow[],
@@ -339,7 +365,10 @@ export default function ProjectInvoicesPage(): ReactElement {
         map.set(inv.billing_period_id, inv.billing_period_name);
       }
     }
-    return Array.from(map.entries()).map(([value, label]) => ({ value, label }));
+    return Array.from(map.entries()).map(([value, label]) => ({
+      value,
+      label,
+    }));
   }, [subInvoicesRaw]);
 
   const subCompanyOptions = React.useMemo(() => {
@@ -356,7 +385,12 @@ export default function ProjectInvoicesPage(): ReactElement {
 
   const subcontractorFilters: FilterConfig[] = React.useMemo(
     () => [
-      { id: "status", label: "Invoice Status", type: "select", options: INVOICE_STATUS_OPTIONS },
+      {
+        id: "status",
+        label: "Invoice Status",
+        type: "select",
+        options: INVOICE_STATUS_OPTIONS,
+      },
       {
         id: "billing_period_id",
         label: "Billing Period",
@@ -399,7 +433,9 @@ export default function ProjectInvoicesPage(): ReactElement {
     if (f.billing_period_id)
       items = items.filter((i) => i.billing_period_id === f.billing_period_id);
     if (f.contract_company_id)
-      items = items.filter((i) => i.contract_company_id === f.contract_company_id);
+      items = items.filter(
+        (i) => i.contract_company_id === f.contract_company_id,
+      );
     if (f.payment_status)
       items = items.filter((i) => i.payment_status === f.payment_status);
     if (f.contract_type)
@@ -412,7 +448,9 @@ export default function ProjectInvoicesPage(): ReactElement {
         const contract = (i.contract_number ?? "").toLowerCase();
         const company = (i.contract_company_name ?? "").toLowerCase();
         return (
-          number.includes(search) || contract.includes(search) || company.includes(search)
+          number.includes(search) ||
+          contract.includes(search) ||
+          company.includes(search)
         );
       });
     }
@@ -428,7 +466,9 @@ export default function ProjectInvoicesPage(): ReactElement {
     [projectId, router],
   );
 
-  const subcontractorColumns = React.useMemo<TableColumn<SubcontractorInvoiceRow>[]>(
+  const subcontractorColumns = React.useMemo<
+    TableColumn<SubcontractorInvoiceRow>[]
+  >(
     () => [
       {
         id: "invoice_number",
@@ -441,7 +481,9 @@ export default function ProjectInvoicesPage(): ReactElement {
             type="button"
             variant="link"
             className="font-medium text-primary hover:underline h-auto p-0"
-            onClick={() => router.push(`/${projectId}/invoicing/subcontractor/${i.id}`)}
+            onClick={() =>
+              router.push(`/${projectId}/invoicing/subcontractor/${i.id}`)
+            }
           >
             {i.invoice_number ?? `INV-${i.id}`}
           </Button>
@@ -486,7 +528,9 @@ export default function ProjectInvoicesPage(): ReactElement {
         sortable: true,
         sortValue: (i) => i.gross_amount,
         render: (i) => (
-          <span className="font-medium tabular-nums">{formatCurrency(i.gross_amount)}</span>
+          <span className="font-medium tabular-nums">
+            {formatCurrency(i.gross_amount)}
+          </span>
         ),
       },
       {
@@ -535,7 +579,10 @@ export default function ProjectInvoicesPage(): ReactElement {
           <span className="text-sm text-foreground">
             {i.contract_number ?? "-"}
             {i.contract_title ? (
-              <span className="text-muted-foreground"> — {i.contract_title}</span>
+              <span className="text-muted-foreground">
+                {" "}
+                — {i.contract_title}
+              </span>
             ) : null}
           </span>
         ),
@@ -547,7 +594,9 @@ export default function ProjectInvoicesPage(): ReactElement {
         sortable: true,
         sortValue: (i) => i.total_contract_amount,
         render: (i) => (
-          <span className="tabular-nums">{formatCurrency(i.total_contract_amount)}</span>
+          <span className="tabular-nums">
+            {formatCurrency(i.total_contract_amount)}
+          </span>
         ),
       },
       {
@@ -558,7 +607,7 @@ export default function ProjectInvoicesPage(): ReactElement {
         sortValue: (i) => i.percent_complete,
         render: (i) => (
           <span className="tabular-nums text-muted-foreground">
-            {i.percent_complete.toFixed(1)}%
+            {formatPercent(i.percent_complete, 1)}
           </span>
         ),
       },
@@ -569,7 +618,9 @@ export default function ProjectInvoicesPage(): ReactElement {
         sortable: true,
         sortValue: (i) => i.total_completed,
         render: (i) => (
-          <span className="tabular-nums">{formatCurrency(i.total_completed)}</span>
+          <span className="tabular-nums">
+            {formatCurrency(i.total_completed)}
+          </span>
         ),
       },
       {
@@ -579,7 +630,9 @@ export default function ProjectInvoicesPage(): ReactElement {
         sortable: true,
         sortValue: (i) => i.erp_status ?? "",
         render: (i) => (
-          <span className="text-sm text-muted-foreground">{i.erp_status ?? "-"}</span>
+          <span className="text-sm text-muted-foreground">
+            {i.erp_status ?? "-"}
+          </span>
         ),
       },
     ],
@@ -587,7 +640,13 @@ export default function ProjectInvoicesPage(): ReactElement {
   );
 
   const sortedOwnerInvoices = React.useMemo(
-    () => sortItems(ownerInvoices, ownerColumns, tableState.sortBy, tableState.sortDirection),
+    () =>
+      sortItems(
+        ownerInvoices,
+        ownerColumns,
+        tableState.sortBy,
+        tableState.sortDirection,
+      ),
     [ownerInvoices, ownerColumns, tableState.sortBy, tableState.sortDirection],
   );
 
@@ -599,14 +658,22 @@ export default function ProjectInvoicesPage(): ReactElement {
         tableState.sortBy,
         tableState.sortDirection,
       ),
-    [subcontractorItems, subcontractorColumns, tableState.sortBy, tableState.sortDirection],
+    [
+      subcontractorItems,
+      subcontractorColumns,
+      tableState.sortBy,
+      tableState.sortDirection,
+    ],
   );
 
   const ownerKpiTotals = React.useMemo(() => {
     const sumFor = (status: string) =>
       ownerRawInvoices
         .filter((inv) => inv.status === status)
-        .reduce((acc, inv) => acc + (inv.gross_amount ?? inv.total_amount ?? 0), 0);
+        .reduce(
+          (acc, inv) => acc + (inv.gross_amount ?? inv.total_amount ?? 0),
+          0,
+        );
     return {
       underReview: sumFor("under_review"),
       approved: sumFor("approved"),
@@ -617,17 +684,29 @@ export default function ProjectInvoicesPage(): ReactElement {
   const ownerKpiRow = (
     <KpiStrip
       metrics={[
-        { label: "Under Review", value: formatCurrency(ownerKpiTotals.underReview) },
+        {
+          label: "Under Review",
+          value: formatCurrency(ownerKpiTotals.underReview),
+        },
         { label: "Approved", value: formatCurrency(ownerKpiTotals.approved) },
-        { label: "Revise & Resubmit", value: formatCurrency(ownerKpiTotals.reviseAndResubmit) },
+        {
+          label: "Revise & Resubmit",
+          value: formatCurrency(ownerKpiTotals.reviseAndResubmit),
+        },
       ]}
     />
   );
 
   const ownerTotalItems = sortedOwnerInvoices.length;
-  const ownerTotalPages = Math.max(1, Math.ceil(ownerTotalItems / tableState.perPage));
+  const ownerTotalPages = Math.max(
+    1,
+    Math.ceil(ownerTotalItems / tableState.perPage),
+  );
   const ownerOffset = (tableState.page - 1) * tableState.perPage;
-  const ownerPageItems = sortedOwnerInvoices.slice(ownerOffset, ownerOffset + tableState.perPage);
+  const ownerPageItems = sortedOwnerInvoices.slice(
+    ownerOffset,
+    ownerOffset + tableState.perPage,
+  );
 
   const subcontractorTotalItems = sortedSubcontractors.length;
   const subcontractorTotalPages = Math.max(
@@ -635,7 +714,10 @@ export default function ProjectInvoicesPage(): ReactElement {
     Math.ceil(subcontractorTotalItems / tableState.perPage),
   );
   const subOffset = (tableState.page - 1) * tableState.perPage;
-  const subPageItems = sortedSubcontractors.slice(subOffset, subOffset + tableState.perPage);
+  const subPageItems = sortedSubcontractors.slice(
+    subOffset,
+    subOffset + tableState.perPage,
+  );
 
   const subKpiTotals = React.useMemo(() => {
     const sumFor = (status: string) =>
@@ -652,9 +734,15 @@ export default function ProjectInvoicesPage(): ReactElement {
   const subKpiRow = (
     <KpiStrip
       metrics={[
-        { label: "Under Review", value: formatCurrency(subKpiTotals.underReview) },
+        {
+          label: "Under Review",
+          value: formatCurrency(subKpiTotals.underReview),
+        },
         { label: "Approved", value: formatCurrency(subKpiTotals.approved) },
-        { label: "Revise & Resubmit", value: formatCurrency(subKpiTotals.reviseAndResubmit) },
+        {
+          label: "Revise & Resubmit",
+          value: formatCurrency(subKpiTotals.reviseAndResubmit),
+        },
       ]}
     />
   );
@@ -663,7 +751,9 @@ export default function ProjectInvoicesPage(): ReactElement {
   const bpColumns = React.useMemo(
     () =>
       buildBillingPeriodColumns((bp) =>
-        router.push(`/${projectId}/invoices?tab=billing-periods&periodId=${bp.id}`),
+        router.push(
+          `/${projectId}/invoices?tab=billing-periods&periodId=${bp.id}`,
+        ),
       ),
     [projectId, router],
   );
@@ -672,7 +762,9 @@ export default function ProjectInvoicesPage(): ReactElement {
     let items = [...billingPeriodsRaw];
     if (activeTab === "billing-periods" && statusFilter) {
       items = items.filter((bp) =>
-        statusFilter === "closed" ? bp.is_closed === true : bp.is_closed !== true,
+        statusFilter === "closed"
+          ? bp.is_closed === true
+          : bp.is_closed !== true,
       );
     }
     const search = tableState.debouncedSearch.toLowerCase().trim();
@@ -690,14 +782,31 @@ export default function ProjectInvoicesPage(): ReactElement {
   }, [activeTab, statusFilter, tableState.debouncedSearch, billingPeriodsRaw]);
 
   const sortedBillingPeriods = React.useMemo(
-    () => sortItems(filteredBillingPeriods, bpColumns, tableState.sortBy, tableState.sortDirection),
-    [filteredBillingPeriods, bpColumns, tableState.sortBy, tableState.sortDirection],
+    () =>
+      sortItems(
+        filteredBillingPeriods,
+        bpColumns,
+        tableState.sortBy,
+        tableState.sortDirection,
+      ),
+    [
+      filteredBillingPeriods,
+      bpColumns,
+      tableState.sortBy,
+      tableState.sortDirection,
+    ],
   );
 
   const bpTotalItems = sortedBillingPeriods.length;
-  const bpTotalPages = Math.max(1, Math.ceil(bpTotalItems / tableState.perPage));
+  const bpTotalPages = Math.max(
+    1,
+    Math.ceil(bpTotalItems / tableState.perPage),
+  );
   const bpOffset = (tableState.page - 1) * tableState.perPage;
-  const bpPageItems = sortedBillingPeriods.slice(bpOffset, bpOffset + tableState.perPage);
+  const bpPageItems = sortedBillingPeriods.slice(
+    bpOffset,
+    bpOffset + tableState.perPage,
+  );
 
   const tabs = [
     {
@@ -720,7 +829,8 @@ export default function ProjectInvoicesPage(): ReactElement {
   const handleFilterChange = (nextFilters: FilterState) => {
     tableState.setActiveFilters(nextFilters);
     tableState.setSearchParams({
-      status: typeof nextFilters.status === "string" ? nextFilters.status : null,
+      status:
+        typeof nextFilters.status === "string" ? nextFilters.status : null,
       page: "1",
     });
     tableState.setPage(1);
@@ -746,7 +856,8 @@ export default function ProjectInvoicesPage(): ReactElement {
     </Button>
   );
 
-  const isFiltered = Boolean(tableState.searchInput) || Boolean(activeFilters.status);
+  const isFiltered =
+    Boolean(tableState.searchInput) || Boolean(activeFilters.status);
 
   if (activeTab === "subcontractor") {
     return (
@@ -761,7 +872,6 @@ export default function ProjectInvoicesPage(): ReactElement {
           totalItems: subInvoicesRaw.length,
           leftContent: subKpiRow,
           filteredItems: subcontractorTotalItems,
-          selectedCount: tableState.selectedIds.length,
           searchValue: tableState.searchInput,
           onSearchChange: tableState.setSearchInput,
           searchPlaceholder: "Search subcontractor invoices...",
@@ -799,24 +909,18 @@ export default function ProjectInvoicesPage(): ReactElement {
           onSortChange: (sortBy, direction) => {
             tableState.setSortBy(sortBy);
             tableState.setSortDirection(direction);
-            tableState.setSearchParams({ sort: sortBy, sort_dir: direction, page: "1" });
+            tableState.setSearchParams({
+              sort: sortBy,
+              sort_dir: direction,
+              page: "1",
+            });
             tableState.setPage(1);
-          },
-        }}
-        selection={{
-          selectedIds: tableState.selectedIds,
-          onSelectAll: (checked) => {
-            tableState.setSelectedIds(checked ? subPageItems.map((item) => String(item.id)) : []);
-          },
-          onSelectRow: (id, checked) => {
-            tableState.setSelectedIds((prev) =>
-              checked ? [...prev, String(id)] : prev.filter((existingId) => existingId !== id),
-            );
           },
         }}
         emptyState={{
           title: "No subcontractor invoices found",
-          description: "Create a subcontractor invoice against one of your commitments.",
+          description:
+            "Create a subcontractor invoice against one of your commitments.",
           filteredDescription: "Try adjusting your search or filters.",
           isFiltered,
         }}
@@ -829,13 +933,15 @@ export default function ProjectInvoicesPage(): ReactElement {
         }}
         features={{
           enableViews: false,
+          enableRowSelection: false,
         }}
       />
     );
   }
 
   if (activeTab === "billing-periods") {
-    const bpIsFiltered = Boolean(tableState.searchInput) || Boolean(activeFilters.status);
+    const bpIsFiltered =
+      Boolean(tableState.searchInput) || Boolean(activeFilters.status);
 
     const renderBpRowActions = (bp: BillingPeriod) => (
       <DropdownMenu>
@@ -847,7 +953,9 @@ export default function ProjectInvoicesPage(): ReactElement {
         <DropdownMenuContent align="end">
           <DropdownMenuItem
             onClick={() =>
-              toast.info(`Billing Period BP-${String(bp.period_number).padStart(3, "0")} — ${bp.is_closed ? "Closed" : "Open"}`)
+              toast.info(
+                `Billing Period BP-${String(bp.period_number).padStart(3, "0")} — ${bp.is_closed ? "Closed" : "Open"}`,
+              )
             }
           >
             <Eye className="mr-2 h-4 w-4" />
@@ -859,369 +967,414 @@ export default function ProjectInvoicesPage(): ReactElement {
 
     return (
       <>
-      <UnifiedTablePage
-        header={{
-          title: "Invoices",
-          description: "Track owner and subcontractor invoice activity",
-          actions: (
-            <Button
-              size="sm"
-              onClick={() => setCreateBpOpen(true)}
-            >
-              <Plus />
-              Create Billing Period
-            </Button>
-          ),
-        }}
-        tabs={tabs}
-        toolbar={{
-          totalItems: billingPeriodsRaw.length,
-          filteredItems: bpTotalItems,
-          selectedCount: tableState.selectedIds.length,
-          searchValue: tableState.searchInput,
-          onSearchChange: tableState.setSearchInput,
-          searchPlaceholder: "Search billing periods...",
-          currentView: "table",
-          onViewChange: () => undefined,
-          enabledViews: ["table"],
-          filters: billingPeriodFilters,
-          activeFilters,
-          onFilterChange: handleFilterChange,
-          onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
-          columns: billingPeriodColumnConfig,
-          visibleColumns: bpVisibleColumns,
-          onColumnVisibilityChange: setBpVisibleColumns,
-        }}
-        data={{
-          items: bpPageItems,
-          isLoading: bpLoading,
-          isFetching: bpFetching,
-          error: bpError instanceof Error ? bpError : bpError ? new Error("Failed to load billing periods") : undefined,
-        }}
-        table={{
-          columns: bpColumns,
-          getRowId: (bp) => bp.id,
-          onRowClick: (bp) =>
-            toast.info(`Billing Period BP-${String(bp.period_number).padStart(3, "0")} — ${bp.is_closed ? "Closed" : "Open"}`),
-          rowActions: renderBpRowActions,
-        }}
-        sorting={{
-          sortBy: tableState.sortBy,
-          sortDirection: tableState.sortDirection,
-          onSortChange: (sortBy, direction) => {
-            tableState.setSortBy(sortBy);
-            tableState.setSortDirection(direction);
-            tableState.setSearchParams({ sort: sortBy, sort_dir: direction, page: "1" });
-            tableState.setPage(1);
-          },
-        }}
-        selection={{
-          selectedIds: tableState.selectedIds,
-          onSelectAll: (checked) => {
-            tableState.setSelectedIds(checked ? bpPageItems.map((bp) => bp.id) : []);
-          },
-          onSelectRow: (id, checked) => {
-            tableState.setSelectedIds((prev) =>
-              checked ? [...prev, String(id)] : prev.filter((existingId) => existingId !== id),
-            );
-          },
-        }}
-        emptyState={{
-          title: "No billing periods yet",
-          description: "Create a billing period to organize invoices by cycle.",
-          filteredDescription: "Try adjusting your search or filters.",
-          isFiltered: bpIsFiltered,
-        }}
-        pagination={{
-          page: tableState.page,
-          totalPages: bpTotalPages,
-          perPage: tableState.perPage,
-          onPageChange: handlePaginationChange,
-          onPerPageChange: handlePerPageChange,
-        }}
-        features={{
-          enableViews: false,
-        }}
-      />
-      <Dialog open={createBpOpen} onOpenChange={setCreateBpOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Set Up Billing Period</DialogTitle>
-            <DialogDescription>
-              Add a billing period manually, or generate a recurring schedule
-              automatically.
-            </DialogDescription>
-          </DialogHeader>
+        <UnifiedTablePage
+          header={{
+            title: "Invoices",
+            description: "Track owner and subcontractor invoice activity",
+            actions: (
+              <Button size="sm" onClick={() => setCreateBpOpen(true)}>
+                <Plus />
+                Create Billing Period
+              </Button>
+            ),
+          }}
+          tabs={tabs}
+          toolbar={{
+            totalItems: billingPeriodsRaw.length,
+            filteredItems: bpTotalItems,
+            searchValue: tableState.searchInput,
+            onSearchChange: tableState.setSearchInput,
+            searchPlaceholder: "Search billing periods...",
+            currentView: "table",
+            onViewChange: () => undefined,
+            enabledViews: ["table"],
+            filters: billingPeriodFilters,
+            activeFilters,
+            onFilterChange: handleFilterChange,
+            onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
+            columns: billingPeriodColumnConfig,
+            visibleColumns: bpVisibleColumns,
+            onColumnVisibilityChange: setBpVisibleColumns,
+          }}
+          data={{
+            items: bpPageItems,
+            isLoading: bpLoading,
+            isFetching: bpFetching,
+            error:
+              bpError instanceof Error
+                ? bpError
+                : bpError
+                  ? new Error("Failed to load billing periods")
+                  : undefined,
+          }}
+          table={{
+            columns: bpColumns,
+            getRowId: (bp) => bp.id,
+            onRowClick: (bp) =>
+              toast.info(
+                `Billing Period BP-${String(bp.period_number).padStart(3, "0")} — ${bp.is_closed ? "Closed" : "Open"}`,
+              ),
+            rowActions: renderBpRowActions,
+          }}
+          sorting={{
+            sortBy: tableState.sortBy,
+            sortDirection: tableState.sortDirection,
+            onSortChange: (sortBy, direction) => {
+              tableState.setSortBy(sortBy);
+              tableState.setSortDirection(direction);
+              tableState.setSearchParams({
+                sort: sortBy,
+                sort_dir: direction,
+                page: "1",
+              });
+              tableState.setPage(1);
+            },
+          }}
+          emptyState={{
+            title: "No billing periods yet",
+            description:
+              "Create a billing period to organize invoices by cycle.",
+            filteredDescription: "Try adjusting your search or filters.",
+            isFiltered: bpIsFiltered,
+          }}
+          pagination={{
+            page: tableState.page,
+            totalPages: bpTotalPages,
+            perPage: tableState.perPage,
+            onPageChange: handlePaginationChange,
+            onPerPageChange: handlePerPageChange,
+          }}
+          features={{
+            enableViews: false,
+            enableRowSelection: false,
+          }}
+        />
+        <Dialog open={createBpOpen} onOpenChange={setCreateBpOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Set Up Billing Period</DialogTitle>
+              <DialogDescription>
+                Add a billing period manually, or generate a recurring schedule
+                automatically.
+              </DialogDescription>
+            </DialogHeader>
 
-          <PageTabs
-            variant="inline"
-            onTabClick={(href) => setBpMode(href as "manual" | "automatic")}
-            tabs={[
-              { label: "Manual", href: "manual", isActive: bpMode === "manual" },
-              { label: "Automatic", href: "automatic", isActive: bpMode === "automatic" },
-            ]}
-          />
+            <PageTabs
+              variant="inline"
+              onTabClick={(href) => setBpMode(href as "manual" | "automatic")}
+              tabs={[
+                {
+                  label: "Manual",
+                  href: "manual",
+                  isActive: bpMode === "manual",
+                },
+                {
+                  label: "Automatic",
+                  href: "automatic",
+                  isActive: bpMode === "automatic",
+                },
+              ]}
+            />
 
-          {bpMode === "manual" ? (
-            <div className="space-y-4 py-2">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="bp-start">From</Label>
-                  <Input
-                    id="bp-start"
-                    type="date"
-                    value={bpFormStartDate}
-                    onChange={(e) => setBpFormStartDate(e.target.value)}
-                  />
+            {bpMode === "manual" ? (
+              <div className="space-y-4 py-2">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="bp-start">From</Label>
+                    <Input
+                      id="bp-start"
+                      type="date"
+                      value={bpFormStartDate}
+                      onChange={(e) => setBpFormStartDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bp-end">To</Label>
+                    <Input
+                      id="bp-end"
+                      type="date"
+                      value={bpFormEndDate}
+                      onChange={(e) => setBpFormEndDate(e.target.value)}
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="bp-end">To</Label>
+                  <Label htmlFor="bp-billing">Due Date</Label>
                   <Input
-                    id="bp-end"
+                    id="bp-billing"
                     type="date"
-                    value={bpFormEndDate}
-                    onChange={(e) => setBpFormEndDate(e.target.value)}
+                    value={bpFormBillingDate}
+                    onChange={(e) => setBpFormBillingDate(e.target.value)}
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="bp-billing">Due Date</Label>
-                <Input
-                  id="bp-billing"
-                  type="date"
-                  value={bpFormBillingDate}
-                  onChange={(e) => setBpFormBillingDate(e.target.value)}
-                />
-              </div>
-            </div>
-          ) : (
-            (() => {
-              const selectClass =
-                "flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring";
-              const dayOptions = Array.from({ length: 31 }, (_, i) => i + 1);
-              const ordinal = (n: number) => {
-                const s = ["th", "st", "nd", "rd"];
-                const v = n % 100;
-                return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
-              };
-              const monthOptions = [
-                { value: "previous", label: "previous month" },
-                { value: "this", label: "this month" },
-                { value: "next", label: "next month" },
-              ] as const;
-              return (
-                <div className="space-y-4 py-2">
-                  <div className="space-y-2">
-                    <Label>Frequency</Label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <select
-                        value={bpAutoFrequency}
-                        onChange={(e) =>
-                          setBpAutoFrequency(
-                            e.target.value as "monthly" | "semi_monthly" | "weekly",
-                          )
-                        }
-                        className={selectClass}
-                      >
-                        <option value="monthly">Monthly</option>
-                        <option value="semi_monthly">Semi-monthly</option>
-                        <option value="weekly">Weekly</option>
-                      </select>
-                      <select
-                        value={bpAutoBasis}
-                        onChange={(e) =>
-                          setBpAutoBasis(e.target.value as "by_date")
-                        }
-                        className={selectClass}
-                      >
-                        <option value="by_date">By date</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Start Date</Label>
-                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-                      <select
-                        value={bpAutoStartDay}
-                        onChange={(e) => setBpAutoStartDay(e.target.value)}
-                        className={selectClass}
-                      >
-                        {dayOptions.map((d) => (
-                          <option key={d} value={d}>
-                            {ordinal(d)}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="text-sm text-muted-foreground">of</span>
-                      <select
-                        value={bpAutoStartMonth}
-                        onChange={(e) =>
-                          setBpAutoStartMonth(
-                            e.target.value as "previous" | "this" | "next",
-                          )
-                        }
-                        className={selectClass}
-                      >
-                        {monthOptions.map((o) => (
-                          <option key={o.value} value={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>End Date</Label>
-                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-                      <select
-                        value={bpAutoEndDay}
-                        onChange={(e) => setBpAutoEndDay(e.target.value)}
-                        className={selectClass}
-                      >
-                        {dayOptions.map((d) => (
-                          <option key={d} value={d}>
-                            {ordinal(d)}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="text-sm text-muted-foreground">of</span>
-                      <select
-                        value={bpAutoEndMonth}
-                        onChange={(e) =>
-                          setBpAutoEndMonth(
-                            e.target.value as "previous" | "this" | "next",
-                          )
-                        }
-                        className={selectClass}
-                      >
-                        {monthOptions.map((o) => (
-                          <option key={o.value} value={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Due Date</Label>
-                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-                      <select
-                        value={bpAutoDueDay}
-                        onChange={(e) => setBpAutoDueDay(e.target.value)}
-                        className={selectClass}
-                      >
-                        {dayOptions.map((d) => (
-                          <option key={d} value={d}>
-                            {ordinal(d)}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="text-sm text-muted-foreground">of</span>
-                      <select
-                        value={bpAutoDueMonth}
-                        onChange={(e) =>
-                          setBpAutoDueMonth(
-                            e.target.value as "previous" | "this" | "next",
-                          )
-                        }
-                        className={selectClass}
-                      >
-                        {monthOptions.map((o) => (
-                          <option key={o.value} value={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()
-          )}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateBpOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              disabled={
-                createBpMutation.isPending ||
-                (bpMode === "manual" &&
-                  (!bpFormStartDate || !bpFormEndDate || !bpFormBillingDate))
-              }
-              onClick={async () => {
-                if (bpMode === "manual") {
-                  createBpMutation.mutate(
-                    {
-                      start_date: bpFormStartDate,
-                      end_date: bpFormEndDate,
-                      due_date: bpFormBillingDate || undefined,
-                    },
-                    {
-                      onSuccess: () => {
-                        setCreateBpOpen(false);
-                        setBpFormStartDate("");
-                        setBpFormEndDate("");
-                        setBpFormBillingDate("");
-                      },
-                    },
-                  );
-                  return;
-                }
-
-                // Automatic: resolve day-of-month rule to a single period
-                const resolveDate = (
-                  dayStr: string,
-                  offset: "previous" | "this" | "next",
-                ) => {
-                  const today = new Date();
-                  const monthDelta =
-                    offset === "previous" ? -1 : offset === "next" ? 1 : 0;
-                  const target = new Date(
-                    today.getFullYear(),
-                    today.getMonth() + monthDelta,
-                    1,
-                  );
-                  const lastDay = new Date(
-                    target.getFullYear(),
-                    target.getMonth() + 1,
-                    0,
-                  ).getDate();
-                  const day = Math.min(
-                    Math.max(1, Number(dayStr) || 1),
-                    lastDay,
-                  );
-                  target.setDate(day);
-                  return target.toISOString().slice(0, 10);
+            ) : (
+              (() => {
+                const selectClass = "h-9 w-full";
+                const dayOptions = Array.from({ length: 31 }, (_, i) => i + 1);
+                const ordinal = (n: number) => {
+                  const s = ["th", "st", "nd", "rd"];
+                  const v = n % 100;
+                  return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
                 };
+                const monthOptions = [
+                  { value: "previous", label: "previous month" },
+                  { value: "this", label: "this month" },
+                  { value: "next", label: "next month" },
+                ] as const;
+                return (
+                  <div className="space-y-4 py-2">
+                    <div className="space-y-2">
+                      <Label>Frequency</Label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Select
+                          value={bpAutoFrequency}
+                          onValueChange={(value) =>
+                            setBpAutoFrequency(
+                              value as "monthly" | "semi_monthly" | "weekly",
+                            )
+                          }
+                        >
+                          <SelectTrigger className={selectClass}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                            <SelectItem value="semi_monthly">
+                              Semi-monthly
+                            </SelectItem>
+                            <SelectItem value="weekly">Weekly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Select
+                          value={bpAutoBasis}
+                          onValueChange={(value) =>
+                            setBpAutoBasis(value as "by_date")
+                          }
+                        >
+                          <SelectTrigger className={selectClass}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="by_date">By date</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
 
-                try {
-                  await createBpMutation.mutateAsync({
-                    start_date: resolveDate(bpAutoStartDay, bpAutoStartMonth),
-                    end_date: resolveDate(bpAutoEndDay, bpAutoEndMonth),
-                    due_date: resolveDate(bpAutoDueDay, bpAutoDueMonth),
-                  });
-                  setCreateBpOpen(false);
-                } catch (error) {
-                  reportNonCriticalFailure({
-                    area: "invoices",
-                    operation: "create-billing-period",
-                    error,
-                    userVisibleFallback:
-                      "Billing period creation failed and the dialog remains available.",
-                    metadata: { projectId },
-                  });
+                    <div className="space-y-2">
+                      <Label>Start Date</Label>
+                      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                        <Select
+                          value={bpAutoStartDay}
+                          onValueChange={setBpAutoStartDay}
+                        >
+                          <SelectTrigger className={selectClass}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {dayOptions.map((d) => (
+                              <SelectItem key={d} value={String(d)}>
+                                {ordinal(d)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-sm text-muted-foreground">
+                          of
+                        </span>
+                        <Select
+                          value={bpAutoStartMonth}
+                          onValueChange={(value) =>
+                            setBpAutoStartMonth(
+                              value as "previous" | "this" | "next",
+                            )
+                          }
+                        >
+                          <SelectTrigger className={selectClass}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {monthOptions.map((o) => (
+                              <SelectItem key={o.value} value={o.value}>
+                                {o.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>End Date</Label>
+                      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                        <Select
+                          value={bpAutoEndDay}
+                          onValueChange={setBpAutoEndDay}
+                        >
+                          <SelectTrigger className={selectClass}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {dayOptions.map((d) => (
+                              <SelectItem key={d} value={String(d)}>
+                                {ordinal(d)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-sm text-muted-foreground">
+                          of
+                        </span>
+                        <Select
+                          value={bpAutoEndMonth}
+                          onValueChange={(value) =>
+                            setBpAutoEndMonth(
+                              value as "previous" | "this" | "next",
+                            )
+                          }
+                        >
+                          <SelectTrigger className={selectClass}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {monthOptions.map((o) => (
+                              <SelectItem key={o.value} value={o.value}>
+                                {o.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Due Date</Label>
+                      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                        <Select
+                          value={bpAutoDueDay}
+                          onValueChange={setBpAutoDueDay}
+                        >
+                          <SelectTrigger className={selectClass}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {dayOptions.map((d) => (
+                              <SelectItem key={d} value={String(d)}>
+                                {ordinal(d)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-sm text-muted-foreground">
+                          of
+                        </span>
+                        <Select
+                          value={bpAutoDueMonth}
+                          onValueChange={(value) =>
+                            setBpAutoDueMonth(
+                              value as "previous" | "this" | "next",
+                            )
+                          }
+                        >
+                          <SelectTrigger className={selectClass}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {monthOptions.map((o) => (
+                              <SelectItem key={o.value} value={o.value}>
+                                {o.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()
+            )}
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCreateBpOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                disabled={
+                  createBpMutation.isPending ||
+                  (bpMode === "manual" &&
+                    (!bpFormStartDate || !bpFormEndDate || !bpFormBillingDate))
                 }
-              }}
-            >
-              {createBpMutation.isPending ? "Creating..." : "Create"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                onClick={async () => {
+                  if (bpMode === "manual") {
+                    createBpMutation.mutate(
+                      {
+                        start_date: bpFormStartDate,
+                        end_date: bpFormEndDate,
+                        due_date: bpFormBillingDate || undefined,
+                      },
+                      {
+                        onSuccess: () => {
+                          setCreateBpOpen(false);
+                          setBpFormStartDate("");
+                          setBpFormEndDate("");
+                          setBpFormBillingDate("");
+                        },
+                      },
+                    );
+                    return;
+                  }
+
+                  // Automatic: resolve day-of-month rule to a single period
+                  const resolveDate = (
+                    dayStr: string,
+                    offset: "previous" | "this" | "next",
+                  ) => {
+                    const today = new Date();
+                    const monthDelta =
+                      offset === "previous" ? -1 : offset === "next" ? 1 : 0;
+                    const target = new Date(
+                      today.getFullYear(),
+                      today.getMonth() + monthDelta,
+                      1,
+                    );
+                    const lastDay = new Date(
+                      target.getFullYear(),
+                      target.getMonth() + 1,
+                      0,
+                    ).getDate();
+                    const day = Math.min(
+                      Math.max(1, Number(dayStr) || 1),
+                      lastDay,
+                    );
+                    target.setDate(day);
+                    return target.toISOString().slice(0, 10);
+                  };
+
+                  try {
+                    await createBpMutation.mutateAsync({
+                      start_date: resolveDate(bpAutoStartDay, bpAutoStartMonth),
+                      end_date: resolveDate(bpAutoEndDay, bpAutoEndMonth),
+                      due_date: resolveDate(bpAutoDueDay, bpAutoDueMonth),
+                    });
+                    setCreateBpOpen(false);
+                  } catch (error) {
+                    reportNonCriticalFailure({
+                      area: "invoices",
+                      operation: "create-billing-period",
+                      error,
+                      userVisibleFallback:
+                        "Billing period creation failed and the dialog remains available.",
+                      metadata: { projectId },
+                    });
+                  }
+                }}
+              >
+                {createBpMutation.isPending ? "Creating..." : "Create"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </>
     );
   }
@@ -1238,7 +1391,6 @@ export default function ProjectInvoicesPage(): ReactElement {
         totalItems: ownerTotalItems,
         leftContent: ownerKpiRow,
         filteredItems: ownerTotalItems,
-        selectedCount: tableState.selectedIds.length,
         searchValue: tableState.searchInput,
         onSearchChange: tableState.setSearchInput,
         searchPlaceholder: "Search owner invoices...",
@@ -1282,19 +1434,12 @@ export default function ProjectInvoicesPage(): ReactElement {
         onSortChange: (sortBy, direction) => {
           tableState.setSortBy(sortBy);
           tableState.setSortDirection(direction);
-          tableState.setSearchParams({ sort: sortBy, sort_dir: direction, page: "1" });
+          tableState.setSearchParams({
+            sort: sortBy,
+            sort_dir: direction,
+            page: "1",
+          });
           tableState.setPage(1);
-        },
-      }}
-      selection={{
-        selectedIds: tableState.selectedIds,
-        onSelectAll: (checked) => {
-          tableState.setSelectedIds(checked ? ownerPageItems.map((item) => String(item.id)) : []);
-        },
-        onSelectRow: (id, checked) => {
-          tableState.setSelectedIds((prev) =>
-            checked ? [...prev, String(id)] : prev.filter((existingId) => existingId !== id),
-          );
         },
       }}
       emptyState={{
@@ -1303,7 +1448,10 @@ export default function ProjectInvoicesPage(): ReactElement {
         filteredDescription: "Try adjusting your search or filters.",
         isFiltered,
         action: (
-          <Button size="sm" onClick={() => router.push(`/${projectId}/invoices/new`)}>
+          <Button
+            size="sm"
+            onClick={() => router.push(`/${projectId}/invoices/new`)}
+          >
             <Plus />
             Create invoice
           </Button>
@@ -1318,6 +1466,7 @@ export default function ProjectInvoicesPage(): ReactElement {
       }}
       features={{
         enableViews: false,
+        enableRowSelection: false,
       }}
     />
   );
