@@ -126,8 +126,9 @@ export function CommitmentsImportDialog({
         <ModalHeader>
           <ModalTitle>Import Commitments</ModalTitle>
           <ModalDescription>
-            Upload the Alleato commitments import template (.xlsx). Each row creates a subcontract
-            or purchase order with the original contract amount.
+            Upload a commitments export (.xlsx) — the Alleato template or a Procore / Job Planner
+            export. Each row creates a subcontract or purchase order with its original contract
+            amount. Companies are matched by name; any not already in the directory are created.
           </ModalDescription>
         </ModalHeader>
 
