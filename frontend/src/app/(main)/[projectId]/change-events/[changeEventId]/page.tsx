@@ -12,7 +12,6 @@ import {
   FileText,
   Mail,
   MoreHorizontal,
-  Pencil,
   Trash2,
   X,
   XCircle,
@@ -69,6 +68,7 @@ import { EntityRoom } from "@/components/comments/entity-room";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ChangeEventRfqForm } from "@/components/domain/change-events/ChangeEventRfqForm";
 import type { ChangeEventRfqFormValues } from "@/components/domain/change-events/ChangeEventRfqForm";
+import { ChangeEventEditSheet } from "@/components/domain/change-events/ChangeEventEditSheet";
 import { useDropdownData } from "@/components/domain/change-events/change-event-form/useDropdownData";
 import type { ProjectEmail } from "@/hooks/use-emails";
 
@@ -106,6 +106,7 @@ export default function ChangeEventDetailPage() {
     actions,
   } = useChangeEventDetail(projectId, changeEventId);
 
+  const [showEditSheet, setShowEditSheet] = useState(false);
   const [showRfqSheet, setShowRfqSheet] = useState(false);
   const [isCreatingRfq, setIsCreatingRfq] = useState(false);
   const [projectContacts, setProjectContacts] = useState<
@@ -453,8 +454,7 @@ export default function ChangeEventDetailPage() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => router.push(`/${projectId}/change-events/${changeEventId}/edit`)}>
-            <Pencil className="mr-2 h-4 w-4" />
+          <DropdownMenuItem onClick={() => setShowEditSheet(true)}>
             Edit Change Event
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -753,6 +753,15 @@ export default function ChangeEventDetailPage() {
       </div>
 
       {/* Dialogs */}
+      <ChangeEventEditSheet
+        open={showEditSheet}
+        onOpenChange={setShowEditSheet}
+        projectId={projectId}
+        changeEventId={changeEventId}
+        changeEvent={changeEvent}
+        onSaved={() => void actions.refetch()}
+      />
+
       <ChangeEventEmailDialog
         open={showEmailDialog}
         onOpenChange={handleEmailDialogOpenChange}
