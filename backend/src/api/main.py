@@ -1373,6 +1373,34 @@ async def project_synthesize(
         ) from exc
 
 
+class ReconcileFlagsRequest(BaseModel):
+    project_id: int
+
+
+@app.post(
+    "/api/intelligence/reconcile-flags",
+    tags=["Intelligence"],
+    summary="Flag->outcome calibration: resolve open predictive flags against later events",
+)
+async def reconcile_flags(
+    request: ReconcileFlagsRequest,
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """For each open predictive flag on the project, decide whether it has since
+    materialized / did-not-materialize based on subsequent events, and link the
+    realizing event."""
+    try:
+        from src.services.intelligence.project_synthesizer import reconcile_project_flags
+
+        return reconcile_project_flags(request.project_id)
+    except Exception as exc:
+        logger.error("[ReconcileFlagsAPI] failed project_id=%s: %s", request.project_id, exc, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Flag reconcile failed for project {request.project_id}: {exc}",
+        ) from exc
+
+
 @app.post(
     "/api/intelligence/projects/operating-summary/refresh",
     tags=["Intelligence"],

@@ -513,6 +513,115 @@ def synthesize_project_intelligence(
     return result
 
 
+def reconcile_project_flags(project_id: int, *, model: Optional[str] = None) -> dict:
+    """Flag -> outcome calibration loop.
+
+    For each OPEN predictive ``flag`` card on the project, compare it against the
+    project's subsequent real events (decisions/changes/risks that occurred after
+    the prediction) and decide whether the prediction MATERIALIZED, DID NOT
+    materialize, or is STILL OPEN. Materialized/did-not flips ``current_status``
+    and links the realizing event(s) via ``related_card_ids`` — so the timeline
+    shows whether the AI's predictions came true.
+    """
+    from .client import COMPILER_MODEL_LIGHT, extract_with_retry
+
+    client = get_supabase_client()
+    target = ensure_client_project_target(client, int(project_id), compiler_version=COMMS_COMPILER_VERSION)
+    target_id = target.get("id")
+    result: Dict[str, Any] = {"project_id": int(project_id), "open_flags": 0, "materialized": 0, "did_not_materialize": 0, "still_open": 0, "errors": []}
+    if not target_id:
+        return result
+
+    flags = (
+        client.table("insight_cards")
+        .select("id,title,summary,occurred_at,why_it_matters")
+        .eq("primary_target_id", target_id)
+        .eq("card_type", "flag")
+        .eq("current_status", "open")
+        .order("occurred_at", desc=False)
+        .limit(40)
+        .execute()
+        .data
+        or []
+    )
+    result["open_flags"] = len(flags)
+    if not flags:
+        return result
+
+    project_name = (target.get("name") or f"project {project_id}")
+    today = datetime.now(timezone.utc).date().isoformat()
+
+    for flag in flags:
+        try:
+            flag_at = flag.get("occurred_at")
+            # Subsequent real events (non-flag) that occurred after the prediction.
+            events = (
+                client.table("insight_cards")
+                .select("id,card_type,title,occurred_at")
+                .eq("primary_target_id", target_id)
+                .neq("card_type", "flag")
+                .gt("occurred_at", flag_at)
+                .order("occurred_at", desc=True)
+                .limit(25)
+                .execute()
+                .data
+                or []
+            )
+            event_lines = "\n".join(
+                f"- [{e['id']}] ({str(e.get('occurred_at'))[:10]}, {e.get('card_type')}) {e.get('title')}"
+                for e in events
+            ) or "(no subsequent events recorded yet)"
+
+            prompt = (
+                f'You audit AI predictions for a construction project ("{project_name}"). '
+                f'Today is {today}.\n\n'
+                f'PREDICTION (flagged {str(flag_at)[:10]}): {flag.get("title")}\n'
+                f'Detail: {flag.get("summary") or ""}\n\n'
+                f'SUBSEQUENT PROJECT EVENTS (after the prediction):\n{event_lines}\n\n'
+                'Decide, using ONLY the events above:\n'
+                '- "materialized": a subsequent event shows the predicted thing actually happened. '
+                'Return the realizing event id(s) in realizing_card_ids.\n'
+                '- "did_not_materialize": enough time has passed and/or events show it was abandoned or will not happen.\n'
+                '- "still_open": not enough evidence yet.\n'
+                'Prefer "still_open" unless evidence is clear. Return JSON: '
+                '{"verdict":"materialized|did_not_materialize|still_open","realizing_card_ids":["uuid"...],"reasoning":"one sentence"}'
+            )
+            data = extract_with_retry(
+                [{"role": "user", "content": prompt}],
+                model=model or COMPILER_MODEL_LIGHT,
+                timeout=60,
+            )
+            if data.get("_extraction_failed"):
+                result["errors"].append({"flag_id": flag["id"], "error": "llm_failed"})
+                continue
+
+            verdict = str(data.get("verdict") or "still_open").strip().lower()
+            valid_ids = {e["id"] for e in events}
+            realizing = [cid for cid in (data.get("realizing_card_ids") or []) if cid in valid_ids]
+
+            if verdict == "materialized":
+                client.table("insight_cards").update(
+                    {"current_status": "materialized", "related_card_ids": realizing, "updated_at": datetime.now(timezone.utc).isoformat()}
+                ).eq("id", flag["id"]).execute()
+                result["materialized"] += 1
+            elif verdict == "did_not_materialize":
+                client.table("insight_cards").update(
+                    {"current_status": "did_not_materialize", "updated_at": datetime.now(timezone.utc).isoformat()}
+                ).eq("id", flag["id"]).execute()
+                result["did_not_materialize"] += 1
+            else:
+                result["still_open"] += 1
+        except Exception as exc:  # noqa: BLE001 — one flag must not abort the pass
+            logger.error("[ProjectSynthesizer] flag reconcile failed for %s: %s", flag.get("id"), exc, exc_info=True)
+            result["errors"].append({"flag_id": flag.get("id"), "error": str(exc)})
+
+    logger.info(
+        "[ProjectSynthesizer] flag reconcile project=%s open=%d materialized=%d did_not=%d still_open=%d",
+        project_id, result["open_flags"], result["materialized"], result["did_not_materialize"], result["still_open"],
+    )
+    return result
+
+
 def run_synthesis_sweep(
     *,
     project_ids: Optional[List[int]] = None,
@@ -567,7 +676,15 @@ def run_synthesis_sweep(
             summary["teams"] += r.get("teams", 0)
             summary["cards_written"] += r.get("cards_written", 0)
             summary["tasks_written"] += r.get("tasks_written", 0)
-            summary["per_project"].append({"project_id": pid, "emails": r.get("emails"), "teams": r.get("teams"), "cards": r.get("cards_written")})
+            # Flag -> outcome calibration for this project (cheap: only open flags).
+            flag_res = {}
+            try:
+                flag_res = reconcile_project_flags(pid)
+                summary["flags_materialized"] = summary.get("flags_materialized", 0) + flag_res.get("materialized", 0)
+                summary["flags_resolved"] = summary.get("flags_resolved", 0) + flag_res.get("materialized", 0) + flag_res.get("did_not_materialize", 0)
+            except Exception as fexc:  # noqa: BLE001 — reconcile must not abort the sweep
+                logger.warning("[ProjectSynthesizer] flag reconcile failed for %s: %s", pid, fexc)
+            summary["per_project"].append({"project_id": pid, "emails": r.get("emails"), "teams": r.get("teams"), "cards": r.get("cards_written"), "flags_resolved": flag_res.get("materialized", 0) + flag_res.get("did_not_materialize", 0) if flag_res else 0})
         except Exception as exc:  # noqa: BLE001 — one project must not abort the sweep
             logger.error("[ProjectSynthesizer] sweep failed for project %s: %s", pid, exc, exc_info=True)
             summary["errors"].append({"project_id": pid, "error": str(exc)})
