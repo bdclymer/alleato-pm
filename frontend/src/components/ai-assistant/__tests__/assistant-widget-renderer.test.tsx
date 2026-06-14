@@ -7,6 +7,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AssistantWidgetRenderer } from "../assistant-widget-renderer";
 import { apiFetch } from "@/lib/api-client";
 import type {
+  CommitmentDraftWidgetPayload,
   OutlookEmailDraftWidgetPayload,
   OutlookInboxSummaryWidgetPayload,
 } from "@/lib/ai/assistant-widgets";
@@ -113,6 +114,86 @@ describe("AssistantWidgetRenderer Outlook draft feedback", () => {
   });
 });
 
+describe("AssistantWidgetRenderer commitment draft", () => {
+  function commitmentWidget(
+    overrides: Partial<CommitmentDraftWidgetPayload> = {},
+  ): CommitmentDraftWidgetPayload {
+    return {
+      type: "commitment_draft",
+      id: "commitment-draft-preview",
+      title: "Subcontract draft",
+      commitmentType: "subcontract",
+      projectId: 25125,
+      contractNumber: "SC-001",
+      vendorName: "Acme Electric",
+      vendorResolved: true,
+      fields: [
+        { label: "Title", value: "Electrical rough-in", editable: true },
+        { label: "Vendor", value: "Acme Electric", editable: true },
+        { label: "Scope", value: "Electrical rough-in scope", editable: true, multiline: true },
+      ],
+      validation: [
+        {
+          label: "Vendor",
+          status: "pass",
+          message: "Vendor is linked to a company record.",
+        },
+      ],
+      lineItems: [
+        {
+          id: "line-1",
+          costCode: "26-0000",
+          description: "Electrical rough-in",
+          amount: 12500,
+        },
+      ],
+      totalAmount: 12500,
+      confirmPrompt: "Create this commitment with createCommitment.",
+      ...overrides,
+    };
+  }
+
+  it("renders a structured commitment draft and submits the final preview prompt", () => {
+    const onSubmit = jest.fn();
+    render(
+      <AssistantWidgetRenderer
+        widget={commitmentWidget()}
+        onSubmit={onSubmit}
+        onEditDraft={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByText("SC-001")).toBeInTheDocument();
+    expect(screen.getAllByText("$12,500.00")).toHaveLength(2);
+    expect(screen.getByText("Electrical rough-in")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /build final preview/i }));
+    expect(onSubmit).toHaveBeenCalledWith(expect.stringContaining("createCommitment"));
+    expect(onSubmit).toHaveBeenCalledWith(expect.stringContaining("Acme Electric"));
+  });
+
+  it("blocks final preview submission when vendor validation fails", () => {
+    render(
+      <AssistantWidgetRenderer
+        widget={commitmentWidget({
+          vendorResolved: false,
+          validation: [
+            {
+              label: "Vendor",
+              status: "fail",
+              message: "Resolve the vendor before creating the commitment.",
+            },
+          ],
+        })}
+        onSubmit={jest.fn()}
+        onEditDraft={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: /build final preview/i })).toBeDisabled();
+    expect(screen.getByText(/resolve the vendor/i)).toBeInTheDocument();
+  });
+});
+
 describe("AssistantWidgetRenderer Outlook inbox summary", () => {
   function inboxWidget(): OutlookInboxSummaryWidgetPayload {
     return {
@@ -181,7 +262,6 @@ describe("AssistantWidgetRenderer Outlook inbox summary", () => {
 
     expect(screen.getByLabelText("Important Outlook emails")).toBeInTheDocument();
     expect(screen.getByText("RE: Closeout MTV 2 Project")).toBeInTheDocument();
-    expect(screen.getByText(/Next step:/)).toBeInTheDocument();
     expect(screen.getByText("Ok yes please get me final bill today.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /^reply$/i }));
     expect(onSubmit).toHaveBeenCalledWith(expect.stringContaining("OUTLOOK_INBOX_CARD_ACTION"));

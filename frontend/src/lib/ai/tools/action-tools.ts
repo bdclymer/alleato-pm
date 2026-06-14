@@ -8,6 +8,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { createHash, randomUUID } from "crypto";
+import type { CommitmentDraftWidgetPayload } from "@/lib/ai/assistant-widgets";
 import type { Json } from "@/types/database.types";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createToolGuardrails } from "./guardrails";
@@ -101,6 +102,81 @@ export function normalizeGeneratedTaskStatus(
   if (status === "blocked") return "blocked";
   if (status === "cancelled") return "cancelled";
   return "open";
+}
+
+type CommitmentDraftPreviewInput = {
+  projectId: number;
+  type: "subcontract" | "purchase_order";
+  title: string;
+  contractNumber: string;
+  status: string;
+  vendorName?: string | null;
+  contractCompanyId?: string | null;
+  description?: string | null;
+  startDate?: string | null;
+  estimatedCompletionDate?: string | null;
+  defaultRetainagePercent?: number | null;
+};
+
+export function buildCommitmentDraftWidget(
+  input: CommitmentDraftPreviewInput,
+): CommitmentDraftWidgetPayload {
+  const vendorResolved = Boolean(input.contractCompanyId);
+  const commitmentLabel = input.type === "subcontract" ? "Subcontract" : "Purchase order";
+  const validation: CommitmentDraftWidgetPayload["validation"] = [
+    {
+      label: "Project",
+      status: Number.isFinite(input.projectId) ? "pass" : "fail",
+      message: Number.isFinite(input.projectId) ? `Project ${input.projectId}` : "Missing project.",
+    },
+    {
+      label: "Vendor",
+      status: vendorResolved ? "pass" : "fail",
+      message: vendorResolved
+        ? "Vendor is linked to a company record."
+        : input.vendorName
+          ? `No matching vendor company was found for "${input.vendorName}".`
+          : "Vendor is required before creating a commitment.",
+    },
+    {
+      label: "Contract number",
+      status: input.contractNumber ? "pass" : "warning",
+      message: input.contractNumber || "Contract number will need to be assigned.",
+    },
+  ];
+
+  return {
+    type: "commitment_draft",
+    id: "commitment-draft-preview",
+    title: `${commitmentLabel} draft`,
+    commitmentType: input.type,
+    projectId: input.projectId,
+    contractNumber: input.contractNumber,
+    vendorName: input.vendorName ?? null,
+    vendorResolved,
+    fields: [
+      { label: "Title", value: input.title, editable: true },
+      { label: "Vendor", value: input.vendorName ?? "", editable: true },
+      { label: "Status", value: input.status, editable: true },
+      { label: "Scope", value: input.description ?? "", editable: true, multiline: true },
+      { label: "Start date", value: input.startDate ?? "", editable: true },
+      {
+        label: input.type === "purchase_order" ? "Delivery date" : "Estimated completion",
+        value: input.estimatedCompletionDate ?? "",
+        editable: true,
+      },
+      {
+        label: "Retainage %",
+        value: input.defaultRetainagePercent == null ? "" : String(input.defaultRetainagePercent),
+        editable: true,
+      },
+    ],
+    validation,
+    lineItems: [],
+    totalAmount: 0,
+    confirmPrompt:
+      "Create this commitment with createCommitment. Use confirmed: false for any revised preview, and confirmed: true only after I explicitly confirm.",
+  };
 }
 
 export async function previewCreateRFI(
@@ -2750,11 +2826,25 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
         }
 
         if (!confirmed) {
+          const widget = buildCommitmentDraftWidget({
+            projectId,
+            type,
+            title,
+            contractNumber: finalContractNumber,
+            status,
+            vendorName: vendorName ?? null,
+            contractCompanyId,
+            description: description ?? null,
+            startDate: startDate ?? null,
+            estimatedCompletionDate: estimatedCompletionDate ?? null,
+            defaultRetainagePercent: defaultRetainagePercent ?? null,
+          });
           return {
             action: "preview",
             message:
               `Here's the ${type === "subcontract" ? "subcontract" : "purchase order"} I'll create. ` +
               "Reply **confirm** to proceed or tell me what to change.",
+            widget,
             preview: {
               table,
               fields: {
@@ -2776,6 +2866,25 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
         const idempotencyKey = resolveIdempotencyKey("createCommitment", input);
         const replay = await getReplayResponse("createCommitment", idempotencyKey);
         if (replay) return replay;
+
+        if (!contractCompanyId) {
+          const failure = {
+            success: false,
+            error:
+              vendorName
+                ? `Cannot create the commitment because "${vendorName}" was not found in the vendor directory.`
+                : "Cannot create the commitment without a vendor company.",
+          };
+          await recordWriteAudit({
+            toolName: "createCommitment",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
 
         // Build the insert payload
         const insertPayload: Record<string, unknown> = {

@@ -15,6 +15,7 @@ export type AssistantWidgetKind =
   | "creative_draft"
   | "source_evidence_drawer"
   | "record_write_preview"
+  | "commitment_draft"
   | "create_event"
   | "project_action_preview"
   | "decision_packet"
@@ -501,6 +502,31 @@ export type RecordWritePreviewWidgetPayload = {
   confirmPrompt: string;
 };
 
+export type CommitmentDraftWidgetPayload = {
+  type: "commitment_draft";
+  id: string;
+  title: string;
+  commitmentType: "subcontract" | "purchase_order";
+  projectId: number;
+  contractNumber: string;
+  vendorName?: string | null;
+  vendorResolved: boolean;
+  fields: AssistantWidgetField[];
+  validation: Array<{
+    label: string;
+    status: "pass" | "warning" | "fail";
+    message: string;
+  }>;
+  lineItems: Array<{
+    id: string;
+    costCode?: string | null;
+    description: string;
+    amount: number;
+  }>;
+  totalAmount: number;
+  confirmPrompt: string;
+};
+
 export type AssistantWidgetPayload =
   | DraftEmailWidgetPayload
   | OutlookEmailDraftWidgetPayload
@@ -518,6 +544,7 @@ export type AssistantWidgetPayload =
   | CreativeDraftWidgetPayload
   | SourceEvidenceDrawerWidgetPayload
   | RecordWritePreviewWidgetPayload
+  | CommitmentDraftWidgetPayload
   | CreateEventWidgetPayload
   | ProjectActionPreviewWidgetPayload
   | DecisionPacketWidgetPayload
@@ -548,6 +575,7 @@ export const ASSISTANT_WIDGET_TYPES = [
   "creative_draft",
   "source_evidence_drawer",
   "record_write_preview",
+  "commitment_draft",
   "create_event",
   "project_action_preview",
   "decision_packet",

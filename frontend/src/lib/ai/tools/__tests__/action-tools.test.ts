@@ -21,6 +21,7 @@ jest.mock("@/lib/microsoft-graph/mail", () => ({
 import { createServiceClient } from "@/lib/supabase/service";
 import { createToolGuardrails } from "../guardrails";
 import {
+  buildCommitmentDraftWidget,
   createActionTools,
   normalizeGeneratedTaskPriority,
   normalizeGeneratedTaskStatus,
@@ -246,6 +247,54 @@ describe("generated task DB contract normalization", () => {
         priority: "urgent",
       },
     });
+  });
+});
+
+describe("buildCommitmentDraftWidget", () => {
+  it("marks unresolved vendors as a failing validation item", () => {
+    const widget = buildCommitmentDraftWidget({
+      projectId: 25125,
+      type: "subcontract",
+      title: "Electrical rough-in",
+      contractNumber: "SC-001",
+      status: "Draft",
+      vendorName: "Acme Electric",
+      contractCompanyId: null,
+      description: "Electrical rough-in scope",
+    });
+
+    expect(widget.type).toBe("commitment_draft");
+    expect(widget.vendorResolved).toBe(false);
+    expect(widget.validation).toContainEqual(
+      expect.objectContaining({
+        label: "Vendor",
+        status: "fail",
+      }),
+    );
+  });
+
+  it("builds a passable purchase order draft when the vendor is resolved", () => {
+    const widget = buildCommitmentDraftWidget({
+      projectId: 25125,
+      type: "purchase_order",
+      title: "Switchgear procurement",
+      contractNumber: "PO-001",
+      status: "Draft",
+      vendorName: "Acme Supply",
+      contractCompanyId: "company-1",
+      estimatedCompletionDate: "2026-07-01",
+      defaultRetainagePercent: 5,
+    });
+
+    expect(widget.commitmentType).toBe("purchase_order");
+    expect(widget.vendorResolved).toBe(true);
+    expect(widget.validation.every((item) => item.status !== "fail")).toBe(true);
+    expect(widget.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: "Delivery date", value: "2026-07-01" }),
+        expect.objectContaining({ label: "Retainage %", value: "5" }),
+      ]),
+    );
   });
 });
 

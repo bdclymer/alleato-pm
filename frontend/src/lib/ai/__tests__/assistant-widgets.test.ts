@@ -2,6 +2,7 @@ import {
   ASSISTANT_WIDGET_TYPES,
   isAssistantWidgetPayload,
   type AssistantWidgetDataPart,
+  type CommitmentDraftWidgetPayload,
   type MeetingInsightsWidgetPayload,
   type OutlookInboxSummaryWidgetPayload,
 } from "../assistant-widgets";
@@ -168,5 +169,47 @@ describe("assistant widget registry", () => {
 
     expect(isAssistantWidgetPayload(dataPart.data.widget)).toBe(true);
     expect(dataPart.data.widget.type).toBe("outlook_inbox_summary");
+  });
+
+  it("accepts the commitment draft generative UI widget data part", () => {
+    const widget: CommitmentDraftWidgetPayload = {
+      type: "commitment_draft",
+      id: "commitment-draft-preview",
+      title: "Subcontract draft",
+      commitmentType: "subcontract",
+      projectId: 25125,
+      contractNumber: "SC-001",
+      vendorName: "Acme Electric",
+      vendorResolved: true,
+      fields: [
+        { label: "Title", value: "Electrical rough-in", editable: true },
+        { label: "Vendor", value: "Acme Electric", editable: true },
+      ],
+      validation: [
+        {
+          label: "Vendor",
+          status: "pass",
+          message: "Vendor is linked to a company record.",
+        },
+      ],
+      lineItems: [
+        {
+          id: "line-1",
+          costCode: "26-0000",
+          description: "Electrical rough-in",
+          amount: 12500,
+        },
+      ],
+      totalAmount: 12500,
+      confirmPrompt: "Create this commitment with createCommitment.",
+    };
+    const dataPart: AssistantWidgetDataPart = {
+      type: "data-assistant-widget",
+      id: "assistant-widget-commitment-draft",
+      data: { widget },
+    };
+
+    expect(isAssistantWidgetPayload(dataPart.data.widget)).toBe(true);
+    expect(dataPart.data.widget.type).toBe("commitment_draft");
   });
 });

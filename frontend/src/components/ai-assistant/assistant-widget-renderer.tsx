@@ -64,6 +64,7 @@ import type {
   AssistantWidgetField,
   AssistantWidgetPayload,
   CalendarInviteWidgetPayload,
+  CommitmentDraftWidgetPayload,
   CreateEventWidgetPayload,
   CreateTaskWidgetPayload,
   CreativeDraftWidgetPayload,
@@ -1701,6 +1702,94 @@ function normalizeGetRecentEmailsToolOutput(output: unknown): OutlookInboxSummar
   };
 }
 
+function toMoney(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function normalizeCommitmentDraftToolOutput(output: unknown): CommitmentDraftWidgetPayload | null {
+  const record = asRecord(output);
+  const widget = asRecord(record.widget);
+  if (widget.type === "commitment_draft") {
+    return widget as CommitmentDraftWidgetPayload;
+  }
+
+  const preview = asRecord(record.preview);
+  const fields = asRecord(preview.fields);
+  const table = String(preview.table ?? "").toLowerCase();
+  if (record.action !== "preview" || (!table.includes("contract") && !table.includes("purchase"))) {
+    return null;
+  }
+
+  const commitmentType: CommitmentDraftWidgetPayload["commitmentType"] =
+    table.includes("purchase") ? "purchase_order" : "subcontract";
+  const projectId = Number(fields.project_id);
+  const contractNumber = String(fields.contract_number ?? "");
+  const title = String(fields.title ?? "Untitled commitment");
+  const vendorName =
+    typeof fields.vendor_name_resolved === "string"
+      ? fields.vendor_name_resolved
+      : typeof fields.vendor_name === "string"
+        ? fields.vendor_name
+        : null;
+  const vendorResolved = Boolean(fields.contract_company_id);
+  const validation: CommitmentDraftWidgetPayload["validation"] = [
+    {
+      label: "Project",
+      status: Number.isFinite(projectId) ? "pass" : "fail",
+      message: Number.isFinite(projectId) ? `Project ${projectId}` : "Missing project.",
+    },
+    {
+      label: "Vendor",
+      status: vendorResolved ? "pass" : "fail",
+      message: vendorResolved
+        ? "Vendor is linked to a company record."
+        : "Resolve the vendor before creating the commitment.",
+    },
+    {
+      label: "Contract number",
+      status: contractNumber ? "pass" : "warning",
+      message: contractNumber || "Contract number will need to be assigned.",
+    },
+  ];
+
+  return {
+    type: "commitment_draft",
+    id: "commitment-draft-preview",
+    title: `${commitmentType === "subcontract" ? "Subcontract" : "Purchase order"} draft`,
+    commitmentType,
+    projectId: Number.isFinite(projectId) ? projectId : 0,
+    contractNumber,
+    vendorName,
+    vendorResolved,
+    fields: [
+      { label: "Title", value: title, editable: true },
+      { label: "Vendor", value: vendorName ?? "", editable: true },
+      { label: "Status", value: String(fields.status ?? "Draft"), editable: true },
+      { label: "Scope", value: String(fields.description ?? ""), editable: true, multiline: true },
+      { label: "Start date", value: String(fields.start_date ?? ""), editable: true },
+      {
+        label: commitmentType === "purchase_order" ? "Delivery date" : "Estimated completion",
+        value: String(fields.estimated_completion_date ?? fields.delivery_date ?? ""),
+        editable: true,
+      },
+      {
+        label: "Retainage %",
+        value: fields.default_retainage_percent == null ? "" : String(fields.default_retainage_percent),
+        editable: true,
+      },
+    ],
+    validation,
+    lineItems: [],
+    totalAmount: 0,
+    confirmPrompt:
+      "Create this commitment with createCommitment. Use confirmed: false for any revised preview, and confirmed: true only after I explicitly confirm.",
+  };
+}
+
 function MeetingIntelligenceWidget({ widget }: { widget: MeetingIntelligenceWidgetPayload }) {
   return (
     <WidgetShell
@@ -2263,6 +2352,144 @@ function RecordWritePreviewWidget({
   );
 }
 
+function CommitmentDraftWidget({
+  widget,
+  onSubmit,
+  onEditDraft,
+}: {
+  widget: CommitmentDraftWidgetPayload;
+  onSubmit: (message: string) => void;
+  onEditDraft: (message: string) => void;
+}) {
+  const [fields, setFields] = useState(widget.fields);
+  const lineItemsTotal = widget.lineItems.reduce((sum, item) => sum + item.amount, 0);
+  const total = widget.totalAmount || lineItemsTotal;
+  const prompt = [
+    widget.confirmPrompt,
+    "",
+    JSON.stringify(
+      {
+        projectId: widget.projectId,
+        type: widget.commitmentType,
+        contractNumber: widget.contractNumber,
+        fields: Object.fromEntries(fields.map((field) => [field.label, field.value])),
+        lineItems: widget.lineItems,
+      },
+      null,
+      2,
+    ),
+  ].join("\n");
+
+  return (
+    <WidgetShell
+      eyebrow="Commitment draft"
+      title={widget.title}
+      icon={<ShieldCheckIcon className="h-4 w-4" />}
+      actions={<WidgetMeta>{widget.commitmentType.replaceAll("_", " ")}</WidgetMeta>}
+    >
+      <div className="grid gap-2 text-sm">
+        <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-2">
+          <span className="text-muted-foreground">Project</span>
+          <span className="font-medium text-foreground">{widget.projectId}</span>
+        </div>
+        <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-2">
+          <span className="text-muted-foreground">Contract number</span>
+          <span className="font-medium text-foreground">{widget.contractNumber}</span>
+        </div>
+        <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-2">
+          <span className="text-muted-foreground">SOV total</span>
+          <span className="font-medium text-foreground">{toMoney(total)}</span>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        {fields.map((field, index) => (
+          <label key={`${field.label}-${index}`} className="grid gap-1">
+            <span className="text-xs font-medium text-muted-foreground">{field.label}</span>
+            {field.multiline ? (
+              <Textarea
+                value={field.value}
+                onChange={(event) => {
+                  const next = [...fields];
+                  next[index] = { ...field, value: event.target.value };
+                  setFields(next);
+                }}
+                className="min-h-20 resize-y"
+              />
+            ) : (
+              <Input
+                value={field.value}
+                onChange={(event) => {
+                  const next = [...fields];
+                  next[index] = { ...field, value: event.target.value };
+                  setFields(next);
+                }}
+              />
+            )}
+          </label>
+        ))}
+      </div>
+
+      {widget.lineItems.length > 0 ? (
+        <div className="overflow-hidden rounded-md border border-border">
+          <div className="grid grid-cols-[1fr_auto] gap-3 bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground">
+            <span>Line item</span>
+            <span>Amount</span>
+          </div>
+          <div className="divide-y divide-border">
+            {widget.lineItems.map((item) => (
+              <div key={item.id} className="grid grid-cols-[1fr_auto] gap-3 px-3 py-2 text-sm">
+                <div className="min-w-0">
+                  <div className="truncate font-medium text-foreground">{item.description}</div>
+                  {item.costCode ? (
+                    <div className="text-xs text-muted-foreground">{item.costCode}</div>
+                  ) : null}
+                </div>
+                <div className="font-medium text-foreground">{toMoney(item.amount)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="space-y-1">
+        {widget.validation.map((item) => (
+          <div key={item.label} className="flex items-start gap-2 text-xs">
+            <span
+              className={cn(
+                "mt-1 h-1.5 w-1.5 shrink-0 rounded-full",
+                item.status === "pass"
+                  ? "bg-emerald-600"
+                  : item.status === "warning"
+                    ? "bg-amber-600"
+                    : "bg-destructive",
+              )}
+            />
+            <span className="text-muted-foreground">
+              <span className="font-medium text-foreground">{item.label}:</span> {item.message}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          onClick={() => onSubmit(prompt)}
+          disabled={widget.validation.some((item) => item.status === "fail")}
+        >
+          <ShieldCheckIcon className="h-4 w-4" />
+          Build final preview
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => onEditDraft(prompt)}>
+          <SquarePenIcon className="h-4 w-4" />
+          Edit in chat
+        </Button>
+      </div>
+    </WidgetShell>
+  );
+}
+
 function CreateEventWidget({
   widget,
   onSubmit,
@@ -2815,6 +3042,14 @@ const assistantWidgetComponentRegistry: Record<AssistantWidgetPayload["type"], A
         onEditDraft={props.onEditDraft}
       />
     ) : null,
+  commitment_draft: (props) =>
+    props.widget.type === "commitment_draft" ? (
+      <CommitmentDraftWidget
+        widget={props.widget}
+        onSubmit={props.onSubmit}
+        onEditDraft={props.onEditDraft}
+      />
+    ) : null,
   create_event: (props) =>
     props.widget.type === "create_event" ? (
       <CreateEventWidget widget={props.widget} onSubmit={props.onSubmit} onEditDraft={props.onEditDraft} />
@@ -2853,6 +3088,7 @@ const assistantToolComponentRegistry: Record<string, (output: unknown) => Assist
   createOutlookCalendarInvite: normalizeCalendarInviteToolOutput,
   draftOutlookEmail: normalizeOutlookEmailDraftToolOutput,
   getRecentEmails: normalizeGetRecentEmailsToolOutput,
+  createCommitment: normalizeCommitmentDraftToolOutput,
 };
 
 export function hasAssistantDynamicToolComponent(part: AssistantToolPartForRegistry): boolean {
