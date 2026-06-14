@@ -1,0 +1,182 @@
+# PRP — Project Intelligence Rolling-State Synthesis (L2) + Brief Synthesis (L4)
+
+**Status:** NOT IMPLEMENTED (the core of the redesign). This PRP specifies the missing synthesis layer and provides an independently-verifiable audit of what currently exists.
+**Author:** Claude (the agent that built the WRONG thing and is documenting it honestly).
+**Confidence for one-pass success:** 8/10 (design is concrete; main risk is prompt quality + Acumatica snapshot wiring).
+**Verify-don't-trust:** Every "DONE" claim below has a copy-paste command. Run them. Do not take prose for ground truth.
+
+---
+
+## 0. The one-sentence problem
+
+The redesign's **core principle** — *"pre-compute project intelligence by reading raw documents in full context… rolling project-state document: read last synthesized state + only raw docs added since last refresh → one bounded synthesis pass"* — was **never built**. What got built instead is a per-document fragment extractor that writes `insight_cards`. The executive brief then dumps those fragments verbatim with **no synthesis**, which is why the output is a subpar card list, not insight.
+
+---
+
+## 1. GROUND-TRUTH AUDIT (run these — do not trust the prose)
+
+Setup for DB checks (the Supabase MCP was flaky; use the service client directly):
+```bash
+cd /Users/meganharrison/Documents/alleato-pm
+export SUPA_URL=$(grep -E "^SUPABASE_URL=" .env | head -1 | cut -d= -f2- | tr -d '"'"'\'' ')
+export SUPA_KEY=$(grep -E "^SUPABASE_SERVICE_ROLE_KEY=" .env | head -1 | cut -d= -f2- | tr -d '"'"'\'' ')
+# helper: node -e with @supabase/supabase-js resolved from frontend/node_modules
+runsql(){ SUPA_URL="$SUPA_URL" SUPA_KEY="$SUPA_KEY" NODE_PATH="$PWD/frontend/node_modules" node -e "$1"; }
+```
+
+| # | Claim | Reality | Verification command | Expected (proves the claim) |
+|---|-------|---------|----------------------|------------------------------|
+| A1 | "L2 rolling-state synthesis exists" | **FALSE** | `grep -oE '\.table\("[a-z_]+"\)' backend/src/services/intelligence/project_synthesizer.py \| sort -u` | Writes only `document_metadata`, `insight_cards`, `source_signal_candidates`. **No `intelligence_packets`.** |
+| A2 | "Synthesis packets are being written" | **FALSE** | `runsql "const{createClient}=require('@supabase/supabase-js');(async()=>{const sb=createClient(process.env.SUPA_URL,process.env.SUPA_KEY);const{data}=await sb.from('intelligence_packets').select('compiler_version,generated_at');const m={};for(const r of data){m[r.compiler_version]=m[r.compiler_version]||{n:0,l:''};m[r.compiler_version].n++;if(r.generated_at>m[r.compiler_version].l)m[r.compiler_version].l=r.generated_at}console.log(m)})()"` | `project-operating-summary-v1` (latest **2026-06-11**), `ai_intelligence_compiler_v0_1` (2026-05-18), `domain_compiler_v0_1`. **NO `project_intelligence_synthesis*`.** The newest project packet predates the redesign cards. |
+| A3 | "The project page shows the new intelligence" | **FALSE** | `grep -n "from(\"intelligence_packets\")\|loadCurrentIntelligencePacket" frontend/src/lib/ai/intelligence/packet-service.ts` | Page reads the latest `intelligence_packets` row — which is a **stale 2026-06-11 operating-summary packet** (per A2), NOT synthesizer output. |
+| A4 | "The brief synthesizes" | **FALSE** | `grep -n "no LLM re-summarization\|buildBriefSectionsFromInsightCards" frontend/src/lib/executive/brandon-daily-update.ts` | The insight-cards brief path uses card fields **"verbatim — no LLM re-summarization"**. It buckets + ranks fragments. No synthesis. |
+| A5 | "2.1 schema" | **TRUE** | `runsql "const{createClient}=require('@supabase/supabase-js');(async()=>{const sb=createClient(process.env.SUPA_URL,process.env.SUPA_KEY);const{data}=await sb.from('insight_cards').select('occurred_at,severity,related_card_ids').limit(1);console.log(Object.keys(data[0]))})"` | Columns `occurred_at,severity,related_card_ids` exist. Migration `supabase/migrations/20260614140000_insight_cards_timeline_fields.sql`. |
+| A6 | "2.2 card extractor works" | **TRUE (but it's the fragment layer, not synthesis)** | `runsql "const{createClient}=require('@supabase/supabase-js');(async()=>{const sb=createClient(process.env.SUPA_URL,process.env.SUPA_KEY);const{count}=await sb.from('insight_cards').select('*',{count:'exact',head:true}).eq('compiler_version','project_synthesizer_v1');console.log('project_synthesizer_v1 cards:',count)})"` | >0 cards from `project_synthesizer_v1`. These are good per-doc fragments — but fragments. |
+| A7 | "2.4 sweep cron live" | **TRUE** | `KEY=$(grep -E "^RENDER_API_KEY=" .env\|head -1\|cut -d= -f2-\|tr -d '"'); curl -s -H "Authorization: Bearer $KEY" https://api.render.com/v1/services/crn-d8ne6u8js32c73dkbre0 \| python3 -c "import sys,json;d=json.load(sys.stdin);print(d['name'],d['serviceDetails']['schedule'],d.get('suspended'))"` | `alleato-project-synthesis-sweep`, `0 */2 * * *`, not suspended. **But it only runs the card extractor — it does NOT call any synthesis.** |
+| A8 | "2.5 timeline UI" | **TRUE** | `grep -c "ProgressLogSection\|loadProjectTimeline" "frontend/src/app/(main)/[projectId]/intelligence/page.tsx"` | >0. Commit `50a9ddd5d`. Renders the fragment cards as a timeline (legit display of the fragment layer). |
+| A9 | "Email ingestion is current" | **STALE** | `runsql "const{createClient}=require('@supabase/supabase-js');(async()=>{const sb=createClient(process.env.SUPA_URL,process.env.SUPA_KEY);const{data}=await sb.from('document_metadata').select('date,captured_at').ilike('source_system','%outlook%').order('date',{ascending:false}).limit(1);console.log('latest email:',data[0])})"` | Latest email ~2026-06-08 → emails behind because graph-sync was down (now fixed; confirm it's catching up). |
+
+**Audit conclusion:** the *fragment layer* (2.1/2.2/2.4/2.5) is real and works. The *synthesis layer* (L2 packet writer + L4 brief synthesis) — the thing that turns fragments into insight — **does not exist**. The page and brief are wired to a fragment dump / stale operating-summary packet.
+
+---
+
+## 2. GAP ANALYSIS — exactly what is missing
+
+Per `docs/architecture/INTELLIGENCE-REDESIGN-INVENTORY.md` §5 ("L2 Synthesize"):
+> input: **prior packet + raw text of docs-since-last-packet + structured snapshot** → one gpt-5.5 pass → **structured packet** → write `intelligence_packets`
+
+| Layer | Designed (§5) | Built | Missing |
+|-------|---------------|-------|---------|
+| L0 Ingest | document_metadata + attribution | ✅ | — |
+| L1 Embed | document_chunks (archive Q&A only) | ✅ | — |
+| **L2 Synthesize** | prior packet + raw delta + numbers → 1 pass → `intelligence_packets` | ❌ (only per-doc cards) | **ENTIRE LAYER** |
+| L3 Project page | reads packet narrative | reads stale operating-summary packet | rewire to synthesis packet |
+| **L4 Brief** | synthesize ACROSS packets | dumps cards verbatim | **synthesis pass** |
+| Timeline (§7 Part B) | cards as event log | ✅ | — (this is the part that's correct) |
+
+The cards/timeline are **not wrong** — they are the granular evidence log. They are simply **not the intelligence product**. The product is the synthesized packet, which must be added.
+
+---
+
+## 3. DATABASE SCHEMA (relevant tables, verified 2026-06-14)
+
+Two Supabase projects:
+- **PM APP** `lgveqfnpkxvzbnnwuled` — `insight_cards`, `intelligence_packets`, `intelligence_targets`, `document_metadata`, `projects`, `budgets`, `rfis`, `change_events`.
+- **AI Database** `fqcvmfqldlewvbsuxdvz` — `rag_document_metadata` (**raw doc text lives here in `.content`/`.raw_text`** — PM APP copies are stale), `document_chunks`.
+
+### `intelligence_packets` (PM APP) — L2 WRITES this
+Columns: `id` (uuid), `target_id` (uuid → intelligence_targets.id), `packet_type` (text, use `"current"`), `packet_version` (text), `generated_at` (timestamptz), `covered_start_at` (timestamptz), `covered_end_at` (timestamptz — **the rolling watermark; advance each run**), `freshness_status` (text), `executive_summary` (text), `current_status` (text), `strategic_read` (text), `why_it_matters` (text), `recommended_next_moves` (text[]), `confidence_summary` (jsonb), `source_coverage` (jsonb), `review_queue_count` (int), `stale_item_count` (int), `packet_json` (jsonb), `compiler_version` (text — use **`project_intelligence_synthesis_v1`**), `created_at` (timestamptz).
+- `packet_json` shape the **page already renders** (`page.tsx` reads `packet_json.strategicReport` + `packet_json.summary`): `{ schema, target, summary, sourceSet, generatedAt, strategicReport }`. **L2 must write `packet_json.strategicReport` in this shape** so the page works with zero/minimal frontend change.
+
+### `intelligence_targets` (PM APP)
+`id` (uuid), `target_type` (text — `"client_project"`), `name`, `slug`, `status` (text — `"active"`), `project_id` (**INTEGER**, FK→projects.id), `owner_person_id` (uuid), `metadata` (jsonb).
+
+### `document_metadata` (PM APP) — L2 reads to find the delta
+`id` (text — NOT uuid; e.g. `outlook_...`, `fireflies_...`), `project_id` (**INTEGER**), `title`, `type`, `category`, `source`, `source_system`, `date`, `captured_at`, `participants`, `participants_array`, `source_metadata` (jsonb). **No `client_id` column** (this caused a bug — see Pitfalls). Comms type is keyword-classified on `source_system||source||category||type` (fireflies/meeting/transcript=meeting, outlook/email=email, teams/chat=teams).
+
+### `rag_document_metadata` (AI Database) — raw text source
+`id` (matches document_metadata.id), `content` (text — **the raw doc body**), `raw_text` (text).
+
+### FK type requirements (CRITICAL — verified)
+- `projects.id` = **INTEGER** (`number`) → every `project_id` is INTEGER. `intelligence_targets.project_id` = INTEGER.
+- `intelligence_targets.id`, `insight_cards.id`, `intelligence_packets.id`, `intelligence_packets.target_id` = **UUID**.
+- `document_metadata.id` = **TEXT** (not uuid).
+
+---
+
+## 4. KNOWN PITFALLS & PREVENTION (from this session's incidents — all real)
+
+1. **Backend AI silently dies on OpenAI quota** (`incident_openai_quota_backend_ai_down.md`). `extract_with_retry` swallows 429 into an empty result. **Prevention:** L2 must check `data.get("_extraction_failed")` and RAISE/log loudly, never write a silent empty packet. Verify quota first when output is empty: `curl -s -H "Authorization: Bearer $OPENAI_API_KEY" https://api.openai.com/v1/chat/completions -d '{"model":"gpt-4o-mini","messages":[{"role":"user","content":"hi"}],"max_tokens":5}'` → a 429 = billing, not code.
+2. **Two Supabase projects** — raw doc text is in **AI Database `rag_document_metadata.content`**, NOT PM APP `document_metadata.content` (stale). Use `get_rag_read_client()`.
+3. **`COMPILER_MODEL` defaults to `gpt-5.5`** and is unset on Render (works). Backend calls OpenAI directly (gateway removed 2026-06-09). gpt-5.5 needs `max_completion_tokens`, not `max_tokens`; omit `temperature` for gpt-5* (already handled in `intelligence/client.extract_with_retry`).
+4. **`document_metadata` has NO `client_id` column** — selecting it throws Postgres 42703 and aborts the whole query with a silent 200 (this bug shipped once). Only select columns that exist.
+5. **Deleting a fn param/CLI arg breaks Render cron `dockerCommand`s** (`incident_deleted_params_broke_ingestion_crons.md`). render.yaml has DRIFTED from live Render — verify cron commands via Render API, not render.yaml.
+6. **Render backend auto-deploy** was off then re-enabled; if a push doesn't deploy, trigger via API (`POST /v1/services/srv-d8271ohj2pic739klb7g/deploys`).
+7. **Large synchronous LLM batches exceed the request timeout.** L2 is ~seconds/project; a sweep over many projects must be bounded per run (`max_projects` cap, like the existing sweep).
+8. **RAG-DOCS-GATE pre-commit hook** blocks commits that touch `backend/src/services/intelligence/**` without updating `docs/architecture/AI-RAG-ARCHITECTURE.md`. Update that doc in the same commit (the `[skip-rag-docs]` token via `-m` does NOT work — the hook reads stale `.git/COMMIT_EDITMSG`).
+9. **No raw `fetch` in API routes / components** (ESLint). Use `apiFetch`/`fetchWithGuardrails`.
+
+---
+
+## 5. IMPLEMENTATION — the real L2 + L4 (dependency-ordered)
+
+### Feature Goal
+A strong model reads each project's prior synthesized state + the small batch of new raw documents + the live numbers, and writes ONE coherent `intelligence_packets` row that reads like a sharp PM/advisor wrote it. The brief then synthesizes ACROSS those packets.
+
+### Deliverables
+1. `backend/src/services/intelligence/project_intelligence.py` — `refresh_project_intelligence(project_id, force_full=False)`.
+2. An LLM synthesis function (in `pipeline/llm.py` or the new file) — `synthesize_project_state(...)`.
+3. Wiring into the sweep / a cron so it runs per project after card extraction.
+4. Project page renders the new packet shape (zero or minimal change if `packet_json.strategicReport` matches).
+5. `frontend/src/lib/executive/...` — a new brief path that synthesizes across packets (gpt-5.5), replacing the verbatim-card dump.
+6. Admin endpoints + a `dry_run` to inspect output before writing.
+
+### Task 1 — L2 backend module (`project_intelligence.py`)
+`refresh_project_intelligence(project_id: int, *, force_full=False, dry_run=False) -> dict`:
+1. `client = get_supabase_client()`; `target = ensure_client_project_target(client, project_id, compiler_version="project_intelligence_synthesis_v1")`.
+2. **Prior packet:** latest `intelligence_packets` for `target_id` with `compiler_version="project_intelligence_synthesis_v1"`, order `generated_at` desc, limit 1. Extract `packet_json` (prior synthesized state) + `covered_end_at`.
+3. **Delta window:** `since = prior.covered_end_at` (or `now - DEFAULT_LOOKBACK_DAYS` (30) if no prior or `force_full`).
+4. **Raw delta docs:** `document_metadata` where `project_id`, comms type, `coalesce(date,captured_at) > since`, order asc. For each: `content = fetch_optional_row(get_rag_read_client(), "rag_document_metadata", "content,raw_text", "id", doc_id)`. **Bound total to `MAX_SYNTH_CHARS` (e.g. 220k)** — if exceeded keep the most recent and set `truncated=true`.
+5. **Structured snapshot (deterministic ground truth):** budget summary (PM APP `budgets`/project rollup), open RFIs count (`rfis`), open change_events/COs (`change_events`), and **Acumatica AR/overdue for the project** (reuse the executive brief's financial-pulse source / `acumatica` client). These are NUMBERS the model must not invent.
+6. **One synthesis pass** → `synthesize_project_state(prior_state, raw_docs, snapshot, project_name, date)` (Task 2).
+7. If `extraction_failed` → log + RAISE (never write a silent empty packet — Pitfall 1).
+8. Validate: every `sourceId` the model cites must be in the delta doc ids (drop fabricated cites; if a risk has no valid evidence, demote its confidence).
+9. **Write `intelligence_packets`** (skip if `dry_run`): `compiler_version="project_intelligence_synthesis_v1"`, `packet_type="current"`, `covered_start_at=since`, `covered_end_at=max(doc dates)`, `executive_summary`, `current_status`, `strategic_read`, `recommended_next_moves`, `packet_json={schema:"project_intelligence_synthesis_v1", target, generatedAt, summary, strategicReport:{...}, sourceSet}`, `source_coverage`, `confidence_summary`. **`packet_json.strategicReport` must use the keys `page.tsx` reads** (`immediateAttention`, `currentFocus`, `whatChanged`, `risks`, `openDecisions`, `moneyImpact`, `recommendedActions`) so the page renders with no change. Return counts + (on dry_run) the full synthesized object for inspection.
+
+### Task 2 — synthesis prompt (the quality lever — get this right)
+`synthesize_project_state(...)` builds ONE gpt-5.5 message and calls `extract_with_retry(model=COMPILER_MODEL, timeout=300)`. The prompt MUST demand synthesis, not listing:
+```
+You are a sharp construction project executive briefing the firm's owner. You are given:
+1) the PRIOR synthesized state of this project (may be empty on first run),
+2) the NEW raw communications since then (full meeting transcripts / email threads / Teams), and
+3) the current hard numbers (budget, AR/overdue, RFIs, change orders) — these are GROUND TRUTH, never alter them.
+
+Produce an UPDATED, COHERENT executive read of THIS project. Do not list cards. Reason across the
+material: what is the real story, what changed and why it matters, where is the money/schedule/risk,
+what decisions are open, what should the owner do. Carry forward still-relevant prior state; supersede
+what the new material changes; drop what's resolved.
+
+Output JSON:
+{
+ "executiveRead": "2-4 sentences: the state of this project in plain, sharp language",
+ "whatChanged": [{"point":"...","whyItMatters":"...","evidence":"verbatim quote","sourceId":"doc id"}],
+ "risks": [{"risk":"...","reasoning":"why this is a risk and what it threatens","severity":1-5,"evidence":"...","sourceId":"..."}],
+ "openDecisions": [{"decision":"...","owner":"name or null","evidence":"...","sourceId":"..."}],
+ "financialPosition": "interpret the numbers — what they mean, not just restate them",
+ "recommendedActions": [{"action":"specific, do-this-today","why":"...","priority":"high|medium"}],
+ "confidence": "high|medium|low"
+}
+Rules: every whatChanged/risk/decision cites a verbatim evidence quote + the real sourceId. Prefer fewer,
+sharper items over many weak ones. Never invent numbers. If nothing material changed, say so plainly.
+```
+Parse into a dataclass. Map to the `strategicReport` keys the page expects.
+
+### Task 3 — trigger
+Extend `run_synthesis_sweep` (`project_synthesizer.py`) OR add a sibling cron: after extracting cards for a project's new docs, call `refresh_project_intelligence(project_id)`. Bounded (`max_projects`). The card extractor and the synthesizer both read the same raw docs; the synthesizer is the product, the cards are the timeline. Add admin endpoint `POST /api/intelligence/project-intelligence/refresh` `{project_id, dry_run}`.
+
+### Task 4 — project page (L3)
+`loadCurrentIntelligencePacket` already returns the latest `packet_type="current"` packet by `generated_at` — once L2 writes a newer one, the page picks it up automatically **if** `packet_json.strategicReport` matches the keys `page.tsx` reads (Task 1 ensures this). Verify the page renders the synthesis; adjust the renderer only if keys differ. (The new Progress Log timeline stays as-is — it's the evidence log.)
+
+### Task 5 — brief synthesis (L4)
+New path in `frontend/src/lib/executive/` (TS, runs on Vercel): load all active client_project `intelligence_packets` (`compiler_version="project_intelligence_synthesis_v1"`), feed their `executiveRead`/`whatChanged`/`risks`/`recommendedActions` + the deterministic financial pulse into ONE gpt-5.5 pass that produces the cross-portfolio brief (the one-line → what-changed → needs-Brandon → watch-list → waiting-on skeleton from §8). This is synthesis-of-syntheses. Gate behind a new flag; keep the verbatim-card path available as fallback. Re-enable AM/PM Teams delivery only after Megan approves the output.
+
+---
+
+## 6. VALIDATION GATES (real data, project 1009 Union Collective)
+
+Each gate must PASS before the next task.
+
+- **G1 (L2 dry-run quality):** `POST /api/intelligence/project-intelligence/refresh {"project_id":1009,"dry_run":true}` → returns a synthesized object whose `executiveRead` is a coherent paragraph and whose risks have *reasoning + verbatim evidence + real sourceIds* (cross-check the sourceIds exist in document_metadata). **A human (Megan) reads it and confirms it's insight, not a list.** This is the gate that the last build skipped.
+- **G2 (packet written):** real run → `runsql` count `intelligence_packets where compiler_version='project_intelligence_synthesis_v1'` > 0; `covered_end_at` ≈ latest doc date.
+- **G3 (rolling-state):** run twice; second run's `since` = first run's `covered_end_at`, processes only newer docs, and the packet UPDATES (supersedes) rather than duplicating.
+- **G4 (page):** browser-verify `/1009/intelligence` renders the synthesis narrative (not the stale operating-summary). Authenticated Playwright screenshot.
+- **G5 (no silent failure):** force a quota/empty case → endpoint returns 500 + logs the provider error, never writes an empty packet.
+- **G6 (brief):** generate the cross-packet brief → Megan confirms it reads like an advisor, not a card dump. Compare side-by-side with the current subpar brief.
+
+---
+
+## 7. What to explicitly NOT do
+- Do not feed the brief raw RAG chunk search (that was the old broken path).
+- Do not make the brief read `insight_cards` verbatim (that's the current subpar path).
+- Do not let the model invent financial numbers — inject Acumatica/SQL as ground truth.
+- Do not declare any task done without its validation gate passing on real data, reviewed by a human for the synthesis gates (G1, G6). **The previous build's failure was declaring "verified" on fragment quality while the synthesis never existed.**
