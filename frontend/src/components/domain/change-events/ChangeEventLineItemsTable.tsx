@@ -851,8 +851,16 @@ export function ChangeEventLineItemsTable({
                           >
                             {li.vendor.name}
                           </Link>
+                        ) : li.commitment?.contract_company_id && li.commitment?.company_name ? (
+                          <Link
+                            href={`/directory/companies/${li.commitment.contract_company_id}`}
+                            className="text-primary hover:underline"
+                            title={li.commitment.company_name}
+                          >
+                            {li.commitment.company_name}
+                          </Link>
                         ) : (
-                          li.vendor?.name || "--"
+                          li.vendor?.name || li.commitment?.company_name || "--"
                         )}
                       </InlineTableCell>
                       <InlineTableCell className="max-w-22.5 truncate">
@@ -1211,7 +1219,14 @@ export function ChangeEventLineItemsTable({
                 <Label>Commitment</Label>
                 <ContractCombobox
                   value={formState.contractValue}
-                  onChange={(v) => setFormState((s) => ({ ...s, contractValue: v }))}
+                  onChange={(v) => {
+                    const commitment = contracts.find((c) => c.id === v);
+                    setFormState((s) => ({
+                      ...s,
+                      contractValue: v,
+                      vendorId: s.vendorId || (commitment?.vendorId ? String(commitment.vendorId) : s.vendorId),
+                    }));
+                  }}
                   contracts={contracts}
                   disabled={!!(editingItem?.commitmentId)}
                 />
