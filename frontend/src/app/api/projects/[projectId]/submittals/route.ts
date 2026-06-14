@@ -158,7 +158,6 @@ export const POST = withApiGuardrails(
   
     const { projectId } = await params;
     const supabase = await createClient();
-    const body = await request.json();
 
     const {
       data: { user },
@@ -167,6 +166,13 @@ export const POST = withApiGuardrails(
 
     if (authError || !user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/submittals#POST", message: "Authentication required." });
+    }
+
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      throw new GuardrailError({ code: "BAD_REQUEST", where: "projects/[projectId]/submittals#POST", message: "Request body must be valid JSON." });
     }
 
     const validatedData = createSubmittalSchema.parse(body);
