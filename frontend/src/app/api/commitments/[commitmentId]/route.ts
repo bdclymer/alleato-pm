@@ -39,6 +39,12 @@ const commitmentEditSchema = z
     allow_non_admin_view_sov_items: z.boolean().optional(),
     invoice_contact_ids: z.array(z.string()).optional(),
     accounting_method: z.string().nullable().optional(),
+    bill_to: z.string().nullable().optional(),
+    ship_to: z.string().nullable().optional(),
+    ship_via: z.string().nullable().optional(),
+    payment_terms: z.string().nullable().optional(),
+    assigned_to: z.string().nullable().optional(),
+    executed: z.boolean().optional(),
   })
   .passthrough();
 
@@ -112,10 +118,11 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
     `;
     const purchaseOrderBaseSelect = `
       id, project_id, contract_number, title, description, status, executed,
-      contract_company_id, contract_date, signed_po_received_date,
+      contract_company_id, contract_date, delivery_date, signed_po_received_date,
       issued_on_date, default_retainage_percent, accounting_method,
       is_private, non_admin_user_ids, allow_non_admin_view_sov_items,
-      invoice_contact_ids, created_by, created_at, updated_at, deleted_at
+      invoice_contact_ids, created_by, created_at, updated_at, deleted_at,
+      bill_to, ship_to, ship_via, payment_terms, assigned_to
     `;
 
     // Performance optimization: Run all detail queries in parallel
@@ -281,6 +288,21 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
       }
     }
 
+    // Resolve assigned_to (people.id) → display name for POs
+    let assignedToName: string | null = null;
+    const assignedToId = typeof record.assigned_to === "string" ? record.assigned_to : null;
+    if (assignedToId) {
+      const { data: assigneeData } = await supabase
+        .from("people")
+        .select("first_name, last_name")
+        .eq("id", assignedToId)
+        .maybeSingle();
+      if (assigneeData) {
+        assignedToName =
+          [assigneeData.first_name, assigneeData.last_name].filter(Boolean).join(" ") || null;
+      }
+    }
+
     const originalAmount = Number(totalsData?.total_sov_amount) || 0;
     const billedToDate = Number(totalsData?.total_billed_to_date) || 0;
     // Revised amount = original + approved change orders
@@ -308,6 +330,7 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
       change_order_totals: changeOrderTotals,
       invoice_contacts: invoiceContacts,
       created_by_name: createdByName,
+      assigned_to_name: assignedToName,
     };
 
     // Add cache headers for detail data (5 seconds, revalidate in background)
@@ -450,6 +473,12 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
       def(validatedData.delivery_date, "delivery_date");
       def(validatedData.accounting_method, "accounting_method");
       def(validatedData.signed_po_received_date, "signed_po_received_date");
+      def(validatedData.bill_to, "bill_to");
+      def(validatedData.ship_to, "ship_to");
+      def(validatedData.ship_via, "ship_via");
+      def(validatedData.payment_terms, "payment_terms");
+      def(validatedData.assigned_to, "assigned_to");
+      def(validatedData.executed, "executed");
     }
 
     // Update commitment

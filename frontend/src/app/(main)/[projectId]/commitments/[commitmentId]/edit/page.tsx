@@ -140,9 +140,16 @@ export default function EditCommitmentPage() {
           signedPoReceivedDate: typeof r.signed_po_received_date === "string" ? r.signed_po_received_date : undefined,
           issuedOnDate: typeof r.issued_on_date === "string" ? r.issued_on_date : undefined,
         },
+        assignedTo: typeof r.assigned_to === "string" ? r.assigned_to : undefined,
+        invoiceContactIds: Array.isArray(r.invoice_contact_ids)
+          ? (r.invoice_contact_ids as string[])
+          : [],
         privacy: {
           isPrivate: typeof r.is_private === "boolean" ? r.is_private : true,
           allowNonAdminViewSovItems: typeof r.allow_non_admin_view_sov_items === "boolean" ? r.allow_non_admin_view_sov_items : false,
+          nonAdminUserIds: Array.isArray(r.non_admin_user_ids)
+            ? (r.non_admin_user_ids as string[])
+            : [],
         },
         sovLines: sovLines as unknown as PurchaseOrderSovLineItem[],
       };

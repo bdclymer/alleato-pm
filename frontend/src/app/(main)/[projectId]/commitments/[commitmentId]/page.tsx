@@ -86,6 +86,12 @@ type CommitmentDetail = Commitment & {
   executed?: boolean;
   created_by?: string | null;
   created_by_name?: string | null;
+  assigned_to?: string | null;
+  assigned_to_name?: string | null;
+  bill_to?: string | null;
+  ship_to?: string | null;
+  ship_via?: string | null;
+  payment_terms?: string | null;
   change_order_totals?: {
     approved: number;
     pending: number;
@@ -297,6 +303,12 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
     executed: typeof record.executed === "boolean" ? record.executed : undefined,
     created_by: typeof record.created_by === "string" ? record.created_by : null,
     created_by_name: typeof record.created_by_name === "string" ? record.created_by_name : null,
+    assigned_to: typeof record.assigned_to === "string" ? record.assigned_to : null,
+    assigned_to_name: typeof record.assigned_to_name === "string" ? record.assigned_to_name : null,
+    bill_to: typeof record.bill_to === "string" ? record.bill_to : null,
+    ship_to: typeof record.ship_to === "string" ? record.ship_to : null,
+    ship_via: typeof record.ship_via === "string" ? record.ship_via : null,
+    payment_terms: typeof record.payment_terms === "string" ? record.payment_terms : null,
     line_items,
   };
 };
@@ -458,6 +470,21 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                   <LabelValueRow label="Default Retainage" labelClassName="w-36">
                     {commitment.retention_percentage ?? 0}%
                   </LabelValueRow>
+                  {isPO && (
+                    <LabelValueRow label="Assigned To" labelClassName="w-36" missing={!commitment.assigned_to_name}>
+                      {commitment.assigned_to_name || "—"}
+                    </LabelValueRow>
+                  )}
+                  {isPO && (
+                    <LabelValueRow label="Payment Terms" labelClassName="w-36" missing={!commitment.payment_terms}>
+                      {commitment.payment_terms || "—"}
+                    </LabelValueRow>
+                  )}
+                  {isPO && (
+                    <LabelValueRow label="Ship Via" labelClassName="w-36" missing={!commitment.ship_via}>
+                      {commitment.ship_via || "—"}
+                    </LabelValueRow>
+                  )}
                 </dl>
                 <dl className="space-y-4 text-sm">
                   {!isPO && (
@@ -505,6 +532,27 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
               >
                 {capitalizeWords(commitment.description) || "—"}
               </LabelValueRow>
+
+              {isPO && (commitment.bill_to || commitment.ship_to) && (
+                <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  <LabelValueRow
+                    label="Bill To"
+                    labelClassName="w-36"
+                    missing={!commitment.bill_to}
+                    valueClassName="whitespace-pre-wrap leading-relaxed"
+                  >
+                    {commitment.bill_to || "—"}
+                  </LabelValueRow>
+                  <LabelValueRow
+                    label="Ship To"
+                    labelClassName="w-36"
+                    missing={!commitment.ship_to}
+                    valueClassName="whitespace-pre-wrap leading-relaxed"
+                  >
+                    {commitment.ship_to || "—"}
+                  </LabelValueRow>
+                </div>
+              )}
 
               <LabelValueRow label="Private Commitment" labelClassName="w-36" className="mt-6">
                 {commitment.private ? "Yes" : "No"}
