@@ -485,6 +485,8 @@ export interface UnifiedTablePageProps<T> {
     containerPadding?: boolean;
     /** Minimum desktop table width in pixels. Use when columns should scroll horizontally instead of compressing. */
     minWidth?: number;
+    /** Hide the built-in table/empty/pagination body when topContent owns a custom table body. */
+    hideTableBody?: boolean;
   };
   features?: UnifiedTableFeatures;
   columnGroups?: Array<{ label: string; columnIds: string[] }>;
@@ -780,6 +782,7 @@ export function UnifiedTablePage<T>({
       !canRenderListView &&
       !canRenderSplitView);
   const isFullBleedTable = layout?.fullBleedTable ?? false;
+  const hideTableBody = layout?.hideTableBody ?? false;
   const alignHeaderWithFullBleedTable =
     layout?.alignHeaderWithFullBleedTable ?? false;
   const removeTableFrame = layout?.removeTableFrame ?? false;
@@ -1430,9 +1433,15 @@ export function UnifiedTablePage<T>({
   const someSelected = selectedIds.length > 0 && !allSelected;
 
   const showEmptyState =
-    !data.isLoading && !data.error && rowOrderedItems.length === 0;
+    !hideTableBody &&
+    !data.isLoading &&
+    !data.error &&
+    rowOrderedItems.length === 0;
   const showTable =
-    !data.isLoading && !data.error && rowOrderedItems.length > 0;
+    !hideTableBody &&
+    !data.isLoading &&
+    !data.error &&
+    rowOrderedItems.length > 0;
 
   const handleSortClick = (columnId: string) => {
     if (!effectiveSorting) return;
@@ -2557,10 +2566,14 @@ export function UnifiedTablePage<T>({
                                   value={editingValue}
                                   options={
                                     column.editType === "boolean"
-                                      ? (column.editOptions ?? BOOLEAN_EDIT_OPTIONS)
+                                      ? (column.editOptions ??
+                                        BOOLEAN_EDIT_OPTIONS)
                                       : (column.editOptions ?? [])
                                   }
-                                  placeholder={column.editEmptyLabel ?? `Select ${column.label}`}
+                                  placeholder={
+                                    column.editEmptyLabel ??
+                                    `Select ${column.label}`
+                                  }
                                   onChange={setEditingValue}
                                   onCommit={(nextValue) =>
                                     void commitInlineEdit(
@@ -2857,6 +2870,7 @@ export function UnifiedTablePage<T>({
         })()}
 
       {(() => {
+        if (hideTableBody) return null;
         const paginProps =
           pagination ??
           (resolvedFeatures.enablePagination

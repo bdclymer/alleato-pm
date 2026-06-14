@@ -2,8 +2,19 @@
 
 import * as React from "react";
 import type { ReactElement, ReactNode } from "react";
-import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, FileText, MoreVertical, Plus, RotateCcw } from "lucide-react";
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+import {
+  ChevronDown,
+  FileText,
+  MoreVertical,
+  Plus,
+  RotateCcw,
+} from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -15,7 +26,6 @@ import {
   type FilterValue,
   type TableColumn,
 } from "@/components/tables/unified";
-import { EmptyState } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,7 +41,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import {
   useSubmittals,
@@ -130,7 +139,9 @@ function PackagePickerDialog({
             </div>
           ) : filtered.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">
-              {packages.length === 0 ? "No packages found for this project." : "No packages match your search."}
+              {packages.length === 0
+                ? "No packages found for this project."
+                : "No packages match your search."}
             </p>
           ) : (
             <div className="flex flex-col gap-0.5 pr-2">
@@ -144,9 +155,13 @@ function PackagePickerDialog({
                     onOpenChange(false);
                   }}
                 >
-                  <span className="font-medium text-foreground">{pkg.name}</span>
+                  <span className="font-medium text-foreground">
+                    {pkg.name}
+                  </span>
                   {pkg.description && (
-                    <span className="ml-2 text-xs text-muted-foreground">{pkg.description}</span>
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      {pkg.description}
+                    </span>
                   )}
                 </Button>
               ))}
@@ -219,7 +234,9 @@ function SpecPickerDialog({
             </div>
           ) : filtered.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">
-              {specs.length === 0 ? "No specifications found for this project." : "No sections match your search."}
+              {specs.length === 0
+                ? "No specifications found for this project."
+                : "No sections match your search."}
             </p>
           ) : (
             <div className="flex flex-col gap-0.5 pr-2">
@@ -237,7 +254,9 @@ function SpecPickerDialog({
                     {spec.section_number} — {spec.section_title}
                   </span>
                   {spec.division && (
-                    <span className="ml-2 text-xs text-muted-foreground">{spec.division}</span>
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      {spec.division}
+                    </span>
                   )}
                 </Button>
               ))}
@@ -255,18 +274,35 @@ const EMPTY_FILTERS: SubmittalFilterState = {
   division: undefined,
 };
 
+type SubmittalSummaryWithRelations = SubmittalSummary & {
+  responsible_contractor?: { name?: string | null } | null;
+  submittal_workflow_steps?: {
+    step_type: string;
+    submittal_responses?: {
+      responder_id: string;
+      response_status: string;
+    }[];
+  }[];
+};
+
+function getSubmittalColumnValue(
+  item: SubmittalTableRow,
+  columnId: string,
+): unknown {
+  return item[columnId as keyof SubmittalTableRow];
+}
+
 function toTableRow(item: SubmittalSummary): SubmittalTableRow {
   // Resolve responsible contractor from joined company data
-  const itemAny = item as unknown as Record<string, unknown>;
+  const itemWithRelations = item as SubmittalSummaryWithRelations;
   const responsibleContractor =
-    typeof itemAny.responsible_contractor === "object" && itemAny.responsible_contractor
-      ? (itemAny.responsible_contractor as { name?: string })?.name ?? null
+    typeof itemWithRelations.responsible_contractor === "object" &&
+    itemWithRelations.responsible_contractor
+      ? (itemWithRelations.responsible_contractor.name ?? null)
       : null;
 
   // Resolve approvers and latest response from joined workflow steps
-  const workflowSteps = itemAny.submittal_workflow_steps as
-    | { step_type: string; submittal_responses: { responder_id: string; response_status: string }[] }[]
-    | undefined;
+  const workflowSteps = itemWithRelations.submittal_workflow_steps;
 
   let approverNames: string | null = null;
   let latestResponse: string | null = null;
@@ -296,8 +332,8 @@ function toTableRow(item: SubmittalSummary): SubmittalTableRow {
     title: item.title ?? "Untitled Submittal",
     submittal_type_name:
       typeof item.submittal_type === "object"
-        ? (item.submittal_type as { name?: string } | null)?.name ?? null
-        : item.submittal_type ?? null,
+        ? ((item.submittal_type as { name?: string } | null)?.name ?? null)
+        : (item.submittal_type ?? null),
     status: item.status ?? "Draft",
     responsible_contractor: responsibleContractor,
     received_from: item.received_from ?? null,
@@ -332,79 +368,89 @@ function GroupedSubmittalView({
   groupAction?: (label: string) => ReactNode;
 }) {
   const visibleCols = columns.filter((col) => visibleColumns.includes(col.id));
+  const colSpan = visibleCols.length + (extraAction ? 1 : 0);
 
   if (groups.length === 0) {
     return (
-      <EmptyState
-        icon={<FileText />}
-        title="No items found"
-        description="No submittals match the current filters."
-      />
+      <div className="py-8 text-sm text-muted-foreground">
+        No submittals match the current filters.
+      </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6 py-4">
-      {groups.map((group, idx) => (
-        <React.Fragment key={group.label}>
-          {idx > 0 && <Separator />}
-          <div className="flex flex-col gap-3">
-            {/* Section heading */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-foreground">{group.label}</span>
-              <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                {group.items.length}
-              </span>
-              {groupAction && groupAction(group.label)}
-            </div>
+    <div className="space-y-6 py-2">
+      {groups.map((group) => (
+        <section key={group.label} className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-foreground">
+              {group.label}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {group.items.length}
+            </span>
+            {groupAction && groupAction(group.label)}
+          </div>
 
-            {/* Simple table */}
-            <div className="overflow-x-auto rounded-lg bg-card">
-              <table className="w-full text-sm">
-                <thead className="bg-muted">
+          <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <table className="w-full text-sm" style={{ minWidth: 960 }}>
+              <thead className="border-b border-border bg-muted/40">
+                <tr>
+                  {visibleCols.map((col) => (
+                    <th
+                      key={col.id}
+                      className="h-8 whitespace-nowrap px-3 text-left text-xs font-medium uppercase text-muted-foreground"
+                    >
+                      {col.label}
+                    </th>
+                  ))}
+                  {extraAction && (
+                    <th className="h-8 whitespace-nowrap px-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                      Actions
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {group.items.length === 0 ? (
                   <tr>
-                    {visibleCols.map((col) => (
-                      <th
-                        key={col.id}
-                        className="whitespace-nowrap px-3 py-2 text-left text-xs font-medium text-muted-foreground"
-                      >
-                        {col.label}
-                      </th>
-                    ))}
-                    {extraAction && (
-                      <th className="whitespace-nowrap px-3 py-2 text-left text-xs font-medium text-muted-foreground">
-                        Actions
-                      </th>
-                    )}
+                    <td
+                      colSpan={colSpan}
+                      className="px-3 py-6 text-sm text-muted-foreground"
+                    >
+                      No submittals in this group.
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-border bg-card">
-                  {group.items.map((item) => (
+                ) : (
+                  group.items.map((item) => (
                     <tr
                       key={item.id}
                       className="cursor-pointer transition-colors hover:bg-muted/50"
                       onClick={() => onRowClick(item)}
                     >
                       {visibleCols.map((col) => (
-                        <td key={col.id} className="whitespace-nowrap px-3 py-2 text-foreground">
+                        <td
+                          key={col.id}
+                          className="h-9 whitespace-nowrap px-3 text-foreground"
+                        >
                           {col.render(item)}
                         </td>
                       ))}
                       {extraAction && (
                         <td
-                          className="whitespace-nowrap px-3 py-2"
+                          className="h-9 whitespace-nowrap px-3"
                           onClick={(e) => e.stopPropagation()}
                         >
                           {extraAction(item)}
                         </td>
                       )}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-        </React.Fragment>
+        </section>
       ))}
     </div>
   );
@@ -430,7 +476,9 @@ function PackageManageDialog({
   isPending: boolean;
 }) {
   const [name, setName] = React.useState(initialPackage?.name ?? "");
-  const [description, setDescription] = React.useState(initialPackage?.description ?? "");
+  const [description, setDescription] = React.useState(
+    initialPackage?.description ?? "",
+  );
 
   // Reset when dialog opens with a new package
   React.useEffect(() => {
@@ -449,14 +497,24 @@ function PackageManageDialog({
   }
 
   return (
-    <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
+    <Dialog
+      open
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+    >
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>{mode === "create" ? "New Package" : "Edit Package"}</DialogTitle>
+          <DialogTitle>
+            {mode === "create" ? "New Package" : "Edit Package"}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="mt-2 space-y-3">
           <div className="space-y-1">
-            <label className="text-xs font-medium text-foreground" htmlFor="pkg-name">
+            <label
+              className="text-xs font-medium text-foreground"
+              htmlFor="pkg-name"
+            >
               Name <span className="text-destructive">*</span>
             </label>
             <Input
@@ -469,7 +527,10 @@ function PackageManageDialog({
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-medium text-foreground" htmlFor="pkg-desc">
+            <label
+              className="text-xs font-medium text-foreground"
+              htmlFor="pkg-desc"
+            >
               Description
             </label>
             <Input
@@ -483,7 +544,11 @@ function PackageManageDialog({
             <Button type="button" variant="ghost" size="sm" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" size="sm" disabled={!name.trim() || isPending}>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={!name.trim() || isPending}
+            >
               {mode === "create" ? "Create" : "Save"}
             </Button>
           </div>
@@ -514,7 +579,9 @@ export default function SubmittalsPage(): ReactElement {
   const [specPickerOpen, setSpecPickerOpen] = React.useState(false);
   const deleteSubmittal = useDeleteSubmittal(projectId);
   const [packageManageOpen, setPackageManageOpen] = React.useState(false);
-  const [editingPackage, setEditingPackage] = React.useState<PackageRow | null>(null);
+  const [editingPackage, setEditingPackage] = React.useState<PackageRow | null>(
+    null,
+  );
   const { data: allPackages = [] } = usePackages(projectId);
   const createPackageMutation = useCreatePackage(projectId);
   const updatePackageMutation = useUpdatePackage(projectId);
@@ -558,16 +625,23 @@ export default function SubmittalsPage(): ReactElement {
 
   const filteredItems = React.useMemo(() => {
     const search = tableState.debouncedSearch.trim().toLowerCase();
-    const statusFilter = typeof activeFilters.status === "string" ? activeFilters.status : "";
+    const statusFilter =
+      typeof activeFilters.status === "string" ? activeFilters.status : "";
     const responseFilter =
-      typeof activeFilters.latest_response === "string" ? activeFilters.latest_response : "";
+      typeof activeFilters.latest_response === "string"
+        ? activeFilters.latest_response
+        : "";
     const divisionFilter =
       typeof activeFilters.division === "string" ? activeFilters.division : "";
 
     return tableRows.filter((row) => {
       if (statusFilter && row.status !== statusFilter) return false;
-      if (responseFilter && row.latest_response !== responseFilter) return false;
-      if (divisionFilter && (row.division ?? "").toLowerCase() !== divisionFilter.toLowerCase())
+      if (responseFilter && row.latest_response !== responseFilter)
+        return false;
+      if (
+        divisionFilter &&
+        (row.division ?? "").toLowerCase() !== divisionFilter.toLowerCase()
+      )
         return false;
       if (!search) return true;
       return (
@@ -608,7 +682,8 @@ export default function SubmittalsPage(): ReactElement {
         m.set(pkg.name, {
           id: pkg.id,
           name: pkg.name,
-          description: (pkg as { description?: string | null }).description ?? null,
+          description:
+            (pkg as { description?: string | null }).description ?? null,
         });
       }
     }
@@ -672,9 +747,12 @@ export default function SubmittalsPage(): ReactElement {
   const handleRestore = React.useCallback(
     async (submittalId: string) => {
       try {
-        await apiFetch(`/api/projects/${projectId}/submittals/${submittalId}/restore`, {
-          method: "PATCH",
-        });
+        await apiFetch(
+          `/api/projects/${projectId}/submittals/${submittalId}/restore`,
+          {
+            method: "PATCH",
+          },
+        );
         toast.success("Submittal restored");
         await qc.invalidateQueries({ queryKey: ["submittals", projectId] });
       } catch (error) {
@@ -722,10 +800,14 @@ export default function SubmittalsPage(): ReactElement {
   const handleFilterChange = (nextFilters: SubmittalFilterState) => {
     tableState.setActiveFilters(nextFilters);
     tableState.setSearchParams({
-      status: typeof nextFilters.status === "string" ? nextFilters.status : null,
+      status:
+        typeof nextFilters.status === "string" ? nextFilters.status : null,
       latest_response:
-        typeof nextFilters.latest_response === "string" ? nextFilters.latest_response : null,
-      division: typeof nextFilters.division === "string" ? nextFilters.division : null,
+        typeof nextFilters.latest_response === "string"
+          ? nextFilters.latest_response
+          : null,
+      division:
+        typeof nextFilters.division === "string" ? nextFilters.division : null,
       page: "1",
     });
     tableState.setPage(1);
@@ -760,7 +842,9 @@ export default function SubmittalsPage(): ReactElement {
       <GroupedSubmittalView
         groups={groups}
         columns={tableColumns}
-        onRowClick={(item) => router.push(`/${projectId}/submittals/${item.id}`)}
+        onRowClick={(item) =>
+          router.push(`/${projectId}/submittals/${item.id}`)
+        }
         visibleColumns={tableState.visibleColumns}
         groupAction={
           activeTab === "packages"
@@ -770,7 +854,12 @@ export default function SubmittalsPage(): ReactElement {
                 return (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 ml-1" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 ml-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <MoreVertical className="h-3.5 w-3.5" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -853,7 +942,7 @@ export default function SubmittalsPage(): ReactElement {
     const headers = visibleCols.map((c) => c.label);
     const rows = filteredItems.map((item) =>
       visibleCols.map((c) => {
-        const val = (item as unknown as Record<string, unknown>)[c.id];
+        const val = getSubmittalColumnValue(item, c.id);
         if (val === null || val === undefined) return "";
         return String(val).replace(/,/g, ";").replace(/\n/g, " ");
       }),
@@ -893,7 +982,7 @@ export default function SubmittalsPage(): ReactElement {
               (item) =>
                 `<tr>${visibleCols
                   .map((c) => {
-                    const val = (item as unknown as Record<string, unknown>)[c.id];
+                    const val = getSubmittalColumnValue(item, c.id);
                     return `<td>${val === null || val === undefined ? "" : String(val)}</td>`;
                   })
                   .join("")}</tr>`,
@@ -914,7 +1003,9 @@ export default function SubmittalsPage(): ReactElement {
         open={packagePickerOpen}
         onOpenChange={setPackagePickerOpen}
         onSelect={(pkg) => {
-          router.push(`/${projectId}/submittals/new?package_id=${encodeURIComponent(pkg.id)}`);
+          router.push(
+            `/${projectId}/submittals/new?package_id=${encodeURIComponent(pkg.id)}`,
+          );
         }}
       />
       <SpecPickerDialog
@@ -922,8 +1013,12 @@ export default function SubmittalsPage(): ReactElement {
         open={specPickerOpen}
         onOpenChange={setSpecPickerOpen}
         onSelect={(spec) => {
-          const section = encodeURIComponent(`${spec.section_number} - ${spec.section_title}`);
-          router.push(`/${projectId}/submittals/new?specification_section=${section}`);
+          const section = encodeURIComponent(
+            `${spec.section_number} - ${spec.section_title}`,
+          );
+          router.push(
+            `/${projectId}/submittals/new?specification_section=${section}`,
+          );
         }}
       />
       {packageManageOpen && (
@@ -955,7 +1050,9 @@ export default function SubmittalsPage(): ReactElement {
               },
             );
           }}
-          isPending={createPackageMutation.isPending || updatePackageMutation.isPending}
+          isPending={
+            createPackageMutation.isPending || updatePackageMutation.isPending
+          }
         />
       )}
       {ConfirmDialog}
@@ -987,7 +1084,9 @@ export default function SubmittalsPage(): ReactElement {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onSelect={() => router.push(`/${projectId}/submittals/new`)}>
+                  <DropdownMenuItem
+                    onSelect={() => router.push(`/${projectId}/submittals/new`)}
+                  >
                     Create new submittal
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => setPackagePickerOpen(true)}>
@@ -1043,9 +1142,14 @@ export default function SubmittalsPage(): ReactElement {
         table={{
           columns: tableColumns,
           getRowId: (item) => item.id,
-          onRowClick: (item) => router.push(`/${projectId}/submittals/${item.id}`),
-          onDelete: activeTab === "recycle-bin" ? undefined : (item) => deleteSubmittal.mutate(item.id),
-          rowActions: activeTab === "recycle-bin" ? recycleRowActions : undefined,
+          onRowClick: (item) =>
+            router.push(`/${projectId}/submittals/${item.id}`),
+          onDelete:
+            activeTab === "recycle-bin"
+              ? undefined
+              : (item) => deleteSubmittal.mutate(item.id),
+          rowActions:
+            activeTab === "recycle-bin" ? recycleRowActions : undefined,
         }}
         sorting={{
           sortBy: tableState.sortBy,
@@ -1058,9 +1162,13 @@ export default function SubmittalsPage(): ReactElement {
         }}
         views={{
           card: (item) =>
-            renderSubmittalCard(item, (r) => router.push(`/${projectId}/submittals/${r.id}`)),
+            renderSubmittalCard(item, (r) =>
+              router.push(`/${projectId}/submittals/${r.id}`),
+            ),
           list: (item) =>
-            renderSubmittalList(item, (r) => router.push(`/${projectId}/submittals/${r.id}`)),
+            renderSubmittalList(item, (r) =>
+              router.push(`/${projectId}/submittals/${r.id}`),
+            ),
         }}
         emptyState={{
           title: isGroupedTab ? "" : "No submittals found",
@@ -1069,11 +1177,16 @@ export default function SubmittalsPage(): ReactElement {
             : activeTab === "recycle-bin"
               ? "No submittals in the Recycle Bin."
               : "Create your first submittal to get started.",
-          filteredDescription: isGroupedTab ? "" : "Try adjusting your search or filters.",
+          filteredDescription: isGroupedTab
+            ? ""
+            : "Try adjusting your search or filters.",
           isFiltered: isFiltered && !isGroupedTab,
           action:
             isGroupedTab || activeTab === "recycle-bin" ? undefined : (
-              <Button size="sm" onClick={() => router.push(`/${projectId}/submittals/new`)}>
+              <Button
+                size="sm"
+                onClick={() => router.push(`/${projectId}/submittals/new`)}
+              >
                 <Plus />
                 Create your first submittal
               </Button>
@@ -1084,9 +1197,11 @@ export default function SubmittalsPage(): ReactElement {
           enableBulkDelete: activeTab === "items",
           enableRowSelection: activeTab === "items",
         }}
+        layout={{
+          hideTableBody: isGroupedTab,
+        }}
         topContent={groupedTopContent}
       />
-
     </>
   );
 }
