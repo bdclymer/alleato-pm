@@ -281,9 +281,15 @@ def synthesize_project_intelligence(
     *,
     since: Optional[str] = None,
     max_docs: int = 40,
+    dry_run: bool = False,
 ) -> dict:
     """Run deep communication-intelligence extraction over a project's recent
     emails + Teams conversations and write evidence-backed insight cards + tasks.
+
+    When ``dry_run`` is True, extraction still runs but NOTHING is written —
+    instead each doc's structured output (what_changed, signal/task counts, and
+    a few sample items with evidence quotes) is returned under ``samples`` so the
+    extraction quality can be inspected directly.
 
     Returns a summary dict; never raises for a single bad document (errors are
     collected so one bad doc doesn't abort the batch).
@@ -308,8 +314,11 @@ def synthesize_project_intelligence(
         "skipped": 0,
         "cards_written": 0,
         "tasks_written": 0,
+        "dry_run": dry_run,
         "errors": [],
     }
+    if dry_run:
+        result["samples"] = []
 
     if not target_id:
         result["errors"].append("missing intelligence target")
@@ -387,9 +396,35 @@ def synthesize_project_intelligence(
             )
 
             source_occurred_at = doc.get("date") or doc.get("captured_at")
+            payloads = _build_signal_payloads(structured)
+
+            # Dry-run: surface the raw extraction for inspection; write nothing.
+            if dry_run:
+                if comm_type == "email":
+                    result["emails"] += 1
+                elif comm_type == "teams":
+                    result["teams"] += 1
+                result["samples"].append({
+                    "doc_id": doc_id,
+                    "comm_type": comm_type,
+                    "title": doc.get("title"),
+                    "text_chars": len(full_text),
+                    "what_changed": getattr(structured, "what_changed", None),
+                    "signals": len(payloads),
+                    "tasks": len(structured.tasks),
+                    "sample_signals": [
+                        {"type": p["signal_type"], "title": p["title"][:120],
+                         "evidence": (p.get("excerpt") or "")[:200]}
+                        for p in payloads[:5]
+                    ],
+                    "sample_tasks": [
+                        {"description": (t.description or "")[:140], "assignee": t.assignee}
+                        for t in structured.tasks[:5]
+                    ],
+                })
+                continue
 
             # (f) Signals -> candidates -> promotion.
-            payloads = _build_signal_payloads(structured)
             for payload in payloads:
                 candidate = write_source_signal_candidate(
                     client,
