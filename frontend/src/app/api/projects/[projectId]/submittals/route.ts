@@ -22,7 +22,7 @@ const createSubmittalSchema = z.object({
   submittal_type_id: z.string().uuid().nullable().optional(),
   division: z.string().nullable().optional(),
   submittal_package_id: z.string().uuid().nullable().optional(),
-  responsible_contractor_id: z.coerce.number().int().nullable().optional(),
+  responsible_contractor_id: z.string().uuid().nullable().optional(),
   received_from_id: z.string().uuid().nullable().optional(),
   submittal_manager_id: z.string().uuid().nullable().optional(),
   final_due_date: z.string().nullable().optional(),
@@ -94,9 +94,8 @@ export const GET = withApiGuardrails(
     const contractorIds = [
       ...new Set(
         (data ?? [])
-          .map((s: Record<string, unknown>) => s.responsible_contractor_id)
-          .filter(Boolean)
-          .map(String),
+          .map((s: Record<string, unknown>) => s.responsible_contractor_id as string | null)
+          .filter((id): id is string => Boolean(id)),
       ),
     ];
     let companyMap: Record<string, string> = {};
@@ -106,7 +105,7 @@ export const GET = withApiGuardrails(
         .select("id, name")
         .in("id", contractorIds);
       if (companies) {
-        companyMap = Object.fromEntries(companies.map((c) => [String(c.id), c.name]));
+        companyMap = Object.fromEntries(companies.map((c) => [c.id, c.name]));
       }
     }
 
@@ -138,7 +137,7 @@ export const GET = withApiGuardrails(
     const enriched = (data ?? []).map((s: Record<string, unknown>) => ({
       ...s,
       responsible_contractor: s.responsible_contractor_id
-        ? { id: String(s.responsible_contractor_id), name: companyMap[String(s.responsible_contractor_id)] ?? null }
+        ? { id: s.responsible_contractor_id as string, name: companyMap[s.responsible_contractor_id as string] ?? null }
         : null,
       received_from: s.received_from_id
         ? receivedFromMap[String(s.received_from_id)] ?? null

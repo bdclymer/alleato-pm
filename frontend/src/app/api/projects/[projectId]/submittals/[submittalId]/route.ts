@@ -23,7 +23,7 @@ const updateSubmittalSchema = z.object({
   submittal_type_id: z.string().uuid().nullable().optional(),
   division: z.string().nullable().optional(),
   submittal_package_id: z.string().uuid().nullable().optional(),
-  responsible_contractor_id: z.coerce.number().int().nullable().optional(),
+  responsible_contractor_id: z.string().uuid().nullable().optional(),
   received_from_id: z.string().uuid().nullable().optional(),
   submittal_manager_id: z.string().uuid().nullable().optional(),
   final_due_date: z.string().nullable().optional(),
@@ -114,7 +114,7 @@ export const GET = withApiGuardrails(
       const { data: company } = await supabase
         .from("companies")
         .select("id, name")
-        .eq("id", String(data.responsible_contractor_id))
+        .eq("id", data.responsible_contractor_id)
         .single();
       if (company) {
         responsible_contractor = company;

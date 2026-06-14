@@ -269,10 +269,12 @@ export function SubmittalFormPage({
 
   const companyOptions = useMemo(
     () =>
-      companies.map((c) => ({
-        value: c.id,
-        label: c.company?.name ?? c.id,
-      })),
+      companies
+        .filter((c) => c.company_id)
+        .map((c) => ({
+          value: c.company_id,
+          label: c.company?.name ?? c.company_id,
+        })),
     [companies],
   );
 

@@ -164,6 +164,12 @@ const ENDPOINTS = [
   ["GET", `/api/projects/${PROJECT_ID}/submittals/${FAKE_UUID}`, "Submittal detail (fake id)", [200, 401, 404]],
   ["GET", `/api/projects/${PROJECT_ID}/submittals/packages`, "Submittal packages", [200, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/submittals/specs`, "Submittal specs", [200, 401]],
+  // Regression: responsible_contractor_id was z.coerce.number() but column is UUID — field silently dropped.
+  // An unauthenticated PATCH must return 401 — if it returns 500 the update handler is broken.
+  ["PUT", `/api/projects/${PROJECT_ID}/submittals/${FAKE_UUID}`, "Submittal update unauthorized (responsible_contractor guard)", [401]],
+  // Regression: POST with responsible_contractor_id as UUID must not 500 (was NaN from z.coerce.number).
+  // An unauthenticated POST must return 401 — if it returns 500 the create handler is broken.
+  ["POST", `/api/projects/${PROJECT_ID}/submittals`, "Submittal create unauthorized (responsible_contractor guard)", [401]],
 
   // Drawings
   ["GET", `/api/projects/${PROJECT_ID}/drawings`, "Drawings list", [200, 401]],

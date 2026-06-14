@@ -28724,7 +28724,7 @@ export type Database = {
           received_from_id: string | null
           required_approval_date: string | null
           required_on_site_date: string | null
-          responsible_contractor_id: number | null
+          responsible_contractor_id: string | null
           revision: number
           sent_date: string | null
           specification_id: string | null
@@ -28763,7 +28763,7 @@ export type Database = {
           received_from_id?: string | null
           required_approval_date?: string | null
           required_on_site_date?: string | null
-          responsible_contractor_id?: number | null
+          responsible_contractor_id?: string | null
           revision?: number
           sent_date?: string | null
           specification_id?: string | null
@@ -28802,7 +28802,7 @@ export type Database = {
           received_from_id?: string | null
           required_approval_date?: string | null
           required_on_site_date?: string | null
-          responsible_contractor_id?: number | null
+          responsible_contractor_id?: string | null
           revision?: number
           sent_date?: string | null
           specification_id?: string | null

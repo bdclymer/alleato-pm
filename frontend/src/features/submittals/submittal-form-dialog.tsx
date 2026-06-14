@@ -404,9 +404,9 @@ export function SubmittalFormDialog({
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="__none__">None</SelectItem>
-                        {companies.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.company?.name ?? c.id}
+                        {companies.filter((c) => c.company_id).map((c) => (
+                          <SelectItem key={c.company_id} value={c.company_id}>
+                            {c.company?.name ?? c.company_id}
                           </SelectItem>
                         ))}
                       </SelectContent>
