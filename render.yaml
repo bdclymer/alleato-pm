@@ -495,7 +495,7 @@ services:
     dockerContext: ./backend
     schedule: "0 2,9,15,21 * * *"
     dockerCommand: >-
-      python3 src/scripts/enqueue_periodic_packet_refresh.py
+      python3 src/scripts/enqueue_periodic_packet_refresh.py --dry-run
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services:/app/src/workers
@@ -534,7 +534,7 @@ services:
       import json, sys;
       sys.path.insert(0, '/app');
       from src.services.scheduler import _run_intelligence_compiler;
-      result = _run_intelligence_compiler(source_limit=15, packet_limit=10, max_processing_time_ms=600000);
+      result = _run_intelligence_compiler(source_limit=15, packet_limit=0, max_processing_time_ms=600000);
       print(json.dumps(result, indent=2, default=str));
       failed = int(result.get('source_jobs_failed') or 0) + int(result.get('packet_jobs_failed') or 0);
       succeeded = int(result.get('source_jobs_succeeded') or 0) + int(result.get('packet_jobs_succeeded') or 0);
