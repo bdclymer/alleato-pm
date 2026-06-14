@@ -157,10 +157,15 @@ export function useDropdownData({ projectId }: UseDropdownDataOptions) {
 
         // Derive vendor list from active commitments only — vendors without a
         // commitment on this project must not appear in the dropdown.
+        // Include vendors even if company_name is null so that commitment-based
+        // auto-fill always has a visible entry in the dropdown.
         const vendorMap = new Map<string, VendorOption>();
         for (const c of contractList) {
-          if (c.vendorId && c.vendorName && !vendorMap.has(c.vendorId)) {
-            vendorMap.set(c.vendorId, { id: c.vendorId, vendor_name: c.vendorName });
+          if (c.vendorId && !vendorMap.has(c.vendorId)) {
+            vendorMap.set(c.vendorId, {
+              id: c.vendorId,
+              vendor_name: c.vendorName || "Unknown Vendor",
+            });
           }
         }
         setVendors(Array.from(vendorMap.values()));
@@ -186,6 +191,7 @@ export function useDropdownData({ projectId }: UseDropdownDataOptions) {
 
   return {
     vendors,
+    setVendors,
     contracts,
     budgetCodes,
     primeContractOptions,

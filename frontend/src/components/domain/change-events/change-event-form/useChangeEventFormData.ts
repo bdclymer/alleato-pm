@@ -89,6 +89,7 @@ export function useChangeEventFormData({
   // Dropdown data from separate hook
   const {
     vendors,
+    setVendors,
     contracts,
     budgetCodes,
     primeContractOptions,
@@ -163,6 +164,24 @@ export function useChangeEventFormData({
     async (rowIndex: number, commitmentId: string) => {
       const commitment = contracts.find((c) => c.id === commitmentId);
 
+      // Ensure the commitment's vendor appears in the dropdown list.
+      // The vendor list is built from contracts that have a company_name; if
+      // company_name is null in the view, the vendor was silently excluded.
+      // Add it here using the contract's own vendorName so the combobox can
+      // display it immediately after selection.
+      if (commitment?.vendorId) {
+        setVendors((prev) => {
+          if (prev.some((v) => v.id === commitment.vendorId)) return prev;
+          return [
+            ...prev,
+            {
+              id: String(commitment.vendorId),
+              vendor_name: commitment.vendorName || "Unknown Vendor",
+            },
+          ];
+        });
+      }
+
       setFormData((prev) => {
         const nextItems = [...prev.lineItems];
         const current = { ...nextItems[rowIndex], contract: commitmentId, commitmentId: commitmentId || undefined, commitmentLineItemId: "" };
@@ -212,7 +231,7 @@ export function useChangeEventFormData({
         setCommitmentLineItemsMap((prev) => ({ ...prev, [commitmentId]: [] }));
       }
     },
-    [contracts, commitmentLineItemsMap, budgetCodes, projectId],
+    [contracts, commitmentLineItemsMap, budgetCodes, projectId, setVendors],
   );
 
   const handleCommitmentLineItemChange = React.useCallback(

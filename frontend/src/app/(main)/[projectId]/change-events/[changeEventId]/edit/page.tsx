@@ -127,7 +127,7 @@ export default function EditChangeEventPage() {
         id: li.id,
         budgetCode: li.projectBudgetCodeId ?? "",
         description: li.description ?? "",
-        vendor: li.vendorId ?? li.vendor?.id ?? "",
+        vendor: li.vendorId ?? li.vendor?.id ?? li.commitment?.contract_company_id ?? "",
         contract: li.commitmentId
           ? `${li.commitmentType === "purchase_order" ? "po" : "sub"}-${li.commitmentId}`
           : "",

@@ -159,6 +159,7 @@ export interface ChangeEventDetailLineItem {
     id: string;
     contract_number?: string | null;
     title?: string | null;
+    contract_company_id?: string | null;
     company_name?: string | null;
     display_name?: string | null;
   } | null;
