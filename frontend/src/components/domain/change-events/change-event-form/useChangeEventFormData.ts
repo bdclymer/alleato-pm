@@ -15,6 +15,21 @@ import { useDropdownData } from "./useDropdownData";
 
 // When all SOV items share the same budget code, auto-fill it; if only one item
 // exists also use its description. Returns only the fields that should update.
+function findBudgetCode(code: string | null, budgetCodes: BudgetCodeOption[]): BudgetCodeOption | undefined {
+  if (!code) return undefined;
+  const q = code.trim().toLowerCase();
+  // 1. Exact match on cost_code_id
+  return (
+    budgetCodes.find((b) => b.code === code) ||
+    // 2. Case-insensitive code match
+    budgetCodes.find((b) => b.code.toLowerCase() === q) ||
+    // 3. Match on description (cost_code title)
+    budgetCodes.find((b) => b.description.toLowerCase() === q) ||
+    // 4. Match on full label prefix (e.g. "23-000 - HVAC" starts with "23-000")
+    budgetCodes.find((b) => b.fullLabel.toLowerCase().startsWith(q))
+  );
+}
+
 function resolveBudgetCodeFromItems(
   items: CommitmentSovLineItem[],
   budgetCodes: BudgetCodeOption[],
@@ -25,7 +40,7 @@ function resolveBudgetCodeFromItems(
   const firstCode = items[0].budget_code;
   const allSameCode = firstCode !== null && items.every((i) => i.budget_code === firstCode);
   if (allSameCode) {
-    const bc = budgetCodes.find((b) => b.code === firstCode);
+    const bc = findBudgetCode(firstCode, budgetCodes);
     if (bc) updates.budgetCode = bc.id;
   }
 
@@ -242,7 +257,7 @@ export function useChangeEventFormData({
         const nextItems = [...prev.lineItems];
         const current = { ...nextItems[rowIndex], commitmentLineItemId: sovLineItemId };
         if (selectedItem?.budget_code) {
-          const bc = budgetCodes.find((b) => b.code === selectedItem.budget_code);
+          const bc = findBudgetCode(selectedItem.budget_code, budgetCodes);
           if (bc) current.budgetCode = bc.id;
         }
         if (selectedItem?.description) {
@@ -344,7 +359,7 @@ export function useChangeEventFormData({
       }
       const commitment = contracts.find((c) => c.id === commitmentId);
       const newRows: ChangeEventLineItem[] = items.map((li) => {
-        const bc = budgetCodes.find((b) => b.code === li.budget_code);
+        const bc = findBudgetCode(li.budget_code, budgetCodes);
         return {
           ...createEmptyLineItem(),
           budgetCode: bc?.id || "",
