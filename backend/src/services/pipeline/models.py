@@ -127,3 +127,6 @@ class StructuredData:
     # rather than legitimately finding nothing. Lets callers distinguish a silent
     # model failure from a genuinely empty communication. None/False = call succeeded.
     extraction_failed: bool = False
+    # The underlying provider error(s) when extraction_failed is True (model id,
+    # auth, rate limit, schema rejection). None when the call succeeded.
+    extraction_error: Optional[str] = None

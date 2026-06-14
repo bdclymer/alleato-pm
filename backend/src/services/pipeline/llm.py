@@ -693,7 +693,10 @@ severity is 1 (minor) to 5 (critical: safety/inspection/major cost/schedule-kill
     )
     if data.get("_extraction_failed"):
         logger.error("[LLM] Deep communication extraction failed: %s", data.get("_errors"))
-        return StructuredData(extraction_failed=True)
+        return StructuredData(
+            extraction_failed=True,
+            extraction_error=str(data.get("_errors"))[:600] or "unknown",
+        )
 
     _email_map = speaker_email_map or {}
 

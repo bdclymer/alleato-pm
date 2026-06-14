@@ -417,6 +417,7 @@ def synthesize_project_intelligence(
                     "title": doc.get("title"),
                     "text_chars": len(full_text),
                     "extraction_failed": getattr(structured, "extraction_failed", False),
+                    "extraction_error": getattr(structured, "extraction_error", None),
                     "what_changed": getattr(structured, "what_changed", None),
                     "signals": len(payloads),
                     "tasks": len(structured.tasks),
