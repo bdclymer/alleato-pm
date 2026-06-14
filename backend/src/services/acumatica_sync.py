@@ -29,6 +29,19 @@ PAYMENT_APPLICATION_REMEDIATION = (
     "payment_applications to that source."
 )
 
+AR_PAYMENT_APPLICATION_ENTITY_CANDIDATES = (
+    "ARPaymentApplications",
+    "ARPaymentsToInvoices",
+    "ARInvoicesToPayments",
+    "PaymentApplications",
+    "CustomerPaymentApplications",
+    "BI-ARPaymentApplications",
+    "BI-ARPaymentsToInvoices",
+    "BI-ARApplications",
+    "ProcoreARPaymentApplications",
+    "ProcorePaymentApplications",
+)
+
 
 @dataclass
 class EntitySyncResult:
@@ -286,6 +299,27 @@ class AcumaticaSession:
             skip += top
 
         return records
+
+    def fetch_odata_entity_sets(self) -> List[str]:
+        username = os.getenv("ACCOUNTING_USER")
+        password = os.getenv("ACCOUNTING_PASSWORD")
+        if not username or not password:
+            raise RuntimeError("ACCOUNTING_USER and ACCOUNTING_PASSWORD are required for Acumatica OData sync")
+
+        company_path = quote(DEFAULT_COMPANY_NAME, safe="")
+        response = self.client.get(
+            f"{self.base_url}/odata/{company_path}/$metadata",
+            headers={"Accept": "application/xml,text/xml,*/*"},
+            auth=(username, password),
+        )
+        if not response.is_success:
+            raise RuntimeError(
+                f"Acumatica OData metadata fetch failed (HTTP {response.status_code}): {response.text[:300]}"
+            )
+
+        import re
+
+        return sorted(set(re.findall(r'EntitySet Name="([^"]+)"', response.text)))
 
 
 class AcumaticaFinancialSyncService:
@@ -1276,6 +1310,76 @@ class AcumaticaFinancialSyncService:
             if amount is not None:
                 return amount
         return None
+
+    @staticmethod
+    def _clean_acumatica_text(value: Any) -> Optional[str]:
+        if value is None:
+            return None
+        cleaned = str(value).strip()
+        return cleaned or None
+
+    @staticmethod
+    def _normalize_prime_payment_method(value: Any) -> str:
+        cleaned = AcumaticaFinancialSyncService._clean_acumatica_text(value)
+        if not cleaned:
+            return "other"
+        lowered = cleaned.lower()
+        if "check" in lowered:
+            return "check"
+        if "wire" in lowered:
+            return "wire"
+        if "ach" in lowered:
+            return "ach"
+        if "credit" in lowered:
+            return "credit_card"
+        if lowered == "cash":
+            return "cash"
+        return "other"
+
+    @staticmethod
+    def _first_text_from_aliases(record: Dict[str, Any], keys: Sequence[str]) -> Optional[str]:
+        for key in keys:
+            cleaned = AcumaticaFinancialSyncService._clean_acumatica_text(record.get(key))
+            if cleaned:
+                return cleaned
+        return None
+
+    @staticmethod
+    def _first_num_from_aliases(record: Dict[str, Any], keys: Sequence[str]) -> Optional[float]:
+        for key in keys:
+            amount = _num(record.get(key))
+            if amount is not None:
+                return amount
+        return None
+
+    def _find_ar_payment_applications_odata_entity(self) -> Optional[str]:
+        configured = self._clean_acumatica_text(os.getenv("ACUMATICA_AR_PAYMENT_APPLICATIONS_ENTITY"))
+        candidates = [configured] if configured else []
+        candidates.extend(AR_PAYMENT_APPLICATION_ENTITY_CANDIDATES)
+
+        entity_sets = self.session.fetch_odata_entity_sets()
+        by_lower = {name.lower(): name for name in entity_sets}
+        for candidate in candidates:
+            if not candidate:
+                continue
+            match = by_lower.get(candidate.lower())
+            if match:
+                return match
+
+        return None
+
+    def _available_ar_payment_application_entity_message(self) -> str:
+        entity_sets = self.session.fetch_odata_entity_sets()
+        relevant = [
+            name
+            for name in entity_sets
+            if any(token in name.lower() for token in ("ar", "payment", "pay", "invoice", "application"))
+        ]
+        return (
+            f"{PAYMENT_APPLICATION_REMEDIATION} No AR payment application OData entity set was found. "
+            f"Set ACUMATICA_AR_PAYMENT_APPLICATIONS_ENTITY to the exposed GI name once it appears in metadata. "
+            f"Currently relevant OData entity sets: {', '.join(relevant) or '(none)'}."
+        )
 
     def _project_commitment_payments_from_checks(self) -> int:
         invoices: List[Dict[str, Any]] = []
@@ -2457,18 +2561,297 @@ class AcumaticaFinancialSyncService:
         result.projected = self._project_commitment_payments_from_checks()
         return result
 
+    def _ar_payment_application_row_from_odata(self, row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        payment_ref = self._first_text_from_aliases(
+            row,
+            (
+                "PaymentReferenceNbr",
+                "PaymentRefNbr",
+                "PaymentNbr",
+                "PaymentReference",
+                "PaymentRef",
+                "AdjgRefNbr",
+                "ReferenceNbr_2",
+            ),
+        )
+        invoice_ref = self._first_text_from_aliases(
+            row,
+            (
+                "InvoiceReferenceNbr",
+                "InvoiceRefNbr",
+                "AppliedInvoiceRefNbr",
+                "AppliedToDocRef",
+                "AdjdRefNbr",
+                "DocRefNbr",
+                "DocumentRefNbr",
+                "ReferenceNbr",
+            ),
+        )
+        if not payment_ref or not invoice_ref:
+            return None
+
+        payment_type = self._first_text_from_aliases(
+            row,
+            (
+                "PaymentType",
+                "PaymentDocType",
+                "AdjgDocType",
+                "Type_2",
+                "Type_3",
+            ),
+        ) or "Payment"
+        invoice_type = self._first_text_from_aliases(
+            row,
+            (
+                "InvoiceType",
+                "InvoiceDocType",
+                "AppliedInvoiceType",
+                "AppliedToDocType",
+                "AdjdDocType",
+                "DocType",
+                "DocumentType",
+                "TranType",
+                "Type",
+            ),
+        ) or "Invoice"
+
+        explicit_project_code = self._first_text_from_aliases(
+            row,
+            (
+                "Project",
+                "ProjectID",
+                "ProjectCD",
+                "ProjectCode",
+                "JobNumber",
+            ),
+        )
+        resolved_project_code = explicit_project_code
+        resolution_method = "ar_payment_applications_odata"
+        if not resolved_project_code:
+            ar_invoice_rows = (
+                self.supabase.table("acumatica_ar_invoices")
+                .select("project")
+                .eq("reference_nbr", invoice_ref)
+                .limit(1)
+                .execute()
+            ).data or []
+            if ar_invoice_rows and ar_invoice_rows[0].get("project"):
+                resolved_project_code = ar_invoice_rows[0]["project"]
+                resolution_method = "ar_invoice_lookup"
+
+        return {
+            "payment_external_key": f"{payment_type}|{payment_ref}",
+            "payment_reference_nbr": payment_ref,
+            "payment_type": payment_type,
+            "invoice_reference_nbr": invoice_ref,
+            "invoice_type": invoice_type,
+            "customer_id": self._first_text_from_aliases(row, ("CustomerID", "Customer", "CustomerCD")),
+            "amount_applied": self._first_num_from_aliases(
+                row,
+                (
+                    "AmountApplied",
+                    "AppliedAmount",
+                    "AmountPaid",
+                    "PaymentAmount",
+                    "CuryAdjdAmt",
+                    "CuryAdjgAmt",
+                    "ARAdjust_curyAdjdAmt",
+                ),
+            ),
+            "balance": self._first_num_from_aliases(
+                row,
+                (
+                    "Balance",
+                    "DocumentBalance",
+                    "InvoiceBalance",
+                    "CuryAdjdBilledAmt",
+                ),
+            ),
+            "resolved_project_code": resolved_project_code,
+            "resolution_method": resolution_method,
+        }
+
+    def _sync_payment_applications_from_odata(self, entity_set_name: str) -> EntitySyncResult:
+        result = EntitySyncResult(entity="payment_applications")
+        records = self.session.fetch_odata_entity(entity_set_name, top=1000)
+        result.fetched = len(records)
+        result.cursor = _now_iso()
+
+        rows: List[Dict[str, Any]] = []
+        seen_keys: set[tuple[str, str, str, str]] = set()
+        for record in records:
+            row = self._ar_payment_application_row_from_odata(record)
+            if not row:
+                result.skipped += 1
+                continue
+            unique_key = (
+                row["payment_reference_nbr"],
+                row.get("payment_type") or "",
+                row["invoice_reference_nbr"],
+                row.get("invoice_type") or "",
+            )
+            if unique_key in seen_keys:
+                result.skipped += 1
+                continue
+            seen_keys.add(unique_key)
+            rows.append(row)
+
+        if rows:
+            for chunk in _chunked(rows):
+                self.supabase.table("acumatica_payment_applications").upsert(
+                    list(chunk),
+                    on_conflict="payment_reference_nbr,payment_type,invoice_reference_nbr,invoice_type",
+                ).execute()
+
+        result.upserted = len(rows)
+        result.projected = self._project_prime_contract_payments_from_applications()
+        return result
+
+    def _project_prime_contract_payments_from_applications(self) -> int:
+        applications = (
+            self.supabase.table("acumatica_payment_applications")
+            .select(
+                "payment_external_key, payment_reference_nbr, payment_type, invoice_reference_nbr, "
+                "invoice_type, amount_applied, resolved_project_code, customer_id"
+            )
+            .neq("invoice_type", "Bill")
+            .execute()
+        ).data or []
+        if not applications:
+            return 0
+
+        payments = (
+            self.supabase.table("acumatica_payments")
+            .select("external_key, reference_nbr, document_type, payment_method, payment_ref, application_date, description")
+            .execute()
+        ).data or []
+        payment_by_external_key = {row.get("external_key"): row for row in payments if row.get("external_key")}
+        payment_by_ref = {row.get("reference_nbr"): row for row in payments if row.get("reference_nbr")}
+
+        projects = (
+            self.supabase.table("projects")
+            .select("id, acumatica_project_id")
+            .not_.is_("acumatica_project_id", "null")
+            .execute()
+        ).data or []
+        project_by_alias: Dict[str, int] = {}
+        for project in projects:
+            project_id = project.get("id")
+            if project_id is None:
+                continue
+            for alias in _project_code_aliases(project.get("acumatica_project_id")):
+                project_by_alias[alias] = project_id
+
+        prime_contracts = (
+            self.supabase.table("prime_contracts")
+            .select("id, project_id")
+            .execute()
+        ).data or []
+        contract_by_project_id: Dict[int, str] = {}
+        for contract in prime_contracts:
+            project_id = contract.get("project_id")
+            if project_id is not None and project_id not in contract_by_project_id:
+                contract_by_project_id[project_id] = contract["id"]
+
+        grouped: Dict[tuple[str, str, int], Dict[str, Any]] = {}
+        for application in applications:
+            payment_ref = application.get("payment_reference_nbr")
+            payment_type = application.get("payment_type") or "Payment"
+            project_code = application.get("resolved_project_code")
+            amount = _num(application.get("amount_applied"))
+            if not payment_ref or not project_code or amount is None:
+                continue
+
+            project_id = next(
+                (project_by_alias[alias] for alias in _project_code_aliases(project_code) if alias in project_by_alias),
+                None,
+            )
+            if project_id is None:
+                continue
+
+            key = (payment_ref, payment_type, project_id)
+            payment = payment_by_external_key.get(application.get("payment_external_key")) or payment_by_ref.get(payment_ref)
+            current = grouped.setdefault(
+                key,
+                {
+                    "payment_ref": payment_ref,
+                    "payment_type": payment_type,
+                    "project_id": project_id,
+                    "amount": 0.0,
+                    "payment": payment or {},
+                    "invoice_refs": [],
+                },
+            )
+            current["amount"] += amount
+            current["invoice_refs"].append(application.get("invoice_reference_nbr"))
+            if payment and not current.get("payment"):
+                current["payment"] = payment
+
+        now = _now_iso()
+        rows: List[Dict[str, Any]] = []
+        for grouped_row in grouped.values():
+            project_id = grouped_row["project_id"]
+            contract_id = contract_by_project_id.get(project_id)
+            if not contract_id:
+                continue
+            payment = grouped_row.get("payment") or {}
+            payment_ref = grouped_row["payment_ref"]
+            payment_type = grouped_row["payment_type"]
+            rows.append(
+                {
+                    "contract_id": contract_id,
+                    "project_id": project_id,
+                    "payment_number": payment_ref,
+                    "amount": grouped_row["amount"],
+                    "payment_date": payment.get("application_date") or now.split("T")[0],
+                    "method": self._normalize_prime_payment_method(payment.get("payment_method")),
+                    "reference_number": payment.get("payment_ref"),
+                    "notes": payment.get("description")
+                    or f"Imported from Acumatica payment applications for invoices {', '.join(sorted(set(grouped_row['invoice_refs'])))}",
+                    "updated_at": now,
+                    "acumatica_ref_nbr": payment_ref,
+                    "acumatica_doc_type": payment_type,
+                    "acumatica_sync_at": now,
+                }
+            )
+
+        existing = (
+            self.supabase.table("prime_contract_payments")
+            .select("id, acumatica_ref_nbr")
+            .not_.is_("acumatica_ref_nbr", "null")
+            .execute()
+        ).data or []
+        existing_by_ref = {row.get("acumatica_ref_nbr"): row.get("id") for row in existing if row.get("acumatica_ref_nbr")}
+
+        for row in rows:
+            existing_id = existing_by_ref.get(row["acumatica_ref_nbr"])
+            if existing_id:
+                self.supabase.table("prime_contract_payments").update(row).eq("id", existing_id).execute()
+            else:
+                self.supabase.table("prime_contract_payments").insert(row).execute()
+
+        return len(rows)
+
     def _sync_payment_applications(self, last_cursor: Optional[str]) -> EntitySyncResult:
         """Sync AR payment application lines into acumatica_payment_applications.
 
-        Each AR Payment can be applied against multiple invoices.  We expand
-        the ApplicationHistory sub-entity to get one row per
-        (payment, applied-invoice) pair.
+        Each AR Payment can be applied against multiple invoices. Prefer an
+        Acumatica OData Generic Inquiry because the Default endpoint's
+        ApplicationHistory sub-entity fails in this tenant on BQL delegate
+        fields. Fall back to the REST sub-entity only when no GI is exposed.
 
         Unique constraint: (payment_reference_nbr, payment_type,
                              invoice_reference_nbr, invoice_type)
         """
+        entity_set_name = self._find_ar_payment_applications_odata_entity()
+        if entity_set_name:
+            return self._sync_payment_applications_from_odata(entity_set_name)
+
         result = EntitySyncResult(entity="payment_applications")
-        records = self._fetch_payment_application_records(last_cursor)
+        try:
+            records = self._fetch_payment_application_records(last_cursor)
+        except RuntimeError as exc:
+            raise RuntimeError(f"{self._available_ar_payment_application_entity_message()} REST fallback error: {exc}") from exc
         result.fetched = len(records)
         result.cursor = self._max_cursor(records) or _now_iso()
 
@@ -2546,6 +2929,7 @@ class AcumaticaFinancialSyncService:
             ).execute()
 
         result.upserted = len(rows)
+        result.projected = self._project_prime_contract_payments_from_applications()
         return result
 
 
