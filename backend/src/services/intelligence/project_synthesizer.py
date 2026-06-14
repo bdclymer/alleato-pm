@@ -322,7 +322,7 @@ def synthesize_project_intelligence(
             client.table("document_metadata")
             .select(
                 "id,title,type,category,source,source_system,date,captured_at,"
-                "participants,participants_array,client_id,source_metadata"
+                "participants,participants_array,source_metadata"
             )
             .eq("project_id", int(project_id))
             .or_(f"date.gte.{effective_since},captured_at.gte.{effective_since}")
@@ -332,10 +332,12 @@ def synthesize_project_intelligence(
             .data
             or []
         )
-    except Exception as exc:  # noqa: BLE001 — surface as a batch-level error
+    except Exception as exc:  # noqa: BLE001
+        # A failed document fetch is FATAL (nothing can be processed) — raise so
+        # the endpoint returns a non-200 instead of a silent empty 200. Per-doc
+        # failures below are partial and collected into result["errors"].
         logger.error("[ProjectSynthesizer] document fetch failed (project=%s): %s", project_id, exc)
-        result["errors"].append(f"document fetch failed: {exc}")
-        return result
+        raise RuntimeError(f"document fetch failed for project {project_id}: {exc}") from exc
 
     # Project ground truth is the same for every doc in this batch — fetch once.
     try:
@@ -411,7 +413,7 @@ def synthesize_project_intelligence(
                     task,
                     metadata_id=doc_id,
                     project_id=int(project_id),
-                    client_id=doc.get("client_id"),
+                    client_id=None,  # document_metadata has no client linkage column
                     source_system=comm_type,
                 )
                 result["tasks_written"] += 1
