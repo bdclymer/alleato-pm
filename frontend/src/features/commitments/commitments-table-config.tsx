@@ -359,33 +359,10 @@ export function buildCommitmentTableColumns(
       ...(onInlineEdit
         ? {
             editable: true,
+            editType: "boolean" as const,
             editValue: (item) => (item.executed ? "true" : "false"),
             onEdit: (item, value) =>
               onInlineEdit(item.id, "executed", value === "true"),
-            renderEditor: ({ value, onChange, onCommit, onCancel }) => (
-              <Select
-                value={value}
-                onValueChange={(next) => {
-                  onChange(next);
-                  onCommit(next);
-                }}
-                onOpenChange={(open) => {
-                  if (!open) onCancel();
-                }}
-              >
-                <SelectTrigger
-                  className="h-8"
-                  onClick={(e) => e.stopPropagation()}
-                  aria-label="Edit executed"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="true">Yes</SelectItem>
-                  <SelectItem value="false">No</SelectItem>
-                </SelectContent>
-              </Select>
-            ),
           }
         : {}),
     },

@@ -6,7 +6,6 @@ import {
   TableAvatarUsers,
   TableRowActionsMenu,
   TableTagBadge,
-  InlineSelectEditor,
   type TableColumn,
   type FilterConfig,
   type ColumnConfig,
@@ -203,21 +202,15 @@ export function buildTasksTableColumns(
             onUpdate?.(item.id!, {
               assignee_user_id: value === "__unassigned__" ? null : value,
             }),
-          renderEditor: ({ value, onChange, onCommit }) => (
-            <InlineSelectEditor
-              value={value || "__unassigned__"}
-              options={[
-                { value: "__unassigned__", label: "Unassigned" },
-                ...users.map((user) => ({
-                  value: user.id,
-                  label: user.full_name || user.email || user.id,
-                })),
-              ]}
-              placeholder="Select assignee"
-              onChange={onChange}
-              onCommit={onCommit}
-            />
-          ),
+          editType: "select",
+          editEmptyLabel: "Select assignee",
+          editOptions: [
+            { value: "__unassigned__", label: "Unassigned" },
+            ...users.map((user) => ({
+              value: user.id,
+              label: user.full_name || user.email || user.id,
+            })),
+          ],
         };
       case "project_name":
         return {
@@ -237,21 +230,15 @@ export function buildTasksTableColumns(
             onUpdate?.(item.id!, {
               project_id: value === "__none__" ? null : Number(value),
             }),
-          renderEditor: ({ value, onChange, onCommit }) => (
-            <InlineSelectEditor
-              value={value || "__none__"}
-              options={[
-                { value: "__none__", label: "Unlinked" },
-                ...projects.map((project) => ({
-                  value: String(project.id),
-                  label: project.name ?? `Project ${project.id}`,
-                })),
-              ]}
-              placeholder="Select project"
-              onChange={onChange}
-              onCommit={onCommit}
-            />
-          ),
+          editType: "select",
+          editEmptyLabel: "Select project",
+          editOptions: [
+            { value: "__none__", label: "Unlinked" },
+            ...projects.map((project) => ({
+              value: String(project.id),
+              label: project.name ?? `Project ${project.id}`,
+            })),
+          ],
         };
       case "source_system":
         return {
@@ -344,15 +331,9 @@ export function buildTasksTableColumns(
             onUpdate?.(item.id!, {
               priority: value === "__none__" ? null : value,
             }),
-          renderEditor: ({ value, onChange, onCommit }) => (
-            <InlineSelectEditor
-              value={value || "__none__"}
-              options={TASK_PRIORITY_OPTIONS}
-              placeholder="Select priority"
-              onChange={onChange}
-              onCommit={onCommit}
-            />
-          ),
+          editType: "select",
+          editEmptyLabel: "Select priority",
+          editOptions: TASK_PRIORITY_OPTIONS,
         };
       case "status":
         return {
@@ -368,15 +349,9 @@ export function buildTasksTableColumns(
           editable: Boolean(onUpdate),
           editValue: (item) => item.status ?? "open",
           onEdit: (item, value) => onUpdate?.(item.id!, { status: value }),
-          renderEditor: ({ value, onChange, onCommit }) => (
-            <InlineSelectEditor
-              value={value || "open"}
-              options={TASK_STATUS_OPTIONS}
-              placeholder="Select status"
-              onChange={onChange}
-              onCommit={onCommit}
-            />
-          ),
+          editType: "select",
+          editEmptyLabel: "Select status",
+          editOptions: TASK_STATUS_OPTIONS,
         };
       default:
         return {

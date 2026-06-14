@@ -97,6 +97,12 @@ import {
   X,
 } from "lucide-react";
 import { MobileCardList } from "./mobile-card-list";
+import { InlineSelectEditor } from "./inline-select-editor";
+
+const BOOLEAN_EDIT_OPTIONS = [
+  { value: "true", label: "Yes" },
+  { value: "false", label: "No" },
+];
 
 const INTERACTIVE_ROW_TARGET_SELECTOR = [
   "a",
@@ -247,6 +253,17 @@ export interface TableColumn<T> extends ColumnConfig {
   onEdit?: (item: T, value: string) => void | Promise<void>;
   editEmptyLabel?: string;
   editInputType?: React.HTMLInputTypeAttribute;
+  /**
+   * Declarative inline editor type. The component renders the matching editor
+   * centrally — no per-column `renderEditor` needed:
+   *  - "text" (default) / "number" / "date" → `<Input>` (also honours `editInputType`)
+   *  - "select" → `InlineSelectEditor` driven by `editOptions`
+   *  - "boolean" → `InlineSelectEditor` with Yes/No (or custom `editOptions`)
+   * Use `renderEditor` only for genuinely custom widgets.
+   */
+  editType?: "text" | "number" | "date" | "boolean" | "select";
+  /** Options for `editType: "select"`. For "boolean" these override the Yes/No default. */
+  editOptions?: { value: string; label: string }[];
   /** Preferred column width in pixels. Applied as default when the user has not manually resized. */
   width?: number;
   /** Custom editor widget (e.g. dropdown select). Receives current value, onChange, onCommit, and onCancel. */
@@ -2534,6 +2551,26 @@ export function UnifiedTablePage<T>({
                                     setEditingValue("");
                                   },
                                 })
+                              ) : column.editType === "select" ||
+                                column.editType === "boolean" ? (
+                                <InlineSelectEditor
+                                  value={editingValue}
+                                  options={
+                                    column.editType === "boolean"
+                                      ? (column.editOptions ?? BOOLEAN_EDIT_OPTIONS)
+                                      : (column.editOptions ?? [])
+                                  }
+                                  placeholder={column.editEmptyLabel ?? `Select ${column.label}`}
+                                  onChange={setEditingValue}
+                                  onCommit={(nextValue) =>
+                                    void commitInlineEdit(
+                                      item,
+                                      column,
+                                      table.getRowId(item),
+                                      nextValue ?? editingValue,
+                                    )
+                                  }
+                                />
                               ) : (
                                 <Input
                                   type={column.editInputType}
