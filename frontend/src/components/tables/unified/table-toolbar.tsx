@@ -513,7 +513,7 @@ function FilterFields({
           <Input
             id={`filter-${filter.id}`}
             type={filter.type === "number" ? "number" : "text"}
-            className="h-8 w-44 text-sm"
+            className="h-8 w-44 shrink-0 text-sm"
             min={filter.type === "number" ? "0" : undefined}
             step={filter.type === "number" ? "1" : undefined}
             placeholder={filter.placeholder}
@@ -619,7 +619,10 @@ export function FilterMenu({
               </Button>
             ) : null}
           </div>
-          <div className="max-h-96 overflow-y-auto p-2.5">
+          <div
+            className="overflow-y-auto p-2.5"
+            style={{ maxHeight: "min(70vh, 40rem)" }}
+          >
             <FilterFields
               filters={filters}
               activeFilters={activeFilters}

@@ -78,7 +78,7 @@ export const commitmentFilters: FilterConfig[] = [
   },
   {
     id: "contract_company_name",
-    label: "Contract Company",
+    label: "Company",
     type: "text",
     placeholder: "Filter by company name...",
   },
