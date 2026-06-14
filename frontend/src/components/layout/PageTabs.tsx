@@ -52,7 +52,7 @@ export function PageTabs({
     variant === "inline"
       ? "group relative inline-flex min-h-11 snap-start items-center gap-2 whitespace-nowrap px-1 py-2 text-sm transition-colors"
       : "group relative inline-flex min-h-11 snap-start items-center gap-2 whitespace-nowrap px-3 py-3 text-sm transition-colors";
-  const spacingClasses = variant === "inline" ? "mb-2 md:mb-3" : "mb-4 md:mb-6";
+  const spacingClasses = variant === "inline" ? "mb-4 md:mb-5" : "mb-6 md:mb-8";
 
   return (
     <div className={cn(wrapperClasses, spacingClasses, className, "border-0")}>
