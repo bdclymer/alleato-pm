@@ -198,13 +198,15 @@ export function ChangeEventLineItemsTable({
   const [filterVendorOnly, setFilterVendorOnly] = useState(false);
   const [filterNonZero, setFilterNonZero] = useState(false);
 
-  /* Individual column visibility */
-  const [visibleCols, setVisibleCols] = useState<Record<ColId, boolean>>({
-    rev_qty: true, rev_unitCost: true, rev_rom: true, rev_primePco: true, rev_latestPrice: true,
+  /* Individual column visibility — revenue columns default hidden when the
+     change event is not expecting revenue (still user-toggleable below). */
+  const [visibleCols, setVisibleCols] = useState<Record<ColId, boolean>>(() => ({
+    rev_qty: expectingRevenue, rev_unitCost: expectingRevenue, rev_rom: expectingRevenue,
+    rev_primePco: expectingRevenue, rev_latestPrice: expectingRevenue,
     cost_qty: true, cost_unitCost: true, cost_rom: true, cost_rfq: true,
     cost_commitment: true, cost_nonCommitted: true, cost_latestCost: true,
     overUnder: true, budgetMod: true,
-  });
+  }));
 
   /* Resizable column widths */
   const [colWidths, setColWidths] = useState<Record<ColWidthKey, number>>(DEFAULT_COL_WIDTHS);
@@ -727,7 +729,7 @@ export function ChangeEventLineItemsTable({
               {showCost && (
                 <InlineTableHeaderCell colSpan={costSpan} divider>Cost</InlineTableHeaderCell>
               )}
-              {visibleCols.overUnder && <InlineTableHeaderCell divider>O/U</InlineTableHeaderCell>}
+              {visibleCols.overUnder && <InlineTableHeaderCell divider>Over / Under</InlineTableHeaderCell>}
               {visibleCols.budgetMod && <InlineTableHeaderCell divider>Mod</InlineTableHeaderCell>}
               {(onDeleteLineItem || changeEventId) && <InlineTableHeaderCell />}
             </InlineTableHeaderRow>
@@ -780,7 +782,7 @@ export function ChangeEventLineItemsTable({
 
               {visibleCols.overUnder && (
                 <InlineTableHeaderCell align="right" divider className="relative">
-                  O/U <RH col="overUnder" />
+                  {COL_LABELS.overUnder} <RH col="overUnder" />
                 </InlineTableHeaderCell>
               )}
               {visibleCols.budgetMod && (
