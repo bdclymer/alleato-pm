@@ -68,7 +68,7 @@ services:
     dockerContext: ./backend
     schedule: "10 * * * *"
     dockerCommand: >-
-      timeout 25m python3 src/scripts/run_graph_sync_phase.py teams --skip-embedding --skip-teams-compiler
+      timeout 25m python3 src/scripts/run_graph_sync_phase.py teams --skip-embedding
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -112,7 +112,7 @@ services:
     dockerContext: ./backend
     schedule: "40 * * * *"
     dockerCommand: >-
-      timeout 10m python3 src/scripts/run_graph_sync_phase.py teams-dm --skip-embedding --skip-teams-compiler
+      timeout 10m python3 src/scripts/run_graph_sync_phase.py teams-dm --skip-embedding
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services
@@ -173,9 +173,7 @@ services:
         get_supabase_client(),
         run_teams=False,
         run_embedding=True,
-        run_teams_compiler=False,
         embed_limit=50,
-        teams_compiler_batch_size=25,
       );
       print(json.dumps(result, indent=2));
       errors = result.get('errors', []);
