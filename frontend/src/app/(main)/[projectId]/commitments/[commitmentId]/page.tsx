@@ -413,7 +413,8 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
       <section>
         <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
           <div className="space-y-6">
-            <section className="space-y-6">
+            {/* General Information */}
+            <DetailPanel>
               <SectionRuleHeading label="General Information" className="mb-6 pb-0" />
               <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-x-10 gap-y-4">
                 <dl className="space-y-4 text-sm">
@@ -470,21 +471,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                   <LabelValueRow label="Default Retainage" labelClassName="w-36">
                     {commitment.retention_percentage ?? 0}%
                   </LabelValueRow>
-                  {isPO && (
-                    <LabelValueRow label="Assigned To" labelClassName="w-36" missing={!commitment.assigned_to_name}>
-                      {commitment.assigned_to_name || "—"}
-                    </LabelValueRow>
-                  )}
-                  {isPO && (
-                    <LabelValueRow label="Payment Terms" labelClassName="w-36" missing={!commitment.payment_terms}>
-                      {commitment.payment_terms || "—"}
-                    </LabelValueRow>
-                  )}
-                  {isPO && (
-                    <LabelValueRow label="Ship Via" labelClassName="w-36" missing={!commitment.ship_via}>
-                      {commitment.ship_via || "—"}
-                    </LabelValueRow>
-                  )}
                 </dl>
                 <dl className="space-y-4 text-sm">
                   {!isPO && (
@@ -522,38 +508,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                   </LabelValueRow>
                 </dl>
               </div>
-
-              <LabelValueRow
-                label="Description"
-                labelClassName="w-36"
-                className="mt-6"
-                missing={!commitment.description}
-                valueClassName="leading-relaxed font-normal text-foreground text-sm"
-              >
-                {capitalizeWords(commitment.description) || "—"}
-              </LabelValueRow>
-
-              {isPO && (commitment.bill_to || commitment.ship_to) && (
-                <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-                  <LabelValueRow
-                    label="Bill To"
-                    labelClassName="w-36"
-                    missing={!commitment.bill_to}
-                    valueClassName="whitespace-pre-wrap leading-relaxed"
-                  >
-                    {commitment.bill_to || "—"}
-                  </LabelValueRow>
-                  <LabelValueRow
-                    label="Ship To"
-                    labelClassName="w-36"
-                    missing={!commitment.ship_to}
-                    valueClassName="whitespace-pre-wrap leading-relaxed"
-                  >
-                    {commitment.ship_to || "—"}
-                  </LabelValueRow>
-                </div>
-              )}
-
               <LabelValueRow label="Private Commitment" labelClassName="w-36" className="mt-6">
                 {commitment.private ? "Yes" : "No"}
               </LabelValueRow>
@@ -565,12 +519,69 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                   entityType="commitment"
                   entityId={commitmentId}
                   projectId={projectId}
+                  showLabel={false}
                 />
               </LabelValueRow>
-            </section>
+            </DetailPanel>
 
-            <section className="space-y-6">
-              <Collapsible defaultOpen>
+            {/* Shipping & Billing (PO only) */}
+            {isPO && (
+              <DetailPanel>
+                <SectionRuleHeading label="Shipping & Billing" className="mb-6 pb-0" />
+                <dl className="space-y-4 text-sm">
+                  <LabelValueRow label="Assigned To" labelClassName="w-36" missing={!commitment.assigned_to_name}>
+                    {commitment.assigned_to_name || "—"}
+                  </LabelValueRow>
+                  <LabelValueRow label="Payment Terms" labelClassName="w-36" missing={!commitment.payment_terms}>
+                    {commitment.payment_terms || "—"}
+                  </LabelValueRow>
+                  <LabelValueRow label="Ship Via" labelClassName="w-36" missing={!commitment.ship_via}>
+                    {commitment.ship_via || "—"}
+                  </LabelValueRow>
+                </dl>
+                <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  <LabelValueRow
+                    label="Bill To"
+                    labelClassName="w-36"
+                    missing={!commitment.bill_to}
+                    valueClassName="whitespace-pre-wrap leading-relaxed text-sm"
+                  >
+                    {commitment.bill_to || "—"}
+                  </LabelValueRow>
+                  <LabelValueRow
+                    label="Ship To"
+                    labelClassName="w-36"
+                    missing={!commitment.ship_to}
+                    valueClassName="whitespace-pre-wrap leading-relaxed text-sm"
+                  >
+                    {commitment.ship_to || "—"}
+                  </LabelValueRow>
+                </div>
+              </DetailPanel>
+            )}
+
+            {/* Description (collapsible, closed by default) */}
+            <DetailPanel>
+              <Collapsible>
+                <div className="mb-6 flex items-center justify-between">
+                  <SectionRuleHeading label="Description" className="pb-0" />
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-muted-foreground">
+                      <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=closed]_&]:rotate-[-90deg]" />
+                    </Button>
+                  </CollapsibleTrigger>
+                </div>
+                <CollapsibleContent>
+                  <p className={`text-sm leading-relaxed ${!commitment.description ? "text-muted-foreground/50" : "text-foreground"}`}>
+                    {capitalizeWords(commitment.description) || "—"}
+                  </p>
+                </CollapsibleContent>
+              </Collapsible>
+            </DetailPanel>
+
+            {/* Inclusions + Exclusions (collapsible, closed by default) */}
+            <DetailPanel>
+              <Collapsible>
                 <div className="mb-6 flex items-center justify-between">
                   <SectionRuleHeading label="Inclusions + Exclusions" className="pb-0" />
                   <CollapsibleTrigger asChild>
@@ -612,7 +623,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                   </div>
                 </CollapsibleContent>
               </Collapsible>
-            </section>
+            </DetailPanel>
           </div>
 
           <aside>

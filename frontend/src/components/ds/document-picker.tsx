@@ -97,6 +97,7 @@ export interface EntityAttachmentsProps {
   defaultDocumentType?: string;
   className?: string;
   hideIfEmpty?: boolean;
+  showLabel?: boolean;
 }
 
 export function EntityAttachments({
@@ -106,6 +107,7 @@ export function EntityAttachments({
   defaultDocumentType,
   className,
   hideIfEmpty = false,
+  showLabel = true,
 }: EntityAttachmentsProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState<string[]>([]);
@@ -382,7 +384,7 @@ export function EntityAttachments({
 
   return (
     <section className="space-y-4">
-      <h2 className="text-sm font-semibold text-foreground">Files</h2>
+      {showLabel && <h2 className="text-sm font-semibold text-foreground">Files</h2>}
       {content}
     </section>
   );
