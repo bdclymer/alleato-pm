@@ -1373,6 +1373,53 @@ async def project_synthesize(
         ) from exc
 
 
+class ProjectIntelligenceRefreshRequest(BaseModel):
+    project_id: int
+    force_full: bool = False
+    dry_run: bool = False
+    model: Optional[str] = None
+
+
+@app.post(
+    "/api/intelligence/project-intelligence/refresh",
+    tags=["Intelligence"],
+    summary="L2 rolling-state synthesis: one coherent intelligence packet for a project",
+)
+async def refresh_project_intelligence_endpoint(
+    request: ProjectIntelligenceRefreshRequest,
+    _: None = Depends(require_admin_api_key),
+) -> Dict[str, Any]:
+    """Read prior synthesized state + raw comms since + hard numbers -> ONE
+    synthesis pass -> a coherent ``intelligence_packets`` row the project page
+    renders. Use ``dry_run`` to inspect the synthesized output before writing.
+
+    Surfaces LLM failure as a 500 (never writes a silent empty packet)."""
+    if request.project_id < 1:
+        raise HTTPException(status_code=422, detail="project_id must be positive")
+    try:
+        from src.services.intelligence.project_intelligence import (
+            refresh_project_intelligence,
+        )
+
+        return refresh_project_intelligence(
+            request.project_id,
+            force_full=request.force_full,
+            dry_run=request.dry_run,
+            model=request.model,
+        )
+    except Exception as exc:
+        logger.error(
+            "[ProjectIntelligenceAPI] refresh failed project_id=%s: %s",
+            request.project_id,
+            exc,
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=f"Project intelligence synthesis failed for project {request.project_id}: {exc}",
+        ) from exc
+
+
 class ReconcileFlagsRequest(BaseModel):
     project_id: int
 

@@ -646,6 +646,7 @@ def run_synthesis_sweep(
     max_projects: int = 10,
     max_extractions_per_project: int = 4,
     since_days: int = 14,
+    refresh_intelligence: bool = True,
 ) -> dict:
     """Incremental cron driver: synthesize recent un-synthesized email/Teams docs
     across active projects, bounded so total LLM spend per run stays predictable.
@@ -653,6 +654,12 @@ def run_synthesis_sweep(
     Cost ceiling per run = max_projects x max_extractions_per_project deep
     extractions. Projects whose recent docs are all already synthesized do a cheap
     no-op doc-scan (no LLM calls) thanks to the skip_synthesized marker.
+
+    When ``refresh_intelligence`` is True (default), after the per-doc card
+    extraction each project also gets ONE L2 rolling-state synthesis pass
+    (``refresh_project_intelligence``) — the cards are the timeline/evidence log,
+    the synthesis packet is the product the page reads. Bounded: one LLM call per
+    swept project.
     """
     client = get_supabase_client()
     since = (datetime.now(timezone.utc) - timedelta(days=since_days)).isoformat()
@@ -702,7 +709,25 @@ def run_synthesis_sweep(
                 summary["flags_resolved"] = summary.get("flags_resolved", 0) + flag_res.get("materialized", 0) + flag_res.get("did_not_materialize", 0)
             except Exception as fexc:  # noqa: BLE001 — reconcile must not abort the sweep
                 logger.warning("[ProjectSynthesizer] flag reconcile failed for %s: %s", pid, fexc)
-            summary["per_project"].append({"project_id": pid, "emails": r.get("emails"), "teams": r.get("teams"), "cards": r.get("cards_written"), "flags_resolved": flag_res.get("materialized", 0) + flag_res.get("did_not_materialize", 0) if flag_res else 0})
+
+            # L2 rolling-state synthesis: one coherent packet per project (the
+            # product the page reads). Bounded to one LLM call per project; never
+            # aborts the sweep. Lazy import avoids a circular module load.
+            synthesis_res: Dict[str, Any] = {}
+            if refresh_intelligence:
+                try:
+                    from .project_intelligence import refresh_project_intelligence
+
+                    synthesis_res = refresh_project_intelligence(pid)
+                    summary["synthesis_packets_written"] = (
+                        summary.get("synthesis_packets_written", 0)
+                        + (1 if synthesis_res.get("packet_id") else 0)
+                    )
+                except Exception as sexc:  # noqa: BLE001 — synthesis must not abort the sweep
+                    logger.error("[ProjectSynthesizer] L2 synthesis failed for %s: %s", pid, sexc, exc_info=True)
+                    summary["errors"].append({"project_id": pid, "stage": "synthesis", "error": str(sexc)})
+
+            summary["per_project"].append({"project_id": pid, "emails": r.get("emails"), "teams": r.get("teams"), "cards": r.get("cards_written"), "flags_resolved": flag_res.get("materialized", 0) + flag_res.get("did_not_materialize", 0) if flag_res else 0, "synthesis_packet": synthesis_res.get("packet_id")})
         except Exception as exc:  # noqa: BLE001 — one project must not abort the sweep
             logger.error("[ProjectSynthesizer] sweep failed for project %s: %s", pid, exc, exc_info=True)
             summary["errors"].append({"project_id": pid, "error": str(exc)})

@@ -3,12 +3,12 @@
 PRP: `prp-intelligence-synthesis.md`. Update this file as work progresses. Each task has a gate; **do not check a box without the gate passing on real data** (the prior build failed by skipping this).
 
 ## Progress summary
-- [ ] Phase 0 — Audit confirmed by an independent agent
-- [ ] Phase 1 — L2 backend synthesizer
-- [ ] Phase 2 — Trigger + admin endpoint
-- [ ] Phase 3 — Project page reads synthesis packet
-- [ ] Phase 4 — Brief synthesizes across packets
-- [ ] Phase 5 — Re-enable AM/PM delivery (after human approval)
+- [x] Phase 0 — Audit reproduced (A1–A4 confirm L2 was missing; A5–A8 confirm fragment layer real; A9 email staleness)
+- [x] Phase 1 — L2 backend synthesizer (`backend/src/services/intelligence/project_intelligence.py`) — G1, G5 PASS on 1009
+- [x] Phase 2 — Trigger + admin endpoint — G2, G3 PASS on 1009
+- [x] Phase 3 — Project page reads synthesis packet — G4 PASS (authenticated screenshot)
+- [x] Phase 4 — Brief synthesizes across packets (`portfolio-synthesis-brief.ts`) — built + data path verified; **G6 awaits Megan's review**
+- [ ] Phase 5 — Re-enable AM/PM delivery (HUMAN-GATED, outward-facing — not started; needs Megan approval of G6)
 
 ---
 
@@ -52,3 +52,4 @@ PRP: `prp-intelligence-synthesis.md`. Update this file as work progresses. Each 
 
 ## Session log
 - 2026-06-14 — PRP created. Audit confirmed the synthesis layer (L2/L4) was never built; fragment layer (2.1/2.2/2.4/2.5) is real. Nothing in Phases 1–5 started.
+- 2026-06-14 — Executed Phases 1–4. Built L2 (`backend/src/services/intelligence/project_intelligence.py`, `refresh_project_intelligence` + `synthesize_project_state`, compiler_version `project_intelligence_synthesis_v1`), admin endpoint `POST /api/intelligence/project-intelligence/refresh`, sweep wiring (`run_synthesis_sweep(refresh_intelligence=True)`), and L4 (`frontend/src/lib/executive/portfolio-synthesis-brief.ts` + preview route `POST /api/admin/portfolio-brief/preview`). Verified on project 1009: **G1** (dry-run = real synthesis, fabricatedCiteCount=0), **G2** (packet written), **G3** (rolling-state: 2nd run since=prior covered_end_at, only newer docs, same packet_id updated), **G4** (authenticated page screenshot renders the synthesis, not the stale operating-summary), **G5** (forced LLM failure raises, existing packet untouched). Key discovery: `intelligence_packets_one_current_per_target` partial-unique constraint → synthesis UPDATES the single current row in place (superseding the operating-summary packet). **Remaining: G6** = Megan reviews `POST /api/admin/portfolio-brief/preview` output (needs `CRON_SECRET`; only 1009 has a synthesis packet until the 2h sweep populates others). **Phase 5** (re-enable AM/PM Teams delivery, set `PORTFOLIO_SYNTHESIS_BRIEF_ENABLED=true`) is outward-facing — hold for Megan's explicit go.
