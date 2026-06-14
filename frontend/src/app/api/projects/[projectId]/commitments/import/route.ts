@@ -243,15 +243,30 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
       // Create a single SOV item for the original amount
       if (row.originalAmount > 0) {
-        const { error: sovError } = await supabase
-          .from(sovTable as "subcontract_sov_items")
-          .insert({
-            [sovFk]: created.id,
-            line_number: 1,
-            description: row.costCodeDescription || row.description || row.title,
-            amount: row.originalAmount,
-            ...(row.costCode ? { budget_code: row.costCode } : {}),
-          });
+        let sovError;
+        if (isPO) {
+          const result = await supabase
+            .from("purchase_order_sov_items")
+            .insert({
+              purchase_order_id: created.id,
+              line_number: 1,
+              description: row.costCodeDescription || row.description || row.title,
+              amount: row.originalAmount,
+              ...(row.costCode ? { budget_code: row.costCode } : {}),
+            });
+          sovError = result.error;
+        } else {
+          const result = await supabase
+            .from("subcontract_sov_items")
+            .insert({
+              subcontract_id: created.id,
+              line_number: 1,
+              description: row.costCodeDescription || row.description || row.title,
+              amount: row.originalAmount,
+              ...(row.costCode ? { budget_code: row.costCode } : {}),
+            });
+          sovError = result.error;
+        }
 
         if (sovError) {
           logger.error({ msg: `[commitments/import] SOV insert failed for ${row.number}`, error: sovError.message });

@@ -286,7 +286,7 @@ export const GET = withApiGuardrails("/api/projects#GET", async ({ request }) =>
     });
   }
 
-  const projects = (data ?? []) as ProjectApiRow[];
+  const projects = (data as unknown as ProjectApiRow[]) ?? [];
   const responseProjects = skipClientResolution
     ? projects
     : await applyResolvedClientNames(supabase, projects);

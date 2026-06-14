@@ -55,7 +55,7 @@ type PermissionTemplate = Database["public"]["Tables"]["permission_templates"]["
 type Project = Database["public"]["Tables"]["projects"]["Row"];
 type ContactUpdateData = Database["public"]["Tables"]["people"]["Update"];
 
-interface ContactWithRelations extends Contact {
+interface ContactWithRelations extends Omit<Contact, 'company'> {
   company?: Company | null;
   memberships?: (Membership & {
     project?: Project | null;
@@ -497,7 +497,7 @@ export default function ContactDetailsPage() {
 
   if (isLoading) {
     return (
-      <PageShell variant="content">
+      <PageShell variant="content" title="Contact">
         <div className="space-y-10 pt-4">
           <div className="flex gap-5">
             <Skeleton className="h-16 w-16 rounded-full flex-shrink-0" />
@@ -538,7 +538,7 @@ export default function ContactDetailsPage() {
   const activeCount = contact.memberships?.filter(m => m.status === "active").length ?? 0;
 
   return (
-    <PageShell variant="content">
+    <PageShell variant="content" title={fullName}>
       <div className="space-y-10 pb-16">
 
         {/* ── Identity header ─────────────────────────────────── */}
@@ -707,7 +707,7 @@ export default function ContactDetailsPage() {
                 { value: "user", label: "User" },
               ]}
               placeholder="Select type"
-              onSave={val => save({ person_type: val as "contact" | "employee" | "user" | null })}
+              onSave={val => save({ person_type: val as "contact" | "employee" | "user" | undefined })}
             />
             <InlineTextField
               label="Business Unit"

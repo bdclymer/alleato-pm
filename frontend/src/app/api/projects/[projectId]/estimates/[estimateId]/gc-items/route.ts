@@ -123,14 +123,14 @@ export const PUT = withApiGuardrails<{ projectId: string; estimateId: string }>(
 
     const rows = (body.items as Record<string, unknown>[]).map((item, idx) => ({
       estimate_id: estimateIdNum,
-      cost_code: item.cost_code ?? "",
-      description: item.description ?? "",
-      cost_type: item.cost_type ?? "Expense",
-      qty: item.qty ?? null,
-      qty_basis: item.qty_basis ?? null,
-      unit: item.unit ?? null,
-      rate: item.rate ?? 0,
-      allocation: item.allocation ?? 0,
+      cost_code: (item.cost_code as string | undefined) ?? "",
+      description: (item.description as string | undefined) ?? "",
+      cost_type: (item.cost_type as string | undefined) ?? "Expense",
+      qty: (item.qty as number | null | undefined) ?? null,
+      qty_basis: (item.qty_basis as string | null | undefined) ?? null,
+      unit: (item.unit as string | null | undefined) ?? null,
+      rate: (typeof item.rate === "number" ? item.rate : 0),
+      allocation: (typeof item.allocation === "number" ? item.allocation : 0),
       sort_order: (item.sort_order as number | undefined) ?? idx + 1,
     }));
 

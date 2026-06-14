@@ -541,15 +541,27 @@ export const PUT = withApiGuardrails<{ commitmentId: string }>(
             })
             .eq("id", existing.id);
         } else {
-          await supabase
-            .from(sovTable as "subcontract_sov_items")
-            .insert({
-              [sovFk]: commitmentId,
-              line_number: line.line_number,
-              budget_code: line.budget_code,
-              description: line.description,
-              amount: line.amount,
-            });
+          if (unifiedData.commitment_type === "subcontract") {
+            await supabase
+              .from("subcontract_sov_items")
+              .insert({
+                subcontract_id: commitmentId,
+                line_number: line.line_number,
+                budget_code: line.budget_code,
+                description: line.description,
+                amount: line.amount,
+              });
+          } else {
+            await supabase
+              .from("purchase_order_sov_items")
+              .insert({
+                purchase_order_id: commitmentId,
+                line_number: line.line_number,
+                budget_code: line.budget_code,
+                description: line.description,
+                amount: line.amount,
+              });
+          }
         }
       }
     }

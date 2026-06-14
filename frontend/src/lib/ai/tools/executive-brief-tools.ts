@@ -1,7 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { regenerateExecutiveBriefingDraft } from "@/lib/executive/executive-briefing-workflow";
-import { createToolGuardrails } from "./guardrails";
 import { type ToolTracePayload, withTrace as _withTrace } from "./tool-utils";
 
 type CreateExecutiveBriefToolsOptions = {
@@ -24,17 +23,11 @@ function withTrace<TInput extends Record<string, unknown>, TResult>(
 export function createExecutiveBriefTools(
   options: CreateExecutiveBriefToolsOptions = {},
 ) {
-  const guardrails = createToolGuardrails({
-    onTrace: options.onTrace,
-    checksum: "executive-brief-tools",
-  });
-
-  return [
-    tool({
+  return {
+    generateExecutiveDailyBrief: tool({
       description:
         "Generate the executive daily brief — a curated intelligence digest for Brandon covering the top risks, financial exposures, schedule impacts, and recommended actions across all active projects. The brief synthesizes emails, Teams messages, meetings, and documents from the past 3 days to surface what needs Brandon's immediate attention.",
-      name: "generateExecutiveDailyBrief",
-      parameters: z.object({
+      inputSchema: z.object({
         windowDays: z
           .number()
           .int()
@@ -97,5 +90,5 @@ export function createExecutiveBriefTools(
         },
       ),
     }),
-  ];
+  };
 }

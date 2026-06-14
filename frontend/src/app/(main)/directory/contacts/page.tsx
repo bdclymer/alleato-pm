@@ -145,7 +145,7 @@ function buildContactTableColumns(
           item.company &&
           !options.some((option) => option.value === item.company_id);
         const resolvedOptions = currentOptionMissing
-          ? [...options, { value: item.company_id, label: item.company }]
+          ? [...options, { value: item.company_id || "", label: item.company || "" }]
           : options;
 
         return (

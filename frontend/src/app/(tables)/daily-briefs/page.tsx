@@ -61,9 +61,9 @@ export default function DailyBriefsTablePage() {
   const briefs = briefsQuery.data?.briefs ?? [];
   const initialFilters = React.useMemo<DailyBriefFilterState>(
     () => ({
-      workflowStatus: searchParams.get("workflowStatus") ?? undefined,
-      delivery: searchParams.get("delivery") ?? undefined,
-      packet: searchParams.get("packet") ?? undefined,
+      workflowStatus: searchParams?.get("workflowStatus") ?? undefined,
+      delivery: searchParams?.get("delivery") ?? undefined,
+      packet: searchParams?.get("packet") ?? undefined,
     }),
     [searchParams],
   );
