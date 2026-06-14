@@ -19,7 +19,14 @@ compiler → insight_card → intelligence_packet → executive-brief path, trac
   (+materialized/did_not_materialize/superseded) and `card_type` (+flag/solution/milestone); backfilled
   `occurred_at` on all 10,618 rows; added timeline index. Applied to PM APP + verified (test flag/materialized
   insert accepted & rolled back, 0 rows broken). Types regenerated.
-- ⬜ **2.2 Synthesizer** — generalize deep-extractor to all sources, rolling-state + delta.
+- ✅ **2.2 Synthesizer** — generalized deep-extraction to email/Teams (`project_synthesizer.py` +
+  `extract_deep_communication_intelligence`). **VERIFIED end-to-end on project 1009 (2026-06-14, after OpenAI
+  funded):** 3 emails → 17 promoted insight_cards (decision/risk/schedule_risk/initiative_signal/**flag**/
+  project_update) with verbatim evidence, `severity` (2,3), `occurred_at`=real email date, + 9 tasks with
+  `source_system='email'` and named assignees. A real predictive `flag` card surfaced ("team may adopt a
+  mechanical scope change removing Make Up Air..."). Quality matches the meeting path. Added `max_extractions`
+  cap (deep extraction is ~seconds/doc; large sync batches exceed the request timeout — the auto-trigger in
+  2.4 must process incrementally).
 - ⬜ **2.3 Flag→outcome calibration loop.**
 - ⬜ **2.4 Trigger + staleness gate.**
 - ⬜ **2.5 Page + AM/PM brief wiring.**
