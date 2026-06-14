@@ -23,6 +23,13 @@ const PROJECT_ID = process.env.API_SMOKE_PROJECT_ID || "67";
 const BEARER_TOKEN = process.env.API_SMOKE_BEARER_TOKEN || "";
 const FAKE_UUID = "00000000-0000-0000-0000-000000000000";
 
+// FastAPI backend (separate service from the Next.js app). The intelligence
+// endpoints live here, authed via the x-admin-api-key header. Default matches
+// the local dev backend; override with API_SMOKE_BACKEND_URL in CI/prod.
+const BACKEND_URL =
+  process.env.API_SMOKE_BACKEND_URL || process.env.PYTHON_BACKEND_URL || "http://127.0.0.1:8000";
+const ADMIN_API_KEY = process.env.ADMIN_API_KEY || "";
+
 // ─── Endpoint definitions ───────────────────────────────────────────────────
 // [method, path, description, expectedStatuses?]
 // If expectedStatuses is omitted, defaults to: any non-500, non-000 status
@@ -379,6 +386,39 @@ function assertModificationsBody(body) {
   );
 }
 
+// ─── Project synthesizer (empty-window) contract ─────────────────────────────
+// POST /api/intelligence/project-synthesize runs expensive gpt-5.5 extraction
+// per comms doc. To exercise the QUERY PATH without paying for extraction, we
+// call it with a far-future `since` so the document_metadata SELECT executes but
+// matches zero rows → docs_seen=0 and no LLM call fires.
+//
+// The regression this guards: the document_metadata SELECT once referenced a
+// non-existent column (client_id), raising Postgres 42703. Before the fix that
+// error was swallowed and the endpoint still returned HTTP 200 with the error
+// buried in the body. The fetch now RAISES on failure → the endpoint returns
+// 500. So a malformed/renamed-column SELECT must surface as a 500 here, not a
+// silent 200. This contract asserts:
+//   - HTTP 200 (a healthy query must NOT 500)
+//   - docs_seen === 0 (legitimately empty window, not a query error)
+//   - errors is an empty array (no per-doc or fetch failures)
+//   - the full result envelope shape is present
+function assertSynthesizeEmptyBody(body) {
+  if (!body || typeof body !== "object") return false;
+  if (body.docs_seen !== 0) return false;
+  if (!Array.isArray(body.errors) || body.errors.length !== 0) return false;
+  const requiredKeys = [
+    "project_id",
+    "since",
+    "docs_seen",
+    "emails",
+    "teams",
+    "skipped",
+    "cards_written",
+    "tasks_written",
+  ];
+  return requiredKeys.every((k) => k in body);
+}
+
 // ─── Error envelope contracts ────────────────────────────────────────────────
 function hasStandardErrorEnvelope(body) {
   return (
@@ -403,7 +443,8 @@ async function run() {
   const warnings = [];
   let pass = 0;
   const authProbeCount = BEARER_TOKEN ? AUTH_WRITE_PROBES.length : 0;
-  let total = ENDPOINTS.length + authProbeCount;
+  const backendProbeCount = ADMIN_API_KEY ? 1 : 0;
+  let total = ENDPOINTS.length + authProbeCount + backendProbeCount;
   const timestamp = new Date().toISOString();
 
   console.log(`\nAPI Smoke Test — ${timestamp}`);
@@ -548,6 +589,68 @@ async function run() {
     }
   } else {
     warnings.push("Authenticated write probes skipped because API_SMOKE_BEARER_TOKEN is not set.");
+  }
+
+  // ─── Backend admin probe: project synthesizer query-path guard ──────────────
+  // Hits the FastAPI backend (not the Next.js app) with the admin key. Validates
+  // the document_metadata SELECT runs cleanly without triggering gpt-5.5
+  // extraction (far-future `since` → zero matched docs).
+  if (ADMIN_API_KEY) {
+    const probePath = "/api/intelligence/project-synthesize";
+    const description = "Project synthesizer query path (empty window — no extraction)";
+    const url = `${BACKEND_URL}${probePath}`;
+    let status = 0;
+    let body = null;
+
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "x-admin-api-key": ADMIN_API_KEY,
+          "Content-Type": "application/json",
+        },
+        // Far-future `since` guarantees the SELECT matches zero rows → docs_seen=0
+        // and no LLM extraction runs. A malformed SELECT still raises → 500.
+        body: JSON.stringify({
+          project_id: Number(PROJECT_ID),
+          since: "2999-01-01T00:00:00Z",
+          max_docs: 1,
+          dry_run: true,
+        }),
+        signal: AbortSignal.timeout(30000),
+      });
+      status = res.status;
+      const text = await res.text();
+      try {
+        body = text ? JSON.parse(text) : null;
+      } catch {
+        body = null;
+      }
+    } catch {
+      status = 0;
+    }
+
+    if (status === 500 || status === 0) {
+      const label = status === 0 ? "TIMEOUT" : "500";
+      console.error(`  FAIL  ${label}  POST ${probePath}  (${description})`);
+      // A 500 here is exactly the regression we are guarding: a malformed
+      // document_metadata SELECT (missing/renamed column) must not pass.
+      failures.push(`${label}: POST ${probePath} — ${description}`);
+    } else if (status !== 200) {
+      console.error(`  FAIL  ${status}  POST ${probePath}  expected [200]  (${description})`);
+      failures.push(`Unexpected ${status}: POST ${probePath} — ${description} (expected [200])`);
+    } else if (!assertSynthesizeEmptyBody(body)) {
+      console.error(`  FAIL  200  POST ${probePath}  synthesize body shape mismatch`);
+      failures.push(
+        `Project synthesize body contract failed: expected docs_seen=0, empty errors[], ` +
+          `and full result envelope — got ${JSON.stringify(body)}`,
+      );
+    } else {
+      console.log(`   OK   ${status}  POST ${probePath}  (${description})`);
+      pass++;
+    }
+  } else {
+    warnings.push("Project synthesizer backend probe skipped because ADMIN_API_KEY is not set.");
   }
 
   // Summary
