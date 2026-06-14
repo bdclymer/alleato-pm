@@ -53,6 +53,10 @@ const commitmentInlinePatchSchema = z
     number: z.string().trim().min(1).optional(),
     title: z.string().trim().min(1).optional(),
     status: z.string().optional(),
+    // `description` and `executed` exist on both subcontracts and
+    // purchase_orders, so the table can edit them inline for either type.
+    description: z.string().nullable().optional(),
+    executed: z.boolean().optional(),
   })
   .refine(
     (data) => Object.keys(data).length > 0,
@@ -657,7 +661,9 @@ export const DELETE = withApiGuardrails<{ commitmentId: string }>(
  * PATCH /api/commitments/[commitmentId]
  *
  * Lightweight partial update endpoint used by inline editing in list views.
- * Only supports safe, text-based fields that can be edited from a table cell.
+ * Supports the safe per-cell editable fields: number, title, status,
+ * description, executed. Derived/financial fields (amounts, change-order
+ * rollups) are intentionally excluded — edit those via the SOV / full editor.
  */
 export const PATCH = withApiGuardrails<{ commitmentId: string }>(
   "commitments/[commitmentId]#PATCH",
@@ -715,7 +721,7 @@ export const PATCH = withApiGuardrails<{ commitmentId: string }>(
         ? "subcontracts"
         : "purchase_orders";
 
-    const updatePayload: Record<string, string> = {
+    const updatePayload: Record<string, string | boolean | null> = {
       updated_at: new Date().toISOString(),
     };
     if (parsed.data.number !== undefined) {
@@ -731,12 +737,18 @@ export const PATCH = withApiGuardrails<{ commitmentId: string }>(
       // Always normalize via normalizeSubcontractStatus so the stored value satisfies the constraint.
       updatePayload.status = normalizeSubcontractStatus(parsed.data.status);
     }
+    if (parsed.data.description !== undefined) {
+      updatePayload.description = parsed.data.description;
+    }
+    if (parsed.data.executed !== undefined) {
+      updatePayload.executed = parsed.data.executed;
+    }
 
     const { data, error } = await supabase
       .from(tableName)
       .update(updatePayload)
       .eq("id", commitmentId)
-      .select("id, contract_number, title, status, updated_at")
+      .select("id, contract_number, title, status, description, executed, updated_at")
       .single();
 
     if (error) {
@@ -749,6 +761,8 @@ export const PATCH = withApiGuardrails<{ commitmentId: string }>(
         number: data.contract_number,
         title: data.title,
         status: data.status,
+        description: data.description,
+        executed: data.executed,
         updated_at: data.updated_at,
       },
     });

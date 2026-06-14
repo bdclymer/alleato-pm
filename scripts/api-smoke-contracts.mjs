@@ -117,6 +117,11 @@ const ENDPOINTS = [
   // (auth runs before schema validation) — a 500 means the handler crashed before auth, which
   // would indicate a schema regression stripping the `executed` field.
   ["PUT", `/api/commitments/${FAKE_UUID}`, "Commitment subcontract PUT — executed field not stripped (auth check)", [401]],
+  // Regression guard: the inline-edit PATCH endpoint backs table cell editing
+  // (title / status / description / executed). An unauthed PATCH must return 401
+  // (auth runs before schema validation) — a 404/500 would mean the route was
+  // removed or the inline schema crashed, breaking in-place editing.
+  ["PATCH", `/api/commitments/${FAKE_UUID}`, "Commitment inline PATCH — title/description/executed (auth check)", [401]],
   ["POST", `/api/projects/${PROJECT_ID}/commitments/export`, "Commitments export (auth + schema check)", [400, 401]],
   ["POST", "/api/sync/acumatica/commitments", "Commitments Acumatica sync (unauthenticated)", [401]],
   // Regression guard: this endpoint returns { deprecated: true } with 200 (no auth required).

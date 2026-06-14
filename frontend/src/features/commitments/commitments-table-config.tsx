@@ -174,11 +174,18 @@ function acumaticaCommitmentUrl(
   return `${ACUMATICA_BASE_URL}/Main?ScreenId=SC301000&SubcontractNbr=${encodeURIComponent(number)}`;
 }
 
+export type CommitmentInlineField = "title" | "description" | "executed";
+
 export function buildCommitmentTableColumns(
   projectId: string,
   expandedIds?: Set<string>,
   onToggleExpand?: (id: string) => void,
   onStatusChange?: (id: string, status: string) => void,
+  onInlineEdit?: (
+    id: string,
+    field: CommitmentInlineField,
+    value: string | boolean,
+  ) => void | Promise<void>,
 ): TableColumn<CommitmentListItem>[] {
   const col = (id: string) => {
     const found = commitmentColumns.find((c) => c.id === id);
@@ -190,7 +197,14 @@ export function buildCommitmentTableColumns(
     number: {
       render: (item) => (
         <div className="flex items-center gap-1.5">
-          <span className="font-medium max-w-32 truncate" title={item.number}>{item.number}</span>
+          <Link
+            href={`/${projectId}/commitments/${item.id}`}
+            className="font-medium max-w-32 truncate text-primary hover:underline underline-offset-2"
+            title={item.number}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {item.number}
+          </Link>
           {onToggleExpand && (
             <Button
               type="button"
@@ -266,19 +280,29 @@ export function buildCommitmentTableColumns(
       ),
       csvValue: (item) => item.scope_summary ?? "",
       sortValue: (item) => item.scope_summary ?? "",
+      ...(onInlineEdit
+        ? {
+            editable: true,
+            editInputType: "text",
+            editValue: (item) => item.scope_summary ?? "",
+            onEdit: (item, value) => onInlineEdit(item.id, "description", value),
+          }
+        : {}),
     },
     title: {
       render: (item) => (
-        <Link
-          href={`/${projectId}/commitments/${item.id}`}
-          className="text-primary hover:underline underline-offset-2"
-        >
-          <span className="font-medium text-foreground">{item.number}</span>
-          {item.title ? <span className="text-muted-foreground"> {item.title}</span> : null}
-        </Link>
+        <span className="font-medium text-foreground">{item.title ?? "-"}</span>
       ),
       csvValue: (item) => [item.number, item.title].filter(Boolean).join(" "),
       sortValue: (item) => item.title ?? "",
+      ...(onInlineEdit
+        ? {
+            editable: true,
+            editInputType: "text",
+            editValue: (item) => item.title ?? "",
+            onEdit: (item, value) => onInlineEdit(item.id, "title", value),
+          }
+        : {}),
     },
     type: {
       render: (item) => (
@@ -332,6 +356,38 @@ export function buildCommitmentTableColumns(
       render: (item) => <span>{yesNo(item.executed)}</span>,
       csvValue: (item) => yesNo(item.executed),
       sortValue: (item) => (item.executed ? 1 : 0),
+      ...(onInlineEdit
+        ? {
+            editable: true,
+            editValue: (item) => (item.executed ? "true" : "false"),
+            onEdit: (item, value) =>
+              onInlineEdit(item.id, "executed", value === "true"),
+            renderEditor: ({ value, onChange, onCommit, onCancel }) => (
+              <Select
+                value={value}
+                onValueChange={(next) => {
+                  onChange(next);
+                  onCommit(next);
+                }}
+                onOpenChange={(open) => {
+                  if (!open) onCancel();
+                }}
+              >
+                <SelectTrigger
+                  className="h-8"
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label="Edit executed"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">Yes</SelectItem>
+                  <SelectItem value="false">No</SelectItem>
+                </SelectContent>
+              </Select>
+            ),
+          }
+        : {}),
     },
     acumatica_link: {
       render: (item) => {

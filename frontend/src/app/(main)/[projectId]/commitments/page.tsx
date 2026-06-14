@@ -41,6 +41,7 @@ import {
 } from "@/components/tables/unified";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  commitmentKeys,
   useCommitmentsList,
   useDeleteCommitment,
 } from "@/hooks/use-commitments-query";
@@ -403,12 +404,31 @@ export default function ProjectCommitmentsPage(): ReactElement {
           body: JSON.stringify({ status }),
         });
         toast.success("Status updated");
-        await queryClient.invalidateQueries({ queryKey: ["commitments", projectId] });
+        // Must use the list key factory (["commitments","list",...]). A bare
+        // ["commitments", projectId] never prefix-matches, so the cell would
+        // silently show stale data until a manual reload.
+        await queryClient.invalidateQueries({ queryKey: commitmentKeys.lists() });
       } catch (err) {
         toast.error("Failed to update status");
       }
     },
     [projectId, queryClient],
+  );
+
+  // Inline cell edits (title / description / executed). The table's own
+  // commitInlineEdit shows the success/error toast and reverts the cell if this
+  // throws — so we deliberately do NOT swallow errors or toast here. apiFetch
+  // throws on a non-2xx response, which is exactly the revert signal the table
+  // wants.
+  const handleInlineEdit = React.useCallback(
+    async (id: string, field: "title" | "description" | "executed", value: string | boolean) => {
+      await apiFetch(`/api/commitments/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ [field]: value }),
+      });
+      await queryClient.invalidateQueries({ queryKey: commitmentKeys.lists() });
+    },
+    [queryClient],
   );
 
   const handleErpSync = React.useCallback(async () => {
@@ -482,8 +502,16 @@ export default function ProjectCommitmentsPage(): ReactElement {
   }, []);
 
   const tableColumns = React.useMemo(
-    () => buildCommitmentTableColumns(projectId, expandedIds, handleToggleExpand, handleStatusChange),
-    [projectId, expandedIds, handleToggleExpand, handleStatusChange],
+    () =>
+      buildCommitmentTableColumns(
+        projectId,
+        expandedIds,
+        handleToggleExpand,
+        handleStatusChange,
+        // No inline editing in the recycle bin — deleted rows are read-only.
+        isRecycleBinTab ? undefined : handleInlineEdit,
+      ),
+    [projectId, expandedIds, handleToggleExpand, handleStatusChange, handleInlineEdit, isRecycleBinTab],
   );
   const sortedCommitments = React.useMemo(() => {
     if (!tableState.sortBy) return commitments;
@@ -738,6 +766,11 @@ export default function ProjectCommitmentsPage(): ReactElement {
         tabs={tabs}
         layout={{
           fullBleedTable: true,
+        }}
+        features={{
+          // Click a cell to edit title / description / executed in place.
+          // Disabled in the recycle bin (deleted rows are read-only).
+          enableInlineEditing: !isRecycleBinTab,
         }}
         toolbar={{
           totalItems,
