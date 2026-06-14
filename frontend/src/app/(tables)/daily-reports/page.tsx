@@ -1,15 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
-import {
-  GenericDataTable,
-  type GenericTableConfig,
-} from "@/components/tables/generic-table-factory";
+import type { GenericTableConfig } from "@/components/tables/generic-table-factory";
+import { GenericConfigUnifiedTable } from "@/components/tables/generic-config-unified-table";
 import { TablePageWrapper } from "@/components/tables/table-page-wrapper";
 import { Database } from "@/types/database.types";
 
 type DailyRecap = Database["public"]["Tables"]["daily_recaps"]["Row"];
 
 const PAGE_TITLE = "Daily Recaps";
-const PAGE_DESCRIPTION = "AI-generated daily summaries of meetings and decisions";
+const PAGE_DESCRIPTION =
+  "AI-generated daily summaries of meetings and decisions";
 
 const config: GenericTableConfig = {
   title: "Daily Recaps",
@@ -135,8 +134,14 @@ export default async function DailyRecapsPage() {
   }
 
   return (
-    <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
-      <GenericDataTable data={(dailyRecaps || []) as DailyRecap[]} config={config} />
-    </TablePageWrapper>
+    <GenericConfigUnifiedTable
+      data={(dailyRecaps || []) as DailyRecap[]}
+      config={config}
+      title={PAGE_TITLE}
+      description={PAGE_DESCRIPTION}
+      entityKey="daily-recaps"
+      emptyTitle="No daily recaps found"
+      emptyDescription="No AI-generated daily recaps have been created yet."
+    />
   );
 }

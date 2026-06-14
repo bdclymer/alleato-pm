@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import {
-  GenericDataTable,
-  type GenericTableConfig,
-} from "@/components/tables/generic-table-factory";
+import type { GenericTableConfig } from "@/components/tables/generic-table-factory";
+import { GenericConfigUnifiedTable } from "@/components/tables/generic-config-unified-table";
 import { TablePageWrapper } from "@/components/tables/table-page-wrapper";
 import {
   insightCardBaseQuery,
@@ -218,8 +216,14 @@ export default async function AIInsightsPage() {
   }));
 
   return (
-    <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
-      <GenericDataTable data={rows} config={config} />
-    </TablePageWrapper>
+    <GenericConfigUnifiedTable
+      data={rows}
+      config={config}
+      title={PAGE_TITLE}
+      description={PAGE_DESCRIPTION}
+      entityKey="ai-insights"
+      emptyTitle="No AI insights found"
+      emptyDescription="No AI-generated insights have been created yet."
+    />
   );
 }

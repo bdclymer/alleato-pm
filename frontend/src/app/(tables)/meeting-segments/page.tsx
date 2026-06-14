@@ -1,15 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
-import {
-  GenericDataTable,
-  type GenericTableConfig,
-} from "@/components/tables/generic-table-factory";
+import type { GenericTableConfig } from "@/components/tables/generic-table-factory";
+import { GenericConfigUnifiedTable } from "@/components/tables/generic-config-unified-table";
 import { TablePageWrapper } from "@/components/tables/table-page-wrapper";
 import { Database } from "@/types/database.types";
 
 type MeetingSegment = Database["public"]["Tables"]["meeting_segments"]["Row"];
 
 const PAGE_TITLE = "Meeting Segments";
-const PAGE_DESCRIPTION = "Chunked meeting content for AI analysis and retrieval";
+const PAGE_DESCRIPTION =
+  "Chunked meeting content for AI analysis and retrieval";
 
 const config: GenericTableConfig = {
   title: "Meeting Segments",
@@ -140,8 +139,14 @@ export default async function MeetingSegmentsPage() {
   }
 
   return (
-    <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
-      <GenericDataTable data={(meetingSegments || []) as MeetingSegment[]} config={config} />
-    </TablePageWrapper>
+    <GenericConfigUnifiedTable
+      data={(meetingSegments || []) as MeetingSegment[]}
+      config={config}
+      title={PAGE_TITLE}
+      description={PAGE_DESCRIPTION}
+      entityKey="meeting-segments"
+      emptyTitle="No meeting segments found"
+      emptyDescription="No meeting segments have been generated yet."
+    />
   );
 }

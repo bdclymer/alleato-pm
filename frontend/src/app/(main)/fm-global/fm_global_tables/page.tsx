@@ -1,8 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
-import {
-  GenericDataTable,
-  type GenericTableConfig,
-} from "@/components/tables/generic-table-factory";
+import type { GenericTableConfig } from "@/components/tables/generic-table-factory";
+import { GenericConfigUnifiedTable } from "@/components/tables/generic-config-unified-table";
+import { PageShell } from "@/components/layout";
 
 const config: GenericTableConfig = {
   title: "FM Global Tables",
@@ -245,11 +244,27 @@ export default async function FMGlobalTablesPage() {
 
   if (error) {
     return (
-      <div className="text-center text-destructive">
-        Error loading FM Global tables. Please try again later.
-      </div>
+      <PageShell
+        variant="table"
+        title="FM Global Tables"
+        description="Reference tables for FM Global sprinkler protection data"
+      >
+        <p className="py-6 text-center text-destructive">
+          Error loading FM Global tables. Please try again later.
+        </p>
+      </PageShell>
     );
   }
 
-  return <GenericDataTable data={data || []} config={config} />;
+  return (
+    <GenericConfigUnifiedTable
+      data={data || []}
+      config={config}
+      title="FM Global Tables"
+      description="Reference tables for FM Global sprinkler protection data"
+      entityKey="fm-global-tables-directory"
+      emptyTitle="No FM Global tables found"
+      emptyDescription="No FM Global table records have been imported yet."
+    />
+  );
 }

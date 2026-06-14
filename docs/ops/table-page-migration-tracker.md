@@ -30,16 +30,21 @@ email templates, admin diagnostics, or small read-only detail-page tables.
 | Payments             | Prime contract Payments Received tab        | Updated | Old `DataTable` replaced with compact `UnifiedTablePage`.                                                       |
 | Payments             | Commitment Payments Issued tab              | Updated | Old `DataTable` replaced with compact `UnifiedTablePage`.                                                       |
 | RFQs                 | Commitment RFQs tab                         | Updated | Old `DataTable` replaced with compact `UnifiedTablePage`.                                                       |
+| RFIs                 | `/[projectId]/rfis`                         | Updated | Old `AleatoDataTable`/`useDataTable` page replaced with `UnifiedTablePage`.                                     |
+| Daily Logs           | `/daily-logs`                               | Updated | Old `GenericDataTable` page replaced through the shared generic-config `UnifiedTablePage` adapter.              |
+| Meeting Segments     | `/meeting-segments`                         | Updated | Old `GenericDataTable` page replaced through the shared generic-config `UnifiedTablePage` adapter.              |
+| Daily Reports        | `/daily-reports`                            | Updated | Old `GenericDataTable` page replaced through the shared generic-config `UnifiedTablePage` adapter.              |
+| AI Insights          | `/insights`                                 | Updated | Old `GenericDataTable` page replaced through the shared generic-config `UnifiedTablePage` adapter.              |
+| FM Global            | `/fm-global` table and figure tabs          | Updated | Old embedded `GenericDataTable` tabs replaced through the shared generic-config `UnifiedTablePage` adapter.     |
+| FM Global            | `/fm-global/fm_global_tables`               | Updated | Old `GenericDataTable` page replaced through the shared generic-config `UnifiedTablePage` adapter.              |
 
 ## Remaining Candidate Batches
 
-| Area                | Route / Surface                                          | Next Action                                                                                |
-| ------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Daily Logs          | `/[projectId]/daily-logs` and top-level daily log routes | Inventory and migrate any raw table/DataTable usage.                                       |
-| Meeting Segments    | Meeting segment/list routes                              | Inventory remaining raw table usage after `/stats` migration.                              |
-| Daily Reports       | Daily report routes                                      | Inventory and migrate user-facing legacy tables.                                           |
-| Admin / Debug       | Admin diagnostics and database tools                     | Treat as separate low-priority batch; many raw tables are intentional inspection surfaces. |
-| Detail / Line Items | SOV, invoice lines, change-event lines                   | Do not force into `UnifiedTablePage`; use the canonical line-item table primitive instead. |
+| Area                | Route / Surface                        | Next Action                                                                                     |
+| ------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Drawings Helpers    | Deprecated `DrawingLogTable` component | Leave parked unless a mounted route still uses it; canonical drawing routes use unified config. |
+| Admin / Debug       | Admin diagnostics and database tools   | Treat as separate low-priority batch; many raw tables are intentional inspection surfaces.      |
+| Detail / Line Items | SOV, invoice lines, change-event lines | Do not force into `UnifiedTablePage`; use the canonical line-item table primitive instead.      |
 
 ## Guardrails
 

@@ -1,17 +1,23 @@
 "use client";
 
 import * as React from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
-import { useDataTable } from "@/hooks/use-data-table";
-import { AleatoDataTable } from "@/components/data-table/alleato-data-table";
-import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { apiFetch, summarizeBulkResults } from "@/lib/api-client";
-import { getRfiColumns } from "@/features/rfis/rfis-columns";
+import { apiFetch } from "@/lib/api-client";
+import {
+  UnifiedTablePage,
+  useUnifiedTableState,
+  type TableColumn,
+} from "@/components/tables/unified";
+import {
+  CellDate,
+  CellStatus,
+  CellText,
+} from "@/components/tables/unified/table-primitives";
 import type { RFI } from "@/types/database-extensions";
 
 interface RfisTableProps {
@@ -41,6 +47,31 @@ const TAB_STATUS_MAP: Record<ActiveTab, string | null> = {
   closed: "closed,closed-draft",
 };
 
+const rfiColumnConfig = [
+  { id: "number", label: "#", alwaysVisible: true },
+  { id: "subject", label: "Subject", defaultVisible: true },
+  { id: "status", label: "Status", defaultVisible: true },
+  { id: "assignees", label: "Assignees", defaultVisible: true },
+  { id: "due_date", label: "Due Date", defaultVisible: true },
+  { id: "ball_in_court", label: "Ball In Court", defaultVisible: true },
+  { id: "rfi_manager", label: "RFI Manager", defaultVisible: true },
+  {
+    id: "responsible_contractor",
+    label: "Resp. Contractor",
+    defaultVisible: false,
+  },
+  { id: "received_from", label: "Received From", defaultVisible: false },
+  { id: "location", label: "Location", defaultVisible: false },
+  { id: "rfi_stage", label: "RFI Stage", defaultVisible: false },
+  { id: "schedule_impact", label: "Schedule Impact", defaultVisible: false },
+  { id: "cost_impact", label: "Cost Impact", defaultVisible: false },
+  { id: "created_at", label: "Created", defaultVisible: false },
+];
+
+const rfiDefaultVisibleColumns = rfiColumnConfig
+  .filter((column) => column.defaultVisible !== false || column.alwaysVisible)
+  .map((column) => column.id);
+
 async function fetchRfis(
   projectId: number,
   params: {
@@ -64,18 +95,40 @@ async function fetchRfis(
 
 export function RfisTable({ projectId }: RfisTableProps) {
   const router = useRouter();
+  const pathname = usePathname()!;
   const searchParamsRaw = useSearchParams()!;
   const searchParams = searchParamsRaw ?? new URLSearchParams();
   const queryClient = useQueryClient();
   const activeTabParam = searchParams.get("tab");
   const activeTab: ActiveTab =
-    activeTabParam === "open" || activeTabParam === "closed" ? activeTabParam : "all";
+    activeTabParam === "open" || activeTabParam === "closed"
+      ? activeTabParam
+      : "all";
 
-  const page = Number(searchParams.get("page") ?? "1");
-  const perPage = Number(searchParams.get("perPage") ?? "25");
   const sort = searchParams.get("sort");
-  const search = searchParams.get("search");
   const status = TAB_STATUS_MAP[activeTab];
+
+  const tableState = useUnifiedTableState({
+    entityKey: `rfis-${projectId}`,
+    searchParams,
+    pathname,
+    router,
+    defaults: {
+      view: "table",
+      allowedViews: ["table", "list"],
+      page: Number(searchParams.get("page") ?? "1"),
+      perPage: Number(searchParams.get("perPage") ?? "25"),
+      search: searchParams.get("search") ?? "",
+      sortBy: "number",
+      sortDirection: "desc",
+      visibleColumns: rfiDefaultVisibleColumns,
+      filters: {},
+    },
+  });
+
+  const page = tableState.page;
+  const perPage = tableState.perPage;
+  const search = tableState.debouncedSearch.trim() || null;
 
   const queryParams = React.useMemo(
     () => ({ page, perPage, sort, status, search }),
@@ -90,56 +143,177 @@ export function RfisTable({ projectId }: RfisTableProps) {
 
   const rfis = data?.data ?? [];
   const pageCount = data?.meta.totalPages ?? 1;
-  const tabCounts = data?.meta.tab_counts;
-
-  const columns = React.useMemo(() => getRfiColumns({ projectId }), [projectId]);
-
-  const { table } = useDataTable({
-    data: rfis,
-    columns,
-    pageCount,
-    enableColumnResizing: true,
-    columnResizeMode: "onChange",
-    initialState: {
-      pagination: { pageIndex: 0, pageSize: 25 },
-      columnVisibility: {
-        responsible_contractor: false,
-        received_from: false,
-        location: false,
-        rfi_stage: false,
-        schedule_impact: false,
-        cost_impact: false,
-        created_at: false,
+  const columns = React.useMemo<TableColumn<RFI>[]>(
+    () => [
+      {
+        id: "number",
+        label: "#",
+        alwaysVisible: true,
+        sortable: true,
+        sortValue: (rfi) => rfi.number ?? 0,
+        render: (rfi) => (
+          <span className="font-medium tabular-nums">{rfi.number ?? "-"}</span>
+        ),
+        csvValue: (rfi) => String(rfi.number ?? ""),
+        width: 80,
       },
-    },
-  });
-
-  const handleSearchChange = React.useCallback(
-    (val: string) => {
-      const next = new URLSearchParams(searchParams.toString());
-      if (val) next.set("search", val);
-      else next.delete("search");
-      next.set("page", "1");
-      router.replace(`?${next.toString()}`, { scroll: false });
-    },
-    [searchParams, router],
+      {
+        id: "subject",
+        label: "Subject",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (rfi) => rfi.subject ?? "",
+        render: (rfi) => (
+          <Button
+            type="button"
+            variant="link"
+            className="h-auto justify-start p-0 text-left font-normal"
+            onClick={(event) => {
+              event.stopPropagation();
+              router.push(`/${projectId}/rfis/${rfi.id}`);
+            }}
+          >
+            <CellText value={rfi.subject ?? "Untitled RFI"} />
+          </Button>
+        ),
+        csvValue: (rfi) => rfi.subject ?? "",
+        width: 320,
+      },
+      {
+        id: "status",
+        label: "Status",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (rfi) => rfi.status ?? "",
+        render: (rfi) => <CellStatus value={rfi.status ?? ""} />,
+        csvValue: (rfi) => rfi.status ?? "",
+        width: 130,
+      },
+      {
+        id: "assignees",
+        label: "Assignees",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (rfi) => formatAssignees(rfi.assignees as string[] | null),
+        render: (rfi) => (
+          <CellText value={formatAssignees(rfi.assignees as string[] | null)} />
+        ),
+        csvValue: (rfi) => formatAssignees(rfi.assignees as string[] | null),
+        width: 180,
+      },
+      {
+        id: "due_date",
+        label: "Due Date",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (rfi) =>
+          rfi.due_date ? new Date(rfi.due_date).getTime() : 0,
+        render: (rfi) => <CellDate value={rfi.due_date} />,
+        csvValue: (rfi) => rfi.due_date ?? "",
+        width: 140,
+      },
+      {
+        id: "ball_in_court",
+        label: "Ball In Court",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (rfi) => rfi.ball_in_court ?? "",
+        render: (rfi) => <CellText value={rfi.ball_in_court} />,
+        csvValue: (rfi) => rfi.ball_in_court ?? "",
+        width: 160,
+      },
+      {
+        id: "rfi_manager",
+        label: "RFI Manager",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (rfi) => rfi.rfi_manager ?? "",
+        render: (rfi) => <CellText value={rfi.rfi_manager} />,
+        csvValue: (rfi) => rfi.rfi_manager ?? "",
+        width: 160,
+      },
+      {
+        id: "responsible_contractor",
+        label: "Resp. Contractor",
+        defaultVisible: false,
+        sortable: true,
+        sortValue: (rfi) => rfi.responsible_contractor ?? "",
+        render: (rfi) => <CellText value={rfi.responsible_contractor} />,
+        csvValue: (rfi) => rfi.responsible_contractor ?? "",
+        width: 180,
+      },
+      {
+        id: "received_from",
+        label: "Received From",
+        defaultVisible: false,
+        sortable: true,
+        sortValue: (rfi) => rfi.received_from ?? "",
+        render: (rfi) => <CellText value={rfi.received_from} />,
+        csvValue: (rfi) => rfi.received_from ?? "",
+        width: 160,
+      },
+      {
+        id: "location",
+        label: "Location",
+        defaultVisible: false,
+        sortable: true,
+        sortValue: (rfi) => rfi.location ?? "",
+        render: (rfi) => <CellText value={rfi.location} />,
+        csvValue: (rfi) => rfi.location ?? "",
+        width: 150,
+      },
+      {
+        id: "rfi_stage",
+        label: "RFI Stage",
+        defaultVisible: false,
+        sortable: true,
+        sortValue: (rfi) => rfi.rfi_stage ?? "",
+        render: (rfi) => <CellText value={rfi.rfi_stage} />,
+        csvValue: (rfi) => rfi.rfi_stage ?? "",
+        width: 150,
+      },
+      {
+        id: "schedule_impact",
+        label: "Schedule Impact",
+        defaultVisible: false,
+        sortable: true,
+        sortValue: (rfi) => rfi.schedule_impact ?? "",
+        render: (rfi) => <CellText value={rfi.schedule_impact} />,
+        csvValue: (rfi) => rfi.schedule_impact ?? "",
+        width: 170,
+      },
+      {
+        id: "cost_impact",
+        label: "Cost Impact",
+        defaultVisible: false,
+        sortable: true,
+        sortValue: (rfi) => rfi.cost_impact ?? "",
+        render: (rfi) => <CellText value={rfi.cost_impact} />,
+        csvValue: (rfi) => rfi.cost_impact ?? "",
+        width: 150,
+      },
+      {
+        id: "created_at",
+        label: "Created",
+        defaultVisible: false,
+        sortable: true,
+        sortValue: (rfi) =>
+          rfi.created_at ? new Date(rfi.created_at).getTime() : 0,
+        render: (rfi) => <CellDate value={rfi.created_at} />,
+        csvValue: (rfi) => rfi.created_at ?? "",
+        width: 140,
+      },
+    ],
+    [projectId, router],
   );
 
-  const handleBulkDelete = React.useCallback(
-    async (ids: string[]) => {
-      const results = await Promise.allSettled(
-        ids.map((id) =>
-          apiFetch(`/api/projects/${projectId}/rfis/${id}`, { method: "DELETE" }),
-        ),
-      );
-      const { succeeded, failed, firstError } = summarizeBulkResults(results);
-      if (succeeded > 0) {
-        toast.success(`${succeeded} RFI${succeeded !== 1 ? "s" : ""} deleted`);
-        void queryClient.invalidateQueries({ queryKey: ["rfis", projectId] });
-      }
-      if (failed > 0) {
-        toast.error(`${failed} RFI${failed !== 1 ? "s" : ""} failed: ${firstError}`);
-      }
+  const handleDelete = React.useCallback(
+    async (rfi: RFI) => {
+      await apiFetch(`/api/projects/${projectId}/rfis/${rfi.id}`, {
+        method: "DELETE",
+      });
+      toast.success("RFI deleted");
+      void queryClient.invalidateQueries({ queryKey: ["rfis", projectId] });
     },
     [projectId, queryClient],
   );
@@ -169,54 +343,116 @@ export function RfisTable({ projectId }: RfisTableProps) {
     {
       label: "All",
       href: buildTabHref("all"),
-      count: tabCounts?.all,
       isActive: activeTab === "all",
       testId: "rfis-tab-all",
     },
     {
       label: "Open",
       href: buildTabHref("open"),
-      count: tabCounts?.open,
       isActive: activeTab === "open",
       testId: "rfis-tab-open",
     },
     {
       label: "Closed",
       href: buildTabHref("closed"),
-      count: tabCounts?.closed,
       isActive: activeTab === "closed",
       testId: "rfis-tab-closed",
     },
   ];
 
   return (
-    <PageShell
-      variant="table"
-      title="RFIs"
-      description="Requests for Information"
-      actions={
-        <Button
-          size="sm"
-          onClick={() => router.push(`/${projectId}/rfis/new`)}
-          data-testid="rfis-create-button"
-        >
-          <Plus className="h-4 w-4" />
-          Create RFI
-        </Button>
-      }
-    >
-      <AleatoDataTable
-        table={table}
-        isLoading={isLoading}
-        storageKey={`rfis-${projectId}`}
-        tabs={tabs}
-        searchValue={search ?? ""}
-        onSearchChange={handleSearchChange}
-        searchPlaceholder={
-          activeTab === "all" ? "Search RFIs…" : `Search ${activeTab} RFIs…`
-        }
-        onBulkDelete={handleBulkDelete}
-      />
-    </PageShell>
+    <UnifiedTablePage
+      header={{
+        title: "RFIs",
+        description: "Requests for Information",
+        actions: (
+          <Button
+            size="sm"
+            onClick={() => router.push(`/${projectId}/rfis/new`)}
+            data-testid="rfis-create-button"
+          >
+            <Plus className="h-4 w-4" />
+            Create RFI
+          </Button>
+        ),
+      }}
+      tabs={tabs}
+      toolbar={{
+        totalItems: data?.meta.total ?? 0,
+        filteredItems: data?.meta.total ?? rfis.length,
+        searchValue: tableState.searchInput,
+        onSearchChange: (value) => {
+          tableState.setSearchInput(value);
+          tableState.setPage(1);
+          tableState.setSearchParams({ search: value || null, page: "1" });
+        },
+        searchPlaceholder:
+          activeTab === "all"
+            ? "Search RFIs..."
+            : `Search ${activeTab} RFIs...`,
+        currentView: tableState.currentView,
+        onViewChange: (view) => {
+          tableState.setCurrentView(view);
+          tableState.setSearchParams({ view });
+        },
+        enabledViews: ["table", "list"],
+        columns: rfiColumnConfig,
+        visibleColumns: tableState.visibleColumns,
+        onColumnVisibilityChange: tableState.setVisibleColumns,
+      }}
+      data={{ items: rfis, isLoading, isFetching: false, error: null }}
+      table={{
+        columns,
+        getRowId: (rfi) => String(rfi.id),
+        onRowClick: (rfi) => router.push(`/${projectId}/rfis/${rfi.id}`),
+        onEdit: (rfi) => router.push(`/${projectId}/rfis/${rfi.id}?mode=edit`),
+        onDelete: handleDelete,
+        density: "compact",
+        stickyHeader: true,
+      }}
+      pagination={{
+        page,
+        totalPages: pageCount,
+        perPage,
+        onPageChange: (nextPage) => {
+          tableState.setPage(nextPage);
+          tableState.setSearchParams({ page: String(nextPage) });
+        },
+        onPerPageChange: (nextPerPage) => {
+          const parsed = Number(nextPerPage);
+          if (!Number.isFinite(parsed) || parsed <= 0) return;
+          tableState.setPerPage(parsed);
+          tableState.setPage(1);
+          tableState.setSearchParams({
+            perPage: String(parsed),
+            page: "1",
+          });
+        },
+      }}
+      emptyState={{
+        title: "No RFIs found",
+        description:
+          "Create your first RFI to start tracking project questions.",
+        filteredDescription: "No RFIs match your current search or tab.",
+        isFiltered: Boolean(tableState.searchInput) || activeTab !== "all",
+        action: (
+          <Button
+            size="sm"
+            onClick={() => router.push(`/${projectId}/rfis/new`)}
+          >
+            <Plus className="h-4 w-4" />
+            Create RFI
+          </Button>
+        ),
+      }}
+      features={{
+        enableViews: true,
+        enableColumnToggle: true,
+        enableExport: true,
+        enablePagination: true,
+        enableBulkDelete: true,
+      }}
+      layout={{ fullBleedTable: true }}
+    />
   );
 }
