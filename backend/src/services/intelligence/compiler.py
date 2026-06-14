@@ -1015,6 +1015,32 @@ def _find_existing_insight_card(
     return None
 
 
+# Risk-bearing card types that carry a 1-5 severity on the timeline.
+_SEVERITY_CARD_TYPES = {"risk", "schedule_risk", "financial_exposure", "blocker"}
+_SEVERITY_IMPACT = {"low": 1, "medium": 3, "high": 5}
+_SEVERITY_LIKELIHOOD = {"low": 0, "medium": 1, "high": 2}
+
+
+def _derive_card_severity(candidate: Dict[str, Any]) -> Optional[int]:
+    """1-5 timeline severity for risk-bearing cards.
+
+    Prefers an explicit ``severity`` emitted by the LLM; otherwise derives it
+    from likelihood x impact in ``extraction_json``. Returns None for
+    non-risk card types or when the inputs are missing.
+    """
+    if candidate.get("signal_type") not in _SEVERITY_CARD_TYPES:
+        return None
+    raw = candidate.get("extraction_json") or {}
+    explicit = raw.get("severity")
+    if isinstance(explicit, (int, float)) and 1 <= explicit <= 5:
+        return int(round(explicit))
+    impact = _SEVERITY_IMPACT.get(str(raw.get("impact") or "").lower())
+    if impact is None:
+        return None
+    likelihood = _SEVERITY_LIKELIHOOD.get(str(raw.get("likelihood") or "").lower(), 0)
+    return max(1, min(5, impact + likelihood - 1))
+
+
 def _upsert_insight_card_from_candidate(
     supabase: Any,
     candidate: Dict[str, Any],
@@ -1073,6 +1099,7 @@ def _upsert_insight_card_from_candidate(
             "last_seen_at": last_seen_at,
             "stale_after": candidate.get("stale_after"),
             "source_count": int(existing.get("source_count") or 0) + source_count_increment,
+            "severity": _derive_card_severity(candidate),
             "metadata": metadata,
             "updated_at": _utc_now(),
         }
@@ -1097,6 +1124,8 @@ def _upsert_insight_card_from_candidate(
         "next_action": candidate.get("next_action"),
         "first_seen_at": last_seen_at,
         "last_seen_at": last_seen_at,
+        "occurred_at": last_seen_at,
+        "severity": _derive_card_severity(candidate),
         "stale_after": candidate.get("stale_after"),
         "source_count": 1,
         "compiler_version": compiler_version,
