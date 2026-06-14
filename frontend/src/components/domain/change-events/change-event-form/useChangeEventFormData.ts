@@ -15,17 +15,25 @@ import { useDropdownData } from "./useDropdownData";
 
 // When all SOV items share the same budget code, auto-fill it; if only one item
 // exists also use its description. Returns only the fields that should update.
+// Strip dashes and dots so "233000" matches "23-3000", "23.3000", etc.
+function normCode(s: string): string {
+  return s.replace(/[-./]/g, "").toLowerCase();
+}
+
 function findBudgetCode(code: string | null, budgetCodes: BudgetCodeOption[]): BudgetCodeOption | undefined {
   if (!code) return undefined;
   const q = code.trim().toLowerCase();
-  // 1. Exact match on cost_code_id
+  const qNorm = normCode(q);
   return (
+    // 1. Exact match
     budgetCodes.find((b) => b.code === code) ||
-    // 2. Case-insensitive code match
+    // 2. Case-insensitive exact match
     budgetCodes.find((b) => b.code.toLowerCase() === q) ||
-    // 3. Match on description (cost_code title)
+    // 3. Normalized match — "233000" matches "23-3000"
+    budgetCodes.find((b) => normCode(b.code) === qNorm) ||
+    // 4. Description match
     budgetCodes.find((b) => b.description.toLowerCase() === q) ||
-    // 4. Match on full label prefix (e.g. "23-000 - HVAC" starts with "23-000")
+    // 5. Full label prefix match
     budgetCodes.find((b) => b.fullLabel.toLowerCase().startsWith(q))
   );
 }
