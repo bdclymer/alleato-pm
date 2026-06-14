@@ -53,6 +53,11 @@ COMMS_COMPILER_VERSION = "project_synthesizer_v1"
 # deterministic — a 30-day window of recent communications.
 DEFAULT_LOOKBACK_DAYS = 30
 
+# A predictive flag is not marked did_not_materialize until at least this many
+# days have passed — a change event can still happen; premature "didn't happen"
+# verdicts erode trust in the calibration loop.
+FLAG_DID_NOT_MATERIALIZE_MIN_DAYS = 21
+
 # Reuse the meeting extractor's risk-category -> signal_type mapping so cards
 # from emails/teams land in the same buckets as cards from meetings.
 _RISK_CATEGORY_SIGNAL_TYPE = {
@@ -598,6 +603,19 @@ def reconcile_project_flags(project_id: int, *, model: Optional[str] = None) -> 
             verdict = str(data.get("verdict") or "still_open").strip().lower()
             valid_ids = {e["id"] for e in events}
             realizing = [cid for cid in (data.get("realizing_card_ids") or []) if cid in valid_ids]
+
+            # Guardrail: don't call a prediction "didn't happen" prematurely — a
+            # change event can still occur. Require a real elapsed window (or
+            # explicit abandonment, which the model expresses via realizing events
+            # for materialized, not here) before did_not_materialize sticks.
+            if verdict == "did_not_materialize":
+                try:
+                    flag_dt = datetime.fromisoformat(str(flag_at).replace("Z", "+00:00"))
+                    age_days = (datetime.now(timezone.utc) - flag_dt).days
+                except Exception:  # noqa: BLE001
+                    age_days = 0
+                if age_days < FLAG_DID_NOT_MATERIALIZE_MIN_DAYS:
+                    verdict = "still_open"
 
             if verdict == "materialized":
                 client.table("insight_cards").update(
