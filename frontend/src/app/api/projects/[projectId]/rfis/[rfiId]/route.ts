@@ -16,15 +16,17 @@ import { sendEmail } from "@/lib/email/send";
 import { APP_BASE_URL } from "@/lib/email/client";
 import RFIClosedNotification from "@/emails/rfi/RFIClosedNotification";
 import { rfiEditSchema } from "@/lib/schemas/rfi-schema";
+import {
+  RFI_RECIPIENT_UUID_PATTERN as UUID_PATTERN,
+  classifyRfiRecipientEntries,
+  personFullNameKey,
+} from "@/lib/rfi/rfi-recipients";
 import { ZodError } from "zod";
 import { logger } from "@/lib/logger";
 
 type RouteParams = {
   params: Promise<{ projectId: string; rfiId: string }>;
 };
-
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 /**
  * GET /api/projects/[projectId]/rfis/[rfiId]
@@ -257,35 +259,32 @@ async function notifyRfiClosed(args: {
     return { sent: 0, failed: [{ error: "RFI not found for close notification." }] };
   }
 
-  // Build a unique set of person IDs to notify:
-  // creator, assignees, distribution list, RFI manager
-  const personIds = new Set<string>();
-  const creatorEmails = new Set<string>();
-  if (rfi.created_by) {
-    if (UUID_PATTERN.test(rfi.created_by)) {
-      personIds.add(rfi.created_by);
-    } else if (rfi.created_by.includes("@")) {
-      creatorEmails.add(rfi.created_by);
-    }
-  }
-  if (rfi.rfi_manager && UUID_PATTERN.test(rfi.rfi_manager)) {
-    personIds.add(rfi.rfi_manager);
-  }
-  for (const a of rfi.assignees || []) {
-    if (UUID_PATTERN.test(a)) personIds.add(a);
-  }
-  for (const d of rfi.distribution_list || []) {
-    if (UUID_PATTERN.test(d)) personIds.add(d);
-  }
+  // Recipients = creator + assignees + distribution list + RFI manager.
+  //
+  // These columns store DISPLAY NAMES (from the RFI form), and historically
+  // also UUIDs or raw emails. Classify every entry into the three shapes so
+  // name-shaped recipients (the common case) are resolved, not dropped.
+  const { personIds, emails: recipientEmails, names: recipientNames } =
+    classifyRfiRecipientEntries([
+      rfi.created_by,
+      rfi.rfi_manager,
+      ...(rfi.assignees || []),
+      ...(rfi.distribution_list || []),
+    ]);
 
-  if (personIds.size === 0 && creatorEmails.size === 0) {
+  if (
+    personIds.size === 0 &&
+    recipientEmails.size === 0 &&
+    recipientNames.size === 0
+  ) {
     return { sent: 0, failed: [{ error: "No RFI notification recipients were selected." }] };
   }
 
-  // Resolve people to emails and the closer's name
+  // Resolve people to emails and the closer's name.
   const [
     { data: peopleById, error: peopleByIdError },
     { data: peopleByEmail, error: peopleByEmailError },
+    { data: peopleByName, error: peopleByNameError },
     { data: project },
     { data: closerProfile },
   ] = await Promise.all([
@@ -295,11 +294,19 @@ async function notifyRfiClosed(args: {
           .select("id, first_name, last_name, email")
           .in("id", [...personIds])
       : Promise.resolve({ data: [], error: null }),
-    creatorEmails.size > 0
+    recipientEmails.size > 0
       ? supabase
           .from("people")
           .select("id, first_name, last_name, email")
-          .in("email", [...creatorEmails])
+          .in("email", [...recipientEmails])
+      : Promise.resolve({ data: [], error: null }),
+    // Name-shaped entries: the `people` table is small and there is no FK to
+    // join on, so resolve by matching the computed full name in memory. Only
+    // queried when there are names to resolve.
+    recipientNames.size > 0
+      ? supabase
+          .from("people")
+          .select("id, first_name, last_name, email")
       : Promise.resolve({ data: [], error: null }),
     supabase
       .from("projects")
@@ -313,7 +320,7 @@ async function notifyRfiClosed(args: {
       .maybeSingle(),
   ]);
 
-  if (peopleByIdError || peopleByEmailError) {
+  if (peopleByIdError || peopleByEmailError || peopleByNameError) {
     return {
       sent: 0,
       failed: [
@@ -321,6 +328,7 @@ async function notifyRfiClosed(args: {
           error:
             peopleByIdError?.message ??
             peopleByEmailError?.message ??
+            peopleByNameError?.message ??
             "Failed to resolve RFI notification recipients.",
         },
       ],
@@ -332,7 +340,16 @@ async function notifyRfiClosed(args: {
     closerProfile?.email?.split("@")[0] ||
     "A team member";
 
-  const people = [...(peopleById || []), ...(peopleByEmail || [])];
+  // Keep only the name-matched people that were actually requested.
+  const nameMatchedPeople = (peopleByName || []).filter((p) =>
+    recipientNames.has(personFullNameKey(p.first_name, p.last_name)),
+  );
+
+  const people = [
+    ...(peopleById || []),
+    ...(peopleByEmail || []),
+    ...nameMatchedPeople,
+  ];
   const recipientByEmail = new Map<string, { name: string; email: string }>();
   for (const p of people) {
     if (!p.email) continue;
