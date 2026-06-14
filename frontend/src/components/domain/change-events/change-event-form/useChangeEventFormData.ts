@@ -113,6 +113,29 @@ export function useChangeEventFormData({
     fetchBudgetCodes,
   } = useDropdownData({ projectId });
 
+  // Re-resolve budget codes for committed line items that are still missing one.
+  // Handles two failure modes:
+  //   1. Race condition — budgetCodes loaded after commitment was selected
+  //   2. Edit form — existing line item has a commitment but budget_code_id was null in DB
+  // Runs whenever budgetCodes or commitmentLineItemsMap becomes available.
+  React.useEffect(() => {
+    if (budgetCodes.length === 0) return;
+
+    setFormData((prev) => {
+      let changed = false;
+      const nextItems = prev.lineItems.map((item) => {
+        if (!item.commitmentId || item.budgetCode) return item;
+        const cached = commitmentLineItemsMap[item.contract];
+        if (!cached || cached.length === 0) return item;
+        const updates = resolveBudgetCodeFromItems(cached, budgetCodes);
+        if (!updates.budgetCode) return item;
+        changed = true;
+        return { ...item, ...updates };
+      });
+      return changed ? { ...prev, lineItems: nextItems } : prev;
+    });
+  }, [budgetCodes, commitmentLineItemsMap]);
+
   // ── Update helpers ──
 
   const updateFormData = React.useCallback(

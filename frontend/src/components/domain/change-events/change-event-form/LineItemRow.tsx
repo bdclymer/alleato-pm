@@ -121,7 +121,7 @@ export function LineItemRow({
           budgetCodes={budgetCodes}
           onCreateNew={() => onCreateBudgetCode(index)}
           placeholder="Select budget code..."
-          disabled={isLinkedToCommitment && Boolean(item.budgetCode)}
+          disabled={isLinkedToCommitment}
         />
       </TableCell>
 
