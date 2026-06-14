@@ -139,7 +139,7 @@ export function CreateSubcontractForm({
               isLoadingVendors={isLoadingVendors}
             />
 
-            <section className="space-y-4 border-b border-border/70 pb-8">
+            <section className="space-y-4">
               <div className="space-y-1">
                 <SectionRuleHeading label="Attachments" />
                 <p className="text-sm text-muted-foreground">

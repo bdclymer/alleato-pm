@@ -18,7 +18,9 @@ import { PageShell } from "@/components/layout";
 import { buildIntelligencePageState } from "@/lib/ai/intelligence/page-state";
 import {
   loadCurrentIntelligencePacket,
+  loadProjectTimeline,
   resolveIntelligenceTarget,
+  type ProjectTimelineEntry,
 } from "@/lib/ai/intelligence/packet-service";
 import type {
   ClientProjectIntelligencePacket,
@@ -1162,6 +1164,89 @@ function AuditTrail({
   );
 }
 
+const TIMELINE_TYPE_LABELS: Record<string, string> = {
+  decision: "Decision",
+  risk: "Risk",
+  schedule_risk: "Schedule risk",
+  financial_exposure: "Financial exposure",
+  blocker: "Blocker",
+  flag: "Flag",
+  initiative_signal: "Opportunity",
+  project_update: "Update",
+  open_question: "Open question",
+  requirement: "Requirement",
+  change_management: "Change",
+  solution: "Solution",
+  milestone: "Milestone",
+  task: "Task",
+  product_need: "Product need",
+  process_issue: "Process issue",
+  sentiment: "Sentiment",
+};
+
+function timelineVariant(
+  cardType: string,
+  status: string,
+): NonNullable<TimelineItem["variant"]> {
+  if (status === "materialized") return "success";
+  if (cardType === "flag") return "warning";
+  if (["risk", "schedule_risk", "financial_exposure", "blocker"].includes(cardType)) {
+    return "destructive";
+  }
+  if (cardType === "decision" || cardType === "change_management") return "info";
+  if (["solution", "milestone", "initiative_signal"].includes(cardType)) return "success";
+  return "default";
+}
+
+function timelineStatusNote(cardType: string, status: string): string {
+  if (status === "materialized") return " · ✓ materialized";
+  if (status === "did_not_materialize") return " · did not materialize";
+  if (status === "resolved") return " · resolved";
+  if (status === "blocked") return " · blocked";
+  if (cardType === "flag") return " · prediction";
+  return "";
+}
+
+function formatTimelineDate(occurredAt: string | null): string {
+  if (!occurredAt) return "";
+  const parsed = new Date(occurredAt);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return parsed.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function ProgressLogSection({ entries }: { entries: ProjectTimelineEntry[] }) {
+  if (entries.length === 0) return null;
+
+  const items: TimelineItem[] = entries.map((entry) => {
+    const typeLabel = TIMELINE_TYPE_LABELS[entry.cardType] ?? entry.cardType;
+    const severityNote = entry.severity ? ` · severity ${entry.severity}` : "";
+    const statusNote = timelineStatusNote(entry.cardType, entry.currentStatus);
+    const meta = `${typeLabel}${severityNote}${statusNote}`;
+    return {
+      id: entry.id,
+      title: entry.title,
+      timestamp: formatTimelineDate(entry.occurredAt),
+      user: entry.suggestedOwnerLabel ?? undefined,
+      description: entry.summary ? `${meta} — ${entry.summary}` : meta,
+      variant: timelineVariant(entry.cardType, entry.currentStatus),
+    };
+  });
+
+  return (
+    <section className="space-y-4">
+      <div className="space-y-1">
+        <Heading level={5} as="h2" className="text-lg">
+          Progress Log
+        </Heading>
+        <p className="text-sm text-muted-foreground">
+          Decisions, risks, issues, and AI flags surfaced from meetings, emails, and Teams — most recent first.
+        </p>
+      </div>
+      <Timeline items={items} />
+    </section>
+  );
+}
+
 export default async function ProjectIntelligencePage({
   params,
 }: {
@@ -1204,6 +1289,17 @@ export default async function ProjectIntelligencePage({
       });
     } catch (error) {
       packetLoadError = error instanceof Error ? error.message : "Unexpected packet load failure.";
+    }
+  }
+
+  // Progress Log timeline — all synthesized cards for this project, most-recent
+  // first, INDEPENDENT of any packet (the synthesizer writes cards, not packets).
+  let timelineEntries: ProjectTimelineEntry[] = [];
+  if (target) {
+    try {
+      timelineEntries = await loadProjectTimeline({ targetId: target.id, supabase });
+    } catch {
+      timelineEntries = [];
     }
   }
 
@@ -1308,60 +1404,66 @@ export default async function ProjectIntelligencePage({
           project={project}
           reason="Create an intelligence target before the living project brief can compile source-backed analysis."
         />
-      ) : packetLoadError ? (
-        <EmptyState
-          title="Project intelligence brief could not load"
-          description={`The current packet failed to load: ${packetLoadError}`}
-          action={
-            <Button asChild size="sm" variant="outline">
-              <Link href="/intelligence-compiler">Open compiler health</Link>
-            </Button>
-          }
-        />
-      ) : !packet ? (
-        <IntelligenceEmptyState
-          project={project}
-          reason="The target exists, but no current packet has been generated yet."
-        />
       ) : (
         <>
-          <OverviewStrip
-            packet={packet}
-            projectId={numericProjectId}
-            sourceDocumentMap={sourceDocumentMap}
-          />
-          <CurrentFocus
-            packet={packet}
-            projectId={numericProjectId}
-            sourceDocumentMap={sourceDocumentMap}
-          />
-          <CriticalRisks
-            packet={packet}
-            projectId={numericProjectId}
-            sourceDocumentMap={sourceDocumentMap}
-          />
-          <DecisionsNeeded
-            packet={packet}
-            projectId={numericProjectId}
-            sourceDocumentMap={sourceDocumentMap}
-          />
-          <ExecutiveActions
-            packet={packet}
-            projectId={numericProjectId}
-            sourceDocumentMap={sourceDocumentMap}
-          />
-          <ProjectTimelineSection
-            packet={packet}
-            recentSources={recentSources}
-            projectId={numericProjectId}
-            sourceDocumentMap={sourceDocumentMap}
-          />
-          <EvidenceDrawer packet={packet} projectId={numericProjectId} sourceDocumentMap={sourceDocumentMap} />
-          <AuditTrail
-            packet={packet}
-            projectId={numericProjectId}
-            sourceDocumentMap={sourceDocumentMap}
-          />
+          {packetLoadError ? (
+            <EmptyState
+              title="Project intelligence brief could not load"
+              description={`The current packet failed to load: ${packetLoadError}`}
+              action={
+                <Button asChild size="sm" variant="outline">
+                  <Link href="/intelligence-compiler">Open compiler health</Link>
+                </Button>
+              }
+            />
+          ) : packet ? (
+            <>
+              <OverviewStrip
+                packet={packet}
+                projectId={numericProjectId}
+                sourceDocumentMap={sourceDocumentMap}
+              />
+              <CurrentFocus
+                packet={packet}
+                projectId={numericProjectId}
+                sourceDocumentMap={sourceDocumentMap}
+              />
+              <CriticalRisks
+                packet={packet}
+                projectId={numericProjectId}
+                sourceDocumentMap={sourceDocumentMap}
+              />
+              <DecisionsNeeded
+                packet={packet}
+                projectId={numericProjectId}
+                sourceDocumentMap={sourceDocumentMap}
+              />
+              <ExecutiveActions
+                packet={packet}
+                projectId={numericProjectId}
+                sourceDocumentMap={sourceDocumentMap}
+              />
+              <ProjectTimelineSection
+                packet={packet}
+                recentSources={recentSources}
+                projectId={numericProjectId}
+                sourceDocumentMap={sourceDocumentMap}
+              />
+              <EvidenceDrawer packet={packet} projectId={numericProjectId} sourceDocumentMap={sourceDocumentMap} />
+              <AuditTrail
+                packet={packet}
+                projectId={numericProjectId}
+                sourceDocumentMap={sourceDocumentMap}
+              />
+            </>
+          ) : timelineEntries.length === 0 ? (
+            <IntelligenceEmptyState
+              project={project}
+              reason="The target exists, but no current packet has been generated yet."
+            />
+          ) : null}
+
+          <ProgressLogSection entries={timelineEntries} />
         </>
       )}
     </PageShell>

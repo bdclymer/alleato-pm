@@ -556,3 +556,53 @@ export async function loadPacketCards(input: {
     })
     .filter((card): card is InsightCard => Boolean(card));
 }
+
+/**
+ * Project intelligence "Progress Log" — all timeline cards for a target,
+ * most-recent-first by occurred_at, INDEPENDENT of any packet. This is the
+ * running log of decisions/issues/risks/solutions/flags surfaced by the
+ * synthesizer from meetings, emails, and Teams.
+ */
+export type ProjectTimelineEntry = {
+  id: string;
+  cardType: string;
+  title: string;
+  summary: string;
+  whyItMatters: string | null;
+  occurredAt: string | null;
+  severity: number | null;
+  currentStatus: string;
+  suggestedOwnerLabel: string | null;
+};
+
+export async function loadProjectTimeline(input: {
+  targetId: string;
+  supabase: AlleatoSupabaseClient;
+  limit?: number;
+}): Promise<ProjectTimelineEntry[]> {
+  const { data, error } = await input.supabase
+    .from("insight_cards")
+    .select(
+      "id, card_type, title, summary, why_it_matters, occurred_at, severity, current_status, suggested_owner_label",
+    )
+    .eq("primary_target_id", input.targetId)
+    .neq("attribution_status", "rejected")
+    .order("occurred_at", { ascending: false, nullsFirst: false })
+    .limit(input.limit ?? 80);
+
+  if (error) {
+    throw new Error(`Failed to load project timeline: ${error.message}`);
+  }
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    cardType: row.card_type,
+    title: row.title,
+    summary: row.summary,
+    whyItMatters: row.why_it_matters,
+    occurredAt: row.occurred_at,
+    severity: row.severity,
+    currentStatus: row.current_status,
+    suggestedOwnerLabel: row.suggested_owner_label,
+  }));
+}

@@ -16,7 +16,7 @@ export function InclusionsExclusionsSection({
   const { control } = useFormContext<CreateSubcontractInput>();
 
   return (
-    <section className="space-y-4 border-b border-border/70 pb-8">
+    <section className="space-y-4">
       <SectionRuleHeading label="Inclusions & Exclusions" />
       <div className="space-y-4">
         <div className="space-y-1.5">

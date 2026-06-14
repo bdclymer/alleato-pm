@@ -16,7 +16,7 @@ export function ContractDatesSection({ isSubmitting }: ContractDatesSectionProps
   } = useFormContext<CreateSubcontractInput>();
 
   return (
-    <section className="space-y-4 border-b border-border/70 pb-8">
+    <section className="space-y-4">
       <SectionRuleHeading label="Contract Dates" />
       <div className="space-y-4">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">

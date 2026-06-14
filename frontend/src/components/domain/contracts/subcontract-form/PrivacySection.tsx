@@ -45,7 +45,7 @@ export function PrivacySection({
     .filter(Boolean) as string[];
 
   return (
-    <section className="space-y-4 border-b border-border/70 pb-8">
+    <section className="space-y-4">
       <SectionRuleHeading label="Contract Privacy" />
       <div className="space-y-4">
         <p className="text-sm text-muted-foreground">

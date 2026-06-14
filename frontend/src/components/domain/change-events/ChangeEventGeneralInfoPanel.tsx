@@ -7,6 +7,7 @@ import type { ChangeEventDetail } from "@/types/change-events";
 import { EntityAttachments, StatusBadge } from "@/components/ds";
 import {
   ContentSectionStack,
+  DetailPanel,
   LabelValueRow,
   SectionRuleHeading,
 } from "@/components/layout";
@@ -364,25 +365,25 @@ export function ChangeEventGeneralInfoPanel({
   return (
     <ContentSectionStack>
       <section>
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
+        <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
           {/* Left column */}
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-14 gap-y-8">
-              {/* Details */}
-              <div className="space-y-4">
-                <SectionRuleHeading label="Details" className="[&_span]:text-primary" />
+          <div className="space-y-6">
+            <DetailPanel>
+              <SectionRuleHeading label="General Information" className="mb-6 pb-0" />
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-x-10 gap-y-4">
+                {/* Details */}
                 <dl className="space-y-4 text-sm">
-                  <LabelValueRow label="Number">
+                  <LabelValueRow label="Number" labelClassName="w-36">
                     {changeEvent.number || `CE-${changeEvent.id}`}
                   </LabelValueRow>
-                  <LabelValueRow label="Title">
+                  <LabelValueRow label="Title" labelClassName="w-36">
                     <InlineText
                       value={changeEvent.title}
                       fieldKey="title"
                       onSave={save}
                     />
                   </LabelValueRow>
-                  <LabelValueRow label="Status">
+                  <LabelValueRow label="Status" labelClassName="w-36">
                     {changeEvent.status ? (
                       <InlineSelect
                         value={changeEvent.status}
@@ -400,14 +401,14 @@ export function ChangeEventGeneralInfoPanel({
                       />
                     )}
                   </LabelValueRow>
-                  <LabelValueRow label="Expecting Revenue">
+                  <LabelValueRow label="Expecting Revenue" labelClassName="w-36">
                     <InlineBoolToggle
                       value={expectingRevenue}
                       fieldKey="expectingRevenue"
                       onSave={save}
                     />
                   </LabelValueRow>
-                  <LabelValueRow label="Revenue Source" missing={!lineItemRevenueSource}>
+                  <LabelValueRow label="Revenue Source" labelClassName="w-36" missing={!lineItemRevenueSource}>
                     <InlineSelect
                       value={lineItemRevenueSource ?? null}
                       fieldKey="lineItemRevenueSource"
@@ -416,7 +417,7 @@ export function ChangeEventGeneralInfoPanel({
                       placeholder="Not set"
                     />
                   </LabelValueRow>
-                  <LabelValueRow label="Prime Contract" missing={!primeContractId}>
+                  <LabelValueRow label="Prime Contract" labelClassName="w-36" missing={!primeContractId}>
                     {primeContractId ? (
                       <a
                         href={`/${projectId}/prime-contracts/${primeContractId}`}
@@ -430,21 +431,9 @@ export function ChangeEventGeneralInfoPanel({
                   </LabelValueRow>
                 </dl>
 
-                {/* Attachments */}
-                <div className="pt-2">
-                  <EntityAttachments
-                    entityType="change_order"
-                    entityId={String(changeEvent.id)}
-                    projectId={String(projectId)}
-                  />
-                </div>
-              </div>
-
-              {/* Reason for Change */}
-              <div>
-                <SectionRuleHeading label="Reason for Change" className="[&_span]:text-primary" />
+                {/* Reason for Change */}
                 <dl className="space-y-4 text-sm">
-                  <LabelValueRow label="Origin" missing={!changeEvent.origin}>
+                  <LabelValueRow label="Origin" labelClassName="w-36" missing={!changeEvent.origin}>
                     <InlineSelect
                       value={changeEvent.origin ?? null}
                       fieldKey="origin"
@@ -453,7 +442,7 @@ export function ChangeEventGeneralInfoPanel({
                       placeholder="Not set"
                     />
                   </LabelValueRow>
-                  <LabelValueRow label="Type" missing={!changeEvent.type}>
+                  <LabelValueRow label="Type" labelClassName="w-36" missing={!changeEvent.type}>
                     <InlineSelect
                       value={changeEvent.type ?? null}
                       fieldKey="type"
@@ -462,7 +451,7 @@ export function ChangeEventGeneralInfoPanel({
                       placeholder="Not set"
                     />
                   </LabelValueRow>
-                  <LabelValueRow label="Scope" missing={!changeEvent.scope}>
+                  <LabelValueRow label="Scope" labelClassName="w-36" missing={!changeEvent.scope}>
                     <InlineSelect
                       value={changeEvent.scope ?? null}
                       fieldKey="scope"
@@ -471,7 +460,7 @@ export function ChangeEventGeneralInfoPanel({
                       placeholder="Not set"
                     />
                   </LabelValueRow>
-                  <LabelValueRow label="Change Reason" missing={!changeEvent.reason}>
+                  <LabelValueRow label="Change Reason" labelClassName="w-36" missing={!changeEvent.reason}>
                     <InlineSelect
                       value={changeEvent.reason ?? null}
                       fieldKey="reason"
@@ -480,36 +469,49 @@ export function ChangeEventGeneralInfoPanel({
                       placeholder="Not set"
                     />
                   </LabelValueRow>
-                  <LabelValueRow label="Description" missing={!changeEvent.description} stacked>
-                    <InlineTextarea
-                      value={stripHtml(changeEvent.description)}
-                      fieldKey="description"
-                      onSave={save}
-                    />
-                  </LabelValueRow>
                 </dl>
               </div>
-            </div>
+
+              <LabelValueRow
+                label="Description"
+                labelClassName="w-36"
+                className="mt-6"
+                missing={!changeEvent.description}
+                stacked
+              >
+                <InlineTextarea
+                  value={stripHtml(changeEvent.description)}
+                  fieldKey="description"
+                  onSave={save}
+                />
+              </LabelValueRow>
+            </DetailPanel>
+
+            <DetailPanel>
+              <EntityAttachments
+                entityType="change_order"
+                entityId={String(changeEvent.id)}
+                projectId={String(projectId)}
+              />
+            </DetailPanel>
           </div>
 
-          {/* Right sidebar: Totals */}
-          <div className="space-y-8">
-            <div>
-              <SectionRuleHeading label="Totals" className="[&_span]:text-primary" />
-              <div className="rounded-md bg-muted p-6">
-                <dl className="space-y-3 text-sm">
-                  <LabelValueRow label="Revenue ROM">
-                    {formatCurrency(totals.revenueRom)}
-                  </LabelValueRow>
-                  <LabelValueRow label="Cost ROM">
-                    {formatCurrency(totals.costRom)}
-                  </LabelValueRow>
-                  <LabelValueRow label="Non-Committed Cost">
-                    {formatCurrency(totals.nonCommittedCost)}
-                  </LabelValueRow>
-                </dl>
-              </div>
-            </div>
+          {/* Right sidebar: Financial Summary */}
+          <div className="space-y-6">
+            <DetailPanel>
+              <SectionRuleHeading label="Financial Summary" className="mb-4 pb-0" />
+              <dl className="space-y-3 text-sm">
+                <LabelValueRow label="Revenue ROM">
+                  {formatCurrency(totals.revenueRom)}
+                </LabelValueRow>
+                <LabelValueRow label="Cost ROM">
+                  {formatCurrency(totals.costRom)}
+                </LabelValueRow>
+                <LabelValueRow label="Non-Committed Cost">
+                  {formatCurrency(totals.nonCommittedCost)}
+                </LabelValueRow>
+              </dl>
+            </DetailPanel>
           </div>
         </div>
       </section>

@@ -72,7 +72,7 @@ export function GeneralInfoSection({
   );
 
   return (
-    <section className="space-y-6 border-b border-border/70 pb-8">
+    <section className="space-y-6">
       <SectionRuleHeading label="General Information" />
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

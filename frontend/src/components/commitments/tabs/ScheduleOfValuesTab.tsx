@@ -166,12 +166,22 @@ export function ScheduleOfValuesTab({
       prev.map((item) => {
         if (item.id !== id) return item;
         if (field === "amount") {
+          // In unit mode, amount is computed — not directly editable
+          if (accountingMethod === "unit") return item;
           if (isLocked(item)) return item;
           return { ...item, amount: value === undefined ? null : Number(value), isDirty: true };
         }
         if (field === "quantity" || field === "unit_cost") {
           if (isLocked(item)) return item;
-          return { ...item, [field]: value === undefined || value === "" ? null : Number(value), isDirty: true };
+          const numValue = value === undefined || value === "" ? null : Number(value);
+          const updatedItem = { ...item, [field]: numValue, isDirty: true };
+          // Auto-calculate amount when in unit mode
+          if (accountingMethod === "unit") {
+            const qty = field === "quantity" ? numValue : (item.quantity ?? null);
+            const unitCost = field === "unit_cost" ? numValue : (item.unit_cost ?? null);
+            updatedItem.amount = qty !== null && unitCost !== null ? qty * unitCost : null;
+          }
+          return updatedItem;
         }
         return { ...item, [field]: typeof value === "string" ? value : "", isDirty: true };
       }),
@@ -454,15 +464,21 @@ export function ScheduleOfValuesTab({
                     </InlineTableCell>
                   </>
                 ) : null}
-                <InlineTableCell align="right">
-                  <MoneyField
-                    label={`Amount ${index + 1}`}
-                    inline
-                    showCurrency={false}
-                    value={item.amount ?? undefined}
-                    onChange={(value) => updateItem(item.id, "amount", value)}
-                    disabled={locked}
-                  />
+                <InlineTableCell align="right" numeric>
+                  {accountingMethod === "unit" ? (
+                    <span className="text-sm tabular-nums text-muted-foreground">
+                      {formatCurrency(Number(item.amount ?? 0))}
+                    </span>
+                  ) : (
+                    <MoneyField
+                      label={`Amount ${index + 1}`}
+                      inline
+                      showCurrency={false}
+                      value={item.amount ?? undefined}
+                      onChange={(value) => updateItem(item.id, "amount", value)}
+                      disabled={locked}
+                    />
+                  )}
                 </InlineTableCell>
                 <InlineTableCell align="right" numeric className="text-muted-foreground">
                   {formatCurrency(billed)}

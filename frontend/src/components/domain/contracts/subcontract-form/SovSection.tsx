@@ -183,7 +183,7 @@ export function SovSection({
   };
 
   return (
-    <section className="border-b pb-8" data-testid="sov-section">
+    <section data-testid="sov-section">
       <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={handleCSVImport} />
 
       <SectionRuleHeading label="Schedule of Values" />
