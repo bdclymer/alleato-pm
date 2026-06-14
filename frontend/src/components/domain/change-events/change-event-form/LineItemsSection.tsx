@@ -3,6 +3,7 @@
 import * as React from "react";
 import { ChevronDown, Download, Plus, Upload } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/table-config/formatters";
 import { Button } from "@/components/ui/button";
 import { FormSection } from "@/components/forms";
@@ -51,6 +52,7 @@ interface LineItemsSectionProps {
   onCreateBudgetCode: (rowIndex: number) => void;
   handleCommitmentChange: (rowIndex: number, commitmentId: string) => void;
   handleCommitmentLineItemChange: (rowIndex: number, commitmentId: string, sovLineItemId: string) => void;
+  expectingRevenue: boolean;
   csvInputRef: React.RefObject<HTMLInputElement | null>;
   handleCsvImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleAddAllCommitmentLineItems: (commitmentId: string) => void;
@@ -70,6 +72,7 @@ export function LineItemsSection({
   onCreateBudgetCode,
   handleCommitmentChange,
   handleCommitmentLineItemChange,
+  expectingRevenue,
   csvInputRef,
   handleCsvImport,
   handleAddAllCommitmentLineItems,
@@ -87,9 +90,9 @@ export function LineItemsSection({
       />
 
       <TooltipProvider>
-        <div className="overflow-x-auto overflow-hidden rounded-lg border border-border/70">
+        <div className="overflow-x-auto overflow-hidden rounded-lg">
           <Table>
-            <LineItemsTableHeader />
+            <LineItemsTableHeader showRevenue={expectingRevenue} />
             <TableBody>
               {lineItems.map((item, index) => (
                 <LineItemRow
@@ -107,10 +110,11 @@ export function LineItemsSection({
                   onCreateBudgetCode={onCreateBudgetCode}
                   handleCommitmentChange={handleCommitmentChange}
                   handleCommitmentLineItemChange={handleCommitmentLineItemChange}
+                  showRevenue={expectingRevenue}
                   lineItemRevenueSource={lineItemRevenueSource}
                 />
               ))}
-              <LineItemsTotalsRow lineItems={lineItems} />
+              <LineItemsTotalsRow lineItems={lineItems} showRevenue={expectingRevenue} />
             </TableBody>
           </Table>
         </div>
@@ -129,7 +133,7 @@ export function LineItemsSection({
 
 // ── Table Header ──
 
-function LineItemsTableHeader() {
+function LineItemsTableHeader({ showRevenue }: { showRevenue: boolean }) {
   return (
     <TableHeader className="border-y-0 [&_tr]:border-b-0">
       {/* Group headers */}
@@ -141,11 +145,13 @@ function LineItemsTableHeader() {
         <TableHead colSpan={3} className="px-1 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground">
           Cost
         </TableHead>
-        <TableHead colSpan={4} className="px-1 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground">
-          Revenue
-        </TableHead>
+        {showRevenue && (
+          <TableHead colSpan={4} className="px-1 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground">
+            Revenue
+          </TableHead>
+        )}
         <TableHead className="px-1 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground">Non-committed $</TableHead>
-        <TableHead className="px-1 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground">Total</TableHead>
+        <TableHead className="px-1 py-1 text-right text-xs font-semibold normal-case tracking-normal text-muted-foreground">Over / Under</TableHead>
         <TableHead className="w-12 px-1 py-1" />
       </TableRow>
       {/* Column headers */}
@@ -165,26 +171,30 @@ function LineItemsTableHeader() {
         </TableHead>
         <TableHead className="w-56 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Unit Cost</TableHead>
         <TableHead className="w-36 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Cost ROM</TableHead>
-        <TableHead className="w-28 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="cursor-help border-b border-dotted border-muted-foreground">UOM</span>
-            </TooltipTrigger>
-            <TooltipContent>Unit of Measure</TooltipContent>
-          </Tooltip>
-        </TableHead>
-        <TableHead className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="cursor-help border-b border-dotted border-muted-foreground">Qty</span>
-            </TooltipTrigger>
-            <TooltipContent>Revenue quantity for this line item</TooltipContent>
-          </Tooltip>
-        </TableHead>
-        <TableHead className="w-56 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Unit Cost</TableHead>
-        <TableHead className="w-36 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Revenue ROM</TableHead>
+        {showRevenue && (
+          <>
+            <TableHead className="w-28 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-help border-b border-dotted border-muted-foreground">UOM</span>
+                </TooltipTrigger>
+                <TooltipContent>Unit of Measure</TooltipContent>
+              </Tooltip>
+            </TableHead>
+            <TableHead className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-help border-b border-dotted border-muted-foreground">Qty</span>
+                </TooltipTrigger>
+                <TooltipContent>Revenue quantity for this line item</TooltipContent>
+              </Tooltip>
+            </TableHead>
+            <TableHead className="w-56 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Unit Cost</TableHead>
+            <TableHead className="w-36 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Revenue ROM</TableHead>
+          </>
+        )}
         <TableHead className="w-44 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Non-committed $</TableHead>
-        <TableHead className="w-36 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Total</TableHead>
+        <TableHead className="w-36 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Over / Under</TableHead>
         <TableHead className="w-12 px-1 py-1.5" />
       </TableRow>
     </TableHeader>
@@ -193,7 +203,18 @@ function LineItemsTableHeader() {
 
 // ── Totals Row ──
 
-function LineItemsTotalsRow({ lineItems }: { lineItems: ChangeEventLineItem[] }) {
+function LineItemsTotalsRow({
+  lineItems,
+  showRevenue,
+}: {
+  lineItems: ChangeEventLineItem[];
+  showRevenue: boolean;
+}) {
+  const totalCostRom = lineItems.reduce((sum, i) => sum + (i.costRom || 0), 0);
+  const totalRevenueRom = lineItems.reduce((sum, i) => sum + (i.revenueRom || 0), 0);
+  const totalNonCommitted = lineItems.reduce((sum, i) => sum + (i.nonCommittedCost || 0), 0);
+  const totalOverUnder = totalRevenueRom - totalCostRom;
+
   return (
     <TableRow className="hover:bg-transparent">
       <TableCell className="px-1.5 py-2" />
@@ -202,17 +223,26 @@ function LineItemsTotalsRow({ lineItems }: { lineItems: ChangeEventLineItem[] })
       </TableCell>
       <TableCell colSpan={2} className="px-1.5 py-2" />
       <TableCell className="px-1.5 py-2 text-right text-sm font-semibold text-foreground">
-        {formatCurrency(lineItems.reduce((sum, i) => sum + (i.costRom || 0), 0))}
+        {formatCurrency(totalCostRom)}
       </TableCell>
-      <TableCell colSpan={3} className="px-1.5 py-2" />
+      {showRevenue && (
+        <>
+          <TableCell colSpan={3} className="px-1.5 py-2" />
+          <TableCell className="px-1.5 py-2 text-right text-sm font-semibold text-foreground">
+            {formatCurrency(totalRevenueRom)}
+          </TableCell>
+        </>
+      )}
       <TableCell className="px-1.5 py-2 text-right text-sm font-semibold text-foreground">
-        {formatCurrency(lineItems.reduce((sum, i) => sum + (i.revenueRom || 0), 0))}
+        {formatCurrency(totalNonCommitted)}
       </TableCell>
-      <TableCell className="px-1.5 py-2 text-right text-sm font-semibold text-foreground">
-        {formatCurrency(lineItems.reduce((sum, i) => sum + (i.nonCommittedCost || 0), 0))}
-      </TableCell>
-      <TableCell className="px-1.5 py-2 text-right text-sm font-semibold text-foreground">
-        {formatCurrency(lineItems.reduce((sum, i) => sum + (i.revenueRom || 0), 0))}
+      <TableCell
+        className={cn(
+          "px-1.5 py-2 text-right text-sm font-semibold",
+          totalOverUnder < 0 ? "text-destructive" : "text-foreground",
+        )}
+      >
+        {formatCurrency(totalOverUnder)}
       </TableCell>
       <TableCell className="px-1.5 py-2" />
     </TableRow>

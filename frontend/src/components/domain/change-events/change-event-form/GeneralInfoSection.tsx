@@ -9,6 +9,7 @@ import {
   SelectField,
   TextField,
 } from "@/components/forms";
+import { apiFetch } from "@/lib/api-client";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type {
   ChangeEventFormData,
@@ -66,8 +67,9 @@ export function GeneralInfoSection({
     let cancelled = false;
     setLoadingOriginRecords(true);
 
-    fetch(`/api/projects/${projectId}/change-events/origin-options?type=${formData.origin}`)
-      .then((res) => res.json())
+    apiFetch<{ data?: OriginOption[] }>(
+      `/api/projects/${projectId}/change-events/origin-options?type=${formData.origin}`,
+    )
       .then((json) => {
         if (cancelled) return;
         const options = (json.data || []).map((opt: OriginOption) => ({
@@ -156,16 +158,18 @@ export function GeneralInfoSection({
           onValueChange={(value) => updateFormData({ scope: value })}
           placeholder="Select Scope"
         />
+        {formData.expectingRevenue && (
+          <SelectField
+            label="Line Item Revenue Source"
+            options={REVENUE_SOURCE_OPTIONS}
+            value={formData.lineItemRevenueSource || ""}
+            onValueChange={(value) => updateFormData({ lineItemRevenueSource: value })}
+            placeholder="Select Revenue Source"
+            labelTooltip="Match Cost: auto-copies cost to revenue. Enter Manually: type revenue per line. Qty × Unit Cost: calculates from those fields."
+          />
+        )}
         <SelectField
-          label="Line Item Revenue Source"
-          options={REVENUE_SOURCE_OPTIONS}
-          value={formData.lineItemRevenueSource || ""}
-          onValueChange={(value) => updateFormData({ lineItemRevenueSource: value })}
-          placeholder="Select Revenue Source"
-          labelTooltip="Match Cost: auto-copies cost to revenue. Enter Manually: type revenue per line. Qty × Unit Cost: calculates from those fields."
-        />
-        <SelectField
-          label="Prime Contract For Markup Estimates"
+          label="Prime Contract (markup basis)"
           options={primeContractSelectOptions}
           value={formData.primeContractId || ""}
           onValueChange={(value) => updateFormData({ primeContractId: value })}

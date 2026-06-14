@@ -118,6 +118,7 @@ export function ChangeEventForm({
             }}
             handleCommitmentChange={handleCommitmentChange}
             handleCommitmentLineItemChange={handleCommitmentLineItemChange}
+            expectingRevenue={formData.expectingRevenue ?? true}
             csvInputRef={csvInputRef}
             handleCsvImport={handleCsvImport}
             handleAddAllCommitmentLineItems={handleAddAllCommitmentLineItems}
