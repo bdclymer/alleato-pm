@@ -1,18 +1,19 @@
 "use client";
 
 import * as React from "react";
-import { Download, Plus, Upload } from "lucide-react";
+import { ChevronDown, Download, Plus, Upload } from "lucide-react";
 
 import { formatCurrency } from "@/lib/table-config/formatters";
 import { Button } from "@/components/ui/button";
 import { FormSection } from "@/components/forms";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -52,8 +53,6 @@ interface LineItemsSectionProps {
   handleCommitmentLineItemChange: (rowIndex: number, commitmentId: string, sovLineItemId: string) => void;
   csvInputRef: React.RefObject<HTMLInputElement | null>;
   handleCsvImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  addFromCommitmentId: string;
-  setAddFromCommitmentId: (id: string) => void;
   handleAddAllCommitmentLineItems: (commitmentId: string) => void;
   lineItemRevenueSource?: string;
 }
@@ -73,8 +72,6 @@ export function LineItemsSection({
   handleCommitmentLineItemChange,
   csvInputRef,
   handleCsvImport,
-  addFromCommitmentId,
-  setAddFromCommitmentId,
   handleAddAllCommitmentLineItems,
   lineItemRevenueSource = "",
 }: LineItemsSectionProps) {
@@ -123,8 +120,6 @@ export function LineItemsSection({
         addLineItem={addLineItem}
         csvInputRef={csvInputRef}
         contracts={contracts}
-        addFromCommitmentId={addFromCommitmentId}
-        setAddFromCommitmentId={setAddFromCommitmentId}
         handleAddAllCommitmentLineItems={handleAddAllCommitmentLineItems}
         lineItemCount={lineItems.length}
       />
@@ -230,121 +225,93 @@ interface LineItemsToolbarProps {
   addLineItem: () => void;
   csvInputRef: React.RefObject<HTMLInputElement | null>;
   contracts: ContractOption[];
-  addFromCommitmentId: string;
-  setAddFromCommitmentId: (id: string) => void;
   handleAddAllCommitmentLineItems: (commitmentId: string) => void;
   lineItemCount: number;
+}
+
+function downloadCsvTemplate() {
+  const headers = "Budget Code,Description,Cost Qty,Cost Unit Cost,Revenue Qty,Revenue Unit Cost,UOM";
+  const blob = new Blob([headers + "\n"], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "change-event-line-items-template.csv";
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function LineItemsToolbar({
   addLineItem,
   csvInputRef,
   contracts,
-  addFromCommitmentId,
-  setAddFromCommitmentId,
   handleAddAllCommitmentLineItems,
   lineItemCount,
 }: LineItemsToolbarProps) {
+  const purchaseOrders = contracts.filter((c) => c.type === "purchase_order");
+  const subcontracts = contracts.filter((c) => c.type === "subcontract");
+
   return (
-    <div className="flex items-center gap-1">
-      <Button
-        type="button"
-        size="sm"
-        onClick={addLineItem}
-        className="gap-1.5"
-      >
+    <div className="flex items-center gap-2">
+      <Button type="button" size="sm" onClick={addLineItem} className="gap-1.5">
         <Plus />
         Add Line Item
       </Button>
 
-      <div className="mx-1.5 h-4 w-px bg-border" />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button type="button" variant="outline" size="sm" className="gap-1.5">
+            <Upload />
+            Import
+            <ChevronDown className="text-muted-foreground" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-56">
+          <DropdownMenuItem onSelect={() => csvInputRef.current?.click()}>
+            <Upload />
+            Import from CSV
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={downloadCsvTemplate}>
+            <Download />
+            Download template
+          </DropdownMenuItem>
 
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="gap-1.5 text-muted-foreground hover:text-foreground"
-        onClick={() => {
-          const headers = "Budget Code,Description,Cost Qty,Cost Unit Cost,Revenue Qty,Revenue Unit Cost,UOM";
-          const blob = new Blob([headers + "\n"], { type: "text/csv" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "change-event-line-items-template.csv";
-          a.click();
-          URL.revokeObjectURL(url);
-        }}
-      >
-        <Download />
-        Template
-      </Button>
-
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className="gap-1.5 text-muted-foreground hover:text-foreground"
-        onClick={() => csvInputRef.current?.click()}
-      >
-        <Upload />
-        Import CSV
-      </Button>
-
-      {contracts.length > 0 && (
-        <>
-          <div className="mx-1.5 h-4 w-px bg-border" />
-          <Select
-            value={addFromCommitmentId}
-            onValueChange={setAddFromCommitmentId}
-          >
-            <SelectTrigger className="h-8 w-52 border-0 bg-transparent text-xs text-muted-foreground shadow-none hover:text-foreground focus:ring-0">
-              <SelectValue placeholder="Add from commitment..." />
-            </SelectTrigger>
-            <SelectContent>
-              {contracts.filter((c) => c.type === "purchase_order").length > 0 && (
+          {contracts.length > 0 && (
+            <>
+              <DropdownMenuSeparator />
+              {purchaseOrders.length > 0 && (
                 <>
-                  <div className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Purchase Orders
-                  </div>
-                  {contracts
-                    .filter((c) => c.type === "purchase_order")
-                    .map((c) => (
-                      <SelectItem key={c.id} value={c.id} className="text-sm">
-                        {c.label}
-                      </SelectItem>
-                    ))}
+                  <DropdownMenuLabel className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Add from purchase order
+                  </DropdownMenuLabel>
+                  {purchaseOrders.map((c) => (
+                    <DropdownMenuItem
+                      key={c.id}
+                      onSelect={() => handleAddAllCommitmentLineItems(c.id)}
+                    >
+                      {c.label}
+                    </DropdownMenuItem>
+                  ))}
                 </>
               )}
-              {contracts.filter((c) => c.type === "subcontract").length > 0 && (
+              {subcontracts.length > 0 && (
                 <>
-                  <div className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Subcontracts
-                  </div>
-                  {contracts
-                    .filter((c) => c.type === "subcontract")
-                    .map((c) => (
-                      <SelectItem key={c.id} value={c.id} className="text-sm">
-                        {c.label}
-                      </SelectItem>
-                    ))}
+                  <DropdownMenuLabel className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Add from subcontract
+                  </DropdownMenuLabel>
+                  {subcontracts.map((c) => (
+                    <DropdownMenuItem
+                      key={c.id}
+                      onSelect={() => handleAddAllCommitmentLineItems(c.id)}
+                    >
+                      {c.label}
+                    </DropdownMenuItem>
+                  ))}
                 </>
               )}
-            </SelectContent>
-          </Select>
-          {addFromCommitmentId && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="gap-1.5 text-muted-foreground hover:text-foreground"
-              onClick={() => handleAddAllCommitmentLineItems(addFromCommitmentId)}
-            >
-              <Plus />
-              Add All Lines
-            </Button>
+            </>
           )}
-        </>
-      )}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {lineItemCount > 1 && (
         <span className="ml-auto text-xs text-muted-foreground">

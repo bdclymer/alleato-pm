@@ -49,8 +49,6 @@ export function ChangeEventForm({
     setTargetBudgetCodeRowIndex,
     handleCommitmentChange,
     handleCommitmentLineItemChange,
-    addFromCommitmentId,
-    setAddFromCommitmentId,
     handleAddAllCommitmentLineItems,
     addLineItem,
     removeLineItem,
@@ -122,8 +120,6 @@ export function ChangeEventForm({
             handleCommitmentLineItemChange={handleCommitmentLineItemChange}
             csvInputRef={csvInputRef}
             handleCsvImport={handleCsvImport}
-            addFromCommitmentId={addFromCommitmentId}
-            setAddFromCommitmentId={setAddFromCommitmentId}
             handleAddAllCommitmentLineItems={handleAddAllCommitmentLineItems}
             lineItemRevenueSource={formData.lineItemRevenueSource}
           />
