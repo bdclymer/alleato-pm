@@ -19402,22 +19402,90 @@ export type Database = {
         }
         Relationships: []
       }
+      potential_change_order_line_items: {
+        Row: {
+          category: string | null
+          change_event_line_item_id: string | null
+          created_at: string
+          description: string | null
+          id: number
+          line_amount: number | null
+          pco_id: number
+          quantity: number | null
+          sort_order: number | null
+          unit_cost: number | null
+          uom: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          change_event_line_item_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: never
+          line_amount?: number | null
+          pco_id: number
+          quantity?: number | null
+          sort_order?: number | null
+          unit_cost?: number | null
+          uom?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          change_event_line_item_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: never
+          line_amount?: number | null
+          pco_id?: number
+          quantity?: number | null
+          sort_order?: number | null
+          unit_cost?: number | null
+          uom?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "potential_change_order_line_item_change_event_line_item_id_fkey"
+            columns: ["change_event_line_item_id"]
+            isOneToOne: false
+            referencedRelation: "change_event_line_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "potential_change_order_line_items_pco_id_fkey"
+            columns: ["pco_id"]
+            isOneToOne: false
+            referencedRelation: "potential_change_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       potential_change_orders: {
         Row: {
           annotation: string | null
           annotation_note: string | null
           approved_at: string | null
           approved_value: number | null
+          change_reason: string | null
           created_at: string
           created_by_id: string | null
           current_version: number
           description: string | null
+          due_date: string | null
           estimated_value: number | null
+          field_change: boolean
           id: number
+          is_private: boolean
+          location: string | null
           markup_percentage: number | null
           number: string
+          paid_in_full: boolean
           prime_change_order_id: number | null
           project_id: number
+          reference: string | null
+          request_received_from: string | null
           rfq_required: boolean
           rfq_status: string | null
           root_cause: string | null
@@ -19434,16 +19502,24 @@ export type Database = {
           annotation_note?: string | null
           approved_at?: string | null
           approved_value?: number | null
+          change_reason?: string | null
           created_at?: string
           created_by_id?: string | null
           current_version?: number
           description?: string | null
+          due_date?: string | null
           estimated_value?: number | null
+          field_change?: boolean
           id?: number
+          is_private?: boolean
+          location?: string | null
           markup_percentage?: number | null
           number: string
+          paid_in_full?: boolean
           prime_change_order_id?: number | null
           project_id: number
+          reference?: string | null
+          request_received_from?: string | null
           rfq_required?: boolean
           rfq_status?: string | null
           root_cause?: string | null
@@ -19460,16 +19536,24 @@ export type Database = {
           annotation_note?: string | null
           approved_at?: string | null
           approved_value?: number | null
+          change_reason?: string | null
           created_at?: string
           created_by_id?: string | null
           current_version?: number
           description?: string | null
+          due_date?: string | null
           estimated_value?: number | null
+          field_change?: boolean
           id?: number
+          is_private?: boolean
+          location?: string | null
           markup_percentage?: number | null
           number?: string
+          paid_in_full?: boolean
           prime_change_order_id?: number | null
           project_id?: number
+          reference?: string | null
+          request_received_from?: string | null
           rfq_required?: boolean
           rfq_status?: string | null
           root_cause?: string | null
@@ -33674,6 +33758,55 @@ export type Database = {
         }
         Returns: Json
       }
+      create_pco_with_lines: {
+        Args: {
+          p_change_event_ids?: string[]
+          p_header: Json
+          p_line_items?: Json
+          p_project_id: number
+          p_user_id: string
+        }
+        Returns: {
+          annotation: string | null
+          annotation_note: string | null
+          approved_at: string | null
+          approved_value: number | null
+          change_reason: string | null
+          created_at: string
+          created_by_id: string | null
+          current_version: number
+          description: string | null
+          due_date: string | null
+          estimated_value: number | null
+          field_change: boolean
+          id: number
+          is_private: boolean
+          location: string | null
+          markup_percentage: number | null
+          number: string
+          paid_in_full: boolean
+          prime_change_order_id: number | null
+          project_id: number
+          reference: string | null
+          request_received_from: string | null
+          rfq_required: boolean
+          rfq_status: string | null
+          root_cause: string | null
+          schedule_impact_days: number | null
+          schedule_impact_description: string | null
+          status: string
+          submitted_at: string | null
+          title: string
+          type: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "potential_change_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_specification_revision: {
         Args: {
           p_content?: string
@@ -35099,6 +35232,56 @@ export type Database = {
           p_reasoning?: string
         }
         Returns: boolean
+      }
+      update_pco_with_lines: {
+        Args: {
+          p_change_event_ids?: string[]
+          p_header: Json
+          p_line_items?: Json
+          p_pco_id: number
+          p_project_id: number
+          p_user_id: string
+        }
+        Returns: {
+          annotation: string | null
+          annotation_note: string | null
+          approved_at: string | null
+          approved_value: number | null
+          change_reason: string | null
+          created_at: string
+          created_by_id: string | null
+          current_version: number
+          description: string | null
+          due_date: string | null
+          estimated_value: number | null
+          field_change: boolean
+          id: number
+          is_private: boolean
+          location: string | null
+          markup_percentage: number | null
+          number: string
+          paid_in_full: boolean
+          prime_change_order_id: number | null
+          project_id: number
+          reference: string | null
+          request_received_from: string | null
+          rfq_required: boolean
+          rfq_status: string | null
+          root_cause: string | null
+          schedule_impact_days: number | null
+          schedule_impact_description: string | null
+          status: string
+          submitted_at: string | null
+          title: string
+          type: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "potential_change_orders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       update_punch_item_comment: {
         Args: {

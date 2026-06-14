@@ -78,9 +78,9 @@ export const POST = withApiGuardrails(
 
     // Fetch line items and grouped change events for snapshot
     const { data: lineItems } = await supabase
-      .from("pco_line_items")
+      .from("potential_change_order_line_items")
       .select("*")
-      .eq("pco_id", pcoId);
+      .eq("pco_id", numericPcoId);
 
     const { data: groupedCEs } = await supabase
       .from("pco_change_events")

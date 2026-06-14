@@ -24,6 +24,7 @@ import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 import { logger } from "@/lib/logger";
+import type { Json } from "@/types/database.types";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -87,25 +88,22 @@ export const GET = withApiGuardrails(
       return apiErrorResponse(error);
     }
 
-    // Batch-fetch change event and line item counts (no FK join available for pco_line_items).
-    // pco_change_events is the legacy numeric PCO path; pco_line_items now belongs
-    // to the UUID-based prime/commitment PCO path.
-    const pcoIdStrings = (data || []).map((pco: Record<string, unknown>) => String(pco.id));
-    const pcoIdNumbers = pcoIdStrings
-      .map((id) => Number(id))
+    // Batch-fetch change event and line item counts for these numeric PCOs.
+    // Both children are keyed by the bigint PCO id: pco_change_events and
+    // potential_change_order_line_items.
+    const pcoIdNumbers = (data || [])
+      .map((pco: Record<string, unknown>) => Number(pco.id))
       .filter((n) => Number.isFinite(n));
-    const uuidPcoIds = pcoIdStrings.filter((id) =>
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id),
-    );
     const ceCountMap: Record<string, number> = {};
     const liCountMap: Record<string, number> = {};
 
-    if (pcoIdStrings.length > 0) {
+    if (pcoIdNumbers.length > 0) {
       const [ceResult, liResult] = await Promise.all([
         supabase.from("pco_change_events").select("pco_id").in("pco_id", pcoIdNumbers),
-        uuidPcoIds.length > 0
-          ? supabase.from("pco_line_items").select("pco_id").in("pco_id", uuidPcoIds)
-          : Promise.resolve({ data: [] }),
+        supabase
+          .from("potential_change_order_line_items")
+          .select("pco_id")
+          .in("pco_id", pcoIdNumbers),
       ]);
 
       if (ceResult.data) {
@@ -190,68 +188,45 @@ export const POST = withApiGuardrails(
       );
     }
 
-    // Generate next PCO number for this project if not provided
-    let pcoNumber: string | undefined = body.number;
-    if (!pcoNumber) {
-      const { data: latest } = await supabase
-        .from("potential_change_orders")
-        .select("number")
-        .eq("project_id", numericProjectId)
-        .order("id", { ascending: false })
-        .limit(1);
-      const prev = Number(latest?.[0]?.number);
-      pcoNumber = Number.isFinite(prev) && prev > 0
-        ? String(Math.floor(prev) + 1).padStart(3, "0")
-        : "001";
-    }
+    // Atomic create: header + grouped change events + all line items are written
+    // in a single transaction by create_pco_with_lines, so a mid-write failure
+    // leaves no orphaned PCO, grouping, or line items behind.
+    const lineItems = Array.isArray(body.line_items)
+      ? body.line_items.map(
+          (li: {
+            description?: string;
+            quantity?: number;
+            uom?: string;
+            unit_cost?: number;
+            category?: string | null;
+            change_event_line_item_id?: string | null;
+          }) => ({
+            description: li.description ?? null,
+            quantity: li.quantity ?? 1,
+            uom: li.uom ?? null,
+            unit_cost: li.unit_cost ?? 0,
+            category: li.category ?? null,
+            change_event_line_item_id: li.change_event_line_item_id ?? null,
+          }),
+        )
+      : [];
 
-    // Only include columns that exist on `potential_change_orders`.
-    // Legacy fields (change_reason, location, reference, request_received_from,
-    // due_date, is_private, field_change, paid_in_full) are no longer on this
-    // table and are ignored.
-    const insertData = {
-      project_id: numericProjectId,
-      number: pcoNumber,
-      title: body.title.trim(),
-      description: body.description || null,
-      type: body.type || "Client",
-      status: "DRAFT",
-      current_version: 1,
-      estimated_value: body.estimated_value ?? null,
-      markup_percentage: body.markup_percentage ?? null,
-      schedule_impact_days: body.schedule_impact_days ?? null,
-      schedule_impact_description: body.schedule_impact_description || null,
-      rfq_required: body.rfq_required ?? false,
-      root_cause: body.root_cause || null,
-      annotation: body.annotation || null,
-      annotation_note: body.annotation_note || null,
-      prime_change_order_id: body.prime_change_order_id ?? null,
-      created_by_id: user.id,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+    const changeEventIds = Array.isArray(body.change_event_ids)
+      ? (body.change_event_ids as unknown[]).map((id) => String(id))
+      : [];
 
-    const { data, error } = await supabase
-      .from("potential_change_orders")
-      .insert(insertData)
-      .select()
-      .single();
+    const { data, error } = await supabase.rpc("create_pco_with_lines", {
+      p_project_id: numericProjectId,
+      p_user_id: user.id,
+      p_header: body as Json,
+      p_change_event_ids: changeEventIds,
+      p_line_items: lineItems as Json,
+    });
 
     if (error) {
       logger.error({ msg: "Failed to create PCO:", error: error instanceof Error ? error.message : String(error) });
       return apiErrorResponse(error);
     }
-
-    // Write timeline event
-    await supabase.from("timeline_events").insert({
-      project_id: numericProjectId,
-      parent_type: "PCO",
-      parent_id: data.id.toString(),
-      event_type: "CREATED",
-      actor_id: user.id,
-      summary: `PCO "${data.title}" created`,
-      created_at: new Date().toISOString(),
-    });
 
     return NextResponse.json(data, { status: 201 });
     },

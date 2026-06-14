@@ -69,16 +69,14 @@ export interface PCOVersion {
 export interface PCOLineItem {
   id: number;
   pco_id: number;
-  change_event_line_item_id: number | null;
-  cost_code: string | null;
+  change_event_line_item_id: string | null;
   description: string | null;
   quantity: number | null;
   uom: string | null;
   unit_cost: number | null;
   line_amount: number | null;
-  line_type: string | null;
   category: string | null;
-  subcontractor_id: string | null;
+  sort_order: number | null;
 }
 
 interface ChangeEventSummary {

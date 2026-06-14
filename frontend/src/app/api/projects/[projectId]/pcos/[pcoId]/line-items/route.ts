@@ -8,10 +8,14 @@
  * PATCH  /api/projects/[projectId]/pcos/[pcoId]/line-items - Update line item
  * DELETE /api/projects/[projectId]/pcos/[pcoId]/line-items - Remove line item
  *
- * Schema: pco_line_items table
- * - id, pco_id (uuid), change_event_line_item_id
- * - cost_code, description, quantity, uom, unit_cost
- * - line_amount (generated), line_type, category, subcontractor_id
+ * Schema: potential_change_order_line_items table (numeric pco_id).
+ * - id, pco_id (bigint), change_event_line_item_id
+ * - description, quantity, uom, unit_cost, category, sort_order
+ * - line_amount (generated = quantity * unit_cost)
+ *
+ * Note: the create/edit pages now write line items atomically via the
+ * create_pco_with_lines / update_pco_with_lines RPCs; this collection route
+ * remains for incremental single-item edits.
  */
 
 import { withApiGuardrails } from "@/lib/guardrails/api";
@@ -37,10 +41,10 @@ export const GET = withApiGuardrails(
     const supabase = await createClient();
 
     const { data, error } = await supabase
-      .from("pco_line_items")
+      .from("potential_change_order_line_items")
       .select("*")
-      .eq("pco_id", pcoId)
-      .order("id", { ascending: true });
+      .eq("pco_id", parseInt(pcoId, 10))
+      .order("sort_order", { ascending: true });
 
     if (error) {
       logger.error({ msg: "Failed to fetch PCO line items:", error: error instanceof Error ? error.message : String(error) });
@@ -105,23 +109,21 @@ export const POST = withApiGuardrails(
       );
     }
 
-    // Schema note: legacy fields
-    // (cost_code, uom, line_type, category, subcontractor_id, line_amount) were
-    // replaced by (budget_code_id, unit_of_measure, amount, pco_type).
+    // potential_change_order_line_items columns. line_amount is a generated
+    // column (quantity * unit_cost) — never inserted.
     const insertData = {
-      pco_id: pcoId,
-      pco_type: body.pco_type || "commitment",
+      pco_id: numericPcoId,
       description: body.description,
-      budget_code_id: body.budget_code_id || null,
-      quantity: body.quantity ?? null,
-      unit_of_measure: body.unit_of_measure || body.uom || null,
-      unit_cost: body.unit_cost ?? null,
-      amount: body.amount ?? body.line_amount ?? null,
+      quantity: body.quantity ?? 1,
+      uom: body.uom ?? body.unit_of_measure ?? null,
+      unit_cost: body.unit_cost ?? 0,
+      category: body.category ?? null,
       change_event_line_item_id: body.change_event_line_item_id || null,
+      sort_order: body.sort_order ?? 0,
     };
 
     const { data, error } = await supabase
-      .from("pco_line_items")
+      .from("potential_change_order_line_items")
       .insert(insertData)
       .select()
       .single();
@@ -185,12 +187,12 @@ export const PATCH = withApiGuardrails(
       );
     }
 
-    // Verify line item belongs to this PCO 
+    // Verify line item belongs to this PCO
     const { data: existing, error: fetchError } = await supabase
-      .from("pco_line_items")
+      .from("potential_change_order_line_items")
       .select("id")
       .eq("id", body.id)
-      .eq("pco_id", pcoId)
+      .eq("pco_id", numericPcoId)
       .single();
 
     if (fetchError || !existing) {
@@ -200,34 +202,31 @@ export const PATCH = withApiGuardrails(
       );
     }
 
-    // Only real columns on pco_line_items; legacy field names are translated below.
+    // Real columns on potential_change_order_line_items (line_amount is generated).
     const allowedFields = [
-      "budget_code_id",
       "description",
       "quantity",
-      "unit_of_measure",
+      "uom",
       "unit_cost",
-      "amount",
-      "pco_type",
+      "category",
       "change_event_line_item_id",
+      "sort_order",
     ];
 
-    // Back-compat: translate legacy field names to current schema.
-    if (body.uom !== undefined && body.unit_of_measure === undefined) {
-      body.unit_of_measure = body.uom;
-    }
-    if (body.line_amount !== undefined && body.amount === undefined) {
-      body.amount = body.line_amount;
+    // Back-compat: accept the legacy field name for unit of measure.
+    if (body.unit_of_measure !== undefined && body.uom === undefined) {
+      body.uom = body.unit_of_measure;
     }
 
-    const updates: Record<string, unknown> = {};
+    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     for (const field of allowedFields) {
       if (body[field] !== undefined) {
         updates[field] = body[field];
       }
     }
 
-    if (Object.keys(updates).length === 0) {
+    // updated_at is always present; require at least one real field beyond it.
+    if (Object.keys(updates).length <= 1) {
       return NextResponse.json(
         { error: "No fields to update" },
         { status: 400 }
@@ -235,9 +234,10 @@ export const PATCH = withApiGuardrails(
     }
 
     const { data, error } = await supabase
-      .from("pco_line_items")
+      .from("potential_change_order_line_items")
       .update(updates)
       .eq("id", body.id)
+      .eq("pco_id", numericPcoId)
       .select()
       .single();
 
@@ -303,10 +303,10 @@ export const DELETE = withApiGuardrails(
 
     // Delete and return the deleted item for confirmation 
     const { data, error } = await supabase
-      .from("pco_line_items")
+      .from("potential_change_order_line_items")
       .delete()
       .eq("id", body.lineItemId)
-      .eq("pco_id", pcoId)
+      .eq("pco_id", numericPcoId)
       .select()
       .single();
 

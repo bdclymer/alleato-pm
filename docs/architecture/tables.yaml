@@ -1316,7 +1316,23 @@ tables:
     domain: financial
     owner: unknown
     status: dormant
-    purpose: "Dormant potential change orders."
+    purpose: "Numeric (bigint) potential change orders that group change events (via pco_change_events) and convert to COs. Header written atomically by create_pco_with_lines / update_pco_with_lines. NOT the same as commitment_pcos / prime_contract_pcos (uuid)."
+    relatedTables: [pco_change_events, potential_change_order_line_items]
+
+  - name: potential_change_order_line_items
+    db: MAIN
+    domain: financial
+    owner: unknown
+    status: active
+    purpose: "Line items for numeric potential_change_orders (pco_id bigint). line_amount is generated (quantity * unit_cost). Written atomically via create_pco_with_lines / update_pco_with_lines. Distinct from pco_line_items (uuid-keyed, for commitment_pcos / prime_contract_pcos)."
+    relatedTables: [potential_change_orders]
+
+  - name: app_page_access_policies
+    db: MAIN
+    domain: admin
+    owner: unknown
+    status: active
+    purpose: "Admin-managed route access inventory. Records explicit per-page access levels (route, access_level, permission_module) so page visibility decisions are reviewable and auditable."
     relatedTables: []
 
   - name: change_workflow_comments

@@ -103,12 +103,31 @@ export const GET = withApiGuardrails(
       changeEvent: changeEventsMap[pce.change_event_id] || null,
     }));
 
-    // Fetch line items
+    // Flattened change events in the shape the edit form expects (id = the
+    // change_event_id, plus a few display fields).
+    const changeEvents = ((pcoChangeEvents || []) as Array<
+      PcoChangeEventRow & { estimated_amount: number | null }
+    >).map((pce) => {
+      const ce = (changeEventsMap[pce.change_event_id] || {}) as {
+        number?: string;
+        title?: string;
+        type?: string;
+      };
+      return {
+        id: pce.change_event_id,
+        number: ce.number ?? "",
+        title: ce.title ?? "",
+        type: ce.type ?? "",
+        estimated_amount: pce.estimated_amount ?? null,
+      };
+    });
+
+    // Fetch line items from the numeric-PCO line-items table.
     const { data: lineItems } = await supabase
-      .from("pco_line_items")
+      .from("potential_change_order_line_items")
       .select("*")
-      .eq("pco_id", pcoId)
-      .order("id", { ascending: true });
+      .eq("pco_id", numericPcoId)
+      .order("sort_order", { ascending: true });
 
     // Fetch timeline events
     const { data: timeline } = await supabase
@@ -123,6 +142,9 @@ export const GET = withApiGuardrails(
       ...pco,
       versions: versions || [],
       groupedChangeEvents,
+      // Page-facing shapes consumed by the detail sidebar and edit form.
+      change_events: changeEvents,
+      line_items: lineItems || [],
       lineItems: lineItems || [],
       timeline: timeline || [],
       _links: {

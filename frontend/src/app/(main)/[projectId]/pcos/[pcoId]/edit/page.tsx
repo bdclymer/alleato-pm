@@ -12,16 +12,11 @@ import {
   type LocalLineItem,
   type PCOFormValues,
 } from "@/components/domain/pcos/PCOWorkspace";
+import { useQueryClient } from "@tanstack/react-query";
+
 import { apiFetch } from "@/lib/api-client";
 import { useProjectChangeEvents } from "@/hooks/use-change-events";
-import {
-  usePCO,
-  useUpdatePCO,
-  useGroupChangeEvent,
-  useUngroupChangeEvent,
-  useCreatePCOLineItem,
-  useDeletePCOLineItem,
-} from "@/hooks/use-pcos";
+import { usePCO } from "@/hooks/use-pcos";
 import type { ChangeEvent } from "@/types/change-events";
 
 // =============================================================================
@@ -47,12 +42,7 @@ export default function EditPCOPage() {
     { limit: 500, enabled: projectIdNum > 0 },
   );
 
-  // Mutations
-  const updatePCO = useUpdatePCO(projectId, pcoId);
-  const groupCE = useGroupChangeEvent(projectId, pcoId);
-  const ungroupCE = useUngroupChangeEvent(projectId, pcoId);
-  const createLineItem = useCreatePCOLineItem(projectId, pcoId);
-  const deleteLineItem = useDeletePCOLineItem(projectId, pcoId);
+  const queryClient = useQueryClient();
 
   // Form state — initialized from loaded PCO
   const [formValues, setFormValues] = React.useState<PCOFormValues>({
@@ -190,92 +180,53 @@ export default function EditPCOPage() {
       const markupAmount = subtotal * (markupPercentage / 100);
       const total = subtotal + markupAmount;
 
-      // Update main PCO data
-      await updatePCO.mutateAsync({
-        title: formValues.title.trim(),
-        type: formValues.type,
-        description: formValues.description.trim() || null,
-        rfq_required: formValues.rfqRequired,
-        markup_percentage: markupPercentage || null,
-        estimated_value: total,
-        change_reason: formValues.changeReason.trim() || null,
-        location: formValues.location.trim() || null,
-        reference: formValues.reference.trim() || null,
-        request_received_from: formValues.requestReceivedFrom.trim() || null,
-        due_date: formValues.dueDate || null,
-        is_private: formValues.isPrivate,
-        field_change: formValues.fieldChange,
-        paid_in_full: formValues.paidInFull,
-        ...(submitAfter ? { status: "SUBMITTED" as const } : {}),
-      });
-
-      // Handle CE grouping changes
-      const existingCEIds = new Set(
-        (pco?.change_events ?? []).map((ce) => String(ce.id)),
-      );
-      const currentCEIds = new Set(groupedCEs.map((ce) => ce.id));
-
-      // Group newly added CEs
-      const toGroup = groupedCEs.filter((ce) => !existingCEIds.has(ce.id));
-      for (const ce of toGroup) {
-        await groupCE.mutateAsync(ce.id);
-      }
-
-      // Ungroup removed CEs
-      const toUngroup = [...existingCEIds].filter((id) => !currentCEIds.has(id));
-      for (const ceId of toUngroup) {
-        await ungroupCE.mutateAsync(ceId);
-      }
-
-      // Handle line items:
-      // - New items (tempId is a UUID, not a numeric DB id) → POST
-      // - Existing items (tempId is a numeric DB id) → PUT to persist value edits
-      // - Removed items → DELETE
-      for (const li of lineItems) {
-        const isNew = isNaN(Number(li.tempId));
-        if (isNew) {
-          await createLineItem.mutateAsync({
+      // Single transactional update: header + grouped change events + all line
+      // items are written together by update_pco_with_lines. A mid-write failure
+      // rolls everything back, so the PCO can no longer be left half-updated.
+      await apiFetch(`/api/projects/${projectId}/pcos/${pcoId}/atomic`, {
+        method: "PUT",
+        body: JSON.stringify({
+          title: formValues.title.trim(),
+          type: formValues.type,
+          description: formValues.description.trim() || null,
+          rfq_required: formValues.rfqRequired,
+          markup_percentage: markupPercentage || null,
+          estimated_value: total,
+          change_reason: formValues.changeReason.trim() || null,
+          location: formValues.location.trim() || null,
+          reference: formValues.reference.trim() || null,
+          request_received_from: formValues.requestReceivedFrom.trim() || null,
+          due_date: formValues.dueDate || null,
+          is_private: formValues.isPrivate,
+          field_change: formValues.fieldChange,
+          paid_in_full: formValues.paidInFull,
+          ...(submitAfter ? { status: "SUBMITTED" } : {}),
+          // Full desired set of grouped change events (CE uuid ids).
+          change_event_ids: groupedCEs.map((ce) => ce.id),
+          // Full desired set of line items. Existing rows carry a numeric id;
+          // new rows (UUID tempId) omit it. Anything not listed is deleted.
+          line_items: lineItems.map((li) => ({
+            ...(isNaN(Number(li.tempId)) ? {} : { id: Number(li.tempId) }),
             description: li.description,
             quantity: li.quantity,
             uom: li.uom,
             unit_cost: li.unitCost,
-            line_amount: li.quantity * li.unitCost,
             category: li.category || null,
-          });
-        } else {
-          // Existing line item — PUT to persist any edits to values.
-          // Use apiFetch directly to avoid double-toast from the hook's onError.
-          await apiFetch(
-            `/api/projects/${projectId}/pcos/${pcoId}/line-items/${li.tempId}`,
-            {
-              method: "PUT",
-              body: JSON.stringify({
-                description: li.description,
-                quantity: li.quantity,
-                uom: li.uom,
-                unit_cost: li.unitCost,
-                line_amount: li.quantity * li.unitCost,
-                category: li.category || null,
-              }),
-            },
-          );
-        }
-      }
+          })),
+        }),
+      });
 
-      // Delete removed line items
-      const currentLineItemIds = new Set(lineItems.map((li) => li.tempId));
-      const existingLineItemIds = (pco?.line_items ?? []).map((li) =>
-        String(li.id),
+      // Refresh cached PCO data so the list/detail reflect the update.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["pcos", projectId] }),
+        queryClient.invalidateQueries({ queryKey: ["pco", projectId, pcoId] }),
+      ]);
+
+      toast.success(
+        submitAfter
+          ? "PCO updated and submitted to client."
+          : "PCO updated successfully",
       );
-      for (const existingId of existingLineItemIds) {
-        if (!currentLineItemIds.has(existingId)) {
-          await deleteLineItem.mutateAsync(Number(existingId));
-        }
-      }
-
-      if (submitAfter) {
-        toast.success("PCO updated and submitted to client.");
-      }
 
       router.push(`/${projectId}/pcos`);
     } catch (error) {

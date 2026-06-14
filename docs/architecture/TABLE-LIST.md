@@ -2,7 +2,7 @@
 
 > **AUTO-GENERATED — DO NOT EDIT BY HAND.**
 > Regenerate with `npm run db:inventory`. Source: `docs/architecture/tables.yaml` + live Supabase stats.
-> Last generated: 2026-06-11T14:55:20.024Z
+> Last generated: 2026-06-14T06:19:11.935Z
 
 This file lists every table in both Supabase projects with its current status, row count, code-reference count, one-line purpose, and any gotchas/notes. It is the fastest way to answer "does table X exist, what does it do, is it live, does anything use it?"
 
@@ -19,14 +19,15 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 
 ## MAIN — PM App database (`lgveqfnpkxvzbnnwuled`)
 
-394 tables · 188 live · 159 dormant · 35 live-empty · 11 dead · 1 legacy
+396 tables · 188 live · 159 dormant · 35 live-empty · 11 dead · 2 active · 1 legacy
 
 | Table | Domain | Status | Rows | Code refs | Purpose | Notes |
 |---|---|---|---:|---:|---|---|
 | `admin_view_backups` | admin | dormant | 2 | 0 | Dormant admin view backup snapshots. |  |
 | `app_crawl_sessions` | admin | live | 7 | 0 | App crawl sessions for admin auditing. |  |
-| `app_error_events` | admin | live | 4.0k | 3 | Application error event tracking. |  |
+| `app_error_events` | admin | live | 4.4k | 3 | Application error event tracking. |  |
 | `app_error_groups` | admin | live | 1.1k | 6 | Error group aggregation. |  |
+| `app_page_access_policies` | admin | active | 1 | 2 | Admin-managed route access inventory. Records explicit per-page access levels (route, access_level, permission_module) so page visibility decisions are reviewa… |  |
 | `app_pages` | admin | live | 1 | 0 | App page registry. |  |
 | `app_parity_checks` | admin | dormant | 0 | 0 | Dormant parity check results. |  |
 | `app_schedule_bulk_operations` | admin | dormant | 0 | 0 | Dormant app schedule bulk operation records. |  |
@@ -37,7 +38,7 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `app_ui_table_columns` | admin | dormant | 0 | 0 | Dormant UI table column definitions. |  |
 | `app_ui_tables` | admin | live | 0 | 0 | App UI table registry for admin tooling. |  |
 | `database_tables_catalog` | admin | live | 318 | 2 | Schema metadata catalog for admin tooling. Separate from db-inventory.generated.ts. |  |
-| `dev_annotations` | admin | live | 390 | 14 | Dev/admin annotation overlay for the UI. |  |
+| `dev_annotations` | admin | live | 396 | 14 | Dev/admin annotation overlay for the UI. |  |
 | `dev_panel_comments` | admin | live | 4 | 2 | Dev panel inline comments. |  |
 | `parts` | admin | dormant | 7 | 0 | Dormant parts catalog. Purpose unclear. |  |
 | `procore_capture_sessions` | admin | live | 6 | 0 | Procore crawler capture sessions. |  |
@@ -59,11 +60,11 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `tool_features` | admin | live | 40 | 1 | Feature flags or tool feature definitions. |  |
 | `tool_form_fields` | admin | live | 31 | 1 | Form field definitions for tool configuration. |  |
 | `agent_learning_usages` | ai | live | 0 | 0 | Session-level usage/outcome log for injected agent learnings. Proves whether a retrieved learning was used and whether later feedback marked that session posit… | Rows are written opportunistically when learnings are injected into assistant context. Treat it as effectiveness telemetry, not the source of the learning itse… |
-| `agent_learnings` | ai | live | 50 | 0 | Durable AI failure-pattern and prevention-prompt memory. Read and upserted by agent-learning-service.ts from thumbs-down feedback, eval failures, and admin fee… | PM APP stores the structured learning record only. Embeddings for retrieval are synced separately into the RAG database and must not be written into this table. |
+| `agent_learnings` | ai | live | 55 | 0 | Durable AI failure-pattern and prevention-prompt memory. Read and upserted by agent-learning-service.ts from thumbs-down feedback, eval failures, and admin fee… | PM APP stores the structured learning record only. Embeddings for retrieval are synced separately into the RAG database and must not be written into this table. |
 | `ai_analysis_jobs` | ai | dormant | 0 | 0 | Dormant AI analysis job queue. |  |
 | `ai_feedback_events` | ai | live-empty | 12 | 8 | AI feedback events. Writer wired in feedback-event-service.ts but never triggered. |  |
 | `ai_learning_promotions` | ai | live-empty | 0 | 30 | AI learning promotion records. Writer wired but never triggered. |  |
-| `ai_memories` | ai | live | 56.5k | 11 | Long-term AI assistant memory store. 27,990 rows. Written by ai-memory-service.ts and workspace artifact promotions. |  |
+| `ai_memories` | ai | live | 58.7k | 11 | Long-term AI assistant memory store. 27,990 rows. Written by ai-memory-service.ts and workspace artifact promotions. |  |
 | `ai_models` | ai | dormant | 0 | 0 | Dormant AI model registry. |  |
 | `ai_retrieval_feedback` | ai | live | 2.2k | 4 | Thumb/score feedback on AI retrieval results. 1,948 rows. Written by feedback-event-service.ts. |  |
 | `ai_retrieval_weights` | ai | dormant | 0 | 6 | Dormant AI retrieval weight tuning table. |  |
@@ -72,7 +73,7 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `ai_tool_write_audits` | ai | dormant | 2 | 0 | Dormant AI tool write audit log. |  |
 | `chat_history` | ai | live | 4.0k | 31 | AI assistant chat message persistence. 2,908 rows. The live chat store. |  |
 | `chats` | ai | dead | 3 | 0 | Dead schema. No code references. Drop candidate. |  |
-| `conversations` | ai | live | 395 | 15 | AI assistant chat session metadata. 226 rows. Thread/session header for chat_history. |  |
+| `conversations` | ai | live | 396 | 15 | AI assistant chat session metadata. 226 rows. Thread/session header for chat_history. |  |
 | `memories` | ai | live | 79 | 4 | Per-session AI conversation summaries with 3072-dim embeddings, used for cross-session recall. Written by conversation-memory.ts (embedAndStoreMemory, memory_t… |  |
 | `messages` | ai | dead | 32 | 0 | Dead schema. No code references. Drop candidate. |  |
 | `notes` | ai | dead | 0 | 3 | Dead schema. No code references. Drop candidate. |  |
@@ -81,14 +82,14 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `organization_members` | auth | dormant | 0 | 0 | Multi-tenant infrastructure scaffolding. Not in use. |  |
 | `organizations` | auth | dormant | 0 | 0 | Multi-tenant infrastructure scaffolding. Not in use. |  |
 | `user_email_notifications` | auth | live-empty | 2 | 5 | Email notification preferences per user. UI present, no rows. |  |
-| `user_profiles` | auth | live | 16 | 130 | Per-user app preferences and is_admin flag. Read by 123+ code paths for permission checks. | CRITICAL BUG: Table appears empty but 123+ code paths read it. Every permission check silently falls back to null/non-admin. Investigate RLS or actual data sta… |
+| `user_profiles` | auth | live | 16 | 131 | Per-user app preferences and is_admin flag. Read by 123+ code paths for permission checks. | CRITICAL BUG: Table appears empty but 123+ code paths read it. Every permission check silently falls back to null/non-admin. Investigate RLS or actual data sta… |
 | `user_schedule_notifications` | auth | live-empty | 0 | 2 | Schedule notification preferences per user. UI present, no rows. |  |
 | `user_table_views` | auth | live | 0 | 7 | Per-user named presets for UnifiedTablePage — captures visible columns, column order, sort, and filters. Lets PMs/testers save 'Quick view', 'Full detail', etc. | scope_key is project-agnostic (e.g. 'meetings'), not 'meetings-25125'. A view created on project A's meetings page applies on project B's. is_default is enforc… |
 | `users_auth` | auth | live | 16 | 35 | Bridge between Supabase auth user (UUID) and people.id. Critical for all permission checks. | CRITICAL BUG: Only 1 row despite ~7 writer paths. Most signups not producing the bridge row. Silent privilege degradation for all users without a row. |
-| `bot_debug_log` | communications | live | 492 | 1 | Observability log for Teams bot. 336 rows. Written by teams-chat.ts. Not read in app. |  |
+| `bot_debug_log` | communications | live | 497 | 1 | Observability log for Teams bot. 336 rows. Written by teams-chat.ts. Not read in app. |  |
 | `bot_user_mappings` | communications | live | 4 | 16 | Maps (platform, platform_user_id) to supabase_user_id. Drives Teams and Telegram bot identity. 1 active row. |  |
 | `email_attachments` | communications | live | 902 | 10 | In-app attachment store. 419 rows, 391 MB. Covers manual uploads and change-event/contract/commitment/prime-CO/submittal attachments. NOT the same as outlook_e… | Do not confuse with outlook_email_intake_attachments. This stores in-app uploads. |
-| `email_events` | communications | dormant | 33 | 24 | Dormant email event log. |  |
+| `email_events` | communications | dormant | 34 | 24 | Dormant email event log. |  |
 | `email_filter_rules` | communications | live | 0 | 4 | User-trained junk-mail rules. Applied by the Outlook sync as Gate 1.5 between the hand-coded noise filter (_is_noise_email) and the heuristic classifier. Each… | Reads in backend/src/services/integrations/microsoft_graph/user_filter_rules.py. Writes from frontend/src/app/api/email-filter-rules/ (admin-only POST/PATCH/DE… |
 | `email_messages` | communications | dead | 0 | 0 | Dead schema. No code references. Drop candidate. |  |
 | `meeting_preps` | communications | dormant | 0 | 9 | Dormant meeting preparation records. |  |
@@ -101,11 +102,11 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `teams_conversation_refs` | communications | live | 2 | 6 | Per-user proactive Teams thread cache. Upserted on every inbound Teams message so the bot can reply in the same thread. |  |
 | `teams_link_codes` | communications | live-empty | 6 | 4 | Short-lived link codes for Teams bot↔account linking. Empty = no in-progress flows. |  |
 | `telegram_link_codes` | communications | live-empty | 1 | 4 | Short-lived link codes for Telegram bot↔account linking. Empty = no in-progress flows. |  |
-| `companies` | directory | live | 544 | 91 | Master company directory — vendors, clients, subs. is_vendor flag drives Acumatica sync. FK target for vendor-related forms. | FK-validation gate: vendor dropdown sources from vendors view but FK targets companies table. ~50 read sites. |
+| `companies` | directory | live | 557 | 92 | Master company directory — vendors, clients, subs. is_vendor flag drives Acumatica sync. FK target for vendor-related forms. | FK-validation gate: vendor dropdown sources from vendors view but FK targets companies table. ~50 read sites. |
 | `company_context` | directory | live-empty | 0 | 5 | Admin singleton doc for company-level AI context. Not yet populated. |  |
-| `people` | directory | live | 1.2k | 126 | Master person directory. UUID id. Bridged to auth via users_auth.auth_user_id. |  |
+| `people` | directory | live | 1.2k | 128 | Master person directory. UUID id. Bridged to auth via users_auth.auth_user_id. |  |
 | `prospects` | directory | live-empty | 0 | 2 | Prospects directory page exists and reads/writes. Never used in production. |  |
-| `vendor_contacts` | directory | live-empty | 2 | 2 | UI tries to read vendor contacts. No writer found in codebase. |  |
+| `vendor_contacts` | directory | live-empty | 2 | 3 | UI tries to read vendor contacts. No writer found in codebase. |  |
 | `change_order_documents` | documents | live | 0 | 0 | Pattern C junction: change orders ↔ document_metadata. TODO: expand metadata, identify writers/readers. |  |
 | `commitment_change_order_documents` | documents | live | 0 | 0 | Pattern C junction: commitment change orders ↔ document_metadata. Replaces cco_attachments writers. |  |
 | `company_documents` | documents | live | 0 | 0 | Pattern C junction: companies ↔ document_metadata. TODO: expand metadata, identify writers/readers. |  |
@@ -114,9 +115,9 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `document_executive_summaries` | documents | dormant | 0 | 0 | Dormant document executive summaries. |  |
 | `document_group_access` | documents | dormant | 0 | 0 | Dormant per-group document access control. |  |
 | `document_insights` | documents | dormant | 0 | 0 | Dormant document insights table. |  |
-| `document_metadata` | documents | live | 39.0k | 203 | Primary document catalog. 36,511 rows. Dual-written with RAG.rag_document_metadata on every ingestion. Full business metadata including project_id, source_type… | Always written alongside rag_document_metadata via upsert_document_metadata() — never write to one without the other. |
+| `document_metadata` | documents | live | 39.1k | 205 | Primary document catalog. 36,511 rows. Dual-written with RAG.rag_document_metadata on every ingestion. Full business metadata including project_id, source_type… | Always written alongside rag_document_metadata via upsert_document_metadata() — never write to one without the other. |
 | `document_rows` | documents | live | 13.1k | 5 | Structured document rows loaded by ETL outside the repo. 12,354 rows. Read by AI tools/structured-queries.ts. |  |
-| `document_type_taxonomy` | documents | live | 23 | 1 | Lookup table for document_metadata.document_type values (Pattern C). TODO: expand metadata, identify writers/readers. |  |
+| `document_type_taxonomy` | documents | live | 23 | 3 | Lookup table for document_metadata.document_type values (Pattern C). TODO: expand metadata, identify writers/readers. |  |
 | `document_user_access` | documents | dormant | 0 | 0 | Dormant per-user document access control. |  |
 | `documents_rfis_links` | documents | dormant | 0 | 0 | Dormant document to RFI links. |  |
 | `documents_submittals_links` | documents | dormant | 0 | 0 | Dormant document to submittal links. |  |
@@ -150,7 +151,7 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `specification_sections` | documents | dormant | 0 | 14 | Dormant specification sections. |  |
 | `specification_subscribers` | documents | dormant | 0 | 4 | Dormant specification subscribers. |  |
 | `specifications` | documents | live-empty | 0 | 13 | Specification records. Feature wired, no production data. |  |
-| `subcontract_documents` | documents | live | 12 | 0 | Pattern C junction: subcontracts ↔ document_metadata. TODO: expand metadata, identify writers/readers. |  |
+| `subcontract_documents` | documents | live | 13 | 0 | Pattern C junction: subcontracts ↔ document_metadata. TODO: expand metadata, identify writers/readers. |  |
 | `subcontractor_invoice_documents` | documents | live | 0 | 0 | Pattern C junction: subcontractor invoices ↔ document_metadata. Replaces subcontractor side of invoice_attachments. |  |
 | `submittal_doc_links` | documents | live | 1 | 0 | Pattern C junction: submittals ↔ document_metadata. TODO: expand metadata, identify writers/readers. |  |
 | `estimate_gc_templates` | estimating | live | 1 | 2 | GC template definitions for the estimating workflow. TODO: expand metadata, identify writers/readers. |  |
@@ -158,23 +159,23 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `estimate_sublist_call_logs` | estimating | live | 3 | 2 | Call logs against estimate sublists. TODO: expand metadata, identify writers/readers. |  |
 | `estimate_sublist_scope_items` | estimating | live | 34 | 7 | Scope items attached to estimate sublists. TODO: expand metadata, identify writers/readers. |  |
 | `acumatica_accounts` | financial | live | 154 | 1 | Chart of accounts mirror from Acumatica. 154 rows. Frontend-only sync (mirror-sync.ts). No app reads. |  |
-| `acumatica_ap_bill_lines` | financial | live | 4.0k | 2 | Line items for acumatica_ap_bills. 4,016 rows. Delete+reinsert per sync cycle. | Delete+reinsert on every sync. Do not reference rows by id across sync cycles. |
-| `acumatica_ap_bills` | financial | live | 6.4k | 9 | Acumatica AP bills mirror. 6,399 rows. Source for direct_costs projection. Updated 2×/day by Render cron. |  |
-| `acumatica_ar_invoice_lines` | financial | live | 1.9k | 2 | Line items for acumatica_ar_invoices. 1,922 rows. |  |
-| `acumatica_ar_invoices` | financial | live | 468 | 10 | Acumatica AR invoices mirror. 464 rows. Read by accounting invoices, dashboard, WIP, global invoices API. |  |
+| `acumatica_ap_bill_lines` | financial | live | 4.4k | 2 | Line items for acumatica_ap_bills. 4,016 rows. Delete+reinsert per sync cycle. | Delete+reinsert on every sync. Do not reference rows by id across sync cycles. |
+| `acumatica_ap_bills` | financial | live | 6.6k | 10 | Acumatica AP bills mirror. 6,399 rows. Source for direct_costs projection. Updated 2×/day by Render cron. |  |
+| `acumatica_ar_invoice_lines` | financial | live | 2.6k | 2 | Line items for acumatica_ar_invoices. 1,922 rows. |  |
+| `acumatica_ar_invoices` | financial | live | 496 | 11 | Acumatica AR invoices mirror. 464 rows. Read by accounting invoices, dashboard, WIP, global invoices API. |  |
 | `acumatica_change_orders` | financial | live | 4.2k | 5 | Acumatica change orders mirror. 4,069 rows. Projects into both prime_contract_change_orders and contract_change_orders via status mapping. |  |
-| `acumatica_checks` | financial | live | 2.8k | 6 | Acumatica checks mirror. 2,775 rows. Projects into commitment_payments. Also flips paid flag on subcontractor_invoices when matching check found. |  |
+| `acumatica_checks` | financial | live | 3.0k | 6 | Acumatica checks mirror. 2,775 rows. Projects into commitment_payments. Also flips paid flag on subcontractor_invoices when matching check found. |  |
 | `acumatica_customers` | financial | live | 58 | 1 | Acumatica customers mirror. 58 rows. Frontend-only sync. Used to backfill customer_name on acumatica_ar_invoices. |  |
 | `acumatica_outbound_audit_logs` | financial | live-empty | 0 | 2 | Audit log for outbound Acumatica exports. Writer exists but never triggered in production. |  |
-| `acumatica_payment_applications` | financial | live | 183 | 4 | Join table for payment applications. 183 rows. | CRITICAL: No writer found in current code. Schema defined in migration 20260413000001. Rows from historical/manual load. If invoice-paid logic depends on this… |
-| `acumatica_payments` | financial | live | 369 | 5 | Acumatica payments mirror. 368 rows. Read by accounting/payments and accounting/invoices paid logic. |  |
-| `acumatica_project_budgets` | financial | live | 6.2k | 3 | Acumatica project budgets mirror. 6,172 rows. Read by accounting/wip route only. |  |
-| `acumatica_project_tasks` | financial | live | 99 | 1 | Acumatica project tasks mirror. 99 rows. Frontend-only sync. Used for accounting cross-references. |  |
+| `acumatica_payment_applications` | financial | live | 1.6k | 8 | Join table for payment applications. 183 rows. | CRITICAL: No writer found in current code. Schema defined in migration 20260413000001. Rows from historical/manual load. If invoice-paid logic depends on this… |
+| `acumatica_payments` | financial | live | 386 | 6 | Acumatica payments mirror. 368 rows. Read by accounting/payments and accounting/invoices paid logic. |  |
+| `acumatica_project_budgets` | financial | live | 6.6k | 3 | Acumatica project budgets mirror. 6,172 rows. Read by accounting/wip route only. |  |
+| `acumatica_project_tasks` | financial | live | 106 | 1 | Acumatica project tasks mirror. 99 rows. Frontend-only sync. Used for accounting cross-references. |  |
 | `acumatica_projects` | financial | live | 87 | 5 | Acumatica projects mirror. 87 rows. Also upserts matching rows in the projects table on sync. |  |
 | `acumatica_purchase_orders` | financial | live | 213 | 3 | Acumatica purchase orders mirror. 204 rows. Projects into purchase_orders. |  |
 | `acumatica_subcontracts` | financial | live | 740 | 3 | Acumatica subcontracts mirror. 718 rows. Projects into subcontracts and subcontract_sov_items. |  |
-| `acumatica_sync_runs` | financial | live-empty | 175 | 1 | Audit log of Acumatica sync runs. Writer exists at acumatica_sync.py:408 but no rows recorded. | CRITICAL: Empty despite writer. Likely exception path or ACUMATICA_FINANCIAL_SYNC_ENABLED env flag is off. Investigate _record_sync_run. |
-| `acumatica_sync_state` | financial | live | 26 | 2 | Cursor state for Acumatica sync. 25 rows. Read before each sync to determine where to resume. |  |
+| `acumatica_sync_runs` | financial | live-empty | 250 | 1 | Audit log of Acumatica sync runs. Writer exists at acumatica_sync.py:408 but no rows recorded. | CRITICAL: Empty despite writer. Likely exception path or ACUMATICA_FINANCIAL_SYNC_ENABLED env flag is off. Investigate _record_sync_run. |
+| `acumatica_sync_state` | financial | live | 31 | 2 | Cursor state for Acumatica sync. 25 rows. Read before each sync to determine where to resume. |  |
 | `billing_periods` | financial | dormant | 9 | 11 | Dormant billing periods. |  |
 | `budget_changes` | financial | dead | 1 | 3 | Older budget change mechanism predating budget_modifications. 1 row. Effectively dead. |  |
 | `budget_forecast_line_items` | financial | dormant | 0 | 4 | Dormant budget forecasting. No active writers. |  |
@@ -190,8 +191,8 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `budget_views` | financial | live | 26 | 11 | UI column-layout state for budget views. 63 rows. |  |
 | `change_event_approvals` | financial | dormant | 0 | 4 | Dormant change event approval workflow. |  |
 | `change_event_documents` | financial | live | 2 | 0 | Pattern C junction between change events and document_metadata. Created during attachment backfill; 2 rows. |  |
-| `change_event_history` | financial | live | 74 | 8 | Hand-rolled audit log for change events. 43 rows. Written at multiple change-event API call sites. |  |
-| `change_event_line_items` | financial | live | 47 | 17 | Line-item detail per change event. 54 rows. |  |
+| `change_event_history` | financial | live | 75 | 8 | Hand-rolled audit log for change events. 43 rows. Written at multiple change-event API call sites. |  |
+| `change_event_line_items` | financial | live | 44 | 17 | Line-item detail per change event. 54 rows. |  |
 | `change_event_pco_links` | financial | dormant | 6 | 18 | Dormant change event to PCO links. |  |
 | `change_event_related_items` | financial | dormant | 4 | 4 | Dormant change event related items. |  |
 | `change_event_rfq_responses` | financial | live | 1 | 8 | Vendor responses to change event RFQs. 1 row. |  |
@@ -201,15 +202,15 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `change_orders` | financial | dead | 5 | 3 | Generic change order table. Dead — all CO data lives in contract_change_orders and prime_contract_change_orders. |  |
 | `change_workflow_comments` | financial | dormant | 0 | 0 | Dormant change workflow comments. |  |
 | `change_workflow_notifications` | financial | dormant | 0 | 0 | Dormant change workflow notifications. |  |
-| `commitment_audit_log` | financial | live | 976 | 1 | Postgres trigger-driven audit covering subcontracts and purchase_orders mutations. 852 rows. |  |
+| `commitment_audit_log` | financial | live | 1.1k | 1 | Postgres trigger-driven audit covering subcontracts and purchase_orders mutations. 852 rows. |  |
 | `commitment_change_order_lines` | financial | dormant | 3 | 11 | Commitment change order line items. Not clearly mapped in inventory. |  |
-| `commitment_payments` | financial | live | 2.8k | 4 | Mirror of relevant acumatica_checks. 2,775 rows. Only backend Python sync writes. |  |
+| `commitment_payments` | financial | live | 4.0k | 7 | Mirror of relevant acumatica_checks. 2,775 rows. Only backend Python sync writes. |  |
 | `commitment_pcos` | financial | dormant | 2 | 23 | Dormant commitment PCO tracking. |  |
 | `commitment_related_items` | financial | dormant | 0 | 6 | Dormant commitment related items. |  |
 | `contract_billing_periods` | financial | dormant | 5 | 0 | Dormant contract billing period definitions. |  |
 | `contract_change_orders` | financial | live | 168 | 61 | Commitment-side change orders (subcontracts/POs). 140 rows. Despite the name, these are NOT prime CCOs. | Misleading name: stores commitment-side CCOs (subcontracts/POs), NOT prime contract change orders. Routes at api/commitments/[commitmentId]/change-orders/*. |
 | `contract_documents` | financial | live | 0 | 0 | Contract-level documents. 1 row. Effectively unused. |  |
-| `contract_line_items` | financial | live | 202 | 18 | Line items for contract_change_orders. 140 rows. |  |
+| `contract_line_items` | financial | live | 203 | 18 | Line items for contract_change_orders. 140 rows. |  |
 | `contract_payments` | financial | dormant | 0 | 0 | Dormant contract payments. Not the same as prime_contract_payments. |  |
 | `contract_snapshots` | financial | dormant | 0 | 0 | Dormant contract snapshots. |  |
 | `contract_views` | financial | dormant | 0 | 0 | Dormant contract view state. |  |
@@ -219,13 +220,13 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `cost_codes` | financial | live | 372 | 36 | Global master cost code table. 310 rows. Referenced by budget lines and project budget codes. |  |
 | `cost_factors` | financial | dormant | 8 | 0 | Dormant cost factor table. |  |
 | `cost_forecasts` | financial | dormant | 2 | 4 | Dormant cost forecast table. |  |
-| `direct_cost_line_items` | financial | live | 8.8k | 11 | Line items for direct_costs. 8,436 rows. Delete+reinsert per sync cycle. | Delete+reinsert on every sync. Do not reference rows by id across sync cycles. |
-| `direct_costs` | financial | live | 6.6k | 22 | Domain projection of acumatica_ap_bills. 6,555 rows. Project-attributed AP charges. acumatica_document_key is the upsert key — do not edit manually. |  |
+| `direct_cost_line_items` | financial | live | 9.2k | 11 | Line items for direct_costs. 8,436 rows. Delete+reinsert per sync cycle. | Delete+reinsert on every sync. Do not reference rows by id across sync cycles. |
+| `direct_costs` | financial | live | 6.7k | 22 | Domain projection of acumatica_ap_bills. 6,555 rows. Project-attributed AP charges. acumatica_document_key is the upsert key — do not edit manually. |  |
 | `erp_sync_log` | financial | live | 75 | 0 | Frontend-initiated Acumatica sync audit log. 51 rows. Written by the frontend cron route, not the backend Python sync. |  |
 | `estimate_allowances` | financial | dormant | 0 | 3 | Dormant estimate allowances. |  |
 | `estimate_alternates` | financial | dormant | 0 | 3 | Dormant estimate alternates. |  |
 | `estimate_detail_items` | financial | live | 5.2k | 18 | Sub-line drill-downs for estimate line items. 615 rows. |  |
-| `estimate_gc_items` | financial | live | 2.1k | 13 | General conditions items for estimates. 281 rows. |  |
+| `estimate_gc_items` | financial | live | 2.1k | 15 | General conditions items for estimates. 281 rows. |  |
 | `estimate_line_items` | financial | live | 594 | 6 | Main cost-of-work breakdown for estimates. 495 rows. |  |
 | `estimate_sublist_subs` | financial | dormant | 10 | 24 | Dormant estimate sublist substitutions. |  |
 | `estimates` | financial | live | 35 | 17 | Estimate header records. 5 rows. Bridge from estimates to budget and contract line items via estimate-import. |  |
@@ -236,41 +237,42 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `invoice_payments` | financial | dormant | 3 | 4 | Dormant invoice payments. |  |
 | `invoicing_settings` | financial | dormant | 1 | 2 | Dormant invoicing settings. |  |
 | `owner_invoice_line_items` | financial | live | 604 | 5 | Line items for owner_invoices. 604 rows. Average ~20 lines per invoice. |  |
-| `owner_invoices` | financial | live | 35 | 33 | Invoices sent to the owner (pay applications outbound). 29 rows. Full state machine UI. Line-item granularity is in active use. |  |
+| `owner_invoices` | financial | live | 35 | 34 | Invoices sent to the owner (pay applications outbound). 29 rows. Full state machine UI. Line-item granularity is in active use. |  |
 | `payment_application_line_items` | financial | dormant | 5 | 9 | Dormant payment application line items. |  |
 | `payment_transactions` | financial | dormant | 0 | 0 | Dormant payment transactions. |  |
 | `pcco_line_items` | financial | dormant | 1 | 14 | Dormant PCCO line items. |  |
 | `pco_change_events` | financial | dormant | 0 | 8 | Dormant PCO to change event links. |  |
-| `pco_line_items` | financial | dormant | 2 | 19 | Dormant PCO line items. |  |
+| `pco_line_items` | financial | dormant | 2 | 10 | Dormant PCO line items. |  |
 | `pco_versions` | financial | dormant | 0 | 3 | Dormant PCO version history. |  |
-| `potential_change_orders` | financial | dormant | 1 | 14 | Dormant potential change orders. |  |
+| `potential_change_order_line_items` | financial | active | 0 | 9 | Line items for numeric potential_change_orders (pco_id bigint). line_amount is generated (quantity * unit_cost). Written atomically via create_pco_with_lines /… |  |
+| `potential_change_orders` | financial | dormant | 1 | 12 | Numeric (bigint) potential change orders that group change events (via pco_change_events) and convert to COs. Header written atomically by create_pco_with_line… |  |
 | `prime_contract_change_order_related_items` | financial | live | 1 | 3 | Related item links for prime contract change orders. 1 row. |  |
 | `prime_contract_change_orders` | financial | live | 146 | 73 | Owner-side change orders. 142 rows. Projected from acumatica_change_orders via status mapping. |  |
 | `prime_contract_payment_applications` | financial | dormant | 3 | 19 | Dormant prime contract pay applications. |  |
-| `prime_contract_payments` | financial | live | 21 | 3 | Owner payment records. 26 rows. Most owner payments tracked via acumatica_payments + invoice join instead. |  |
+| `prime_contract_payments` | financial | live | 27 | 7 | Owner payment records. 26 rows. Most owner payments tracked via acumatica_payments + invoice join instead. |  |
 | `prime_contract_pcos` | financial | dormant | 1 | 17 | Dormant prime contract PCO table. |  |
 | `prime_contract_project_settings` | financial | live | 2 | 6 | Per-project prime contract settings. 1 row. |  |
 | `prime_contract_sovs` | financial | dormant | 6 | 1 | Dormant prime contract schedule of values. |  |
-| `prime_contracts` | financial | live | 19 | 75 | Owner contracts. 21 rows. Routes live under /api/projects/[projectId]/contracts (NOT /prime-contracts). | API routes are at /contracts not /prime-contracts. Bootstrap creates one only when project has owner info. |
+| `prime_contracts` | financial | live | 19 | 76 | Owner contracts. 21 rows. Routes live under /api/projects/[projectId]/contracts (NOT /prime-contracts). | API routes are at /contracts not /prime-contracts. Bootstrap creates one only when project has owner info. |
 | `project_budget_codes` | financial | live | 3.4k | 42 | Per-project budget codes linking cost codes to budget lines. The dropdown source for budget code selection in forms. | FK-validation gate: budget_code_id FK→budget_lines but dropdown sources from project_cost_codes. Always resolve the ID mismatch in both read and write paths. |
 | `project_budget_settings` | financial | live-empty | 1 | 3 | Per-project budget UI configuration. Schema exists, API routes exist, but no projects have settings saved yet. |  |
-| `purchase_order_sov_items` | financial | live | 211 | 24 | SOV items for purchase orders. 198 rows. |  |
-| `purchase_orders` | financial | live | 139 | 25 | Purchase order records. 129 rows. Domain projection from acumatica_purchase_orders. Audited via Postgres trigger to commitment_audit_log. |  |
+| `purchase_order_sov_items` | financial | live | 220 | 26 | SOV items for purchase orders. 198 rows. |  |
+| `purchase_orders` | financial | live | 140 | 25 | Purchase order records. 129 rows. Domain projection from acumatica_purchase_orders. Audited via Postgres trigger to commitment_audit_log. |  |
 | `qto_items` | financial | dormant | 0 | 0 | Dormant quantity takeoff items. |  |
 | `qtos` | financial | dormant | 0 | 0 | Dormant quantity takeoff headers. |  |
 | `schedule_of_values` | financial | dead | 0 | 4 | SOV table. Referenced as a reader in AI financial tools but NEVER written. Dead reads. |  |
 | `sov_line_items` | financial | dead | 0 | 1 | SOV line items. Same as schedule_of_values — never written. |  |
 | `sub_jobs` | financial | dormant | 0 | 0 | Dormant sub-job tracking. |  |
-| `subcontract_sov_items` | financial | live | 1.0k | 25 | Schedule of Values line items for subcontracts. 964 rows. Source for subcontractor invoicing. | Name collision: subcontractor_sov_items (2 rows) is the near-dead sibling. This is the live table. |
+| `subcontract_sov_items` | financial | live | 1.0k | 27 | Schedule of Values line items for subcontracts. 964 rows. Source for subcontractor invoicing. | Name collision: subcontractor_sov_items (2 rows) is the near-dead sibling. This is the live table. |
 | `subcontractor_invoice_audit_log` | financial | live | 2.4k | 7 | App-level audit log for subcontractor invoice state changes. 2,444 rows. Hand-rolled inserts scattered across invoice routes — no DB trigger backstop. | No DB trigger. Missing inserts in some code paths mean silent audit gaps. |
 | `subcontractor_invoice_emails` | financial | dormant | 1 | 4 | Dormant subcontractor invoice email log. |  |
 | `subcontractor_invoice_line_items` | financial | live | 17 | 6 | Line items for subcontractor_invoices. Only 12 rows — legacy invoices are header-only. |  |
 | `subcontractor_invoice_related_items` | financial | dormant | 0 | 4 | Dormant subcontractor invoice related items. |  |
 | `subcontractor_invoices` | financial | live | 2.4k | 43 | Subcontractor pay applications. 2,433 rows. Full state machine UI. Acumatica sync flips paid flag when matching check found. | Only 12 line items for 2,433 invoices — legacy invoices imported header-only. Line-item granularity not guaranteed for historical data. |
 | `subcontractor_sov_items` | financial | dead | 10 | 9 | Near-dead sibling of subcontract_sov_items. 2 rows. Used for subcontractor-portal submissions. Verify usage before dropping. |  |
-| `subcontractor_sov_submissions` | financial | dormant | 30 | 10 | Subcontractor SOV submission tracking. Dormant. |  |
+| `subcontractor_sov_submissions` | financial | dormant | 32 | 10 | Subcontractor SOV submission tracking. Dormant. |  |
 | `subcontracts` | financial | live | 423 | 32 | Subcontract records. 398 rows. Written by Acumatica sync and UI routes. Audited via Postgres trigger to commitment_audit_log. |  |
-| `vertical_markup` | financial | dormant | 20 | 13 | Dormant vertical markup table. |  |
+| `vertical_markup` | financial | dormant | 24 | 13 | Dormant vertical markup table. |  |
 | `asrs_blocks` | fm-asrs | live | 476 | 0 | ASRS blocks. Lightly referenced. |  |
 | `asrs_configurations` | fm-asrs | dormant | 4 | 0 | Dormant ASRS configurations. No code references. |  |
 | `asrs_decision_matrix` | fm-asrs | dormant | 0 | 0 | Dormant ASRS decision matrix. No code references. |  |
@@ -296,12 +298,12 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `__drizzle_migrations` | infrastructure | live | 1 | 0 | Drizzle ORM migration ledger. Tracks applied migrations. |  |
 | `_prisma_migrations` | infrastructure | legacy | 1 | 0 | Prisma migration ledger from prior ORM. Kept for historical record; Supabase migrations are authoritative. |  |
 | `briefing_runs` | intelligence | dormant | 0 | 0 | Dormant briefing run tracker. |  |
-| `daily_recaps` | intelligence | live | 81 | 13 | Legacy executive briefing packets. 49 rows. Still used by alleato-executive-daily-brief-* Render crons. | Legacy mechanism. intelligence_packets is the modern equivalent but daily_recaps is still actively generated. |
-| `executive_briefing_follow_ups` | intelligence | live | 380 | 8 | Follow-up actions from executive briefings. 108 rows. |  |
+| `daily_recaps` | intelligence | live | 84 | 15 | Legacy executive briefing packets. 49 rows. Still used by alleato-executive-daily-brief-* Render crons. | Legacy mechanism. intelligence_packets is the modern equivalent but daily_recaps is still actively generated. |
+| `executive_briefing_follow_ups` | intelligence | live | 397 | 8 | Follow-up actions from executive briefings. 108 rows. |  |
 | `initiative_cards` | intelligence | live | 12 | 14 | Strategic initiative cards. 8 rows. Separate from insight_cards. |  |
-| `insight_card_evidence` | intelligence | live | 19.3k | 12 | Links insight cards to their source documents. 6,185 rows. FK to document_metadata/source_documents. |  |
+| `insight_card_evidence` | intelligence | live | 20.0k | 12 | Links insight cards to their source documents. 6,185 rows. FK to document_metadata/source_documents. |  |
 | `insight_card_targets` | intelligence | live | 9.6k | 6 | Links insight cards to intelligence targets with is_primary flag. 5,990 rows. |  |
-| `insight_cards` | intelligence | live | 10.4k | 31 | Durable extracted signals from the intelligence pipeline. 5,991 rows. Created by promote_signal_candidate. Can be acknowledged, snoozed, or manually created. |  |
+| `insight_cards` | intelligence | live | 10.6k | 31 | Durable extracted signals from the intelligence pipeline. 5,991 rows. Created by promote_signal_candidate. Can be acknowledged, snoozed, or manually created. |  |
 | `intelligence_packet_cards` | intelligence | live | 1.2k | 9 | Packet to insight_card join table with section and rank. 2,230 rows. Wiped and re-inserted on every packet refresh. | Wiped and re-inserted on every refresh. Do not reference rows by id across refresh cycles. |
 | `intelligence_packets` | intelligence | live | 103 | 18 | Rendered briefing per intelligence target — latest snapshot. 83 rows. Upserted by compile_current_packet on every refresh. |  |
 | `intelligence_reviews` | intelligence | live | 4 | 2 | Human review queue for packet/card feedback. Low row count today, but active insert/read paths make it the durable app-side review ledger. | Do not let this become a silent junk drawer for AI corrections. Keep ownership tight around packet/card feedback until a broader review workflow exists. |
@@ -330,8 +332,8 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `processing_queue` | pipeline | dormant | 3 | 0 | Dormant processing queue. |  |
 | `sources` | pipeline | live | 1.2k | 0 | Source registry — canonical list of ingestion sources. 1,218 rows. |  |
 | `sync_status` | pipeline | dormant | 0 | 1 | Dormant sync status table. |  |
-| `system_alerts` | pipeline | live | 653 | 4 | Health alert sink. 646 rows. Written by source_sync_health.py and source_rag_health.py crons. |  |
-| `project_companies` | projects | live | 65 | 24 | Many-to-many join between projects and companies. company_type and status columns describe the relationship. |  |
+| `system_alerts` | pipeline | live | 654 | 4 | Health alert sink. 646 rows. Written by source_sync_health.py and source_rag_health.py crons. |  |
+| `project_companies` | projects | live | 66 | 24 | Many-to-many join between projects and companies. company_type and status columns describe the relationship. |  |
 | `project_contact_references` | projects | live | 6.0k | 1 | Pipeline-internal contact references built during Graph email sync for project assignment. No UI. Rows accumulate uncontrolled. | Written by project_assignment.py every 30-min Graph sync. No cleanup/expiry mechanism. Row count grows unbounded. |
 | `project_directory_memberships` | projects | live | 34 | 63 | Core M2M join between projects and directory members. Race-protected via onConflict upserts. |  |
 | `project_documents` | projects | live | 2.6k | 9 | Project-scoped uploaded documents. Parallel to document_metadata (the AI-ready catalog). |  |
@@ -342,12 +344,12 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `project_progress_report_photos` | projects | live | 5 | 7 | Photos attached to progress reports. |  |
 | `project_progress_reports` | projects | live | 10 | 12 | Weekly progress reports. Triggered by api/cron/progress-reports and user-triggered PDF email flow. |  |
 | `project_resources` | projects | dormant | 0 | 0 | Dormant. No writer or reader found in codebase. |  |
-| `project_role_members` | projects | live-empty | 41 | 8 | Intended for role-member assignments. Assignment goes through project_directory_memberships instead. |  |
-| `project_roles` | projects | live | 352 | 7 | Project-specific role definitions managed via CRUD routes. |  |
+| `project_role_members` | projects | live-empty | 42 | 8 | Intended for role-member assignments. Assignment goes through project_directory_memberships instead. |  |
+| `project_roles` | projects | live | 353 | 7 | Project-specific role definitions managed via CRUD routes. |  |
 | `project_transmittals` | projects | live-empty | 0 | 6 | Transmittals feature — routes wired, no data yet. |  |
 | `project_vendors` | projects | live | 5 | 6 | User-managed vendor associations per project. |  |
-| `projects` | projects | live | 113 | 144 | Master project record. Integer id is the FK target for nearly every project-scoped table. Acumatica sync AND manual API can both write — race conditions possib… | id is INTEGER (not UUID). Several columns are mostly null: address, city, state, client, current_phase. project_manager FK→people.id (uuid). team_members is uu… |
-| `projects_audit` | projects | live | 18.4k | 0 | Append-only audit trail of changes to the projects table. Written by a Postgres trigger only — no app code touches it directly. | Only useful via direct SQL. No UI. Cannot be queried via normal app routes. |
+| `projects` | projects | live | 113 | 145 | Master project record. Integer id is the FK target for nearly every project-scoped table. Acumatica sync AND manual API can both write — race conditions possib… | id is INTEGER (not UUID). Several columns are mostly null: address, city, state, client, current_phase. project_manager FK→people.id (uuid). team_members is uu… |
+| `projects_audit` | projects | live | 18.5k | 0 | Append-only audit trail of changes to the projects table. Written by a Postgres trigger only — no app code touches it directly. | Only useful via direct SQL. No UI. Cannot be queried via normal app routes. |
 | `projects_sync` | projects | dormant | 1 | 0 | Leftover staging table from early project sync work. No code references found. |  |
 | `user_project_preferences` | projects | live-empty | 0 | 3 | Per-user per-project UI preferences. Service exists, no rows saved. |  |
 | `user_project_roles` | projects | dormant | 0 | 0 | Dormant. No writer or reader found in codebase. |  |
@@ -357,7 +359,7 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `support_article_chunks` | support | live | 5.2k | 3 | Knowledge base embeddings for semantic search. 5,219 rows. |  |
 | `support_articles` | support | live | 2.3k | 8 | In-app knowledge base articles. 2,205 rows. |  |
 | `admin_feedback_comments` | workflow | dormant | 32 | 6 | Dormant admin feedback comments. |  |
-| `admin_feedback_items` | workflow | live | 321 | 33 | In-app user feedback inbox. 291 rows. Managed at /api/admin/feedback/*. |  |
+| `admin_feedback_items` | workflow | live | 323 | 33 | In-app user feedback inbox. 291 rows. Managed at /api/admin/feedback/*. |  |
 | `collaboration_comments` | workflow | dormant | 16 | 3 | Dormant collaboration comments. |  |
 | `collaboration_notifications` | workflow | dormant | 0 | 9 | Dormant collaboration notifications. |  |
 | `daily_log_equipment` | workflow | dormant | 0 | 5 | Dormant daily log equipment entries. |  |
@@ -396,7 +398,7 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `roadmap_items` | workflow | live | 10 | 0 | Product roadmap items. 10 rows. Admin-managed at /api/admin/roadmap/*. |  |
 | `schedule_deadlines` | workflow | dormant | 0 | 3 | Dormant schedule deadline tracking. |  |
 | `schedule_dependencies` | workflow | dormant | 0 | 7 | Dormant schedule task dependencies. |  |
-| `schedule_tasks` | workflow | live | 253 | 31 | Project schedule tasks. 241 rows. |  |
+| `schedule_tasks` | workflow | live | 357 | 31 | Project schedule tasks. 241 rows. |  |
 | `submittal_analytics_events` | workflow | live-empty | 0 | 0 | Analytics events for submittal workflows. Wired but no data. |  |
 | `submittal_distribution_recipients` | workflow | dormant | 2 | 0 | Dormant submittal distribution recipient records. |  |
 | `submittal_distributions` | workflow | dormant | 2 | 0 | Dormant submittal distribution records. |  |
@@ -412,8 +414,8 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `submittal_workflow_templates` | workflow | live | 1 | 4 | Submittal workflow templates. 1 row. |  |
 | `submittals` | workflow | live | 17 | 48 | Submittal records. 1 row. |  |
 | `task_comments` | workflow | live-empty | 0 | 4 | Comments on tasks. Routes exist, no data. |  |
-| `tasks` | workflow | live | 833 | 57 | Project action items. 845 rows. Written by task_extraction.py (daily cron) and teams_compiler.py. |  |
-| `timeline_events` | workflow | dormant | 1 | 12 | Dormant timeline events. |  |
+| `tasks` | workflow | live | 913 | 57 | Project action items. 845 rows. Written by task_extraction.py (daily cron) and teams_compiler.py. |  |
+| `timeline_events` | workflow | dormant | 1 | 11 | Dormant timeline events. |  |
 | `timesheets` | workflow | dormant | 0 | 0 | Dormant timesheet records. |  |
 | `todos` | workflow | live-empty | 1 | 2 | SOV-related todos. Referenced in subcontractor-sov-service.ts but empty. |  |
 | `transmittal_items` | workflow | dormant | 0 | 0 | Dormant transmittal items. |  |
@@ -429,14 +431,14 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 |---|---|---|---:|---:|---|---|
 | `fireflies_ingestion_jobs` | communications | live | 27.2k | 25 | Meeting ingestion job queue. 27,230 rows. Canonical copy. MAIN.fireflies_ingestion_jobs is stale. |  |
 | `document_attribution_candidates` | documents | live | 14.0k | 14 | Low-confidence project attribution review queue. 13,193 rows. Canonical copy. Written when project confidence < 0.70. |  |
-| `document_chunks` | documents | live | 137.6k | 40 | THE unified vector store. 109,171 rows. halfvec 3072 embeddings. Written by pipeline/embedder.py. Read by rpc('search_document_chunks'). Canonical source for a… | MAIN.document_chunks (103K rows) is a stale orphan. Always use the RAG copy for reads and writes. |
-| `rag_document_metadata` | documents | live | 38.3k | 17 | Embedding-side document catalog. 36,657 rows. app_document_id FK back to MAIN.document_metadata. Only backend pipeline reads this directly. |  |
+| `document_chunks` | documents | live | 140.7k | 40 | THE unified vector store. 109,171 rows. halfvec 3072 embeddings. Written by pipeline/embedder.py. Read by rpc('search_document_chunks'). Canonical source for a… | MAIN.document_chunks (103K rows) is a stale orphan. Always use the RAG copy for reads and writes. |
+| `rag_document_metadata` | documents | live | 38.4k | 17 | Embedding-side document catalog. 36,657 rows. app_document_id FK back to MAIN.document_metadata. Only backend pipeline reads this directly. |  |
 | `packet_refresh_jobs` | intelligence | live | 1.8k | 11 | Packet refresh job queue. 1,530 rows. Canonical copy. MAIN copy is stale orphan. |  |
 | `source_intelligence_jobs` | intelligence | live | 14.2k | 10 | Compiler job queue. 11,071 rows. Canonical copy. Drained every 10 min by APScheduler in FastAPI. |  |
 | `source_signal_candidates` | intelligence | live | 9.0k | 8 | Pre-promotion signal candidates from compiler. 7,527 rows. Canonical copy. |  |
 | `ingestion_dead_letter` | pipeline | live-empty | 17 | 0 | Dead letter queue for failed ingestion jobs. Wired but empty. |  |
-| `ingestion_jobs` | pipeline | live | 567 | 4 | Generic ingestion audit log. 436 rows. Canonical copy. |  |
+| `ingestion_jobs` | pipeline | live | 581 | 4 | Generic ingestion audit log. 436 rows. Canonical copy. |  |
 | `rag_pipeline_state` | pipeline | live-empty | 1 | 0 | RAG pipeline state metadata. Wired but empty. |  |
-| `source_sync_health_snapshots` | pipeline | live | 335 | 2 | Source sync health rollup snapshots. 330 rows. Canonical copy. |  |
-| `source_sync_runs` | pipeline | live | 13.5k | 12 | Per-sync-run audit log. 3,639 rows. Canonical copy. |  |
+| `source_sync_health_snapshots` | pipeline | live | 336 | 2 | Source sync health rollup snapshots. 330 rows. Canonical copy. |  |
+| `source_sync_runs` | pipeline | live | 14.9k | 12 | Per-sync-run audit log. 3,639 rows. Canonical copy. |  |
 

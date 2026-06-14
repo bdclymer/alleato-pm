@@ -69,7 +69,7 @@ export function PCOSidebar({ pco }: PCOSidebarProps) {
             {lineItems.map((item) => (
               <div key={item.id} className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground truncate max-w-[60%]">
-                  {item.description || item.cost_code || "Line item"}
+                  {item.description || item.category || "Line item"}
                 </span>
                 <span className="tabular-nums text-foreground">
                   {formatCurrency(item.line_amount)}

@@ -93,10 +93,10 @@ export const POST = withApiGuardrails(
 
     // 2. Fetch line items for this PCO
     const { data: lineItems } = await supabase
-      .from("pco_line_items")
+      .from("potential_change_order_line_items")
       .select("*")
-      .eq("pco_id", pcoId)
-      .order("id", { ascending: true });
+      .eq("pco_id", numericPcoId)
+      .order("sort_order", { ascending: true });
 
     // 3. Auto-generate next PCCO number (safe parsing — treat non-numeric as 0)
     const { data: existingCOs } = await supabase
@@ -116,11 +116,11 @@ export const POST = withApiGuardrails(
     }
 
     // Calculate total amount from line items or use estimated_value.
-    // Column is `amount` (legacy: `line_amount`).
+    // potential_change_order_line_items exposes the generated `line_amount`.
     const totalAmount =
       lineItems && lineItems.length > 0
         ? lineItems.reduce(
-            (sum, item) => sum + (item.amount || 0),
+            (sum, item) => sum + (item.line_amount || 0),
             0
           )
         : pco.estimated_value || 0;
@@ -292,7 +292,7 @@ export const POST = withApiGuardrails(
         }
 
         const subAmount = items.reduce(
-          (sum, item) => sum + (item.amount || 0),
+          (sum, item) => sum + (item.line_amount || 0),
           0
         );
 
