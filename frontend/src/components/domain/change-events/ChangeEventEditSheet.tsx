@@ -169,7 +169,7 @@ export function ChangeEventEditSheet({
           <SheetTitle>Edit Change Event</SheetTitle>
         </SheetHeader>
 
-        <div className="flex-1 space-y-5 py-4 overflow-y-auto pr-1">
+        <div className="flex-1 space-y-5 px-6 py-3 overflow-y-auto">
           {/* Title */}
           <div className="space-y-1.5">
             <Label htmlFor="ce-title">Title</Label>
@@ -312,7 +312,7 @@ export function ChangeEventEditSheet({
           )}
         </div>
 
-        <SheetFooter className="flex-row justify-end gap-2 border-t border-border pt-4">
+        <SheetFooter className="border-t border-border">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}

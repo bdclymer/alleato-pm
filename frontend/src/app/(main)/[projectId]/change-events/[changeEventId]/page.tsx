@@ -809,7 +809,7 @@ export default function ChangeEventDetailPage() {
           <SheetHeader>
             <SheetTitle>Send Request for Quote</SheetTitle>
           </SheetHeader>
-          <div className="px-8 pb-8">
+          <div className="px-6 pb-5">
             {changeEvent && (
               <ChangeEventRfqForm
                 changeEvent={changeEvent}

@@ -947,7 +947,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
         <SheetHeader>
           <SheetTitle>Send Requests for Quote</SheetTitle>
         </SheetHeader>
-        <div className="px-8 pb-8">
+        <div className="px-6 pb-5">
           {selectedChangeEvents.length > 0 && selectedChangeEvents[0] !== undefined && (
             <ChangeEventRfqForm
               changeEvent={selectedChangeEvents[0]}

@@ -95,7 +95,7 @@ function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="sheet-header"
-      className={cn("flex flex-col gap-2 px-8 pt-8 pb-6", className)}
+      className={cn("flex flex-col gap-1 px-6 pt-5 pb-2", className)}
       {...props}
     />
   )
@@ -105,7 +105,7 @@ function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="sheet-footer"
-      className={cn("mt-auto flex flex-row gap-2 justify-end px-8 pb-8 pt-6", className)}
+      className={cn("mt-auto flex flex-row gap-2 justify-end px-6 pb-5 pt-4", className)}
       {...props}
     />
   )
