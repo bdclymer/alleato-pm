@@ -281,6 +281,7 @@ def synthesize_project_intelligence(
     *,
     since: Optional[str] = None,
     max_docs: int = 40,
+    max_extractions: Optional[int] = None,
     dry_run: bool = False,
 ) -> dict:
     """Run deep communication-intelligence extraction over a project's recent
@@ -356,6 +357,13 @@ def synthesize_project_intelligence(
         project_state = ""
 
     for doc in rows:
+        # Cap the number of (slow) LLM extractions per call. Deep extraction takes
+        # seconds per doc, so a large synchronous batch can exceed the request
+        # timeout. max_extractions bounds the actual extractions (not docs scanned).
+        if max_extractions is not None and (result["emails"] + result["teams"]) >= max_extractions:
+            result["capped_at_max_extractions"] = max_extractions
+            break
+
         result["docs_seen"] += 1
         doc_id = doc.get("id")
         comm_type = _classify_comm_type(doc)
