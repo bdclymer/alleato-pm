@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type {
   ColumnConfig,
+  DetailFieldConfig,
   FilterConfig,
   TableColumn,
 } from "@/components/tables/unified";
@@ -118,6 +119,59 @@ export const commitmentFilters: FilterConfig[] = [
 export const commitmentDefaultVisibleColumns = commitmentColumns
   .filter((column) => column.defaultVisible !== false)
   .map((column) => column.id);
+
+// Title-case values that satisfy the DB CHECK constraint on subcontracts /
+// purchase_orders status (and round-trip through normalizeSubcontractStatus).
+export const COMMITMENT_STATUS_OPTIONS = [
+  { value: "Draft", label: "Draft" },
+  { value: "Out for Bid", label: "Out for Bid" },
+  { value: "Out for Signature", label: "Out for Signature" },
+  { value: "Approved", label: "Approved" },
+  { value: "Complete", label: "Complete" },
+  { value: "Terminated", label: "Terminated" },
+];
+
+const YES_NO_OPTIONS = [
+  { value: "true", label: "Yes" },
+  { value: "false", label: "No" },
+];
+
+/**
+ * Fields for the same-page slide-over editor (DetailPanel). Edits the full
+ * commitment record without navigating away. Date fields differ by type;
+ * financials/SOV stay on the full detail page (not edited here).
+ */
+export function buildCommitmentDetailFields(
+  type: string | undefined,
+): DetailFieldConfig[] {
+  const dateFields: DetailFieldConfig[] =
+    type === "purchase_order"
+      ? [
+          { id: "contract_date", label: "Contract Date", type: "date" },
+          { id: "delivery_date", label: "Delivery Date", type: "date" },
+          { id: "signed_po_received_date", label: "Signed PO Received", type: "date" },
+        ]
+      : [
+          { id: "start_date", label: "Start Date", type: "date" },
+          { id: "estimated_completion_date", label: "Est. Completion", type: "date" },
+          { id: "contract_date", label: "Contract Date", type: "date" },
+          {
+            id: "signed_contract_received_date",
+            label: "Signed Contract Received",
+            type: "date",
+          },
+        ];
+
+  return [
+    { id: "contract_number", label: "Number", type: "readonly" },
+    { id: "contract_company.name", label: "Company", type: "readonly" },
+    { id: "title", label: "Title", type: "text", fullWidth: true },
+    { id: "status", label: "Status", type: "select", options: COMMITMENT_STATUS_OPTIONS },
+    { id: "executed", label: "Executed", type: "select", options: YES_NO_OPTIONS },
+    { id: "description", label: "Description", type: "textarea", fullWidth: true },
+    ...dateFields,
+  ];
+}
 
 function formatCurrency(value: number | null | undefined): string {
   if (value === null || value === undefined) return "-";

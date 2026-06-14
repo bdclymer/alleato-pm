@@ -50,6 +50,7 @@ import {
 import { ExportDialog } from "@/components/commitments/ExportDialog";
 import { CommitmentsImportDialog } from "@/components/commitments/CommitmentsImportDialog";
 import {
+  DetailPanel,
   TableExpandedRow,
   UnifiedTablePage,
   useUnifiedTableState,
@@ -65,6 +66,7 @@ import type { CommitmentListItem } from "@/lib/validation/commitments";
 import { formatCurrency } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
 import {
+  buildCommitmentDetailFields,
   buildCommitmentTableColumns,
   commitmentColumns,
   commitmentDefaultVisibleColumns,
@@ -612,12 +614,123 @@ export default function ProjectCommitmentsPage(): ReactElement {
     tableState.setPage(1);
   };
 
+  // ─── Same-page slide-over editor ──────────────────────────────────────────
+  // Editing happens in a slide-over panel on the list page — no navigation to a
+  // separate edit route. The list row only carries a few fields, so we fetch the
+  // full record on open to edit dates/etc. too.
+  const [editId, setEditId] = React.useState<string | null>(null);
+  const [editDetail, setEditDetail] = React.useState<Record<string, unknown> | null>(null);
+
+  const editIndex = React.useMemo(
+    () => (editId ? sortedCommitments.findIndex((c) => c.id === editId) : -1),
+    [editId, sortedCommitments],
+  );
+
+  const openEdit = React.useCallback(async (item: CommitmentListItem) => {
+    setEditId(item.id);
+    setEditDetail(null);
+    try {
+      const res = await apiFetch<{ data: Record<string, unknown> }>(
+        `/api/commitments/${item.id}`,
+      );
+      setEditDetail(res.data);
+    } catch (err) {
+      toast.error("Could not open commitment for editing", {
+        description: err instanceof Error ? err.message : "Unexpected error",
+      });
+      setEditId(null);
+    }
+  }, []);
+
+  // DetailPanel binds <input type="date"> which needs YYYY-MM-DD, not full ISO.
+  const panelItem = React.useMemo(() => {
+    if (!editDetail) return null;
+    const toDateInput = (value: unknown) =>
+      typeof value === "string" && value.length >= 10 ? value.slice(0, 10) : (value ?? "");
+    return {
+      ...editDetail,
+      start_date: toDateInput(editDetail.start_date),
+      estimated_completion_date: toDateInput(editDetail.estimated_completion_date),
+      contract_date: toDateInput(editDetail.contract_date),
+      signed_contract_received_date: toDateInput(editDetail.signed_contract_received_date),
+      signed_po_received_date: toDateInput(editDetail.signed_po_received_date),
+      delivery_date: toDateInput(editDetail.delivery_date),
+    };
+  }, [editDetail]);
+
+  const EDITABLE_DETAIL_KEYS = React.useMemo(
+    () =>
+      [
+        "title",
+        "status",
+        "description",
+        "executed",
+        "start_date",
+        "estimated_completion_date",
+        "contract_date",
+        "signed_contract_received_date",
+        "signed_po_received_date",
+        "delivery_date",
+      ] as const,
+    [],
+  );
+
+  const handleDetailSave = React.useCallback(
+    async (formData: Partial<Record<string, unknown>>) => {
+      if (!editId) return;
+      const payload: Record<string, unknown> = {};
+      for (const key of EDITABLE_DETAIL_KEYS) {
+        if (!(key in formData)) continue;
+        let value = formData[key];
+        if (key === "executed") {
+          value = value === true || value === "true";
+        } else if (value === "") {
+          value = null; // empty date/text → clear
+        }
+        payload[key] = value;
+      }
+
+      // PUT validates against the full edit schema and ignores readonly fields.
+      await apiFetch(`/api/commitments/${editId}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      toast.success("Commitment updated");
+      await queryClient.invalidateQueries({ queryKey: commitmentKeys.lists() });
+      // Re-pull the record so the panel reflects any server-side normalization.
+      const res = await apiFetch<{ data: Record<string, unknown> }>(
+        `/api/commitments/${editId}`,
+      );
+      setEditDetail(res.data);
+    },
+    [editId, queryClient, EDITABLE_DETAIL_KEYS],
+  );
+
+  const handleDetailDelete = React.useCallback(async () => {
+    if (!editId) return;
+    await apiFetch(`/api/commitments/${editId}`, { method: "DELETE" });
+    toast.success("Commitment deleted");
+    await queryClient.invalidateQueries({ queryKey: commitmentKeys.lists() });
+    await refetch();
+    setEditId(null);
+    setEditDetail(null);
+  }, [editId, queryClient, refetch]);
+
+  const navigateEdit = React.useCallback(
+    (direction: "prev" | "next") => {
+      const nextIndex = direction === "prev" ? editIndex - 1 : editIndex + 1;
+      const next = sortedCommitments[nextIndex];
+      if (next) void openEdit(next);
+    },
+    [editIndex, sortedCommitments, openEdit],
+  );
+
   const handleRowClick = (item: CommitmentListItem) => {
-    router.push(`/${projectId}/commitments/${item.id}`);
+    void openEdit(item);
   };
 
   const handleEdit = (item: CommitmentListItem) => {
-    router.push(`/${projectId}/commitments/${item.id}?edit=1`);
+    void openEdit(item);
   };
 
   const handleDeleteIntent = (item: CommitmentListItem) => {
@@ -1103,6 +1216,30 @@ export default function ProjectCommitmentsPage(): ReactElement {
             />
           ) : undefined
         }
+      />
+
+      <DetailPanel
+        open={Boolean(editId)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditId(null);
+            setEditDetail(null);
+          }
+        }}
+        item={panelItem}
+        title={
+          editDetail
+            ? [editDetail.contract_number, editDetail.title]
+                .filter(Boolean)
+                .join(" — ") || "Commitment"
+            : "Loading…"
+        }
+        fields={buildCommitmentDetailFields(editDetail?.type as string | undefined)}
+        onSave={handleDetailSave}
+        onDelete={editDetail ? handleDetailDelete : undefined}
+        onNavigate={navigateEdit}
+        canNavigatePrev={editIndex > 0}
+        canNavigateNext={editIndex >= 0 && editIndex < sortedCommitments.length - 1}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
