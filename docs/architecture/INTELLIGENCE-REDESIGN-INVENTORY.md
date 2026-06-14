@@ -4,7 +4,11 @@
 compiler → insight_card → intelligence_packet → executive-brief path, traced by `grep`
 (not by docs), so we can rip out the broken path safely and rebuild on full-context synthesis.
 
-**Status:** ✅ Step 1 COMPLETE. 🔨 Step 2 in progress — Slice 2.1 (schema) DONE (2026-06-14).
+**Status (2026-06-14):** Backend COMPLETE + verified — Step 1, Slices 2.1/2.2/2.3/2.4 all done & verified.
+Sweep cron LIVE (`crn-d8ne6u8js32c73dkbre0`, every 2h) — first run wrote 65 cards + 31 tasks across 10
+projects, 0 errors (emails + Teams both confirmed). Only 2.5 (frontend timeline + brief) remains (chipped).
+Regression fixed: Step 1's param deletions broke the graph-sync/teams ingestion cron commands — patched live
+via Render API + render.yaml, graph-sync re-verified clean (see `incident_deleted_params_broke_ingestion_crons.md`).
 
 ### Step 2 slice tracker
 > 🚨 **BLOCKED on external billing (2026-06-14):** backend AI is down — OpenAI account hit
