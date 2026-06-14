@@ -27,9 +27,15 @@ compiler → insight_card → intelligence_packet → executive-brief path, trac
   mechanical scope change removing Make Up Air..."). Quality matches the meeting path. Added `max_extractions`
   cap (deep extraction is ~seconds/doc; large sync batches exceed the request timeout — the auto-trigger in
   2.4 must process incrementally).
-- ⬜ **2.3 Flag→outcome calibration loop.**
-- ⬜ **2.4 Trigger + staleness gate.**
-- ⬜ **2.5 Page + AM/PM brief wiring.**
+- ✅ **2.4 Incremental trigger** — `skip_synthesized` (mark `source_metadata.synthesized_at_v1`,
+  skip on later runs) + `run_synthesis_sweep()` bounded cron driver + `alleato-project-synthesis-sweep`
+  cron in render.yaml (DEFINED; activation = deliberate backlog-drain cost decision). **VERIFIED on 1009:**
+  run A marked 2 emails, run B skipped them and advanced to 2 fresh emails. Self-limiting at steady state.
+- ⬜ **2.3 Flag→outcome calibration loop** — flags extract + write correctly (verified: MUA scope-change
+  `flag` card). REMAINING: a reconcile pass that flips open flags to materialized/did_not_materialize and
+  sets `related_card_ids` as outcome events arrive.
+- ⬜ **2.5 Page timeline render + AM/PM brief rebuild** — backend writes the data; frontend display +
+  brief synthesis remain. (Frontend; a concurrent session is editing frontend files.)
 **Verified:** 2026-06-14 against live code AND live Render prod env.
 
 ### Step 1 completion record (2026-06-14)
