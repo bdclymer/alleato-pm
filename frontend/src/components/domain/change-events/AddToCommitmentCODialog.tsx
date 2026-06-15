@@ -199,7 +199,7 @@ export function AddToCommitmentCODialog({
         if (!isOpen) handleClose();
       }}
     >
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent size="form">
         <DialogHeader>
           <DialogTitle>Add to Commitment CO</DialogTitle>
           <DialogDescription>
@@ -249,12 +249,15 @@ export function AddToCommitmentCODialog({
                     />
                     <Label
                       htmlFor={`commitment-${commitment.id}`}
-                      className="flex-1 cursor-pointer text-sm leading-snug"
+                      className="min-w-0 flex-1 cursor-pointer text-sm leading-snug"
                     >
                       {commitmentLabel(commitment)}
                     </Label>
                     {commitment.status ? (
-                      <StatusBadge status={commitment.status} />
+                      <StatusBadge
+                        status={commitment.status}
+                        className="shrink-0"
+                      />
                     ) : null}
                   </div>
                 ))}
