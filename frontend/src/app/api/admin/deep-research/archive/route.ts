@@ -61,7 +61,8 @@ function getBackendAdminApiKey(): string {
     throw new GuardrailError({
       code: "MISSING_ENV_VAR",
       where: WHERE,
-      message: "ADMIN_API_KEY is required to browse backend Deep Agents research archives.",
+      message:
+        "ADMIN_API_KEY is required to browse backend Deep Agents research archives.",
       status: 503,
     });
   }
@@ -71,7 +72,9 @@ function getBackendAdminApiKey(): string {
 export const GET = withApiGuardrails(WHERE, async ({ request, requestId }) => {
   await requireAdmin(WHERE);
 
-  const backendUrl = new URL(`${getBackendUrl()}/api/intelligence/deep-agent/llm-wiki/archive`);
+  const backendUrl = new URL(
+    `${getBackendUrl()}/api/intelligence/deep-agent/llm-wiki/archive`,
+  );
   for (const key of ["userId", "topicSlug", "sessionId", "limit"] as const) {
     const value = request.nextUrl.searchParams.get(key);
     if (value) backendUrl.searchParams.set(key, value);

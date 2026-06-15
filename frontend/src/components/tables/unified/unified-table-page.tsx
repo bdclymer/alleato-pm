@@ -276,6 +276,27 @@ export interface TableColumn<T> extends ColumnConfig {
   }) => ReactNode;
 }
 
+type TableColumnAlignment = "left" | "center" | "right";
+
+const TEXT_LIKE_ALIGNMENT_PATTERN =
+  /(^|[_\s-])(title|name|description|reason|origin|status|scope|type|date|created|updated|received|sent|issued|due|closed|opened)([_\s-]|$)/i;
+
+const NUMERIC_LIKE_ALIGNMENT_PATTERN =
+  /(^|[_\s-])(#|amount|total|subtotal|balance|cost|price|rate|revenue|budget|commitment|paid|payment|retainage|over_under|rom|qty|quantity|percent|percentage|count|hours|days|score|variance|forecast|estimate|estimated|actual|projected|remaining)([_\s-]|$)|[$%#]/i;
+
+function resolveColumnAlignment<T>(
+  column: TableColumn<T>,
+  fallback: TableColumnAlignment,
+): TableColumnAlignment {
+  if (column.align) return column.align;
+
+  const searchable = `${column.id} ${column.label}`;
+  if (TEXT_LIKE_ALIGNMENT_PATTERN.test(searchable)) return fallback;
+  if (NUMERIC_LIKE_ALIGNMENT_PATTERN.test(searchable)) return "right";
+
+  return fallback;
+}
+
 export type SortDirection = "asc" | "desc";
 
 export interface UnifiedTableFeatures {
@@ -387,7 +408,11 @@ export interface UnifiedTablePageProps<T> {
       item: T,
       colSpan: number,
       context?: {
-        columns: Array<{ id: string; width?: number }>;
+        columns: Array<{
+          id: string;
+          width?: number;
+          align?: TableColumnAlignment;
+        }>;
         hasSelection: boolean;
         hasActions: boolean;
       },
@@ -1929,7 +1954,7 @@ export function UnifiedTablePage<T>({
           className={cn(
             "flex flex-col gap-2",
             tabs
-              ? "2xl:flex-row 2xl:items-end 2xl:justify-between 2xl:gap-4"
+              ? "md:flex-row md:items-end md:justify-between md:gap-4"
               : "md:flex-row md:items-end md:justify-end md:gap-4",
             isCompactDensity
               ? "pb-1 pt-0"
@@ -1940,14 +1965,14 @@ export function UnifiedTablePage<T>({
             <PageTabs
               tabs={tabs}
               variant="inline"
-              className="-mr-1 mb-0 w-full min-w-0 sm:mr-0 2xl:flex-1"
+              className="-mr-1 mb-0 w-full min-w-0 sm:mr-0 md:w-auto md:flex-none"
             />
           )}
           {!toolbarInlineWithHeader ? (
             <div
               className={cn(
                 "hidden min-w-0 justify-end sm:flex",
-                tabs ? "self-end 2xl:shrink-0" : "md:shrink-0",
+                tabs ? "self-end md:shrink-0" : "md:shrink-0",
               )}
             >
               {tableToolbar}
@@ -2135,7 +2160,10 @@ export function UnifiedTablePage<T>({
                           column.sortable !== false &&
                           Boolean(effectiveSorting);
                         const isHideable = !column.alwaysVisible;
-                        const columnAlignment = column.align ?? headerAlignment;
+                        const columnAlignment = resolveColumnAlignment(
+                          column,
+                          headerAlignment,
+                        );
                         const width = columnWidths[column.id] ?? column.width;
                         const headerPinnedStyle =
                           getPinnedStyle(column.id) ?? undefined;
@@ -2486,179 +2514,190 @@ export function UnifiedTablePage<T>({
                             </div>
                           </TableCell>
                         )}
-                        {orderedVisibleColumns.map((column) => (
-                          <TableCell
-                            key={column.id}
-                            data-editable-cell={
-                              resolvedFeatures.enableInlineEditing &&
-                              column.editable &&
-                              column.editValue
-                                ? "true"
-                                : undefined
-                            }
-                            style={
-                              columnWidths[column.id] ||
-                              column.width ||
-                              getPinnedStyle(column.id)
-                                ? ({
-                                    width:
-                                      columnWidths[column.id] ?? column.width,
-                                    minWidth:
-                                      columnWidths[column.id] ?? undefined,
-                                    maxWidth:
-                                      column.width && !columnWidths[column.id]
-                                        ? column.width
-                                        : undefined,
-                                    ...getPinnedStyle(column.id),
-                                  } as React.CSSProperties)
-                                : undefined
-                            }
-                            className={cn(
-                              "group/cell relative align-middle",
-                              resolvedFeatures.enableInlineEditing &&
+                        {orderedVisibleColumns.map((column) => {
+                          const columnAlignment = resolveColumnAlignment(
+                            column,
+                            "left",
+                          );
+                          return (
+                            <TableCell
+                              key={column.id}
+                              data-editable-cell={
+                                resolvedFeatures.enableInlineEditing &&
                                 column.editable &&
                                 column.editValue
-                                ? "cursor-text hover:bg-muted/50 transition-colors focus-within:bg-muted/40"
-                                : "",
-                            )}
-                            onClick={(event) => {
-                              if (
-                                !(
-                                  resolvedFeatures.enableInlineEditing &&
+                                  ? "true"
+                                  : undefined
+                              }
+                              style={
+                                columnWidths[column.id] ||
+                                column.width ||
+                                getPinnedStyle(column.id)
+                                  ? ({
+                                      width:
+                                        columnWidths[column.id] ?? column.width,
+                                      minWidth:
+                                        columnWidths[column.id] ?? undefined,
+                                      maxWidth:
+                                        column.width && !columnWidths[column.id]
+                                          ? column.width
+                                          : undefined,
+                                      ...getPinnedStyle(column.id),
+                                    } as React.CSSProperties)
+                                  : undefined
+                              }
+                              className={cn(
+                                "group/cell relative align-middle",
+                                columnAlignment === "right"
+                                  ? "text-right"
+                                  : columnAlignment === "center"
+                                    ? "text-center"
+                                    : "text-left",
+                                resolvedFeatures.enableInlineEditing &&
                                   column.editable &&
                                   column.editValue
-                                )
-                              ) {
-                                return;
-                              }
-                              if (isInteractiveRowTarget(event.target)) {
-                                return;
-                              }
-                              event.stopPropagation();
-                              startInlineEdit(item, column);
-                            }}
-                          >
-                            {editingCell?.rowId === table.getRowId(item) &&
-                            editingCell.columnId === column.id &&
-                            resolvedFeatures.enableInlineEditing &&
-                            column.editable &&
-                            column.editValue ? (
-                              column.renderEditor ? (
-                                column.renderEditor({
-                                  item,
-                                  value: editingValue,
-                                  onChange: setEditingValue,
-                                  onCommit: (nextValue) =>
-                                    void commitInlineEdit(
-                                      item,
-                                      column,
-                                      table.getRowId(item),
-                                      nextValue ?? editingValue,
-                                    ),
-                                  onCancel: () => {
-                                    setEditingCell(null);
-                                    setEditingValue("");
-                                  },
-                                })
-                              ) : column.editType === "select" ||
-                                column.editType === "boolean" ? (
-                                <InlineSelectEditor
-                                  value={editingValue}
-                                  options={
-                                    column.editType === "boolean"
-                                      ? (column.editOptions ??
-                                        BOOLEAN_EDIT_OPTIONS)
-                                      : (column.editOptions ?? [])
-                                  }
-                                  placeholder={
-                                    column.editEmptyLabel ??
-                                    `Select ${column.label}`
-                                  }
-                                  onChange={setEditingValue}
-                                  onCommit={(nextValue) =>
-                                    void commitInlineEdit(
-                                      item,
-                                      column,
-                                      table.getRowId(item),
-                                      nextValue ?? editingValue,
-                                    )
-                                  }
-                                />
-                              ) : (
-                                <Input
-                                  type={column.editInputType}
-                                  variant="inline"
-                                  className="h-8 w-full px-0 text-sm"
-                                  value={editingValue}
-                                  autoFocus
-                                  disabled={
-                                    savingCell?.rowId ===
-                                      table.getRowId(item) &&
-                                    savingCell.columnId === column.id
-                                  }
-                                  onChange={(event) =>
-                                    setEditingValue(event.target.value)
-                                  }
-                                  onClick={(event) => event.stopPropagation()}
-                                  onBlur={() =>
-                                    commitInlineEdit(
-                                      item,
-                                      column,
-                                      table.getRowId(item),
-                                      editingValue,
-                                    )
-                                  }
-                                  onKeyDown={(event) => {
-                                    if (event.key === "Enter") {
-                                      event.preventDefault();
-                                      void commitInlineEdit(
-                                        item,
-                                        column,
-                                        table.getRowId(item),
-                                        editingValue,
-                                      );
-                                    }
-                                    if (event.key === "Escape") {
-                                      event.preventDefault();
-                                      setEditingCell(null);
-                                      setEditingValue("");
-                                    }
-                                    if (event.key === "Tab") {
-                                      void commitInlineEdit(
-                                        item,
-                                        column,
-                                        table.getRowId(item),
-                                        editingValue,
-                                      );
-                                    }
-                                  }}
-                                />
-                              )
-                            ) : resolvedFeatures.enableInlineEditing &&
+                                  ? "cursor-text hover:bg-muted/50 transition-colors focus-within:bg-muted/40"
+                                  : "",
+                              )}
+                              onClick={(event) => {
+                                if (
+                                  !(
+                                    resolvedFeatures.enableInlineEditing &&
+                                    column.editable &&
+                                    column.editValue
+                                  )
+                                ) {
+                                  return;
+                                }
+                                if (isInteractiveRowTarget(event.target)) {
+                                  return;
+                                }
+                                event.stopPropagation();
+                                startInlineEdit(item, column);
+                              }}
+                            >
+                              {editingCell?.rowId === table.getRowId(item) &&
+                              editingCell.columnId === column.id &&
+                              resolvedFeatures.enableInlineEditing &&
                               column.editable &&
                               column.editValue ? (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                className="flex h-auto min-h-8 w-full min-w-0 items-center justify-between gap-2 px-0 py-0 text-left font-normal hover:bg-transparent focus-visible:ring-1 focus-visible:ring-ring"
-                                data-row-interactive="true"
-                                aria-label={`Edit ${column.label}`}
-                                title={`Edit ${column.label}`}
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  startInlineEdit(item, column);
-                                }}
-                              >
-                                <span className="min-w-0 flex-1 truncate">
-                                  {column.render(item)}
-                                </span>
-                                <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50 opacity-0 transition-opacity group-hover/cell:opacity-100 group-focus-within/cell:opacity-100" />
-                              </Button>
-                            ) : (
-                              column.render(item)
-                            )}
-                          </TableCell>
-                        ))}
+                                column.renderEditor ? (
+                                  column.renderEditor({
+                                    item,
+                                    value: editingValue,
+                                    onChange: setEditingValue,
+                                    onCommit: (nextValue) =>
+                                      void commitInlineEdit(
+                                        item,
+                                        column,
+                                        table.getRowId(item),
+                                        nextValue ?? editingValue,
+                                      ),
+                                    onCancel: () => {
+                                      setEditingCell(null);
+                                      setEditingValue("");
+                                    },
+                                  })
+                                ) : column.editType === "select" ||
+                                  column.editType === "boolean" ? (
+                                  <InlineSelectEditor
+                                    value={editingValue}
+                                    options={
+                                      column.editType === "boolean"
+                                        ? (column.editOptions ??
+                                          BOOLEAN_EDIT_OPTIONS)
+                                        : (column.editOptions ?? [])
+                                    }
+                                    placeholder={
+                                      column.editEmptyLabel ??
+                                      `Select ${column.label}`
+                                    }
+                                    onChange={setEditingValue}
+                                    onCommit={(nextValue) =>
+                                      void commitInlineEdit(
+                                        item,
+                                        column,
+                                        table.getRowId(item),
+                                        nextValue ?? editingValue,
+                                      )
+                                    }
+                                  />
+                                ) : (
+                                  <Input
+                                    type={column.editInputType}
+                                    variant="inline"
+                                    className="h-8 w-full px-0 text-sm"
+                                    value={editingValue}
+                                    autoFocus
+                                    disabled={
+                                      savingCell?.rowId ===
+                                        table.getRowId(item) &&
+                                      savingCell.columnId === column.id
+                                    }
+                                    onChange={(event) =>
+                                      setEditingValue(event.target.value)
+                                    }
+                                    onClick={(event) => event.stopPropagation()}
+                                    onBlur={() =>
+                                      commitInlineEdit(
+                                        item,
+                                        column,
+                                        table.getRowId(item),
+                                        editingValue,
+                                      )
+                                    }
+                                    onKeyDown={(event) => {
+                                      if (event.key === "Enter") {
+                                        event.preventDefault();
+                                        void commitInlineEdit(
+                                          item,
+                                          column,
+                                          table.getRowId(item),
+                                          editingValue,
+                                        );
+                                      }
+                                      if (event.key === "Escape") {
+                                        event.preventDefault();
+                                        setEditingCell(null);
+                                        setEditingValue("");
+                                      }
+                                      if (event.key === "Tab") {
+                                        void commitInlineEdit(
+                                          item,
+                                          column,
+                                          table.getRowId(item),
+                                          editingValue,
+                                        );
+                                      }
+                                    }}
+                                  />
+                                )
+                              ) : resolvedFeatures.enableInlineEditing &&
+                                column.editable &&
+                                column.editValue ? (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  className="flex h-auto min-h-8 w-full min-w-0 items-center justify-between gap-2 px-0 py-0 text-left font-normal hover:bg-transparent focus-visible:ring-1 focus-visible:ring-ring"
+                                  data-row-interactive="true"
+                                  aria-label={`Edit ${column.label}`}
+                                  title={`Edit ${column.label}`}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    startInlineEdit(item, column);
+                                  }}
+                                >
+                                  <span className="min-w-0 flex-1 truncate">
+                                    {column.render(item)}
+                                  </span>
+                                  <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50 opacity-0 transition-opacity group-hover/cell:opacity-100 group-focus-within/cell:opacity-100" />
+                                </Button>
+                              ) : (
+                                column.render(item)
+                              )}
+                            </TableCell>
+                          );
+                        })}
                         {hasRowActions && (
                           <TableCell
                             className={cn("pl-2", sidePanel ? "pr-4" : "pr-2")}
@@ -2714,6 +2753,7 @@ export function UnifiedTablePage<T>({
                             columns: orderedVisibleColumns.map((c) => ({
                               id: c.id,
                               width: columnWidths[c.id] ?? c.width,
+                              align: resolveColumnAlignment(c, "left"),
                             })),
                             hasSelection: hasRowSelection,
                             hasActions: hasRowActions,

@@ -336,7 +336,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
   };
 
   const tableState = useUnifiedTableState({
-    entityKey: "commitments-v2",
+    entityKey: "commitments-v4",
     searchParams,
     pathname,
     router,
@@ -619,7 +619,10 @@ export default function ProjectCommitmentsPage(): ReactElement {
   // separate edit route. The list row only carries a few fields, so we fetch the
   // full record on open to edit dates/etc. too.
   const [editId, setEditId] = React.useState<string | null>(null);
-  const [editDetail, setEditDetail] = React.useState<Record<string, unknown> | null>(null);
+  const [editDetail, setEditDetail] = React.useState<Record<
+    string,
+    unknown
+  > | null>(null);
 
   const editIndex = React.useMemo(
     () => (editId ? sortedCommitments.findIndex((c) => c.id === editId) : -1),
@@ -646,13 +649,19 @@ export default function ProjectCommitmentsPage(): ReactElement {
   const panelItem = React.useMemo(() => {
     if (!editDetail) return null;
     const toDateInput = (value: unknown) =>
-      typeof value === "string" && value.length >= 10 ? value.slice(0, 10) : (value ?? "");
+      typeof value === "string" && value.length >= 10
+        ? value.slice(0, 10)
+        : (value ?? "");
     return {
       ...editDetail,
       start_date: toDateInput(editDetail.start_date),
-      estimated_completion_date: toDateInput(editDetail.estimated_completion_date),
+      estimated_completion_date: toDateInput(
+        editDetail.estimated_completion_date,
+      ),
       contract_date: toDateInput(editDetail.contract_date),
-      signed_contract_received_date: toDateInput(editDetail.signed_contract_received_date),
+      signed_contract_received_date: toDateInput(
+        editDetail.signed_contract_received_date,
+      ),
       signed_po_received_date: toDateInput(editDetail.signed_po_received_date),
       delivery_date: toDateInput(editDetail.delivery_date),
     };
@@ -1234,12 +1243,16 @@ export default function ProjectCommitmentsPage(): ReactElement {
                 .join(" — ") || "Commitment"
             : "Loading…"
         }
-        fields={buildCommitmentDetailFields(editDetail?.type as string | undefined)}
+        fields={buildCommitmentDetailFields(
+          editDetail?.type as string | undefined,
+        )}
         onSave={handleDetailSave}
         onDelete={editDetail ? handleDetailDelete : undefined}
         onNavigate={navigateEdit}
         canNavigatePrev={editIndex > 0}
-        canNavigateNext={editIndex >= 0 && editIndex < sortedCommitments.length - 1}
+        canNavigateNext={
+          editIndex >= 0 && editIndex < sortedCommitments.length - 1
+        }
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

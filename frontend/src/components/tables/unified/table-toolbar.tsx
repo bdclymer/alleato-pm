@@ -1,7 +1,26 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { ReactElement, ReactNode } from "react";
+import type { CSSProperties, ReactElement, ReactNode } from "react";
+import {
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 import {
   AlignJustify,
@@ -9,8 +28,8 @@ import {
   CalendarIcon,
   Columns3,
   Download,
-  Eye,
   Filter,
+  GripVertical,
   LayoutGrid,
   List,
   MoreVertical,
@@ -349,7 +368,9 @@ function FilterFields({
                     onCheckedChange={(nextChecked) => {
                       const nextValues = nextChecked
                         ? [...currentValues, option.value]
-                        : currentValues.filter((value) => value !== option.value);
+                        : currentValues.filter(
+                            (value) => value !== option.value,
+                          );
                       onFilterChange({
                         ...activeFilters,
                         [filter.id]:
@@ -557,11 +578,7 @@ function FilterFields({
     return null;
   };
 
-  return (
-    <div className="space-y-2">
-      {filters.map(renderFilter)}
-    </div>
-  );
+  return <div className="space-y-2">{filters.map(renderFilter)}</div>;
 }
 
 export function FilterMenu({
@@ -755,18 +772,254 @@ export function DensityToggle({
   );
 }
 
-export function ColumnToggle({
+function DensityOptions({
+  density = "default",
+  onDensityChange,
+}: {
+  density?: TableDensity;
+  onDensityChange?: (density: TableDensity) => void;
+}): ReactElement {
+  return (
+    <div className="grid grid-cols-3 gap-1 rounded-md bg-muted p-1">
+      {DENSITY_OPTIONS.map((option) => (
+        <Button
+          key={option.value}
+          type="button"
+          variant={density === option.value ? "secondary" : "ghost"}
+          size="sm"
+          className="h-8 px-2 text-xs font-medium"
+          onClick={() => onDensityChange?.(option.value)}
+        >
+          {option.label}
+        </Button>
+      ))}
+    </div>
+  );
+}
+
+export function orderColumnsForToggle(
+  columns: ColumnConfig[],
+  columnOrder: string[] | undefined,
+  visibleColumns: string[],
+): ColumnConfig[] {
+  const columnById = new Map(columns.map((column) => [column.id, column]));
+  const preferredOrder =
+    columnOrder && columnOrder.length > 0 ? columnOrder : visibleColumns;
+  const orderedIds = [
+    ...preferredOrder.filter((id) => columnById.has(id)),
+    ...columns
+      .map((column) => column.id)
+      .filter((id) => !preferredOrder.includes(id)),
+  ];
+
+  return orderedIds
+    .map((id) => columnById.get(id))
+    .filter((column): column is ColumnConfig => Boolean(column));
+}
+
+export function reorderColumnIds(
+  orderedIds: string[],
+  activeId: string,
+  overId: string,
+): string[] {
+  const oldIndex = orderedIds.indexOf(activeId);
+  const newIndex = orderedIds.indexOf(overId);
+
+  if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) {
+    return orderedIds;
+  }
+
+  return arrayMove(orderedIds, oldIndex, newIndex);
+}
+
+export function visibleColumnsInOrder(
+  orderedIds: string[],
+  visibleColumns: string[],
+): string[] {
+  const visibleSet = new Set(visibleColumns);
+  const orderedVisible = orderedIds.filter((id) => visibleSet.has(id));
+  const missingVisible = visibleColumns.filter(
+    (id) => !orderedIds.includes(id),
+  );
+
+  return [...orderedVisible, ...missingVisible];
+}
+
+function SortableColumnToggleItem({
+  column,
+  checked,
+  onCheckedChange,
+  idPrefix,
+}: {
+  column: ColumnConfig;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  idPrefix: string;
+}): ReactElement {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: column.id });
+  const style: CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex min-h-9 items-center gap-2 px-2 py-1.5 text-sm",
+        isDragging && "relative z-10 rounded-md bg-background shadow-sm",
+      )}
+    >
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        aria-label={`Drag ${column.label} column`}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4" />
+      </Button>
+      <Checkbox
+        id={`${idPrefix}-${column.id}`}
+        checked={checked}
+        disabled={column.alwaysVisible}
+        onCheckedChange={(value) => onCheckedChange(value === true)}
+      />
+      <label
+        htmlFor={`${idPrefix}-${column.id}`}
+        className={cn(
+          "min-w-0 flex-1 truncate text-foreground",
+          column.alwaysVisible && "text-muted-foreground",
+        )}
+      >
+        {column.label}
+      </label>
+    </div>
+  );
+}
+
+function ColumnReorderList({
   columns,
   visibleColumns,
   onColumnVisibilityChange,
+  columnOrder,
+  onColumnOrderChange,
+  idPrefix,
+  className,
 }: {
   columns: ColumnConfig[];
   visibleColumns: string[];
   onColumnVisibilityChange: (columns: string[]) => void;
+  columnOrder?: string[];
+  onColumnOrderChange?: (columns: string[]) => void;
+  idPrefix: string;
+  className?: string;
+}): ReactElement {
+  const orderedColumns = orderColumnsForToggle(
+    columns,
+    columnOrder,
+    visibleColumns,
+  );
+  const orderedIds = orderedColumns.map((column) => column.id);
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 150, tolerance: 5 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const setVisibleColumnsInOrder = (nextVisibleColumns: string[]) => {
+    onColumnVisibilityChange(
+      visibleColumnsInOrder(orderedIds, nextVisibleColumns),
+    );
+  };
+
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return;
+
+    const nextOrder = reorderColumnIds(
+      orderedIds,
+      String(active.id),
+      String(over.id),
+    );
+
+    onColumnOrderChange?.(nextOrder);
+    onColumnVisibilityChange(visibleColumnsInOrder(nextOrder, visibleColumns));
+  };
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      modifiers={[restrictToVerticalAxis]}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext
+        items={orderedIds}
+        strategy={verticalListSortingStrategy}
+      >
+        <div className={cn("overflow-y-auto py-1", className)}>
+          {orderedColumns.map((column) => (
+            <SortableColumnToggleItem
+              key={column.id}
+              column={column}
+              checked={
+                column.alwaysVisible || visibleColumns.includes(column.id)
+              }
+              idPrefix={idPrefix}
+              onCheckedChange={(checked) => {
+                if (column.alwaysVisible) return;
+                if (checked) {
+                  setVisibleColumnsInOrder([...visibleColumns, column.id]);
+                } else {
+                  setVisibleColumnsInOrder(
+                    visibleColumns.filter((existing) => existing !== column.id),
+                  );
+                }
+              }}
+            />
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
+  );
+}
+
+export function ColumnToggle({
+  columns,
+  visibleColumns,
+  onColumnVisibilityChange,
+  columnOrder,
+  onColumnOrderChange,
+}: {
+  columns: ColumnConfig[];
+  visibleColumns: string[];
+  onColumnVisibilityChange: (columns: string[]) => void;
+  columnOrder?: string[];
+  onColumnOrderChange?: (columns: string[]) => void;
 }): ReactElement {
   const defaultColumns = columns
     .filter((column) => column.defaultVisible !== false || column.alwaysVisible)
     .map((column) => column.id);
+  const orderedColumns = orderColumnsForToggle(
+    columns,
+    columnOrder,
+    visibleColumns,
+  );
+  const orderedIds = orderedColumns.map((column) => column.id);
 
   return (
     <DropdownMenu>
@@ -787,56 +1040,158 @@ export function ColumnToggle({
           <TooltipContent>Select which columns to display</TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      <DropdownMenuContent align="end" className="w-60">
+      <DropdownMenuContent align="end" className="w-72">
         <DropdownMenuLabel>Columns</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {columns
-          .filter((column) => !column.alwaysVisible)
-          .map((column) => (
-            <DropdownMenuCheckboxItem
-              key={column.id}
-              checked={visibleColumns.includes(column.id)}
-              onSelect={(e) => e.preventDefault()}
-              onCheckedChange={(checked) => {
-                if (checked) {
-                  onColumnVisibilityChange([...visibleColumns, column.id]);
-                } else {
-                  onColumnVisibilityChange(
-                    visibleColumns.filter((existing) => existing !== column.id),
-                  );
-                }
-              }}
-            >
-              {column.label}
-            </DropdownMenuCheckboxItem>
-          ))}
+        <ColumnReorderList
+          columns={columns}
+          visibleColumns={visibleColumns}
+          onColumnVisibilityChange={onColumnVisibilityChange}
+          columnOrder={columnOrder}
+          onColumnOrderChange={onColumnOrderChange}
+          idPrefix="column-toggle"
+          className="max-h-80"
+        />
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() =>
-            onColumnVisibilityChange(columns.map((column) => column.id))
-          }
+          onClick={() => {
+            onColumnOrderChange?.(orderedIds);
+            onColumnVisibilityChange(orderedIds);
+          }}
         >
           Show all
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() =>
+          onClick={() => {
+            const resetOrder = columns.map((column) => column.id);
+            onColumnOrderChange?.(resetOrder);
             onColumnVisibilityChange(
-              Array.from(
-                new Set(
-                  defaultColumns.concat(
-                    columns
-                      .filter((column) => column.alwaysVisible)
-                      .map((column) => column.id),
-                  ),
-                ),
-              ),
-            )
-          }
+              visibleColumnsInOrder(resetOrder, defaultColumns),
+            );
+          }}
         >
           Reset to defaults
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+export function TableDisplaySettings({
+  columns,
+  visibleColumns,
+  onColumnVisibilityChange,
+  columnOrder,
+  onColumnOrderChange,
+  density,
+  onDensityChange,
+}: {
+  columns: ColumnConfig[];
+  visibleColumns: string[];
+  onColumnVisibilityChange: (columns: string[]) => void;
+  columnOrder?: string[];
+  onColumnOrderChange?: (columns: string[]) => void;
+  density?: TableDensity;
+  onDensityChange?: (density: TableDensity) => void;
+}): ReactElement {
+  const defaultColumns = columns
+    .filter((column) => column.defaultVisible !== false || column.alwaysVisible)
+    .map((column) => column.id);
+  const orderedColumns = orderColumnsForToggle(
+    columns,
+    columnOrder,
+    visibleColumns,
+  );
+  const orderedIds = orderedColumns.map((column) => column.id);
+
+  return (
+    <Popover>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                aria-label="Table settings"
+              >
+                <Columns3 className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+          </TooltipTrigger>
+          <TooltipContent>Table settings</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <PopoverContent align="end" className="w-80 p-0">
+        <div className="border-b px-3 py-2.5">
+          <p className="text-sm font-medium text-foreground">Table settings</p>
+        </div>
+        <div className="space-y-4 p-3">
+          <div className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Row density
+            </p>
+            <DensityOptions
+              density={density}
+              onDensityChange={onDensityChange}
+            />
+          </div>
+          {columns.length > 0 ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Columns
+                </p>
+                <span className="text-xs text-muted-foreground">
+                  Drag to reorder
+                </span>
+              </div>
+              <div className="overflow-hidden rounded-md border">
+                <ColumnReorderList
+                  columns={columns}
+                  visibleColumns={visibleColumns}
+                  onColumnVisibilityChange={onColumnVisibilityChange}
+                  columnOrder={columnOrder}
+                  onColumnOrderChange={onColumnOrderChange}
+                  idPrefix="table-settings-column"
+                  className="max-h-80"
+                />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-xs"
+                  onClick={() => {
+                    onColumnOrderChange?.(orderedIds);
+                    onColumnVisibilityChange(orderedIds);
+                  }}
+                >
+                  Show all
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-xs"
+                  onClick={() => {
+                    const resetOrder = columns.map((column) => column.id);
+                    onColumnOrderChange?.(resetOrder);
+                    onColumnVisibilityChange(
+                      visibleColumnsInOrder(resetOrder, defaultColumns),
+                    );
+                  }}
+                >
+                  Reset defaults
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -959,14 +1314,14 @@ export function TableToolbar({
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
-  const [mobileColumnsOpen, setMobileColumnsOpen] = useState(false);
+  const [mobileDisplayOpen, setMobileDisplayOpen] = useState(false);
   const [mobileSortOpen, setMobileSortOpen] = useState(false);
   const mobileSearchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const mediaQuery = window.matchMedia("(max-width: 1023px)");
     const apply = (): void => setIsMobile(mediaQuery.matches);
 
     apply();
@@ -1050,15 +1405,19 @@ export function TableToolbar({
                         }}
                       />
                     )}
-                    {feat.columnToggle && columns.length > 0 && (
+                    {(feat.columnToggle || onDensityChange) && (
                       <MobileSettingsRow
-                        icon={<Eye className="h-5 w-5" />}
-                        label="Property visibility"
-                        value={visibleColumnCount}
+                        icon={<Columns3 className="h-5 w-5" />}
+                        label="Columns and density"
+                        value={
+                          feat.columnToggle && columns.length > 0
+                            ? visibleColumnCount
+                            : undefined
+                        }
                         onClick={() => {
                           setMobilePanelOpen(false);
                           window.setTimeout(
-                            () => setMobileColumnsOpen(true),
+                            () => setMobileDisplayOpen(true),
                             160,
                           );
                         }}
@@ -1099,26 +1458,6 @@ export function TableToolbar({
                           : undefined
                       }
                       disabled={!onSortChange || sortOptions.length === 0}
-                    />
-                    <MobileSettingsRow
-                      icon={<AlignJustify className="h-5 w-5" />}
-                      label="Row density"
-                      value={
-                        density === "compact"
-                          ? "Compact"
-                          : density === "comfortable"
-                            ? "Comfortable"
-                            : "Default"
-                      }
-                      onClick={() => {
-                        const next: TableDensity =
-                          density === "compact"
-                            ? "default"
-                            : density === "default"
-                              ? "comfortable"
-                              : "compact";
-                        onDensityChange?.(next);
-                      }}
                     />
                     <MobileSettingsRow
                       icon={<Columns3 className="h-5 w-5" />}
@@ -1237,48 +1576,46 @@ export function TableToolbar({
               </SheetContent>
             </Sheet>
 
-            <Sheet open={mobileColumnsOpen} onOpenChange={setMobileColumnsOpen}>
+            <Sheet open={mobileDisplayOpen} onOpenChange={setMobileDisplayOpen}>
               <SheetContent
                 side="right"
                 className="w-full max-w-none gap-0 p-0"
               >
                 <SheetHeader className="px-4 py-4">
-                  <SheetTitle>Property visibility</SheetTitle>
+                  <SheetTitle>Columns and density</SheetTitle>
                 </SheetHeader>
-                <div className="max-h-[calc(90dvh-76px)] overflow-y-auto px-4 py-4">
-                  <div className="overflow-hidden rounded-2xl border bg-background">
-                    {columns
-                      .filter((column) => !column.alwaysVisible)
-                      .map((column) => (
-                        <label
-                          key={column.id}
-                          htmlFor={`mobile-col-toggle-${column.id}`}
-                          className="flex min-h-12 items-center gap-3 border-b border-border/70 px-4 py-3 last:border-b-0"
-                        >
-                          <Checkbox
-                            id={`mobile-col-toggle-${column.id}`}
-                            checked={visibleColumns.includes(column.id)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                onColumnVisibilityChange([
-                                  ...visibleColumns,
-                                  column.id,
-                                ]);
-                              } else {
-                                onColumnVisibilityChange(
-                                  visibleColumns.filter(
-                                    (existing) => existing !== column.id,
-                                  ),
-                                );
-                              }
-                            }}
-                          />
-                          <span className="text-base text-foreground">
-                            {column.label}
-                          </span>
-                        </label>
-                      ))}
+                <div className="max-h-[calc(90dvh-76px)] space-y-4 overflow-y-auto px-4 py-4">
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-foreground">
+                      Row density
+                    </p>
+                    <DensityOptions
+                      density={density}
+                      onDensityChange={onDensityChange}
+                    />
                   </div>
+                  {feat.columnToggle && columns.length > 0 ? (
+                    <>
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-medium text-foreground">
+                          Columns
+                        </p>
+                        <span className="text-xs text-muted-foreground">
+                          Drag to reorder
+                        </span>
+                      </div>
+                      <div className="overflow-hidden rounded-2xl border bg-background">
+                        <ColumnReorderList
+                          columns={columns}
+                          visibleColumns={visibleColumns}
+                          onColumnVisibilityChange={onColumnVisibilityChange}
+                          columnOrder={columnOrder}
+                          onColumnOrderChange={onColumnOrderChange}
+                          idPrefix="mobile-col-toggle"
+                        />
+                      </div>
+                    </>
+                  ) : null}
                 </div>
               </SheetContent>
             </Sheet>
@@ -1362,7 +1699,9 @@ export function TableToolbar({
   return (
     <div className={cn("py-2", className)}>
       <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {leftContent ? <div className="shrink-0 pr-2">{leftContent}</div> : null}
+        {leftContent ? (
+          <div className="shrink-0 pr-2">{leftContent}</div>
+        ) : null}
 
         {savedViewsScope ? (
           <div className="shrink-0">
@@ -1413,15 +1752,17 @@ export function TableToolbar({
             />
           )}
 
-          {feat.columnToggle && columns.length > 0 && (
-            <ColumnToggle
-              columns={columns}
+          {(feat.columnToggle || onDensityChange) && (
+            <TableDisplaySettings
+              columns={feat.columnToggle ? columns : []}
               visibleColumns={visibleColumns}
               onColumnVisibilityChange={onColumnVisibilityChange}
+              columnOrder={columnOrder}
+              onColumnOrderChange={onColumnOrderChange}
+              density={density}
+              onDensityChange={onDensityChange}
             />
           )}
-
-          <DensityToggle density={density} onDensityChange={onDensityChange} />
 
           {customActions}
 

@@ -33,24 +33,28 @@ export const commitmentColumns: ColumnConfig[] = [
   { id: "contract_company", label: "Company", defaultVisible: true },
   { id: "title", label: "Title", defaultVisible: true },
   { id: "original_amount", label: "Original Amount", defaultVisible: true },
-  { id: "trade_names", label: "Division", defaultVisible: true },
-  { id: "cost_codes", label: "Cost Code", defaultVisible: true },
-  { id: "scope_summary", label: "Description", defaultVisible: true },
-  { id: "type", label: "Type", defaultVisible: true },
-  { id: "status", label: "Status", defaultVisible: true },
   { id: "approved_change_orders", label: "Approved COs", defaultVisible: true },
-  { id: "remaining_balance", label: "Invoice Balance", defaultVisible: true },
+  {
+    id: "revised_contract_amount",
+    label: "Revised Contract Amount",
+    defaultVisible: true,
+  },
+  { id: "pending_change_orders", label: "Pending COs", defaultVisible: true },
+  { id: "draft_change_orders", label: "Draft COs", defaultVisible: true },
+  { id: "invoiced_amount", label: "Invoiced", defaultVisible: true },
+  { id: "payments_issued", label: "Payments Issued", defaultVisible: true },
+  { id: "percent_paid", label: "% Paid", defaultVisible: true },
+  { id: "remaining_balance", label: "Remaining Balance", defaultVisible: true },
+  { id: "is_private", label: "Private", defaultVisible: false },
+  { id: "trade_names", label: "Division", defaultVisible: false },
+  { id: "cost_codes", label: "Cost Code", defaultVisible: false },
+  { id: "scope_summary", label: "Description", defaultVisible: false },
+  { id: "type", label: "Type", defaultVisible: false },
+  { id: "status", label: "Status", defaultVisible: true },
   { id: "executed", label: "Executed", defaultVisible: true },
   { id: "acumatica_link", label: "Acumatica", defaultVisible: true },
-  { id: "erp_status", label: "ERP Status", defaultVisible: true },
+  { id: "erp_status", label: "ERP Status", defaultVisible: false },
   { id: "ssov_status", label: "SOV Status", defaultVisible: true },
-  { id: "pending_change_orders", label: "Pending COs", defaultVisible: true },
-  { id: "draft_change_orders", label: "Drafts", defaultVisible: true },
-  { id: "revised_contract_amount", label: "COs", defaultVisible: true },
-  { id: "payments_issued", label: "Payments", defaultVisible: true },
-  { id: "invoiced_amount", label: "Issued", defaultVisible: true },
-  { id: "percent_paid", label: "Percent Paid", defaultVisible: true },
-  { id: "is_private", label: "Private", defaultVisible: true },
   { id: "created_at", label: "Created", defaultVisible: true },
 ];
 
@@ -149,11 +153,19 @@ export function buildCommitmentDetailFields(
       ? [
           { id: "contract_date", label: "Contract Date", type: "date" },
           { id: "delivery_date", label: "Delivery Date", type: "date" },
-          { id: "signed_po_received_date", label: "Signed PO Received", type: "date" },
+          {
+            id: "signed_po_received_date",
+            label: "Signed PO Received",
+            type: "date",
+          },
         ]
       : [
           { id: "start_date", label: "Start Date", type: "date" },
-          { id: "estimated_completion_date", label: "Est. Completion", type: "date" },
+          {
+            id: "estimated_completion_date",
+            label: "Est. Completion",
+            type: "date",
+          },
           { id: "contract_date", label: "Contract Date", type: "date" },
           {
             id: "signed_contract_received_date",
@@ -166,9 +178,24 @@ export function buildCommitmentDetailFields(
     { id: "contract_number", label: "Number", type: "readonly" },
     { id: "contract_company.name", label: "Company", type: "readonly" },
     { id: "title", label: "Title", type: "text", fullWidth: true },
-    { id: "status", label: "Status", type: "select", options: COMMITMENT_STATUS_OPTIONS },
-    { id: "executed", label: "Executed", type: "select", options: YES_NO_OPTIONS },
-    { id: "description", label: "Description", type: "textarea", fullWidth: true },
+    {
+      id: "status",
+      label: "Status",
+      type: "select",
+      options: COMMITMENT_STATUS_OPTIONS,
+    },
+    {
+      id: "executed",
+      label: "Executed",
+      type: "select",
+      options: YES_NO_OPTIONS,
+    },
+    {
+      id: "description",
+      label: "Description",
+      type: "textarea",
+      fullWidth: true,
+    },
     ...dateFields,
   ];
 }
@@ -247,7 +274,10 @@ export function buildCommitmentTableColumns(
     return found;
   };
 
-  const renderers: Record<string, Omit<TableColumn<CommitmentListItem>, keyof ColumnConfig>> = {
+  const renderers: Record<
+    string,
+    Omit<TableColumn<CommitmentListItem>, keyof ColumnConfig>
+  > = {
     number: {
       render: (item) => (
         <div className="flex items-center gap-1.5">
@@ -269,7 +299,11 @@ export function buildCommitmentTableColumns(
               variant="ghost"
               size="icon"
               className="h-5 w-5 text-muted-foreground hover:bg-muted hover:text-foreground"
-              aria-label={expandedIds?.has(item.id) ? "Collapse commitment" : "Expand commitment"}
+              aria-label={
+                expandedIds?.has(item.id)
+                  ? "Collapse commitment"
+                  : "Expand commitment"
+              }
             >
               <ChevronRight
                 className={`h-3.5 w-3.5 transition-transform ${
@@ -301,9 +335,13 @@ export function buildCommitmentTableColumns(
     },
     trade_names: {
       render: (item) => {
-        const value = item.trade_names.length > 0 ? item.trade_names.join(", ") : "-";
+        const value =
+          item.trade_names.length > 0 ? item.trade_names.join(", ") : "-";
         return (
-          <span className="block max-w-48 truncate text-sm text-muted-foreground" title={value}>
+          <span
+            className="block max-w-48 truncate text-sm text-muted-foreground"
+            title={value}
+          >
             {value}
           </span>
         );
@@ -312,10 +350,15 @@ export function buildCommitmentTableColumns(
       sortValue: (item) => item.trade_names.join(", "),
     },
     cost_codes: {
+      align: "left",
       render: (item) => {
-        const value = item.cost_codes.length > 0 ? item.cost_codes.join(", ") : "-";
+        const value =
+          item.cost_codes.length > 0 ? item.cost_codes.join(", ") : "-";
         return (
-          <span className="block max-w-40 truncate text-sm text-muted-foreground" title={value}>
+          <span
+            className="block max-w-40 truncate text-sm text-muted-foreground"
+            title={value}
+          >
             {value}
           </span>
         );
@@ -339,13 +382,14 @@ export function buildCommitmentTableColumns(
             editable: true,
             editInputType: "text",
             editValue: (item) => item.scope_summary ?? "",
-            onEdit: (item, value) => onInlineEdit(item.id, "description", value),
+            onEdit: (item, value) =>
+              onInlineEdit(item.id, "description", value),
           }
         : {}),
     },
     title: {
       render: (item) => (
-        <span className="font-medium text-foreground">{item.title ?? "-"}</span>
+        <span className="font-medium">{item.title ?? "-"}</span>
       ),
       csvValue: (item) => [item.number, item.title].filter(Boolean).join(" "),
       sortValue: (item) => item.title ?? "",
@@ -370,16 +414,22 @@ export function buildCommitmentTableColumns(
     erp_status: {
       render: (item) => {
         const label = item.erp_status
-          ? (ERP_STATUS_LABELS[item.erp_status.toLowerCase()] ?? item.erp_status)
+          ? (ERP_STATUS_LABELS[item.erp_status.toLowerCase()] ??
+            item.erp_status)
           : null;
-        return label ? <StatusBadge status={label} /> : <span className="text-muted-foreground">—</span>;
+        return label ? (
+          <StatusBadge status={label} />
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        );
       },
       csvValue: (item) => item.erp_status ?? "",
       sortValue: (item) => item.erp_status ?? "",
     },
     status: {
       render: (item) => {
-        if (!onStatusChange) return <StatusBadge status={statusLabel(item.status)} />;
+        if (!onStatusChange)
+          return <StatusBadge status={statusLabel(item.status)} />;
         return (
           <Select
             value={item.status ?? "draft"}
@@ -394,7 +444,15 @@ export function buildCommitmentTableColumns(
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {["draft", "out_for_bid", "out_for_signature", "approved", "complete", "terminated", "void"].map((s) => (
+              {[
+                "draft",
+                "out_for_bid",
+                "out_for_signature",
+                "approved",
+                "complete",
+                "terminated",
+                "void",
+              ].map((s) => (
                 <SelectItem key={s} value={s}>
                   <StatusBadge status={statusLabel(s)} />
                 </SelectItem>
@@ -447,36 +505,49 @@ export function buildCommitmentTableColumns(
       sortValue: (item) => item.ssov_status ?? "",
     },
     original_amount: {
+      align: "right",
       render: (item) => <span>{formatCurrency(item.original_amount)}</span>,
       csvValue: (item) => String(item.original_amount),
       sortValue: (item) => item.original_amount,
     },
     approved_change_orders: {
-      render: (item) => <span>{formatCurrency(item.approved_change_orders)}</span>,
+      align: "right",
+      render: (item) => (
+        <span>{formatCurrency(item.approved_change_orders)}</span>
+      ),
       csvValue: (item) => String(item.approved_change_orders),
       sortValue: (item) => item.approved_change_orders,
     },
     revised_contract_amount: {
-      render: (item) => <span>{formatCurrency(item.revised_contract_amount)}</span>,
+      align: "right",
+      render: (item) => (
+        <span>{formatCurrency(item.revised_contract_amount)}</span>
+      ),
       csvValue: (item) => String(item.revised_contract_amount),
       sortValue: (item) => item.revised_contract_amount,
     },
     pending_change_orders: {
-      render: (item) => <span>{formatCurrency(item.pending_change_orders)}</span>,
+      align: "right",
+      render: (item) => (
+        <span>{formatCurrency(item.pending_change_orders)}</span>
+      ),
       csvValue: (item) => String(item.pending_change_orders),
       sortValue: (item) => item.pending_change_orders,
     },
     draft_change_orders: {
+      align: "right",
       render: (item) => <span>{formatCurrency(item.draft_change_orders)}</span>,
       csvValue: (item) => String(item.draft_change_orders),
       sortValue: (item) => item.draft_change_orders,
     },
     invoiced_amount: {
+      align: "right",
       render: (item) => <span>{formatCurrency(item.invoiced_amount)}</span>,
       csvValue: (item) => String(item.invoiced_amount),
       sortValue: (item) => item.invoiced_amount,
     },
     payments_issued: {
+      align: "right",
       render: (item) => <span>{formatCurrency(item.payments_issued)}</span>,
       csvValue: (item) => String(item.payments_issued),
       sortValue: (item) => item.payments_issued,
@@ -487,6 +558,7 @@ export function buildCommitmentTableColumns(
       sortValue: (item) => item.percent_paid,
     },
     remaining_balance: {
+      align: "right",
       render: (item) => <span>{formatCurrency(item.remaining_balance)}</span>,
       csvValue: (item) => String(item.remaining_balance),
       sortValue: (item) => item.remaining_balance,
@@ -499,7 +571,8 @@ export function buildCommitmentTableColumns(
     created_at: {
       render: (item) => <span>{formatDate(item.created_at)}</span>,
       csvValue: (item) => item.created_at,
-      sortValue: (item) => (item.created_at ? new Date(item.created_at).getTime() : 0),
+      sortValue: (item) =>
+        item.created_at ? new Date(item.created_at).getTime() : 0,
     },
   };
 
@@ -514,14 +587,17 @@ export function renderCommitmentRowActions(
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Row actions">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          aria-label="Row actions"
+        >
           <MoreHorizontal />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => onEdit(item)}>
-          Edit
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onEdit(item)}>Edit</DropdownMenuItem>
         <DropdownMenuItem
           className="text-destructive"
           onClick={() => onDelete(item)}
@@ -545,12 +621,16 @@ export function renderCommitmentCard(
     >
       <div className="flex items-start justify-between mb-2">
         <div>
-          <p className="text-xs uppercase text-muted-foreground">{item.number}</p>
+          <p className="text-xs uppercase text-muted-foreground">
+            {item.number}
+          </p>
           <p className="font-medium">{item.title ?? "Untitled Commitment"}</p>
         </div>
         <StatusBadge status={statusLabel(item.status)} />
       </div>
-      <p className="text-sm text-muted-foreground">{item.contract_company?.name ?? "-"}</p>
+      <p className="text-sm text-muted-foreground">
+        {item.contract_company?.name ?? "-"}
+      </p>
       <p className="text-sm text-muted-foreground mt-2">
         Revised: {formatCurrency(item.revised_contract_amount)}
       </p>
@@ -569,7 +649,9 @@ export function renderCommitmentList(
     >
       <div>
         <p className="text-sm font-medium">{item.number}</p>
-        <p className="text-xs text-muted-foreground">{item.title ?? "Untitled"}</p>
+        <p className="text-xs text-muted-foreground">
+          {item.title ?? "Untitled"}
+        </p>
       </div>
       <StatusBadge status={statusLabel(item.status)} />
     </div>
