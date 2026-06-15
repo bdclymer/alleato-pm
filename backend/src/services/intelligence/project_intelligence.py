@@ -549,9 +549,6 @@ def refresh_project_intelligence(
 
     delta = _load_delta_docs(client, rag_read, int(project_id), effective_since)
     docs = delta["docs"]
-    snapshot = build_structured_snapshot(client, int(project_id))
-    snapshot_text = _render_snapshot_text(snapshot)
-    valid_ids = {d["id"] for d in docs}
 
     result: Dict[str, Any] = {
         "project_id": int(project_id),
@@ -563,6 +560,27 @@ def refresh_project_intelligence(
         "dry_run": dry_run,
         "had_prior": bool(prior),
     }
+
+    # COST GUARD — the whole point of rolling-state: only pay to re-synthesize
+    # when new material actually landed. If a prior packet exists and nothing
+    # arrived since its watermark, the prior packet is still current — skip the
+    # (expensive frontier gpt-5.5) pass entirely. Without this, the 2-hourly
+    # sweep would re-run a full reasoning pass on every quiet project, burning
+    # money for zero change. (dry_run still runs so a human can inspect; force_full
+    # always re-synthesizes.)
+    if prior and not docs and not force_full and not dry_run:
+        result["skipped_no_new_docs"] = True
+        result["packet_id"] = prior.get("id")
+        result["covered_end_at"] = prior.get("covered_end_at")
+        logger.info(
+            "[ProjectIntelligence] project=%s — no new docs since %s; skipping synthesis (packet unchanged)",
+            project_id, effective_since,
+        )
+        return result
+
+    snapshot = build_structured_snapshot(client, int(project_id))
+    snapshot_text = _render_snapshot_text(snapshot)
+    valid_ids = {d["id"] for d in docs}
 
     raw = synthesize_project_state(
         project_name=project_name,
