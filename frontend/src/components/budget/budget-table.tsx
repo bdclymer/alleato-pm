@@ -1238,7 +1238,7 @@ export function BudgetTable({
         key={columnId}
         className={cn(
           "py-4 text-sm",
-          columnId === "select" ? "pl-2 pr-1" : "px-2",
+          columnId === "select" ? "pl-3 pr-2" : "px-1.5",
           isDescriptionColumn && "font-semibold text-foreground",
         )}
         style={getColumnSizeStyle(columnId)}

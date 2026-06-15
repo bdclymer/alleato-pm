@@ -1,5 +1,4 @@
 import {
-  calculateBudgetModificationActivityTotal,
   calculateGrandTotals,
 } from "./budget-grouping";
 import type { BudgetLineItem } from "@/types/budget";
@@ -42,17 +41,8 @@ describe("budget grouping totals", () => {
     expect(totals.budgetModifications).toBe(0);
   });
 
-  it("calculates gross budget-modification activity for the visible footer", () => {
-    const activity = calculateBudgetModificationActivityTotal([
-      makeLine({ budgetModifications: 100 }),
-      makeLine({ id: "line-2", budgetModifications: -100 }),
-    ]);
-
-    expect(activity).toBe(200);
-  });
-
-  it("uses displayed grouped rows for budget-modification activity", () => {
-    const activity = calculateBudgetModificationActivityTotal([
+  it("keeps grouped budget-modification totals signed for export parity", () => {
+    const totals = calculateGrandTotals([
       makeLine({
         id: "division-01",
         budgetModifications: -50,
@@ -63,6 +53,6 @@ describe("budget grouping totals", () => {
       }),
     ]);
 
-    expect(activity).toBe(50);
+    expect(totals.budgetModifications).toBe(-50);
   });
 });

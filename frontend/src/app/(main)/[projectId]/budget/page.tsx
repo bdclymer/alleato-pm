@@ -70,7 +70,6 @@ import {
 import type { QuickFilterType } from "@/components/budget/budget-filters";
 import {
   applyGrouping,
-  calculateBudgetModificationActivityTotal,
   calculateGrandTotals,
   type GroupingType,
 } from "@/lib/budget-grouping";
@@ -304,11 +303,7 @@ function BudgetPageContent() {
     return grouped;
   }, [budgetData, quickFilter, selectedGroup]);
   const displayedGrandTotals = React.useMemo(
-    () => ({
-      ...calculateGrandTotals(filteredData),
-      budgetModifications:
-        calculateBudgetModificationActivityTotal(filteredData),
-    }),
+    () => calculateGrandTotals(filteredData),
     [filteredData],
   );
 

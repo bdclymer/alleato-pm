@@ -268,18 +268,3 @@ export function calculateGrandTotals(
   const leafItems = flattenItems(items);
   return aggregateTotals(leafItems);
 }
-
-/**
- * Budget modifications are often transfer activity: additions and deductions
- * can net to zero while the column still has real modification dollars. Use
- * gross activity from the displayed rows for the visible Budget Mods footer so
- * the table does not hide approved transfers behind a $0.00 net.
- */
-export function calculateBudgetModificationActivityTotal(
-  items: BudgetLineItem[],
-): number {
-  return items.reduce(
-    (total, item) => total + Math.abs(item.budgetModifications),
-    0,
-  );
-}
