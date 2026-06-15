@@ -27,6 +27,7 @@ import { z } from "zod";
 import {
   EmptyState,
   EntityAttachments,
+  ErrorState,
   InlineTable,
   InlineTableBody,
   InlineTableCell,
@@ -49,7 +50,9 @@ import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
 import { useConfirm } from "@/hooks/use-confirm";
 import {
   ContentSectionStack,
+  DetailPanel,
   LabelValueRow,
+  PageTabs,
   PageShell,
   SectionRuleHeading,
   SummaryValueRow,
@@ -101,12 +104,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDate } from "@/lib/format";
 import { apiFetch } from "@/lib/api-client";
@@ -115,6 +112,12 @@ import {
   normalizePrimeContractChangeOrderStatus,
   PRIME_CONTRACT_CHANGE_ORDER_STATUSES,
 } from "@/lib/change-orders/prime-contract-change-order-statuses";
+import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
+import type { BudgetCodeOption } from "@/components/domain/change-events/change-event-form/types";
+import {
+  normalizeBudgetCodesForSelector,
+  resolvePrimeCoBudgetCode,
+} from "@/lib/change-orders/prime-co-budget-code";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -374,6 +377,7 @@ export default function PrimeContractCODetailPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [deliveryDialogOpen, setDeliveryDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("general");
   const [primeContracts, setPrimeContracts] = useState<PrimeContractOption[]>(
     [],
   );
@@ -381,6 +385,8 @@ export default function PrimeContractCODetailPage() {
   const [employeesLoading, setEmployeesLoading] = useState(false);
   const [reviewerSelectOpen, setReviewerSelectOpen] = useState(false);
   const [reviewedBySelectOpen, setReviewedBySelectOpen] = useState(false);
+  const [budgetCodes, setBudgetCodes] = useState<BudgetCodeOption[]>([]);
+  const [budgetCodesLoading, setBudgetCodesLoading] = useState(false);
 
 
   const [emails, setEmails] = useState<ProjectEmail[]>([]);
@@ -463,6 +469,29 @@ export default function PrimeContractCODetailPage() {
     }
   }, [apiBase]);
 
+  const fetchBudgetCodes = useCallback(async () => {
+    setBudgetCodesLoading(true);
+    try {
+      const payload = await apiFetch<{
+        budgetCodes?: Array<Partial<BudgetCodeOption> & { id: string; code: string }>;
+        data?: Array<Partial<BudgetCodeOption> & { id: string; code: string }>;
+      }>(`/api/projects/${projectId}/budget-codes`);
+      setBudgetCodes(
+        normalizeBudgetCodesForSelector(payload.budgetCodes || payload.data || []),
+      );
+    } catch (err) {
+      toast.error("Could not load budget codes", {
+        description:
+          err instanceof Error && err.message
+            ? err.message
+            : "Prime change-order line items cannot select budget codes.",
+      });
+      setBudgetCodes([]);
+    } finally {
+      setBudgetCodesLoading(false);
+    }
+  }, [projectId]);
+
   useEffect(() => {
     const fetchEmployees = async () => {
       setEmployeesLoading(true);
@@ -538,9 +567,13 @@ export default function PrimeContractCODetailPage() {
   const handleSaveLineItem = useCallback(async () => {
     setLineItemSaving(true);
     try {
+      const budgetCodeResolution = resolvePrimeCoBudgetCode(
+        lineItemForm.cost_code,
+        budgetCodes,
+      );
       const payload = {
         description: lineItemForm.description || null,
-        cost_code: lineItemForm.cost_code || null,
+        cost_code: budgetCodeResolution.storedCode,
         quantity: lineItemForm.quantity ? Number(lineItemForm.quantity) : 0,
         uom: lineItemForm.uom || null,
         unit_cost: lineItemForm.unit_cost ? Number(lineItemForm.unit_cost) : 0,
@@ -586,6 +619,7 @@ export default function PrimeContractCODetailPage() {
     apiBase,
     editingLineItemId,
     lineItemForm,
+    budgetCodes,
     cancelLineItemEdit,
     fetchLineItems,
   ]);
@@ -613,6 +647,20 @@ export default function PrimeContractCODetailPage() {
     (lineItemForm.quantity ? Number(lineItemForm.quantity) : 0) *
     (lineItemForm.unit_cost ? Number(lineItemForm.unit_cost) : 0);
 
+  const selectedLineItemBudgetCode = resolvePrimeCoBudgetCode(
+    lineItemForm.cost_code,
+    budgetCodes,
+  );
+
+  const handleLineItemBudgetCodeChange = useCallback(
+    (_value: string, code: BudgetCodeOption) => {
+      setLineItemForm((f) => ({
+        ...f,
+        cost_code: code.code,
+      }));
+    },
+    [],
+  );
 
   // ---- Related Items -------------------------------------------------------
   const fetchRelatedItems = useCallback(async () => {
@@ -701,12 +749,14 @@ export default function PrimeContractCODetailPage() {
     fetchEmails();
     fetchLineItems();
     fetchRelatedItems();
+    fetchBudgetCodes();
   }, [
     apiBase,
     projectId,
     fetchEmails,
     fetchLineItems,
     fetchRelatedItems,
+    fetchBudgetCodes,
   ]);
 
   useEffect(() => {
@@ -901,10 +951,10 @@ export default function PrimeContractCODetailPage() {
   if (error || !co) {
     return (
       <PageShell variant="detail" title="Error" onBack={handleBack}>
-        <div className="text-center text-destructive">
-          {error || "Not found"}
-        </div>
-        <div className="mt-4 flex justify-center">
+        <ErrorState
+          error={error || "Prime contract change order not found"}
+        />
+        <div className="-mt-10 flex justify-center">
           <Button onClick={handleBack}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Change Orders
@@ -1573,90 +1623,84 @@ export default function PrimeContractCODetailPage() {
   return (
     <>
       <PageShell
-        variant="dashboard"
-        title=""
+        variant="detailWide"
+        title={pageTitle}
         onBack={handleBack}
-        titleContent={
-          <div className="flex w-full items-center justify-between">
-            <h1 className="min-w-0 truncate text-xl font-semibold">{pageTitle}</h1>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleApprove}>
-                  <Check className="mr-2 h-4 w-4" />
-                  Approve
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setShowRejectDialog(true)}>
-                  <X className="mr-2 h-4 w-4" />
-                  Reject
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <a
-                    href={`/api/projects/${projectId}/prime-contract-change-orders/${primeCoId}/pdf`}
-                    download
-                  >
-                    <FileDown className="mr-2 h-4 w-4" />
-                    Export PDF
-                  </a>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setDeliveryDialogOpen(true)}>
-                  <Mail className="mr-2 h-4 w-4" />
-                  Email PDF
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <a
-                    href={`/api/projects/${projectId}/prime-contract-change-orders/export?status=${co.status}`}
-                    download
-                  >
-                    <FileUp className="mr-2 h-4 w-4" />
-                    Export CSV
-                  </a>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleDelete}
-                  className="text-destructive focus:text-destructive"
+        actions={
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleApprove}>
+                <Check className="mr-2 h-4 w-4" />
+                Approve
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowRejectDialog(true)}>
+                <X className="mr-2 h-4 w-4" />
+                Reject
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <a
+                  href={`/api/projects/${projectId}/prime-contract-change-orders/${primeCoId}/pdf`}
+                  download
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+                  <FileDown className="mr-2 h-4 w-4" />
+                  Export PDF
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDeliveryDialogOpen(true)}>
+                <Mail className="mr-2 h-4 w-4" />
+                Email PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a
+                  href={`/api/projects/${projectId}/prime-contract-change-orders/export?status=${co.status}`}
+                  download
+                >
+                  <FileUp className="mr-2 h-4 w-4" />
+                  Export CSV
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleDelete}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         }
+        contentClassName="space-y-0"
       >
-        <Tabs defaultValue="general">
-          <TabsList variant="line" className="-mb-px mb-2 w-full justify-start gap-0">
-            <TabsTrigger value="general" className="px-3 py-1.5 text-xs">
-              General
-            </TabsTrigger>
-            <TabsTrigger value="related" className="px-3 py-1.5 text-xs">
-              Related Items ({relatedItems.length})
-            </TabsTrigger>
-            <TabsTrigger value="emails" className="px-3 py-1.5 text-xs">
-              Emails ({emails.length})
-            </TabsTrigger>
-            <TabsTrigger value="history" className="px-3 py-1.5 text-xs">
-              Change History
-            </TabsTrigger>
-          </TabsList>
+        <PageTabs
+          variant="inline"
+          tabs={[
+            { label: "General", href: "general", isActive: activeTab === "general" },
+            { label: `Related Items (${relatedItems.length})`, href: "related", isActive: activeTab === "related" },
+            { label: `Emails (${emails.length})`, href: "emails", isActive: activeTab === "emails" },
+            { label: "Change History", href: "history", isActive: activeTab === "history" },
+          ]}
+          onTabClick={(href) => setActiveTab(href)}
+        />
 
-          <TabsContent value="general">
+        <div>
+          {activeTab === "general" && (
             <ContentSectionStack>
               {/* ── General Section: Three-column layout parity with prime contract detail ── */}
               <section>
                 <div className="grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
-                  <div className="space-y-8">
+                  <DetailPanel className="space-y-8">
                     <div className="grid grid-cols-1 gap-x-14 gap-y-8 sm:grid-cols-2">
                       <div>
                         <SectionRuleHeading
@@ -1767,87 +1811,83 @@ export default function PrimeContractCODetailPage() {
                         </p>
                       </div>
                     )}
-                  </div>
+                  </DetailPanel>
 
                   <div className="space-y-8">
-                    <div>
+                    <DetailPanel>
                       <SectionRuleHeading
                         label="Financial Summary"
-                        className="[&_span]:text-primary"
+                        className="mb-6 pb-0"
                       />
-                      <div className="rounded-md border border-border bg-muted p-6">
-                        <dl className="space-y-3 text-sm">
-                          <SummaryValueRow
-                            label="Change Order Amount"
-                            value={formatCurrency(changeOrderAmount)}
-                          />
-                          <SummaryValueRow
-                            label="Line Items Total"
-                            value={formatCurrency(lineItemsTotal)}
-                          />
-                          <SummaryValueRow
-                            label="Variance"
-                            value={formatCurrency(varianceAmount)}
-                          />
-                          <SummaryValueRow
-                            label="Approved Amount"
-                            value={formatCurrency(approvedAmount)}
-                          />
-                          <SummaryValueRow
-                            label="Pending Amount"
-                            value={formatCurrency(pendingAmount)}
-                          />
-                          <SummaryValueRow
-                            label="Schedule Impact"
-                            value={
-                              co.schedule_impact != null
-                                ? `${co.schedule_impact} days`
-                                : "—"
-                            }
-                            bold
-                            border
-                          />
-                        </dl>
-                      </div>
-                    </div>
+                      <dl className="space-y-3 text-sm">
+                        <SummaryValueRow
+                          label="Change Order Amount"
+                          value={formatCurrency(changeOrderAmount)}
+                        />
+                        <SummaryValueRow
+                          label="Line Items Total"
+                          value={formatCurrency(lineItemsTotal)}
+                        />
+                        <SummaryValueRow
+                          label="Variance"
+                          value={formatCurrency(varianceAmount)}
+                        />
+                        <SummaryValueRow
+                          label="Approved Amount"
+                          value={formatCurrency(approvedAmount)}
+                        />
+                        <SummaryValueRow
+                          label="Pending Amount"
+                          value={formatCurrency(pendingAmount)}
+                        />
+                        <SummaryValueRow
+                          label="Schedule Impact"
+                          value={
+                            co.schedule_impact != null
+                              ? `${co.schedule_impact} days`
+                              : "—"
+                          }
+                          bold
+                          border
+                        />
+                      </dl>
+                    </DetailPanel>
 
-                    <div>
+                    <DetailPanel>
                       <SectionRuleHeading
                         label="Key Dates"
-                        className="[&_span]:text-primary"
+                        className="mb-6 pb-0"
                       />
-                      <div className="rounded-md border border-border bg-muted p-6">
-                        <dl className="space-y-3 text-sm">
-                          <LabelValueRow label="Date Created">
-                            {renderDateOrDash(co.created_at)}
-                          </LabelValueRow>
-                          <LabelValueRow label="Created By">
-                            {co.created_by || "—"}
-                          </LabelValueRow>
-                          <LabelValueRow label="Submitted">
-                            {renderDateOrDash(co.submitted_at)}
-                          </LabelValueRow>
-                          <LabelValueRow label="Approved">
-                            {renderDateOrDash(co.approved_at)}
-                          </LabelValueRow>
-                          <LabelValueRow label="Due Date">
-                            {renderDateOrDash(co.due_date)}
-                          </LabelValueRow>
-                          <LabelValueRow label="Invoiced Date">
-                            {renderDateOrDash(co.invoiced_date)}
-                          </LabelValueRow>
-                          <LabelValueRow label="Signed CO Received Date">
-                            {renderDateOrDash(co.signed_co_received_date)}
-                          </LabelValueRow>
-                          <LabelValueRow label="Review Date">
-                            {renderDateOrDash(co.review_date)}
-                          </LabelValueRow>
-                          <LabelValueRow label="Revised Substantial Completion">
-                            {renderDateOrDash(co.revised_substantial_completion_date)}
-                          </LabelValueRow>
-                        </dl>
-                      </div>
-                    </div>
+                      <dl className="space-y-3 text-sm">
+                        <LabelValueRow label="Date Created">
+                          {renderDateOrDash(co.created_at)}
+                        </LabelValueRow>
+                        <LabelValueRow label="Created By">
+                          {co.created_by || "—"}
+                        </LabelValueRow>
+                        <LabelValueRow label="Submitted">
+                          {renderDateOrDash(co.submitted_at)}
+                        </LabelValueRow>
+                        <LabelValueRow label="Approved">
+                          {renderDateOrDash(co.approved_at)}
+                        </LabelValueRow>
+                        <LabelValueRow label="Due Date">
+                          {renderDateOrDash(co.due_date)}
+                        </LabelValueRow>
+                        <LabelValueRow label="Invoiced Date">
+                          {renderDateOrDash(co.invoiced_date)}
+                        </LabelValueRow>
+                        <LabelValueRow label="Signed CO Received Date">
+                          {renderDateOrDash(co.signed_co_received_date)}
+                        </LabelValueRow>
+                        <LabelValueRow label="Review Date">
+                          {renderDateOrDash(co.review_date)}
+                        </LabelValueRow>
+                        <LabelValueRow label="Revised Substantial Completion">
+                          {renderDateOrDash(co.revised_substantial_completion_date)}
+                        </LabelValueRow>
+                      </dl>
+                    </DetailPanel>
                   </div>
                 </div>
               </section>
@@ -1911,17 +1951,18 @@ export default function PrimeContractCODetailPage() {
                               />
                             </InlineTableCell>
                             <InlineTableCell className="pr-2">
-                              <Input
-                                value={lineItemForm.cost_code}
-                                onChange={(e) =>
-                                  setLineItemForm((f) => ({
-                                    ...f,
-                                    cost_code: e.target.value,
-                                  }))
+                              <BudgetCodeSelector
+                                value={selectedLineItemBudgetCode.selectorValue}
+                                onValueChange={handleLineItemBudgetCodeChange}
+                                budgetCodes={budgetCodes}
+                                loading={budgetCodesLoading}
+                                placeholder={
+                                  selectedLineItemBudgetCode.isMapped
+                                    ? "Select budget code..."
+                                    : selectedLineItemBudgetCode.displayCode
                                 }
-                                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
-                                placeholder="Cost code"
-                                className="h-8 w-28"
+                                error={!selectedLineItemBudgetCode.isMapped}
+                                className="h-8 min-w-48 px-3"
                               />
                             </InlineTableCell>
                             <InlineTableCell className="pr-2">
@@ -2006,7 +2047,24 @@ export default function PrimeContractCODetailPage() {
                               {item.description || "—"}
                             </InlineTableCell>
                             <InlineTableCell>
-                              {item.cost_code || "—"}
+                              {(() => {
+                                const resolution = resolvePrimeCoBudgetCode(
+                                  item.cost_code,
+                                  budgetCodes,
+                                );
+                                return (
+                                  <span
+                                    title={resolution.displayLabel}
+                                    className={
+                                      resolution.isMapped
+                                        ? undefined
+                                        : "text-muted-foreground"
+                                    }
+                                  >
+                                    {resolution.displayCode}
+                                  </span>
+                                );
+                              })()}
                             </InlineTableCell>
                             <InlineTableCell align="right">
                               {item.quantity ?? "—"}
@@ -2067,17 +2125,17 @@ export default function PrimeContractCODetailPage() {
                             />
                           </InlineTableCell>
                           <InlineTableCell className="pr-2">
-                            <Input
-                              value={lineItemForm.cost_code}
-                              onChange={(e) =>
-                                setLineItemForm((f) => ({
-                                  ...f,
-                                  cost_code: e.target.value,
-                                }))
+                            <BudgetCodeSelector
+                              value={selectedLineItemBudgetCode.selectorValue}
+                              onValueChange={handleLineItemBudgetCodeChange}
+                              budgetCodes={budgetCodes}
+                              loading={budgetCodesLoading}
+                              placeholder="Select budget code..."
+                              error={
+                                Boolean(lineItemForm.cost_code) &&
+                                !selectedLineItemBudgetCode.isMapped
                               }
-                              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void handleSaveLineItem(); } if (e.key === "Escape") cancelLineItemEdit(); }}
-                              placeholder="Cost code"
-                              className="h-8 w-28"
+                              className="h-8 min-w-48 px-3"
                             />
                           </InlineTableCell>
                           <InlineTableCell className="pr-2">
@@ -2230,9 +2288,9 @@ export default function PrimeContractCODetailPage() {
                 />
               </section>
             </ContentSectionStack>
-          </TabsContent>
+          )}
 
-          <TabsContent value="related">
+          {activeTab === "related" && (
             <ChangeEventRelatedItemsTab
               relatedItems={relatedItems}
               isLoading={relatedItemsLoading}
@@ -2240,10 +2298,10 @@ export default function PrimeContractCODetailPage() {
               onLink={linkRelatedItem}
               onUnlink={unlinkRelatedItem}
             />
-          </TabsContent>
+          )}
 
-          <TabsContent value="emails">
-            {emailsLoading ? (
+          {activeTab === "emails" && (
+            emailsLoading ? (
               <div className="space-y-3">
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-10 w-full" />
@@ -2321,13 +2379,13 @@ export default function PrimeContractCODetailPage() {
                   </InlineTableBody>
                 </InlineTable>
               </section>
-            )}
-          </TabsContent>
+            )
+          )}
 
-          <TabsContent value="history">
+          {activeTab === "history" && (
             <ChangeHistoryTimeline co={co} />
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </PageShell>
 
       {ConfirmDialog}

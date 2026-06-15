@@ -32,6 +32,7 @@
     "db:types": "npx supabase gen types typescript --project-id lgveqfnpkxvzbnnwuled --schema public > frontend/src/types/database.types.ts && npm run devtools:sync-schema-fk",
     "db:types:check": "node scripts/check-db-types-current.mjs",
     "guardrails:db-type-overrides": "node scripts/audits/check-no-manual-db-type-overrides.mjs",
+    "guardrails:detail-pages": "node scripts/audits/check-detail-page-primitives.mjs",
     "audit:silent-fallbacks": "node scripts/audits/audit-silent-fallback-debt.mjs",
     "audit:toasts": "node scripts/audit-toast-surface.mjs",
     "guardrails:toasts:changed": "node scripts/audit-toast-surface.mjs --changed --fail-on-debt",
