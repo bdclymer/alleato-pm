@@ -33,7 +33,6 @@ import {
 import { useProject } from "@/contexts/project-context";
 import { ChangeEventRfqForm } from "@/components/domain/change-events/ChangeEventRfqForm";
 import type { ChangeEventRfqFormValues } from "@/components/domain/change-events/ChangeEventRfqForm";
-import { AddToBudgetChangeDialog } from "@/components/domain/change-events/AddToBudgetChangeDialog";
 import { PageShell } from "@/components/layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Text } from "@/components/ds/text";
@@ -220,7 +219,6 @@ export default function ProjectChangeEventsPage(): ReactElement {
 
   const [showRfqSheet, setShowRfqSheet] = React.useState(false);
   const [isCreatingRfq, setIsCreatingRfq] = React.useState(false);
-  const [showBudgetChangeDialog, setShowBudgetChangeDialog] = React.useState(false);
   const [showCommitmentCODialog, setShowCommitmentCODialog] = React.useState(false);
 
   const handleView = React.useCallback(
@@ -830,7 +828,6 @@ export default function ProjectChangeEventsPage(): ReactElement {
               tableState.setSelectedIds([]);
               refetchChangeEvents();
             }}
-            onAddToBudgetChange={() => setShowBudgetChangeDialog(true)}
             onAddToCommitmentChangeOrder={() => setShowCommitmentCODialog(true)}
           />
         ) : undefined
@@ -965,17 +962,6 @@ export default function ProjectChangeEventsPage(): ReactElement {
     {deleteDialog.dialog}
     {restoreDialog.dialog}
     {bulkDeleteDialog.dialog}
-    <AddToBudgetChangeDialog
-      open={showBudgetChangeDialog}
-      onClose={() => setShowBudgetChangeDialog(false)}
-      selectedChangeEventIds={tableState.selectedIds}
-      projectId={projectId}
-      onSuccess={() => {
-        setShowBudgetChangeDialog(false);
-        tableState.setSelectedIds([]);
-        refetchChangeEvents();
-      }}
-    />
     <AddToCommitmentCODialog
       open={showCommitmentCODialog}
       onClose={() => setShowCommitmentCODialog(false)}
