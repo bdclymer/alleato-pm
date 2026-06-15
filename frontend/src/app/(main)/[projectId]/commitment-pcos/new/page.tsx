@@ -432,7 +432,7 @@ export default function NewCommitmentPcoPage() {
         }
       >
         <InfoAlert variant="info" className="text-sm">
-          Start with a change event, then use Price Impact or Add to Commitment
+          Start with a change event, then use Add to or Add to Commitment
           PCO from the selected event. Direct PCO creation is disabled for the
           standard workflow.
         </InfoAlert>

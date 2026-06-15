@@ -43,7 +43,7 @@ export function ChangeEventSelectionBar({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1.5">
-                Price Impact
+                Add to
                 <ChevronDown />
               </Button>
             </DropdownMenuTrigger>
