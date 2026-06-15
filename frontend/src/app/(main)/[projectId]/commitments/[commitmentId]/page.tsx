@@ -392,6 +392,31 @@ function FinancialSummaryPanel({ commitment }: { commitment: CommitmentDetail })
 // General tab — view only
 // ---------------------------------------------------------------------------
 
+/**
+ * Header row for a collapsible section. The trigger reads "Expand"/"Collapse"
+ * with a rotating chevron in the primary color so it's obviously interactive.
+ * No bottom margin on the heading — the content owns its own top spacing — so a
+ * collapsed section stays compact instead of leaving a tall empty gap.
+ */
+function CollapsibleSectionHeading({ label }: { label: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <SectionRuleHeading label={label} className="mb-0 pb-0" />
+      <CollapsibleTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 gap-1.5 px-2 text-xs font-medium text-primary hover:bg-primary/10 hover:text-primary"
+        >
+          <span className="[[data-state=open]_&]:hidden">Expand</span>
+          <span className="[[data-state=closed]_&]:hidden">Collapse</span>
+          <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=open]_&]:rotate-180" />
+        </Button>
+      </CollapsibleTrigger>
+    </div>
+  );
+}
+
 interface GeneralTabProps {
   commitment: CommitmentDetail;
   projectId: number;
@@ -637,15 +662,8 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
             {/* Description (collapsible, closed by default) */}
             <DetailPanel>
               <Collapsible>
-                <div className="mb-6 flex items-center justify-between">
-                  <SectionRuleHeading label="Description" className="pb-0" />
-                  <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-muted-foreground">
-                      <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=closed]_&]:rotate-[-90deg]" />
-                    </Button>
-                  </CollapsibleTrigger>
-                </div>
-                <CollapsibleContent>
+                <CollapsibleSectionHeading label="Description" />
+                <CollapsibleContent className="mt-4">
                   <p className={`text-sm leading-relaxed ${!commitment.description ? "text-muted-foreground/50" : "text-foreground"}`}>
                     {capitalizeWords(commitment.description) || "—"}
                   </p>
@@ -656,15 +674,8 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
             {/* Inclusions + Exclusions (collapsible, closed by default) */}
             <DetailPanel>
               <Collapsible>
-                <div className="mb-6 flex items-center justify-between">
-                  <SectionRuleHeading label="Inclusions + Exclusions" className="pb-0" />
-                  <CollapsibleTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-muted-foreground">
-                      <ChevronDown className="h-3.5 w-3.5 transition-transform [[data-state=closed]_&]:rotate-[-90deg]" />
-                    </Button>
-                  </CollapsibleTrigger>
-                </div>
-                <CollapsibleContent>
+                <CollapsibleSectionHeading label="Inclusions + Exclusions" />
+                <CollapsibleContent className="mt-4">
                   <div className="space-y-6 text-sm">
                     <div className="flex flex-col gap-1.5">
                       <dt className="text-xs text-muted-foreground">Inclusions</dt>
