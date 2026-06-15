@@ -99,13 +99,17 @@ export function BudgetPageHeader({
   };
 
   const lockStateClassName = isLocked
-    ? "border-red-200 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800"
-    : "border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800";
+    ? "h-9 border-red-200/80 bg-background px-3 text-red-700 hover:bg-red-50 hover:text-red-800"
+    : "h-9 border-green-200/80 bg-background px-3 text-green-700 hover:bg-green-50 hover:text-green-800";
   const LockStateIcon = isLocked ? Lock : Unlock;
   const lockStateLabel = isLocked ? "Locked" : "Unlocked";
   const lockActionLabel = isLocked
     ? "Budget locked. Click to unlock budget."
     : "Budget unlocked. Click to lock budget.";
+  const primaryActionClassName =
+    "h-9 rounded-md px-4 text-sm font-medium";
+  const utilityIconButtonClassName =
+    "size-9 text-muted-foreground hover:bg-muted hover:text-foreground";
 
   const renderSnapshotButton = () => (
     <Tooltip>
@@ -114,7 +118,7 @@ export function BudgetPageHeader({
           type="button"
           variant="ghost"
           size="icon"
-          className="text-foreground hover:bg-muted hover:text-foreground"
+          className={utilityIconButtonClassName}
           onClick={onCreateSnapshot}
           aria-label="Create budget snapshot"
         >
@@ -163,8 +167,7 @@ export function BudgetPageHeader({
           aria-label={lockTooltip}
         >
           <LockStateIcon />
-          <span className="hidden lg:inline">{lockStateLabel}</span>
-          <span className="lg:hidden">{lockStateLabel}</span>
+          <span>{lockStateLabel}</span>
         </Button>
       </TooltipTrigger>
       <TooltipContent>{lockTooltip}</TooltipContent>
@@ -298,11 +301,13 @@ export function BudgetPageHeader({
       </div>
 
       {/* Desktop: Show all buttons */}
-      <div className="hidden sm:flex gap-2 flex-wrap justify-end items-center">
+      <div className="hidden items-center justify-end gap-3 sm:flex">
         {isLocked ? (
           <Button
-            size="sm"
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            className={cn(
+              "bg-primary text-primary-foreground hover:bg-primary/90",
+              primaryActionClassName,
+            )}
             onClick={onModificationClick}
           >
             <FileEdit />
@@ -312,8 +317,10 @@ export function BudgetPageHeader({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                size="sm"
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                className={cn(
+                  "bg-primary text-primary-foreground hover:bg-primary/90",
+                  primaryActionClassName,
+                )}
               >
                 <Plus />
                 Create
@@ -337,99 +344,106 @@ export function BudgetPageHeader({
           </DropdownMenu>
         )}
 
-        {/* Lock/Unlock Budget State Button */}
-        {lockStateButton}
+        <div className="flex items-center gap-1">
+          {/* Lock/Unlock Budget State Button */}
+          {lockStateButton}
 
-        {renderSnapshotButton()}
+          {renderSnapshotButton()}
 
-        {/* Sync + Export */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-foreground hover:bg-muted hover:text-foreground"
-              onClick={onResendToERP}
-              disabled={!canSyncToErp}
-              title={
-                canSyncToErp
-                  ? undefined
-                  : "ERP sync is not configured for this budget yet."
-              }
-              aria-label="Sync to ERP"
-            >
-              <RefreshCw />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Sync to ERP</TooltipContent>
-        </Tooltip>
+          {/* Sync + Export */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={utilityIconButtonClassName}
+                onClick={onResendToERP}
+                disabled={!canSyncToErp}
+                title={
+                  canSyncToErp
+                    ? undefined
+                    : "ERP sync is not configured for this budget yet."
+                }
+                aria-label="Sync to ERP"
+              >
+                <RefreshCw />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Sync to ERP</TooltipContent>
+          </Tooltip>
 
-        {/* Export Dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-foreground hover:bg-muted hover:text-foreground"
-              aria-label="Export"
-              title="Export"
-            >
-              <Download />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onExport?.("excel")}>
-              Export to Excel
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onExport?.("csv")}>
-              Export to CSV
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          {/* Export Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={utilityIconButtonClassName}
+                aria-label="Export"
+                title="Export"
+              >
+                <Download />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onExport?.("excel")}>
+                Export to Excel
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onExport?.("csv")}>
+                Export to CSV
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-        {/* More Options */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-muted-foreground">
-              <MoreVertical />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>Budget Reports</DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
-                <DropdownMenuItem onClick={onOpenBuyoutSummaryReport}>
-                  Buyout Summary Report
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={onOpenLegacyBudgetDetailReport}>
-                  Legacy Budget Detail
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={onOpenMonitoredResourcesReport}>
-                  Monitored Resources Report
-                </DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>Custom Reports</DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
-                <DropdownMenuItem onClick={onOpenCustomReports}>
-                  Open Custom Reports
-                </DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>ERP Integrations</DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
-                <DropdownMenuItem onClick={onOpenErpIntegrations}>
-                  Open ERP Integrations
-                </DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-            <DropdownMenuItem onClick={onConfigureBudgetViews}>
-              Configure Budget Views
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          {/* More Options */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={utilityIconButtonClassName}
+                aria-label="More budget actions"
+              >
+                <MoreVertical />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Budget Reports</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem onClick={onOpenBuyoutSummaryReport}>
+                    Buyout Summary Report
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={onOpenLegacyBudgetDetailReport}>
+                    Legacy Budget Detail
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={onOpenMonitoredResourcesReport}>
+                    Monitored Resources Report
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Custom Reports</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem onClick={onOpenCustomReports}>
+                    Open Custom Reports
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>ERP Integrations</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem onClick={onOpenErpIntegrations}>
+                    Open ERP Integrations
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuItem onClick={onConfigureBudgetViews}>
+                Configure Budget Views
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
       </div>
     </div>
