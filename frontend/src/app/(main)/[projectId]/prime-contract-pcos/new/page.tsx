@@ -59,10 +59,14 @@ import {
 } from "@/lib/change-orders/prime-contract-change-order-statuses";
 import {
   buildPrimePcoSourceTitle,
+  getSourcePrimeContractIds,
+  getSourcePrimeContracts,
   parseChangeEventIdsParam,
   resolveSourceChangeReason,
   resolveSourcePrimeContractId,
   type PrimePcoSourceChangeEvent,
+  type PrimePcoSourceContract,
+  type PrimePcoSourceLineItem,
 } from "@/lib/change-events/prime-pco-source";
 
 // ---------------------------------------------------------------------------
@@ -126,6 +130,87 @@ type AttachmentFileInfo = {
   size: number;
   type: string;
 };
+
+function normalizeSourceContract(value: unknown): PrimePcoSourceContract | null {
+  if (!value || typeof value !== "object") return null;
+
+  const contract = value as Record<string, unknown>;
+  const id = contract.id;
+  if (typeof id !== "string" || !id) return null;
+
+  const client = contract.client;
+  const vendor = contract.vendor;
+
+  return {
+    id,
+    contract_number:
+      typeof contract.contract_number === "string"
+        ? contract.contract_number
+        : null,
+    title: typeof contract.title === "string" ? contract.title : null,
+    status: typeof contract.status === "string" ? contract.status : null,
+    client: client && typeof client === "object"
+      ? {
+          id: String((client as Record<string, unknown>).id ?? ""),
+          name: String((client as Record<string, unknown>).name ?? ""),
+        }
+      : null,
+    vendor: vendor && typeof vendor === "object"
+      ? {
+          id: String((vendor as Record<string, unknown>).id ?? ""),
+          name: String((vendor as Record<string, unknown>).name ?? ""),
+        }
+      : null,
+  };
+}
+
+function normalizeSourceLineItems(value: unknown): PrimePcoSourceLineItem[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+
+      const lineItem = item as Record<string, unknown>;
+      const commitment = lineItem.commitment;
+      const normalizedCommitment =
+        commitment && typeof commitment === "object"
+          ? {
+              prime_contract_id:
+                typeof (commitment as Record<string, unknown>).prime_contract_id === "string"
+                  ? String((commitment as Record<string, unknown>).prime_contract_id)
+                  : null,
+              primeContractId:
+                typeof (commitment as Record<string, unknown>).primeContractId === "string"
+                  ? String((commitment as Record<string, unknown>).primeContractId)
+                  : null,
+            }
+          : null;
+
+      return {
+        contract_id:
+          typeof lineItem.contractId === "string"
+            ? lineItem.contractId
+            : typeof lineItem.contract_id === "string"
+              ? lineItem.contract_id
+              : null,
+        contract: normalizeSourceContract(lineItem.contract),
+        commitment: normalizedCommitment,
+      };
+    })
+    .filter((item): item is PrimePcoSourceLineItem => Boolean(item));
+}
+
+function toPrimeContractOption(contract: PrimePcoSourceContract): PrimeContract {
+  return {
+    id: contract.id,
+    contract_number: contract.contract_number ?? "Prime Contract",
+    title: contract.title,
+    status: contract.status ?? null,
+    client: contract.client ?? null,
+    vendor: contract.vendor ?? null,
+  };
+}
 
 function ProjectTeamReviewerTooltip({ projectId }: { projectId: string }) {
   return (
@@ -384,6 +469,12 @@ export default function NewPrimeContractPcoPage() {
                   : data.primeContractId
                     ? String(data.primeContractId)
                     : null,
+                prime_contract: normalizeSourceContract(
+                  data.prime_contract ?? data.primeContract,
+                ),
+                line_items: normalizeSourceLineItems(
+                  data.line_items ?? data.lineItems,
+                ),
               } as ChangeEventSummary;
             } catch {
               return null;
@@ -392,6 +483,12 @@ export default function NewPrimeContractPcoPage() {
         );
         const resolvedEvents = results.filter(Boolean) as ChangeEventSummary[];
         setChangeEvents(resolvedEvents);
+        const sourceContractId = getSourcePrimeContractIds(resolvedEvents)[0];
+        if (sourceContractId && !form.getValues("prime_contract_id")) {
+          form.setValue("prime_contract_id", sourceContractId, {
+            shouldValidate: true,
+          });
+        }
         if (resolvedEvents.length !== changeEventIds.length) {
           setSourceChangeEventError(
             `Loaded ${resolvedEvents.length} of ${changeEventIds.length} source change events.`,
@@ -407,7 +504,44 @@ export default function NewPrimeContractPcoPage() {
 
     fetchChangeEvents();
      
-  }, [projectId, changeEventIdsParam]);
+  }, [form, projectId, changeEventIdsParam]);
+
+  useEffect(() => {
+    if (changeEvents.length === 0) return;
+
+    const sourceContracts = getSourcePrimeContracts(changeEvents);
+    if (sourceContracts.length === 0) return;
+
+    setContracts((current) => {
+      const currentIds = new Set(current.map((contract) => contract.id));
+      const missingContracts = sourceContracts.filter(
+        (contract) => !currentIds.has(contract.id),
+      );
+
+      if (missingContracts.length === 0) return current;
+
+      return [
+        ...missingContracts.map(toPrimeContractOption),
+        ...current,
+      ];
+    });
+  }, [changeEvents]);
+
+  useEffect(() => {
+    if (!hasChangeEvents || changeEvents.length === 0) return;
+    if (form.getValues("prime_contract_id")) return;
+
+    const sourceContractIds = getSourcePrimeContractIds(changeEvents);
+    if (sourceContractIds.length === 0) return;
+
+    const sourceContractId = sourceContractIds[0];
+
+    if (sourceContractId) {
+      form.setValue("prime_contract_id", sourceContractId, {
+        shouldValidate: true,
+      });
+    }
+  }, [changeEvents, form, hasChangeEvents]);
 
   useEffect(() => {
     if (
