@@ -902,9 +902,10 @@ export default function NewPrimeContractPcoPage() {
                 ) : (
                   <div className="divide-y divide-border/60">
                     {changeEvents.map((ce) => (
-                      <div
+                      <Link
                         key={ce.id}
-                        className="flex items-center gap-3 py-2 text-sm"
+                        href={`/${projectId}/change-events/${ce.id}`}
+                        className="flex items-center gap-3 py-2 text-sm transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       >
                         <span className="font-medium text-foreground">
                           {ce.number ? `CE ${ce.number}` : "CE"}
@@ -917,7 +918,7 @@ export default function NewPrimeContractPcoPage() {
                             {ce.reason}
                           </span>
                         )}
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 )}
