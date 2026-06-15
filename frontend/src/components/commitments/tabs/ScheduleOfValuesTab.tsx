@@ -33,7 +33,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCostCodes } from "@/hooks/use-cost-codes";
-import { useProjectBudgetCodes } from "@/hooks/use-project-budget-codes";
 
 interface LineItem {
   id: string;
@@ -87,31 +86,50 @@ export function ScheduleOfValuesTab({
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Fetch cost codes for budget code selection — need high limit to cover all divisions
+  // Budget codes come from ONE source only: the internal `cost_codes` table —
+  // the same chart of accounts the Budget and Estimates pages use. High limit so
+  // every division is covered. Do NOT merge in Acumatica budget codes: those
+  // arrive un-dashed (e.g. "042200") and produced duplicate, differently-
+  // formatted entries for the same code ("04-2200" vs "042200").
   const { options: internalCostCodeOptions, isLoading: costCodesLoading } = useCostCodes({
     enabled: true,
     limit: 1000,
   });
 
-  // Subcontract/PO SOV lines store CSI-style budget codes (e.g. "024113") that
-  // come from the Acumatica import and are NOT in the internal cost_codes table.
-  // Merge the project's Acumatica budget codes so those lines resolve to a
-  // readable "code - description" label and stay selectable.
-  const { options: projectBudgetCodeOptions, isLoading: projectCodesLoading } =
-    useProjectBudgetCodes(projectId);
-
   const costCodeOptions = useMemo(() => {
     const seen = new Set<string>();
     const merged: { value: string; label: string }[] = [];
-    for (const option of [...projectBudgetCodeOptions, ...internalCostCodeOptions]) {
+    for (const option of internalCostCodeOptions) {
       if (seen.has(option.value)) continue;
       seen.add(option.value);
       merged.push({ value: option.value, label: option.label });
     }
     return merged.sort((a, b) => a.value.localeCompare(b.value));
-  }, [projectBudgetCodeOptions, internalCostCodeOptions]);
+  }, [internalCostCodeOptions]);
 
-  const budgetCodesLoading = costCodesLoading || projectCodesLoading;
+  // Map a code to its canonical cost_codes option ignoring dash/dot formatting,
+  // so a legacy SOV value stored un-dashed ("042200") resolves to the real
+  // dashed cost code ("04-2200") instead of falling out of the list.
+  const canonicalByNormalizedCode = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const option of costCodeOptions) {
+      map.set(option.value.replace(/[-./]/g, "").toLowerCase(), option.value);
+    }
+    return map;
+  }, [costCodeOptions]);
+
+  const resolveCostCodeValue = useCallback(
+    (raw: string | null | undefined): string => {
+      if (!raw) return "";
+      if (costCodeOptions.some((o) => o.value === raw)) return raw;
+      return (
+        canonicalByNormalizedCode.get(raw.replace(/[-./]/g, "").toLowerCase()) ?? raw
+      );
+    },
+    [costCodeOptions, canonicalByNormalizedCode],
+  );
+
+  const budgetCodesLoading = costCodesLoading;
 
   useEffect(() => {
     setItems(lineItems);
@@ -399,7 +417,7 @@ export function ScheduleOfValuesTab({
                 </InlineTableCell>
                 <InlineTableCell className="whitespace-nowrap min-w-50">
                   <Select
-                    value={item.budget_code || "none"}
+                    value={resolveCostCodeValue(item.budget_code) || "none"}
                     onValueChange={(value) => updateItem(item.id, "budget_code", value === "none" ? "" : value)}
                     disabled={budgetCodesLoading}
                   >
@@ -407,7 +425,8 @@ export function ScheduleOfValuesTab({
                       <SelectValue placeholder={budgetCodesLoading ? "Loading..." : "Select budget code"}>
                         {item.budget_code
                           ? (() => {
-                              const match = costCodeOptions.find((o) => o.value === item.budget_code);
+                              const resolved = resolveCostCodeValue(item.budget_code);
+                              const match = costCodeOptions.find((o) => o.value === resolved);
                               return match ? match.label : item.budget_code;
                             })()
                           : "No budget code"}

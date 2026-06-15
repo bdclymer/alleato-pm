@@ -16,13 +16,10 @@ import "@testing-library/jest-dom";
 import { ScheduleOfValuesTab } from "../ScheduleOfValuesTab";
 import { assertTableColumnIntegrity } from "@/test-utils/table-column-integrity";
 
-// The component fetches budget-code options via these hooks; stub them so the
-// render is synchronous and data-independent.
+// The component fetches budget-code options from the cost_codes table; stub it
+// so the render is synchronous and data-independent.
 jest.mock("@/hooks/use-cost-codes", () => ({
   useCostCodes: () => ({ options: [], isLoading: false }),
-}));
-jest.mock("@/hooks/use-project-budget-codes", () => ({
-  useProjectBudgetCodes: () => ({ options: [], isLoading: false }),
 }));
 
 const lineItems = [
