@@ -331,10 +331,10 @@ export function BudgetPageHeader({
           </DropdownMenu>
         )}
 
-        {renderSnapshotButton()}
-
         {/* Lock/Unlock Budget State Button */}
         {lockStateButton}
+
+        {renderSnapshotButton()}
 
         {/* Sync + Export */}
         <Tooltip>
