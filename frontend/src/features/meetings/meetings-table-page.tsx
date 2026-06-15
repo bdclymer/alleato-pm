@@ -2,6 +2,8 @@
 
 import type { ReactElement } from "react";
 
+import { FileDown } from "lucide-react";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,6 +14,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { DetailPanel, UnifiedTablePage } from "@/components/tables/unified";
 import type { Meeting } from "@/lib/validation/meetings";
 import {
@@ -60,8 +69,12 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
     handleOpenSource,
     handleOpenRecording,
     handleDownloadTranscriptPdf,
+    handleDownloadMarkdown,
+    handleBulkDownloadMarkdown,
     handleExport,
   } = useMeetingsTable(initialMeetings, projectId);
+
+  const selectedCount = tableState.selectedIds.length;
 
   return (
     <>
@@ -95,6 +108,28 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
           onColumnVisibilityChange: tableState.setVisibleColumns,
           onExport: handleExport,
           onBulkDelete: () => setBulkDeleteDialogOpen(true),
+          customActions: (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={() => void handleBulkDownloadMarkdown()}
+                    aria-label="Download markdown"
+                  >
+                    <FileDown />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {selectedCount > 0
+                    ? `Download markdown (${selectedCount} selected)`
+                    : "Download all as markdown"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ),
           // Stable, project-agnostic scope so a "Quick view" saved on project A
           // also applies on project B. See user_table_views table.
           savedViewsScope: "meetings",
@@ -119,6 +154,7 @@ export function MeetingsTablePage({ initialMeetings, projectId }: MeetingsTableP
               handleOpenSource,
               handleOpenRecording,
               handleDownloadTranscriptPdf,
+              handleDownloadMarkdown,
             ),
         }}
         sorting={{

@@ -173,6 +173,46 @@ export function buildMeetingDetailFields(options: {
   ];
 }
 
+// ─── Markdown export helper ───────────────────────────────────────────────────
+
+/**
+ * Builds a standalone markdown file for a meeting from its transcript content
+ * (falling back to the summary). Returns null when there is nothing to export.
+ */
+export function buildMeetingMarkdownFile(
+  meeting: Meeting,
+): { filename: string; body: string } | null {
+  const markdown = meeting.content?.trim() ?? meeting.summary?.trim() ?? "";
+  if (!markdown) return null;
+
+  const title = meeting.title ?? "Meeting Transcript";
+
+  let dateKey: string | null = null;
+  let dateLabel = "";
+  if (meeting.date) {
+    const parsed = new Date(meeting.date);
+    if (!Number.isNaN(parsed.getTime())) {
+      dateKey = parsed.toISOString().slice(0, 10);
+      dateLabel = parsed.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    }
+  }
+
+  const slug =
+    title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80) || "meeting";
+  const filename = `${dateKey ? `${dateKey}-` : ""}${slug}.md`;
+  const body = `# ${title}\n${dateLabel ? `\n_${dateLabel}_\n` : ""}\n${markdown}\n`;
+
+  return { filename, body };
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 export function parseParticipants(item: Meeting): string[] {
@@ -1277,6 +1317,7 @@ export function renderMeetingRowActions(
   onOpenSource: (meeting: Meeting) => void,
   onOpenRecording: (meeting: Meeting) => void,
   onDownloadPdf: (meeting: Meeting) => void,
+  onDownloadMarkdown: (meeting: Meeting) => void,
 ): React.ReactElement {
   return (
     <TableRowActionsMenu
@@ -1313,6 +1354,12 @@ export function renderMeetingRowActions(
               },
             ]
           : []),
+        {
+          key: "download-markdown",
+          label: "Download markdown",
+          icon: FileText,
+          onSelect: () => onDownloadMarkdown(item),
+        },
         {
           key: "download-pdf",
           label: "Download transcript PDF",

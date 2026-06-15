@@ -17,6 +17,7 @@ import type { Meeting } from "@/lib/validation/meetings";
 import {
   buildMeetingDetailFields,
   buildMeetingFilters,
+  buildMeetingMarkdownFile,
   buildMeetingTableColumns,
   meetingDefaultVisibleColumns,
   type EditableField,
@@ -221,6 +222,8 @@ export interface UseMeetingsTableResult {
   handleOpenSource: (meeting: Meeting) => void;
   handleOpenRecording: (meeting: Meeting) => void;
   handleDownloadTranscriptPdf: (meeting: Meeting) => void;
+  handleDownloadMarkdown: (meeting: Meeting) => void;
+  handleBulkDownloadMarkdown: () => Promise<void>;
   handleExport: () => void;
 }
 
@@ -805,6 +808,91 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     }
   };
 
+  const handleDownloadMarkdown = (meeting: Meeting) => {
+    const file = buildMeetingMarkdownFile(meeting);
+    if (!file) {
+      toast.info("No transcript available for this meeting");
+      return;
+    }
+
+    const blob = new Blob([file.body], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = file.filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Bulk markdown export. Operates on the current selection when rows are
+  // selected, otherwise on every meeting matching the active filters/search.
+  // A single meeting downloads as a .md file; multiple are bundled into a zip.
+  const handleBulkDownloadMarkdown = async () => {
+    const selectedIds = new Set(tableState.selectedIds);
+    const scope =
+      selectedIds.size > 0
+        ? sortedMeetings.filter((meeting) => selectedIds.has(meeting.id))
+        : sortedMeetings;
+
+    if (scope.length === 0) {
+      toast.info("No meetings to export");
+      return;
+    }
+
+    const files = scope
+      .map((meeting) => buildMeetingMarkdownFile(meeting))
+      .filter((file): file is { filename: string; body: string } => file !== null);
+
+    if (files.length === 0) {
+      toast.info("None of the selected meetings have a transcript to export");
+      return;
+    }
+
+    // Single file → plain .md download, no zip overhead.
+    if (files.length === 1) {
+      const blob = new Blob([files[0].body], { type: "text/markdown;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = files[0].filename;
+      link.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    try {
+      const { default: JSZip } = await import("jszip");
+      const zip = new JSZip();
+      const usedNames = new Map<string, number>();
+
+      for (const file of files) {
+        // Disambiguate collisions (e.g. two same-day meetings with same title).
+        const count = usedNames.get(file.filename) ?? 0;
+        usedNames.set(file.filename, count + 1);
+        const name = count === 0
+          ? file.filename
+          : file.filename.replace(/\.md$/, `-${count + 1}.md`);
+        zip.file(name, file.body);
+      }
+
+      const blob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `meetings-${new Date().toISOString().slice(0, 10)}.zip`;
+      link.click();
+      URL.revokeObjectURL(url);
+
+      const skipped = scope.length - files.length;
+      toast.success(
+        `Exported ${files.length} meeting${files.length === 1 ? "" : "s"}` +
+          (skipped > 0 ? ` (${skipped} skipped — no transcript)` : ""),
+      );
+    } catch {
+      toast.error("Failed to export markdown");
+    }
+  };
+
   const handleDownloadTranscriptPdf = (meeting: Meeting) => {
     const markdown = meeting.content?.trim() ?? meeting.summary?.trim() ?? "";
     if (!markdown) {
@@ -944,6 +1032,8 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     handleOpenSource,
     handleOpenRecording,
     handleDownloadTranscriptPdf,
+    handleDownloadMarkdown,
+    handleBulkDownloadMarkdown,
     handleExport,
   };
 }
