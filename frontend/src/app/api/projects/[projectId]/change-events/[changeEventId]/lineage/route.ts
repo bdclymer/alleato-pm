@@ -84,11 +84,19 @@ export const GET = withApiGuardrails(
       : { data: [], error: null };
     if (primeCosError) return apiErrorResponse(primeCosError);
 
-    const { data: commitmentCos, error: commitmentCosError } = promotedCommitmentCoIds.length
+    const directCommitmentCoIds = commitmentPcoIds.filter(
+      (id) => !(commitmentPcos ?? []).some((pco) => pco.id === id),
+    );
+    const commitmentCoIds = [
+      ...new Set([...promotedCommitmentCoIds, ...directCommitmentCoIds]),
+    ];
+
+    const { data: commitmentCos, error: commitmentCosError } = commitmentCoIds.length
       ? await supabase
           .from("contract_change_orders")
           .select("id, change_order_number, title, status, amount")
-          .in("id", promotedCommitmentCoIds)
+          .in("id", commitmentCoIds)
+          .eq("project_id", projectIdNum)
       : { data: [], error: null };
     if (commitmentCosError) return apiErrorResponse(commitmentCosError);
 
@@ -150,6 +158,30 @@ export const GET = withApiGuardrails(
           linked_at: linkedAtMap.get(`commitment:${pco.id}`) ?? null,
         };
       }),
+      ...directCommitmentCoIds.flatMap((coId) => {
+        const co = commitmentCoMap.get(coId);
+        if (!co) return [];
+
+        return [{
+          pco_type: "commitment" as const,
+          pco: {
+            id: co.id,
+            number: co.change_order_number,
+            title: co.title,
+            status: co.status,
+            total_amount: co.amount,
+            record_type: "change_order" as const,
+          },
+          resulting_co: {
+            id: co.id,
+            number: co.change_order_number,
+            title: co.title,
+            status: co.status,
+            total_amount: co.amount,
+          },
+          linked_at: linkedAtMap.get(`commitment:${co.id}`) ?? null,
+        }];
+      }),
     ];
 
     rows.sort((a, b) => {
@@ -168,4 +200,3 @@ export const GET = withApiGuardrails(
     });
     },
 );
-

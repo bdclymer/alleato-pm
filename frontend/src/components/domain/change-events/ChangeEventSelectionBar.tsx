@@ -24,6 +24,7 @@ interface ChangeEventSelectionBarProps {
   projectId: number;
   onSuccess?: () => void;
   onAddToBudgetChange?: () => void;
+  onAddToCommitmentChangeOrder?: () => void;
 }
 
 export function ChangeEventSelectionBar({
@@ -34,6 +35,7 @@ export function ChangeEventSelectionBar({
   projectId,
   onSuccess,
   onAddToBudgetChange,
+  onAddToCommitmentChangeOrder,
 }: ChangeEventSelectionBarProps) {
   const router = useRouter();
   if (selectedCount > 0) {
@@ -70,13 +72,15 @@ export function ChangeEventSelectionBar({
 
               <DropdownMenuItem
                 onSelect={() => {
-                  const ids = selectedChangeEventIds.join(",");
-                  router.push(
-                    `/${projectId}/change-orders/commitment/new?changeEventIds=${encodeURIComponent(ids)}`,
-                  );
+                  if (onAddToCommitmentChangeOrder) {
+                    onAddToCommitmentChangeOrder();
+                    return;
+                  }
+
+                  router.push(`/${projectId}/change-events`);
                 }}
               >
-                Create Commitment PCO
+                Create Commitment CO
               </DropdownMenuItem>
 
               <DropdownMenuItem

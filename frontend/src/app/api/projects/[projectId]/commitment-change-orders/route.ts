@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import { buildNextCommitmentChangeOrderNumber } from "@/lib/change-orders/commitment-change-order-number";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -280,11 +281,30 @@ export const POST = withApiGuardrails(
     const requestedAmount = Number(body.amount ?? 0);
     const changeOrderAmount = requestedAmount !== 0 ? requestedAmount : sourceAmount;
 
+    let changeOrderNumber =
+      typeof body.change_order_number === "string" &&
+      body.change_order_number.trim()
+        ? body.change_order_number.trim()
+        : null;
+
+    if (!changeOrderNumber) {
+      const { count, error: countError } = await supabase
+        .from("contract_change_orders")
+        .select("id", { count: "exact", head: true })
+        .eq("contract_id", body.contract_id);
+
+      if (countError) {
+        return apiErrorResponse(countError);
+      }
+
+      changeOrderNumber = buildNextCommitmentChangeOrderNumber(count ?? 0);
+    }
+
     const { data, error } = await supabase
       .from("contract_change_orders")
       .insert({
         project_id: projectIdNum,
-        change_order_number: body.change_order_number,
+        change_order_number: changeOrderNumber,
         description: body.description ?? "",
         amount: changeOrderAmount,
         contract_id: body.contract_id,

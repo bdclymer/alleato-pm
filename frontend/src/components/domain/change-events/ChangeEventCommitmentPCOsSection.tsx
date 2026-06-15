@@ -23,6 +23,7 @@ import { formatDate } from "@/lib/table-config/formatters";
 interface LinkedCommitmentPco {
   linkId: string;
   linkedAt: string;
+  record_type?: "pco" | "change_order";
   id: string;
   pco_number: string | null;
   title: string;
@@ -73,7 +74,7 @@ export function ChangeEventCommitmentPCOsSection({
         );
         setPcos(res.data ?? []);
       } catch (err) {
-        console.error("[ChangeEventCommitmentPCOsSection] Failed to load commitment PCOs:", err);
+        console.error("[ChangeEventCommitmentPCOsSection] Failed to load commitment change records:", err);
       } finally {
         setIsLoading(false);
       }
@@ -86,13 +87,13 @@ export function ChangeEventCommitmentPCOsSection({
   return (
     <div className="space-y-3">
       <SectionHeader
-        title="Commitment Potential Change Orders"
+        title="Commitment Change Orders"
         count={isLoading ? undefined : pcos.length}
       />
       <InlineTable variant="read">
         <InlineTableHeader>
           <InlineTableHeaderRow>
-            <InlineTableHeaderCell>PCO #</InlineTableHeaderCell>
+            <InlineTableHeaderCell>CO #</InlineTableHeaderCell>
             <InlineTableHeaderCell>Title</InlineTableHeaderCell>
             <InlineTableHeaderCell>Status</InlineTableHeaderCell>
             <InlineTableHeaderCell>Type</InlineTableHeaderCell>
@@ -113,7 +114,11 @@ export function ChangeEventCommitmentPCOsSection({
               <InlineTableRow key={pco.linkId}>
                 <InlineTableCell>
                   <Link
-                    href={`/${projectId}/commitment-pcos/${pco.id}`}
+                    href={
+                      pco.record_type === "change_order"
+                        ? `/${projectId}/change-orders/commitment/${pco.id}`
+                        : `/${projectId}/commitment-pcos/${pco.id}`
+                    }
                     className="text-primary hover:underline font-medium"
                   >
                     {pco.pco_number ?? "—"}

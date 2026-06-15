@@ -58,7 +58,7 @@ export function ChangeEventConvertDialog({
 }: ChangeEventConvertDialogProps) {
   const router = useRouter();
   const [isConverting, setIsConverting] = useState(false);
-  const [conversionType, setConversionType] = useState("commitment_pco");
+  const [conversionType, setConversionType] = useState("commitment_co");
   const [targetContractId, setTargetContractId] = useState<string>("");
   const [contracts, setContracts] = useState<Array<{
     id: string;
@@ -189,43 +189,34 @@ export function ChangeEventConvertDialog({
       }
 
       const selectedContract = contracts.find((contract) => contract.id === targetContractId);
-      const pcoTitle = selectedContract
-        ? `PCO for change event — ${selectedContract.title || selectedContract.contract_number}`
-        : "PCO for change event";
+      const coTitle = selectedContract
+        ? `CCO for change event - ${selectedContract.title || selectedContract.contract_number}`
+        : "CCO for change event";
 
       const result = await apiFetch<Record<string, unknown>>(
-        `/api/projects/${projectId}/change-events/add-to-pco`,
+        `/api/projects/${projectId}/commitment-change-orders`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
+            contract_id: targetContractId,
             change_event_ids: [changeEventId],
-            pco_type: conversionType === "prime_pco" ? "prime" : "commitment",
-            create_new:
-              conversionType === "prime_pco"
-                ? {
-                    title: pcoTitle,
-                    prime_contract_id: targetContractId,
-                  }
-                : {
-                    title: pcoTitle,
-                    commitment_id: targetContractId,
-                    commitment_type: selectedContract?.commitment_type ?? "subcontract",
-                  },
+            title: coTitle,
+            description: coTitle,
+            status: "draft",
           }),
         },
       );
-      toast.success("Successfully created potential change order");
+      toast.success("Successfully created commitment change order");
       onOpenChange(false);
 
-      const pco = result?.pco as Record<string, unknown> | undefined;
-      if (pco?.id) {
-        router.push(`/${projectId}/commitment-pcos/${pco.id}`);
+      if (result?.id) {
+        router.push(`/${projectId}/change-orders/commitment/${result.id}`);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to create potential change order";
+      const message = err instanceof Error ? err.message : "Failed to create change order";
       toast.error(message);
     } finally {
       setIsConverting(false);
@@ -236,11 +227,9 @@ export function ChangeEventConvertDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add to Potential Change Order</DialogTitle>
+          <DialogTitle>Add to Change Order</DialogTitle>
           <DialogDescription>
-            This project uses a two-tier change process. Convert this approved
-            change event into a Potential Change Order (PCO) first. You can
-            create the formal change order from approved PCOs.
+            Create a Commitment CO directly, or create a Prime Contract PCO for owner review.
           </DialogDescription>
         </DialogHeader>
 
@@ -250,9 +239,9 @@ export function ChangeEventConvertDialog({
             <Label>Change Order Type</Label>
             <RadioGroup value={conversionType} onValueChange={setConversionType}>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="commitment_pco" id="commitment_pco" />
-                <Label htmlFor="commitment_pco" className="cursor-pointer">
-                  Commitment Potential Change Order (Subcontractor/Vendor)
+                <RadioGroupItem value="commitment_co" id="commitment_co" />
+                <Label htmlFor="commitment_co" className="cursor-pointer">
+                  Commitment Change Order (Subcontractor/Vendor)
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
@@ -265,7 +254,7 @@ export function ChangeEventConvertDialog({
           </div>
 
           {/* Target Contract Selection */}
-          {conversionType === "commitment_pco" && (
+          {conversionType === "commitment_co" && (
             <SelectField
               label="Target Contract"
               value={targetContractId}
@@ -338,9 +327,8 @@ export function ChangeEventConvertDialog({
             <Text as="div" size="sm" className="flex items-start gap-2">
               <FileCheck className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <span>
-                This change event will be linked to the newly created PCO.
-                Line items and attachments remain available for review before
-                final CO conversion.
+                Commitment change orders are created directly from the change event.
+                Prime contract changes still use the PCO review path.
               </span>
             </Text>
           </div>
@@ -359,7 +347,7 @@ export function ChangeEventConvertDialog({
             disabled={isConverting || !targetContractId || isLoadingContracts}
           >
             <ArrowRight />
-            Create Potential Change Order
+            {conversionType === "prime_pco" ? "Create Potential Change Order" : "Create Commitment CO"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -25,6 +25,7 @@ interface LineageRow {
     title: string | null;
     status: string | null;
     total_amount: number | null;
+    record_type?: "pco" | "change_order";
   };
   resulting_co: {
     id: string | number;
@@ -97,14 +98,14 @@ export function ChangeEventLineagePanel({
           </div>
         ) : rows.length === 0 ? (
           <div className="p-4 text-sm text-muted-foreground">
-            This change event has not been linked to any PCOs yet.
+            This change event has not been linked to any change orders yet.
           </div>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Path</TableHead>
-                <TableHead>PCO</TableHead>
+                <TableHead>Record</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
                 <TableHead>Resulting CO</TableHead>
@@ -116,7 +117,9 @@ export function ChangeEventLineagePanel({
                 const pcoHref =
                   row.pco_type === "prime"
                     ? `/${projectId}/prime-contract-pcos/${row.pco.id}`
-                    : `/${projectId}/commitment-pcos/${row.pco.id}`;
+                    : row.pco.record_type === "change_order"
+                      ? `/${projectId}/change-orders/commitment/${row.pco.id}`
+                      : `/${projectId}/commitment-pcos/${row.pco.id}`;
                 const coHref = row.resulting_co
                   ? row.pco_type === "prime"
                     ? `/${projectId}/change-orders/prime/${row.resulting_co.id}`
@@ -130,7 +133,9 @@ export function ChangeEventLineagePanel({
                     </TableCell>
                     <TableCell>
                       <Link href={pcoHref} className="text-primary hover:underline">
-                        {row.pco.number || "PCO"} — {row.pco.title || "Untitled"}
+                        {row.pco.number ||
+                          (row.pco.record_type === "change_order" ? "CO" : "PCO")}{" "}
+                        — {row.pco.title || "Untitled"}
                       </Link>
                     </TableCell>
                     <TableCell>
@@ -156,7 +161,9 @@ export function ChangeEventLineagePanel({
                           ) : null}
                         </div>
                       ) : (
-                        <span className="text-muted-foreground">Not promoted</span>
+                        <span className="text-muted-foreground">
+                          {row.pco.record_type === "change_order" ? "Direct CO" : "Not promoted"}
+                        </span>
                       )}
                     </TableCell>
                     <TableCell className="text-muted-foreground">

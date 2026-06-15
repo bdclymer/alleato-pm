@@ -12,6 +12,7 @@ import { useConfirmationDialog } from "@/components/common/ConfirmationDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ChangeEventExpandedRow } from "@/components/domain/change-events/ChangeEventExpandedRow";
 import { ChangeEventSelectionBar } from "@/components/domain/change-events/ChangeEventSelectionBar";
+import { AddToCommitmentCODialog } from "@/components/domain/change-events/AddToCommitmentCODialog";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -220,6 +221,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
   const [showRfqSheet, setShowRfqSheet] = React.useState(false);
   const [isCreatingRfq, setIsCreatingRfq] = React.useState(false);
   const [showBudgetChangeDialog, setShowBudgetChangeDialog] = React.useState(false);
+  const [showCommitmentCODialog, setShowCommitmentCODialog] = React.useState(false);
 
   const handleView = React.useCallback(
     (item: ChangeEvent) => {
@@ -829,6 +831,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
               refetchChangeEvents();
             }}
             onAddToBudgetChange={() => setShowBudgetChangeDialog(true)}
+            onAddToCommitmentChangeOrder={() => setShowCommitmentCODialog(true)}
           />
         ) : undefined
       }
@@ -969,6 +972,17 @@ export default function ProjectChangeEventsPage(): ReactElement {
       projectId={projectId}
       onSuccess={() => {
         setShowBudgetChangeDialog(false);
+        tableState.setSelectedIds([]);
+        refetchChangeEvents();
+      }}
+    />
+    <AddToCommitmentCODialog
+      open={showCommitmentCODialog}
+      onClose={() => setShowCommitmentCODialog(false)}
+      selectedChangeEventIds={tableState.selectedIds}
+      projectId={projectId}
+      onSuccess={() => {
+        setShowCommitmentCODialog(false);
         tableState.setSelectedIds([]);
         refetchChangeEvents();
       }}
