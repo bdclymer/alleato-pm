@@ -456,7 +456,9 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "20 */2 * * *"
+    # Hourly (was every 2h) so a quota/billing outage is caught within the hour,
+    # not after half a day of burn.
+    schedule: "20 * * * *"
     dockerCommand: python3 -m src.services.health.ai_provider_health
     envVars:
       - key: PYTHONPATH
@@ -465,9 +467,17 @@ services:
         value: 1
       - key: OPENAI_API_KEY
         sync: false
-      # Slack incoming webhook (set via Render API 2026-06-14). Posts an alert
-      # on quota/auth/rate_limit failure. Secret — value lives in Render only.
+      # Slack incoming webhook (set via Render API 2026-06-14). Secondary record.
       - key: SLACK_WEBHOOK_URL
+        sync: false
+      # Teams DM alert (primary — the channel the owner actually watches). The
+      # health check POSTs to {NEXT_PUBLIC_APP_URL}/api/bot/proactive/teams with
+      # NOTIFICATION_SERVICE_KEY. Secrets live in Render only.
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
+      - key: NOTIFICATION_SERVICE_KEY
+        sync: false
+      - key: AI_HEALTH_ALERT_TEAMS_USER_ID
         sync: false
 
   # Checks source freshness, embedding backlog, compiler backlog, task extraction,

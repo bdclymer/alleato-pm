@@ -181,6 +181,58 @@ def _post_slack(webhook_url: str, result: dict[str, Any]) -> None:
         logger.warning("Slack notification failed: %s", exc)
 
 
+# Default Teams alert recipient — Megan's Supabase user id. Override with
+# AI_HEALTH_ALERT_TEAMS_USER_ID so the recipient can change without a code edit.
+_DEFAULT_ALERT_TEAMS_USER_ID = "1854b4b0-3e8e-4d69-86df-32cdb3c80ee0"
+
+
+def _teams_text(result: dict[str, Any]) -> str:
+    """Plain-text alert for a Teams DM (no Slack markdown / emoji codes)."""
+    reason = result.get("reason") or "unknown"
+    headline = _REASON_MESSAGE.get(reason, _REASON_MESSAGE["unknown"])
+    return (
+        f"⚠️ Backend AI is DOWN — reason: {reason} "
+        f"(http {result.get('http_status')}, probe model {result.get('model')}).\n\n"
+        f"{headline}\n\n"
+        f"detail: {result.get('detail')}\n"
+        f"checked at {result.get('checked_at')}"
+    )
+
+
+def _post_teams(result: dict[str, Any]) -> bool:
+    """Send the alert as a Teams DM via the frontend proactive-bot bridge.
+
+    Slack alerts already fire, but the channel isn't actively watched — a quota
+    burn went unnoticed for half a day. This routes the same alert to Teams, where
+    the owner actually is. Best-effort; never raises. Requires
+    NOTIFICATION_SERVICE_KEY + the app base URL (NEXT_PUBLIC_APP_URL) on the cron.
+    """
+    base_url = (
+        os.getenv("NEXT_PUBLIC_APP_URL")
+        or os.getenv("APP_BASE_URL")
+        or "https://projects.alleatogroup.com"
+    ).rstrip("/")
+    service_key = os.getenv("NOTIFICATION_SERVICE_KEY")
+    user_id = os.getenv("AI_HEALTH_ALERT_TEAMS_USER_ID", _DEFAULT_ALERT_TEAMS_USER_ID)
+    if not service_key:
+        logger.warning("[AIProviderHealth] NOTIFICATION_SERVICE_KEY not set — cannot send Teams alert")
+        return False
+    try:
+        resp = httpx.post(
+            f"{base_url}/api/bot/proactive/teams",
+            headers={"Authorization": f"Bearer {service_key}"},
+            json={"userId": user_id, "message": _teams_text(result)},
+            timeout=15,
+        )
+        if resp.status_code >= 400:
+            logger.warning("[AIProviderHealth] Teams alert HTTP %s: %s", resp.status_code, resp.text[:200])
+            return False
+        return True
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("[AIProviderHealth] Teams notification failed: %s", exc)
+        return False
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, stream=sys.stderr)
 
@@ -194,9 +246,16 @@ if __name__ == "__main__":
             f"\nAI PROVIDER HEALTH: DOWN ({reason}) — {_REASON_MESSAGE.get(reason, '')}",
             file=sys.stderr,
         )
+        # Fan out to every configured channel. Teams is the one the owner actually
+        # watches; Slack stays as a secondary record. Both are best-effort.
         slack_url = os.getenv("SLACK_WEBHOOK_URL")
         if slack_url:
             _post_slack(slack_url, result)
+        teams_sent = _post_teams(result)
+        print(
+            f"alerts sent — slack={'yes' if slack_url else 'no-webhook'}, teams={'yes' if teams_sent else 'failed'}",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     print("\nAI provider health: OK", file=sys.stderr)
