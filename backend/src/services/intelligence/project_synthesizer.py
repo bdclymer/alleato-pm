@@ -362,6 +362,30 @@ def synthesize_project_intelligence(
         logger.warning("[ProjectSynthesizer] project state fetch failed (project=%s): %s", project_id, exc)
         project_state = ""
 
+    # Durable processed-set: doc ids that ALREADY produced a signal candidate for
+    # this compiler version. This is the reliable "already extracted" signal —
+    # unlike the best-effort `source_metadata.synthesized_at_v1` marker (a metadata
+    # write that can silently fail and cause needless re-extraction). A doc is
+    # skipped if it's marked OR has a candidate, so a failed marker write can no
+    # longer make us pay to re-run the model on a doc we've already processed.
+    # (Zero-yield docs leave no candidate, so the marker still covers those.)
+    processed_doc_ids: set = set()
+    if skip_synthesized:
+        try:
+            cand_rows = (
+                rag_read.table("source_signal_candidates")
+                .select("source_document_id")
+                .eq("project_id", int(project_id))
+                .eq("compiler_version", COMMS_COMPILER_VERSION)
+                .limit(5000)
+                .execute()
+                .data
+                or []
+            )
+            processed_doc_ids = {r["source_document_id"] for r in cand_rows if r.get("source_document_id")}
+        except Exception as exc:  # noqa: BLE001 — fall back to marker-only skip
+            logger.debug("[ProjectSynthesizer] candidate processed-set fetch failed (project=%s): %s", project_id, exc)
+
     for doc in rows:
         # Cap the number of (slow) LLM extractions per call. Deep extraction takes
         # seconds per doc, so a large synchronous batch can exceed the request
@@ -383,12 +407,14 @@ def synthesize_project_intelligence(
             logger.info("[ProjectSynthesizer] skipping meeting doc %s (handled by meeting extractor)", doc_id)
             continue
 
-        # Skip docs already synthesized by this version (lets cron/repeat runs
-        # drain a backlog instead of re-extracting the same recent docs). Set
-        # skip_synthesized=False to force re-processing a specific window.
+        # Skip docs already processed by this version (lets cron/repeat runs drain
+        # a backlog instead of re-extracting the same docs). Reliable: skip if the
+        # doc already produced a candidate (durable) OR carries the marker (covers
+        # zero-yield docs). Set skip_synthesized=False to force re-processing.
         if skip_synthesized:
             sm = doc.get("source_metadata")
-            if isinstance(sm, dict) and sm.get("synthesized_at_v1"):
+            already_marked = isinstance(sm, dict) and sm.get("synthesized_at_v1")
+            if doc_id in processed_doc_ids or already_marked:
                 result["skipped"] += 1
                 continue
 
@@ -640,10 +666,85 @@ def reconcile_project_flags(project_id: int, *, model: Optional[str] = None) -> 
     return result
 
 
+def synthesize_new_comms_since(
+    since: str,
+    *,
+    max_projects: int = 25,
+    max_extractions_per_project: int = 25,
+    refresh_intelligence: bool = True,
+) -> dict:
+    """EVENT-DRIVEN extraction: process ONLY the email/Teams docs ingested since
+    ``since`` (what the just-finished sync brought in), per affected project, then
+    refresh that project's L2 synthesis.
+
+    Called inline at the end of ``run_graph_sync`` so new communications become
+    intelligence in the same cycle they arrive — instead of a blind 2-hourly
+    re-scan of everything. The candidate-based skip in
+    ``synthesize_project_intelligence`` guarantees already-processed docs are never
+    re-extracted, and the empty-delta guard in ``refresh_project_intelligence``
+    means L2 only pays for projects that actually changed. Bounded so one sync can
+    never blow its time/cost budget; the daily backstop sweep catches any overflow.
+    """
+    client = get_supabase_client()
+    try:
+        rows = (
+            client.table("document_metadata")
+            .select("project_id")
+            .not_.is_("project_id", "null")
+            .gte("created_at", since)
+            .limit(5000)
+            .execute()
+            .data
+            or []
+        )
+    except Exception as exc:  # noqa: BLE001 — never let this abort the sync
+        logger.error("[ProjectSynthesizer] event-driven project scan failed: %s", exc)
+        return {"since": since, "projects": 0, "error": str(exc)}
+
+    project_ids = sorted({int(r["project_id"]) for r in rows if r.get("project_id")})[:max_projects]
+    summary: Dict[str, Any] = {
+        "since": since, "projects": len(project_ids), "emails": 0, "teams": 0,
+        "cards_written": 0, "synthesis_packets_written": 0, "errors": [],
+    }
+    for pid in project_ids:
+        try:
+            r = synthesize_project_intelligence(
+                pid,
+                since=since,
+                max_docs=400,
+                max_extractions=max_extractions_per_project,
+                skip_synthesized=True,
+            )
+            summary["emails"] += r.get("emails", 0)
+            summary["teams"] += r.get("teams", 0)
+            summary["cards_written"] += r.get("cards_written", 0)
+        except Exception as exc:  # noqa: BLE001 — one project must not abort the rest
+            logger.error("[ProjectSynthesizer] event-driven extraction failed for %s: %s", pid, exc, exc_info=True)
+            summary["errors"].append({"project_id": pid, "stage": "extract", "error": str(exc)})
+            continue
+        if refresh_intelligence:
+            try:
+                from .project_intelligence import refresh_project_intelligence
+
+                sres = refresh_project_intelligence(pid)
+                if sres.get("packet_id") and not sres.get("skipped_no_new_docs"):
+                    summary["synthesis_packets_written"] += 1
+            except Exception as exc:  # noqa: BLE001 — synthesis must not abort the rest
+                logger.error("[ProjectSynthesizer] event-driven L2 synthesis failed for %s: %s", pid, exc, exc_info=True)
+                summary["errors"].append({"project_id": pid, "stage": "synthesis", "error": str(exc)})
+
+    logger.info(
+        "[ProjectSynthesizer] event-driven: since=%s projects=%d emails=%d teams=%d cards=%d packets=%d errors=%d",
+        since, summary["projects"], summary["emails"], summary["teams"],
+        summary["cards_written"], summary["synthesis_packets_written"], len(summary["errors"]),
+    )
+    return summary
+
+
 def run_synthesis_sweep(
     *,
     project_ids: Optional[List[int]] = None,
-    max_projects: int = 10,
+    max_projects: int = 200,
     max_extractions_per_project: int = 4,
     since_days: int = 14,
     refresh_intelligence: bool = True,
@@ -740,13 +841,18 @@ def run_synthesis_sweep(
     return summary
 
 
-if __name__ == "__main__":  # cron entrypoint
+if __name__ == "__main__":  # cron entrypoint — DAILY BACKSTOP
+    # The primary path is now event-driven (synthesize_new_comms_since, called
+    # inline at the end of each graph-sync). This sweep is a once-daily safety net
+    # that covers ALL active projects (no first-10 cap) and re-checks for anything
+    # the inline path missed. The candidate-based skip + empty-delta L2 guard mean
+    # this is cheap: already-processed docs and unchanged projects cost nothing.
     import json
     import os
 
     out = run_synthesis_sweep(
-        max_projects=int(os.getenv("SYNTHESIS_SWEEP_MAX_PROJECTS", "10")),
-        max_extractions_per_project=int(os.getenv("SYNTHESIS_SWEEP_MAX_EXTRACTIONS", "4")),
+        max_projects=int(os.getenv("SYNTHESIS_SWEEP_MAX_PROJECTS", "200")),
+        max_extractions_per_project=int(os.getenv("SYNTHESIS_SWEEP_MAX_EXTRACTIONS", "25")),
         since_days=int(os.getenv("SYNTHESIS_SWEEP_SINCE_DAYS", "14")),
     )
     print(json.dumps(out, indent=2, default=str))

@@ -5,7 +5,7 @@ Saves delta tokens between runs for incremental sync.
 """
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 from supabase import Client
@@ -303,6 +303,13 @@ def run_graph_sync(
     from src.services.ops.db_pressure_guard import enforce_app_db_pressure_guard
 
     enforce_app_db_pressure_guard("graph_sync")
+
+    # Watermark for the event-driven extraction phase below: anything ingested
+    # after this instant is "new this sync" and gets turned into intelligence
+    # inline, instead of waiting for a blind re-scan. Small buffer so a doc whose
+    # row lands a moment before this line is still caught (the candidate-based skip
+    # makes any overlap free).
+    sync_started_at = datetime.now(timezone.utc) - timedelta(minutes=5)
 
     graph = get_graph_client()
     if not graph.is_configured():
@@ -725,6 +732,31 @@ def run_graph_sync(
             summary["attachment_promotion"] = {"error": str(e)}
     else:
         summary["attachment_promotion"] = {"status": "skipped", "reason": "run_attachment_promotion=false"}
+
+    # ── Event-driven intelligence extraction ─────────────────────────────────
+    # Turn the email/Teams docs this sync just ingested into intelligence NOW,
+    # in the same cycle — replacing the old blind 2-hourly re-scan. Processes only
+    # the newly-ingested docs (candidate-based skip dedupes), per affected project,
+    # then refreshes each project's L2 synthesis (empty-delta guard keeps quiet
+    # projects free). Bounded + non-fatal; the daily backstop sweep catches any
+    # overflow. Skipped when embedding is off (no new embedded docs to extract).
+    if run_embedding:
+        try:
+            from src.services.intelligence.project_synthesizer import synthesize_new_comms_since
+
+            extract_result = synthesize_new_comms_since(sync_started_at.isoformat())
+            summary["intelligence_extraction"] = extract_result
+            logger.info(
+                "[GraphSync] Event-driven extraction: projects=%d cards=%d packets=%d errors=%d",
+                extract_result.get("projects", 0),
+                extract_result.get("cards_written", 0),
+                extract_result.get("synthesis_packets_written", 0),
+                len(extract_result.get("errors", [])),
+            )
+        except Exception as e:
+            logger.error("[GraphSync] Event-driven extraction failed (non-fatal): %s", e)
+            summary["errors"].append(f"Intelligence extraction failed: {e}")
+            summary["intelligence_extraction"] = {"error": str(e)}
 
     # Report status accurately — "complete" only if no errors
     status = "complete" if not summary["errors"] else "complete_with_errors"

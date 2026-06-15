@@ -634,19 +634,21 @@ services:
       - key: DOMAIN_PACKET_MODEL
         value: "gpt-5.4-mini"
 
-  # Project communications intelligence sweep — incrementally extracts evidence-
-  # backed timeline cards + tasks from NEW (un-synthesized) emails/Teams across
-  # active projects via project_synthesizer.run_synthesis_sweep. Self-limiting:
-  # docs marked synthesized (source_metadata.synthesized_at_v1) are skipped, so
-  # steady-state cost = only new docs. Per-run LLM ceiling = MAX_PROJECTS x
-  # MAX_EXTRACTIONS deep extractions (default 10 x 4 = 40). Tune the env vars to
-  # control spend / backlog-drain speed.
+  # Project communications intelligence — DAILY BACKSTOP. The PRIMARY path is now
+  # event-driven: synthesize_new_comms_since() runs inline at the end of every
+  # graph-sync, turning newly-ingested email/Teams docs into cards + L2 synthesis
+  # in the same cycle they arrive. This once-daily sweep is the safety net: it
+  # covers ALL active projects (no first-10 cap) and re-checks for anything the
+  # inline path missed. Cheap by construction — the candidate-based skip means
+  # already-processed docs cost nothing, and the empty-delta L2 guard means
+  # unchanged projects cost nothing. (Was every 2h, which blindly re-scanned the
+  # same first 10 projects and re-ran L2 on quiet projects — both fixed.)
   - type: cron
     name: alleato-project-synthesis-sweep
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "0 */2 * * *"
+    schedule: "0 7 * * *"
     dockerCommand: >-
       python3 -m src.services.intelligence.project_synthesizer
     envVars:
@@ -671,9 +673,9 @@ services:
       - key: OPENAI_API_KEY
         sync: false
       - key: SYNTHESIS_SWEEP_MAX_PROJECTS
-        value: "10"
+        value: "200"
       - key: SYNTHESIS_SWEEP_MAX_EXTRACTIONS
-        value: "4"
+        value: "25"
       - key: SYNTHESIS_SWEEP_SINCE_DAYS
         value: "14"
 
