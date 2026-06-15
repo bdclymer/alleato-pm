@@ -5,6 +5,10 @@ import { apiErrorResponse } from "@/lib/api-error";
 import { NextResponse } from "next/server";
 import { updateChangeOrderSchema } from "../validation";
 import { requirePermission } from "@/lib/permissions-guard";
+import {
+  canDeletePrimeContractChangeOrderStatus,
+  primeContractChangeOrderDeleteBlockedMessage,
+} from "@/lib/change-orders/prime-contract-change-order-statuses";
 import type { Database } from "@/types/database.types";
 
 interface RouteParams {
@@ -249,11 +253,10 @@ export const DELETE = withApiGuardrails(
       return NextResponse.json({ error: "Change order not found" }, { status: 404 });
     }
 
-    const normalizedStatus = (existing.status ?? "").toLowerCase();
-    if (!["draft", "pending", "rejected", "proposed"].includes(normalizedStatus)) {
+    if (!canDeletePrimeContractChangeOrderStatus(existing.status)) {
       return NextResponse.json(
         {
-          error: `Cannot delete a change order with status "${normalizedStatus}".`,
+          error: primeContractChangeOrderDeleteBlockedMessage(existing.status),
         },
         { status: 409 },
       );

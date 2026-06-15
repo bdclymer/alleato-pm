@@ -5,6 +5,10 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
+import {
+  canDeletePrimeContractChangeOrderStatus,
+  primeContractChangeOrderDeleteBlockedMessage,
+} from "@/lib/change-orders/prime-contract-change-order-statuses";
 
 interface RouteParams {
   params: Promise<{ projectId: string; primeCoId: string }>;
@@ -203,11 +207,9 @@ export const DELETE = withApiGuardrails(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const normalizedStatus = (existing.status ?? "").toLowerCase();
-    const deletableStatuses = ["draft", "pending", "rejected"];
-    if (!deletableStatuses.includes(normalizedStatus)) {
+    if (!canDeletePrimeContractChangeOrderStatus(existing.status)) {
       return NextResponse.json(
-        { error: `Cannot delete a change order with status "${normalizedStatus}". Only draft, pending, or rejected change orders can be deleted.` },
+        { error: primeContractChangeOrderDeleteBlockedMessage(existing.status) },
         { status: 409 },
       );
     }

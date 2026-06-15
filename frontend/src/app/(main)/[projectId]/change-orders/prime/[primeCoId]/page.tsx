@@ -791,15 +791,16 @@ export default function PrimeContractCODetailPage() {
     });
     if (!ok) return;
     try {
-      const res = await fetch(apiBase, { method: "DELETE" });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to delete");
-      }
+      await apiFetch(apiBase, { method: "DELETE" });
       toast.success("Change order deleted");
       router.push(`/${projectId}/change-orders?tab=prime`);
     } catch (err) {
-      toast.error("Failed to delete");
+      toast.error("Could not delete change order", {
+        description:
+          err instanceof Error && err.message
+            ? err.message
+            : "The server did not return a delete reason.",
+      });
     }
   }, [co, apiBase, router, projectId, confirm]);
 

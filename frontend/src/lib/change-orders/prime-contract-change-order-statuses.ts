@@ -16,6 +16,35 @@ export const PRIME_CONTRACT_CHANGE_ORDER_STATUSES = [
 export type PrimeContractChangeOrderStatus =
   (typeof PRIME_CONTRACT_CHANGE_ORDER_STATUSES)[number]["value"];
 
+export const PRIME_CONTRACT_CHANGE_ORDER_DELETABLE_STATUSES = [
+  "draft",
+  "proposed",
+  "pending",
+  "rejected",
+] as const;
+
+function normalizeStatusValue(status: string | null | undefined) {
+  return status?.trim().toLowerCase() ?? "";
+}
+
+export function canDeletePrimeContractChangeOrderStatus(
+  status: string | null | undefined,
+) {
+  type DeletableStatus =
+    (typeof PRIME_CONTRACT_CHANGE_ORDER_DELETABLE_STATUSES)[number];
+
+  return PRIME_CONTRACT_CHANGE_ORDER_DELETABLE_STATUSES.includes(
+    normalizeStatusValue(status) as DeletableStatus,
+  );
+}
+
+export function primeContractChangeOrderDeleteBlockedMessage(
+  status: string | null | undefined,
+) {
+  const normalizedStatus = normalizeStatusValue(status) || "unknown";
+  return `Cannot delete a change order with status "${normalizedStatus}". Only draft, proposed, pending, or rejected change orders can be deleted.`;
+}
+
 export function primeContractChangeOrderStatusLabel(status: string | null | undefined) {
   return (
     PRIME_CONTRACT_CHANGE_ORDER_STATUSES.find((option) => option.value === status)
@@ -26,14 +55,15 @@ export function primeContractChangeOrderStatusLabel(status: string | null | unde
 export function normalizePrimeContractChangeOrderStatus(
   status: string | null | undefined,
 ): PrimeContractChangeOrderStatus {
+  const normalizedStatus = normalizeStatusValue(status);
   if (
-    PRIME_CONTRACT_CHANGE_ORDER_STATUSES.some((option) => option.value === status)
+    PRIME_CONTRACT_CHANGE_ORDER_STATUSES.some((option) => option.value === normalizedStatus)
   ) {
-    return status as PrimeContractChangeOrderStatus;
+    return normalizedStatus as PrimeContractChangeOrderStatus;
   }
 
-  if (status === "proposed") return "pending";
-  if (status === "out_for_signature") return "pending_in_review";
-  if (status === "executed") return "approved";
+  if (normalizedStatus === "proposed") return "pending";
+  if (normalizedStatus === "out_for_signature") return "pending_in_review";
+  if (normalizedStatus === "executed") return "approved";
   return "draft";
 }
