@@ -677,18 +677,27 @@ severity is 1 (minor) to 5 (critical: safety/inspection/major cost/schedule-kill
 
     # Lazy import: the intelligence package eagerly loads the compiler at startup,
     # so a top-level import risks a circular load order under FastAPI/pytest.
-    from ..intelligence.client import COMPILER_MODEL, extract_with_retry
+    #
+    # COST: emails + Teams are HIGH VOLUME, so this per-doc extraction runs on the
+    # LIGHT model (gpt-4.1-mini), NOT frontier gpt-5.5 — restoring the deliberate
+    # routing from commit b71a70771 ("route Teams DM + email extraction to mini
+    # model") that the intelligence redesign accidentally reverted when it replaced
+    # the old email/teams compilers with this extractor. Frontier gpt-5.5 on every
+    # email/DM was a ~$60/day driver; mini cuts per-call cost ~10-20x. Meetings
+    # (extract_deep_meeting_intelligence) and L2 synthesis intentionally keep the
+    # full model — low-volume + high-value. Override via COMPILER_MODEL_LIGHT.
+    from ..intelligence.client import COMPILER_MODEL_LIGHT, extract_with_retry
 
     logger.info(
         "[LLM] Deep communication extraction (%s) via %s (text=%d chars, state=%d chars)",
         comm_type,
-        COMPILER_MODEL,
+        COMPILER_MODEL_LIGHT,
         len(full_text),
         len(project_state or ""),
     )
     data = extract_with_retry(
         [{"role": "user", "content": prompt}],
-        model=COMPILER_MODEL,
+        model=COMPILER_MODEL_LIGHT,
         timeout=DEEP_EXTRACTION_TIMEOUT_SECONDS,
     )
     if data.get("_extraction_failed"):
