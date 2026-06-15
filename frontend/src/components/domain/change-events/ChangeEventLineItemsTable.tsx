@@ -21,13 +21,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Modal as Dialog,
-  ModalContent as DialogContent,
-  ModalFooter as DialogFooter,
-  ModalHeader as DialogHeader,
-  ModalTitle as DialogTitle,
-} from "@/components/ui/unified-modal";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -192,7 +185,9 @@ export function ChangeEventLineItemsTable({
 }: ChangeEventLineItemsTableProps) {
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  // Inline editor state. The editor renders as an expanded row beneath the line
+  // being edited (or at the end of the table when adding) — never a modal.
+  const [isAdding, setIsAdding] = useState(false);
   const [editingItem, setEditingItem] = useState<ChangeEventDetailLineItem | null>(null);
   const [formState, setFormState] = useState<LineItemFormState>(EMPTY_FORM);
   const [isSaving, setIsSaving] = useState(false);
@@ -381,13 +376,20 @@ export function ChangeEventLineItemsTable({
     [projectId, budgetCodes],
   );
 
+  const closeEditor = () => {
+    setIsAdding(false);
+    setEditingItem(null);
+    setFormState(EMPTY_FORM);
+  };
+
   const openAdd = () => {
     setEditingItem(null);
     setFormState(EMPTY_FORM);
-    setDialogOpen(true);
+    setIsAdding(true);
   };
 
   const openEdit = (li: ChangeEventDetailLineItem) => {
+    setIsAdding(false);
     setEditingItem(li);
     const qty = li.quantity ?? 1;
     const uc = li.unitCost ?? 0;
@@ -407,7 +409,6 @@ export function ChangeEventLineItemsTable({
       revenueUnitCost: uc !== 0 ? String(uc) : li.revenueRom != null ? String(li.revenueRom) : "",
       nonCommittedCost: li.nonCommittedCost != null && li.nonCommittedCost !== 0 ? String(li.nonCommittedCost) : "",
     });
-    setDialogOpen(true);
     // Existing committed line saved without a budget code (e.g. created before
     // auto-populate worked here) — resolve it now so the field isn't blank.
     if (contractValue && !li.projectBudgetCodeId) {
@@ -461,7 +462,7 @@ export function ChangeEventLineItemsTable({
         );
         toast.success("Line item added");
       }
-      setDialogOpen(false);
+      closeEditor();
       onLineItemsChange?.();
     } catch (err) {
       toast.error("Line item was not saved", {
@@ -471,6 +472,196 @@ export function ChangeEventLineItemsTable({
       setIsSaving(false);
     }
   };
+
+  // The inline line-item editor — the SAME fields as the change-event form,
+  // rendered in an expanded table row instead of a modal. Used for both Edit
+  // (under the row) and Add (end of table).
+  function renderLineItemEditor() {
+    return (
+      <div className="space-y-4 border-l-2 border-primary/40 bg-muted/20 px-4 py-4">
+        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {editingItem ? "Edit Line Item" : "Add Line Item"}
+        </div>
+
+        <div className="grid max-w-3xl gap-4 sm:grid-cols-2">
+          {/* Budget Code */}
+          <div className="space-y-1.5">
+            <Label>Budget Code</Label>
+            <BudgetCodeSelector
+              value={formState.budgetCodeId}
+              onValueChange={(id) => setFormState((s) => ({ ...s, budgetCodeId: id }))}
+              budgetCodes={budgetCodes}
+              onCreateNew={() => {}}
+              placeholder="Select budget code..."
+              // Lock only once a code is actually resolved/chosen; never trap the
+              // user on a committed line whose budget code couldn't auto-populate.
+              disabled={!!formState.contractValue && !!formState.budgetCodeId}
+            />
+          </div>
+
+          {/* Description */}
+          <div className="space-y-1.5">
+            <Label htmlFor="li-description">Description *</Label>
+            <Input
+              id="li-description"
+              value={formState.description}
+              onChange={(e) => setFormState((s) => ({ ...s, description: e.target.value }))}
+              placeholder="Enter description"
+            />
+          </div>
+
+          {/* Vendor */}
+          <div className="space-y-1.5">
+            <Label>Vendor</Label>
+            <VendorCombobox
+              value={formState.vendorId}
+              onChange={(v) => setFormState((s) => ({ ...s, vendorId: v }))}
+              vendors={vendors}
+              onAddCompany={() => {}}
+            />
+          </div>
+
+          {/* Commitment */}
+          <div className="space-y-1.5">
+            <Label>Commitment</Label>
+            <ContractCombobox
+              value={formState.contractValue}
+              onChange={(v) => {
+                const commitment = contracts.find((c) => c.id === v);
+                setFormState((s) => ({
+                  ...s,
+                  contractValue: v,
+                  vendorId: s.vendorId || (commitment?.vendorId ? String(commitment.vendorId) : s.vendorId),
+                }));
+                // Auto-populate the budget code from the commitment's SOV.
+                void autoPopulateBudgetCodeFromCommitment(v);
+              }}
+              contracts={contracts}
+              disabled={!!editingItem?.commitmentId}
+            />
+          </div>
+
+          {/* UOM */}
+          <div className="space-y-1.5">
+            <Label>Unit of Measure</Label>
+            <Select
+              value={formState.unitOfMeasure}
+              onValueChange={(v) => setFormState((s) => ({ ...s, unitOfMeasure: v }))}
+            >
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent>
+                {UOM_OPTIONS.map((u) => (
+                  <SelectItem key={u} value={u}>{u}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Cost */}
+        <div className="max-w-3xl">
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Cost</p>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="li-costQty">Quantity</Label>
+              <Input
+                id="li-costQty"
+                type="number"
+                inputMode="numeric"
+                min="0"
+                value={formState.costQuantity}
+                onChange={(e) => setFormState((s) => ({ ...s, costQuantity: e.target.value }))}
+                placeholder="1"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="li-costUc">Unit Cost</Label>
+              <MoneyField
+                inline
+                label="Cost Unit Cost"
+                value={parseFloat(formState.costUnitCost) || undefined}
+                onChange={(v) => setFormState((s) => ({ ...s, costUnitCost: v != null ? String(v) : "" }))}
+                showCurrency={false}
+                className="h-9"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Cost ROM</Label>
+              <div className="flex h-9 items-center rounded-md border border-border bg-muted px-3 text-sm font-medium">
+                {formatCurrency((parseFloat(formState.costQuantity) || 0) * (parseFloat(formState.costUnitCost) || 0))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Revenue */}
+        <div className="max-w-3xl">
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Revenue</p>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="li-revQty">Quantity</Label>
+              <Input
+                id="li-revQty"
+                type="number"
+                inputMode="numeric"
+                min="0"
+                value={formState.revenueQuantity}
+                onChange={(e) => setFormState((s) => ({ ...s, revenueQuantity: e.target.value }))}
+                placeholder="1"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="li-revUc">Unit Cost</Label>
+              <MoneyField
+                inline
+                label="Revenue Unit Cost"
+                value={parseFloat(formState.revenueUnitCost) || undefined}
+                onChange={(v) => setFormState((s) => ({ ...s, revenueUnitCost: v != null ? String(v) : "" }))}
+                showCurrency={false}
+                className="h-9"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Revenue ROM</Label>
+              <div className="flex h-9 items-center rounded-md border border-border bg-muted px-3 text-sm font-medium">
+                {formatCurrency((parseFloat(formState.revenueQuantity) || 0) * (parseFloat(formState.revenueUnitCost) || 0))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Non-committed cost (only when a commitment is selected) */}
+        {formState.contractValue && (
+          <div className="w-48 space-y-1.5">
+            <Label>Non-committed Cost</Label>
+            <MoneyField
+              inline
+              label="Non-committed Cost"
+              value={parseFloat(formState.nonCommittedCost) || undefined}
+              onChange={(v) => setFormState((s) => ({ ...s, nonCommittedCost: v != null ? String(v) : "" }))}
+              showCurrency={false}
+              className="h-9"
+            />
+          </div>
+        )}
+
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={closeEditor} disabled={isSaving}>
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleSaveLineItem}
+            disabled={isSaving || !formState.description.trim()}
+          >
+            {isSaving ? "Saving…" : editingItem ? "Save Changes" : "Add Line Item"}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const detailSpan = 5;
   const actionSpan = onDeleteLineItem || changeEventId ? 1 : 0;
@@ -754,7 +945,7 @@ export function ChangeEventLineItemsTable({
             Clear filters
           </Button>
         </div>
-      ) : filteredItems.length > 0 || computedMarkups.length > 0 ? (
+      ) : filteredItems.length > 0 || computedMarkups.length > 0 || isAdding ? (
         <InlineTable variant="read" tableClassName="min-w-max">
           <colgroup>
             <col style={{ width: colWidths.budgetCode }} />
@@ -870,7 +1061,8 @@ export function ChangeEventLineItemsTable({
                   const liOverUnder = latestPrice - latestCost;
 
                   return (
-                    <InlineTableRow key={li.id}>
+                    <React.Fragment key={li.id}>
+                    <InlineTableRow>
                       <InlineTableCell className="align-top">
                         {li.budgetLine ? (
                           <Link
@@ -1090,10 +1282,27 @@ export function ChangeEventLineItemsTable({
                         </InlineTableCell>
                       )}
                     </InlineTableRow>
+                    {editingItem?.id === li.id && (
+                      <InlineTableRow>
+                        <InlineTableCell colSpan={totalColCount} className="p-0">
+                          {renderLineItemEditor()}
+                        </InlineTableCell>
+                      </InlineTableRow>
+                    )}
+                    </React.Fragment>
                   );
                 })}
               </React.Fragment>
             ))}
+
+            {/* Inline add editor — appended at the end of the table */}
+            {isAdding && (
+              <InlineTableRow>
+                <InlineTableCell colSpan={totalColCount} className="p-0">
+                  {renderLineItemEditor()}
+                </InlineTableCell>
+              </InlineTableRow>
+            )}
 
             {/* Markup rows */}
             {computedMarkups.map((markup) => (
@@ -1222,191 +1431,6 @@ export function ChangeEventLineItemsTable({
           )}
         </div>
       )}
-
-      {/* Add / Edit dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{editingItem ? "Edit Line Item" : "Add Line Item"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            {/* Budget Code */}
-            <div className="space-y-1.5">
-              <Label>Budget Code</Label>
-              <BudgetCodeSelector
-                value={formState.budgetCodeId}
-                onValueChange={(id) => setFormState((s) => ({ ...s, budgetCodeId: id }))}
-                budgetCodes={budgetCodes}
-                onCreateNew={() => {}}
-                placeholder="Select budget code..."
-                // Lock only once a code is actually resolved/chosen; never trap
-                // the user on a committed line whose budget code couldn't be
-                // auto-populated.
-                disabled={!!formState.contractValue && !!formState.budgetCodeId}
-              />
-            </div>
-
-            {/* Description */}
-            <div className="space-y-1.5">
-              <Label htmlFor="li-description">Description *</Label>
-              <Input
-                id="li-description"
-                value={formState.description}
-                onChange={(e) => setFormState((s) => ({ ...s, description: e.target.value }))}
-                placeholder="Enter description"
-              />
-            </div>
-
-            {/* Vendor + Contract */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Vendor</Label>
-                <VendorCombobox
-                  value={formState.vendorId}
-                  onChange={(v) => setFormState((s) => ({ ...s, vendorId: v }))}
-                  vendors={vendors}
-                  onAddCompany={() => {}}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Commitment</Label>
-                <ContractCombobox
-                  value={formState.contractValue}
-                  onChange={(v) => {
-                    const commitment = contracts.find((c) => c.id === v);
-                    setFormState((s) => ({
-                      ...s,
-                      contractValue: v,
-                      vendorId: s.vendorId || (commitment?.vendorId ? String(commitment.vendorId) : s.vendorId),
-                    }));
-                    // Mirror ChangeEventForm: auto-populate the budget code from
-                    // the commitment's SOV (vendor alone is not enough).
-                    void autoPopulateBudgetCodeFromCommitment(v);
-                  }}
-                  contracts={contracts}
-                  disabled={!!(editingItem?.commitmentId)}
-                />
-              </div>
-            </div>
-
-            {/* UOM */}
-            <div className="w-40 space-y-1.5">
-              <Label>Unit of Measure</Label>
-              <Select
-                value={formState.unitOfMeasure}
-                onValueChange={(v) => setFormState((s) => ({ ...s, unitOfMeasure: v }))}
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  {UOM_OPTIONS.map((u) => (
-                    <SelectItem key={u} value={u}>{u}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Cost section */}
-            <div>
-              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Cost</p>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="li-costQty">Quantity</Label>
-                  <Input
-                    id="li-costQty"
-                    type="number"
-                    inputMode="numeric"
-                    min="0"
-                    value={formState.costQuantity}
-                    onChange={(e) => setFormState((s) => ({ ...s, costQuantity: e.target.value }))}
-                    placeholder="1"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="li-costUc">Unit Cost</Label>
-                  <MoneyField
-                    inline
-                    label="Cost Unit Cost"
-                    value={parseFloat(formState.costUnitCost) || undefined}
-                    onChange={(v) => setFormState((s) => ({ ...s, costUnitCost: v != null ? String(v) : "" }))}
-                    showCurrency={false}
-                    className="h-9"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Cost ROM</Label>
-                  <div className="flex h-9 items-center rounded-md border border-border bg-muted px-3 text-sm font-medium">
-                    {formatCurrency((parseFloat(formState.costQuantity) || 0) * (parseFloat(formState.costUnitCost) || 0))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Revenue section */}
-            <div>
-              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Revenue</p>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="li-revQty">Quantity</Label>
-                  <Input
-                    id="li-revQty"
-                    type="number"
-                    inputMode="numeric"
-                    min="0"
-                    value={formState.revenueQuantity}
-                    onChange={(e) => setFormState((s) => ({ ...s, revenueQuantity: e.target.value }))}
-                    placeholder="1"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="li-revUc">Unit Cost</Label>
-                  <MoneyField
-                    inline
-                    label="Revenue Unit Cost"
-                    value={parseFloat(formState.revenueUnitCost) || undefined}
-                    onChange={(v) => setFormState((s) => ({ ...s, revenueUnitCost: v != null ? String(v) : "" }))}
-                    showCurrency={false}
-                    className="h-9"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Revenue ROM</Label>
-                  <div className="flex h-9 items-center rounded-md border border-border bg-muted px-3 text-sm font-medium">
-                    {formatCurrency((parseFloat(formState.revenueQuantity) || 0) * (parseFloat(formState.revenueUnitCost) || 0))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Non-committed cost (only shown when a commitment is selected) */}
-            {formState.contractValue && (
-              <div className="w-48 space-y-1.5">
-                <Label>Non-committed Cost</Label>
-                <MoneyField
-                  inline
-                  label="Non-committed Cost"
-                  value={parseFloat(formState.nonCommittedCost) || undefined}
-                  onChange={(v) => setFormState((s) => ({ ...s, nonCommittedCost: v != null ? String(v) : "" }))}
-                  showCurrency={false}
-                  className="h-9"
-                />
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={isSaving}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSaveLineItem}
-              disabled={isSaving || !formState.description.trim()}
-            >
-              {isSaving ? "Saving…" : editingItem ? "Save Changes" : "Add Line Item"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
     </div>
   );
