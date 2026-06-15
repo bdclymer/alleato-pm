@@ -125,20 +125,6 @@ export function BudgetPageHeader({
     </Tooltip>
   );
 
-  const lockStateButton = (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={isLocked ? onUnlockBudget : () => setShowLockDialog(true)}
-      className={lockStateClassName}
-      aria-label={lockActionLabel}
-    >
-      <LockStateIcon />
-      <span className="hidden lg:inline">{lockStateLabel}</span>
-      <span className="lg:hidden">{lockStateLabel}</span>
-    </Button>
-  );
-
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return "";
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -164,6 +150,26 @@ export function BudgetPageHeader({
     isLocked && lockedAt
       ? `Locked ${formatDate(lockedAt)}${lockOwnerDisplay ? ` by ${lockOwnerDisplay}` : ""}`
       : undefined;
+  const lockTooltip = statusDescription ?? lockActionLabel;
+
+  const lockStateButton = (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={isLocked ? onUnlockBudget : () => setShowLockDialog(true)}
+          className={lockStateClassName}
+          aria-label={lockTooltip}
+        >
+          <LockStateIcon />
+          <span className="hidden lg:inline">{lockStateLabel}</span>
+          <span className="lg:hidden">{lockStateLabel}</span>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{lockTooltip}</TooltipContent>
+    </Tooltip>
+  );
 
   const actionButtons = (
     <div className="flex w-full gap-2 min-w-0">
@@ -434,7 +440,6 @@ export function BudgetPageHeader({
       <PageHeader
         title={title}
         titleContent={titleContent}
-        description={statusDescription}
         actions={actionButtons}
       />
 
