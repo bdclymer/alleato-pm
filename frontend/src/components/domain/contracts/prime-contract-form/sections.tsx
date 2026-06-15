@@ -350,6 +350,7 @@ export function PrimeContractPrivacySection({
             value={formData.allowedUsers || []}
             onChange={(values) => onUpdateFormData({ allowedUsers: values })}
             placeholder="Select project users"
+            fullWidth
             hint={
               formData.isPrivate
                 ? "Choose which non-admin project users can access this contract."
