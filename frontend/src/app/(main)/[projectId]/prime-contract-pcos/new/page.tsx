@@ -1368,41 +1368,6 @@ export default function NewPrimeContractPcoPage() {
 
                 <FormField
                   control={form.control}
-                  name="executed"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start gap-3 pt-2">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-0.5 leading-none">
-                        <FormLabel className="cursor-pointer">Executed</FormLabel>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="is_private"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start gap-3 pt-2">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-0.5 leading-none">
-                        <FormLabel className="cursor-pointer">Private</FormLabel>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
                   name="due_date"
                   render={({ field }) => (
                     <FormItem>
@@ -1564,6 +1529,41 @@ export default function NewPrimeContractPcoPage() {
                     variant="minimal"
                   />
                 </div>
+                <FormField
+                  control={form.control}
+                  name="executed"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start gap-3 pt-2">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-0.5 leading-none">
+                        <FormLabel className="cursor-pointer">Executed</FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="is_private"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start gap-3 pt-2">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-0.5 leading-none">
+                        <FormLabel className="cursor-pointer">Private</FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
               </div>
             </section>
           </form>
