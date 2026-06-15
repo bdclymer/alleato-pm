@@ -404,7 +404,7 @@ function EditableCurrencyCell({
         variant="ghost"
         aria-label={`Edit ${formatCurrency(value)}`}
         className={cn(
-          "text-right cursor-pointer px-1 py-0.5 rounded transition-colors w-full h-auto font-normal",
+          "flex h-auto w-full cursor-pointer justify-end rounded px-1 py-0.5 text-right font-normal transition-colors",
           "hover:bg-muted/80 underline decoration-muted-foreground/40 underline-offset-2 hover:decoration-foreground",
         )}
         onClick={onEdit}
@@ -1246,8 +1246,13 @@ export function BudgetTable({
         {isDescriptionColumn ? (
           "Grand Totals"
         ) : columnTotal !== null ? (
-          <div className="text-right">
-            <CurrencyCell value={columnTotal} />
+          <div className="flex w-full items-center gap-0.5">
+            <div className="flex-1 min-w-0">
+              <div className="flex h-auto w-full justify-end px-1 text-right">
+                <CurrencyCell value={columnTotal} />
+              </div>
+            </div>
+            <span className="h-5 w-5 flex-shrink-0" aria-hidden="true" />
           </div>
         ) : isUtilityColumn ? null : (
           <span className="sr-only">
@@ -1608,8 +1613,8 @@ export function BudgetTable({
                         className={cn(
                           "relative bg-background py-2 text-left text-xs font-semibold text-foreground capitalize tracking-normal",
                           header.column.id === "select"
-                            ? "pl-3 pr-2"
-                            : "px-1.5",
+                            ? "pl-3 pr-2 sm:pl-3 sm:pr-2"
+                            : "px-1.5 sm:px-1.5",
                         )}
                         style={getColumnSizeStyle(header.column.id)}
                       >
@@ -1667,15 +1672,15 @@ export function BudgetTable({
                             className={cn(
                               "py-2 text-sm",
                               cell.column.id === "select"
-                                ? "pl-3 pr-2"
-                                : "px-1.5",
+                                ? "pl-3 pr-2 sm:pl-3 sm:pr-2"
+                                : "px-1.5 sm:px-1.5",
                               row.depth > 0 && "text-foreground",
                               isDataColumn && "group/cell",
                             )}
                             style={getColumnSizeStyle(cell.column.id)}
                           >
                             {isDataColumn ? (
-                              <div className="flex items-center gap-0.5">
+                              <div className="flex w-full items-center gap-0.5">
                                 <div className="flex-1 min-w-0">
                                   {flexRender(
                                     cell.column.columnDef.cell,
