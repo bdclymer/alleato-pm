@@ -12,50 +12,23 @@ import type {
 import { createEmptyLineItem } from "./types";
 import { apiFetch } from "@/lib/api-client";
 import { useDropdownData } from "./useDropdownData";
+import {
+  findBudgetCode,
+  resolveBudgetCodeFromSov,
+} from "@/lib/change-events/budget-code-match";
 
-// When all SOV items share the same budget code, auto-fill it; if only one item
-// exists also use its description. Returns only the fields that should update.
-// Strip dashes and dots so "233000" matches "23-3000", "23.3000", etc.
-function normCode(s: string): string {
-  return s.replace(/[-./]/g, "").toLowerCase();
-}
-
-function findBudgetCode(code: string | null, budgetCodes: BudgetCodeOption[]): BudgetCodeOption | undefined {
-  if (!code) return undefined;
-  const q = code.trim().toLowerCase();
-  const qNorm = normCode(q);
-  return (
-    // 1. Exact match
-    budgetCodes.find((b) => b.code === code) ||
-    // 2. Case-insensitive exact match
-    budgetCodes.find((b) => b.code.toLowerCase() === q) ||
-    // 3. Normalized match — "233000" matches "23-3000"
-    budgetCodes.find((b) => normCode(b.code) === qNorm) ||
-    // 4. Description match
-    budgetCodes.find((b) => b.description.toLowerCase() === q) ||
-    // 5. Full label prefix match
-    budgetCodes.find((b) => b.fullLabel.toLowerCase().startsWith(q))
-  );
-}
-
+// Thin adapter over the shared resolver: maps the resolution onto this form's
+// line-item shape (budgetCode / description). Matching itself lives in
+// @/lib/change-events/budget-code-match so the detail-page inline editor and
+// this form can never drift apart again.
 function resolveBudgetCodeFromItems(
   items: CommitmentSovLineItem[],
   budgetCodes: BudgetCodeOption[],
 ): Partial<ChangeEventLineItem> {
-  if (items.length === 0) return {};
+  const resolution = resolveBudgetCodeFromSov(items, budgetCodes);
   const updates: Partial<ChangeEventLineItem> = {};
-
-  const firstCode = items[0].budget_code;
-  const allSameCode = firstCode !== null && items.every((i) => i.budget_code === firstCode);
-  if (allSameCode) {
-    const bc = findBudgetCode(firstCode, budgetCodes);
-    if (bc) updates.budgetCode = bc.id;
-  }
-
-  if (items.length === 1 && items[0].description) {
-    updates.description = items[0].description;
-  }
-
+  if (resolution.budgetCodeId) updates.budgetCode = resolution.budgetCodeId;
+  if (resolution.description) updates.description = resolution.description;
   return updates;
 }
 

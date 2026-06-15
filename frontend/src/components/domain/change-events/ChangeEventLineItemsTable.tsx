@@ -56,6 +56,10 @@ import { useDropdownData } from "./change-event-form/useDropdownData";
 import { VendorCombobox } from "./change-event-form/VendorCombobox";
 import { ContractCombobox } from "./change-event-form/ContractCombobox";
 import { UOM_OPTIONS } from "./change-event-form/types";
+import {
+  fetchCommitmentSovLineItems,
+  resolveBudgetCodeFromSov,
+} from "@/lib/change-events/budget-code-match";
 
 interface LineItemFormState {
   description: string;
@@ -336,6 +340,47 @@ export function ChangeEventLineItemsTable({
 
   const overUnder = totals.latestPrice - totals.latestCost;
 
+  /**
+   * Fetch the selected commitment's SOV and auto-populate the budget code, the
+   * same way the new/edit ChangeEventForm does. Runs on commitment selection and
+   * when opening an already-committed line that has no budget code yet. Surfaces
+   * a reason when it can't resolve instead of silently leaving the field blank.
+   */
+  const autoPopulateBudgetCodeFromCommitment = React.useCallback(
+    async (contractValue: string, opts?: { silent?: boolean }) => {
+      if (!contractValue) return;
+      const items = await fetchCommitmentSovLineItems(projectId, contractValue);
+      const resolution = resolveBudgetCodeFromSov(items, budgetCodes);
+      if (resolution.budgetCodeId) {
+        setFormState((s) => ({
+          ...s,
+          // Don't clobber a budget code the user already chose.
+          budgetCodeId: s.budgetCodeId || resolution.budgetCodeId!,
+          description:
+            s.description.trim() === "" && resolution.description
+              ? resolution.description
+              : s.description,
+        }));
+        return;
+      }
+      if (opts?.silent) return;
+      if (resolution.reason === "multiple_codes") {
+        toast.info(
+          "This commitment has multiple budget codes — pick the one for this line.",
+        );
+      } else if (resolution.reason === "code_not_in_project") {
+        toast.warning(
+          "The commitment's budget code isn't in this project's budget. Select it manually or add it to the budget.",
+        );
+      } else if (resolution.reason === "no_sov") {
+        toast.info(
+          "This commitment has no line items to copy a budget code from — select one manually.",
+        );
+      }
+    },
+    [projectId, budgetCodes],
+  );
+
   const openAdd = () => {
     setEditingItem(null);
     setFormState(EMPTY_FORM);
@@ -363,6 +408,11 @@ export function ChangeEventLineItemsTable({
       nonCommittedCost: li.nonCommittedCost != null && li.nonCommittedCost !== 0 ? String(li.nonCommittedCost) : "",
     });
     setDialogOpen(true);
+    // Existing committed line saved without a budget code (e.g. created before
+    // auto-populate worked here) — resolve it now so the field isn't blank.
+    if (contractValue && !li.projectBudgetCodeId) {
+      void autoPopulateBudgetCodeFromCommitment(contractValue, { silent: true });
+    }
   };
 
   const handleSaveLineItem = async () => {
@@ -1189,7 +1239,10 @@ export function ChangeEventLineItemsTable({
                 budgetCodes={budgetCodes}
                 onCreateNew={() => {}}
                 placeholder="Select budget code..."
-                disabled={!!(editingItem?.commitmentId)}
+                // Lock only once a code is actually resolved/chosen; never trap
+                // the user on a committed line whose budget code couldn't be
+                // auto-populated.
+                disabled={!!formState.contractValue && !!formState.budgetCodeId}
               />
             </div>
 
@@ -1226,6 +1279,9 @@ export function ChangeEventLineItemsTable({
                       contractValue: v,
                       vendorId: s.vendorId || (commitment?.vendorId ? String(commitment.vendorId) : s.vendorId),
                     }));
+                    // Mirror ChangeEventForm: auto-populate the budget code from
+                    // the commitment's SOV (vendor alone is not enough).
+                    void autoPopulateBudgetCodeFromCommitment(v);
                   }}
                   contracts={contracts}
                   disabled={!!(editingItem?.commitmentId)}
