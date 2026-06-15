@@ -3,27 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alleato RAG Process Flow</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%23087f5b'/%3E%3Cpath d='M4 8h8M8 4v8' stroke='white' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E">
+  <title>Alleato RAG Process, Plain English</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%230f766e'/%3E%3Cpath d='M4 5.5h8M4 8h8M4 10.5h5' stroke='white' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E">
   <style>
     :root {
-      --bg: #f7f8fa;
+      --bg: #fbfbfa;
+      --ink: #16211d;
+      --muted: #5d6b66;
+      --faint: #edf1ef;
+      --line: #d8dfdc;
       --panel: #ffffff;
-      --panel-soft: #f1f5f4;
-      --ink: #17201d;
-      --muted: #5f6f68;
-      --subtle: #dbe4df;
-      --line: #c8d4ce;
-      --accent: #087f5b;
-      --accent-strong: #056348;
-      --accent-soft: #dff4ec;
-      --blue: #2563eb;
-      --blue-soft: #e7efff;
-      --amber: #b7791f;
-      --amber-soft: #fff4d6;
-      --red: #b42318;
-      --red-soft: #fff0ed;
-      --shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+      --accent: #0f766e;
+      --accent-soft: #e3f4f1;
+      --accent-ink: #0b514c;
+      --warning: #8a5a14;
+      --warning-soft: #fff4d8;
+      --blue: #1d4ed8;
+      --blue-soft: #e8f0ff;
       --radius: 8px;
     }
 
@@ -31,48 +27,45 @@
       box-sizing: border-box;
     }
 
-    html {
-      scroll-behavior: smooth;
-    }
-
     body {
       margin: 0;
       background: var(--bg);
       color: var(--ink);
-      font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
       -webkit-font-smoothing: antialiased;
     }
 
-    button,
-    input {
+    button {
       font: inherit;
     }
 
     code {
-      border: 1px solid var(--subtle);
+      border: 1px solid var(--line);
       border-radius: 5px;
-      background: #fbfcfd;
-      color: #24352e;
-      font: 0.875rem/1.4 "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+      background: #fff;
+      color: #26352f;
       padding: 0.05rem 0.3rem;
+      font: 0.875rem/1.4 "SF Mono", ui-monospace, Menlo, Consolas, monospace;
     }
 
     .page {
-      width: min(1440px, 100%);
+      width: min(1180px, 100%);
       margin: 0 auto;
       padding: 1rem;
     }
 
     .hero {
       display: grid;
-      gap: 1.25rem;
-      padding: 1.5rem 0 1rem;
+      gap: 1rem;
+      padding: 1.5rem 0;
+      border-bottom: 1px solid var(--line);
     }
 
     .eyebrow {
+      margin: 0;
       color: var(--accent);
       font-size: 0.78rem;
-      font-weight: 700;
+      font-weight: 750;
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
@@ -83,229 +76,43 @@
       font-size: 2rem;
       font-weight: 650;
       letter-spacing: 0;
-      line-height: 1.1;
+      line-height: 1.08;
     }
 
-    .hero-copy {
-      max-width: 72ch;
+    .plain-answer {
+      max-width: 68ch;
       margin: 0;
       color: var(--muted);
+      font-size: 1.05rem;
     }
 
-    .mental-model {
-      display: grid;
-      gap: 0.75rem;
-      margin-top: 0.25rem;
-    }
-
-    .model-row {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 0.5rem;
-      align-items: stretch;
-    }
-
-    .model-pill {
-      min-height: 3.25rem;
-      border: 1px solid var(--subtle);
-      border-radius: var(--radius);
-      background: var(--panel);
-      padding: 0.75rem 0.85rem;
-      box-shadow: var(--shadow);
-    }
-
-    .model-pill strong {
-      display: block;
-      font-size: 0.95rem;
+    .simple-rule {
+      margin: 0;
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent-ink);
+      padding: 0.85rem 1rem;
       font-weight: 650;
     }
 
-    .model-pill span {
-      display: block;
-      color: var(--muted);
-      font-size: 0.875rem;
-      margin-top: 0.15rem;
-    }
-
-    .controls {
+    .toolbar {
       position: sticky;
       top: 0;
       z-index: 10;
       display: grid;
       gap: 0.75rem;
-      border-top: 1px solid var(--subtle);
-      border-bottom: 1px solid var(--subtle);
-      background: rgba(247, 248, 250, 0.94);
+      border-bottom: 1px solid var(--line);
+      background: rgba(251, 251, 250, 0.96);
       padding: 0.85rem 0;
       backdrop-filter: blur(10px);
     }
 
-    .source-tabs,
-    .view-tabs {
-      display: flex;
-      gap: 0.5rem;
-      overflow-x: auto;
-      padding-bottom: 0.05rem;
-      scrollbar-width: thin;
-    }
-
-    .source-tab,
-    .view-tab {
-      min-height: 44px;
-      border: 1px solid var(--subtle);
-      border-radius: 999px;
-      background: var(--panel);
-      color: var(--muted);
-      cursor: pointer;
-      flex: 0 0 auto;
-      padding: 0.55rem 0.9rem;
-    }
-
-    .source-tab[aria-pressed="true"],
-    .view-tab[aria-pressed="true"] {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-      color: var(--accent-strong);
-      font-weight: 650;
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
-    .flow-shell,
-    .detail-panel,
-    .legend,
-    .explain-section {
-      border: 1px solid var(--subtle);
-      border-radius: var(--radius);
-      background: var(--panel);
-      box-shadow: var(--shadow);
-    }
-
-    .flow-shell {
-      overflow: hidden;
-    }
-
-    .flow-header,
-    .detail-header,
-    .legend-header {
-      border-bottom: 1px solid var(--subtle);
-      padding: 1rem;
-    }
-
-    .flow-title,
-    .detail-title,
-    .legend-title {
-      margin: 0;
-      font-size: 1rem;
-      font-weight: 650;
-    }
-
-    .flow-subtitle,
-    .detail-kicker,
-    .legend-subtitle {
-      margin: 0.2rem 0 0;
-      color: var(--muted);
-      font-size: 0.875rem;
-    }
-
-    .flow-canvas {
-      overflow-x: auto;
-      padding: 1rem;
-    }
-
-    .flow-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 0.75rem;
+    .toolbar > div {
       min-width: 0;
     }
 
-    .flow-node {
-      position: relative;
-      width: 100%;
-      min-height: 7rem;
-      border: 1px solid var(--subtle);
-      border-radius: var(--radius);
-      background: var(--panel);
-      color: var(--ink);
-      cursor: pointer;
-      padding: 0.9rem;
-      text-align: left;
-      transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
-    }
-
-    .flow-node:hover,
-    .flow-node:focus-visible {
-      border-color: var(--accent);
-      background: #fbfdfc;
-      outline: none;
-      transform: translateY(-1px);
-    }
-
-    .flow-node.active {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-    }
-
-    .flow-node.dimmed {
-      opacity: 0.38;
-    }
-
-    .node-step {
-      color: var(--accent);
-      font-size: 0.75rem;
-      font-weight: 750;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-
-    .node-title {
-      display: block;
-      margin-top: 0.25rem;
-      font-size: 1rem;
-      font-weight: 700;
-      line-height: 1.25;
-    }
-
-    .node-summary {
-      display: block;
-      margin-top: 0.35rem;
-      color: var(--muted);
-      font-size: 0.875rem;
-      line-height: 1.4;
-    }
-
-    .node-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.3rem;
-      margin-top: 0.75rem;
-    }
-
-    .tag {
-      border-radius: 999px;
-      background: var(--panel-soft);
-      color: #40524a;
-      font-size: 0.75rem;
-      line-height: 1;
-      padding: 0.28rem 0.45rem;
-    }
-
-    .flow-arrow {
-      display: grid;
-      place-items: center;
-      min-height: 1.25rem;
-      color: var(--muted);
-      font-weight: 700;
-    }
-
-    .branch-label {
-      margin: 0.75rem 0 0.25rem;
+    .control-label {
+      margin: 0 0 0.35rem;
       color: var(--muted);
       font-size: 0.78rem;
       font-weight: 750;
@@ -313,263 +120,265 @@
       text-transform: uppercase;
     }
 
-    .branch-grid {
+    .button-row {
+      display: flex;
+      gap: 0.5rem;
+      max-width: 100%;
+      overflow-x: auto;
+      padding-bottom: 0.05rem;
+    }
+
+    .choice {
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--muted);
+      cursor: pointer;
+      flex: 0 0 auto;
+      padding: 0.55rem 0.85rem;
+    }
+
+    .choice[aria-pressed="true"] {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent-ink);
+      font-weight: 700;
+    }
+
+    .main {
       display: grid;
-      grid-template-columns: 1fr;
+      gap: 1.25rem;
+      padding: 1.25rem 0 2rem;
+    }
+
+    .journey {
+      display: grid;
       gap: 0.75rem;
     }
 
-    .detail-panel {
-      align-self: start;
-      overflow: hidden;
-    }
-
-    .detail-body {
+    .step {
       display: grid;
-      gap: 1rem;
-      padding: 1rem;
+      grid-template-columns: 2.4rem minmax(0, 1fr);
+      gap: 0.85rem;
+      align-items: start;
+      border-bottom: 1px solid var(--line);
+      padding: 0.85rem 0;
     }
 
-    .detail-status {
-      display: inline-flex;
-      width: fit-content;
-      align-items: center;
-      border-radius: 999px;
-      background: var(--blue-soft);
-      color: #174ea6;
-      font-size: 0.78rem;
-      font-weight: 700;
-      padding: 0.3rem 0.55rem;
-    }
-
-    .detail-text {
-      margin: 0;
-      color: #2d3c36;
-    }
-
-    .detail-list {
-      display: grid;
-      gap: 0.6rem;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-
-    .detail-list li {
-      display: grid;
-      grid-template-columns: 1.25rem 1fr;
-      gap: 0.5rem;
-      color: #33443d;
-    }
-
-    .detail-list li::before {
-      content: "";
-      width: 0.42rem;
-      height: 0.42rem;
-      border-radius: 999px;
-      background: var(--accent);
-      margin-top: 0.55rem;
-    }
-
-    .mini-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.875rem;
-    }
-
-    .mini-table th,
-    .mini-table td {
-      border-bottom: 1px solid var(--subtle);
-      padding: 0.55rem 0;
-      text-align: left;
-      vertical-align: top;
-    }
-
-    .mini-table th {
-      color: var(--muted);
-      font-size: 0.75rem;
-      font-weight: 750;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-
-    .mini-table tr:last-child td {
+    .step:last-child {
       border-bottom: 0;
     }
 
-    .side-stack {
+    .number {
       display: grid;
-      gap: 1rem;
-    }
-
-    .legend {
-      padding: 0;
-    }
-
-    .legend-body {
-      display: grid;
-      gap: 0.65rem;
-      padding: 1rem;
-    }
-
-    .legend-row {
-      display: grid;
-      grid-template-columns: 1rem 1fr;
-      gap: 0.55rem;
-      align-items: start;
-      color: var(--muted);
-      font-size: 0.875rem;
-    }
-
-    .dot {
-      width: 0.7rem;
-      height: 0.7rem;
+      place-items: center;
+      width: 2.2rem;
+      height: 2.2rem;
       border-radius: 999px;
-      margin-top: 0.35rem;
+      background: var(--faint);
+      color: var(--muted);
+      font-weight: 750;
     }
 
-    .dot.app { background: var(--accent); }
-    .dot.ai { background: var(--blue); }
-    .dot.output { background: var(--amber); }
-    .dot.guard { background: var(--red); }
-
-    .explain-section {
-      margin-top: 1rem;
-      padding: 1rem;
+    .step.active .number {
+      background: var(--accent);
+      color: #fff;
     }
 
-    .section-heading {
-      margin: 0 0 0.75rem;
-      font-size: 1.1rem;
-      font-weight: 650;
-    }
-
-    .compare-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 0.75rem;
-    }
-
-    .compare-item {
-      border-top: 1px solid var(--subtle);
-      padding-top: 0.75rem;
-    }
-
-    .compare-item:first-child {
-      border-top: 0;
-      padding-top: 0;
-    }
-
-    .compare-item strong {
-      display: block;
+    .step h2 {
+      margin: 0;
+      font-size: 1.05rem;
       font-weight: 700;
+      letter-spacing: 0;
     }
 
-    .compare-item p {
+    .step p {
       margin: 0.2rem 0 0;
       color: var(--muted);
     }
 
-    .source-map {
-      display: grid;
-      gap: 0.75rem;
-      margin-top: 0.75rem;
+    .step button {
+      min-height: 44px;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      padding: 0;
+      text-align: left;
     }
 
-    .source-card {
-      border-top: 1px solid var(--subtle);
+    .output-panel,
+    .why-panel,
+    .technical-panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      padding: 1rem;
+    }
+
+    .panel-kicker {
+      margin: 0 0 0.3rem;
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 750;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .panel-text {
+      margin: 0.55rem 0 0;
+      color: var(--muted);
+    }
+
+    .split {
+      display: grid;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .path {
+      border-top: 1px solid var(--line);
       padding-top: 0.75rem;
     }
 
-    .source-card:first-child {
+    .path strong {
+      display: block;
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .path span {
+      display: block;
+      color: var(--muted);
+      margin-top: 0.15rem;
+    }
+
+    .callout {
+      margin-top: 1rem;
+      border-radius: var(--radius);
+      background: var(--warning-soft);
+      color: var(--warning);
+      padding: 0.8rem 0.9rem;
+    }
+
+    details {
+      margin-top: 1rem;
+    }
+
+    summary {
+      min-height: 44px;
+      cursor: pointer;
+      color: var(--accent-ink);
+      font-weight: 700;
+      padding: 0.55rem 0;
+    }
+
+    .tech-grid {
+      display: grid;
+      gap: 0.6rem;
+      margin-top: 0.5rem;
+    }
+
+    .tech-row {
+      display: grid;
+      gap: 0.15rem;
+      border-top: 1px solid var(--line);
+      padding-top: 0.55rem;
+    }
+
+    .tech-row:first-child {
       border-top: 0;
       padding-top: 0;
     }
 
-    .source-card h3 {
-      margin: 0 0 0.25rem;
-      font-size: 0.95rem;
+    .tech-row strong {
+      font-weight: 700;
     }
 
-    .source-card p {
-      margin: 0;
+    .tech-row span {
       color: var(--muted);
-      font-size: 0.9rem;
+    }
+
+    .map {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .map-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.25rem;
+      border-top: 1px solid var(--line);
+      padding-top: 0.75rem;
+    }
+
+    .map-row:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .map-row strong {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .map-row span {
+      color: var(--muted);
     }
 
     .hidden {
-      display: none !important;
+      display: none;
     }
 
     @media (min-width: 768px) {
       .page {
-        padding: 1.25rem 1.5rem 2rem;
+        padding: 1.25rem 1.5rem 2.5rem;
       }
 
       h1 {
-        font-size: 2.5rem;
+        font-size: 2.65rem;
       }
 
-      .model-row {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .controls {
-        grid-template-columns: 1fr auto;
-        align-items: center;
-      }
-
-      .flow-grid {
-        min-width: 860px;
-      }
-
-      .branch-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-
-      .compare-grid,
-      .source-map {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .source-card:nth-child(2) {
-        border-top: 0;
-        padding-top: 0;
-      }
-    }
-
-    @media (min-width: 1120px) {
-      .page {
-        padding: 1.5rem 2rem 3rem;
-      }
-
-      .hero {
-        grid-template-columns: 0.9fr 1.1fr;
-        align-items: end;
-        padding-top: 2rem;
-      }
-
-      .layout {
-        grid-template-columns: minmax(0, 1fr) 390px;
+      .toolbar {
+        grid-template-columns: 1fr 1fr;
         align-items: start;
       }
 
-      .flow-grid {
-        min-width: 0;
+      .main {
+        grid-template-columns: minmax(0, 1fr) 24rem;
+        align-items: start;
       }
 
-      .detail-panel {
+      .side {
         position: sticky;
-        top: 7.25rem;
+        top: 7rem;
+      }
+
+      .split {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .map-row {
+        grid-template-columns: 10rem 1fr;
       }
     }
 
-    @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        scroll-behavior: auto !important;
-        transition: none !important;
+    @media (min-width: 1080px) {
+      .hero {
+        grid-template-columns: 0.78fr 1.22fr;
+        align-items: end;
+      }
+
+      .main {
+        grid-template-columns: minmax(0, 1fr) 27rem;
       }
     }
   </style>
@@ -578,451 +387,255 @@
   <main class="page">
     <header class="hero">
       <div>
-        <div class="eyebrow">Alleato RAG pipeline</div>
-        <h1>From source artifact to assistant answer, project intelligence, and executive brief</h1>
+        <p class="eyebrow">RAG process</p>
+        <h1>One source item becomes two different AI products.</h1>
       </div>
       <div>
-        <p class="hero-copy">
-          This page explains the complete path for a meeting transcript, Teams message, email, synced document, or manual upload.
-          The important split: live Q&amp;A reads the vector store, while the product intelligence views read compiled cards and synthesized packets.
+        <p class="plain-answer">
+          A meeting transcript, Teams message, email, or document is synced, cleaned, assigned to a project, stored as raw text, chunked into searchable vectors, then used in two ways: live assistant retrieval and precomputed project intelligence.
         </p>
-        <div class="mental-model" aria-label="Core mental model">
-          <div class="model-row">
-            <div class="model-pill">
-              <strong>Ingest foundation</strong>
-              <span>Syncs create catalog rows, store raw text, assign projects, then chunk and embed.</span>
-            </div>
-            <div class="model-pill">
-              <strong>Assistant path</strong>
-              <span>Every chat question retrieves live evidence from vectors, tools, SQL, and Acumatica.</span>
-            </div>
-            <div class="model-pill">
-              <strong>Intelligence path</strong>
-              <span>Deep extraction creates evidence cards; synthesis creates current project and portfolio reads.</span>
-            </div>
-          </div>
-        </div>
+        <p class="simple-rule">
+          The assistant answers live questions from the vector store and tools. Project Intelligence and briefs read compiled evidence cards and synthesized packets.
+        </p>
       </div>
     </header>
 
-    <section class="controls" aria-label="Flow controls">
-      <div class="source-tabs" role="group" aria-label="Highlight a source">
-        <button class="source-tab" type="button" data-source="all" aria-pressed="true">All sources</button>
-        <button class="source-tab" type="button" data-source="meeting" aria-pressed="false">Meetings</button>
-        <button class="source-tab" type="button" data-source="email" aria-pressed="false">Email</button>
-        <button class="source-tab" type="button" data-source="teams" aria-pressed="false">Teams</button>
-        <button class="source-tab" type="button" data-source="document" aria-pressed="false">Documents</button>
+    <section class="toolbar" aria-label="Choose source and output">
+      <div>
+        <p class="control-label">Start with</p>
+        <div class="button-row">
+          <button class="choice" type="button" data-source="meeting" aria-pressed="true">Meeting transcript</button>
+          <button class="choice" type="button" data-source="email" aria-pressed="false">Email</button>
+          <button class="choice" type="button" data-source="teams" aria-pressed="false">Teams message</button>
+          <button class="choice" type="button" data-source="document" aria-pressed="false">Document</button>
+        </div>
       </div>
-      <div class="view-tabs" role="group" aria-label="Show output path">
-        <button class="view-tab" type="button" data-view="all" aria-pressed="true">Full process</button>
-        <button class="view-tab" type="button" data-view="assistant" aria-pressed="false">AI assistant</button>
-        <button class="view-tab" type="button" data-view="intelligence" aria-pressed="false">Project intelligence</button>
-        <button class="view-tab" type="button" data-view="brief" aria-pressed="false">Executive brief</button>
+      <div>
+        <p class="control-label">Show output</p>
+        <div class="button-row">
+          <button class="choice" type="button" data-output="assistant" aria-pressed="true">AI Assistant</button>
+          <button class="choice" type="button" data-output="intelligence" aria-pressed="false">Project Intelligence</button>
+          <button class="choice" type="button" data-output="brief" aria-pressed="false">Portfolio brief</button>
+        </div>
       </div>
     </section>
 
-    <section class="layout">
+    <section class="main">
       <div>
-        <section class="flow-shell" aria-labelledby="flow-heading">
-          <div class="flow-header">
-            <h2 id="flow-heading" class="flow-title">Interactive flowchart</h2>
-            <p class="flow-subtitle">Click any step to see what changes, where it lives, and what fails loudly.</p>
+        <section class="journey" aria-label="Step by step process" id="journey"></section>
+
+        <section class="why-panel">
+          <p class="panel-kicker">The confusing part</p>
+          <h2 class="panel-title">RAG is only the searchable foundation, not the whole intelligence product.</h2>
+          <div class="split">
+            <div class="path">
+              <strong>RAG / vectors</strong>
+              <span>Chunks in <code>document_chunks</code> help the assistant find relevant source evidence at question time.</span>
+            </div>
+            <div class="path">
+              <strong>Compiled intelligence</strong>
+              <span><code>insight_cards</code>, <code>tasks</code>, and <code>intelligence_packets</code> turn source evidence into product views and briefs.</span>
+            </div>
           </div>
-          <div class="flow-canvas">
-            <div class="flow-grid" id="flowGrid"></div>
-          </div>
+          <p class="callout">
+            A source can be searchable before it is understood. Embedding makes it findable; extraction and synthesis make it useful.
+          </p>
         </section>
 
-        <section class="explain-section">
-          <h2 class="section-heading">What each output is for</h2>
-          <div class="compare-grid">
-            <div class="compare-item">
-              <strong>AI Assistant</strong>
-              <p>Best for flexible questions. It retrieves relevant chunks and calls live tools at answer time, so it can combine source evidence with current project, finance, schedule, and task data.</p>
-            </div>
-            <div class="compare-item">
-              <strong>Project Intelligence</strong>
-              <p>Best for a stable operating read. It uses compiled evidence cards plus a rolling synthesized packet, so the page is not just search results.</p>
-            </div>
-            <div class="compare-item">
-              <strong>Progress Log</strong>
-              <p>Best for source traceability. It shows granular <code>insight_cards</code> from meetings, emails, and Teams messages with evidence quotes and links.</p>
-            </div>
-            <div class="compare-item">
-              <strong>Portfolio Brief</strong>
-              <p>Best for Brandon-level prioritization. It synthesizes across current project packets plus financial pulse data into what changed, what needs attention, and who is waiting.</p>
-            </div>
-          </div>
-        </section>
-
-        <section class="explain-section">
-          <h2 class="section-heading">Source-specific intake</h2>
-          <div class="source-map">
-            <div class="source-card">
-              <h3>Meeting transcript</h3>
-              <p>Fireflies sync normalizes transcript markdown, uploads it to Storage, writes catalog/raw-text records, segments the meeting, embeds transcript chunks, and extracts tasks/risks/decisions.</p>
-            </div>
-            <div class="source-card">
-              <h3>Email</h3>
-              <p>Outlook sync writes raw intake first, filters operational relevance, assigns a project when confidence is high enough, then embeds the raw content from the AI Database.</p>
-            </div>
-            <div class="source-card">
-              <h3>Teams</h3>
-              <p>Graph sync captures channels and DMs, groups DMs into conversation documents, writes them into the catalog, and vectorizes them for assistant and intelligence retrieval.</p>
-            </div>
-            <div class="source-card">
-              <h3>Documents</h3>
-              <p>OneDrive/SharePoint sync and manual uploads create document catalog rows, extract text where possible, hydrate raw text from the AI Database, then chunk and embed.</p>
-            </div>
-          </div>
+        <section class="technical-panel">
+          <details>
+            <summary>Show the technical table and code names</summary>
+            <div class="tech-grid" id="techGrid"></div>
+          </details>
         </section>
       </div>
 
-      <aside class="side-stack">
-        <section class="detail-panel" aria-live="polite" aria-labelledby="detailTitle">
-          <div class="detail-header">
-            <p class="detail-kicker" id="detailKicker">Selected step</p>
-            <h2 class="detail-title" id="detailTitle">Step details</h2>
-          </div>
-          <div class="detail-body">
-            <span class="detail-status" id="detailStatus">Click a node</span>
-            <p class="detail-text" id="detailText"></p>
-            <table class="mini-table" aria-label="Selected step metadata">
-              <tbody id="detailTable"></tbody>
-            </table>
-            <ul class="detail-list" id="detailList"></ul>
-          </div>
-        </section>
-
-        <section class="legend">
-          <div class="legend-header">
-            <h2 class="legend-title">Read this first</h2>
-            <p class="legend-subtitle">The pipeline has two databases and two read paths.</p>
-          </div>
-          <div class="legend-body">
-            <div class="legend-row"><span class="dot app"></span><span><strong>PM APP</strong>: app-facing catalog, project tables, tasks, insight cards, intelligence packets.</span></div>
-            <div class="legend-row"><span class="dot ai"></span><span><strong>AI Database</strong>: raw RAG content and <code>document_chunks</code> vector store.</span></div>
-            <div class="legend-row"><span class="dot output"></span><span><strong>Compiled output</strong>: cards, packets, pages, and portfolio brief.</span></div>
-            <div class="legend-row"><span class="dot guard"></span><span><strong>Fail loudly</strong>: failed model calls, fabricated citations, missing content, and stale candidate filters must be visible.</span></div>
-          </div>
+      <aside class="side">
+        <section class="output-panel" aria-live="polite">
+          <p class="panel-kicker" id="outputKicker">Selected output</p>
+          <h2 class="panel-title" id="outputTitle"></h2>
+          <p class="panel-text" id="outputText"></p>
+          <div class="map" id="outputMap"></div>
         </section>
       </aside>
     </section>
   </main>
 
   <script>
-    const steps = [
-      {
-        id: "source",
-        step: "Step 0",
-        title: "A source artifact appears",
-        summary: "Email, Teams, document, meeting, or manual upload enters the system.",
-        sources: ["meeting", "email", "teams", "document"],
-        views: ["all", "assistant", "intelligence", "brief"],
-        status: "Input",
-        text: "The process starts when a communication or document becomes available. Sync is polling-based: Microsoft Graph and Fireflies jobs sweep on a schedule rather than pushing in real time.",
-        table: [
-          ["Main systems", "Microsoft Graph, Fireflies, manual upload API"],
-          ["Cadence", "Graph/Fireflies sweep roughly every 30 minutes"],
-          ["Key question", "What exists, and is it operationally relevant?"]
-        ],
-        bullets: [
-          "Emails come from Outlook through Microsoft Graph.",
-          "Teams channels and DMs come from Microsoft Graph, with DMs grouped into conversation documents.",
-          "OneDrive and SharePoint documents come through Graph; manual files use the document upload API.",
-          "Meeting transcripts come from Fireflies and receive additional transcript normalization."
+    const sourceCopy = {
+      meeting: {
+        label: "meeting transcript",
+        sync: "Fireflies sync pulls the transcript, normalizes markdown, uploads it to Storage, and writes catalog/raw-text records.",
+        extra: "Meetings also get segmented and deep-extracted for decisions, risks, opportunities, and tasks.",
+        raw: "Full transcript text is stored in the AI Database; the PM APP keeps the lightweight catalog row."
+      },
+      email: {
+        label: "email",
+        sync: "Outlook sync writes raw intake first, then filters for operational relevance.",
+        extra: "Project inference checks title, participants, sender domain, and body. Low-confidence matches go to attribution review.",
+        raw: "The email body is hydrated from the AI Database before chunking and embedding."
+      },
+      teams: {
+        label: "Teams message",
+        sync: "Graph sync captures Teams channels and DMs. DMs are grouped into conversation documents.",
+        extra: "The grouped conversation is assigned to a project when confidence is high enough.",
+        raw: "Conversation text is stored as raw RAG content, then embedded for retrieval."
+      },
+      document: {
+        label: "document",
+        sync: "OneDrive, SharePoint, or manual upload creates a document catalog row and extracts text where possible.",
+        extra: "Scanned or low-text documents are flagged instead of pretending they are searchable.",
+        raw: "Extracted raw text lives in the AI Database; app-facing metadata stays in PM APP."
+      }
+    };
+
+    const outputs = {
+      assistant: {
+        kicker: "AI Assistant",
+        title: "Live question answering",
+        text: "The assistant embeds the user's question, searches document_chunks, calls source tools, and combines that evidence with live SQL or Acumatica data when needed.",
+        rows: [
+          ["Reads", "document_chunks, source tools, SQL, Acumatica, memories"],
+          ["Best for", "Flexible questions like what changed, find emails about X, summarize meetings about Y"],
+          ["Does not use", "The precomputed project packet as its main answer path"]
         ]
       },
-      {
-        id: "catalog",
-        step: "L0",
-        title: "Ingest into catalog and raw text stores",
-        summary: "PM APP keeps the catalog; the AI Database keeps the heavy raw content.",
-        sources: ["meeting", "email", "teams", "document"],
-        views: ["all", "assistant", "intelligence", "brief"],
-        status: "Cataloged",
-        text: "The app-facing catalog and the heavy RAG text split here. That keeps operational tables light while preserving full source text for retrieval and synthesis.",
-        table: [
-          ["PM APP", "document_metadata, project_emails, attribution candidates"],
-          ["AI Database", "rag_document_metadata.content"],
-          ["Status", "raw_ingested, embedded, skipped_low_content, intentionally_excluded"]
-        ],
-        bullets: [
-          "Raw email intake is preserved before filtering so the system can distinguish source existence from AI-ready relevance.",
-          "Relevance filtering removes low-value operational noise before a row becomes AI-ready.",
-          "Project inference tries title, participants, sender domain, and body text; high-confidence matches stamp project_id.",
-          "Low-confidence items go to attribution review instead of being silently forced into the wrong project."
+      intelligence: {
+        kicker: "Project Intelligence",
+        title: "One current project read",
+        text: "Extraction creates evidence cards and tasks. L2 synthesis rolls prior state, new raw communications, and SQL truth into the current project packet.",
+        rows: [
+          ["Reads", "insight_cards, tasks, raw delta text, SQL snapshot"],
+          ["Renders", "/{projectId}/intelligence"],
+          ["Best for", "A stable operating read with risks, open decisions, what changed, and recommended actions"]
         ]
       },
-      {
-        id: "meeting-extra",
-        step: "Meeting path",
-        title: "Meeting transcripts are normalized and segmented",
-        summary: "Fireflies markdown becomes storage content, meeting segments, tasks, risks, and decisions.",
-        sources: ["meeting"],
-        views: ["all", "assistant", "intelligence", "brief"],
-        status: "Meeting-specific",
-        text: "Meetings carry long, conversational context, so they get extra parsing before and after embedding. This is how implied decisions, action items, and risks become durable records instead of transcript-only text.",
-        table: [
-          ["Code path", "backend/src/services/ingestion/fireflies_pipeline.py"],
-          ["Structured output", "meeting_segments, tasks, insight_cards"],
-          ["Evidence", "Verbatim transcript quotes and source links"]
-        ],
-        bullets: [
-          "Transcript markdown is normalized and uploaded to Supabase Storage.",
-          "A segmentation pass splits the transcript into usable units.",
-          "Deep extraction can read the whole transcript against project state.",
-          "Extracted decisions, risks, opportunities, and tasks keep source evidence."
-        ]
-      },
-      {
-        id: "embed",
-        step: "L1",
-        title: "Chunk and embed into document_chunks",
-        summary: "Text becomes vector-searchable evidence in the AI Database.",
-        sources: ["meeting", "email", "teams", "document"],
-        views: ["all", "assistant", "intelligence", "brief"],
-        status: "Searchable",
-        text: "Embedding makes the source retrievable by meaning, not just keyword. The assistant and intelligence jobs use this foundation when they need source evidence.",
-        table: [
-          ["Vector table", "AI Database document_chunks"],
-          ["Search RPC", "search_document_chunks"],
-          ["Chunking", "About 3,000 characters with overlap and title/context prepended"]
-        ],
-        bullets: [
-          "Pending catalog rows hydrate full text from rag_document_metadata.",
-          "Content is split into sentence-aligned chunks with overlap.",
-          "Each chunk gets an embedding and denormalized source metadata.",
-          "The catalog row is marked embedded or skipped_low_content; silent pending rows are a detection failure."
-        ]
-      },
-      {
-        id: "assistant",
-        step: "Read path A",
-        title: "AI Assistant retrieves live evidence",
-        summary: "Chat queries vectors, source tools, SQL, memories, and live finance tools at answer time.",
-        sources: ["meeting", "email", "teams", "document"],
-        views: ["all", "assistant"],
-        status: "Live Q&A",
-        text: "The assistant is a parallel read surface. It does not wait for precomputed project packets; it retrieves the evidence and live operational data needed for the current question.",
-        table: [
-          ["Agent", "Strategist with specialist tools and delegation"],
-          ["Semantic source", "document_chunks via pgvector RPC"],
-          ["Live truth", "SQL project tables and Acumatica tools for numbers"]
-        ],
-        bullets: [
-          "Topic questions use semantic tools like searchEmails, searchTeamsMessages, searchMeetingsByTopic, and semanticSearch.",
-          "Date-based inbox questions can use raw recent-email tools instead of semantic search.",
-          "Financial values do not come from RAG; they come from Acumatica or structured SQL.",
-          "The final answer combines persona, user profile, memories, operational instructions, and retrieved evidence."
-        ]
-      },
-      {
-        id: "extract",
-        step: "Deep extraction",
-        title: "Source text becomes evidence cards and tasks",
-        summary: "LLM extraction turns raw communications into risks, decisions, flags, tasks, and source-backed cards.",
-        sources: ["meeting", "email", "teams"],
-        views: ["all", "intelligence", "brief"],
-        status: "Compiled fragments",
-        text: "This is the fragment layer. It captures granular facts from sources with evidence quotes, but it is not the final product intelligence by itself.",
-        table: [
-          ["Meetings", "pipeline/extractor.py"],
-          ["Email + Teams", "intelligence/project_synthesizer.py"],
-          ["Outputs", "insight_cards, tasks, flags"]
-        ],
-        bullets: [
-          "Meetings are extracted with transcript-aware logic.",
-          "Emails and Teams documents run an evidence-backed communication synthesis pass.",
-          "Findings promote through compiler.promote_signal_candidate into insight_cards.",
-          "Flags predict possible future events and can later be reconciled as materialized or did_not_materialize."
-        ]
-      },
-      {
-        id: "l2",
-        step: "L2",
-        title: "Synthesize one current project read",
-        summary: "Prior packet + raw delta + SQL truth becomes the current intelligence packet.",
-        sources: ["meeting", "email", "teams", "document"],
-        views: ["all", "intelligence", "brief"],
-        status: "Project synthesis",
-        text: "This is the core layer that makes Project Intelligence coherent. It carries forward what is still true, reads new source text since the last watermark, uses SQL facts as ground truth, and writes one current packet.",
-        table: [
-          ["Code path", "backend/src/services/intelligence/project_intelligence.py"],
-          ["Trigger", "alleato-project-synthesis-sweep every 2h or admin refresh API"],
-          ["Output", "one current intelligence_packets row per target"]
-        ],
-        bullets: [
-          "Loads the previous synthesized packet and covered_end_at watermark.",
-          "Loads raw communications added since that watermark from rag_document_metadata.",
-          "Adds deterministic SQL facts such as budget, RFI counts, and change-event counts.",
-          "Checks cited source IDs against real delta docs; fabricated citations are dropped, and failed model calls raise instead of writing empty packets."
-        ]
-      },
-      {
-        id: "page",
-        step: "L3",
-        title: "Project Intelligence page renders packet + timeline",
-        summary: "The page shows synthesized narrative on top and granular evidence below.",
-        sources: ["meeting", "email", "teams", "document"],
-        views: ["all", "intelligence"],
-        status: "Product page",
-        text: "The project page is not just a vector-search UI. It reads the current synthesized packet for the executive read and the insight cards for the progress log.",
-        table: [
-          ["Route", "/{projectId}/intelligence"],
-          ["Packet read", "loadCurrentIntelligencePacket"],
-          ["Timeline read", "loadProjectTimeline"]
-        ],
-        bullets: [
-          "The current packet drives executive read, immediate attention, risks, open decisions, recommended actions, financial read, and schedule/procurement summary.",
-          "The progress log reads insight_cards newest-first.",
-          "Evidence cards keep source quote and link context available for drilldown.",
-          "The page should fail loudly if the packet cannot load rather than showing stale or empty intelligence as if it were complete."
-        ]
-      },
-      {
-        id: "brief",
-        step: "L4",
-        title: "Portfolio brief synthesizes across projects",
-        summary: "Current project packets plus financial pulse become the executive brief.",
-        sources: ["meeting", "email", "teams", "document"],
-        views: ["all", "brief"],
-        status: "Executive synthesis",
-        text: "The portfolio brief is a synthesis of syntheses. It should not dump raw cards; it should use each active project's current packet plus financial pulse data to produce what changed and what needs Brandon's attention.",
-        table: [
-          ["Code path", "frontend/src/lib/executive/portfolio-synthesis-brief.ts"],
-          ["Input", "current packets for active projects + financial-pulse.ts"],
-          ["Output", "daily brief skeleton; preview route is no-delivery"]
-        ],
-        bullets: [
-          "Loads each active project's current L2 packet.",
-          "Reduces each packet to executive read, what changed, risks, open decisions, and recommended actions.",
-          "Adds deterministic financial pulse data.",
-          "Runs one cross-portfolio synthesis pass to produce one-line summary, what changed, needs-Brandon, watch-list, and waiting-on."
+      brief: {
+        kicker: "Portfolio brief",
+        title: "Cross-project executive summary",
+        text: "The portfolio brief loads every active project's current packet, adds financial pulse data, and creates the Brandon-level daily brief.",
+        rows: [
+          ["Reads", "current intelligence_packets plus financial-pulse.ts"],
+          ["Output", "what changed, needs-Brandon, watch-list, waiting-on"],
+          ["Delivery", "Previewable first; Teams delivery stays gated until approval"]
         ]
       }
+    };
+
+    const techRows = [
+      ["Sync", "Graph/Fireflies cron, manual upload API"],
+      ["Catalog", "PM APP document_metadata, project_emails, document_attribution_candidates"],
+      ["Raw text", "AI Database rag_document_metadata.content"],
+      ["Vectors", "AI Database document_chunks through search_document_chunks"],
+      ["Fragments", "insight_cards, tasks, flags"],
+      ["Project packet", "intelligence_packets, packet_type='current'"],
+      ["Portfolio brief", "frontend/src/lib/executive/portfolio-synthesis-brief.ts"]
     ];
 
-    const flowGrid = document.getElementById("flowGrid");
-    const detailKicker = document.getElementById("detailKicker");
-    const detailTitle = document.getElementById("detailTitle");
-    const detailStatus = document.getElementById("detailStatus");
-    const detailText = document.getElementById("detailText");
-    const detailTable = document.getElementById("detailTable");
-    const detailList = document.getElementById("detailList");
-    const state = { source: "all", view: "all", active: "source" };
+    const state = {
+      source: "meeting",
+      output: "assistant",
+      activeStep: 1
+    };
 
-    function createNode(step) {
-      const node = document.createElement("button");
-      node.className = "flow-node";
-      node.type = "button";
-      node.dataset.id = step.id;
-      node.dataset.sources = step.sources.join(",");
-      node.dataset.views = step.views.join(",");
-      node.setAttribute("aria-pressed", step.id === state.active ? "true" : "false");
-      node.innerHTML = `
-        <span class="node-step">${step.step}</span>
-        <span class="node-title">${step.title}</span>
-        <span class="node-summary">${step.summary}</span>
-        <span class="node-tags">${step.sources.map(source => `<span class="tag">${source}</span>`).join("")}</span>
-      `;
-      node.addEventListener("click", () => {
-        state.active = step.id;
-        render();
-      });
-      return node;
+    function stepsForSource(sourceKey) {
+      const source = sourceCopy[sourceKey];
+      return [
+        {
+          title: `A ${source.label} appears`,
+          body: source.sync
+        },
+        {
+          title: "Create the catalog row",
+          body: "PM APP records what the item is, where it came from, source date, project assignment, and processing status."
+        },
+        {
+          title: "Store the full text separately",
+          body: source.raw
+        },
+        {
+          title: "Chunk and embed it",
+          body: "The raw text is split into overlapping chunks and written to document_chunks so semantic search can find it later."
+        },
+        {
+          title: "Extract useful facts",
+          body: source.extra
+        },
+        {
+          title: "Send it to the right product surface",
+          body: "Assistant queries use live retrieval. Project Intelligence and portfolio briefs use compiled cards and synthesized packets."
+        }
+      ];
     }
 
-    function createArrow(label) {
-      const arrow = document.createElement("div");
-      arrow.className = "flow-arrow";
-      arrow.textContent = label || "↓";
-      return arrow;
-    }
-
-    function renderFlow() {
-      flowGrid.innerHTML = "";
-      const linear = ["source", "catalog", "meeting-extra", "embed"];
-      linear.forEach((id, index) => {
-        flowGrid.appendChild(createNode(steps.find(step => step.id === id)));
-        if (index < linear.length - 1) flowGrid.appendChild(createArrow());
-      });
-
-      const branchLabel = document.createElement("div");
-      branchLabel.className = "branch-label";
-      branchLabel.textContent = "Two read paths after embedding";
-      flowGrid.appendChild(branchLabel);
-
-      const branch = document.createElement("div");
-      branch.className = "branch-grid";
-      ["assistant", "extract", "l2"].forEach(id => branch.appendChild(createNode(steps.find(step => step.id === id))));
-      flowGrid.appendChild(branch);
-      flowGrid.appendChild(createArrow("↓"));
-
-      const output = document.createElement("div");
-      output.className = "branch-grid";
-      ["page", "brief"].forEach(id => output.appendChild(createNode(steps.find(step => step.id === id))));
-      flowGrid.appendChild(output);
-    }
-
-    function matchesFilter(step) {
-      const sourceMatch = state.source === "all" || step.sources.includes(state.source);
-      const viewMatch = state.view === "all" || step.views.includes(state.view);
-      return sourceMatch && viewMatch;
-    }
-
-    function renderDetails() {
-      const step = steps.find(item => item.id === state.active) || steps[0];
-      detailKicker.textContent = step.step;
-      detailTitle.textContent = step.title;
-      detailStatus.textContent = step.status;
-      detailText.textContent = step.text;
-      detailTable.innerHTML = step.table.map(row => `
-        <tr>
-          <th scope="row">${row[0]}</th>
-          <td>${row[1]}</td>
-        </tr>
+    function renderSteps() {
+      const journey = document.getElementById("journey");
+      journey.innerHTML = stepsForSource(state.source).map((step, index) => `
+        <div class="step ${index + 1 === state.activeStep ? "active" : ""}">
+          <div class="number">${index + 1}</div>
+          <button type="button" data-step="${index + 1}">
+            <h2>${step.title}</h2>
+            <p>${step.body}</p>
+          </button>
+        </div>
       `).join("");
-      detailList.innerHTML = step.bullets.map(item => `<li><span>${item}</span></li>`).join("");
+      journey.querySelectorAll("button[data-step]").forEach(button => {
+        button.addEventListener("click", () => {
+          state.activeStep = Number(button.dataset.step);
+          renderSteps();
+        });
+      });
     }
 
-    function renderFilters() {
-      document.querySelectorAll(".source-tab").forEach(button => {
+    function renderOutput() {
+      const output = outputs[state.output];
+      document.getElementById("outputKicker").textContent = output.kicker;
+      document.getElementById("outputTitle").textContent = output.title;
+      document.getElementById("outputText").textContent = output.text;
+      document.getElementById("outputMap").innerHTML = output.rows.map(row => `
+        <div class="map-row">
+          <strong>${row[0]}</strong>
+          <span>${row[1]}</span>
+        </div>
+      `).join("");
+    }
+
+    function renderTech() {
+      document.getElementById("techGrid").innerHTML = techRows.map(row => `
+        <div class="tech-row">
+          <strong>${row[0]}</strong>
+          <span>${row[1]}</span>
+        </div>
+      `).join("");
+    }
+
+    function renderControls() {
+      document.querySelectorAll("[data-source]").forEach(button => {
         button.setAttribute("aria-pressed", button.dataset.source === state.source ? "true" : "false");
       });
-      document.querySelectorAll(".view-tab").forEach(button => {
-        button.setAttribute("aria-pressed", button.dataset.view === state.view ? "true" : "false");
-      });
-
-      document.querySelectorAll(".flow-node").forEach(node => {
-        const step = steps.find(item => item.id === node.dataset.id);
-        node.classList.toggle("active", step.id === state.active);
-        node.classList.toggle("dimmed", !matchesFilter(step));
-        node.setAttribute("aria-pressed", step.id === state.active ? "true" : "false");
+      document.querySelectorAll("[data-output]").forEach(button => {
+        button.setAttribute("aria-pressed", button.dataset.output === state.output ? "true" : "false");
       });
     }
 
     function render() {
-      if (!flowGrid.children.length) renderFlow();
-      const activeStep = steps.find(step => step.id === state.active);
-      if (activeStep && !matchesFilter(activeStep)) {
-        const next = steps.find(matchesFilter);
-        state.active = next ? next.id : "source";
-      }
-      renderDetails();
-      renderFilters();
+      renderSteps();
+      renderOutput();
+      renderTech();
+      renderControls();
     }
 
-    document.querySelectorAll(".source-tab").forEach(button => {
+    document.querySelectorAll("[data-source]").forEach(button => {
       button.addEventListener("click", () => {
         state.source = button.dataset.source;
+        state.activeStep = 1;
         render();
       });
     });
 
-    document.querySelectorAll(".view-tab").forEach(button => {
+    document.querySelectorAll("[data-output]").forEach(button => {
       button.addEventListener("click", () => {
-        state.view = button.dataset.view;
+        state.output = button.dataset.output;
         render();
       });
     });
