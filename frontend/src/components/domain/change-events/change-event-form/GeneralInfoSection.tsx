@@ -10,7 +10,6 @@ import {
   TextField,
 } from "@/components/forms";
 import { apiFetch } from "@/lib/api-client";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type {
   ChangeEventFormData,
   ChangeEventStatus,
@@ -26,6 +25,11 @@ import {
   SCOPE_OPTIONS,
   REVENUE_SOURCE_OPTIONS,
 } from "./types";
+
+const EXPECTING_REVENUE_OPTIONS = [
+  { value: "yes", label: "Yes" },
+  { value: "no", label: "No" },
+];
 
 interface OriginOption {
   id: string;
@@ -57,6 +61,7 @@ export function GeneralInfoSection({
 }: GeneralInfoSectionProps) {
   const [originRecordOptions, setOriginRecordOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [loadingOriginRecords, setLoadingOriginRecords] = useState(false);
+  const expectingRevenue = formData.expectingRevenue !== false;
 
   useEffect(() => {
     if (!formData.origin) {
@@ -103,7 +108,7 @@ export function GeneralInfoSection({
           required
           value={formData.title}
           onChange={(e) => updateFormData({ title: e.target.value })}
-          placeholder="Enter title"
+          placeholder="e.g. Added storefront blocking"
           error={errors.title}
         />
         <SelectField
@@ -158,7 +163,13 @@ export function GeneralInfoSection({
           onValueChange={(value) => updateFormData({ scope: value })}
           placeholder="Select Scope"
         />
-        {formData.expectingRevenue && (
+        <SelectField
+          label="Expecting Revenue"
+          options={EXPECTING_REVENUE_OPTIONS}
+          value={expectingRevenue ? "yes" : "no"}
+          onValueChange={(value) => updateFormData({ expectingRevenue: value === "yes" })}
+        />
+        {expectingRevenue && (
           <SelectField
             label="Line Item Revenue Source"
             options={REVENUE_SOURCE_OPTIONS}
@@ -176,33 +187,13 @@ export function GeneralInfoSection({
           placeholder="Select Prime Contract"
           disabled={!hasPrimeContracts}
         />
-
-        <div className="md:col-span-3">
-          <div className="space-y-2">
-            <label className="text-sm font-medium leading-none">Expecting Revenue</label>
-            <RadioGroup
-              value={formData.expectingRevenue ? "yes" : "no"}
-              onValueChange={(value) => updateFormData({ expectingRevenue: value === "yes" })}
-              className="flex items-center gap-6"
-            >
-              <label className="flex items-center gap-2 cursor-pointer">
-                <RadioGroupItem value="yes" />
-                <span className="text-sm">Yes</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <RadioGroupItem value="no" />
-                <span className="text-sm">No</span>
-              </label>
-            </RadioGroup>
-          </div>
-        </div>
         {showDescription && (
           <div className="md:col-span-3">
             <RichTextField
               label="Description"
               value={formData.description || ""}
               onChange={(value) => updateFormData({ description: value })}
-              placeholder="Describe the change event"
+              placeholder="e.g. Added storefront blocking at the main entry."
             />
           </div>
         )}

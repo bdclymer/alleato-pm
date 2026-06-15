@@ -73,7 +73,7 @@ export function LineItemRow({
     !revenueSourceLower.includes("manual entry");
 
   return (
-    <TableRow className="group border-b border-border/60 bg-background transition-colors hover:bg-transparent">
+    <TableRow className="group border-b-0 bg-background transition-colors hover:bg-transparent">
       {/* Drag handle */}
       <TableCell className="w-9 px-1 py-1.5 align-top">
         <div className="mt-1 cursor-grab rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground active:cursor-grabbing">
@@ -82,7 +82,7 @@ export function LineItemRow({
       </TableCell>
 
       {/* Commitment */}
-      <TableCell className="min-w-40 px-1 py-1.5 align-top">
+      <TableCell className="min-w-40 px-0.5 py-1.5 align-top">
         <ContractCombobox
           value={item.contract}
           onChange={(value) => handleCommitmentChange(index, value)}
@@ -114,7 +114,7 @@ export function LineItemRow({
       </TableCell>
 
       {/* Budget Code */}
-      <TableCell className="min-w-52 px-1 py-1.5 align-top">
+      <TableCell className="min-w-40 px-0.5 py-1.5 align-top">
         <BudgetCodeSelector
           value={item.budgetCode || ""}
           onValueChange={(value) => updateLineItem(index, "budgetCode", value)}
@@ -126,16 +126,17 @@ export function LineItemRow({
       </TableCell>
 
       {/* Description */}
-      <TableCell className="min-w-40 px-1 py-1.5 align-top">
+      <TableCell className="min-w-64 px-1 py-1.5 align-top">
         <Input
           value={item.description}
           onChange={(e) => updateLineItem(index, "description", e.target.value)}
           placeholder="Enter description"
+          className="text-[13px]"
         />
       </TableCell>
 
       {/* Vendor */}
-      <TableCell className="min-w-40 px-1 py-1.5 align-top">
+      <TableCell className="line-item-group-end min-w-36 px-0.5 py-1.5 align-top">
         <VendorCombobox
           value={item.vendor}
           onChange={(value) => updateLineItem(index, "vendor", value)}
@@ -145,13 +146,13 @@ export function LineItemRow({
       </TableCell>
 
       {/* Cost: Quantity */}
-      <TableCell className="w-40 px-1 py-1.5 align-top">
+      <TableCell className="line-item-group-start w-28 border-l border-border/60 px-2 py-1.5 align-top">
         <Input
           type="number"
           inputMode="numeric"
           step="1"
           min="0"
-          className="min-w-24 text-right"
+          className="min-w-20 text-right text-[13px]"
           value={Number.isFinite(item.costQuantity) ? Math.trunc(item.costQuantity) : 1}
           onChange={(e) =>
             updateLineItem(
@@ -166,22 +167,22 @@ export function LineItemRow({
       </TableCell>
 
       {/* Cost: Unit Cost */}
-      <TableCell className="w-56 px-1 py-1.5 align-top">
+      <TableCell className="w-44 px-1 py-1.5 align-top">
         <MoneyField
           inline
           label="Cost Unit Cost"
           value={item.costUnitCost ?? undefined}
           onChange={(val) => updateLineItem(index, "costUnitCost", val ?? 0)}
           showCurrency={false}
-          className="h-9 min-w-32"
+          className="h-9 min-w-28 text-[13px]"
         />
       </TableCell>
 
       {/* Cost ROM (computed) */}
-      <TableCell className="w-36 px-1 py-1.5 align-top">
+      <TableCell className="line-item-group-end w-32 px-1 py-1.5 align-top">
         <div
           className={cn(
-            "pt-2 text-right text-sm font-semibold",
+            "pt-2 text-right text-[13px] font-semibold",
             item.costRom > 0 ? "text-foreground" : "text-muted-foreground",
           )}
         >
@@ -192,12 +193,12 @@ export function LineItemRow({
       {showRevenue && (
         <>
           {/* Revenue: UOM */}
-          <TableCell className="w-28 px-1 py-1.5 align-top">
+          <TableCell className="line-item-group-start w-24 border-l border-border/60 px-2 py-1.5 align-top">
             <Select
               value={item.revenueUnitOfMeasure || ""}
               onValueChange={(value) => updateLineItem(index, "revenueUnitOfMeasure", value)}
             >
-              <SelectTrigger className="h-9 w-full">
+              <SelectTrigger className="h-9 w-full text-[13px]">
                 <SelectValue placeholder="Select" />
               </SelectTrigger>
               <SelectContent>
@@ -211,9 +212,9 @@ export function LineItemRow({
           </TableCell>
 
           {/* Revenue: Quantity */}
-          <TableCell className="w-40 px-1 py-1.5 align-top">
+          <TableCell className="w-28 px-1 py-1.5 align-top">
             {isRevenueReadOnly ? (
-              <div className="min-w-24 pt-2 text-right text-sm text-muted-foreground">
+              <div className="min-w-20 pt-2 text-right text-[13px] text-muted-foreground">
                 {Number.isFinite(item.revenueQuantity) ? Math.trunc(item.revenueQuantity) : 1}
               </div>
             ) : (
@@ -222,7 +223,7 @@ export function LineItemRow({
                 inputMode="numeric"
                 step="1"
                 min="0"
-                className="min-w-24 text-right"
+                className="min-w-20 text-right text-[13px]"
                 value={Number.isFinite(item.revenueQuantity) ? Math.trunc(item.revenueQuantity) : 1}
                 onChange={(e) =>
                   updateLineItem(
@@ -238,9 +239,9 @@ export function LineItemRow({
           </TableCell>
 
           {/* Revenue: Unit Cost */}
-          <TableCell className="w-56 px-1 py-1.5 align-top">
+          <TableCell className="w-44 px-1 py-1.5 align-top">
             {isRevenueReadOnly ? (
-              <div className="pt-2 text-right text-sm text-muted-foreground">
+              <div className="pt-2 text-right text-[13px] text-muted-foreground">
                 {item.revenueUnitCost != null ? formatCurrency(item.revenueUnitCost) : "--"}
               </div>
             ) : (
@@ -250,16 +251,16 @@ export function LineItemRow({
                 value={item.revenueUnitCost ?? undefined}
                 onChange={(val) => updateLineItem(index, "revenueUnitCost", val ?? 0)}
                 showCurrency={false}
-                className="h-9 min-w-32"
+                className="h-9 min-w-28 text-[13px]"
               />
             )}
           </TableCell>
 
           {/* Revenue ROM (computed) */}
-          <TableCell className="w-36 px-1 py-1.5 align-top">
+          <TableCell className="line-item-group-end w-32 px-1 py-1.5 align-top">
             <div
               className={cn(
-                "pt-2 text-right text-sm font-semibold",
+                "pt-2 text-right text-[13px] font-semibold",
                 isRevenueReadOnly && "text-muted-foreground italic",
                 !isRevenueReadOnly && (item.revenueRom > 0 ? "text-foreground" : "text-muted-foreground"),
               )}
@@ -271,7 +272,7 @@ export function LineItemRow({
       )}
 
       {/* Non-committed cost */}
-      <TableCell className="w-44 px-1 py-1.5 align-top">
+      <TableCell className="line-item-group-start w-36 border-l border-border/60 px-2 py-1.5 align-top">
         {item.contract ? (
           <MoneyField
             inline
@@ -279,12 +280,12 @@ export function LineItemRow({
             value={item.nonCommittedCost ?? undefined}
             onChange={(val) => updateLineItem(index, "nonCommittedCost", val ?? 0)}
             showCurrency={false}
-            className="h-9 min-w-32"
+            className="h-9 min-w-28 text-[13px]"
           />
         ) : (
           <div
             className={cn(
-              "pt-2 text-right text-sm font-semibold",
+              "pt-2 text-right text-[13px] font-semibold",
               (item.nonCommittedCost ?? 0) !== 0
                 ? "text-foreground"
                 : "text-muted-foreground",
@@ -296,10 +297,10 @@ export function LineItemRow({
       </TableCell>
 
       {/* Over / Under (revenue − cost) */}
-      <TableCell className="w-36 px-1 py-1.5 align-top">
+      <TableCell className="w-32 px-1 py-1.5 align-top">
         <div
           className={cn(
-            "pt-2 text-right text-sm font-semibold",
+            "pt-2 text-right text-[13px] font-semibold",
             overUnder < 0
               ? "text-destructive"
               : overUnder > 0

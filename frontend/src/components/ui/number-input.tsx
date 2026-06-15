@@ -35,7 +35,7 @@ function NumberInput({
   decimals = 2,
   onBlur,
   value,
-  placeholder = "Enter amount",
+  placeholder = "e.g. 1250",
   step = "0.01",
   ref,
   ...props
@@ -153,7 +153,7 @@ function NumberInput({
       onPaste={handlePaste}
       className={cn(
         "tabular-nums text-right !bg-transparent",
-        "focus:ring-2 focus:ring-brand/20 focus:border-brand",
+        "focus:border-input focus:ring-0",
         "transition-all duration-200",
         className
       )}

@@ -66,7 +66,7 @@ export function RHFMultiComboboxField<TFieldValues extends FieldValues>({
   label,
   options,
   placeholder = "Select options",
-  searchPlaceholder = "Search...",
+  searchPlaceholder = "Search",
   emptyMessage = "No results found.",
   description,
   disabled,
@@ -102,8 +102,9 @@ export function RHFMultiComboboxField<TFieldValues extends FieldValues>({
               disabled={disabled}
               className={cn(
                 "h-auto min-h-11 w-full justify-between py-2",
-                selected.length === 0 && "text-muted-foreground",
+                selected.length === 0 && "text-[hsl(var(--input-placeholder))]",
               )}
+              {...(selected.length === 0 && { "data-placeholder-style": "" })}
             >
               <div className="flex flex-wrap gap-1 text-left">
                 {selected.length === 0 ? (

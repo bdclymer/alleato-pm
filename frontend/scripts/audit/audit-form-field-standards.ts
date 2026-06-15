@@ -14,7 +14,7 @@ const SCHEMA_DUMP_PATH = path.join(
 );
 
 type AuditIssue = {
-  kind: "placeholder" | "status-enum";
+  kind: "placeholder" | "placeholder-copy" | "status-enum";
   file: string;
   detail: string;
 };
@@ -81,6 +81,54 @@ function parseConstraintValues(
   return values;
 }
 
+function isSharedFormPrimitive(file: string): boolean {
+  const relative = rel(file);
+  if (relative.includes(".stories.")) return false;
+  return (
+    relative.startsWith("src/components/forms/") ||
+    relative.startsWith("src/components/ui/")
+  );
+}
+
+function extractStaticPlaceholderValues(source: string): string[] {
+  const values: string[] = [];
+  const patterns = [
+    /\bplaceholder\s*=\s*["']([^"']*)["']/g,
+    /\bplaceholder\s*:\s*["']([^"']*)["']/g,
+    /\bsearchPlaceholder\s*=\s*["']([^"']*)["']/g,
+    /\bsearchPlaceholder\s*:\s*["']([^"']*)["']/g,
+  ];
+
+  for (const pattern of patterns) {
+    let match: RegExpExecArray | null = pattern.exec(source);
+    while (match) {
+      values.push(match[1].trim());
+      match = pattern.exec(source);
+    }
+  }
+
+  return values;
+}
+
+function isAllowedPlaceholderCopy(value: string): boolean {
+  if (!value) return true;
+  const normalized = value.trim();
+  const lower = normalized.toLowerCase();
+
+  if (/^e\.g\.\s+\S+/.test(lower)) return true;
+  if (/^search(\s|$)/.test(lower)) return true;
+  if (/^select(\s|$|\.{3}$)/.test(lower)) return true;
+  if (/^(pick|set)\s/.test(lower)) return true;
+  if (/^loading/.test(lower)) return true;
+  if (/^not set$/.test(lower)) return true;
+  if (/^[-—]+$/.test(normalized)) return true;
+  if (/^(m{1,2}|d{1,2}|y{2,4})([/-](m{1,2}|d{1,2}|y{2,4}))+$/i.test(normalized)) return true;
+  if (/^[\w.%+-]+@[\w.-]+\.[a-z]{2,}$/i.test(normalized)) return true;
+  if (/^\(?\d{3}\)?[-\s]\d{3}[-\s]\d{4}$/.test(normalized)) return true;
+
+  return false;
+}
+
 function main() {
   const issues: AuditIssue[] = [];
   const allFiles = walk(SRC_ROOT).filter((f) => /\.(tsx?|jsx?)$/.test(f));
@@ -104,6 +152,22 @@ function main() {
       });
       break;
     }
+  }
+
+  for (const file of allFiles.filter(isSharedFormPrimitive)) {
+    const source = fs.readFileSync(file, "utf8");
+    const invalidPlaceholders = extractStaticPlaceholderValues(source).filter(
+      (value) => !isAllowedPlaceholderCopy(value),
+    );
+    if (!invalidPlaceholders.length) continue;
+
+    issues.push({
+      kind: "placeholder-copy",
+      file: rel(file),
+      detail:
+        "placeholder copy must be short example text, a select/search action, loading text, or a date/contact format; avoid using placeholders as labels or instructions: " +
+        invalidPlaceholders.map((value) => `"${value}"`).join(", "),
+    });
   }
 
   const schemaDump = fs.existsSync(SCHEMA_DUMP_PATH)

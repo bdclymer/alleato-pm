@@ -90,7 +90,7 @@ export function ChangeEventForm({
         data-dev-autofill-disabled="true"
         data-form-id="change-event-create"
       >
-        <div className="space-y-4">
+        <div className="space-y-10">
           <GeneralInfoSection
             formData={formData}
             nextNumber={nextNumber}
@@ -126,31 +126,32 @@ export function ChangeEventForm({
           />
 
           <FormSection title="Attachments">
-            <FileUploadField
-              label="Attach Files"
-              value={attachmentsAsInfo}
-              multiple
-              variant="minimal"
-              onFilesSelected={(files) => {
-                setFormData((prev) => ({
-                  ...prev,
-                  attachments: [...prev.attachments, ...files],
-                }));
-              }}
-              onChange={(nextFiles) => {
-                const remaining = nextFiles.map(
-                  (f) => `${f.name}:${f.size}:${f.type || ""}`,
-                );
-                setFormData((prev) => ({
-                  ...prev,
-                  attachments: prev.attachments.filter((file) =>
-                    remaining.includes(`${file.name}:${file.size}:${file.type || ""}`),
-                  ),
-                }));
-              }}
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.heic,.csv"
-              maxSize={25 * 1024 * 1024}
-            />
+            <div className="max-w-3xl">
+              <FileUploadField
+                value={attachmentsAsInfo}
+                multiple
+                variant="minimal"
+                onFilesSelected={(files) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    attachments: [...prev.attachments, ...files],
+                  }));
+                }}
+                onChange={(nextFiles) => {
+                  const remaining = nextFiles.map(
+                    (f) => `${f.name}:${f.size}:${f.type || ""}`,
+                  );
+                  setFormData((prev) => ({
+                    ...prev,
+                    attachments: prev.attachments.filter((file) =>
+                      remaining.includes(`${file.name}:${file.size}:${file.type || ""}`),
+                    ),
+                  }));
+                }}
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.heic,.csv"
+                maxSize={25 * 1024 * 1024}
+              />
+            </div>
           </FormSection>
 
           <FormActions
@@ -158,11 +159,7 @@ export function ChangeEventForm({
             isSubmitting={isSubmitting}
             submitLabel={mode === "create" ? "Create Change Event" : "Update Change Event"}
             submitDataTestId={mode === "create" ? "change-event-create-submit" : "change-event-update-submit"}
-          >
-            <p className="text-sm text-muted-foreground">
-              <span className="text-destructive">*</span> Required fields
-            </p>
-          </FormActions>
+          />
         </div>
       </Form>
 

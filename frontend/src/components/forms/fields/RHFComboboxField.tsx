@@ -65,7 +65,7 @@ export function RHFComboboxField<TFieldValues extends FieldValues>({
   options,
   placeholder = "Select an option",
   selectedLabel,
-  searchPlaceholder = "Search...",
+  searchPlaceholder = "Search",
   emptyMessage = "No results found.",
   description,
   disabled,
@@ -90,8 +90,9 @@ export function RHFComboboxField<TFieldValues extends FieldValues>({
               disabled={disabled}
               className={cn(
                 "h-11 w-full justify-between",
-                !displayLabel && "text-muted-foreground"
+                !displayLabel && "text-[hsl(var(--input-placeholder))]"
               )}
+              {...(!displayLabel && { "data-placeholder-style": "" })}
             >
               <span className="truncate">
                 {displayLabel ?? placeholder}

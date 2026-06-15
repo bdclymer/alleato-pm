@@ -47,7 +47,7 @@ export function AutocompleteField({
   value,
   onValueChange,
   placeholder = "Select an option",
-  searchPlaceholder = "Search...",
+  searchPlaceholder = "Search",
   emptyMessage = "No results found",
   error,
   hint,
@@ -118,7 +118,7 @@ export function AutocompleteField({
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-[--radix-popover-trigger-width] p-0"
+          className="w-[var(--radix-popover-trigger-width)] p-0"
           align="start"
           sideOffset={0}
         >

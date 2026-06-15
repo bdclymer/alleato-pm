@@ -7,6 +7,7 @@ interface FormSectionProps {
   children: React.ReactNode;
   actions?: React.ReactNode;
   className?: string;
+  headerDivider?: boolean;
   /** @deprecated — use a gap wrapper around sections instead */
   showDivider?: boolean;
   /** @deprecated — use a gap wrapper around sections instead */
@@ -21,11 +22,16 @@ export function FormSection({
   className,
 }: FormSectionProps) {
   return (
-    <section className={cn("space-y-4 pb-4 last:pb-0", className)}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <section className={cn("space-y-4", className)}>
+      <div
+        className={cn(
+          "flex flex-col gap-3 sm:flex-row sm:justify-between",
+          description ? "sm:items-start" : "sm:items-center",
+        )}
+      >
         <div className="space-y-0.5">
           {/* eslint-disable-next-line design-system/no-raw-heading */}
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-primary">
             {title}
           </h2>
           {description ? (

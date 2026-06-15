@@ -130,24 +130,36 @@ export function FileUploadField({
 
   const control = (
     <div className={cn(isMinimal ? "space-y-2.5" : isLink ? "space-y-1" : "space-y-4")}>
-        <div
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-          className={cn(
-            isLink
-              ? "relative"
-              : isMinimal
-              ? "relative rounded-md border border-dashed px-4 py-3 text-left"
-              : "relative rounded-lg border-2 border-dashed p-6 text-center",
-            dragActive && "border-primary bg-primary/5",
-            error && "border-destructive",
-            disabled && "opacity-50 cursor-not-allowed",
-            className,
-          )}
-          data-testid={dropzoneTestId}
-        >
+      <div
+        onDragEnter={handleDrag}
+        onDragLeave={handleDrag}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+        onClick={() => {
+          if (!isLink && !disabled) inputRef.current?.click();
+        }}
+        onKeyDown={(event) => {
+          if (isLink || disabled) return;
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            inputRef.current?.click();
+          }
+        }}
+        role={isLink ? undefined : "button"}
+        tabIndex={isLink || disabled ? undefined : 0}
+        className={cn(
+          isLink
+            ? "relative"
+            : isMinimal
+              ? "relative cursor-pointer rounded-md border border-dashed px-4 py-3 text-left transition-colors hover:border-primary/60 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              : "relative cursor-pointer rounded-lg border-2 border-dashed p-5 text-center transition-colors hover:border-primary/60 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+          dragActive && "border-primary bg-primary/5",
+          error && "border-destructive",
+          disabled && "opacity-50 cursor-not-allowed",
+          className,
+        )}
+        data-testid={dropzoneTestId}
+      >
           <input
             ref={inputRef}
             type="file"
@@ -155,6 +167,8 @@ export function FileUploadField({
             multiple={multiple}
             onChange={handleFileInput}
             disabled={disabled}
+            tabIndex={-1}
+            aria-hidden="true"
             className="sr-only"
             data-testid={inputTestId}
           />
@@ -169,32 +183,26 @@ export function FileUploadField({
               Upload Attachments
             </Button>
           ) : isMinimal ? (
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-2">
-                <Upload className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm text-foreground">Drop files here or choose from your computer.</p>
-              </div>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="w-full sm:w-auto"
-                onClick={() => inputRef.current?.click()}
-                disabled={disabled}
-              >
-                Choose Files
-              </Button>
+            <div className="flex min-h-11 items-center justify-center gap-2 text-center">
+              <Upload className="h-4 w-4 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                Drop files here or{" "}
+                <span className="font-semibold text-primary">browse to upload</span>
+              </p>
             </div>
           ) : (
             <>
-              <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+              <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
               <p className="mt-2 text-sm text-foreground">
                 Drag and drop files here, or{" "}
                 <Button
                   type="button"
                   variant="link"
                   className="h-auto p-0 font-semibold"
-                  onClick={() => inputRef.current?.click()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    inputRef.current?.click();
+                  }}
                   disabled={disabled}
                 >
                   browse
