@@ -558,7 +558,28 @@ export async function loadPacketCards(input: {
 }
 
 /**
- * Project intelligence "Progress Log" — all timeline cards for a target,
+ * Card types that belong on the Progress Log — the curated "decisions, risks,
+ * issues, and AI flags" the timeline subtitle promises. Excludes high-volume,
+ * low-signal types (project_update, task, sentiment, requirement, product_need,
+ * process_issue, initiative_signal) that otherwise flood the log: a single
+ * deeply-extracted meeting can emit 40-70 cards, and without this filter one
+ * busy meeting day consumes the entire row limit and hides weeks of history.
+ */
+export const TIMELINE_EVENT_CARD_TYPES = [
+  "decision",
+  "risk",
+  "schedule_risk",
+  "financial_exposure",
+  "blocker",
+  "change_management",
+  "open_question",
+  "flag",
+  "solution",
+  "milestone",
+] as const;
+
+/**
+ * Project intelligence "Progress Log" — curated event cards for a target,
  * most-recent-first by occurred_at, INDEPENDENT of any packet. This is the
  * running log of decisions/issues/risks/solutions/flags surfaced by the
  * synthesizer from meetings, emails, and Teams.
@@ -587,8 +608,9 @@ export async function loadProjectTimeline(input: {
     )
     .eq("primary_target_id", input.targetId)
     .neq("attribution_status", "rejected")
+    .in("card_type", [...TIMELINE_EVENT_CARD_TYPES])
     .order("occurred_at", { ascending: false, nullsFirst: false })
-    .limit(input.limit ?? 80);
+    .limit(input.limit ?? 200);
 
   if (error) {
     throw new Error(`Failed to load project timeline: ${error.message}`);
