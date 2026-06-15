@@ -3,23 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Alleato RAG Process, Plain English</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%230f766e'/%3E%3Cpath d='M4 5.5h8M4 8h8M4 10.5h5' stroke='white' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <title>Alleato RAG Process Map</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%230f766e'/%3E%3Cpath d='M3.5 8h9M9 4.5 12.5 8 9 11.5' fill='none' stroke='white' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
   <style>
     :root {
       --bg: #fbfbfa;
-      --ink: #16211d;
-      --muted: #5d6b66;
-      --faint: #edf1ef;
-      --line: #d8dfdc;
+      --ink: #17211d;
+      --muted: #64716c;
+      --line: #dce3e0;
       --panel: #ffffff;
+      --soft: #f1f5f3;
       --accent: #0f766e;
-      --accent-soft: #e3f4f1;
-      --accent-ink: #0b514c;
-      --warning: #8a5a14;
-      --warning-soft: #fff4d8;
+      --accent-soft: #e2f4f1;
+      --accent-ink: #0b504b;
       --blue: #1d4ed8;
-      --blue-soft: #e8f0ff;
+      --blue-soft: #e9f0ff;
+      --amber: #946200;
+      --amber-soft: #fff4d7;
       --radius: 8px;
     }
 
@@ -31,7 +31,7 @@
       margin: 0;
       background: var(--bg);
       color: var(--ink);
-      font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
       -webkit-font-smoothing: antialiased;
     }
 
@@ -43,92 +43,57 @@
       border: 1px solid var(--line);
       border-radius: 5px;
       background: #fff;
-      color: #26352f;
       padding: 0.05rem 0.3rem;
-      font: 0.875rem/1.4 "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+      font: 0.85rem/1.4 "SF Mono", ui-monospace, Menlo, Consolas, monospace;
     }
 
     .page {
-      width: min(1180px, 100%);
+      width: min(1120px, 100%);
       margin: 0 auto;
       padding: 1rem;
     }
 
-    .hero {
+    header {
       display: grid;
-      gap: 1rem;
-      padding: 1.5rem 0;
+      gap: 0.65rem;
+      padding: 1.25rem 0 1rem;
       border-bottom: 1px solid var(--line);
     }
 
     .eyebrow {
       margin: 0;
       color: var(--accent);
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       font-weight: 750;
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
 
     h1 {
-      max-width: 18ch;
       margin: 0;
       font-size: 2rem;
       font-weight: 650;
-      letter-spacing: 0;
       line-height: 1.08;
+      letter-spacing: 0;
     }
 
-    .plain-answer {
-      max-width: 68ch;
+    .lede {
+      max-width: 70ch;
       margin: 0;
       color: var(--muted);
-      font-size: 1.05rem;
+      font-size: 1rem;
     }
 
-    .simple-rule {
-      margin: 0;
-      border-left: 3px solid var(--accent);
-      background: var(--accent-soft);
-      color: var(--accent-ink);
-      padding: 0.85rem 1rem;
-      font-weight: 650;
-    }
-
-    .toolbar {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      display: grid;
-      gap: 0.75rem;
-      border-bottom: 1px solid var(--line);
-      background: rgba(251, 251, 250, 0.96);
-      padding: 0.85rem 0;
-      backdrop-filter: blur(10px);
-    }
-
-    .toolbar > div {
-      min-width: 0;
-    }
-
-    .control-label {
-      margin: 0 0 0.35rem;
-      color: var(--muted);
-      font-size: 0.78rem;
-      font-weight: 750;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    .button-row {
+    .source-picker {
       display: flex;
       gap: 0.5rem;
       max-width: 100%;
       overflow-x: auto;
-      padding-bottom: 0.05rem;
+      padding: 0.85rem 0;
+      border-bottom: 1px solid var(--line);
     }
 
-    .choice {
+    .source-button {
       min-height: 44px;
       border: 1px solid var(--line);
       border-radius: 999px;
@@ -136,141 +101,191 @@
       color: var(--muted);
       cursor: pointer;
       flex: 0 0 auto;
-      padding: 0.55rem 0.85rem;
+      padding: 0.5rem 0.8rem;
     }
 
-    .choice[aria-pressed="true"] {
+    .source-button[aria-pressed="true"] {
       border-color: var(--accent);
       background: var(--accent-soft);
       color: var(--accent-ink);
       font-weight: 700;
     }
 
-    .main {
+    .map {
       display: grid;
-      gap: 1.25rem;
-      padding: 1.25rem 0 2rem;
+      gap: 1rem;
+      padding: 1rem 0;
     }
 
-    .journey {
+    .flow {
       display: grid;
-      gap: 0.75rem;
+      gap: 0.6rem;
+      align-items: center;
     }
 
-    .step {
-      display: grid;
-      grid-template-columns: 2.4rem minmax(0, 1fr);
-      gap: 0.85rem;
-      align-items: start;
-      border-bottom: 1px solid var(--line);
-      padding: 0.85rem 0;
-    }
-
-    .step:last-child {
-      border-bottom: 0;
-    }
-
-    .number {
-      display: grid;
-      place-items: center;
-      width: 2.2rem;
-      height: 2.2rem;
-      border-radius: 999px;
-      background: var(--faint);
-      color: var(--muted);
-      font-weight: 750;
-    }
-
-    .step.active .number {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    .step h2 {
-      margin: 0;
-      font-size: 1.05rem;
-      font-weight: 700;
-      letter-spacing: 0;
-    }
-
-    .step p {
-      margin: 0.2rem 0 0;
-      color: var(--muted);
-    }
-
-    .step button {
-      min-height: 44px;
-      border: 0;
-      background: transparent;
-      color: inherit;
-      cursor: pointer;
-      padding: 0;
-      text-align: left;
-    }
-
-    .output-panel,
-    .why-panel,
-    .technical-panel {
+    .node {
+      min-height: 56px;
       border: 1px solid var(--line);
       border-radius: var(--radius);
       background: var(--panel);
-      padding: 1rem;
+      color: var(--ink);
+      cursor: pointer;
+      padding: 0.65rem 0.75rem;
+      text-align: left;
     }
 
-    .panel-kicker {
-      margin: 0 0 0.3rem;
-      color: var(--accent);
+    .node:hover,
+    .node:focus-visible,
+    .node.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      outline: none;
+    }
+
+    .node small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 750;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .node strong {
+      display: block;
+      margin-top: 0.08rem;
+      font-size: 0.95rem;
+      line-height: 1.2;
+    }
+
+    .arrow {
+      color: var(--muted);
+      font-weight: 750;
+      text-align: center;
+    }
+
+    .split-label {
+      margin: 0.4rem 0 0;
+      color: var(--muted);
       font-size: 0.78rem;
       font-weight: 750;
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
 
-    .panel-title {
+    .branches {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .branch {
+      display: grid;
+      gap: 0.5rem;
+      border-left: 2px solid var(--line);
+      padding-left: 0.75rem;
+    }
+
+    .branch.assistant .node.active,
+    .branch.assistant .node:hover,
+    .branch.assistant .node:focus-visible {
+      border-color: var(--blue);
+      background: var(--blue-soft);
+    }
+
+    .branch.intelligence .node.active,
+    .branch.intelligence .node:hover,
+    .branch.intelligence .node:focus-visible {
+      border-color: var(--amber);
+      background: var(--amber-soft);
+    }
+
+    .detail {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      padding: 0.9rem;
+    }
+
+    .detail-kicker {
       margin: 0;
-      font-size: 1.2rem;
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-weight: 750;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .detail h2 {
+      margin: 0.2rem 0 0;
+      font-size: 1.1rem;
       font-weight: 700;
       letter-spacing: 0;
     }
 
-    .panel-text {
-      margin: 0.55rem 0 0;
+    .detail p {
+      margin: 0.45rem 0 0;
       color: var(--muted);
     }
 
-    .split {
+    .facts {
       display: grid;
-      gap: 0.75rem;
-      margin-top: 1rem;
+      gap: 0.45rem;
+      margin-top: 0.75rem;
     }
 
-    .path {
+    .fact {
+      display: grid;
+      grid-template-columns: 7.5rem minmax(0, 1fr);
+      gap: 0.5rem;
+      border-top: 1px solid var(--line);
+      padding-top: 0.45rem;
+      font-size: 0.92rem;
+    }
+
+    .fact:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .fact strong {
+      font-weight: 700;
+    }
+
+    .fact span {
+      color: var(--muted);
+    }
+
+    .plain-grid {
+      display: grid;
+      gap: 0.75rem;
+      padding: 1rem 0 2rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .plain-item {
       border-top: 1px solid var(--line);
       padding-top: 0.75rem;
     }
 
-    .path strong {
+    .plain-item:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .plain-item strong {
       display: block;
-      color: var(--ink);
       font-weight: 700;
     }
 
-    .path span {
+    .plain-item span {
       display: block;
       color: var(--muted);
-      margin-top: 0.15rem;
-    }
-
-    .callout {
-      margin-top: 1rem;
-      border-radius: var(--radius);
-      background: var(--warning-soft);
-      color: var(--warning);
-      padding: 0.8rem 0.9rem;
+      margin-top: 0.12rem;
     }
 
     details {
-      margin-top: 1rem;
+      border-top: 1px solid var(--line);
+      padding: 0.75rem 0 2rem;
     }
 
     summary {
@@ -281,361 +296,298 @@
       padding: 0.55rem 0;
     }
 
-    .tech-grid {
+    .technical {
       display: grid;
-      gap: 0.6rem;
-      margin-top: 0.5rem;
+      gap: 0.45rem;
+      margin-top: 0.4rem;
     }
 
-    .tech-row {
+    .technical div {
       display: grid;
       gap: 0.15rem;
       border-top: 1px solid var(--line);
-      padding-top: 0.55rem;
+      padding-top: 0.45rem;
     }
 
-    .tech-row:first-child {
+    .technical div:first-child {
       border-top: 0;
       padding-top: 0;
     }
 
-    .tech-row strong {
-      font-weight: 700;
-    }
-
-    .tech-row span {
+    .technical span {
       color: var(--muted);
     }
 
-    .map {
-      display: grid;
-      gap: 0.75rem;
-    }
-
-    .map-row {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 0.25rem;
-      border-top: 1px solid var(--line);
-      padding-top: 0.75rem;
-    }
-
-    .map-row:first-child {
-      border-top: 0;
-      padding-top: 0;
-    }
-
-    .map-row strong {
-      color: var(--ink);
-      font-weight: 700;
-    }
-
-    .map-row span {
-      color: var(--muted);
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    @media (min-width: 768px) {
+    @media (min-width: 760px) {
       .page {
-        padding: 1.25rem 1.5rem 2.5rem;
+        padding: 1.25rem 1.5rem 2rem;
       }
 
-      h1 {
-        font-size: 2.65rem;
-      }
-
-      .toolbar {
-        grid-template-columns: 1fr 1fr;
-        align-items: start;
-      }
-
-      .main {
-        grid-template-columns: minmax(0, 1fr) 24rem;
-        align-items: start;
-      }
-
-      .side {
-        position: sticky;
-        top: 7rem;
-      }
-
-      .split {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .map-row {
-        grid-template-columns: 10rem 1fr;
-      }
-    }
-
-    @media (min-width: 1080px) {
-      .hero {
-        grid-template-columns: 0.78fr 1.22fr;
+      header {
+        grid-template-columns: 0.7fr 1.3fr;
         align-items: end;
       }
 
-      .main {
-        grid-template-columns: minmax(0, 1fr) 27rem;
+      h1 {
+        font-size: 2.5rem;
+      }
+
+      .map {
+        grid-template-columns: minmax(0, 1fr) 22rem;
+        align-items: start;
+      }
+
+      .detail {
+        position: sticky;
+        top: 1rem;
+      }
+
+      .flow {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .arrow {
+        display: none;
+      }
+
+      .node[data-node="source"],
+      .node[data-node="sync"],
+      .node[data-node="catalog"] {
+        position: relative;
+      }
+
+      .node[data-node="source"]::after,
+      .node[data-node="sync"]::after,
+      .node[data-node="catalog"]::after {
+        content: "->";
+        position: absolute;
+        right: -1.05rem;
+        top: 50%;
+        color: var(--muted);
+        font-weight: 750;
+        transform: translateY(-50%);
+      }
+
+      .split-label {
+        grid-column: 1 / -1;
+      }
+
+      .branches {
+        grid-column: 1 / -1;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .plain-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .plain-item {
+        border-top: 0;
+        border-left: 1px solid var(--line);
+        padding-top: 0;
+        padding-left: 0.75rem;
+      }
+
+      .plain-item:first-child {
+        border-left: 0;
+        padding-left: 0;
       }
     }
   </style>
 </head>
 <body>
   <main class="page">
-    <header class="hero">
+    <header>
       <div>
         <p class="eyebrow">RAG process</p>
-        <h1>One source item becomes two different AI products.</h1>
+        <h1>One item in. Two products out.</h1>
       </div>
-      <div>
-        <p class="plain-answer">
-          A meeting transcript, Teams message, email, or document is synced, cleaned, assigned to a project, stored as raw text, chunked into searchable vectors, then used in two ways: live assistant retrieval and precomputed project intelligence.
-        </p>
-        <p class="simple-rule">
-          The assistant answers live questions from the vector store and tools. Project Intelligence and briefs read compiled evidence cards and synthesized packets.
-        </p>
-      </div>
+      <p class="lede">
+        Every source follows the same first path: sync it, catalog it, store the raw text, make it searchable. After that, the path splits.
+      </p>
     </header>
 
-    <section class="toolbar" aria-label="Choose source and output">
-      <div>
-        <p class="control-label">Start with</p>
-        <div class="button-row">
-          <button class="choice" type="button" data-source="meeting" aria-pressed="true">Meeting transcript</button>
-          <button class="choice" type="button" data-source="email" aria-pressed="false">Email</button>
-          <button class="choice" type="button" data-source="teams" aria-pressed="false">Teams message</button>
-          <button class="choice" type="button" data-source="document" aria-pressed="false">Document</button>
-        </div>
-      </div>
-      <div>
-        <p class="control-label">Show output</p>
-        <div class="button-row">
-          <button class="choice" type="button" data-output="assistant" aria-pressed="true">AI Assistant</button>
-          <button class="choice" type="button" data-output="intelligence" aria-pressed="false">Project Intelligence</button>
-          <button class="choice" type="button" data-output="brief" aria-pressed="false">Portfolio brief</button>
-        </div>
-      </div>
-    </section>
+    <nav class="source-picker" aria-label="Choose source type">
+      <button class="source-button" type="button" data-source="meeting" aria-pressed="true">Meeting</button>
+      <button class="source-button" type="button" data-source="email" aria-pressed="false">Email</button>
+      <button class="source-button" type="button" data-source="teams" aria-pressed="false">Teams</button>
+      <button class="source-button" type="button" data-source="document" aria-pressed="false">Document</button>
+    </nav>
 
-    <section class="main">
-      <div>
-        <section class="journey" aria-label="Step by step process" id="journey"></section>
+    <section class="map">
+      <section class="flow" aria-label="Interactive RAG flow map">
+        <button class="node" type="button" data-node="source">
+          <small>1</small>
+          <strong id="sourceNodeTitle">Meeting transcript</strong>
+        </button>
+        <div class="arrow">↓</div>
+        <button class="node" type="button" data-node="sync"><small>2</small><strong>Sync</strong></button>
+        <div class="arrow">↓</div>
+        <button class="node" type="button" data-node="catalog"><small>3</small><strong>Catalog + raw text</strong></button>
+        <div class="arrow">↓</div>
+        <button class="node active" type="button" data-node="vectors"><small>4</small><strong>Searchable chunks</strong></button>
 
-        <section class="why-panel">
-          <p class="panel-kicker">The confusing part</p>
-          <h2 class="panel-title">RAG is only the searchable foundation, not the whole intelligence product.</h2>
-          <div class="split">
-            <div class="path">
-              <strong>RAG / vectors</strong>
-              <span>Chunks in <code>document_chunks</code> help the assistant find relevant source evidence at question time.</span>
-            </div>
-            <div class="path">
-              <strong>Compiled intelligence</strong>
-              <span><code>insight_cards</code>, <code>tasks</code>, and <code>intelligence_packets</code> turn source evidence into product views and briefs.</span>
-            </div>
+        <p class="split-label">Then it splits</p>
+
+        <div class="branches">
+          <div class="branch assistant">
+            <button class="node" type="button" data-node="assistant"><small>Live Q&amp;A</small><strong>AI Assistant</strong></button>
           </div>
-          <p class="callout">
-            A source can be searchable before it is understood. Embedding makes it findable; extraction and synthesis make it useful.
-          </p>
-        </section>
+          <div class="branch intelligence">
+            <button class="node" type="button" data-node="extract"><small>Compile</small><strong>Cards + tasks</strong></button>
+            <button class="node" type="button" data-node="packet"><small>Synthesize</small><strong>Project packet</strong></button>
+            <button class="node" type="button" data-node="brief"><small>Roll up</small><strong>Portfolio brief</strong></button>
+          </div>
+        </div>
+      </section>
 
-        <section class="technical-panel">
-          <details>
-            <summary>Show the technical table and code names</summary>
-            <div class="tech-grid" id="techGrid"></div>
-          </details>
-        </section>
-      </div>
-
-      <aside class="side">
-        <section class="output-panel" aria-live="polite">
-          <p class="panel-kicker" id="outputKicker">Selected output</p>
-          <h2 class="panel-title" id="outputTitle"></h2>
-          <p class="panel-text" id="outputText"></p>
-          <div class="map" id="outputMap"></div>
-        </section>
+      <aside class="detail" aria-live="polite">
+        <p class="detail-kicker" id="detailKicker">Step 4</p>
+        <h2 id="detailTitle">Searchable chunks</h2>
+        <p id="detailText">The raw text is split into small overlapping chunks and embedded. This makes the source findable by meaning, not just exact keywords.</p>
+        <div class="facts" id="facts"></div>
       </aside>
     </section>
+
+    <section class="plain-grid" aria-label="Plain English definitions">
+      <div class="plain-item">
+        <strong>Catalog</strong>
+        <span>What is this source, when did it happen, and which project does it belong to?</span>
+      </div>
+      <div class="plain-item">
+        <strong>Chunks</strong>
+        <span>Searchable pieces of the full text. They power live retrieval.</span>
+      </div>
+      <div class="plain-item">
+        <strong>Cards</strong>
+        <span>Extracted facts: risks, decisions, tasks, flags, and evidence quotes.</span>
+      </div>
+      <div class="plain-item">
+        <strong>Packets</strong>
+        <span>The current project read. This is what the intelligence page and brief summarize.</span>
+      </div>
+    </section>
+
+    <details>
+      <summary>Show implementation names</summary>
+      <div class="technical">
+        <div><strong>PM APP catalog</strong><span><code>document_metadata</code>, <code>project_emails</code>, attribution candidates</span></div>
+        <div><strong>AI Database raw text</strong><span><code>rag_document_metadata.content</code></span></div>
+        <div><strong>Vector store</strong><span><code>document_chunks</code> through <code>search_document_chunks</code></span></div>
+        <div><strong>Compiled intelligence</strong><span><code>insight_cards</code>, <code>tasks</code>, <code>intelligence_packets</code></span></div>
+      </div>
+    </details>
   </main>
 
   <script>
-    const sourceCopy = {
+    const sources = {
       meeting: {
-        label: "meeting transcript",
-        sync: "Fireflies sync pulls the transcript, normalizes markdown, uploads it to Storage, and writes catalog/raw-text records.",
-        extra: "Meetings also get segmented and deep-extracted for decisions, risks, opportunities, and tasks.",
-        raw: "Full transcript text is stored in the AI Database; the PM APP keeps the lightweight catalog row."
+        label: "Meeting transcript",
+        sync: "Fireflies pulls the transcript and normalizes it.",
+        catalog: "The meeting gets a catalog row, project link, and transcript storage reference.",
+        raw: "Full transcript text stays in the AI Database."
       },
       email: {
-        label: "email",
-        sync: "Outlook sync writes raw intake first, then filters for operational relevance.",
-        extra: "Project inference checks title, participants, sender domain, and body. Low-confidence matches go to attribution review.",
-        raw: "The email body is hydrated from the AI Database before chunking and embedding."
+        label: "Email",
+        sync: "Outlook sync pulls the message through Microsoft Graph.",
+        catalog: "The email is filtered for relevance, then assigned to a project when confidence is high enough.",
+        raw: "The full body is stored for RAG; raw intake remains separate from AI-ready catalog rows."
       },
       teams: {
         label: "Teams message",
-        sync: "Graph sync captures Teams channels and DMs. DMs are grouped into conversation documents.",
-        extra: "The grouped conversation is assigned to a project when confidence is high enough.",
-        raw: "Conversation text is stored as raw RAG content, then embedded for retrieval."
+        sync: "Graph sync pulls channels and DMs.",
+        catalog: "DMs are grouped into conversation documents before they become useful retrieval sources.",
+        raw: "Conversation text is stored as raw RAG content."
       },
       document: {
-        label: "document",
-        sync: "OneDrive, SharePoint, or manual upload creates a document catalog row and extracts text where possible.",
-        extra: "Scanned or low-text documents are flagged instead of pretending they are searchable.",
-        raw: "Extracted raw text lives in the AI Database; app-facing metadata stays in PM APP."
+        label: "Document",
+        sync: "OneDrive, SharePoint, or manual upload brings the file in.",
+        catalog: "The app records file metadata and extracts text when possible.",
+        raw: "Extracted text is stored in the AI Database; scanned or low-text files are flagged."
       }
     };
 
-    const outputs = {
-      assistant: {
-        kicker: "AI Assistant",
-        title: "Live question answering",
-        text: "The assistant embeds the user's question, searches document_chunks, calls source tools, and combines that evidence with live SQL or Acumatica data when needed.",
-        rows: [
-          ["Reads", "document_chunks, source tools, SQL, Acumatica, memories"],
-          ["Best for", "Flexible questions like what changed, find emails about X, summarize meetings about Y"],
-          ["Does not use", "The precomputed project packet as its main answer path"]
-        ]
+    const details = {
+      source: {
+        kicker: "Step 1",
+        title: () => sources[state.source].label,
+        text: () => `The process starts with one ${sources[state.source].label.toLowerCase()}. The exact sync source changes, but the rest of the pipeline is the same.`,
+        facts: () => [["Source-specific note", sources[state.source].sync]]
       },
-      intelligence: {
-        kicker: "Project Intelligence",
-        title: "One current project read",
-        text: "Extraction creates evidence cards and tasks. L2 synthesis rolls prior state, new raw communications, and SQL truth into the current project packet.",
-        rows: [
-          ["Reads", "insight_cards, tasks, raw delta text, SQL snapshot"],
-          ["Renders", "/{projectId}/intelligence"],
-          ["Best for", "A stable operating read with risks, open decisions, what changed, and recommended actions"]
-        ]
+      sync: {
+        kicker: "Step 2",
+        title: () => "Sync",
+        text: () => sources[state.source].sync,
+        facts: () => [["Purpose", "Bring the source into Alleato without making it an AI answer yet."]]
+      },
+      catalog: {
+        kicker: "Step 3",
+        title: () => "Catalog + raw text",
+        text: () => sources[state.source].catalog,
+        facts: () => [["PM APP", "Keeps lightweight metadata and project assignment."], ["AI Database", sources[state.source].raw]]
+      },
+      vectors: {
+        kicker: "Step 4",
+        title: () => "Searchable chunks",
+        text: () => "The raw text is split into small overlapping chunks and embedded. This makes the source findable by meaning, not just exact keywords.",
+        facts: () => [["Used by", "AI Assistant retrieval."], ["Stored in", "document_chunks."]]
+      },
+      assistant: {
+        kicker: "Live Q&A",
+        title: () => "AI Assistant",
+        text: () => "The assistant searches chunks at question time, then combines source evidence with live tools like SQL or Acumatica when needed.",
+        facts: () => [["Best for", "Flexible questions."], ["Important", "Live numbers do not come from RAG."]]
+      },
+      extract: {
+        kicker: "Compile",
+        title: () => "Cards + tasks",
+        text: () => "Extraction turns source text into evidence-backed facts: risks, decisions, action items, flags, and tasks.",
+        facts: () => [["Why it exists", "Searchable text is not the same thing as understood project intelligence."]]
+      },
+      packet: {
+        kicker: "Synthesize",
+        title: () => "Project packet",
+        text: () => "The system combines new source evidence, prior state, and SQL truth into one current project read.",
+        facts: () => [["Used by", "Project Intelligence page."], ["Guardrail", "Bad citations are dropped; failed synthesis should not write an empty packet."]]
       },
       brief: {
-        kicker: "Portfolio brief",
-        title: "Cross-project executive summary",
-        text: "The portfolio brief loads every active project's current packet, adds financial pulse data, and creates the Brandon-level daily brief.",
-        rows: [
-          ["Reads", "current intelligence_packets plus financial-pulse.ts"],
-          ["Output", "what changed, needs-Brandon, watch-list, waiting-on"],
-          ["Delivery", "Previewable first; Teams delivery stays gated until approval"]
-        ]
+        kicker: "Roll up",
+        title: () => "Portfolio brief",
+        text: () => "The executive brief summarizes current packets across projects and adds financial pulse data.",
+        facts: () => [["Used for", "What changed, what needs attention, and who is waiting."]]
       }
     };
 
-    const techRows = [
-      ["Sync", "Graph/Fireflies cron, manual upload API"],
-      ["Catalog", "PM APP document_metadata, project_emails, document_attribution_candidates"],
-      ["Raw text", "AI Database rag_document_metadata.content"],
-      ["Vectors", "AI Database document_chunks through search_document_chunks"],
-      ["Fragments", "insight_cards, tasks, flags"],
-      ["Project packet", "intelligence_packets, packet_type='current'"],
-      ["Portfolio brief", "frontend/src/lib/executive/portfolio-synthesis-brief.ts"]
-    ];
+    const state = { source: "meeting", node: "vectors" };
 
-    const state = {
-      source: "meeting",
-      output: "assistant",
-      activeStep: 1
-    };
-
-    function stepsForSource(sourceKey) {
-      const source = sourceCopy[sourceKey];
-      return [
-        {
-          title: `A ${source.label} appears`,
-          body: source.sync
-        },
-        {
-          title: "Create the catalog row",
-          body: "PM APP records what the item is, where it came from, source date, project assignment, and processing status."
-        },
-        {
-          title: "Store the full text separately",
-          body: source.raw
-        },
-        {
-          title: "Chunk and embed it",
-          body: "The raw text is split into overlapping chunks and written to document_chunks so semantic search can find it later."
-        },
-        {
-          title: "Extract useful facts",
-          body: source.extra
-        },
-        {
-          title: "Send it to the right product surface",
-          body: "Assistant queries use live retrieval. Project Intelligence and portfolio briefs use compiled cards and synthesized packets."
-        }
-      ];
-    }
-
-    function renderSteps() {
-      const journey = document.getElementById("journey");
-      journey.innerHTML = stepsForSource(state.source).map((step, index) => `
-        <div class="step ${index + 1 === state.activeStep ? "active" : ""}">
-          <div class="number">${index + 1}</div>
-          <button type="button" data-step="${index + 1}">
-            <h2>${step.title}</h2>
-            <p>${step.body}</p>
-          </button>
-        </div>
-      `).join("");
-      journey.querySelectorAll("button[data-step]").forEach(button => {
-        button.addEventListener("click", () => {
-          state.activeStep = Number(button.dataset.step);
-          renderSteps();
-        });
-      });
-    }
-
-    function renderOutput() {
-      const output = outputs[state.output];
-      document.getElementById("outputKicker").textContent = output.kicker;
-      document.getElementById("outputTitle").textContent = output.title;
-      document.getElementById("outputText").textContent = output.text;
-      document.getElementById("outputMap").innerHTML = output.rows.map(row => `
-        <div class="map-row">
-          <strong>${row[0]}</strong>
-          <span>${row[1]}</span>
-        </div>
-      `).join("");
-    }
-
-    function renderTech() {
-      document.getElementById("techGrid").innerHTML = techRows.map(row => `
-        <div class="tech-row">
-          <strong>${row[0]}</strong>
-          <span>${row[1]}</span>
-        </div>
-      `).join("");
-    }
-
-    function renderControls() {
+    function render() {
+      document.getElementById("sourceNodeTitle").textContent = sources[state.source].label;
       document.querySelectorAll("[data-source]").forEach(button => {
         button.setAttribute("aria-pressed", button.dataset.source === state.source ? "true" : "false");
       });
-      document.querySelectorAll("[data-output]").forEach(button => {
-        button.setAttribute("aria-pressed", button.dataset.output === state.output ? "true" : "false");
+      document.querySelectorAll("[data-node]").forEach(button => {
+        button.classList.toggle("active", button.dataset.node === state.node);
       });
-    }
-
-    function render() {
-      renderSteps();
-      renderOutput();
-      renderTech();
-      renderControls();
+      const selected = details[state.node];
+      document.getElementById("detailKicker").textContent = selected.kicker;
+      document.getElementById("detailTitle").textContent = selected.title();
+      document.getElementById("detailText").textContent = selected.text();
+      document.getElementById("facts").innerHTML = selected.facts().map(([label, value]) => `
+        <div class="fact"><strong>${label}</strong><span>${value}</span></div>
+      `).join("");
     }
 
     document.querySelectorAll("[data-source]").forEach(button => {
       button.addEventListener("click", () => {
         state.source = button.dataset.source;
-        state.activeStep = 1;
+        state.node = "source";
         render();
       });
     });
 
-    document.querySelectorAll("[data-output]").forEach(button => {
+    document.querySelectorAll("[data-node]").forEach(button => {
       button.addEventListener("click", () => {
-        state.output = button.dataset.output;
+        state.node = button.dataset.node;
         render();
       });
     });
