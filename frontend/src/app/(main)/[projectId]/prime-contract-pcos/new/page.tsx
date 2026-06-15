@@ -1143,12 +1143,89 @@ export default function NewPrimeContractPcoPage() {
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          value={field.value ?? ""}
+                          rows={4}
+                          placeholder="Describe the change order..."
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="signed_co_received_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Signed Change Order Received Date</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(e.target.value || null)
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex items-start gap-6 pt-7">
+                  <FormField
+                    control={form.control}
+                    name="executed"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start gap-3">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-0.5 leading-none">
+                          <FormLabel className="cursor-pointer">Executed</FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="is_private"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start gap-3">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-0.5 leading-none">
+                          <FormLabel className="cursor-pointer">Private</FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
             </section>
 
             <section className="space-y-4">
               <SectionRuleHeading
-                label="Approval And Schedule"
+                label="Approval"
                 className="[&_span]:text-primary"
               />
               <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
@@ -1346,26 +1423,15 @@ export default function NewPrimeContractPcoPage() {
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="signed_co_received_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Signed Change Order Received Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(e.target.value || null)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              </div>
+            </section>
 
+            <section className="space-y-4">
+              <SectionRuleHeading
+                label="Schedule"
+                className="[&_span]:text-primary"
+              />
+              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="due_date"
@@ -1430,6 +1496,15 @@ export default function NewPrimeContractPcoPage() {
                     </FormItem>
                   )}
                 />
+              </div>
+            </section>
+
+            <section className="space-y-4">
+              <SectionRuleHeading
+                label="Financial"
+                className="[&_span]:text-primary"
+              />
+              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="total_amount"
@@ -1458,7 +1533,7 @@ export default function NewPrimeContractPcoPage() {
                   name="invoiced_date"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Invoiced Date</FormLabel>
+                      <FormLabel>Invoice Date</FormLabel>
                       <FormControl>
                         <Input
                           type="date"
@@ -1497,28 +1572,10 @@ export default function NewPrimeContractPcoPage() {
 
             <section className="space-y-4">
               <SectionRuleHeading
-                label="Details And Supporting Info"
+                label="Attachments"
                 className="[&_span]:text-primary"
               />
               <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem className="md:col-span-2">
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          {...field}
-                          value={field.value ?? ""}
-                          rows={4}
-                          placeholder="Describe the change order..."
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                 <div className="md:col-span-2">
                   <FileUploadField
                     label="Attachments"
@@ -1529,41 +1586,6 @@ export default function NewPrimeContractPcoPage() {
                     variant="minimal"
                   />
                 </div>
-                <FormField
-                  control={form.control}
-                  name="executed"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start gap-3 pt-2">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-0.5 leading-none">
-                        <FormLabel className="cursor-pointer">Executed</FormLabel>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="is_private"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start gap-3 pt-2">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-0.5 leading-none">
-                        <FormLabel className="cursor-pointer">Private</FormLabel>
-                      </div>
-                    </FormItem>
-                  )}
-                />
               </div>
             </section>
           </form>
