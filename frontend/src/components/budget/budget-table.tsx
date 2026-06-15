@@ -1534,7 +1534,7 @@ export function BudgetTable({
   );
 
   return (
-    <div className="flex h-full flex-col rounded-md bg-background">
+    <div className="flex min-h-0 flex-col rounded-md bg-background sm:h-[calc(100vh-12.75rem)]">
       {columnControlsPortal
         ? createPortal(columnVisibilityControl, columnControlsPortal)
         : null}
@@ -1590,7 +1590,7 @@ export function BudgetTable({
         {/* Horizontal scroll container — allows the wide budget table to scroll on mobile */}
         <div
           ref={bodyScrollRef}
-          className="flex-1 min-w-0 overflow-hidden"
+          className="min-h-0 flex-1 min-w-0 overflow-hidden [&_[data-slot=table-container]]:h-full [&_[data-slot=table-container]]:overflow-auto"
         >
         <Table
           className="table-fixed bg-background"

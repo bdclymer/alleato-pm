@@ -1102,8 +1102,8 @@ function BudgetPageContent() {
             />
           </div>
         ) : (
-          <div className="flex min-w-0 flex-1 -mx-4 sm:-mx-6 lg:-mx-8">
-            <div className="min-w-0 flex-1">
+          <div className="flex min-h-0 min-w-0 flex-1 -mx-4 sm:-mx-6 lg:-mx-8">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               {/* Selection action bar */}
               {selectedIds.length > 0 && (
                 /* eslint-disable-next-line design-system/require-info-alert -- selection action bar with destructive control, not an informational callout */
