@@ -1954,8 +1954,8 @@ export function UnifiedTablePage<T>({
           className={cn(
             "flex flex-col gap-2",
             tabs
-              ? "md:flex-row md:items-end md:justify-between md:gap-4"
-              : "md:flex-row md:items-end md:justify-end md:gap-4",
+              ? "md:flex-row md:items-center md:justify-between md:gap-4"
+              : "md:flex-row md:items-center md:justify-end md:gap-4",
             isCompactDensity
               ? "pb-1 pt-0"
               : cn("pb-3", containerPadding ? "pt-1 sm:pt-2" : "pt-0"),
@@ -1972,7 +1972,7 @@ export function UnifiedTablePage<T>({
             <div
               className={cn(
                 "hidden min-w-0 justify-end sm:flex",
-                tabs ? "self-end md:shrink-0" : "md:shrink-0",
+                tabs ? "self-center md:shrink-0" : "md:shrink-0",
               )}
             >
               {tableToolbar}
