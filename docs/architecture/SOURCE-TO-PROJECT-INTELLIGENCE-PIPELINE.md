@@ -137,12 +137,40 @@ queryable without parsing logs.
 | Control | Required behavior |
 |---|---|
 | Content-hash idempotency | If `source_system + source_item_id + content_hash` is complete, mark `skipped_unchanged` and do not call embeddings or LLMs. |
-| Stage-specific model routing | High-volume source extraction uses `COMPILER_MODEL_LIGHT`; full-model synthesis is reserved for project packet updates and high-value meeting passes. |
+| Stage-specific model routing | Use the model map below. Expensive models are reserved for high-value synthesis and executive-facing outputs. |
 | Delta-only synthesis | Project intelligence only runs when new source evidence exists or a user explicitly forces a refresh. |
 | One current packet | Update the current `intelligence_packets` row in place; do not create competing packet writers. |
 | Retry caps | Retry transient provider/network failures with backoff; permanent failures must stop loudly. |
 | Daily budget guard | Stop background LLM stages when a configured daily cap is reached, but continue cheap capture and indexing. |
 | Usage ledger | Every LLM/embedding call records source item, stage, model, token usage when available, status, and error. |
+
+## Model Map
+
+| Pipeline step | Primary model | Escalation / fallback |
+|---|---|---|
+| Capture, dedupe, and content hash | no model | Never call an LLM for this stage. |
+| Project assignment | rules and SQL first; `gpt-5.4-nano` only when rules are inconclusive | Send low-confidence assignments to review instead of retrying repeatedly. |
+| Text extraction and cleanup | no model | Use `gpt-5.4-nano` only for messy OCR or malformed extracted text. |
+| Embeddings | `text-embedding-3-small` | Use `text-embedding-3-large` only if the vector schema requires 3072 dimensions or retrieval quality proves the need. |
+| Task, risk, urgent item, and change-order signal extraction | `gpt-5.5-mini` target | Current OpenAI docs reviewed on 2026-06-16 list `gpt-5.4-mini` as the deployable mini model. Use `gpt-5.4-mini` until `gpt-5.5-mini` is available from the provider. |
+| Project intelligence update | `gpt-5.4` | Do not run if there is no new source evidence or explicit user refresh. |
+| Brandon email importance, reply draft, and Teams alert | `gpt-5.5` | Route contractual/legal uncertainty to human review before sending. |
+| Morning and evening Teams brief | `gpt-5.5` | Generate from current packets and today deltas; avoid broad raw RAG scans. |
+| AI assistant | `gpt-5.5` | Use retrieval and structured tools first so the model is reasoning over bounded evidence. |
+
+Recommended environment defaults:
+
+```text
+PIPELINE_MODEL_PROJECT_ASSIGNMENT=gpt-5.4-nano
+PIPELINE_MODEL_TEXT_CLEANUP=gpt-5.4-nano
+PIPELINE_MODEL_SIGNAL_EXTRACTION=gpt-5.4-mini
+PIPELINE_MODEL_SIGNAL_EXTRACTION_TARGET=gpt-5.5-mini
+PIPELINE_MODEL_PROJECT_INTELLIGENCE=gpt-5.4
+PIPELINE_MODEL_BRANDON_EMAIL=gpt-5.5
+PIPELINE_MODEL_DAILY_BRIEF=gpt-5.5
+PIPELINE_MODEL_ASSISTANT=gpt-5.5
+PIPELINE_EMBEDDING_MODEL=text-embedding-3-small
+```
 
 ## Consumer Workflows
 
