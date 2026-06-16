@@ -892,7 +892,7 @@ export default function NewPrimeContractPcoPage() {
       variant="dashboard"
       title={
         hasChangeEvents
-          ? "Create Prime Contract PCO"
+          ? "New Prime Contract PCO"
           : "New Prime Contract Change Order"
       }
       description={
