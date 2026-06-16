@@ -12,6 +12,7 @@ import {
   type HeaderNavigationTool,
 } from "@/lib/navigation-config";
 import { apiFetch } from "@/lib/api-client";
+import { getPrimeContractPcoDisplayName } from "@/lib/prime-contract-pcos/display";
 import { useProject } from "@/contexts/project-context";
 import { createClient } from "@/lib/supabase/client";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
@@ -377,6 +378,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
 
     segments.forEach((segment, index) => {
       if (skippedIndexes.has(index)) return;
+      if (isCommitmentCoDetailRoute && index === 2) return;
 
       let href = `/${segments.slice(0, index + 1).join("/")}`;
       let label: string;
@@ -492,6 +494,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
           const labelMap: Record<string, string> = {
             "prime-contracts": "Prime Contracts",
             "prime-contract-pcos": "Prime Contract PCOs",
+            "commitment-pcos": "Commitment PCO's",
             pcos: "Potential Change Orders",
             "change-events": "Change Events",
             "change-orders": "Change Orders",
@@ -1030,25 +1033,15 @@ export function useHeaderNav(): UseHeaderNavReturn {
         const data = await apiFetch<{ pco_number?: unknown; title?: unknown }>(
           `/api/projects/${projectId}/prime-contract-pcos/${pcoId}`,
         );
-        const numberPart =
-          typeof data?.pco_number === "string" && data.pco_number.length > 0
-            ? `PCO #${data.pco_number}`
-            : null;
-        const titlePart =
-          typeof data?.title === "string" && data.title.length > 0
-            ? data.title
-            : null;
-        const title = titlePart && numberPart
-          ? `${numberPart} — ${titlePart}`
-          : (titlePart ?? numberPart);
+        const title = getPrimeContractPcoDisplayName({
+          pcoNumber:
+            typeof data?.pco_number === "string" ? data.pco_number : null,
+          title: typeof data?.title === "string" ? data.title : null,
+        });
 
         if (isActive) {
-          if (title) {
-            primePcoTitleCache.set(cacheKey, title);
-            setPrimePcoTitle(title);
-          } else {
-            setPrimePcoTitle(null);
-          }
+          primePcoTitleCache.set(cacheKey, title);
+          setPrimePcoTitle(title);
         }
       } catch (error) {
         reportHeaderNavFailure("resolve-prime-pco-title", error, {

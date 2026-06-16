@@ -2,6 +2,8 @@
 
 import * as React from "react";
 
+import { apiFetch } from "@/lib/api-client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import type {
   PrimeContractOption,
   VendorOption,
@@ -17,6 +19,17 @@ interface UseDropdownDataOptions {
   projectId: number;
 }
 
+interface CommitmentApiRecord {
+  id: string | number;
+  contract_number?: string | null;
+  number?: string | null;
+  title?: string | null;
+  status?: string | null;
+  deleted_at?: string | null;
+  contract_company_id?: string | null;
+  company_name?: string | null;
+}
+
 export function useDropdownData({ projectId }: UseDropdownDataOptions) {
   const [primeContractOptions, setPrimeContractOptions] = React.useState<
     PrimeContractOption[]
@@ -29,43 +42,79 @@ export function useDropdownData({ projectId }: UseDropdownDataOptions) {
   // appears immediately. Merges with the existing contract-derived list.
   const fetchVendors = React.useCallback(async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/vendors`);
-      if (!response.ok) return;
-      const data = await response.json();
+      const data = await apiFetch<VendorOption[] | { data?: VendorOption[] }>(
+        `/api/projects/${projectId}/vendors`,
+      );
       const apiVendors: VendorOption[] = Array.isArray(data) ? data : data.data || [];
       setVendors((prev) => {
         const existingIds = new Set(prev.map((v) => v.id));
         const incoming = apiVendors.filter((v) => !existingIds.has(v.id));
         return incoming.length > 0 ? [...prev, ...incoming] : prev;
       });
-    } catch {
-      // Keep existing list on error
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "change-event-dropdown-data",
+        operation: "load-vendors",
+        error,
+        userVisibleFallback:
+          "Vendor options could not be refreshed. Existing vendor options were kept.",
+        metadata: { projectId },
+      });
     }
   }, [projectId]);
 
   const fetchBudgetCodes = React.useCallback(async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/budget-codes`);
-      if (!response.ok) return;
-      const payload = await response.json();
+      const payload = await apiFetch<{
+        budgetCodes?: Array<{
+          id: string;
+          code: string;
+          legacyCostCodeId?: string | null;
+          description?: string;
+          costType?: string | null;
+          costTypeId?: string | null;
+          fullLabel?: string;
+        }>;
+        data?: Array<{
+          id: string;
+          code: string;
+          legacyCostCodeId?: string | null;
+          description?: string;
+          costType?: string | null;
+          costTypeId?: string | null;
+          fullLabel?: string;
+        }>;
+      }>(`/api/projects/${projectId}/budget-codes`);
       const codes = (payload.budgetCodes || payload.data || []) as Array<{
         id: string;
         code: string;
+        legacyCostCodeId?: string | null;
         description?: string;
         costType?: string | null;
+        costTypeId?: string | null;
         fullLabel?: string;
       }>;
       setBudgetCodes(
         codes.map((bc) => ({
           id: bc.id,
           code: bc.code,
+          legacyCostCodeId: bc.legacyCostCodeId || null,
           description: bc.description || "",
           costType: bc.costType || null,
+          costTypeId: bc.costTypeId || null,
           fullLabel:
             bc.fullLabel || `${bc.code}${bc.description ? ` - ${bc.description}` : ""}`,
         })),
       );
-    } catch {
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "change-event-dropdown-data",
+        operation: "load-budget-codes",
+        error,
+        userVisibleFallback:
+          "Budget code options could not be loaded for change event line items.",
+        metadata: { projectId },
+      });
       setBudgetCodes([]);
     }
   }, [projectId]);
@@ -74,34 +123,57 @@ export function useDropdownData({ projectId }: UseDropdownDataOptions) {
     const fetchAll = async () => {
       // Prime contracts
       try {
-        const response = await fetch(`/api/projects/${projectId}/contracts`);
-        if (response.ok) {
-          const payload = await response.json();
-          const records = (
-            Array.isArray(payload)
-              ? payload
-              : Array.isArray(payload?.data)
-                ? payload.data
-                : Array.isArray(payload?.contracts)
-                  ? payload.contracts
-                  : []
-          ) as Array<{
-            id: number | string;
-            contract_number?: string;
-            number?: string;
-            title?: string;
-            description?: string;
-          }>;
-          setPrimeContractOptions(
-            records
-              .filter((record) => record.id !== undefined && record.id !== null)
-              .map((record) => ({
-                value: String(record.id),
-                label: `${record.contract_number || record.number || "PC"} - ${record.title || record.description || "Untitled"}`,
-              })),
-          );
-        }
-      } catch {
+        const payload = await apiFetch<
+          | Array<{
+              id: number | string;
+              contract_number?: string;
+              number?: string;
+              title?: string;
+              description?: string;
+            }>
+          | {
+              data?: Array<{
+                id: number | string;
+                contract_number?: string;
+                number?: string;
+                title?: string;
+                description?: string;
+              }>;
+              contracts?: Array<{
+                id: number | string;
+                contract_number?: string;
+                number?: string;
+                title?: string;
+                description?: string;
+              }>;
+            }
+        >(`/api/projects/${projectId}/contracts`);
+        const records = (
+          Array.isArray(payload)
+            ? payload
+            : Array.isArray(payload?.data)
+              ? payload.data
+              : Array.isArray(payload?.contracts)
+                ? payload.contracts
+                : []
+        );
+        setPrimeContractOptions(
+          records
+            .filter((record) => record.id !== undefined && record.id !== null)
+            .map((record) => ({
+              value: String(record.id),
+              label: `${record.contract_number || record.number || "PC"} - ${record.title || record.description || "Untitled"}`,
+            })),
+        );
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "change-event-dropdown-data",
+          operation: "load-prime-contracts",
+          error,
+          userVisibleFallback:
+            "Prime contract options could not be loaded for change event fields.",
+          metadata: { projectId },
+        });
         setPrimeContractOptions([]);
       }
 
@@ -110,47 +182,57 @@ export function useDropdownData({ projectId }: UseDropdownDataOptions) {
       // for Change Events. The vendor list is derived from these commitments so that
       // only vendors with an active contract on this project appear in the dropdown.
       try {
-        const [poRes, subRes] = await Promise.all([
-          fetch(`/api/projects/${projectId}/purchase-orders`),
-          fetch(`/api/projects/${projectId}/subcontracts`),
+        const [poPayload, subPayload] = await Promise.all([
+          apiFetch<{ data?: CommitmentApiRecord[] } | CommitmentApiRecord[]>(
+            `/api/projects/${projectId}/purchase-orders`,
+          ),
+          apiFetch<{ data?: CommitmentApiRecord[] } | CommitmentApiRecord[]>(
+            `/api/projects/${projectId}/subcontracts`,
+          ),
         ]);
 
         const contractList: ContractOption[] = [];
 
-        if (poRes.ok) {
-          const poPayload = await poRes.json();
-          const poData = poPayload.data || poPayload || [];
-          for (const po of poData) {
-            if (po.deleted_at || po.status === "Void" || EXCLUDED_COMMITMENT_STATUSES.has(po.status)) continue;
-            const companyLabel = po.company_name ? ` (${po.company_name})` : "";
-            contractList.push({
-              id: `po-${po.id}`,
-              label: `${po.contract_number || po.number || "PO"} - ${po.title || "Untitled"}${companyLabel}`,
-              type: "purchase_order",
-              vendorId: po.contract_company_id || null,
-              vendorName: po.company_name || null,
-              title: po.title || null,
-              status: po.status || null,
-            });
+        const poData = Array.isArray(poPayload) ? poPayload : poPayload.data || [];
+        for (const po of poData) {
+          if (
+            po.deleted_at ||
+            po.status === "Void" ||
+            (po.status && EXCLUDED_COMMITMENT_STATUSES.has(po.status))
+          ) {
+            continue;
           }
+          const companyLabel = po.company_name ? ` (${po.company_name})` : "";
+          contractList.push({
+            id: `po-${po.id}`,
+            label: `${po.contract_number || po.number || "PO"} - ${po.title || "Untitled"}${companyLabel}`,
+            type: "purchase_order",
+            vendorId: po.contract_company_id || null,
+            vendorName: po.company_name || null,
+            title: po.title || null,
+            status: po.status || null,
+          });
         }
 
-        if (subRes.ok) {
-          const subPayload = await subRes.json();
-          const subData = subPayload.data || subPayload || [];
-          for (const sub of subData) {
-            if (sub.deleted_at || sub.status === "Void" || EXCLUDED_COMMITMENT_STATUSES.has(sub.status)) continue;
-            const companyLabel = sub.company_name ? ` (${sub.company_name})` : "";
-            contractList.push({
-              id: `sub-${sub.id}`,
-              label: `${sub.contract_number || sub.number || "SC"} - ${sub.title || "Untitled"}${companyLabel}`,
-              type: "subcontract",
-              vendorId: sub.contract_company_id || null,
-              vendorName: sub.company_name || null,
-              title: sub.title || null,
-              status: sub.status || null,
-            });
+        const subData = Array.isArray(subPayload) ? subPayload : subPayload.data || [];
+        for (const sub of subData) {
+          if (
+            sub.deleted_at ||
+            sub.status === "Void" ||
+            (sub.status && EXCLUDED_COMMITMENT_STATUSES.has(sub.status))
+          ) {
+            continue;
           }
+          const companyLabel = sub.company_name ? ` (${sub.company_name})` : "";
+          contractList.push({
+            id: `sub-${sub.id}`,
+            label: `${sub.contract_number || sub.number || "SC"} - ${sub.title || "Untitled"}${companyLabel}`,
+            type: "subcontract",
+            vendorId: sub.contract_company_id || null,
+            vendorName: sub.company_name || null,
+            title: sub.title || null,
+            status: sub.status || null,
+          });
         }
 
         setContracts(contractList);
@@ -169,7 +251,15 @@ export function useDropdownData({ projectId }: UseDropdownDataOptions) {
           }
         }
         setVendors(Array.from(vendorMap.values()));
-      } catch {
+      } catch (error) {
+        reportNonCriticalFailure({
+          area: "change-event-dropdown-data",
+          operation: "load-commitments-and-derived-vendors",
+          error,
+          userVisibleFallback:
+            "Commitment options could not be loaded for change event line items.",
+          metadata: { projectId },
+        });
         setContracts([]);
       }
 

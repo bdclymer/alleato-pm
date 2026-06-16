@@ -1,9 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   ArrowUpRight,
   Copy,
   Download,
@@ -16,6 +16,8 @@ import { toast } from "sonner";
 
 import { formatDate } from "@/lib/format";
 import { apiFetch } from "@/lib/api-client";
+import { handleFormError } from "@/lib/handle-form-error";
+import { getPrimeContractPcoDisplayName } from "@/lib/prime-contract-pcos/display";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -36,13 +38,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Inline } from "@/components/layout/inline";
-import { Text } from "@/components/ds/text";
+import { DetailField, DetailFieldGrid, Text } from "@/components/ds";
 import {
   LabelValueRow,
   PageShell,
 } from "@/components/layout";
 import { SectionRuleHeading } from "@/components/layout/spacing";
-import { StatusBadge, EmptyState } from "@/components/ds";
+import { StatusBadge, EmptyState, ErrorState } from "@/components/ds";
 import {
   InlineTable,
   InlineTableHeader,
@@ -246,7 +248,7 @@ export default function PrimeContractPcoDetailPage() {
         router.push(`/${projectId}/prime-contract-pcos`);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete PCO");
+      handleFormError(err, { entity: "prime contract PCO", action: "delete" });
     }
   }, [projectId, pcoId, router, contractIdFromRoute]);
 
@@ -261,7 +263,7 @@ export default function PrimeContractPcoDetailPage() {
       setShowPromoteDialog(false);
       fetchPco();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to promote PCO");
+      handleFormError(err, { entity: "prime contract PCO", action: "promote" });
     } finally {
       setIsPromoting(false);
     }
@@ -321,7 +323,7 @@ export default function PrimeContractPcoDetailPage() {
 
   if (isLoading) {
     return (
-      <PageShell variant="dashboard" title="Loading Prime Contract PCO">
+      <PageShell variant="detailWide" title="Loading Prime Contract PCO">
         <div className="space-y-4 px-6 py-4">
           <Skeleton className="h-8 w-64" />
           <Skeleton className="h-4 w-full" />
@@ -337,21 +339,22 @@ export default function PrimeContractPcoDetailPage() {
   if (error || !pco) {
     return (
       <PageShell
-        variant="dashboard"
+        variant="detailWide"
         title="Prime Contract PCO"
         onBack={handleBack}
         backLabel="Back"
       >
-        <div className="px-6 py-4">
-          <Text tone="destructive">{error || "PCO not found"}</Text>
-        </div>
+        <ErrorState error={error || "PCO not found"} onRetry={handleBack} />
       </PageShell>
     );
   }
 
   /* ── Header ────────────────────────────────────────────────────── */
 
-  const pageTitle = `PCO #${pco.pco_number}: ${pco.title || "Untitled"}`;
+  const pageTitle = getPrimeContractPcoDisplayName({
+    pcoNumber: pco.pco_number,
+    title: pco.title,
+  });
 
   const headerActions = (
     <Inline gap="sm">
@@ -406,27 +409,29 @@ export default function PrimeContractPcoDetailPage() {
 
   return (
     <PageShell
-      variant="dashboard"
+      variant="detailWide"
       title={pageTitle}
-      description={
-        pco.prime_contract
-          ? `Contract ${pco.prime_contract.contract_number}${pco.prime_contract.title ? ` — ${pco.prime_contract.title}` : ""}`
-          : undefined
-      }
       onBack={handleBack}
       backLabel="Back"
       actions={headerActions}
       contentClassName="space-y-8"
     >
       {/* Summary header */}
-      <div className="flex flex-wrap items-center gap-4 border-b border-border pb-6">
-        <StatusBadge status={pco.status} />
-        {pco.prime_contract && (
-          <Text tone="muted" size="sm">
-            Prime Contract: {pco.prime_contract.contract_number} -{" "}
-            {pco.prime_contract.title}
-          </Text>
-        )}
+      <div className="flex flex-wrap items-start gap-4 border-b border-border pb-6">
+        <div className="space-y-2">
+          <StatusBadge status={pco.status} />
+          {pco.prime_contract && (
+            <Text tone="muted" size="sm">
+              Related Contract:{" "}
+              <Link
+                href={`/${projectId}/prime-contracts/${pco.prime_contract.id}`}
+                className="underline underline-offset-4 transition-colors hover:text-foreground"
+              >
+                {pco.prime_contract.contract_number} - {pco.prime_contract.title}
+              </Link>
+            </Text>
+          )}
+        </div>
         <div className="ml-auto text-right">
           <Text size="sm" tone="muted">
             Total Amount
@@ -439,76 +444,111 @@ export default function PrimeContractPcoDetailPage() {
 
       <div className="space-y-8">
         <section className="space-y-4">
-          <SectionRuleHeading label="General Information" />
-          <div className="grid grid-cols-1 gap-x-20 gap-y-0 lg:grid-cols-2">
-            <dl className="space-y-4 text-sm">
-              <LabelValueRow label="#">{pco.pco_number || "--"}</LabelValueRow>
-              <LabelValueRow label="Revision">{pco.revision ?? 0}</LabelValueRow>
-              <LabelValueRow label="Contract Company">
-                {pco.prime_contract?.contract_company?.name ||
-                  pco.prime_contract?.client?.name ||
-                  pco.prime_contract?.vendor?.name ||
-                  "--"}
-              </LabelValueRow>
-              <LabelValueRow label="Title">{pco.title || "--"}</LabelValueRow>
-              <LabelValueRow label="Status">
-                <StatusBadge status={pco.status} />
-              </LabelValueRow>
-              <LabelValueRow label="Change Reason">
-                {pco.change_reason || "--"}
-              </LabelValueRow>
-              <LabelValueRow label="Private">
-                {pco.is_private ? "Yes" : "No"}
-              </LabelValueRow>
-              <LabelValueRow label="Description">
-                <span className="whitespace-pre-wrap">
-                  {pco.description || "--"}
-                </span>
-              </LabelValueRow>
-              <LabelValueRow label="Executed">
-                {pco.executed ? "Yes" : "No"}
-              </LabelValueRow>
-              <LabelValueRow label="Request Received From">
-                {pco.request_received_from || "--"}
-              </LabelValueRow>
-              <LabelValueRow label="Schedule Impact">
-                {pco.schedule_impact != null ? `${pco.schedule_impact} days` : "--"}
-              </LabelValueRow>
-              <LabelValueRow label="Reference">
-                {pco.reference || "--"}
-              </LabelValueRow>
-            </dl>
-            <dl className="space-y-4 text-sm">
-              <LabelValueRow label="Date Created">
-                {formatDateTime(pco.created_at)}
-              </LabelValueRow>
-              <LabelValueRow label="Created By">
-                {pco.created_by_name || pco.created_by || "--"}
-              </LabelValueRow>
-              <LabelValueRow label="Contract">
-                {pco.prime_contract
-                  ? `${pco.prime_contract.contract_number} - ${pco.prime_contract.title}`
-                  : "--"}
-              </LabelValueRow>
-              <LabelValueRow label="Prime Contract Change Order">
-                {pco.promoted_to_co_id ? `#${pco.promoted_to_co_id}` : "None"}
-              </LabelValueRow>
-              <LabelValueRow label="Signed Change Order Received Date">
-                {formatDate(pco.signed_co_received_date)}
-              </LabelValueRow>
-              <LabelValueRow label="Location">{pco.location || "--"}</LabelValueRow>
-              <LabelValueRow label="Field Change">
-                {pco.field_change ? "Yes" : "No"}
-              </LabelValueRow>
-              <LabelValueRow label="Paid in Full">
-                {pco.paid_in_full ? "Yes" : "No"}
-              </LabelValueRow>
-            </dl>
-          </div>
+          <SectionRuleHeading
+            label="General Information"
+            className="[&_span]:text-primary"
+          />
+          <DetailFieldGrid columns={2}>
+            <DetailField label="#">
+              {pco.pco_number || "--"}
+            </DetailField>
+            <DetailField label="Date Created">
+              {formatDateTime(pco.created_at)}
+            </DetailField>
+            <DetailField label="Revision">
+              {pco.revision ?? 0}
+            </DetailField>
+            <DetailField label="Created By">
+              {pco.created_by_name || pco.created_by || "--"}
+            </DetailField>
+            <DetailField label="Company">
+              {(() => {
+                const company =
+                  pco.prime_contract?.contract_company ||
+                  pco.prime_contract?.client ||
+                  pco.prime_contract?.vendor ||
+                  null;
+                const companyName =
+                  company?.name || pco.prime_contract?.company_name || "--";
+
+                if (!company?.id) {
+                  return companyName;
+                }
+
+                return (
+                  <Link
+                    href={`/directory/companies/${company.id}`}
+                    className="underline underline-offset-4 transition-colors hover:text-foreground"
+                  >
+                    {companyName}
+                  </Link>
+                );
+              })()}
+            </DetailField>
+            <DetailField label="Prime Contract">
+              {pco.prime_contract ? (
+                <Link
+                  href={`/${projectId}/prime-contracts/${pco.prime_contract.id}`}
+                  className="underline underline-offset-4 transition-colors hover:text-foreground"
+                >
+                  {pco.prime_contract.contract_number} - {pco.prime_contract.title}
+                </Link>
+              ) : (
+                "--"
+              )}
+            </DetailField>
+            <DetailField label="Title">
+              {pco.title || "--"}
+            </DetailField>
+            <DetailField label="Linked PCO">
+              {pco.promoted_to_co_id ? `#${pco.promoted_to_co_id}` : "None"}
+            </DetailField>
+            <DetailField label="Status">
+              <StatusBadge status={pco.status} />
+            </DetailField>
+            <DetailField label="PCO Signed">
+              {formatDate(pco.signed_co_received_date)}
+            </DetailField>
+            <DetailField label="Change Reason">
+              {pco.change_reason || "--"}
+            </DetailField>
+            <DetailField label="Location">
+              {pco.location || "--"}
+            </DetailField>
+            <DetailField label="Private">
+              {pco.is_private ? "Yes" : "No"}
+            </DetailField>
+            <DetailField label="Field Change">
+              {pco.field_change ? "Yes" : "No"}
+            </DetailField>
+            <DetailField label="Executed">
+              {pco.executed ? "Yes" : "No"}
+            </DetailField>
+            <DetailField label="Paid in Full">
+              {pco.paid_in_full ? "Yes" : "No"}
+            </DetailField>
+            <DetailField label="Requested By">
+              {pco.request_received_from || "--"}
+            </DetailField>
+            <DetailField label="Schedule Impact">
+              {pco.schedule_impact != null ? `${pco.schedule_impact} days` : "--"}
+            </DetailField>
+            <DetailField label="Reference">
+              {pco.reference || "--"}
+            </DetailField>
+            <DetailField label="Description" span={2}>
+              <span className="whitespace-pre-wrap">
+                {pco.description || "--"}
+              </span>
+            </DetailField>
+          </DetailFieldGrid>
         </section>
 
         <section className="space-y-4">
-          <SectionRuleHeading label="Attachments" />
+          <SectionRuleHeading
+            label="Attachments"
+            className="[&_span]:text-primary"
+          />
           {pco.attachments?.length ? (
             <div className="space-y-2">
               {pco.attachments.map((attachment) => (
@@ -535,7 +575,10 @@ export default function PrimeContractPcoDetailPage() {
         </section>
 
         <section className="space-y-4">
-          <SectionRuleHeading label="Line Items" />
+          <SectionRuleHeading
+            label="Line Items"
+            className="[&_span]:text-primary"
+          />
           {lineItems.length === 0 ? (
             <EmptyState
               icon={<Inbox />}
@@ -608,7 +651,10 @@ export default function PrimeContractPcoDetailPage() {
         </section>
 
         <section className="space-y-4">
-          <SectionRuleHeading label="Source Change Events" />
+          <SectionRuleHeading
+            label="Source Change Events"
+            className="[&_span]:text-primary"
+          />
           {changeEventLinks.length === 0 ? (
             <EmptyState
               icon={<Link2 />}

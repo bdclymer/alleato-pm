@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Inline } from "@/components/layout/inline";
 import { UomSelect } from "./UomSelect";
 import { BudgetItemDeleteDialog } from "./BudgetItemDeleteDialog";
-import { BudgetCodeSelector } from "@/app/(main)/[projectId]/budget/setup/components";
+import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
+import { projectCostCodesToBudgetCodeOptions } from "@/lib/budget/project-cost-code-selector-options";
 import type {
   BudgetLineItem,
   ProjectCostCode,
@@ -14,8 +15,6 @@ import type {
 interface BudgetLineItemRowProps {
   item: BudgetLineItem;
   projectCostCodes: ProjectCostCode[];
-  isPopoverOpen: boolean;
-  onPopoverOpenChange: (open: boolean) => void;
   onBudgetCodeSelect: (costCode: ProjectCostCode) => void;
   onFieldChange: (field: keyof BudgetLineItem, value: string) => void;
   onRemove: () => void;
@@ -31,8 +30,6 @@ interface BudgetLineItemRowProps {
 export function BudgetLineItemRow({
   item,
   projectCostCodes,
-  isPopoverOpen,
-  onPopoverOpenChange,
   onBudgetCodeSelect,
   onFieldChange,
   onRemove,
@@ -41,6 +38,10 @@ export function BudgetLineItemRow({
   onKeyDown,
 }: BudgetLineItemRowProps) {
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+  const budgetCodeOptions = React.useMemo(
+    () => projectCostCodesToBudgetCodeOptions(projectCostCodes),
+    [projectCostCodes],
+  );
 
   const handleDeleteClick = () => {
     if (!canRemove) return;
@@ -62,12 +63,13 @@ export function BudgetLineItemRow({
         {/* Budget Code Selector */}
         <div className="flex-1">
           <BudgetCodeSelector
-            projectCostCodes={projectCostCodes}
-            selectedLabel={item.costCodeLabel}
-            onSelect={onBudgetCodeSelect}
+            value={item.projectCostCodeId}
+            budgetCodes={budgetCodeOptions}
+            onValueChange={(value) => {
+              const selected = projectCostCodes.find((code) => code.id === value);
+              if (selected) onBudgetCodeSelect(selected);
+            }}
             onCreateNew={onCreateNew}
-            open={isPopoverOpen}
-            onOpenChange={onPopoverOpenChange}
           />
         </div>
 

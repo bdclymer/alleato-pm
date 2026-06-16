@@ -444,7 +444,6 @@ export default function NewCommitmentPcoPage() {
     <PageShell
       variant="form"
       title="Create Commitment PCO"
-      description="Create a potential change order for a subcontract or purchase order."
       onBack={() => router.back()}
       actions={
         <div className="flex items-center gap-1.5">

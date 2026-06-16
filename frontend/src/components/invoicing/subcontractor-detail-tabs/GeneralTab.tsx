@@ -6,6 +6,7 @@ import { Calendar as CalendarIcon, Paperclip, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { apiFetch } from "@/lib/api-client";
+import { DetailField, DetailFieldGrid } from "@/components/ds";
 import { InvoiceStatusBadge } from "@/components/invoicing/InvoiceStatusBadge";
 import { LabelValueRow } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { formatPercent } from "@/lib/table-config/formatters";
 
 import {
   formatCurrency,
@@ -480,154 +482,119 @@ export function GeneralTab({
 
       {/* ── Invoice Information (top section) ── */}
       <section className="space-y-4">
-        <div className="grid grid-cols-2 gap-x-20 gap-y-0">
-          <dl className="space-y-4 text-sm">
-            <LabelValueRow
-              label="Period Start"
-              missing={!editing && !invoice.period_start}
-            >
-              {editing ? (
-                <InlineDatePicker
-                  value={fields.period_start}
-                  onChange={(v) => updateField("period_start", v)}
-                  label="Period Start"
-                />
-              ) : (
-                formatDate(invoice.period_start)
-              )}
-            </LabelValueRow>
-            <LabelValueRow
-              label="Billing Date"
-              missing={!editing && !invoice.billing_date}
-            >
-              {editing ? (
-                <InlineDatePicker
-                  value={fields.billing_date}
-                  onChange={(v) => updateField("billing_date", v)}
-                  label="Billing Date"
-                />
-              ) : (
-                formatDate(invoice.billing_date)
-              )}
-            </LabelValueRow>
-            <LabelValueRow
-              label="Commitment #"
-              missing={!invoice.contract_number}
-            >
-              {invoice.contract_number ?? "—"}
-              {invoice.contract_title ? ` — ${invoice.contract_title}` : ""}
-            </LabelValueRow>
-            <LabelValueRow label="Status">
-              {invoice.status ? (
-                <InvoiceStatusBadge status={invoice.status} />
-              ) : (
-                "—"
-              )}
-            </LabelValueRow>
-            <LabelValueRow
-              label="Payment Date"
-              missing={!invoice.approved_at}
-            >
-              {formatDate(invoice.approved_at)}
-            </LabelValueRow>
-            <LabelValueRow
-              label="Overall Comments"
-              missing={!editing && !invoice.notes}
-              valueClassName="leading-relaxed font-normal text-foreground"
-            >
-              {editing ? (
-                <Textarea
-                  className="min-h-16 text-sm"
-                  value={fields.notes}
-                  onChange={(e) => updateField("notes", e.target.value)}
-                  placeholder="Add comments…"
-                />
-              ) : (
-                invoice.notes ?? "—"
-              )}
-            </LabelValueRow>
-          </dl>
-          <dl className="space-y-4 text-sm">
-            <LabelValueRow
-              label="Period End"
-              missing={!editing && !invoice.period_end}
-            >
-              {editing ? (
-                <InlineDatePicker
-                  value={fields.period_end}
-                  onChange={(v) => updateField("period_end", v)}
-                  label="Period End"
-                />
-              ) : (
-                formatDate(invoice.period_end)
-              )}
-            </LabelValueRow>
-            <LabelValueRow
-              label="Invoice #"
-              missing={!editing && !invoice.invoice_number}
-            >
-              {editing ? (
-                <Input
-                  type="text"
-                  className="h-8 w-44"
-                  value={fields.invoice_number}
-                  onChange={(e) =>
-                    updateField("invoice_number", e.target.value)
-                  }
-                  placeholder="Invoice number"
-                />
-              ) : (
-                invoice.invoice_number ?? "—"
-              )}
-            </LabelValueRow>
-            <LabelValueRow
-              label="Contract Company"
-              missing={!invoice.contract_company_name}
-            >
-              {invoice.contract_company_name ?? "—"}
-            </LabelValueRow>
-            <LabelValueRow label="Percent Complete">
-              {`${(invoice.percent_complete ?? 0).toFixed(2)}%`}
-            </LabelValueRow>
-            <LabelValueRow
-              label="Submitted"
-              missing={!invoice.submitted_at}
-            >
-              {formatDate(invoice.submitted_at)}
-            </LabelValueRow>
-            <LabelValueRow
-              label="Attachments"
-              missing={attachments.length === 0}
-            >
-              {attachments.length === 0 ? (
-                "—"
-              ) : (
-                <ul className="space-y-1">
-                  {attachments.map((att, idx) => (
-                    <li
-                      key={att.id ?? idx}
-                      className="flex items-center gap-2"
-                    >
-                      <Paperclip className="h-4 w-4 text-muted-foreground" />
-                      {att.url ? (
-                        <a
-                          href={att.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-primary hover:underline"
-                        >
-                          {att.file_name ?? "Attachment"}
-                        </a>
-                      ) : (
-                        <span>{att.file_name ?? "Attachment"}</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </LabelValueRow>
-          </dl>
-        </div>
+        <DetailFieldGrid columns={2}>
+          <DetailField label="Period Start">
+            {editing ? (
+              <InlineDatePicker
+                value={fields.period_start}
+                onChange={(v) => updateField("period_start", v)}
+                label="Period Start"
+              />
+            ) : (
+              formatDate(invoice.period_start)
+            )}
+          </DetailField>
+          <DetailField label="Period End">
+            {editing ? (
+              <InlineDatePicker
+                value={fields.period_end}
+                onChange={(v) => updateField("period_end", v)}
+                label="Period End"
+              />
+            ) : (
+              formatDate(invoice.period_end)
+            )}
+          </DetailField>
+          <DetailField label="Billing Date">
+            {editing ? (
+              <InlineDatePicker
+                value={fields.billing_date}
+                onChange={(v) => updateField("billing_date", v)}
+                label="Billing Date"
+              />
+            ) : (
+              formatDate(invoice.billing_date)
+            )}
+          </DetailField>
+          <DetailField label="Invoice #">
+            {editing ? (
+              <Input
+                type="text"
+                className="h-8 w-44"
+                value={fields.invoice_number}
+                onChange={(e) =>
+                  updateField("invoice_number", e.target.value)
+                }
+                placeholder="Invoice number"
+              />
+            ) : (
+              invoice.invoice_number ?? "—"
+            )}
+          </DetailField>
+          <DetailField label="Commitment #">
+            {invoice.contract_number ?? "—"}
+            {invoice.contract_title ? ` — ${invoice.contract_title}` : ""}
+          </DetailField>
+          <DetailField label="Contract Company">
+            {invoice.contract_company_name ?? "—"}
+          </DetailField>
+          <DetailField label="Status">
+            {invoice.status ? (
+              <InvoiceStatusBadge status={invoice.status} />
+            ) : (
+              "—"
+            )}
+          </DetailField>
+          <DetailField label="Percent Complete">
+            {formatPercent(invoice.percent_complete ?? 0, 2)}
+          </DetailField>
+          <DetailField label="Payment Date">
+            {formatDate(invoice.approved_at)}
+          </DetailField>
+          <DetailField label="Submitted">
+            {formatDate(invoice.submitted_at)}
+          </DetailField>
+          <DetailField label="Overall Comments" span={2}>
+            {editing ? (
+              <Textarea
+                className="min-h-16 text-sm"
+                value={fields.notes}
+                onChange={(e) => updateField("notes", e.target.value)}
+                placeholder="Add comments…"
+              />
+            ) : (
+              invoice.notes ?? "—"
+            )}
+          </DetailField>
+          <DetailField label="Attachments" span={2}>
+            {attachments.length === 0 ? (
+              "—"
+            ) : (
+              <ul className="space-y-1">
+                {attachments.map((att, idx) => (
+                  <li
+                    key={att.id ?? idx}
+                    className="flex items-center gap-2"
+                  >
+                    <Paperclip className="h-4 w-4 text-muted-foreground" />
+                    {att.url ? (
+                      <a
+                        href={att.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        {att.file_name ?? "Attachment"}
+                      </a>
+                    ) : (
+                      <span>{att.file_name ?? "Attachment"}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </DetailField>
+        </DetailFieldGrid>
       </section>
 
       {/* ── G703 Line Items Table ── */}

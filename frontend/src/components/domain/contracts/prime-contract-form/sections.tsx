@@ -273,7 +273,6 @@ export function PrimeContractAttachmentsSection({
   return (
     <FormSection title="Attachments">
       <FileUploadField
-        label=""
         value={attachments}
         onChange={onChange}
         onFilesSelected={onFilesSelected}

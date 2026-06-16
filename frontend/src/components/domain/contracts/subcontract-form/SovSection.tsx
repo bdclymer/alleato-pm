@@ -40,6 +40,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { formatCurrency } from "@/lib/utils";
+import { budgetCodeTextValue } from "@/lib/budget/budget-code-selection";
 import type { SovLineItem } from "@/lib/schemas/create-subcontract-schema";
 import { calculateSOVTotals, type BudgetCode } from "./types";
 import { SovGroupRow, SovLineItemRow } from "./SovTableRows";
@@ -96,7 +97,7 @@ export function SovSection({
       ...updated[lineIndex],
       budgetCodeId: code.id,
       budgetCodeLabel: code.fullLabel,
-      budgetCode: code.code,
+      budgetCode: budgetCodeTextValue(code),
     };
     onSovLinesChange(updated);
   };

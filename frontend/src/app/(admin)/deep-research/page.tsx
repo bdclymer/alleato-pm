@@ -20,6 +20,7 @@ type WikiArchiveProject = {
   topic: string;
   topicSlug: string;
   sessionId: string;
+  wikiPath: string;
   title: string;
   updatedAt: string;
   artifactCount: number;
@@ -133,6 +134,7 @@ export default function DeepResearchArchivePage() {
         sessionId,
         topic: topicSlug.replace(/-/g, " "),
         title: topicSlug.replace(/-/g, " "),
+        wikiPath: "",
         updatedAt: new Date(0).toISOString(),
         artifactCount: 0,
         markdownCount: 0,

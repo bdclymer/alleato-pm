@@ -89,19 +89,17 @@ export function LabelValueRow({
   labelClassName,
   valueClassName,
   missing,
-  stacked,
 }: LabelValueRowProps) {
   return (
     <div
       className={cn(
-        stacked ? "flex flex-col gap-1" : "flex flex-row items-start gap-4",
+        "grid grid-cols-[8rem_minmax(0,1fr)] items-start gap-4 sm:grid-cols-[9rem_minmax(0,1fr)]",
         className,
       )}
     >
       <dt
         className={cn(
-          "shrink-0 text-xs text-muted-foreground",
-          !stacked && "w-36 pt-0.5",
+          "min-w-0 pt-0.5 text-xs text-muted-foreground",
           labelClassName,
         )}
       >
@@ -109,8 +107,7 @@ export function LabelValueRow({
       </dt>
       <dd
         className={cn(
-          "min-w-0 text-sm",
-          stacked ? "text-left" : "flex-1 text-left",
+          "min-w-0 text-left text-sm",
           missing
             ? "text-muted-foreground/50"
             : "font-medium text-foreground",

@@ -73,8 +73,6 @@ export function ContractForm({
     validationErrors,
     budgetCodes,
     loadingBudgetCodes,
-    openBudgetCodePopover,
-    budgetCodeSearchQuery,
     showCreateBudgetCodeModal,
     newBudgetCodeData,
     availableCostCodes,
@@ -89,7 +87,6 @@ export function ContractForm({
     showAddCompany,
     newCompanyName,
     isCreating,
-    filteredBudgetCodes,
     isUnitQuantityMode,
     sovColumnCount,
     sovTotals,
@@ -114,8 +111,6 @@ export function ContractForm({
     handleAttachmentListChange,
     handleFilesSelected,
     handleAutoFill,
-    setOpenBudgetCodePopover,
-    setBudgetCodeSearchQuery,
     setShowCreateBudgetCodeModal,
     setNewBudgetCodeData,
     setShowImportFromBudget,
@@ -176,16 +171,11 @@ export function ContractForm({
             formData={{ ...formData, sovItems: sovDisplayItems }}
             budgetCodes={budgetCodes}
             loadingBudgetCodes={loadingBudgetCodes}
-            filteredBudgetCodes={filteredBudgetCodes}
-            openBudgetCodePopover={openBudgetCodePopover}
-            budgetCodeSearchQuery={budgetCodeSearchQuery}
             showImportFromBudget={showImportFromBudget}
             showImportEstimateWorkbook={showImportEstimateWorkbook}
             sovColumnCount={sovColumnCount}
             isUnitQuantityMode={isUnitQuantityMode}
             sovTotals={sovTotals}
-            onBudgetCodeSearchQueryChange={setBudgetCodeSearchQuery}
-            onOpenBudgetCodePopoverChange={setOpenBudgetCodePopover}
             onShowImportFromBudgetChange={setShowImportFromBudget}
             onShowImportEstimateWorkbookChange={setShowImportEstimateWorkbook}
             onShowCreateBudgetCodeModal={() =>

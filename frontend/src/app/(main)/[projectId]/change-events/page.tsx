@@ -54,6 +54,8 @@ const EMPTY_FILTERS: ChangeEventFilterState = {
 };
 const CHANGE_EVENTS_VISIBLE_COLUMNS_MIGRATION_KEY =
   "change-events:visibleColumns:migrate-2026-04-17-all-default";
+const CHANGE_EVENTS_COLUMN_ORDER_MIGRATION_KEY =
+  "change-events:visibleColumns:migrate-2026-06-16-change-event-column-order";
 
 function formatDateValue(dateValue: string | null | undefined): string {
   if (!dateValue) return "";
@@ -127,6 +129,20 @@ export default function ProjectChangeEventsPage(): ReactElement {
       "1",
     );
   }, [tableState.visibleColumns.length, tableState.setVisibleColumns]);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hasMigrated = window.localStorage.getItem(
+      CHANGE_EVENTS_COLUMN_ORDER_MIGRATION_KEY,
+    );
+    if (hasMigrated === "1") return;
+
+    tableState.setVisibleColumns(changeEventDefaultVisibleColumns);
+    window.localStorage.setItem(
+      CHANGE_EVENTS_COLUMN_ORDER_MIGRATION_KEY,
+      "1",
+    );
+  }, [tableState.setVisibleColumns]);
 
   React.useEffect(() => {
     const nextStatus = searchParams.get("status") ?? "";
@@ -924,9 +940,9 @@ export default function ProjectChangeEventsPage(): ReactElement {
       }}
       columnGroups={[
         { label: "", columnIds: ["number_title"] },
-        { label: "Change Event", columnIds: ["status", "scope", "type", "reason", "origin"] },
         { label: "Revenue", columnIds: ["revenue_prime_pco", "prime_pco_title"] },
         { label: "Cost", columnIds: ["cost_rom", "rfq_title", "commitment", "commitment_title"] },
+        { label: "Change Event", columnIds: ["status", "scope", "type", "reason", "origin"] },
         { label: "", columnIds: ["created_at"] },
       ]}
       pagination={{

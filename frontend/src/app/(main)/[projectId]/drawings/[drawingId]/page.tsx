@@ -29,7 +29,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
-import { PageShell } from "@/components/layout";
+import { PageShell, PageTabs } from "@/components/layout";
 import { StatusBadge } from "@/components/ds";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,19 +43,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+  InlineTable,
+  InlineTableBody,
+  InlineTableCell,
+  InlineTableHeader,
+  InlineTableHeaderCell,
+  InlineTableHeaderRow,
+  InlineTableRow,
+} from "@/components/ds";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -158,16 +153,16 @@ interface EditFormState {
 
 function RevisionRowSkeleton() {
   return (
-    <TableRow>
-      <TableCell><Skeleton className="h-4 w-4" /></TableCell>
-      <TableCell><Skeleton className="h-4 w-4" /></TableCell>
-      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-      <TableCell><Skeleton className="h-5 w-20 rounded-full" /></TableCell>
-      <TableCell><Skeleton className="h-4 w-4" /></TableCell>
-    </TableRow>
+    <InlineTableRow>
+      <InlineTableCell><Skeleton className="h-4 w-4" /></InlineTableCell>
+      <InlineTableCell><Skeleton className="h-4 w-4" /></InlineTableCell>
+      <InlineTableCell><Skeleton className="h-4 w-16" /></InlineTableCell>
+      <InlineTableCell><Skeleton className="h-4 w-24" /></InlineTableCell>
+      <InlineTableCell><Skeleton className="h-4 w-20" /></InlineTableCell>
+      <InlineTableCell><Skeleton className="h-4 w-20" /></InlineTableCell>
+      <InlineTableCell><Skeleton className="h-5 w-20 rounded-full" /></InlineTableCell>
+      <InlineTableCell><Skeleton className="h-4 w-4" /></InlineTableCell>
+    </InlineTableRow>
   );
 }
 
@@ -213,8 +208,8 @@ function RevisionRow({ revision, projectId, drawingId, onDownload }: RevisionRow
   };
 
   return (
-    <TableRow className={revision.is_current_revision ? "bg-muted/30" : undefined}>
-      <TableCell>
+    <InlineTableRow className={revision.is_current_revision ? "bg-muted/30" : undefined}>
+      <InlineTableCell>
         <Button
           variant="ghost"
           size="sm"
@@ -227,8 +222,8 @@ function RevisionRow({ revision, projectId, drawingId, onDownload }: RevisionRow
         >
           <Info className="h-4 w-4" />
         </Button>
-      </TableCell>
-      <TableCell>
+      </InlineTableCell>
+      <InlineTableCell>
         <Button
           variant="ghost"
           size="sm"
@@ -239,8 +234,8 @@ function RevisionRow({ revision, projectId, drawingId, onDownload }: RevisionRow
         >
           <Download className="h-4 w-4" />
         </Button>
-      </TableCell>
-      <TableCell className="font-medium text-foreground">
+      </InlineTableCell>
+      <InlineTableCell className="font-medium text-foreground">
         {editingRevNum ? (
           <div className="flex items-center gap-1">
             <Input
@@ -278,20 +273,20 @@ function RevisionRow({ revision, projectId, drawingId, onDownload }: RevisionRow
             )}
           </>
         )}
-      </TableCell>
-      <TableCell className="text-muted-foreground text-sm">
+      </InlineTableCell>
+      <InlineTableCell className="text-muted-foreground text-sm">
         {revision.drawing_set_id ?? "—"}
-      </TableCell>
-      <TableCell className="text-sm text-muted-foreground">
+      </InlineTableCell>
+      <InlineTableCell className="text-sm text-muted-foreground">
         {formatDateSafe(revision.drawing_date)}
-      </TableCell>
-      <TableCell className="text-sm text-muted-foreground">
+      </InlineTableCell>
+      <InlineTableCell className="text-sm text-muted-foreground">
         {formatDateSafe(revision.received_date)}
-      </TableCell>
-      <TableCell>
+      </InlineTableCell>
+      <InlineTableCell>
         <StatusBadge status={revision.status} />
-      </TableCell>
-      <TableCell>
+      </InlineTableCell>
+      <InlineTableCell>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
@@ -305,8 +300,8 @@ function RevisionRow({ revision, projectId, drawingId, onDownload }: RevisionRow
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </TableCell>
-    </TableRow>
+      </InlineTableCell>
+    </InlineTableRow>
   );
 }
 
@@ -329,6 +324,7 @@ export default function DrawingDetailPage() {
   const obsoleteDrawing = useObsoleteDrawing(projectId);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState("general");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDistributeDialog, setShowDistributeDialog] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -665,29 +661,25 @@ export default function DrawingDetailPage() {
         </>
       }
     >
-        <Tabs defaultValue="general" className="mt-4">
-          <TabsList variant="line" className="mb-6 flex-wrap h-auto">
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="sketches">Sketches</TabsTrigger>
-            <TabsTrigger value="download-log">Download Log</TabsTrigger>
-            <TabsTrigger value="revision-related">
-              Revision Related Items
-            </TabsTrigger>
-            <TabsTrigger value="drawing-related">
-              Drawing Related Items
-            </TabsTrigger>
-            <TabsTrigger value="emails">Emails</TabsTrigger>
-            <TabsTrigger value="change-history">Change History</TabsTrigger>
-            <TabsTrigger value="comments">
-              <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
-              Comments
-            </TabsTrigger>
-          </TabsList>
-
-          {/* ---------------------------------------------------------------- */}
+        <><PageTabs
+          variant="inline"
+          tabs={[
+            { label: "General", href: "general", isActive: activeTab === "general" },
+            { label: "Sketches", href: "sketches", isActive: activeTab === "sketches" },
+            { label: "Download Log", href: "download-log", isActive: activeTab === "download-log" },
+            { label: "Revision Related Items", href: "revision-related", isActive: activeTab === "revision-related" },
+            { label: "Drawing Related Items", href: "drawing-related", isActive: activeTab === "drawing-related" },
+            { label: "Emails", href: "emails", isActive: activeTab === "emails" },
+            { label: "Change History", href: "change-history", isActive: activeTab === "change-history" },
+            { label: "Comments", href: "comments", isActive: activeTab === "comments" },
+          ]}
+          onTabClick={(href) => setActiveTab(href)}
+        />
+        <div className="mt-6">
+                    {/* ---------------------------------------------------------------- */}
           {/* GENERAL TAB                                                       */}
           {/* ---------------------------------------------------------------- */}
-          <TabsContent value="general">
+          {activeTab === "general" && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left column — info + revisions */}
               <div className="lg:col-span-2 space-y-6">
@@ -835,34 +827,34 @@ export default function DrawingDetailPage() {
                     <CardTitle className="text-base">Versions</CardTitle>
                   </CardHeader>
                   <CardContent className="p-0">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-10"></TableHead>
-                          <TableHead className="w-10"></TableHead>
-                          <TableHead>Revision</TableHead>
-                          <TableHead>Set</TableHead>
-                          <TableHead>Drawing Date</TableHead>
-                          <TableHead>Received Date</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="w-10"></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
+                    <InlineTable variant="read">
+                      <InlineTableHeader>
+                        <InlineTableRow>
+                          <InlineTableHeaderCell className="w-10"></InlineTableHeaderCell>
+                          <InlineTableHeaderCell className="w-10"></InlineTableHeaderCell>
+                          <InlineTableHeaderCell>Revision</InlineTableHeaderCell>
+                          <InlineTableHeaderCell>Set</InlineTableHeaderCell>
+                          <InlineTableHeaderCell>Drawing Date</InlineTableHeaderCell>
+                          <InlineTableHeaderCell>Received Date</InlineTableHeaderCell>
+                          <InlineTableHeaderCell>Status</InlineTableHeaderCell>
+                          <InlineTableHeaderCell className="w-10"></InlineTableHeaderCell>
+                        </InlineTableRow>
+                      </InlineTableHeader>
+                      <InlineTableBody>
                         {revisionsLoading ? (
                           <>
                             <RevisionRowSkeleton />
                             <RevisionRowSkeleton />
                           </>
                         ) : revisions.length === 0 ? (
-                          <TableRow>
-                            <TableCell
+                          <InlineTableRow>
+                            <InlineTableCell
                               colSpan={8}
                               className="text-center text-muted-foreground text-sm py-8"
                             >
                               No revisions found
-                            </TableCell>
-                          </TableRow>
+                            </InlineTableCell>
+                          </InlineTableRow>
                         ) : (
                           revisions.map((rev) => (
                             <RevisionRow
@@ -874,8 +866,8 @@ export default function DrawingDetailPage() {
                             />
                           ))
                         )}
-                      </TableBody>
-                    </Table>
+                      </InlineTableBody>
+                    </InlineTable>
                   </CardContent>
                 </Card>
               </div>
@@ -948,13 +940,13 @@ export default function DrawingDetailPage() {
                 </Card>
               </div>
             </div>
-          </TabsContent>
+          )}
 
           {/* ---------------------------------------------------------------- */}
           {/* SKETCHES TAB                                                      */}
           {/* ---------------------------------------------------------------- */}
-          <TabsContent value="sketches">
-            {currentRevision ? (
+          {activeTab === "sketches" && (
+            currentRevision ? (
               <DrawingSketchPanel
                 projectId={projectId}
                 drawingId={drawingId}
@@ -966,76 +958,78 @@ export default function DrawingDetailPage() {
                 title="No revision yet"
                 description="Upload a drawing revision first to add sketches."
               />
-            )}
-          </TabsContent>
+            )
+          )}
 
           {/* ---------------------------------------------------------------- */}
           {/* DOWNLOAD LOG TAB                                                  */}
           {/* ---------------------------------------------------------------- */}
-          <TabsContent value="download-log">
+          {activeTab === "download-log" && (
             <EmptyState
               icon={<Download className="h-6 w-6 text-muted-foreground" />}
               title="No downloads recorded"
               description="Download activity for this drawing will be logged here."
             />
-          </TabsContent>
+          )}
 
           {/* ---------------------------------------------------------------- */}
           {/* REVISION RELATED ITEMS TAB                                        */}
           {/* ---------------------------------------------------------------- */}
-          <TabsContent value="revision-related">
+          {activeTab === "revision-related" && (
             <DrawingRelatedItemsPanel
               projectId={projectId}
               drawingId={currentRevision?.id ?? drawingId}
             />
-          </TabsContent>
+          )}
 
           {/* ---------------------------------------------------------------- */}
           {/* DRAWING RELATED ITEMS TAB                                         */}
           {/* ---------------------------------------------------------------- */}
-          <TabsContent value="drawing-related">
+          {activeTab === "drawing-related" && (
             <DrawingRelatedItemsPanel
               projectId={projectId}
               drawingId={drawingId}
             />
-          </TabsContent>
+          )}
 
           {/* ---------------------------------------------------------------- */}
           {/* EMAILS TAB                                                        */}
           {/* ---------------------------------------------------------------- */}
-          <TabsContent value="emails">
-            <div className="flex justify-end mb-4">
-              <Button
-                size="sm"
-                onClick={() => setShowDistributeDialog(true)}
-              >
-                <Mail />
-                Compose Email
-              </Button>
-            </div>
-            <EmptyState
-              icon={<Mail className="h-6 w-6 text-muted-foreground" />}
-              title="No emails"
-              description="Emails sent or received related to this drawing will appear here."
-            />
-          </TabsContent>
+          {activeTab === "emails" && (
+            <>
+              <div className="mb-4 flex justify-end">
+                <Button
+                  size="sm"
+                  onClick={() => setShowDistributeDialog(true)}
+                >
+                  <Mail />
+                  Compose Email
+                </Button>
+              </div>
+              <EmptyState
+                icon={<Mail className="h-6 w-6 text-muted-foreground" />}
+                title="No emails"
+                description="Emails sent or received related to this drawing will appear here."
+              />
+            </>
+          )}
 
           {/* ---------------------------------------------------------------- */}
           {/* CHANGE HISTORY TAB                                                */}
           {/* ---------------------------------------------------------------- */}
-          <TabsContent value="change-history">
+          {activeTab === "change-history" && (
             <DrawingChangeHistory projectId={projectId} drawingId={drawingId} />
-          </TabsContent>
+          )}
 
           {/* ---------------------------------------------------------------- */}
           {/* COMMENTS TAB                                                      */}
           {/* ---------------------------------------------------------------- */}
-          <TabsContent value="comments">
+          {activeTab === "comments" && (
             <div className="max-w-2xl">
               <DrawingComments drawingId={drawingId} projectId={Number(projectId)} />
             </div>
-          </TabsContent>
-        </Tabs>
+          )}
+        </div></>
 
       <DrawingDistributeDialog
         projectId={projectId}

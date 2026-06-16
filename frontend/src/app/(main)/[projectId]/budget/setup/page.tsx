@@ -30,7 +30,6 @@ export default function BudgetSetupPage() {
   const [lineItems, setLineItems] = useState<BudgetLineItem[]>([
     createEmptyLineItem(),
   ]);
-  const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
   const [pendingRowId, setPendingRowId] = useState<string | null>(null);
   const [showCreateCodeModal, setShowCreateCodeModal] = useState(false);
 
@@ -146,7 +145,6 @@ export default function BudgetSetupPage() {
           : item,
       ),
     );
-    setOpenPopoverId(null);
   };
 
   const handleFieldChange = (
@@ -286,14 +284,11 @@ export default function BudgetSetupPage() {
           lineItems={lineItems}
           projectCostCodes={projectCostCodes}
           loadingData={loadingData}
-          openPopoverId={openPopoverId}
-          onPopoverOpenChange={(id, open) => setOpenPopoverId(open ? id : null)}
           onBudgetCodeSelect={handleBudgetCodeSelect}
           onFieldChange={handleFieldChange}
           onRemoveRow={handleRemoveRow}
           onCreateNew={(rowId) => {
             setPendingRowId(rowId);
-            setOpenPopoverId(null);
             setShowCreateCodeModal(true);
           }}
           onAddRow={handleAddRow}

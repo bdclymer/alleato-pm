@@ -20,7 +20,7 @@ import {
   XCircle,
 } from "lucide-react";
 
-import { PageShell } from "@/components/layout";
+import { PageShell, PageTabs } from "@/components/layout";
 import { EntityAttachments, StatusBadge, EmptyState } from "@/components/ds";
 import { RelatedItemsPanel } from "@/components/domain/related-items/RelatedItemsPanel";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useAuthUsers, type AuthUser } from "@/hooks/use-auth-users";
@@ -721,6 +720,7 @@ export function SubmittalDetailClient({
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
   const [distributeOpen, setDistributeOpen] = React.useState(false);
   const [isEditing, setIsEditing] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState("documents");
 
   const { users, allUsers } = useAuthUsers(String(projectId));
 
@@ -1257,50 +1257,58 @@ export function SubmittalDetailClient({
             }}
           />
         ) : (
-          <Tabs defaultValue="documents" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="documents">Documents</TabsTrigger>
-              <TabsTrigger value="workflow">
-                Workflow
-                {workflowSteps.length > 0 && (
-                  <span className="ml-1.5 tabular-nums">({workflowSteps.length})</span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="communications">
-                Communications
-                {commEvents.length > 0 && (
-                  <span className="ml-1.5 tabular-nums">({commEvents.length})</span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="history">
-                History
-                {history.length > 0 && (
-                  <span className="ml-1.5 tabular-nums">({history.length})</span>
-                )}
-              </TabsTrigger>
-            </TabsList>
+          <div className="space-y-4">
+            <PageTabs
+              variant="inline"
+              tabs={[
+                {
+                  label: "Documents",
+                  href: "documents",
+                  isActive: activeTab === "documents",
+                },
+                {
+                  label:
+                    workflowSteps.length > 0
+                      ? `Workflow (${workflowSteps.length})`
+                      : "Workflow",
+                  href: "workflow",
+                  isActive: activeTab === "workflow",
+                },
+                {
+                  label:
+                    commEvents.length > 0
+                      ? `Communications (${commEvents.length})`
+                      : "Communications",
+                  href: "communications",
+                  isActive: activeTab === "communications",
+                },
+                {
+                  label: "Details",
+                  href: "details",
+                  isActive: activeTab === "details",
+                },
+                {
+                  label:
+                    history.length > 0 ? `History (${history.length})` : "History",
+                  href: "history",
+                  isActive: activeTab === "history",
+                },
+              ]}
+              onTabClick={setActiveTab}
+            />
 
-            <TabsContent value="documents" className="mt-0 pt-2">
-              {documentsTab}
-            </TabsContent>
+            {activeTab === "documents" && <div className="pt-2">{documentsTab}</div>}
 
-            <TabsContent value="workflow" className="mt-0 pt-2">
-              {workflowTab}
-            </TabsContent>
+            {activeTab === "workflow" && <div className="pt-2">{workflowTab}</div>}
 
-            <TabsContent value="communications" className="mt-0 pt-4">
-              {communicationsTab}
-            </TabsContent>
+            {activeTab === "communications" && (
+              <div className="pt-4">{communicationsTab}</div>
+            )}
 
-            <TabsContent value="details" className="mt-0 pt-2">
-              {detailsTab}
-            </TabsContent>
+            {activeTab === "details" && <div className="pt-2">{detailsTab}</div>}
 
-            <TabsContent value="history" className="mt-0 pt-2">
-              {historyTab}
-            </TabsContent>
-          </Tabs>
+            {activeTab === "history" && <div className="pt-2">{historyTab}</div>}
+          </div>
         )}
       </PageShell>
     </>

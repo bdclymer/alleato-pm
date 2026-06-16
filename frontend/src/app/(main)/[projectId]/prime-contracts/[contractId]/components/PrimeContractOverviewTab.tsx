@@ -35,7 +35,14 @@ import {
   SectionRuleHeading,
   SummaryValueRow,
 } from "@/components/layout";
-import { EmptyState, EntityAttachments } from "@/components/ds";
+import {
+  DetailField,
+  DetailFieldGrid,
+  EditableDetailField,
+  EmptyState,
+  EntityAttachments,
+  InlineEditField,
+} from "@/components/ds";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -57,8 +64,8 @@ import {
   InlineTableHeaderRow,
   InlineTableRow,
 } from "@/components/ds/inline-table";
-import { getCostTypeLabel } from "@/constants/budget";
 import { formatPercent } from "@/lib/format";
+import { resolveContractLineBudgetCode } from "@/components/domain/contracts/prime-contract-detail/budget-code-resolution";
 import type {
   BudgetCode,
   Contract,
@@ -74,6 +81,7 @@ interface PrimeContractOverviewTabProps {
   contract: Contract;
   changeOrders: PrimeContractCO[];
   projectId: string;
+  companyOptions: Array<{ value: string; label: string }>;
   formatDate: (value: string | null | undefined) => string;
   getTextValue: (
     value: string | null | undefined,
@@ -85,6 +93,7 @@ interface PrimeContractOverviewTabProps {
   lineItemsLoading: boolean;
   lineItems: ContractLineItem[];
   budgetCodes: BudgetCode[];
+  financialMarkupSection: ReactNode;
   sovDraftBudgetCodeIds: Record<string, string>;
   isSovEditing: boolean;
   isSavingSovChanges: boolean;
@@ -102,6 +111,7 @@ interface PrimeContractOverviewTabProps {
   onRemoveSovLine: (lineId: string) => void;
   onReorderSovLines: (oldIndex: number, newIndex: number) => void;
   onRequestCreateBudgetCode: (lineId: string) => void;
+  onSaveContractField: (field: string, value: string | number | boolean | null) => Promise<void>;
   onDeleteSovLine?: (lineId: string) => Promise<void>;
   onImportEstimateToSov?: () => void;
 }
@@ -132,11 +142,25 @@ const DIVISION_NAMES: Record<string, string> = {
   "55": "Contractor Fee",
 };
 
+const CONTRACT_STATUS_OPTIONS = [
+  { value: "draft", label: "Draft" },
+  { value: "out_for_signature", label: "Out for Signature" },
+  { value: "approved", label: "Approved" },
+  { value: "complete", label: "Complete" },
+  { value: "terminated", label: "Terminated" },
+];
+
+const EMPTY_RELATION_VALUE = "__none__";
+
+const toDateInputValue = (value: string | null | undefined) =>
+  value ? value.slice(0, 10) : "";
+
 export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
   const {
     contract,
     changeOrders,
     projectId,
+    companyOptions,
     formatDate,
     getTextValue,
     inclusionsList,
@@ -146,6 +170,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     lineItemsLoading,
     lineItems,
     budgetCodes,
+    financialMarkupSection,
     sovDraftBudgetCodeIds,
     isSovEditing,
     isSavingSovChanges,
@@ -160,6 +185,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     onRemoveSovLine,
     onReorderSovLines,
     onRequestCreateBudgetCode,
+    onSaveContractField,
     onDeleteSovLine,
     onImportEstimateToSov,
   } = props;
@@ -238,15 +264,8 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
   const [collapsedDivisions, setCollapsedDivisions] = useState<Set<string>>(new Set());
 
   const getDivCode = (item: (typeof displayedSovItems)[number]) => {
-    const bc = item.budget_code_id
-      ? budgetCodes.find((c) => c.id === item.budget_code_id)
-      : budgetCodes.find(
-          (c) =>
-            (c.legacyCostCodeId && c.legacyCostCodeId === item.cost_code_id) ||
-            (!!item.cost_code?.code && c.code === item.cost_code.code),
-        );
-    const code = bc?.code || item.cost_code?.code || "--";
-    return code === "--" ? "XX" : (code.split("-")[0] || "XX");
+    const code = resolveContractLineBudgetCode(item, budgetCodes).displayCode;
+    return code === "Unmapped" ? "XX" : (code.split("-")[0] || "XX");
   };
 
   const divisionTotals = useMemo(() => {
@@ -316,6 +335,13 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
 
   const renderDateOrDash = (value: string | null | undefined) =>
     value ? formatDate(value) : <span className="text-muted-foreground/40">—</span>;
+  const descriptionValue = getTextValue(contract.description);
+  const saveNullableDate = (field: string) => (value: string) =>
+    onSaveContractField(field, value || null);
+  const relationshipOptions = [
+    { value: EMPTY_RELATION_VALUE, label: "None" },
+    ...companyOptions,
+  ];
 
   return (
     <ContentSectionStack className="space-y-8 pb-20">
@@ -324,84 +350,133 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
           <div className="space-y-6">
             <DetailPanel>
               <SectionRuleHeading label="General Information" className="mb-6 pb-0" />
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-x-10 gap-y-4">
-                <dl className="space-y-4 text-sm">
-                  <LabelValueRow label="Contract #" labelClassName="w-36">
-                    {contract.contract_number || "—"}
-                  </LabelValueRow>
-                  <LabelValueRow label="Title" labelClassName="w-36">
-                    {contract.title}
-                  </LabelValueRow>
-                  <LabelValueRow label="Status" labelClassName="w-36">
-                    {formatStatusLabel(contract.status)}
-                  </LabelValueRow>
-                  <LabelValueRow label="Executed" labelClassName="w-36">
-                    {contract.executed ? formatDate(contract.executed_at) || "Yes" : "No"}
-                  </LabelValueRow>
-                  <LabelValueRow label="Owner/Client" labelClassName="w-36" missing={!ownerName}>
-                    {ownerName && (contract.contract_company?.id || contract.client?.id) ? (
+              <DetailFieldGrid columns={2}>
+                <EditableDetailField
+                  label="Contract #"
+                  value={contract.contract_number ?? ""}
+                  onSave={(value) => onSaveContractField("contract_number", value)}
+                />
+                <EditableDetailField
+                  label="Title"
+                  value={contract.title ?? ""}
+                  onSave={(value) => onSaveContractField("title", value)}
+                />
+                <EditableDetailField
+                  label="Status"
+                  type="select"
+                  value={contract.status ?? "draft"}
+                  display={formatStatusLabel(contract.status)}
+                  options={CONTRACT_STATUS_OPTIONS}
+                  onSave={(value) => onSaveContractField("status", value)}
+                />
+                <EditableDetailField
+                  label="Executed"
+                  type="boolean"
+                  value={String(Boolean(contract.executed))}
+                  display={contract.executed ? formatDate(contract.executed_at) || "Yes" : "No"}
+                  onSave={(value) => onSaveContractField("executed", value === "true")}
+                />
+                <DetailField label="Owner/Client">
+                  {ownerName && (contract.contract_company?.id || contract.client?.id) ? (
                       <Link
                         href={`/directory/vendors/${contract.contract_company?.id || contract.client?.id}`}
                         className="text-primary underline underline-offset-2 hover:text-primary/90"
                       >
                         {ownerName}
                       </Link>
-                    ) : (ownerName || "—")}
-                  </LabelValueRow>
-                  <LabelValueRow label="Contractor" labelClassName="w-36" missing={!contract.contractor?.name}>
-                    {contract.contractor?.name && contract.contractor?.id ? (
-                      <Link
-                        href={`/directory/companies/${contract.contractor.id}`}
-                        className="font-medium text-primary underline underline-offset-2 hover:text-primary/90"
-                      >
-                        {contract.contractor.name}
-                      </Link>
-                    ) : (contract.contractor?.name || "—")}
-                  </LabelValueRow>
-                  <LabelValueRow label="Architect" labelClassName="w-36" missing={!contract.architect_engineer?.name}>
-                    {contract.architect_engineer?.name || "—"}
-                  </LabelValueRow>
-                </dl>
-                <dl className="space-y-4 text-sm">
-                  <LabelValueRow label="Start Date" labelClassName="w-40">
-                    {renderDateOrDash(contract.start_date)}
-                  </LabelValueRow>
-                  <LabelValueRow label="Est. Completion" labelClassName="w-40">
-                    {renderDateOrDash(contract.end_date)}
-                  </LabelValueRow>
-                  <LabelValueRow label="Substantial Date" labelClassName="w-40">
-                    {renderDateOrDash(contract.substantial_completion_date)}
-                  </LabelValueRow>
-                  <LabelValueRow label="Actual Completion" labelClassName="w-40">
-                    {renderDateOrDash(contract.actual_completion_date)}
-                  </LabelValueRow>
-                  <LabelValueRow label="Signed Date" labelClassName="w-40">
-                    {renderDateOrDash(contract.signed_contract_received_date)}
-                  </LabelValueRow>
-                  <LabelValueRow label="Termination Date" labelClassName="w-40">
-                    {renderDateOrDash(contract.contract_termination_date)}
-                  </LabelValueRow>
-                  <LabelValueRow label="Default Retainage" labelClassName="w-40">
-                    {contract.retention_percentage ?? 0}%
-                  </LabelValueRow>
-                </dl>
-              </div>
-              <LabelValueRow
-                label="Description"
-                labelClassName="w-36"
-                className="mt-6"
-                missing={getTextValue(contract.description).isMissing}
-                valueClassName="leading-relaxed font-normal text-foreground text-sm"
-              >
-                {getTextValue(contract.description).text}
-              </LabelValueRow>
-              <LabelValueRow label="Attachments" labelClassName="w-36" className="mt-6">
-                <EntityAttachments
-                  entityType="prime_contract"
-                  entityId={String(contract.id)}
-                  projectId={projectId}
+                    ) : ownerName}
+                </DetailField>
+                <EditableDetailField
+                  label="Contractor"
+                  type="select"
+                  value={contract.contractor_id || EMPTY_RELATION_VALUE}
+                  display={contract.contractor?.name || <span className="text-muted-foreground/40">—</span>}
+                  options={relationshipOptions}
+                  onSave={(value) =>
+                    onSaveContractField(
+                      "contractor_id",
+                      value === EMPTY_RELATION_VALUE ? null : value,
+                    )
+                  }
                 />
-              </LabelValueRow>
+                <EditableDetailField
+                  label="Architect"
+                  type="select"
+                  value={contract.architect_engineer_id || EMPTY_RELATION_VALUE}
+                  display={contract.architect_engineer?.name || <span className="text-muted-foreground/40">—</span>}
+                  options={relationshipOptions}
+                  onSave={(value) =>
+                    onSaveContractField(
+                      "architect_engineer_id",
+                      value === EMPTY_RELATION_VALUE ? null : value,
+                    )
+                  }
+                />
+                <EditableDetailField
+                  label="Start Date"
+                  type="date"
+                  value={toDateInputValue(contract.start_date)}
+                  display={renderDateOrDash(contract.start_date)}
+                  onSave={saveNullableDate("start_date")}
+                />
+                <EditableDetailField
+                  label="Est. Completion"
+                  editLabel="Estimated Completion"
+                  type="date"
+                  value={toDateInputValue(contract.end_date)}
+                  display={renderDateOrDash(contract.end_date)}
+                  onSave={saveNullableDate("end_date")}
+                />
+                <EditableDetailField
+                  label="Substantial Date"
+                  type="date"
+                  value={toDateInputValue(contract.substantial_completion_date)}
+                  display={renderDateOrDash(contract.substantial_completion_date)}
+                  onSave={saveNullableDate("substantial_completion_date")}
+                />
+                <EditableDetailField
+                  label="Actual Completion"
+                  type="date"
+                  value={toDateInputValue(contract.actual_completion_date)}
+                  display={renderDateOrDash(contract.actual_completion_date)}
+                  onSave={saveNullableDate("actual_completion_date")}
+                />
+                <EditableDetailField
+                  label="Signed Date"
+                  type="date"
+                  value={toDateInputValue(contract.signed_contract_received_date)}
+                  display={renderDateOrDash(contract.signed_contract_received_date)}
+                  onSave={saveNullableDate("signed_contract_received_date")}
+                />
+                <EditableDetailField
+                  label="Termination Date"
+                  type="date"
+                  value={toDateInputValue(contract.contract_termination_date)}
+                  display={renderDateOrDash(contract.contract_termination_date)}
+                  onSave={saveNullableDate("contract_termination_date")}
+                />
+                <EditableDetailField
+                  label="Default Retainage"
+                  type="number"
+                  value={String(contract.retention_percentage ?? 0)}
+                  display={`${contract.retention_percentage ?? 0}%`}
+                  onSave={(value) => onSaveContractField("retention_percentage", Number(value || 0))}
+                />
+                <EditableDetailField
+                  label="Description"
+                  span={2}
+                  value={descriptionValue.isMissing ? "" : descriptionValue.text}
+                  display={descriptionValue.isMissing ? undefined : descriptionValue.text}
+                  onSave={(value) => onSaveContractField("description", value || null)}
+                />
+                <DetailField label="Attachments" span={2}>
+                  <EntityAttachments
+                    entityType="prime_contract"
+                    entityId={String(contract.id)}
+                    projectId={projectId}
+                  />
+                </DetailField>
+              </DetailFieldGrid>
             </DetailPanel>
 
             <DetailPanel>
@@ -419,34 +494,34 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                     <div className="flex flex-col gap-1.5">
                       <dt className="text-xs text-muted-foreground">Inclusions</dt>
                       <dd className="font-normal leading-relaxed text-foreground">
-                        {inclusionsList.length === 0 ? (
-                          <span className="text-muted-foreground/50">—</span>
-                        ) : (
-                          <div className="space-y-1">
-                            {inclusionsList.map((line, index) => (
-                              <p key={`inclusion-${index}`}>{line}</p>
-                            ))}
-                          </div>
-                        )}
+                        <InlineEditField
+                          label="Inclusions"
+                          type="textarea"
+                          value={contract.inclusions ?? ""}
+                          display={inclusionsList.length === 0 ? undefined : inclusionsList.join("\n")}
+                          onSave={(value) => onSaveContractField("inclusions", value || null)}
+                        />
                       </dd>
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <dt className="text-xs text-muted-foreground">Exclusions</dt>
                       <dd className="font-normal leading-relaxed text-foreground">
-                        {exclusionsList.length === 0 ? (
-                          <span className="text-muted-foreground/50">—</span>
-                        ) : (
-                          <div className="space-y-1">
-                            {exclusionsList.map((line, index) => (
-                              <p key={`exclusion-${index}`}>{line}</p>
-                            ))}
-                          </div>
-                        )}
+                        <InlineEditField
+                          label="Exclusions"
+                          type="textarea"
+                          value={contract.exclusions ?? ""}
+                          display={exclusionsList.length === 0 ? undefined : exclusionsList.join("\n")}
+                          onSave={(value) => onSaveContractField("exclusions", value || null)}
+                        />
                       </dd>
                     </div>
                   </div>
                 </CollapsibleContent>
               </Collapsible>
+            </DetailPanel>
+
+            <DetailPanel>
+              {financialMarkupSection}
             </DetailPanel>
           </div>
 
@@ -644,23 +719,10 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                           (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
                         const lineBilledToDate = lineTotal * billedToDateRatio;
                         const lineAmountRemaining = lineTotal - lineBilledToDate;
-                        const selectedBudgetCode = item.budget_code_id
-                          ? budgetCodes.find((code) => code.id === item.budget_code_id)
-                          : budgetCodes.find(
-                              (code) =>
-                                (code.legacyCostCodeId && code.legacyCostCodeId === item.cost_code_id) ||
-                                (!!item.cost_code?.code && code.code === item.cost_code.code),
-                            );
+                        const budgetCodeResolution = resolveContractLineBudgetCode(item, budgetCodes);
                         const selectedBudgetCodeId =
                           (isSovEditing ? sovDraftBudgetCodeIds[item.id] : undefined) ||
-                          selectedBudgetCode?.id ||
-                          "";
-                        const displayBudgetCode = selectedBudgetCode?.code || item.cost_code?.code || "--";
-                        const displayBudgetDescription =
-                          selectedBudgetCode?.description || item.cost_code?.name || "";
-                        const displayCostType = selectedBudgetCode?.costType
-                          ? getCostTypeLabel(selectedBudgetCode.costType)
-                          : "";
+                          budgetCodeResolution.budgetCodeId;
 
                         return (
                           <SortableSovRow
@@ -694,12 +756,12 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                               ) : (
                                 <div className="flex items-baseline gap-2 text-xs leading-tight">
                                   <span className="font-medium">
-                                    {displayBudgetDescription
-                                      ? `${displayBudgetCode} - ${displayBudgetDescription}`
-                                      : displayBudgetCode}
+                                    {budgetCodeResolution.displayDescription
+                                      ? `${budgetCodeResolution.displayCode} - ${budgetCodeResolution.displayDescription}`
+                                      : budgetCodeResolution.displayCode}
                                   </span>
                                   <span className="text-muted-foreground">
-                                    {displayCostType || "—"}
+                                    {budgetCodeResolution.displayCostType || "Needs budget-code link"}
                                   </span>
                                 </div>
                               )}
@@ -981,16 +1043,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                       );
                     }
 
-                    const bc = item.budget_code_id
-                      ? budgetCodes.find((c) => c.id === item.budget_code_id)
-                      : budgetCodes.find(
-                          (c) =>
-                            (c.legacyCostCodeId && c.legacyCostCodeId === item.cost_code_id) ||
-                            (!!item.cost_code?.code && c.code === item.cost_code.code),
-                        );
-                    const displayBudgetCode = bc?.code || item.cost_code?.code || "--";
-                    const displayBudgetDescription = bc?.description || item.cost_code?.name || "";
-                    const displayCostType = bc?.costType ? getCostTypeLabel(bc.costType) : "";
+                    const budgetCodeResolution = resolveContractLineBudgetCode(item, budgetCodes);
                     const lineTotal = getLineTotal(item);
                     const lineBilledToDate = lineTotal * billedToDateRatio;
 
@@ -1003,12 +1056,12 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                         <td className="min-w-72 px-1 py-1 align-top">
                           <div className="flex items-baseline gap-2 text-xs leading-tight">
                             <span className="font-medium">
-                              {displayBudgetDescription
-                                ? `${displayBudgetCode} - ${displayBudgetDescription}`
-                                : displayBudgetCode}
+                              {budgetCodeResolution.displayDescription
+                                ? `${budgetCodeResolution.displayCode} - ${budgetCodeResolution.displayDescription}`
+                                : budgetCodeResolution.displayCode}
                             </span>
                             <span className="text-muted-foreground">
-                              {displayCostType || "—"}
+                              {budgetCodeResolution.displayCostType || "Needs budget-code link"}
                             </span>
                           </div>
                         </td>

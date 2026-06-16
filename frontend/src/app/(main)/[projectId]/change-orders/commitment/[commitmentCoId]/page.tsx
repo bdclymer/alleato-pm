@@ -8,7 +8,7 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, formatPercent } from "@/lib/format";
 
 import {
   InlineTable,
@@ -25,10 +25,16 @@ import {
   ErrorState,
   EntityAttachments,
 } from "@/components/ds";
-import { useMasterCostCodes, useCostCodeTypes } from "@/hooks/use-project-cost-codes";
+import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
+import type { BudgetCodeOption } from "@/components/domain/change-events/change-event-form/types";
+import { useCostCodeTypes } from "@/hooks/use-project-cost-codes";
 import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
-import { ContentSectionStack, LabelValueRow, PageShell, SectionRuleHeading } from "@/components/layout";
+import { ContentSectionStack, DetailPanel, LabelValueRow, PageShell, SectionRuleHeading } from "@/components/layout";
 import { apiFetch } from "@/lib/api-client";
+import {
+  normalizeBudgetCodesForSelector,
+  resolveBudgetCodeByCostFields,
+} from "@/lib/budget/budget-code-selection";
 import { useConfirm } from "@/hooks/use-confirm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -115,6 +121,18 @@ interface CommitmentCOData {
   field_change: boolean | null;
   paid_in_full: boolean | null;
   created_at: string | null;
+  associated_change_requests?: AssociatedChangeRequest[];
+}
+
+interface AssociatedChangeRequest {
+  id: string;
+  number: string;
+  title: string;
+  status: string;
+  reason: string | null;
+  scope: string;
+  created_at: string;
+  linked_at: string | null;
 }
 
 const editSchema = z.object({
@@ -142,12 +160,6 @@ type FormData = z.infer<typeof editSchema>;
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function formatCurrency(amount: number | null): string {
-  if (amount == null) return "$0.00";
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
-}
-
 
 function statusLabel(status: string | null): string {
   if (!status) return "Unknown";
@@ -225,8 +237,9 @@ export default function CommitmentCODetailPage() {
   const [lineItemDraft, setLineItemDraft] = useState<LineItemDraft>(emptyDraft);
 
   // Cost code & cost type lookups
-  const { data: masterCostCodes = [] } = useMasterCostCodes();
   const { data: costCodeTypes = [] } = useCostCodeTypes();
+  const [budgetCodes, setBudgetCodes] = useState<BudgetCodeOption[]>([]);
+  const [budgetCodesLoading, setBudgetCodesLoading] = useState(false);
   const [lineItemSaving, setLineItemSaving] = useState(false);
 
   // Vertical markup
@@ -301,6 +314,33 @@ export default function CommitmentCODetailPage() {
   useEffect(() => {
     if (co) fetchLineItemsFn();
   }, [co, fetchLineItemsFn]);
+
+  const fetchBudgetCodes = useCallback(async () => {
+    setBudgetCodesLoading(true);
+    try {
+      const payload = await apiFetch<{
+        budgetCodes?: Array<Partial<BudgetCodeOption> & { id: string; code: string }>;
+        data?: Array<Partial<BudgetCodeOption> & { id: string; code: string }>;
+      }>(`/api/projects/${projectId}/budget-codes`);
+      setBudgetCodes(
+        normalizeBudgetCodesForSelector(payload.budgetCodes || payload.data || []),
+      );
+    } catch (err) {
+      toast.error("Could not load budget codes", {
+        description:
+          err instanceof Error && err.message
+            ? err.message
+            : "Commitment change-order line items cannot select budget codes.",
+      });
+      setBudgetCodes([]);
+    } finally {
+      setBudgetCodesLoading(false);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    fetchBudgetCodes();
+  }, [fetchBudgetCodes]);
 
   // Line item CRUD handlers
   const lineItemApiBase = `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/line-items`;
@@ -395,62 +435,49 @@ export default function CommitmentCODetailPage() {
     setLineItemDraft(emptyDraft);
   }, []);
 
+  const selectedDraftBudgetCode = resolveBudgetCodeByCostFields(
+    lineItemDraft.cost_code_id,
+    lineItemDraft.cost_type_id,
+    budgetCodes,
+  );
+
   // Cost code / type display helpers
   const costCodeLabel = useCallback(
-    (id: string | null) => {
-      if (!id) return "—";
-      const cc = masterCostCodes.find((c) => c.id === id);
-      return cc ? `${cc.id} - ${cc.title || ""}` : id;
+    (costCodeId: string | null, costTypeId: string | null) => {
+      if (!costCodeId) return "Unmapped";
+      const code = resolveBudgetCodeByCostFields(costCodeId, costTypeId, budgetCodes);
+      return code?.fullLabel || costCodeId;
     },
-    [masterCostCodes],
+    [budgetCodes],
   );
 
   const costTypeLabel = useCallback(
     (id: string | null) => {
       if (!id) return "—";
+      const budgetCode = budgetCodes.find((code) => code.costTypeId === id);
+      if (budgetCode?.costType) return budgetCode.costType;
       const ct = costCodeTypes.find((t) => t.id === id);
       return ct ? `${ct.code} - ${ct.description}` : id;
     },
-    [costCodeTypes],
+    [budgetCodes, costCodeTypes],
   );
 
-  // Inline cost code / cost type select fragment used in add & edit rows
-  const renderCostCodeSelect = (
-    <Select
-      value={lineItemDraft.cost_code_id || "none"}
-      onValueChange={(v) => setLineItemDraft((d) => ({ ...d, cost_code_id: v === "none" ? "" : v }))}
-    >
-      <SelectTrigger className="h-8 text-sm">
-        <SelectValue placeholder="Select..." />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="none">None</SelectItem>
-        {masterCostCodes.map((cc) => (
-          <SelectItem key={cc.id} value={cc.id}>
-            {cc.id} - {cc.title || "Untitled"}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-
-  const renderCostTypeSelect = (
-    <Select
-      value={lineItemDraft.cost_type_id || "none"}
-      onValueChange={(v) => setLineItemDraft((d) => ({ ...d, cost_type_id: v === "none" ? "" : v }))}
-    >
-      <SelectTrigger className="h-8 text-sm">
-        <SelectValue placeholder="Select..." />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="none">None</SelectItem>
-        {costCodeTypes.map((ct) => (
-          <SelectItem key={ct.id} value={ct.id}>
-            {ct.code} - {ct.description}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+  const renderBudgetCodeSelector = (
+    <BudgetCodeSelector
+      value={selectedDraftBudgetCode?.id || ""}
+      onValueChange={(_value, code) =>
+        setLineItemDraft((draft) => ({
+          ...draft,
+          cost_code_id: code.code,
+          cost_type_id: code.costTypeId || "",
+        }))
+      }
+      budgetCodes={budgetCodes}
+      loading={budgetCodesLoading}
+      placeholder="Select budget code..."
+      error={Boolean(lineItemDraft.cost_code_id) && !selectedDraftBudgetCode}
+      className="h-8 min-w-56 px-3"
+    />
   );
 
 
@@ -958,6 +985,7 @@ export default function CommitmentCODetailPage() {
 
   // --- View mode -------------------------------------------------------------
   const pageTitle = co.title || co.description || "Untitled Commitment CO";
+  const associatedChangeRequests = co.associated_change_requests ?? [];
 
   return (
     <>
@@ -1097,7 +1125,7 @@ export default function CommitmentCODetailPage() {
               <div className="space-y-8">
                 <div>
                   <SectionRuleHeading label="Key Dates" className="[&_span]:text-primary" />
-                  <div className="rounded-md border border-border bg-muted p-6">
+                  <DetailPanel>
                     <dl className="space-y-3 text-sm">
                       <LabelValueRow label="Created">
                         {formatDate(co.created_at)}
@@ -1123,10 +1151,57 @@ export default function CommitmentCODetailPage() {
                         </LabelValueRow>
                       )}
                     </dl>
-                  </div>
+                  </DetailPanel>
                 </div>
               </div>
             </div>
+          </section>
+
+          {/* Associated Change Requests */}
+          <section className="space-y-4">
+            <SectionRuleHeading label="Associated Change Requests" className="[&_span]:text-primary" />
+            {associatedChangeRequests.length > 0 ? (
+              <InlineTable variant="read">
+                <InlineTableHeader>
+                  <InlineTableHeaderRow>
+                    <InlineTableHeaderCell>Number</InlineTableHeaderCell>
+                    <InlineTableHeaderCell>Title</InlineTableHeaderCell>
+                    <InlineTableHeaderCell>Status</InlineTableHeaderCell>
+                    <InlineTableHeaderCell>Reason</InlineTableHeaderCell>
+                    <InlineTableHeaderCell>Linked</InlineTableHeaderCell>
+                  </InlineTableHeaderRow>
+                </InlineTableHeader>
+                <InlineTableBody>
+                  {associatedChangeRequests.map((changeRequest) => (
+                    <InlineTableRow
+                      key={changeRequest.id}
+                      className="cursor-pointer"
+                      onClick={() =>
+                        router.push(`/${projectId}/change-events/${changeRequest.id}`)
+                      }
+                    >
+                      <InlineTableCell className="font-medium">
+                        {changeRequest.number}
+                      </InlineTableCell>
+                      <InlineTableCell>{changeRequest.title}</InlineTableCell>
+                      <InlineTableCell>
+                        <StatusBadge status={statusLabel(changeRequest.status)} />
+                      </InlineTableCell>
+                      <InlineTableCell className="text-muted-foreground">
+                        {changeRequest.reason || "—"}
+                      </InlineTableCell>
+                      <InlineTableCell className="text-muted-foreground">
+                        {formatDate(changeRequest.linked_at ?? changeRequest.created_at)}
+                      </InlineTableCell>
+                    </InlineTableRow>
+                  ))}
+                </InlineTableBody>
+              </InlineTable>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No associated change requests.
+              </p>
+            )}
           </section>
 
           {/* Line Items */}
@@ -1170,8 +1245,10 @@ export default function CommitmentCODetailPage() {
                             autoFocus
                           />
                         </InlineTableCell>
-                        <InlineTableCell className="px-2">{renderCostCodeSelect}</InlineTableCell>
-                        <InlineTableCell className="px-2">{renderCostTypeSelect}</InlineTableCell>
+                        <InlineTableCell className="px-2">{renderBudgetCodeSelector}</InlineTableCell>
+                        <InlineTableCell className="px-2 text-muted-foreground">
+                          {costTypeLabel(lineItemDraft.cost_type_id || null)}
+                        </InlineTableCell>
                         <InlineTableCell className="px-2">
                           <Input
                             type="number"
@@ -1212,7 +1289,7 @@ export default function CommitmentCODetailPage() {
                     ) : (
                       <InlineTableRow key={item.id}>
                         <InlineTableCell>{item.description || "—"}</InlineTableCell>
-                        <InlineTableCell className="text-muted-foreground">{costCodeLabel(item.cost_code_id)}</InlineTableCell>
+                        <InlineTableCell className="text-muted-foreground">{costCodeLabel(item.cost_code_id, item.cost_type_id)}</InlineTableCell>
                         <InlineTableCell className="text-muted-foreground">{costTypeLabel(item.cost_type_id)}</InlineTableCell>
                         <InlineTableCell align="right">{formatCurrency(item.amount)}</InlineTableCell>
                         <InlineTableCell align="right">
@@ -1254,8 +1331,10 @@ export default function CommitmentCODetailPage() {
                           autoFocus
                         />
                       </InlineTableCell>
-                      <InlineTableCell className="px-2">{renderCostCodeSelect}</InlineTableCell>
-                      <InlineTableCell className="px-2">{renderCostTypeSelect}</InlineTableCell>
+                      <InlineTableCell className="px-2">{renderBudgetCodeSelector}</InlineTableCell>
+                      <InlineTableCell className="px-2 text-muted-foreground">
+                        {costTypeLabel(lineItemDraft.cost_type_id || null)}
+                      </InlineTableCell>
                       <InlineTableCell className="px-2">
                         <Input
                           type="number"
@@ -1313,7 +1392,7 @@ export default function CommitmentCODetailPage() {
                         {getMarkupLabel(markup.markup_type)}
                       </InlineTableCell>
                       <InlineTableCell align="right">
-                        {markup.percentage.toFixed(2)}%
+                        {formatPercent(markup.percentage / 100)}
                       </InlineTableCell>
                       <InlineTableCell align="right">
                         {formatCurrency(markup.amount)}

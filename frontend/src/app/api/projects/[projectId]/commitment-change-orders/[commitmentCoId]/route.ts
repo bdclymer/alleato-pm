@@ -11,6 +11,17 @@ interface RouteParams {
   params: Promise<{ projectId: string; commitmentCoId: string }>;
 }
 
+interface AssociatedChangeRequest {
+  id: string;
+  number: string;
+  title: string;
+  status: string;
+  reason: string | null;
+  scope: string;
+  created_at: string;
+  linked_at: string | null;
+}
+
 /**
  * GET /api/projects/[projectId]/commitment-change-orders/[commitmentCoId]
  *
@@ -33,7 +44,60 @@ export const GET = withApiGuardrails(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    return NextResponse.json(scoped);
+    const { data: links, error: linksError } = await supabase
+      .from("change_event_pco_links")
+      .select("change_event_id, linked_at")
+      .eq("pco_id", commitmentCoId)
+      .eq("pco_type", "commitment")
+      .order("linked_at", { ascending: false });
+
+    if (linksError) {
+      return apiErrorResponse(linksError);
+    }
+
+    const changeEventIds = [
+      ...new Set((links ?? []).map((link) => link.change_event_id)),
+    ];
+
+    if (changeEventIds.length === 0) {
+      return NextResponse.json({
+        ...scoped,
+        associated_change_requests: [],
+      });
+    }
+
+    const { data: changeEvents, error: changeEventsError } = await supabase
+      .from("change_events")
+      .select("id, number, title, status, reason, scope, created_at")
+      .in("id", changeEventIds)
+      .eq("project_id", Number(projectId))
+      .is("deleted_at", null)
+      .order("number", { ascending: true });
+
+    if (changeEventsError) {
+      return apiErrorResponse(changeEventsError);
+    }
+
+    const linkedAtByChangeEventId = new Map(
+      (links ?? []).map((link) => [link.change_event_id, link.linked_at]),
+    );
+    const associatedChangeRequests: AssociatedChangeRequest[] = (
+      changeEvents ?? []
+    ).map((changeEvent) => ({
+      id: changeEvent.id,
+      number: changeEvent.number,
+      title: changeEvent.title,
+      status: changeEvent.status,
+      reason: changeEvent.reason,
+      scope: changeEvent.scope,
+      created_at: changeEvent.created_at,
+      linked_at: linkedAtByChangeEventId.get(changeEvent.id) ?? null,
+    }));
+
+    return NextResponse.json({
+      ...scoped,
+      associated_change_requests: associatedChangeRequests,
+    });
   },
 );
 

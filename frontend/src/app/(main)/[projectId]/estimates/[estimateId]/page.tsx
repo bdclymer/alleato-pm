@@ -1,5 +1,7 @@
 import { getProjectInfo } from "@/lib/supabase/project-fetcher";
 import { EstimateDetailClientV2 } from "./estimate-detail-client-v2";
+import { ErrorState } from "@/components/ds";
+import { PageShell } from "@/components/layout";
 import type { Database } from "@/types/database.types";
 
 export const dynamic = "force-dynamic";
@@ -27,9 +29,12 @@ export default async function EstimateDetailPage({
 
   if (estimateError || !estimate) {
     return (
-      <div className="text-center text-destructive p-6">
-        Estimate not found.
-      </div>
+      <PageShell variant="detailXWide" title="Estimate not found">
+        <ErrorState
+          title="Estimate not found"
+          description="This estimate could not be loaded for the current project."
+        />
+      </PageShell>
     );
   }
 

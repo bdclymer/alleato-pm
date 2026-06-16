@@ -25,6 +25,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import {
+  DetailField,
+  DetailFieldGrid,
   EmptyState,
   EntityAttachments,
   ErrorState,
@@ -115,9 +117,10 @@ import {
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
 import type { BudgetCodeOption } from "@/components/domain/change-events/change-event-form/types";
 import {
+  budgetCodeTextValue,
   normalizeBudgetCodesForSelector,
   resolvePrimeCoBudgetCode,
-} from "@/lib/change-orders/prime-co-budget-code";
+} from "@/lib/budget/budget-code-selection";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -656,7 +659,7 @@ export default function PrimeContractCODetailPage() {
     (_value: string, code: BudgetCodeOption) => {
       setLineItemForm((f) => ({
         ...f,
-        cost_code: code.code,
+        cost_code: budgetCodeTextValue(code),
       }));
     },
     [],
@@ -1701,106 +1704,89 @@ export default function PrimeContractCODetailPage() {
               <section>
                 <div className="grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
                   <DetailPanel className="space-y-8">
-                    <div className="grid grid-cols-1 gap-x-14 gap-y-8 sm:grid-cols-2">
-                      <div>
-                        <SectionRuleHeading
-                          label="Details"
-                          className="[&_span]:text-primary"
-                        />
-                        <dl className="space-y-4 text-sm">
-                          <LabelValueRow label="#">
-                            {co.pcco_number || "—"}
-                          </LabelValueRow>
-                          <LabelValueRow label="Title">
-                            {co.title || "—"}
-                          </LabelValueRow>
-                          <LabelValueRow label="Status">
-                            <StatusBadge status={co.status || "Unknown"} />
-                          </LabelValueRow>
-                          <LabelValueRow label="Contract Company">
-                            {co.contract_company || "—"}
-                          </LabelValueRow>
-                          <LabelValueRow label="Contract">
-                            {co.contract ? (
-                              <Button
-                                type="button"
-                                variant="link"
-                                className="inline-flex h-auto items-center gap-1 p-0 text-primary"
-                                onClick={() =>
-                                  router.push(
-                                    `/${projectId}/prime-contracts/${co.contract!.id}`,
-                                  )
-                                }
-                              >
-                                <Link2 className="h-3 w-3" />
-                                {co.contract.contract_number} —{" "}
-                                {co.contract.title || "Prime"}
-                              </Button>
-                            ) : (
-                              "—"
-                            )}
-                          </LabelValueRow>
-                        </dl>
-                      </div>
-
-                      <div>
-                        <SectionRuleHeading
-                          label="Attributes"
-                          className="[&_span]:text-primary"
-                        />
-                        <dl className="space-y-4 text-sm">
-                          <LabelValueRow label="Revision">
-                            {co.revision ?? 0}
-                          </LabelValueRow>
-                          <LabelValueRow label="Change Reason">
-                            {co.change_reason || "—"}
-                          </LabelValueRow>
-                          <LabelValueRow label="Executed">
-                            {co.executed ? "Yes" : "No"}
-                          </LabelValueRow>
-                          <LabelValueRow label="Private">
-                            {co.is_private ? "Yes" : "No"}
-                          </LabelValueRow>
-                          <LabelValueRow label="Field Change">
-                            {co.field_change ? "Yes" : "No"}
-                          </LabelValueRow>
-                          <LabelValueRow label="Paid In Full">
-                            {co.paid_in_full ? "Yes" : "No"}
-                          </LabelValueRow>
-                        </dl>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <dl className="space-y-4 text-sm">
-                        <LabelValueRow
-                          label="Description"
-                          missing={!co.description}
-                          valueClassName="leading-relaxed font-normal text-foreground whitespace-pre-wrap"
-                        >
+                    <SectionRuleHeading
+                      label="General Information"
+                      className="[&_span]:text-primary"
+                    />
+                    <DetailFieldGrid columns={2}>
+                      <DetailField label="#">
+                        {co.pcco_number || "—"}
+                      </DetailField>
+                      <DetailField label="Revision">
+                        {co.revision ?? 0}
+                      </DetailField>
+                      <DetailField label="Title">
+                        {co.title || "—"}
+                      </DetailField>
+                      <DetailField label="Change Reason">
+                        {co.change_reason || "—"}
+                      </DetailField>
+                      <DetailField label="Status">
+                        <StatusBadge status={co.status || "Unknown"} />
+                      </DetailField>
+                      <DetailField label="Executed">
+                        {co.executed ? "Yes" : "No"}
+                      </DetailField>
+                      <DetailField label="Contract Company">
+                        {co.contract_company || "—"}
+                      </DetailField>
+                      <DetailField label="Private">
+                        {co.is_private ? "Yes" : "No"}
+                      </DetailField>
+                      <DetailField label="Contract">
+                        {co.contract ? (
+                          <Button
+                            type="button"
+                            variant="link"
+                            className="inline-flex h-auto items-center gap-1 p-0 text-primary"
+                            onClick={() =>
+                              router.push(
+                                `/${projectId}/prime-contracts/${co.contract!.id}`,
+                              )
+                            }
+                          >
+                            <Link2 className="h-3 w-3" />
+                            {co.contract.contract_number} —{" "}
+                            {co.contract.title || "Prime"}
+                          </Button>
+                        ) : (
+                          "—"
+                        )}
+                      </DetailField>
+                      <DetailField label="Field Change">
+                        {co.field_change ? "Yes" : "No"}
+                      </DetailField>
+                      <DetailField label="Request Received From">
+                        {co.request_received_from || "—"}
+                      </DetailField>
+                      <DetailField label="Paid In Full">
+                        {co.paid_in_full ? "Yes" : "No"}
+                      </DetailField>
+                      <DetailField label="Location">
+                        {co.location || "—"}
+                      </DetailField>
+                      <DetailField label="Reference">
+                        {co.reference || "—"}
+                      </DetailField>
+                      {co.designated_reviewer && (
+                        <DetailField label="Designated Reviewer">
+                          {co.designated_reviewer}
+                        </DetailField>
+                      )}
+                      {co.reviewed_by && (
+                        <DetailField label="Reviewed By">
+                          {co.reviewed_by}
+                        </DetailField>
+                      )}
+                      <DetailField
+                        label="Description"
+                        span={2}
+                      >
+                        <span className="whitespace-pre-wrap leading-relaxed">
                           {co.description || "Not set"}
-                        </LabelValueRow>
-                        <LabelValueRow label="Request Received From">
-                          {co.request_received_from || "—"}
-                        </LabelValueRow>
-                        <LabelValueRow label="Location">
-                          {co.location || "—"}
-                        </LabelValueRow>
-                        <LabelValueRow label="Reference">
-                          {co.reference || "—"}
-                        </LabelValueRow>
-                        {co.designated_reviewer && (
-                          <LabelValueRow label="Designated Reviewer">
-                            {co.designated_reviewer}
-                          </LabelValueRow>
-                        )}
-                        {co.reviewed_by && (
-                          <LabelValueRow label="Reviewed By">
-                            {co.reviewed_by}
-                          </LabelValueRow>
-                        )}
-                      </dl>
-                    </div>
+                        </span>
+                      </DetailField>
+                    </DetailFieldGrid>
                     {co.status === "rejected" && co.rejection_reason && (
                       <div className="rounded-md border border-destructive/30 bg-destructive/5 p-4">
                         <p className="mb-1 text-xs font-medium uppercase text-destructive">

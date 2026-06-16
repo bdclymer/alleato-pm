@@ -88,6 +88,7 @@ class WikiArchiveProject(BaseModel):
     topic: str
     topic_slug: str = Field(..., alias="topicSlug")
     session_id: str = Field(..., alias="sessionId")
+    wiki_path: str = Field(..., alias="wikiPath")
     title: str
     updated_at: str = Field(..., alias="updatedAt")
     artifact_count: int = Field(..., ge=0, alias="artifactCount")

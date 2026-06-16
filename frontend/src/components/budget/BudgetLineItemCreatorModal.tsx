@@ -4,13 +4,16 @@ import * as React from "react";
 import {
   Plus,
   X,
-  Search,
   ChevronDown,
   ChevronRight,
   AlertTriangle,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { apiFetch, ApiError } from "@/lib/api-client";
+import { ApiError } from "@/lib/api-client";
+import {
+  type ProjectBudgetCode,
+  useProjectBudgetCodes,
+} from "@/hooks/use-project-budget-codes";
 import { Button } from "@/components/ui/button";
 import { NumberInput } from "@/components/ui/number-input";
 import { MoneyField } from "@/components/forms/MoneyField";
@@ -23,37 +26,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
   BaseModal,
   ModalBody,
   ModalFooter,
 } from "@/components/budget/modals/BaseModal";
+import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
 import { Label } from "@/components/ui/label";
 import { appToast as toast } from "@/lib/toast/app-toast";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { InfoAlert } from "@/components/ds/InfoAlert";
 
-interface BudgetCode {
-  id: string;
-  code: string;
-  costType: string | null;
-  costTypeId: string | null;
-  description: string;
-  fullLabel: string;
-}
+type BudgetCode = ProjectBudgetCode;
 
 interface CostCodeOption {
   id: string;
@@ -110,10 +94,8 @@ export function BudgetLineItemCreatorModal({
     },
   ]);
 
-  const [budgetCodes, setBudgetCodes] = React.useState<BudgetCode[]>([]);
-  const [loadingCodes, setLoadingCodes] = React.useState(false);
-  const [openPopoverId, setOpenPopoverId] = React.useState<number | null>(null);
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const { budgetCodes, loadingCodes, createBudgetCode } =
+    useProjectBudgetCodes(projectId, { enabled: isOpen });
   const [isCreating, setIsCreating] = React.useState(false);
   const [smartCopyUOM, setSmartCopyUOM] = React.useState(true);
   const [pendingRowIndex, setPendingRowIndex] = React.useState<number | null>(
@@ -155,8 +137,6 @@ export function BudgetLineItemCreatorModal({
           amount: "0.00",
         },
       ]);
-      setSearchQuery("");
-      setOpenPopoverId(null);
       setPendingRowIndex(null);
       setNegativeAmountRows(new Set());
     }
@@ -167,25 +147,6 @@ export function BudgetLineItemCreatorModal({
       setPendingRowIndex(null);
     }
   }, [showCreateCodeModal]);
-
-  // Fetch budget codes
-  React.useEffect(() => {
-    const fetchBudgetCodes = async () => {
-      if (!projectId || !isOpen) return;
-
-      try {
-        setLoadingCodes(true);
-        const { budgetCodes } = await apiFetch<{ budgetCodes: BudgetCode[] }>(`/api/projects/${projectId}/budget-codes`);
-        setBudgetCodes(budgetCodes || []);
-      } catch (error) {
-        setBudgetCodes([]);
-      } finally {
-        setLoadingCodes(false);
-      }
-    };
-
-    fetchBudgetCodes();
-  }, [projectId, isOpen]);
 
   // Fetch cost codes when create code modal opens
   React.useEffect(() => {
@@ -318,7 +279,6 @@ export function BudgetLineItemCreatorModal({
           : row,
       ),
     );
-    setOpenPopoverId(null);
   };
 
   // Helper function for currency formatting
@@ -389,17 +349,11 @@ export function BudgetLineItemCreatorModal({
         return;
       }
 
-      const { budgetCode: createdCode } = await apiFetch<{ budgetCode: BudgetCode & { fullLabel: string; code: string; costTypeId: string } }>(
-        `/api/projects/${projectId}/budget-codes`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            cost_code_id: newCodeData.costCodeId,
-            cost_type_id: newCodeData.costType,
-            description: selectedCostCode.title,
-          }),
-        },
-      ).catch((err: unknown) => {
+      const createdCode = await createBudgetCode({
+        costCodeId: newCodeData.costCodeId,
+        costTypeId: newCodeData.costType,
+        description: selectedCostCode.title,
+      }).catch((err: unknown) => {
         if (err instanceof ApiError && err.status === 409) {
           const costTypeLabel = getCostTypeLabel(newCodeData.costType);
           toast.error(
@@ -412,7 +366,6 @@ export function BudgetLineItemCreatorModal({
         throw err;
       });
 
-      setBudgetCodes((prev) => [...prev, createdCode]);
       setRows((prev) => {
         if (pendingRowIndex !== null && prev[pendingRowIndex]) {
           return prev.map((row, i) =>
@@ -422,7 +375,7 @@ export function BudgetLineItemCreatorModal({
                   budgetCodeId: createdCode.id,
                   budgetCodeLabel: createdCode.fullLabel,
                   costCodeId: createdCode.code,
-                  costTypeId: createdCode.costTypeId,
+                  costTypeId: createdCode.costTypeId ?? null,
                 }
               : row,
           );
@@ -437,7 +390,7 @@ export function BudgetLineItemCreatorModal({
                   budgetCodeId: createdCode.id,
                   budgetCodeLabel: createdCode.fullLabel,
                   costCodeId: createdCode.code,
-                  costTypeId: createdCode.costTypeId,
+                  costTypeId: createdCode.costTypeId ?? null,
                 }
               : row,
           );
@@ -449,7 +402,7 @@ export function BudgetLineItemCreatorModal({
             budgetCodeId: createdCode.id,
             budgetCodeLabel: createdCode.fullLabel,
             costCodeId: createdCode.code,
-            costTypeId: createdCode.costTypeId,
+            costTypeId: createdCode.costTypeId ?? null,
             qty: "1",
             uom: "",
             unitCost: "",
@@ -561,13 +514,9 @@ export function BudgetLineItemCreatorModal({
           .filter((r, i) => i !== rowIndex && r.budgetCodeId)
           .map((r) => r.budgetCodeId),
       );
-      return deduplicatedCodes.filter(
-        (code) =>
-          !selectedIds.has(code.id) &&
-          code.fullLabel.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
+      return deduplicatedCodes.filter((code) => !selectedIds.has(code.id));
     },
-    [deduplicatedCodes, rows, searchQuery],
+    [deduplicatedCodes, rows],
   );
 
   const toggleDivision = (division: string) => {
@@ -667,77 +616,23 @@ export function BudgetLineItemCreatorModal({
                       </td>
 
                       <td className="py-2 pr-3 align-middle w-72">
-                        <Popover
-                          open={openPopoverId === index}
-                          onOpenChange={(open) =>
-                            setOpenPopoverId(open ? index : null)
-                          }
-                        >
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              aria-label={`Budget code for line item ${index + 1}`}
-                              data-testid={`budget-code-trigger-${index}`}
-                              className="w-full justify-between text-left font-normal h-8 text-sm bg-muted/30 border-border/60"
-                            >
-                              <span className="truncate">
-                                {row.budgetCodeLabel || "Select budget code..."}
-                              </span>
-                              <Search className="shrink-0 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent
-                            className="w-[400px] p-0"
-                            align="start"
-                          >
-                            <Command>
-                              <CommandInput
-                                placeholder="Search budget codes..."
-                                value={searchQuery}
-                                onValueChange={setSearchQuery}
-                              />
-                              <CommandList className="max-h-80">
-                                <CommandEmpty>
-                                  {loadingCodes
-                                    ? "Loading..."
-                                    : "No budget codes found."}
-                                </CommandEmpty>
-                                <CommandGroup>
-                                  {getAvailableCodesForRow(index).map(
-                                    (code) => (
-                                      <CommandItem
-                                        key={code.id}
-                                        value={code.fullLabel}
-                                        onSelect={() =>
-                                          handleBudgetCodeSelect(index, code)
-                                        }
-                                      >
-                                        {code.fullLabel}
-                                      </CommandItem>
-                                    ),
-                                  )}
-                                </CommandGroup>
-                              </CommandList>
-                              <div className="border-t">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  onClick={() => {
-                                    setOpenPopoverId(null);
-                                    setPendingRowIndex(index);
-                                    setSearchQuery("");
-                                    setShowCreateCodeModal(true);
-                                  }}
-                                  className="h-auto w-full justify-start rounded-none px-4 py-2 text-sm font-medium text-primary hover:text-primary"
-                                >
-                                  <Plus className="mr-2 h-4 w-4" />
-                                  Create New Budget Code
-                                </Button>
-                              </div>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
+                        <BudgetCodeSelector
+                          value={row.budgetCodeId}
+                          onValueChange={(value) => {
+                            const selected = budgetCodes.find(
+                              (code) => code.id === value,
+                            );
+                            if (selected) handleBudgetCodeSelect(index, selected);
+                          }}
+                          budgetCodes={getAvailableCodesForRow(index)}
+                          loading={loadingCodes}
+                          onCreateNew={() => {
+                            setPendingRowIndex(index);
+                            setShowCreateCodeModal(true);
+                          }}
+                          placeholder="Select budget code..."
+                          className="h-8 bg-muted/30 border-border/60"
+                        />
                       </td>
 
                       <td className="py-2 pr-3 align-middle">
@@ -886,7 +781,7 @@ export function BudgetLineItemCreatorModal({
           <Button
             onClick={handleCreate}
             disabled={isCreating || rows.every((r) => !r.budgetCodeId)}
-            className="min-w-[140px]"
+            className="min-w-36"
           >
             {isCreating ? (
               <span className="flex items-center gap-2">
@@ -920,7 +815,7 @@ export function BudgetLineItemCreatorModal({
                   Loading cost codes...
                 </div>
               ) : (
-                <div className="border rounded-md max-h-[400px] overflow-y-auto">
+                <div className="border rounded-md max-h-96 overflow-y-auto">
                   {Object.entries(groupedCostCodes)
                     .sort(([a], [b]) => a.localeCompare(b))
                     .map(([division]) => (

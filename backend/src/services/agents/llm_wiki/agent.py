@@ -380,6 +380,7 @@ def _archive_project_from_workspace(workspace: Path) -> Optional[WikiArchiveProj
         topic=topic,
         topicSlug=topic_slug,
         sessionId=session_id,
+        wikiPath=str(workspace),
         title=title,
         updatedAt=datetime.fromtimestamp(latest_mtime, UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         artifactCount=len(artifacts),

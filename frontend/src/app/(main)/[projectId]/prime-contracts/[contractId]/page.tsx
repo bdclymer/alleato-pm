@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
@@ -47,6 +47,8 @@ import {
   useDeletePaymentApplication,
   paymentApplicationKeys,
 } from "@/hooks/use-payment-applications";
+import { primeContractKeys } from "@/hooks/use-prime-contracts";
+import { useProjectCompanies } from "@/hooks/use-project-companies";
 
 import { EmailsClient } from "../../emails/emails-client";
 import { PrimeContractOverviewTab } from "./components/PrimeContractOverviewTab";
@@ -65,6 +67,7 @@ import {
   PrimeContractSovTab,
   useSovEditing,
 } from "@/components/domain/contracts/prime-contract-detail";
+import { resolveContractLineBudgetCode } from "@/components/domain/contracts/prime-contract-detail/budget-code-resolution";
 
 import type { ContractFormData } from "@/components/domain/contracts/ContractForm";
 import type { MarkupFormItem } from "@/components/domain/contracts/prime-contract-form/types";
@@ -144,7 +147,17 @@ const parseBulletList = (value: string | null | undefined): string[] => {
 };
 
 const getTextValue = (value: string | null | undefined): { text: string; isMissing: boolean } => {
-  const normalized = value?.trim();
+  const normalized = value
+    ?.replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/?(p|div|li)[^>]*>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#\d+;/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
   if (!normalized) return { text: "—", isMissing: true };
   return { text: normalized, isMissing: false };
 };
@@ -226,6 +239,11 @@ export default function ProjectContractDetailPage() {
   const { data: paymentApplications = [], isLoading: paymentsLoading } = usePaymentApplications(Number(projectId), contractId);
   const deletePaymentApp = useDeletePaymentApplication(Number(projectId), contractId);
   const queryClient = useQueryClient();
+  const { companies: projectCompanies } = useProjectCompanies(String(projectId), {
+    status: "ACTIVE",
+    sort: "name",
+    per_page: 150,
+  });
   const [ownerInvoices, setOwnerInvoices] = useState<OwnerInvoiceSummary[]>([]);
   const [ownerInvoicesLoading, setOwnerInvoicesLoading] = useState(false);
 
@@ -259,26 +277,83 @@ export default function ProjectContractDetailPage() {
 
   // #region Data Fetching
 
+  const fetchContract = useCallback(async () => {
+    const response = await fetchWithTransientRouteRetry(
+      `/api/projects/${projectId}/contracts/${contractId}`,
+    );
+    if (!response.ok) {
+      setError(response.status === 404 ? "Contract not found" : "Failed to load contract");
+      return;
+    }
+    setContract(await response.json());
+  }, [contractId, projectId]);
+
+  const fetchLineItems = useCallback(async () => {
+    const response = await fetchWithTransientRouteRetry(
+      `/api/projects/${projectId}/contracts/${contractId}/line-items`,
+    );
+    if (!response.ok) {
+      handleFormError(
+        new Error(`HTTP ${response.status}${response.statusText ? ` ${response.statusText}` : ""}`),
+        { entity: "schedule of values", action: "load" },
+      );
+      return;
+    }
+    setLineItems((await response.json()) || []);
+  }, [contractId, projectId]);
+
+  const refreshContractAfterSovMutation = useCallback(async () => {
+    setLineItemsLoading(true);
+    try {
+      await Promise.all([
+        fetchContract(),
+        fetchLineItems(),
+        queryClient.invalidateQueries({
+          queryKey: primeContractKeys.all(Number(projectId)),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: primeContractKeys.detail(Number(projectId), contractId),
+        }),
+      ]);
+      router.refresh();
+    } finally {
+      setLineItemsLoading(false);
+    }
+  }, [contractId, fetchContract, fetchLineItems, projectId, queryClient, router]);
+
+  const handleSaveContractField = useCallback(
+    async (field: string, value: string | number | boolean | null) => {
+      await apiFetch(`/api/projects/${projectId}/contracts/${contractId}`, {
+        method: "PUT",
+        body: JSON.stringify({ [field]: value }),
+      });
+      await Promise.all([
+        fetchContract(),
+        queryClient.invalidateQueries({
+          queryKey: primeContractKeys.all(Number(projectId)),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: primeContractKeys.detail(Number(projectId), contractId),
+        }),
+      ]);
+      router.refresh();
+    },
+    [contractId, fetchContract, projectId, queryClient, router],
+  );
+
   useEffect(() => {
-    const fetchContract = async () => {
+    const loadContract = async () => {
       try {
         setLoading(true);
-        const response = await fetchWithTransientRouteRetry(
-          `/api/projects/${projectId}/contracts/${contractId}`,
-        );
-        if (!response.ok) {
-          setError(response.status === 404 ? "Contract not found" : "Failed to load contract");
-          return;
-        }
-        setContract(await response.json());
+        await fetchContract();
       } catch {
         setError("Failed to load contract");
       } finally {
         setLoading(false);
       }
     };
-    if (contractId && projectId) fetchContract();
-  }, [contractId, projectId]);
+    if (contractId && projectId) loadContract();
+  }, [contractId, fetchContract, projectId]);
 
   useEffect(() => {
     if (searchParams.get("edit") === "1") setIsEditing(true);
@@ -286,17 +361,10 @@ export default function ProjectContractDetailPage() {
 
   useEffect(() => {
     if (!contractId || !projectId) return;
-    const fetchLineItems = async () => {
+    const loadLineItems = async () => {
       try {
         setLineItemsLoading(true);
-        const response = await fetchWithTransientRouteRetry(
-          `/api/projects/${projectId}/contracts/${contractId}/line-items`,
-        );
-        if (response.ok) {
-          setLineItems((await response.json()) || []);
-        } else {
-          toast.error(`Failed to load schedule of values (${response.status})`);
-        }
+        await fetchLineItems();
       } catch (err) {
         console.error("Failed to load schedule of values:", err);
         toast.error("Failed to load schedule of values. Try refreshing the page.");
@@ -304,8 +372,8 @@ export default function ProjectContractDetailPage() {
         setLineItemsLoading(false);
       }
     };
-    fetchLineItems();
-  }, [contractId, projectId]);
+    loadLineItems();
+  }, [contractId, fetchLineItems, projectId]);
 
   useEffect(() => {
     if (!projectId) return;
@@ -453,6 +521,29 @@ export default function ProjectContractDetailPage() {
 
   const inclusionsList = useMemo(() => parseBulletList(contract?.inclusions), [contract?.inclusions]);
   const exclusionsList = useMemo(() => parseBulletList(contract?.exclusions), [contract?.exclusions]);
+  const companyOptions = useMemo(() => {
+    const options = new Map<string, string>();
+    for (const company of projectCompanies) {
+      const companyId = company.company_id || company.company?.id;
+      const companyName =
+        company.company?.name ??
+        ("company_name" in company && typeof company.company_name === "string"
+          ? company.company_name
+          : null);
+      if (companyId && companyName) {
+        options.set(companyId, companyName);
+      }
+    }
+    if (contract?.contractor_id && contract.contractor?.name) {
+      options.set(contract.contractor_id, contract.contractor.name);
+    }
+    if (contract?.architect_engineer_id && contract.architect_engineer?.name) {
+      options.set(contract.architect_engineer_id, contract.architect_engineer.name);
+    }
+    return Array.from(options.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [contract, projectCompanies]);
   const existingCostCodeByLineId = useMemo(
     () => new Map(lineItems.map((item) => [item.id, item.cost_code_id ?? null])),
     [lineItems],
@@ -689,9 +780,12 @@ export default function ProjectContractDetailPage() {
     setIsDeletingLineItem(true);
     try {
       await apiFetch(`/api/projects/${projectId}/contracts/${contractId}/line-items/${lineItemToDelete.id}`, { method: "DELETE" });
-      setLineItems((prev) => prev.filter((li) => li.id !== lineItemToDelete.id));
+      await refreshContractAfterSovMutation();
       toast.success("Line item deleted");
-    } catch { toast.error("Failed to delete line item"); } finally { setIsDeletingLineItem(false); setLineItemToDelete(null); }
+    } catch (error) {
+      await refreshContractAfterSovMutation().catch(() => undefined);
+      handleFormError(error, { entity: "line item", action: "delete" });
+    } finally { setIsDeletingLineItem(false); setLineItemToDelete(null); }
   };
 
   // ── Inline edit submit ──────────────────────────────────────────────────
@@ -911,9 +1005,9 @@ export default function ProjectContractDetailPage() {
     }
 
     const sovItems = lineItems.filter((item) => !item.markup_type).map((item) => {
-      const matchingBudgetCode = item.budget_code_id ? budgetCodes.find((c) => c.id === item.budget_code_id) : undefined;
+      const budgetCodeResolution = resolveContractLineBudgetCode(item, budgetCodes);
       return {
-        id: item.id, budgetCodeId: item.budget_code_id || "", budgetCodeLabel: matchingBudgetCode?.fullLabel ?? (item.cost_code ? `${item.cost_code.code} ${item.cost_code.name}` : undefined),
+        id: item.id, budgetCodeId: budgetCodeResolution.budgetCodeId, budgetCodeLabel: budgetCodeResolution.budgetCode?.fullLabel ?? (item.cost_code ? `${item.cost_code.code} ${item.cost_code.name}` : undefined),
         description: item.description, amount: item.total_cost, quantity: item.quantity, unitCost: item.unit_cost, unitOfMeasure: item.unit_of_measure ?? undefined, billedToDate: 0, amountRemaining: item.total_cost,
       };
     });
@@ -1045,13 +1139,27 @@ export default function ProjectContractDetailPage() {
         {activeTab === "overview" && (
           <PrimeContractOverviewTab
             contract={contract} changeOrders={changeOrders} projectId={String(projectId)}
+            companyOptions={companyOptions}
             formatDate={formatDate} getTextValue={getTextValue} inclusionsList={inclusionsList} exclusionsList={exclusionsList}
             formatStatusLabel={formatStatusLabel} formatCurrency={formatCurrency} lineItemsLoading={lineItemsLoading} lineItems={lineItems}
-            budgetCodes={budgetCodes} sovDraftBudgetCodeIds={sov.sovDraftBudgetCodeIds} isSovEditing={sov.isSovEditing} isSavingSovChanges={sov.isSavingSovChanges}
+            budgetCodes={budgetCodes}
+            financialMarkupSection={
+              <PrimeContractFinancialMarkupTab
+                projectId={projectId}
+                budgetCodes={budgetCodes}
+                verticalMarkups={verticalMarkups}
+                setVerticalMarkups={setVerticalMarkups}
+                savedVerticalMarkups={savedVerticalMarkups}
+                setSavedVerticalMarkups={setSavedVerticalMarkups}
+                markupsLoading={markupsLoading}
+                variant="compact"
+              />
+            }
+            sovDraftBudgetCodeIds={sov.sovDraftBudgetCodeIds} isSovEditing={sov.isSovEditing} isSavingSovChanges={sov.isSavingSovChanges}
             sovDraftItems={sov.sovDraftItems} onStartSovEdit={sov.handleStartSovEdit} onCancelSovEdit={sov.handleCancelSovEdit} onSaveSovEdit={sov.handleSaveSovEdit}
             onAddSovLine={sov.handleAddSovLine} onAddSovGroup={sov.handleAddSovGroup} onUpdateSovLine={sov.handleUpdateSovLine}
             onUpdateSovLineBudgetCode={sov.handleUpdateSovLineBudgetCode} onRemoveSovLine={sov.handleRemoveSovLine} onReorderSovLines={sov.handleReorderSovLines}
-            onRequestCreateBudgetCode={handleRequestCreateBudgetCodeForSovLine} onDeleteSovLine={sov.handleDeleteSovLine}
+            onRequestCreateBudgetCode={handleRequestCreateBudgetCodeForSovLine} onSaveContractField={handleSaveContractField} onDeleteSovLine={sov.handleDeleteSovLine}
             onImportEstimateToSov={() => setShowEstimateImportModal(true)}
           />
         )}

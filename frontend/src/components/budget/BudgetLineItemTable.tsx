@@ -16,8 +16,6 @@ interface BudgetLineItemTableProps {
   lineItems: BudgetLineItem[];
   projectCostCodes: ProjectCostCode[];
   loadingData: boolean;
-  openPopoverId: string | null;
-  onPopoverOpenChange: (id: string, open: boolean) => void;
   onBudgetCodeSelect: (rowId: string, costCode: ProjectCostCode) => void;
   onFieldChange: (
     id: string,
@@ -39,8 +37,6 @@ export function BudgetLineItemTable({
   lineItems,
   projectCostCodes,
   loadingData,
-  openPopoverId,
-  onPopoverOpenChange,
   onBudgetCodeSelect,
   onFieldChange,
   onRemoveRow,
@@ -65,7 +61,7 @@ export function BudgetLineItemTable({
     <div className="sm:rounded-md sm:bg-card sm:shadow-xs">
       <Stack gap="sm">
         {/* Summary Bar */}
-        <div className="border-b bg-muted px-4 sm:px-6 py-4 sm:rounded-t-md">
+        <div className="border-b px-4 sm:px-6 py-4 sm:rounded-t-md">
           <Inline justify="between" align="center">
             <Text size="sm" weight="medium" tone="default">
               {lineItems.length} Line Item{lineItems.length !== 1 ? "s" : ""}
@@ -110,7 +106,7 @@ export function BudgetLineItemTable({
             {/* Table Body */}
             <div className="divide-y divide-border bg-background">
               {loadingData ? (
-                <div className="px-4 py-8 text-center text-muted-foreground">
+                <div className="flex justify-center px-4 py-8">
                   <Text tone="muted">Loading project cost codes...</Text>
                 </div>
               ) : lineItems.length === 0 ? (
@@ -127,10 +123,6 @@ export function BudgetLineItemTable({
                     key={row.id}
                     item={row}
                     projectCostCodes={projectCostCodes}
-                    isPopoverOpen={openPopoverId === row.id}
-                    onPopoverOpenChange={(open) =>
-                      onPopoverOpenChange(row.id, open)
-                    }
                     onBudgetCodeSelect={(costCode) =>
                       onBudgetCodeSelect(row.id, costCode)
                     }
@@ -170,10 +162,6 @@ export function BudgetLineItemTable({
                   item={row}
                   index={index}
                   projectCostCodes={projectCostCodes}
-                  isPopoverOpen={openPopoverId === row.id}
-                  onPopoverOpenChange={(open) =>
-                    onPopoverOpenChange(row.id, open)
-                  }
                   onBudgetCodeSelect={(costCode) =>
                     onBudgetCodeSelect(row.id, costCode)
                   }

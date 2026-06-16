@@ -5,7 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UomSelect } from "./UomSelect";
 import { BudgetItemDeleteDialog } from "./BudgetItemDeleteDialog";
-import { BudgetCodeSelector } from "@/app/(main)/[projectId]/budget/setup/components";
+import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
+import { formatCurrency } from "@/lib/format";
+import { projectCostCodesToBudgetCodeOptions } from "@/lib/budget/project-cost-code-selector-options";
 import type {
   BudgetLineItem,
   ProjectCostCode,
@@ -15,8 +17,6 @@ interface BudgetLineItemCardProps {
   readonly item: BudgetLineItem;
   readonly index: number;
   readonly projectCostCodes: ProjectCostCode[];
-  readonly isPopoverOpen: boolean;
-  readonly onPopoverOpenChange: (open: boolean) => void;
   readonly onBudgetCodeSelect: (costCode: ProjectCostCode) => void;
   readonly onFieldChange: (field: keyof BudgetLineItem, value: string) => void;
   readonly onRemove: () => void;
@@ -33,8 +33,6 @@ export function BudgetLineItemCard({
   item,
   index,
   projectCostCodes,
-  isPopoverOpen,
-  onPopoverOpenChange,
   onBudgetCodeSelect,
   onFieldChange,
   onRemove,
@@ -43,6 +41,10 @@ export function BudgetLineItemCard({
   onKeyDown,
 }: BudgetLineItemCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+  const budgetCodeOptions = React.useMemo(
+    () => projectCostCodesToBudgetCodeOptions(projectCostCodes),
+    [projectCostCodes],
+  );
 
   const handleDeleteClick = () => {
     if (!canRemove) return;
@@ -58,10 +60,7 @@ export function BudgetLineItemCard({
     ? `"${item.costCodeLabel}" (Line ${index + 1})`
     : `Line ${index + 1}`;
 
-  const formattedAmount = parseFloat(item.amount || "0").toLocaleString(
-    "en-US",
-    { style: "currency", currency: "USD" },
-  );
+  const formattedAmount = formatCurrency(parseFloat(item.amount || "0"));
 
   return (
     <div className="rounded-md bg-muted p-4 space-y-4">
@@ -92,12 +91,13 @@ export function BudgetLineItemCard({
           Budget Code <span className="text-destructive">*</span>
         </Label>
         <BudgetCodeSelector
-          projectCostCodes={projectCostCodes}
-          selectedLabel={item.costCodeLabel}
-          onSelect={onBudgetCodeSelect}
+          value={item.projectCostCodeId}
+          budgetCodes={budgetCodeOptions}
+          onValueChange={(value) => {
+            const selected = projectCostCodes.find((code) => code.id === value);
+            if (selected) onBudgetCodeSelect(selected);
+          }}
           onCreateNew={onCreateNew}
-          open={isPopoverOpen}
-          onOpenChange={onPopoverOpenChange}
           className="w-full"
         />
       </div>

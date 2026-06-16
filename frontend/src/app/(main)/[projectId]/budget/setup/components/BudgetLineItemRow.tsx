@@ -11,7 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { UNITS_OF_MEASURE } from "@/constants/budget";
-import { BudgetCodeSelector } from "./BudgetCodeSelector";
+import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
+import { projectCostCodesToBudgetCodeOptions } from "@/lib/budget/project-cost-code-selector-options";
 import type { BudgetLineItem, ProjectCostCode } from "../types";
 
 interface BudgetLineItemRowProps {
@@ -19,10 +20,6 @@ interface BudgetLineItemRowProps {
   lineItem: BudgetLineItem;
   /** Available project cost codes */
   projectCostCodes: ProjectCostCode[];
-  /** Whether this row's popover is open */
-  isPopoverOpen: boolean;
-  /** Callback to set popover open state */
-  onPopoverOpenChange: (open: boolean) => void;
   /** Callback when a field changes */
   onFieldChange: (field: keyof BudgetLineItem, value: string) => void;
   /** Callback when a budget code is selected */
@@ -38,24 +35,25 @@ interface BudgetLineItemRowProps {
 export function BudgetLineItemRow({
   lineItem,
   projectCostCodes,
-  isPopoverOpen,
-  onPopoverOpenChange,
   onFieldChange,
   onBudgetCodeSelect,
   onCreateNew,
   onRemove,
   canRemove,
 }: BudgetLineItemRowProps) {
+  const budgetCodeOptions = projectCostCodesToBudgetCodeOptions(projectCostCodes);
+
   return (
     <tr>
       <td className="px-4 py-4">
         <BudgetCodeSelector
-          projectCostCodes={projectCostCodes}
-          selectedLabel={lineItem.costCodeLabel}
-          onSelect={onBudgetCodeSelect}
+          value={lineItem.projectCostCodeId}
+          budgetCodes={budgetCodeOptions}
+          onValueChange={(value) => {
+            const selected = projectCostCodes.find((code) => code.id === value);
+            if (selected) onBudgetCodeSelect(selected);
+          }}
           onCreateNew={onCreateNew}
-          open={isPopoverOpen}
-          onOpenChange={onPopoverOpenChange}
         />
       </td>
       <td className="px-4 py-4">

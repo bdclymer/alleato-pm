@@ -11,10 +11,15 @@ interface RouteParams {
 
 const RELATED_ITEM_TYPES = [
   "change_event",
+  "document",
   "drawing",
+  "meeting",
   "rfi",
   "specification",
   "submittal",
+  "prime_contract_change_order",
+  "commitment_co",
+  "commitment",
 ] as const;
 
 type RelatedItemType = (typeof RELATED_ITEM_TYPES)[number];
@@ -31,7 +36,7 @@ interface RelatedItemOption {
 }
 
 function optionSort(a: RelatedItemOption, b: RelatedItemOption): number {
-  return (a.relatedNumber || "").localeCompare(b.relatedNumber || "", undefined, {
+  return (a.relatedNumber || a.relatedTitle).localeCompare(b.relatedNumber || b.relatedTitle, undefined, {
     numeric: true,
     sensitivity: "base",
   });
@@ -84,6 +89,33 @@ export const GET = withApiGuardrails(
           id: item.id,
           relatedNumber: item.number,
           relatedTitle: item.title,
+          relatedStatus: item.status,
+        }));
+        break;
+      }
+
+      case "document": {
+        let query = supabase
+          .from("project_documents")
+          .select("id, title, file_name, status")
+          .eq("project_id", parsedProjectId)
+          .is("deleted_at", null)
+          .order("title", { ascending: true })
+          .limit(safeLimit);
+
+        if (search) {
+          query = query.or(`title.ilike.%${search}%,file_name.ilike.%${search}%`);
+        }
+
+        const { data, error } = await query;
+        if (error) {
+          return apiErrorResponse(error);
+        }
+
+        options = (data || []).map((item) => ({
+          id: String(item.id),
+          relatedNumber: null,
+          relatedTitle: item.title || item.file_name,
           relatedStatus: item.status,
         }));
         break;
@@ -177,6 +209,34 @@ export const GET = withApiGuardrails(
         break;
       }
 
+      case "meeting": {
+        let query = supabase
+          .from("document_metadata")
+          .select("id, title, file_name, date, status")
+          .eq("project_id", parsedProjectId)
+          .eq("type", "meeting")
+          .is("deleted_at", null)
+          .order("date", { ascending: false })
+          .limit(safeLimit);
+
+        if (search) {
+          query = query.or(`title.ilike.%${search}%,file_name.ilike.%${search}%`);
+        }
+
+        const { data, error } = await query;
+        if (error) {
+          return apiErrorResponse(error);
+        }
+
+        options = (data || []).map((item) => ({
+          id: item.id,
+          relatedNumber: item.date,
+          relatedTitle: item.title || item.file_name || "Meeting",
+          relatedStatus: item.status,
+        }));
+        break;
+      }
+
       case "specification": {
         let query = supabase
           .from("specifications")
@@ -198,6 +258,85 @@ export const GET = withApiGuardrails(
           id: item.id,
           relatedNumber: item.section_number,
           relatedTitle: item.section_title,
+          relatedStatus: item.status,
+        }));
+        break;
+      }
+
+      case "prime_contract_change_order": {
+        let query = supabase
+          .from("prime_contract_change_orders")
+          .select("id, pcco_number, title, status")
+          .eq("project_id", parsedProjectId)
+          .order("pcco_number", { ascending: true })
+          .limit(safeLimit);
+
+        if (search) {
+          query = query.or(`title.ilike.%${search}%,pcco_number.ilike.%${search}%`);
+        }
+
+        const { data, error } = await query;
+        if (error) {
+          return apiErrorResponse(error);
+        }
+
+        options = (data || []).map((item) => ({
+          id: String(item.id),
+          relatedNumber: item.pcco_number,
+          relatedTitle: item.title,
+          relatedStatus: item.status,
+        }));
+        break;
+      }
+
+      case "commitment_co": {
+        let query = supabase
+          .from("commitment_pcos")
+          .select("id, pco_number, title, status")
+          .eq("project_id", parsedProjectId)
+          .order("pco_number", { ascending: true })
+          .limit(safeLimit);
+
+        if (search) {
+          query = query.or(`title.ilike.%${search}%,pco_number.ilike.%${search}%`);
+        }
+
+        const { data, error } = await query;
+        if (error) {
+          return apiErrorResponse(error);
+        }
+
+        options = (data || []).map((item) => ({
+          id: String(item.id),
+          relatedNumber: item.pco_number,
+          relatedTitle: item.title,
+          relatedStatus: item.status,
+        }));
+        break;
+      }
+
+      case "commitment": {
+        let query = supabase
+          .from("commitments_unified")
+          .select("id, contract_number, title, status")
+          .eq("project_id", parsedProjectId)
+          .is("deleted_at", null)
+          .order("contract_number", { ascending: true })
+          .limit(safeLimit);
+
+        if (search) {
+          query = query.or(`title.ilike.%${search}%,contract_number.ilike.%${search}%`);
+        }
+
+        const { data, error } = await query;
+        if (error) {
+          return apiErrorResponse(error);
+        }
+
+        options = (data || []).map((item) => ({
+          id: String(item.id),
+          relatedNumber: item.contract_number,
+          relatedTitle: item.title || item.contract_number || "Commitment",
           relatedStatus: item.status,
         }));
         break;

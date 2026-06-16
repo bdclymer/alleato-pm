@@ -733,21 +733,26 @@ export default function NewPrimeContractPcoPage() {
     );
   }, []);
 
-  const uploadAttachmentsToPcco = useCallback(
-    async (primeCoId: number) => {
+  const uploadAttachments = useCallback(
+    async (params: {
+      entityType: "prime_contract_pco" | "prime_contract_change_order";
+      entityId: string | number;
+    }) => {
       if (attachmentFiles.length === 0) return 0;
+
+      const uploadPath =
+        params.entityType === "prime_contract_pco"
+          ? `/api/projects/${projectId}/prime-contract-pcos/${params.entityId}/attachments`
+          : `/api/projects/${projectId}/prime-contract-change-orders/${params.entityId}/attachments`;
 
       const results = await Promise.allSettled(
         attachmentFiles.map(async (file) => {
           const formData = new FormData();
           formData.append("file", file);
-          await apiFetch(
-            `/api/projects/${projectId}/prime-contract-change-orders/${primeCoId}/attachments`,
-            {
-              method: "POST",
-              body: formData,
-            },
-          );
+          await apiFetch(uploadPath, {
+            method: "POST",
+            body: formData,
+          });
         }),
       );
 
@@ -829,8 +834,26 @@ export default function NewPrimeContractPcoPage() {
           },
         );
 
-        toast.success("Prime Contract PCO created");
         const pcoId = result.pco?.id;
+        if (pcoId) {
+          const failedUploads = await uploadAttachments({
+            entityType: "prime_contract_pco",
+            entityId: pcoId,
+          });
+
+          if (failedUploads > 0) {
+            toast.warning(
+              `Prime Contract PCO created, but ${failedUploads} attachment${failedUploads === 1 ? "" : "s"} failed to upload.`,
+            );
+          } else {
+            toast.success("Prime Contract PCO created");
+          }
+        } else {
+          toast.warning(
+            "Prime Contract PCO created, but attachments could not be uploaded because the new PCO ID was not returned.",
+          );
+        }
+
         router.push(
           pcoId
             ? `/${projectId}/prime-contract-pcos/${pcoId}`
@@ -867,7 +890,10 @@ export default function NewPrimeContractPcoPage() {
       }
 
       toast.success("Prime Contract Change Order created");
-      const failedUploads = await uploadAttachmentsToPcco(promotedToCoId);
+      const failedUploads = await uploadAttachments({
+        entityType: "prime_contract_change_order",
+        entityId: promotedToCoId,
+      });
       if (failedUploads > 0) {
         toast.warning(
           `Change order created, but ${failedUploads} attachment${failedUploads === 1 ? "" : "s"} failed to upload.`,
@@ -948,69 +974,6 @@ export default function NewPrimeContractPcoPage() {
             onSubmit={form.handleSubmit(handleSubmit)}
             className="space-y-8"
           >
-            {/* Source Change Events */}
-            {hasChangeEvents && (
-              <section className="space-y-3">
-                <SectionRuleHeading
-                  label={`Source Change Event${changeEventIds.length === 1 ? "" : "s"} (${changeEventIds.length})`}
-                  className="[&_span]:text-primary"
-                />
-                {isLoadingChangeEvents ? (
-                  <InfoAlert variant="info" className="text-sm">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading source change events...
-                  </InfoAlert>
-                ) : sourceChangeEventError ? (
-                  <InfoAlert variant="error" className="text-sm">
-                    {sourceChangeEventError} The PCO cannot be created until every selected source event is loaded.
-                  </InfoAlert>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <div className="min-w-full divide-y divide-border/60">
-                      <div className="grid grid-cols-9 gap-4 py-2 text-xs font-semibold uppercase tracking-wide text-foreground">
-                        <div>Number</div>
-                        <div>Title</div>
-                        <div>Scope</div>
-                        <div>Type</div>
-                        <div>Reason</div>
-                        <div>Status</div>
-                        <div>Origin</div>
-                        <div>Complete</div>
-                        <div className="text-right">ROM</div>
-                      </div>
-                      {changeEvents.map((ce) => (
-                        <div
-                          key={ce.id}
-                          className="grid grid-cols-9 gap-4 py-2.5 text-sm text-foreground/80"
-                        >
-                          <div className="truncate font-medium text-foreground">
-                            <Link
-                              href={`/${projectId}/change-events/${ce.id}`}
-                              className="transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                            >
-                              {ce.number ? `CE ${ce.number}` : "CE"}
-                            </Link>
-                          </div>
-                          <div className="truncate">{ce.title}</div>
-                          <div className="truncate">{formatTableValue(ce.scope)}</div>
-                          <div className="truncate">{formatTableValue(ce.type)}</div>
-                          <div className="truncate">{formatTableValue(ce.reason)}</div>
-                          <div className="truncate">{formatTableValue(ce.status)}</div>
-                          <div className="truncate">{formatTableValue(ce.origin)}</div>
-                          <div>
-                            {isChangeEventComplete(ce.status) ? "Yes" : "No"}
-                          </div>
-                          <div className="text-right tabular-nums">
-                            {formatMoney(ce.rom)}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </section>
-            )}
-
             {/* Overview */}
             <section className="space-y-4">
               <SectionRuleHeading
@@ -1699,7 +1662,6 @@ export default function NewPrimeContractPcoPage() {
               <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2 lg:grid-cols-3">
                 <div className="md:col-span-2 lg:col-span-3">
                   <FileUploadField
-                    label="Attachments"
                     value={attachmentFileInfo}
                     onChange={handleAttachmentInfoChange}
                     onFilesSelected={handleAttachmentFilesSelected}
@@ -1709,6 +1671,69 @@ export default function NewPrimeContractPcoPage() {
                 </div>
               </div>
             </section>
+
+            {/* Source Change Events */}
+            {hasChangeEvents && (
+              <section className="space-y-3">
+                <SectionRuleHeading
+                  label={`Source Change Event${changeEventIds.length === 1 ? "" : "s"} (${changeEventIds.length})`}
+                  className="[&_span]:text-primary"
+                />
+                {isLoadingChangeEvents ? (
+                  <InfoAlert variant="info" className="text-sm">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Loading source change events...
+                  </InfoAlert>
+                ) : sourceChangeEventError ? (
+                  <InfoAlert variant="error" className="text-sm">
+                    {sourceChangeEventError} The PCO cannot be created until every selected source event is loaded.
+                  </InfoAlert>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <div className="min-w-full divide-y divide-border/60">
+                      <div className="grid grid-cols-9 gap-4 py-2 text-xs font-semibold uppercase tracking-wide text-foreground">
+                        <div>Number</div>
+                        <div>Title</div>
+                        <div>Scope</div>
+                        <div>Type</div>
+                        <div>Reason</div>
+                        <div>Status</div>
+                        <div>Origin</div>
+                        <div>Complete</div>
+                        <div className="text-right">ROM</div>
+                      </div>
+                      {changeEvents.map((ce) => (
+                        <div
+                          key={ce.id}
+                          className="grid grid-cols-9 gap-4 py-2.5 text-sm text-foreground/80"
+                        >
+                          <div className="truncate font-medium text-foreground">
+                            <Link
+                              href={`/${projectId}/change-events/${ce.id}`}
+                              className="transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            >
+                              {ce.number ? `CE ${ce.number}` : "CE"}
+                            </Link>
+                          </div>
+                          <div className="truncate">{ce.title}</div>
+                          <div className="truncate">{formatTableValue(ce.scope)}</div>
+                          <div className="truncate">{formatTableValue(ce.type)}</div>
+                          <div className="truncate">{formatTableValue(ce.reason)}</div>
+                          <div className="truncate">{formatTableValue(ce.status)}</div>
+                          <div className="truncate">{formatTableValue(ce.origin)}</div>
+                          <div>
+                            {isChangeEventComplete(ce.status) ? "Yes" : "No"}
+                          </div>
+                          <div className="text-right tabular-nums">
+                            {formatMoney(ce.rom)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </section>
+            )}
           </form>
         </Form>
       )}

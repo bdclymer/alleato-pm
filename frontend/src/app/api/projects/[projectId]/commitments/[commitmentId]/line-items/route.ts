@@ -491,6 +491,15 @@ export const PUT = withApiGuardrails(
       }
     }
 
+    if (errors.length > 0) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: `${ROUTE_WHERE}#upsert-sov-items`,
+        message: "Failed to save one or more SOV line items.",
+        details: errors,
+      });
+    }
+
     // Calculate total amount for budget impact tracking
     const totalAmount = lineItems.reduce(
       (sum, item) => sum + (item.amount ?? 0),

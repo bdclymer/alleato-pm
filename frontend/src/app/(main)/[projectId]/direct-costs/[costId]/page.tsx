@@ -2,22 +2,28 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { PageShell, ContentSectionStack, SectionRuleHeading, LabelValueRow } from "@/components/layout";
+import { PageShell, ContentSectionStack, DetailPanel, SectionRuleHeading, LabelValueRow } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  InlineTable,
+  InlineTableBody,
+  InlineTableCell,
+  DetailField,
+  DetailFieldGrid,
+  InlineTableFooter,
+  InlineTableFooterCell,
+  InlineTableFooterRow,
+  InlineTableHeader,
+  InlineTableHeaderCell,
+  InlineTableHeaderRow,
+  InlineTableRow,
+} from "@/components/ds";
 import { toast } from "sonner";
 import { formatCurrency, formatDate } from "@/lib/table-config/formatters";
 import { ArrowLeft } from "lucide-react";
+import { apiFetch } from "@/lib/api-client";
 
 interface DirectCostDetailPageProps {
   params: Promise<{
@@ -113,15 +119,9 @@ export default function DirectCostDetailPage({
     const fetchDirectCost = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(
+        const data = await apiFetch<DirectCostDetail>(
           `/api/projects/${resolvedParams.projectId}/direct-costs/${resolvedParams.costId}`,
         );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch direct cost");
-        }
-
-        const data = await response.json();
         setDirectCost(data);
       } catch {
         toast.error("Failed to load direct cost details");
@@ -215,43 +215,32 @@ export default function DirectCostDetailPage({
                     {directCost.status}
                   </Badge>
                 </div>
-                <dl className="space-y-4 text-sm">
-                  <LabelValueRow label="Total Amount">
+                <DetailFieldGrid columns={2}>
+                  <DetailField label="Total Amount">
                     <span className="text-2xl font-semibold">
                       {formatCurrency(directCost.total_amount)}
                     </span>
-                  </LabelValueRow>
-                  <LabelValueRow label="Date">
-                    {formatDate(directCost.date)}
-                  </LabelValueRow>
-                  {directCost.vendor ? (
-                    <LabelValueRow label="Vendor">
-                      {directCost.vendor.name}
-                    </LabelValueRow>
-                  ) : (
-                    <LabelValueRow label="Vendor" missing />
-                  )}
+                  </DetailField>
+                  <DetailField label="Date" value={directCost.date} date />
+                  <DetailField
+                    label="Vendor"
+                    value={directCost.vendor?.name}
+                  />
                   {directCost.employee ? (
-                    <LabelValueRow label="Employee">
+                    <DetailField label="Employee">
                       {directCost.employee.first_name}{" "}
                       {directCost.employee.last_name}
-                    </LabelValueRow>
+                    </DetailField>
                   ) : null}
-                  <LabelValueRow label="Invoice Number" missing={!invoiceNumber}>
-                    {invoiceNumber}
-                  </LabelValueRow>
+                  <DetailField label="Invoice Number" value={invoiceNumber} />
                   {directCost.received_date && (
-                    <LabelValueRow label="Received Date">
-                      {formatDate(directCost.received_date)}
-                    </LabelValueRow>
+                    <DetailField label="Received Date" value={directCost.received_date} date />
                   )}
                   {directCost.paid_date && (
-                    <LabelValueRow label="Paid Date">
-                      {formatDate(directCost.paid_date)}
-                    </LabelValueRow>
+                    <DetailField label="Paid Date" value={directCost.paid_date} date />
                   )}
                   {directCost.acumatica_sync_at && (
-                    <LabelValueRow label="Acumatica">
+                    <DetailField label="Acumatica">
                       {directCost.acumatica_ref_nbr ? (
                         <a
                           href={`https://alleatogroup.acumatica.com/Main?ScreenId=PM304000&RefNbr=${encodeURIComponent(directCost.acumatica_ref_nbr)}`}
@@ -265,19 +254,19 @@ export default function DirectCostDetailPage({
                       ) : (
                         <Badge variant="outline">Synced</Badge>
                       )}
-                    </LabelValueRow>
+                    </DetailField>
                   )}
                   {directCost.description && (
-                    <LabelValueRow label="Description">
+                    <DetailField label="Description" span={2}>
                       {directCost.description}
-                    </LabelValueRow>
+                    </DetailField>
                   )}
-                </dl>
+                </DetailFieldGrid>
               </div>
               <div className="space-y-8">
                 <div>
                   <SectionRuleHeading label="Record Information" className="[&_span]:text-primary" />
-                  <div className="rounded-md border border-border bg-muted p-6">
+                  <DetailPanel>
                     <dl className="space-y-3 text-sm">
                       <LabelValueRow label="Created">
                         {formatDate(directCost.created_at, "MMM d, yyyy HH:mm")}
@@ -289,7 +278,7 @@ export default function DirectCostDetailPage({
                           </LabelValueRow>
                         )}
                     </dl>
-                  </div>
+                  </DetailPanel>
                 </div>
               </div>
             </div>
@@ -303,58 +292,56 @@ export default function DirectCostDetailPage({
                   label={`Line Items (${directCost.line_items.length})`}
                   className="[&_span]:text-primary"
                 />
-                <div className="rounded-md border border-border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Budget Code</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead className="text-right">Qty</TableHead>
-                        <TableHead>UOM</TableHead>
-                        <TableHead className="text-right">Unit Cost</TableHead>
-                        <TableHead className="text-right">Line Total</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {directCost.line_items
-                        .sort((a, b) => a.line_order - b.line_order)
-                        .map((li) => (
-                          <TableRow key={li.id}>
-                            <TableCell className="font-medium">
-                              {li.budget_code?.code ?? "-"}
-                            </TableCell>
-                            <TableCell>
-                              {li.description ??
-                                li.budget_code?.description ??
-                                "-"}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {li.quantity}
-                            </TableCell>
-                            <TableCell>{li.uom}</TableCell>
-                            <TableCell className="text-right">
-                              {formatCurrency(li.unit_cost)}
-                            </TableCell>
-                            <TableCell className="text-right font-medium">
-                              {formatCurrency(
-                                li.line_total ?? li.quantity * li.unit_cost,
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                    </TableBody>
-                    <TableFooter>
-                      <TableRow>
-                        <TableCell colSpan={5} className="font-semibold">
-                          Total
-                        </TableCell>
-                        <TableCell className="text-right font-semibold">
-                          {formatCurrency(lineItemsTotal)}
-                        </TableCell>
-                      </TableRow>
-                    </TableFooter>
-                  </Table>
-                </div>
+                <InlineTable variant="read">
+                  <InlineTableHeader>
+                    <InlineTableHeaderRow>
+                      <InlineTableHeaderCell>Budget Code</InlineTableHeaderCell>
+                      <InlineTableHeaderCell>Description</InlineTableHeaderCell>
+                      <InlineTableHeaderCell align="right">Qty</InlineTableHeaderCell>
+                      <InlineTableHeaderCell>UOM</InlineTableHeaderCell>
+                      <InlineTableHeaderCell align="right">Unit Cost</InlineTableHeaderCell>
+                      <InlineTableHeaderCell align="right">Line Total</InlineTableHeaderCell>
+                    </InlineTableHeaderRow>
+                  </InlineTableHeader>
+                  <InlineTableBody>
+                    {directCost.line_items
+                      .sort((a, b) => a.line_order - b.line_order)
+                      .map((li) => (
+                        <InlineTableRow key={li.id}>
+                          <InlineTableCell className="font-medium">
+                            {li.budget_code?.code ?? "-"}
+                          </InlineTableCell>
+                          <InlineTableCell>
+                            {li.description ??
+                              li.budget_code?.description ??
+                              "-"}
+                          </InlineTableCell>
+                          <InlineTableCell align="right">
+                            {li.quantity}
+                          </InlineTableCell>
+                          <InlineTableCell>{li.uom}</InlineTableCell>
+                          <InlineTableCell align="right">
+                            {formatCurrency(li.unit_cost)}
+                          </InlineTableCell>
+                          <InlineTableCell align="right" className="font-medium">
+                            {formatCurrency(
+                              li.line_total ?? li.quantity * li.unit_cost,
+                            )}
+                          </InlineTableCell>
+                        </InlineTableRow>
+                      ))}
+                  </InlineTableBody>
+                  <InlineTableFooter>
+                    <InlineTableFooterRow>
+                      <InlineTableFooterCell colSpan={5}>
+                        Total
+                      </InlineTableFooterCell>
+                      <InlineTableFooterCell align="right">
+                        {formatCurrency(lineItemsTotal)}
+                      </InlineTableFooterCell>
+                    </InlineTableFooterRow>
+                  </InlineTableFooter>
+                </InlineTable>
               </div>
             </section>
           )}

@@ -32,12 +32,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Inline } from "@/components/layout/inline";
 import { Text } from "@/components/ds/text";
-import { PageShell } from "@/components/layout";
-import { StatusBadge, EmptyState } from "@/components/ds";
+import { PageShell, PageTabs } from "@/components/layout";
+import { StatusBadge, EmptyState, ErrorState } from "@/components/ds";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import {
   formatMoney,
@@ -179,16 +178,14 @@ export default function CommitmentPcoDetailPage() {
   if (error || !pco) {
     return (
       <PageShell
-        variant="dashboard"
+        variant="detail"
         title="Error"
-        actions={
-          <Button variant="ghost" size="sm" onClick={handleBack}>
-            <ArrowLeft className="mr-1 h-4 w-4" />
-            Back
-          </Button>
-        }
+        onBack={handleBack}
       >
-        <Text tone="destructive">{error || "Commitment PCO not found"}</Text>
+        <ErrorState
+          error={error || "Commitment PCO not found"}
+          onRetry={handleBack}
+        />
       </PageShell>
     );
   }
@@ -308,32 +305,35 @@ export default function CommitmentPcoDetailPage() {
         </div>
       )}
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList variant="line">
-          <TabsTrigger value="line-items" data-testid="pco-tab-line-items">
-            Line Items
-          </TabsTrigger>
-          <TabsTrigger value="source-ces" data-testid="pco-tab-source-ces">
-            Source Change Events ({linkedCeCount})
-          </TabsTrigger>
-        </TabsList>
+      <PageTabs
+        variant="inline"
+        tabs={[
+          {
+            label: "Line Items",
+            href: "line-items",
+            isActive: activeTab === "line-items",
+            testId: "pco-tab-line-items",
+          },
+          {
+            label: `Source Change Events (${linkedCeCount})`,
+            href: "source-ces",
+            isActive: activeTab === "source-ces",
+            testId: "pco-tab-source-ces",
+          },
+        ]}
+        onTabClick={(href) => setActiveTab(href)}
+      />
 
-        <div className="pt-4">
-          {/* Line Items tab */}
-          <TabsContent value="line-items">
-            <PcoLineItemsTable pco={pco} />
-          </TabsContent>
+      <div className="pt-4">
+        {activeTab === "line-items" && <PcoLineItemsTable pco={pco} />}
 
-          {/* Source Change Events tab */}
-          <TabsContent value="source-ces">
-            <PcoLinkedChangeEvents
-              changeEvents={pco.linked_change_events}
-              projectId={projectId}
-            />
-          </TabsContent>
-        </div>
-      </Tabs>
+        {activeTab === "source-ces" && (
+          <PcoLinkedChangeEvents
+            changeEvents={pco.linked_change_events}
+            projectId={projectId}
+          />
+        )}
+      </div>
 
       {/* Delete dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -385,16 +385,18 @@ export default function CommitmentPcoDetailPage() {
 function PcoLineItemsTable({ pco }: { pco: CommitmentPcoDetail }) {
   // The detail API doesn't return line_items yet (table may not exist),
   // so we show an empty state or a basic table if data is present.
-  const lineItems = (pco as any).line_items as
-    | Array<{
+  const lineItems = (
+    pco as CommitmentPcoDetail & {
+      line_items?: Array<{
         id: string;
         description: string;
         quantity: number;
         unit_of_measure: string;
         unit_cost: number;
         amount: number;
-      }>
-    | undefined;
+      }>;
+    }
+  ).line_items;
 
   if (!lineItems || lineItems.length === 0) {
     return (

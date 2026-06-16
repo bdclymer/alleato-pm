@@ -12,7 +12,9 @@ interface RouteParams {
 
 const RELATED_ITEM_TYPES = [
   "change_event",
+  "document",
   "drawing",
+  "meeting",
   "rfi",
   "specification",
   "submittal",
@@ -27,12 +29,21 @@ function isSupportedRelatedType(value: string): value is RelatedItemType {
   return (RELATED_ITEM_TYPES as readonly string[]).includes(value);
 }
 
+function parseNumericRelatedId(relatedId: string): number | null {
+  const parsed = Number.parseInt(relatedId, 10);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
 function buildRelatedHref(projectId: number, type: RelatedItemType, id: string): string {
   switch (type) {
     case "change_event":
       return `/${projectId}/change-events/${id}`;
+    case "document":
+      return `/${projectId}/documents/${id}`;
     case "drawing":
       return `/${projectId}/drawings/${id}`;
+    case "meeting":
+      return `/${projectId}/meetings/${id}`;
     case "rfi":
       return `/${projectId}/rfis/${id}`;
     case "specification":
@@ -78,6 +89,26 @@ async function getRelatedSourceRecord(
       return {
         relatedNumber: data.number,
         relatedTitle: data.title,
+        relatedStatus: data.status,
+      };
+    }
+
+    case "document": {
+      const parsedRelatedId = parseNumericRelatedId(relatedId);
+      if (parsedRelatedId === null) return null;
+
+      const { data, error } = await supabase
+        .from("project_documents")
+        .select("id, title, file_name, status, deleted_at")
+        .eq("project_id", projectId)
+        .eq("id", parsedRelatedId)
+        .is("deleted_at", null)
+        .single();
+
+      if (error || !data) return null;
+      return {
+        relatedNumber: null,
+        relatedTitle: data.title || data.file_name,
         relatedStatus: data.status,
       };
     }
@@ -131,6 +162,24 @@ async function getRelatedSourceRecord(
       };
     }
 
+    case "meeting": {
+      const { data, error } = await supabase
+        .from("document_metadata")
+        .select("id, title, file_name, date, status, deleted_at")
+        .eq("project_id", projectId)
+        .eq("id", relatedId)
+        .eq("type", "meeting")
+        .is("deleted_at", null)
+        .single();
+
+      if (error || !data) return null;
+      return {
+        relatedNumber: data.date,
+        relatedTitle: data.title || data.file_name || "Meeting",
+        relatedStatus: data.status,
+      };
+    }
+
     case "specification": {
       const { data, error } = await supabase
         .from("specifications")
@@ -143,6 +192,58 @@ async function getRelatedSourceRecord(
       return {
         relatedNumber: data.section_number,
         relatedTitle: data.section_title,
+        relatedStatus: data.status,
+      };
+    }
+
+    case "prime_contract_change_order": {
+      const parsedRelatedId = parseNumericRelatedId(relatedId);
+      if (parsedRelatedId === null) return null;
+
+      const { data, error } = await supabase
+        .from("prime_contract_change_orders")
+        .select("id, pcco_number, title, status")
+        .eq("project_id", projectId)
+        .eq("id", parsedRelatedId)
+        .single();
+
+      if (error || !data) return null;
+      return {
+        relatedNumber: data.pcco_number,
+        relatedTitle: data.title,
+        relatedStatus: data.status,
+      };
+    }
+
+    case "commitment_co": {
+      const { data, error } = await supabase
+        .from("commitment_pcos")
+        .select("id, pco_number, title, status")
+        .eq("project_id", projectId)
+        .eq("id", relatedId)
+        .single();
+
+      if (error || !data) return null;
+      return {
+        relatedNumber: data.pco_number,
+        relatedTitle: data.title,
+        relatedStatus: data.status,
+      };
+    }
+
+    case "commitment": {
+      const { data, error } = await supabase
+        .from("commitments_unified")
+        .select("id, contract_number, title, status, deleted_at")
+        .eq("project_id", projectId)
+        .eq("id", relatedId)
+        .is("deleted_at", null)
+        .single();
+
+      if (error || !data) return null;
+      return {
+        relatedNumber: data.contract_number,
+        relatedTitle: data.title || data.contract_number || "Commitment",
         relatedStatus: data.status,
       };
     }

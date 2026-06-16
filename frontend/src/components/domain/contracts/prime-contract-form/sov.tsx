@@ -5,18 +5,10 @@ import { toast } from "sonner";
 
 import { FormSection } from "@/components/forms/FormSection";
 import { MoneyField } from "@/components/forms/MoneyField";
+import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { InfoAlert } from "@/components/ds/InfoAlert";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from "@/components/ui/command";
 import {
   Modal as Dialog,
   ModalContent as DialogContent,
@@ -40,11 +32,6 @@ import {
 } from "@/components/ds/inline-table";
 import { Label } from "@/components/ui/label";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -64,7 +51,6 @@ import {
   FileSpreadsheet,
   Lock,
   Plus,
-  Search,
   Trash2,
   Upload,
   X,
@@ -72,6 +58,10 @@ import {
 
 import { ImportFromBudgetModal } from "@/components/domain/contracts/ImportFromBudgetModal";
 import { apiFetch } from "@/lib/api-client";
+import {
+  resolveBudgetCodeByCodeAndCostType,
+  resolvePrimeCoBudgetCode,
+} from "@/lib/budget/budget-code-selection";
 import type { EstimateWorkbookImportRow } from "@/lib/prime-contracts/estimate-workbook-sov";
 import type { BudgetCode, ContractFormData, SOVLineItem } from "./types";
 
@@ -87,16 +77,11 @@ export function PrimeContractSovSection({
   formData,
   budgetCodes,
   loadingBudgetCodes,
-  filteredBudgetCodes,
-  openBudgetCodePopover,
-  budgetCodeSearchQuery,
   showImportFromBudget,
   showImportEstimateWorkbook,
   sovColumnCount,
   isUnitQuantityMode,
   sovTotals,
-  onBudgetCodeSearchQueryChange,
-  onOpenBudgetCodePopoverChange,
   onShowImportFromBudgetChange,
   onShowImportEstimateWorkbookChange,
   onShowCreateBudgetCodeModal,
@@ -117,9 +102,6 @@ export function PrimeContractSovSection({
   formData: Partial<ContractFormData>;
   budgetCodes: BudgetCode[];
   loadingBudgetCodes: boolean;
-  filteredBudgetCodes: BudgetCode[];
-  openBudgetCodePopover: string | null;
-  budgetCodeSearchQuery: string;
   showImportFromBudget: boolean;
   showImportEstimateWorkbook: boolean;
   sovColumnCount: number;
@@ -129,8 +111,6 @@ export function PrimeContractSovSection({
     billedToDate: number;
     amountRemaining: number;
   };
-  onBudgetCodeSearchQueryChange: (value: string) => void;
-  onOpenBudgetCodePopoverChange: (value: string | null) => void;
   onShowImportFromBudgetChange: (open: boolean) => void;
   onShowImportEstimateWorkbookChange: (open: boolean) => void;
   onShowCreateBudgetCodeModal: () => void;
@@ -432,73 +412,33 @@ export function PrimeContractSovSection({
                       />
                     </InlineTableCell>
                     <InlineTableCell>
-                      <Popover
-                        open={openBudgetCodePopover === item.id}
-                        onOpenChange={(open) =>
-                          onOpenBudgetCodePopoverChange(open ? item.id : null)
-                        }
-                      >
-                        <PopoverTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            role="combobox"
-                            className="h-8 w-full justify-between border-border bg-background px-3 text-left !text-xs font-normal"
-                            data-testid="sov-line-budget-code"
-                          >
-                            <span className="truncate">
-                              {item.budgetCodeLabel ||
-                                budgetCodes.find(
-                                  (c) => c.id === item.budgetCodeId,
-                                )?.fullLabel ||
-                                "Select budget code..."}
-                            </span>
-                            <Search className="shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-96 p-0" align="start">
-                          <Command>
-                            <CommandInput
-                              placeholder="Search budget codes..."
-                              value={budgetCodeSearchQuery}
-                              onValueChange={onBudgetCodeSearchQueryChange}
-                            />
-                            <CommandList>
-                              <CommandEmpty>
-                                {loadingBudgetCodes
-                                  ? "Loading..."
-                                  : "No budget codes found."}
-                              </CommandEmpty>
-                              <CommandGroup>
-                                {filteredBudgetCodes.map((code) => (
-                                  <CommandItem
-                                    key={code.id}
-                                    value={code.fullLabel}
-                                    onSelect={() =>
-                                      onHandleBudgetCodeSelect(item.id, code)
-                                    }
-                                  >
-                                    {code.fullLabel}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                              <CommandSeparator />
-                              <CommandGroup>
-                                <CommandItem
-                                  onSelect={() => {
-                                    onOpenBudgetCodePopoverChange(null);
-                                    onShowCreateBudgetCodeModal();
-                                  }}
-                                  className="text-primary"
-                                >
-                                  <Plus className="mr-2 h-4 w-4" />
-                                  Create New Budget Code
-                                </CommandItem>
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
+                      {(() => {
+                        const resolution = resolvePrimeCoBudgetCode(
+                          item.budgetCodeId ?? item.budgetCodeLabel,
+                          budgetCodes,
+                        );
+                        return (
+                          <BudgetCodeSelector
+                            value={resolution.selectorValue}
+                            onValueChange={(_value, code) =>
+                              onHandleBudgetCodeSelect(item.id, code)
+                            }
+                            onCreateNew={onShowCreateBudgetCodeModal}
+                            budgetCodes={budgetCodes}
+                            loading={loadingBudgetCodes}
+                            placeholder={
+                              resolution.isMapped || !item.budgetCodeId
+                                ? "Select budget code..."
+                                : resolution.displayCode
+                            }
+                            error={
+                              Boolean(item.budgetCodeId) &&
+                              !resolution.isMapped
+                            }
+                            className="h-8 px-3 !text-xs"
+                          />
+                        );
+                      })()}
                     </InlineTableCell>
                     <InlineTableCell>
                       <Input
@@ -716,17 +656,10 @@ function resolveEstimateBudgetCode(
   row: EstimateWorkbookImportRow,
   budgetCodes: BudgetCode[],
 ): BudgetCode | undefined {
-  return (
-    budgetCodes.find(
-      (code) =>
-        (code.legacyCostCodeId === row.costCode ||
-          code.code === row.costCode) &&
-        (row.costTypeCode ? code.costType === row.costTypeCode : true),
-    ) ??
-    budgetCodes.find(
-      (code) =>
-        code.legacyCostCodeId === row.costCode || code.code === row.costCode,
-    )
+  return resolveBudgetCodeByCodeAndCostType(
+    row.costCode,
+    row.costTypeCode,
+    budgetCodes,
   );
 }
 

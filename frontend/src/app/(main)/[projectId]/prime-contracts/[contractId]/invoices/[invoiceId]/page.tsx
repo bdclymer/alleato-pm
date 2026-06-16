@@ -5,10 +5,9 @@ import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { Download, Plus, Trash2, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
-import { PageShell } from "@/components/layout";
+import { PageShell, PageTabs } from "@/components/layout";
 import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/ds";
 import {
   usePaymentApplication,
@@ -282,14 +281,22 @@ export default function InvoiceDetailPage({
         </div>
       }
     >
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="summary">Summary</TabsTrigger>
-          <TabsTrigger value="detail">Detail</TabsTrigger>
-          <TabsTrigger value="change-history">Change History</TabsTrigger>
-        </TabsList>
+      <PageTabs
+        variant="inline"
+        tabs={[
+          { label: "Summary", href: "summary", isActive: activeTab === "summary" },
+          { label: "Detail", href: "detail", isActive: activeTab === "detail" },
+          {
+            label: "Change History",
+            href: "change-history",
+            isActive: activeTab === "change-history",
+          },
+        ]}
+        onTabClick={(href) => setActiveTab(href)}
+      />
 
-        <TabsContent value="summary" className="space-y-8 mt-6">
+      {activeTab === "summary" && (
+        <div className="mt-6 space-y-8">
           <InvoiceGeneralSettings
             invoice={invoice}
             onUpdate={handleUpdate}
@@ -301,9 +308,11 @@ export default function InvoiceDetailPage({
             contract={contractSummary}
             previousPaymentDue={previousPaymentDue}
           />
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="detail" className="mt-6">
+      {activeTab === "detail" && (
+        <div className="mt-6">
           {lineItemsLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-sm text-muted-foreground">
@@ -331,16 +340,18 @@ export default function InvoiceDetailPage({
               retainageEditBlockReason={invoice.retainage_edit_block_reason}
             />
           )}
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="change-history" className="mt-6">
+      {activeTab === "change-history" && (
+        <div className="mt-6">
           <EmptyState
             icon={<FileSpreadsheet className="h-10 w-10" />}
             title="Change history coming soon"
             description="Invoice change history will appear here once tracking is available."
           />
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
     </PageShell>
     </>
   );

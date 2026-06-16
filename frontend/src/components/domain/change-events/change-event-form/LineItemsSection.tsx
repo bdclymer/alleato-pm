@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, Download, Plus, Upload } from "lucide-react";
+import { ChevronDown, Download, Upload } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/table-config/formatters";
+import { InlineAddButton } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { FormSection } from "@/components/forms";
 import {
@@ -345,16 +346,9 @@ function LineItemsToolbar({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Button
-        type="button"
-        variant="link"
-        size="sm"
-        onClick={addLineItem}
-        className="h-8 gap-1 px-0 font-semibold text-primary underline-offset-4 hover:bg-transparent hover:text-primary/90"
-      >
-        <Plus className="text-primary" />
+      <InlineAddButton onClick={addLineItem}>
         Add Line Item
-      </Button>
+      </InlineAddButton>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

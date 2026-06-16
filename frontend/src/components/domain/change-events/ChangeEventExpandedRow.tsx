@@ -55,7 +55,11 @@ interface MarkupItem {
 }
 
 interface ExpandedRowContext {
-  columns: Array<{ id: string; width?: number }>;
+  columns: Array<{
+    id: string;
+    width?: number;
+    align?: "left" | "center" | "right";
+  }>;
   hasSelection: boolean;
   hasActions: boolean;
 }
@@ -311,8 +315,18 @@ export function ChangeEventExpandedRow({
       {context.columns.map((col) => (
         <TableCell
           key={col.id}
-          className="!py-1.5 !px-2 text-xs text-foreground/80 leading-4 [&_*]:!text-xs [&_*]:!leading-4"
-          style={col.width ? { width: col.width, maxWidth: col.width } : undefined}
+          className={`!py-1.5 !px-4 text-xs text-foreground/80 leading-4 [&_*]:!text-xs [&_*]:!leading-4 ${
+            col.align === "right"
+              ? "text-right"
+              : col.align === "center"
+                ? "text-center"
+                : "text-left"
+          }`}
+          style={
+            col.width
+              ? { width: col.width, minWidth: col.width, maxWidth: col.width }
+              : undefined
+          }
         >
           {getValue(col.id)}
         </TableCell>

@@ -39,7 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DateAvatar, EmptyState } from "@/components/ds";
-import { PageContainer } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { AttendeeAvatarStack } from "@/components/meetings/attendee-avatar-stack";
 import { MeetingTasksManager } from "@/components/meetings/meeting-tasks-manager";
 import { useProjects } from "@/hooks/use-projects";
@@ -566,25 +566,24 @@ export function MeetingDetailContent({
   const hiddenKeywordCount = keywordList.length - visibleKeywords.length;
 
   return (
-    <PageContainer maxWidth="xl" className="pb-12">
-      {/* Page header — back arrow sits inline left of the title, no dedicated row */}
-      <div className="mb-6 flex items-start gap-2">
-        {backHref ? (
-          <Button
-            asChild
-            size="icon"
-            variant="ghost"
-            className="-ml-2 mt-0.5 h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-          >
-            <Link href={backHref} aria-label={backLabel ? `Back to ${backLabel}` : "Back"}>
-              <ArrowLeft className="h-4 w-4" />
+    <PageShell
+      variant="detailWide"
+      title={meeting.title || "Untitled Meeting"}
+      actions={
+        backHref ? (
+          <Button asChild size="sm" variant="ghost">
+            <Link
+              href={backHref}
+              aria-label={backLabel ? `Back to ${backLabel}` : "Back"}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {backLabel || "Meetings"}
             </Link>
           </Button>
-        ) : null}
-        <h1 className="text-2xl font-semibold text-foreground">
-          {meeting.title || "Untitled Meeting"}
-        </h1>
-      </div>
+        ) : undefined
+      }
+      contentClassName="pb-12"
+    >
 
       {/* Meta bar */}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-border pb-4 mb-8">
@@ -898,6 +897,6 @@ export function MeetingDetailContent({
         isSaving={isSavingProject}
         hasProject={Boolean(assignedProjectId)}
       />
-    </PageContainer>
+    </PageShell>
   );
 }

@@ -7,11 +7,11 @@ import { ArrowLeft, Check, Mail, MoreVertical, Phone } from "lucide-react";
 
 import type { Database } from "@/types/database.types";
 import { createClient } from "@/lib/supabase/client";
-import { LabelValueRow, PageShell } from "@/components/layout";
-import { ErrorState } from "@/components/ds";
+import { formatCurrency } from "@/lib/format";
+import { PageShell } from "@/components/layout";
+import { DetailField, DetailFieldGrid, ErrorState, StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StatusBadge } from "@/components/ds";
 import {
   Modal,
   ModalContent,
@@ -70,14 +70,6 @@ function getContactInitials(contact: Contact): string {
   const last = (contact.last_name ?? "").trim().charAt(0);
   const initials = `${first}${last}`.toUpperCase();
   return initials || "?";
-}
-
-function DetailField({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <LabelValueRow label={label}>
-      <span className="text-sm text-foreground">{value}</span>
-    </LabelValueRow>
-  );
 }
 
 export default function VendorDetailPage() {
@@ -391,23 +383,23 @@ export default function VendorDetailPage() {
             </div>
           )}
 
-          <div className="grid gap-5 sm:grid-cols-2">
-            <DetailField label="Legal Name" value={normalizeVendorField(vendor.legal_name) || "-"} />
+          <DetailFieldGrid columns={2}>
+            <DetailField label="Legal Name" value={normalizeVendorField(vendor.legal_name)} />
             <DetailField
               label="Customer ID"
-              value={normalizeVendorField(vendor.customer_id) || "-"}
+              value={normalizeVendorField(vendor.customer_id)}
             />
-            <DetailField label="Payment Method" value={normalizeVendorField(vendor.payment_method) || "-"} />
-            <DetailField label="Terms" value={normalizeVendorField(vendor.terms) || "-"} />
-            <DetailField label="Tax ID" value={normalizeVendorField(vendor.tax_id) || "-"} />
+            <DetailField label="Payment Method" value={normalizeVendorField(vendor.payment_method)} />
+            <DetailField label="Terms" value={normalizeVendorField(vendor.terms)} />
+            <DetailField label="Tax ID" value={normalizeVendorField(vendor.tax_id)} />
             <DetailField label="1099 Vendor" value={vendor.is_1099_vendor ? "Yes" : "No"} />
-            <DetailField label="Address" value={normalizeVendorField(vendor.address) || "-"} />
-            <DetailField label="City" value={normalizeVendorField(vendor.city) || "-"} />
-            <DetailField label="State" value={normalizeVendorField(vendor.state) || "-"} />
-            <DetailField label="Zip Code" value={normalizeVendorField(vendor.zip_code) || "-"} />
+            <DetailField label="Address" value={normalizeVendorField(vendor.address)} />
+            <DetailField label="City" value={normalizeVendorField(vendor.city)} />
+            <DetailField label="State" value={normalizeVendorField(vendor.state)} />
+            <DetailField label="Zip Code" value={normalizeVendorField(vendor.zip_code)} />
             <DetailField label="Created" value={formatDate(vendor.created_at)} />
             <DetailField label="Updated" value={formatDate(vendor.updated_at)} />
-          </div>
+          </DetailFieldGrid>
 
           {normalizeVendorField(vendor.notes) ? (
             <div className="space-y-2">
@@ -607,7 +599,7 @@ export default function VendorDetailPage() {
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             <span className="text-xs tabular-nums text-muted-foreground">
-                              {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(dc.total_amount)}
+                              {formatCurrency(dc.total_amount)}
                             </span>
                             <StatusBadge status={dc.status} />
                           </div>

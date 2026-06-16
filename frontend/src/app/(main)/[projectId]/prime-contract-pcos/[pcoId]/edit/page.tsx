@@ -26,6 +26,7 @@ import {
   PRIME_CONTRACT_CHANGE_ORDER_STATUSES,
   type PrimeContractChangeOrderStatus,
 } from "@/lib/change-orders/prime-contract-change-order-statuses";
+import { getPrimeContractPcoDisplayName } from "@/lib/prime-contract-pcos/display";
 
 interface PrimeContractPcoFormData {
   title: string;
@@ -229,7 +230,7 @@ export default function EditPrimeContractPcoPage() {
   return (
     <PageShell
       variant="form"
-      title={`Edit PCO #${formData.pco_number || "--"}`}
+      title={`Edit ${getPrimeContractPcoDisplayName({ pcoNumber: formData.pco_number })}`}
       onBack={() => router.push(buildDetailPath(formData.prime_contract_id))}
       actions={
         <div className="flex items-center gap-2">

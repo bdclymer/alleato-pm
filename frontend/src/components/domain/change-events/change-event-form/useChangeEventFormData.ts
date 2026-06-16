@@ -317,6 +317,7 @@ export function useChangeEventFormData({
         if (rows.length < 2) return;
         const headers = rows[0].split(",").map((h) => h.trim().toLowerCase());
         const newItems: ChangeEventLineItem[] = [];
+        let unresolvedBudgetCodes = 0;
         for (let i = 1; i < rows.length; i++) {
           const cols = rows[i].split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
           const get = (aliases: string[]) => {
@@ -331,9 +332,14 @@ export function useChangeEventFormData({
           const costRom = costQty * costUnit;
           const revenueQty = Number(get(["revenue qty", "revenue quantity"])) || costQty;
           const revenueUnit = Number(get(["revenue unit cost"])) || costUnit;
+          const rawBudgetCode = get(["budget code", "budget_code", "code"]);
+          const matchedBudgetCode = findBudgetCode(rawBudgetCode, budgetCodes);
+          if (rawBudgetCode && !matchedBudgetCode) {
+            unresolvedBudgetCodes += 1;
+          }
           newItems.push({
             ...createEmptyLineItem(),
-            budgetCode: get(["budget code", "budget_code", "code"]),
+            budgetCode: matchedBudgetCode?.id || "",
             description: get(["description", "desc"]),
             costQuantity: costQty,
             costUnitCost: costUnit,
@@ -356,12 +362,17 @@ export function useChangeEventFormData({
                 : [...prev.lineItems, ...newItems],
           }));
           toast.success(`Imported ${newItems.length} line item${newItems.length !== 1 ? "s" : ""} from CSV`);
+          if (unresolvedBudgetCodes > 0) {
+            toast.warning(
+              `${unresolvedBudgetCodes} budget code${unresolvedBudgetCodes !== 1 ? "s" : ""} could not be matched. Select them before saving.`,
+            );
+          }
         }
       };
       reader.readAsText(file);
       e.target.value = "";
     },
-    [],
+    [budgetCodes],
   );
 
   // ── Add from commitment ──

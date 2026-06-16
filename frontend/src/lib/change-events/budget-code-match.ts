@@ -17,9 +17,13 @@ import type {
  * That drift is what this module exists to prevent — change matching here once.
  */
 
-/** Strip dashes/dots/slashes so "233000" matches "23-3000", "23.3000", etc. */
+/** Strip formatting so "233000" matches "23-3000", "23.3000", "23/3000", etc. */
 export function normCode(value: string): string {
-  return value.replace(/[-./]/g, "").toLowerCase();
+  return value.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+}
+
+function normText(value: string): string {
+  return value.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
 export function findBudgetCode(
@@ -27,19 +31,22 @@ export function findBudgetCode(
   budgetCodes: BudgetCodeOption[],
 ): BudgetCodeOption | undefined {
   if (!code) return undefined;
-  const q = code.trim().toLowerCase();
+  const q = normText(code);
   const qNorm = normCode(q);
   return (
-    // 1. Exact match
-    budgetCodes.find((b) => b.code === code) ||
-    // 2. Case-insensitive exact match
-    budgetCodes.find((b) => b.code.toLowerCase() === q) ||
-    // 3. Normalized match — "233000" matches "23-3000"
+    // 1. Canonical project_budget_codes.id from the selector/API.
+    budgetCodes.find((b) => b.id === code) ||
+    // 2. Exact/case-insensitive visible cost-code text.
+    budgetCodes.find((b) => normText(b.code) === q) ||
+    // 3. Legacy cost code id from older SOV/import paths.
+    budgetCodes.find((b) => b.legacyCostCodeId && normText(b.legacyCostCodeId) === q) ||
+    // 4. Normalized match — "233000" matches "23-3000".
     budgetCodes.find((b) => normCode(b.code) === qNorm) ||
-    // 4. Description match
-    budgetCodes.find((b) => b.description.toLowerCase() === q) ||
-    // 5. Full label prefix match
-    budgetCodes.find((b) => b.fullLabel.toLowerCase().startsWith(q))
+    budgetCodes.find((b) => b.legacyCostCodeId && normCode(b.legacyCostCodeId) === qNorm) ||
+    // 5. Description match.
+    budgetCodes.find((b) => normText(b.description) === q) ||
+    // 6. Full label prefix match.
+    budgetCodes.find((b) => normText(b.fullLabel).startsWith(q))
   );
 }
 

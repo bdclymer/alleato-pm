@@ -52,17 +52,17 @@ const TYPE_FILTER_OPTIONS = [
 
 export const changeEventColumns: ColumnConfig[] = [
   { id: "number_title", label: "CE Number - Title", alwaysVisible: true },
-  { id: "status", label: "Status", defaultVisible: true },
-  { id: "scope", label: "Scope", defaultVisible: true },
-  { id: "type", label: "Type", defaultVisible: true },
-  { id: "reason", label: "Change Reason", defaultVisible: true },
-  { id: "origin", label: "Origin", defaultVisible: true },
   { id: "revenue_prime_pco", label: "Prime PCO", defaultVisible: true },
   { id: "prime_pco_title", label: "Prime PCO Title", defaultVisible: true },
   { id: "cost_rom", label: "Cost ROM", defaultVisible: true },
   { id: "rfq_title", label: "RFQ Title", defaultVisible: true },
   { id: "commitment", label: "Commitment", defaultVisible: true },
   { id: "commitment_title", label: "Commitment Title", defaultVisible: true },
+  { id: "status", label: "Status", defaultVisible: true },
+  { id: "scope", label: "Scope", defaultVisible: true },
+  { id: "type", label: "Type", defaultVisible: true },
+  { id: "reason", label: "Change Reason", defaultVisible: true },
+  { id: "origin", label: "Origin", defaultVisible: true },
   { id: "created_at", label: "Created", defaultVisible: true },
 ];
 
@@ -228,9 +228,19 @@ export function buildChangeEventTableColumns(
   expandedIds?: Set<string>,
   onToggleExpand?: (id: string) => void,
 ): TableColumn<ChangeEvent>[] {
+  const byId = (columnId: string): ColumnConfig => {
+    const column = changeEventColumns.find((candidate) => candidate.id === columnId);
+    if (!column) {
+      throw new Error(
+        `[change-events-table-config] Missing column definition for ${columnId}`,
+      );
+    }
+    return column;
+  };
+
   return [
     {
-      ...changeEventColumns[0],
+      ...byId("number_title"),
       render: (item) => (
         <div className="flex items-center gap-1.5">
           {onToggleExpand && (
@@ -277,40 +287,15 @@ export function buildChangeEventTableColumns(
       sortValue: (item) => `${item.number ?? ""} ${item.title}`,
     },
     {
-      ...changeEventColumns[1],
-      render: (item) => <StatusBadge status={statusLabel(item.status)} />,
-      sortValue: (item) => item.status ?? "",
-    },
-    {
-      ...changeEventColumns[2],
-      render: (item) => <span>{scopeLabel(item.scope)}</span>,
-      sortValue: (item) => scopeLabel(item.scope),
-    },
-    {
-      ...changeEventColumns[3],
-      render: (item) => <span>{typeLabel(item.type)}</span>,
-      sortValue: (item) => typeLabel(item.type),
-    },
-    {
-      ...changeEventColumns[4],
-      render: (item) => <span className="line-clamp-1">{item.reason || "--"}</span>,
-      sortValue: (item) => item.reason ?? "",
-    },
-    {
-      ...changeEventColumns[5],
-      render: (item) => <span>{item.origin || "--"}</span>,
-      sortValue: (item) => item.origin ?? "",
-    },
-    {
       // Revenue > Prime PCO (dollar amount)
-      ...changeEventColumns[6],
+      ...byId("revenue_prime_pco"),
       render: (item) => (
         <span className="tabular-nums">{formatMoney(item.rom)}</span>
       ),
       sortValue: (item) => Number(item.rom ?? 0),
     },
     {
-      ...changeEventColumns[7],
+      ...byId("prime_pco_title"),
       render: (item) => (
         <span className="line-clamp-1">
           {item.prime_pco_title
@@ -324,34 +309,59 @@ export function buildChangeEventTableColumns(
     },
     {
       // Cost > Cost ROM
-      ...changeEventColumns[8],
+      ...byId("cost_rom"),
       render: (item) => (
         <span className="tabular-nums">{formatMoney(item.cost_rom)}</span>
       ),
       sortValue: (item) => Number(item.cost_rom ?? 0),
     },
     {
-      ...changeEventColumns[9],
+      ...byId("rfq_title"),
       render: (item) => <span className="line-clamp-1">{item.rfq_title || "--"}</span>,
       sortValue: (item) => item.rfq_title ?? "",
     },
     {
       // Cost > Commitment (dollar amount)
-      ...changeEventColumns[10],
+      ...byId("commitment"),
       render: (item) => (
         <span className="tabular-nums">{formatMoney(item.commitment)}</span>
       ),
       sortValue: (item) => Number(item.commitment ?? 0),
     },
     {
-      ...changeEventColumns[11],
+      ...byId("commitment_title"),
       render: (item) => (
         <span className="line-clamp-1">{item.commitment_title || "--"}</span>
       ),
       sortValue: (item) => item.commitment_title ?? "",
     },
     {
-      ...changeEventColumns[12],
+      ...byId("status"),
+      render: (item) => <StatusBadge status={statusLabel(item.status)} />,
+      sortValue: (item) => item.status ?? "",
+    },
+    {
+      ...byId("scope"),
+      render: (item) => <span>{scopeLabel(item.scope)}</span>,
+      sortValue: (item) => scopeLabel(item.scope),
+    },
+    {
+      ...byId("type"),
+      render: (item) => <span>{typeLabel(item.type)}</span>,
+      sortValue: (item) => typeLabel(item.type),
+    },
+    {
+      ...byId("reason"),
+      render: (item) => <span className="line-clamp-1">{item.reason || "--"}</span>,
+      sortValue: (item) => item.reason ?? "",
+    },
+    {
+      ...byId("origin"),
+      render: (item) => <span>{item.origin || "--"}</span>,
+      sortValue: (item) => item.origin ?? "",
+    },
+    {
+      ...byId("created_at"),
       render: (item) => <span>{formatDate(item.created_at)}</span>,
       sortValue: (item) => (item.created_at ? new Date(item.created_at).getTime() : 0),
     },

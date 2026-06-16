@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Edit, X, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ds";
+import { DetailField, DetailFieldGrid, EmptyState } from "@/components/ds";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -45,21 +45,6 @@ function formatDateTime(value: string | null | undefined): string {
     hour: "numeric",
     minute: "2-digit",
   });
-}
-
-// ---------------------------------------------------------------------------
-// Sub-components
-// ---------------------------------------------------------------------------
-
-function DetailField({ label, value }: { label: string; value?: string | null }) {
-  return (
-    <div className="flex items-start gap-3 py-2">
-      <span className="w-32 shrink-0 text-xs text-muted-foreground">{label}</span>
-      <span className="min-w-0 flex-1 break-words text-sm text-foreground">
-        {value || "—"}
-      </span>
-    </div>
-  );
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
@@ -190,29 +175,30 @@ export function PunchItemDetail({ item, projectId, punchItemId }: PunchItemDetai
         {/* Left — assignment + scheduling */}
         <div>
           <SectionTitle>Assignment</SectionTitle>
-          <DetailField label="Assignee Company" value={item.assignee_company} />
-          <DetailField label="Ball in Court" value={item.ball_in_court} />
-          <DetailField label="Due Date" value={formatDate(item.due_date)} />
-          <DetailField label="Date Notified" value={formatDateTime(item.date_notified)} />
-          <DetailField label="Date Resolved" value={formatDateTime(item.date_resolved)} />
-          <DetailField label="Date Closed" value={formatDateTime(item.date_closed)} />
+          <DetailFieldGrid columns={2} className="sm:grid-cols-1">
+            <DetailField label="Assignee Company" value={item.assignee_company} />
+            <DetailField label="Ball in Court" value={item.ball_in_court} />
+            <DetailField label="Due Date" value={formatDate(item.due_date)} />
+            <DetailField label="Date Notified" value={formatDateTime(item.date_notified)} />
+            <DetailField label="Date Resolved" value={formatDateTime(item.date_resolved)} />
+            <DetailField label="Date Closed" value={formatDateTime(item.date_closed)} />
+          </DetailFieldGrid>
         </div>
 
         {/* Right — categorisation */}
         <div>
           <SectionTitle>Categorisation</SectionTitle>
-          <DetailField label="Location" value={item.location} />
-          <DetailField label="Trade" value={item.trade} />
-          <DetailField label="Type" value={item.type} />
-          <DetailField label="Reference" value={item.reference} />
-          <DetailField label="Drawing Ref" value={item.drawing_reference} />
-          <DetailField label="Cost Code" value={item.cost_code} />
-          {item.cost_impact != null && (
-            <DetailField
-              label="Cost Impact"
-              value={`$${Number(item.cost_impact).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
-            />
-          )}
+          <DetailFieldGrid columns={2} className="sm:grid-cols-1">
+            <DetailField label="Location" value={item.location} />
+            <DetailField label="Trade" value={item.trade} />
+            <DetailField label="Type" value={item.type} />
+            <DetailField label="Reference" value={item.reference} />
+            <DetailField label="Drawing Ref" value={item.drawing_reference} />
+            <DetailField label="Cost Code" value={item.cost_code} />
+            {item.cost_impact != null && (
+              <DetailField label="Cost Impact" value={item.cost_impact} currency />
+            )}
+          </DetailFieldGrid>
         </div>
       </div>
 
@@ -221,8 +207,10 @@ export function PunchItemDetail({ item, projectId, punchItemId }: PunchItemDetai
       {/* Audit */}
       <div>
         <SectionTitle>Audit</SectionTitle>
-        <DetailField label="Created" value={formatDateTime(item.created_at)} />
-        <DetailField label="Last Updated" value={formatDateTime(item.updated_at)} />
+        <DetailFieldGrid columns={2}>
+          <DetailField label="Created" value={formatDateTime(item.created_at)} />
+          <DetailField label="Last Updated" value={formatDateTime(item.updated_at)} />
+        </DetailFieldGrid>
       </div>
 
       {/* Edit dialog */}

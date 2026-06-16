@@ -30,6 +30,7 @@ import {
   ModalTitle,
 } from "@/components/ui/unified-modal";
 import { apiFetch } from "@/lib/api-client";
+import { resolveBudgetCodeByCodeAndCostType } from "@/lib/budget/budget-code-selection";
 import { cn } from "@/lib/utils";
 import type { BudgetCode, ContractLineItem } from "../types";
 
@@ -151,10 +152,10 @@ function resolveBudgetCodeId(
     return row.budgetCodeId;
   }
 
-  const match = budgetCodes.find(
-    (code) =>
-      code.legacyCostCodeId === row.costCode &&
-      (!code.costType || code.costType === costTypeCode),
+  const match = resolveBudgetCodeByCodeAndCostType(
+    row.costCode,
+    costTypeCode,
+    budgetCodes,
   );
   if (match?.id) return match.id;
 

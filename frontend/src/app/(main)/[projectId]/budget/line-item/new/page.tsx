@@ -9,7 +9,11 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { DevAutoFillButton } from "@/hooks/use-dev-autofill";
 import { Input } from "@/components/ui/input";
-import { apiFetch, ApiError } from "@/lib/api-client";
+import { apiFetch } from "@/lib/api-client";
+import {
+  type ProjectBudgetCode,
+  useProjectBudgetCodes,
+} from "@/hooks/use-project-budget-codes";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -31,13 +35,6 @@ import { PageShell } from "@/components/layout";
 import { FormSection } from "@/components/forms";
 import { FormActions } from "@/components/forms/FormActions";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
-interface BudgetCode {
-  id: string;
-  code: string;
-  costType: string | null; // L = Labor, M = Material, E = Equipment, S = Subcontract, O = Other
-  description: string;
-  fullLabel: string; // Composite label like "01-3120.L – Vice President – Labor"
-}
 
 interface BudgetLineItemRow {
   id: string;
@@ -64,8 +61,8 @@ export default function NewBudgetLineItemPage() {
   const projectId = params.projectId as string;
 
   const [loading, setLoading] = useState(false);
-  const [budgetCodes, setBudgetCodes] = useState<BudgetCode[]>([]);
-  const [loadingCodes, setLoadingCodes] = useState(true);
+  const { budgetCodes, loadingCodes, createBudgetCode } =
+    useProjectBudgetCodes(projectId);
 
   // Cost codes from Supabase
   const [availableCostCodes, setAvailableCostCodes] = useState<
@@ -91,6 +88,7 @@ export default function NewBudgetLineItemPage() {
 
   // Budget Code creation modal state
   const [showCreateCodeModal, setShowCreateCodeModal] = useState(false);
+  const [pendingRowId, setPendingRowId] = useState<string | null>(null);
   const [newCodeData, setNewCodeData] = useState({
     costCodeId: "", // ID from cost_codes table
     costType: "L",
@@ -186,34 +184,6 @@ export default function NewBudgetLineItemPage() {
     fetchCostCodes();
   }, [showCreateCodeModal]);
 
-  // Fetch budget codes for the project
-  useEffect(() => {
-    const fetchBudgetCodes = async () => {
-      if (!projectId) return;
-
-      try {
-        setLoadingCodes(true);
-        const { budgetCodes } = await apiFetch<{ budgetCodes: BudgetCode[] }>(
-          `/api/projects/${projectId}/budget-codes`,
-        );
-        setBudgetCodes(budgetCodes || []);
-      } catch (error) {
-        // Non-fatal: form can still work; users just won't see existing codes.
-        // Log to console so the failure isn't invisible (Rule 1 — no silent
-        // failures). apiFetch puts the real server message on ApiError.
-        console.error(
-          "Failed to load budget codes:",
-          error instanceof ApiError ? error.message : error,
-        );
-        setBudgetCodes([]);
-      } finally {
-        setLoadingCodes(false);
-      }
-    };
-
-    fetchBudgetCodes();
-  }, [projectId]);
-
   const getCostTypeLabel = (type: string) => {
     const types: Record<string, string> = {
       L: "Labor",
@@ -250,23 +220,33 @@ export default function NewBudgetLineItemPage() {
         return;
       }
 
-      // API call to create budget code
-      const { budgetCode: createdCode } = await apiFetch<{
-        budgetCode: BudgetCode;
-      }>(`/api/projects/${projectId}/budget-codes`, {
-        method: "POST",
-        body: JSON.stringify({
-          cost_code_id: newCodeData.costCodeId,
-          cost_type_id: newCodeData.costType, // Send the selected cost type code directly.
-          description: selectedCostCode.title,
-        }),
+      const createdCode = await createBudgetCode({
+        costCodeId: newCodeData.costCodeId,
+        costTypeId: newCodeData.costType,
+        description: selectedCostCode.title,
       });
 
-      // Add the new code to the list
-      setBudgetCodes([...budgetCodes, createdCode]);
+      setRows((prev) => {
+        const targetRow =
+          (pendingRowId && prev.find((row) => row.id === pendingRowId)) ||
+          prev.find((row) => !row.budgetCodeId);
+
+        if (!targetRow) return prev;
+
+        return prev.map((row) =>
+          row.id === targetRow.id
+            ? {
+                ...row,
+                budgetCodeId: createdCode.id,
+                budgetCodeLabel: createdCode.fullLabel,
+              }
+            : row,
+        );
+      });
 
       // Reset modal
       setShowCreateCodeModal(false);
+      setPendingRowId(null);
       setNewCodeData({ costCodeId: "", costType: "L" });
     } catch (error) {
       // apiFetch throws ApiError with the real server message — surface it
@@ -281,7 +261,7 @@ export default function NewBudgetLineItemPage() {
     }
   };
 
-  const handleBudgetCodeSelect = (rowId: string, code: BudgetCode) => {
+  const handleBudgetCodeSelect = (rowId: string, code: ProjectBudgetCode) => {
     setRows(
       rows.map((row) =>
         row.id === rowId
@@ -479,7 +459,10 @@ export default function NewBudgetLineItemPage() {
                         }
                         budgetCodes={budgetCodes}
                         loading={loadingCodes}
-                        onCreateNew={() => setShowCreateCodeModal(true)}
+                        onCreateNew={() => {
+                          setPendingRowId(row.id);
+                          setShowCreateCodeModal(true);
+                        }}
                         placeholder="Select budget code..."
                         className="h-9"
                       />
@@ -611,7 +594,13 @@ export default function NewBudgetLineItemPage() {
       </form>
 
       {/* Create Budget Code Modal */}
-      <Modal open={showCreateCodeModal} onOpenChange={setShowCreateCodeModal}>
+      <Modal
+        open={showCreateCodeModal}
+        onOpenChange={(open) => {
+          setShowCreateCodeModal(open);
+          if (!open) setPendingRowId(null);
+        }}
+      >
         <ModalContent className="sm:max-w-lg">
           <ModalHeader>
             <ModalTitle>Create New Budget Code</ModalTitle>

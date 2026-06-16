@@ -25,14 +25,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MoneyField } from "@/components/forms/MoneyField";
+import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
+import type { BudgetCodeOption } from "@/components/domain/change-events/change-event-form/types";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useCostCodes } from "@/hooks/use-cost-codes";
+  budgetCodeTextValue,
+  normalizeBudgetCodesForSelector,
+  resolvePrimeCoBudgetCode,
+} from "@/lib/budget/budget-code-selection";
 
 interface LineItem {
   id: string;
@@ -85,51 +84,35 @@ export function ScheduleOfValuesTab({
   const [isImporting, setIsImporting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [budgetCodes, setBudgetCodes] = useState<BudgetCodeOption[]>([]);
+  const [budgetCodesLoading, setBudgetCodesLoading] = useState(false);
 
-  // Budget codes come from ONE source only: the internal `cost_codes` table —
-  // the same chart of accounts the Budget and Estimates pages use. High limit so
-  // every division is covered. Do NOT merge in Acumatica budget codes: those
-  // arrive un-dashed (e.g. "042200") and produced duplicate, differently-
-  // formatted entries for the same code ("04-2200" vs "042200").
-  const { options: internalCostCodeOptions, isLoading: costCodesLoading } = useCostCodes({
-    enabled: true,
-    limit: 1000,
-  });
-
-  const costCodeOptions = useMemo(() => {
-    const seen = new Set<string>();
-    const merged: { value: string; label: string }[] = [];
-    for (const option of internalCostCodeOptions) {
-      if (seen.has(option.value)) continue;
-      seen.add(option.value);
-      merged.push({ value: option.value, label: option.label });
-    }
-    return merged.sort((a, b) => a.value.localeCompare(b.value));
-  }, [internalCostCodeOptions]);
-
-  // Map a code to its canonical cost_codes option ignoring dash/dot formatting,
-  // so a legacy SOV value stored un-dashed ("042200") resolves to the real
-  // dashed cost code ("04-2200") instead of falling out of the list.
-  const canonicalByNormalizedCode = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const option of costCodeOptions) {
-      map.set(option.value.replace(/[-./]/g, "").toLowerCase(), option.value);
-    }
-    return map;
-  }, [costCodeOptions]);
-
-  const resolveCostCodeValue = useCallback(
-    (raw: string | null | undefined): string => {
-      if (!raw) return "";
-      if (costCodeOptions.some((o) => o.value === raw)) return raw;
-      return (
-        canonicalByNormalizedCode.get(raw.replace(/[-./]/g, "").toLowerCase()) ?? raw
+  const fetchBudgetCodes = useCallback(async () => {
+    setBudgetCodesLoading(true);
+    try {
+      const payload = await apiFetch<{
+        budgetCodes?: Array<Partial<BudgetCodeOption> & { id: string; code: string }>;
+        data?: Array<Partial<BudgetCodeOption> & { id: string; code: string }>;
+      }>(`/api/projects/${projectId}/budget-codes`);
+      setBudgetCodes(
+        normalizeBudgetCodesForSelector(payload.budgetCodes || payload.data || []),
       );
-    },
-    [costCodeOptions, canonicalByNormalizedCode],
-  );
+    } catch (budgetCodeError) {
+      toast.error("Could not load budget codes", {
+        description:
+          budgetCodeError instanceof Error && budgetCodeError.message
+            ? budgetCodeError.message
+            : "Schedule of values lines cannot select budget codes.",
+      });
+      setBudgetCodes([]);
+    } finally {
+      setBudgetCodesLoading(false);
+    }
+  }, [projectId]);
 
-  const budgetCodesLoading = costCodesLoading;
+  useEffect(() => {
+    void fetchBudgetCodes();
+  }, [fetchBudgetCodes]);
 
   useEffect(() => {
     setItems(lineItems);
@@ -265,7 +248,11 @@ export function ScheduleOfValuesTab({
         onLineItemsChange(items);
       }
     } catch (saveError) {
-      toast.error("Unable to save line items.");
+      toast.error(
+        saveError instanceof Error && saveError.message
+          ? saveError.message
+          : "Unable to save line items.",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -401,6 +388,10 @@ export function ScheduleOfValuesTab({
             const billed = Number(item.billed_to_date ?? 0);
             const remaining = Math.max(amount - billed, 0);
             const locked = isLocked(item);
+            const budgetCodeResolution = resolvePrimeCoBudgetCode(
+              item.budget_code,
+              budgetCodes,
+            );
 
             return (
               <InlineTableRow key={item.id}>
@@ -416,31 +407,22 @@ export function ScheduleOfValuesTab({
                   </div>
                 </InlineTableCell>
                 <InlineTableCell className="whitespace-nowrap min-w-50">
-                  <Select
-                    value={resolveCostCodeValue(item.budget_code) || "none"}
-                    onValueChange={(value) => updateItem(item.id, "budget_code", value === "none" ? "" : value)}
+                  <BudgetCodeSelector
+                    value={budgetCodeResolution.selectorValue}
+                    onValueChange={(_value, code) =>
+                      updateItem(item.id, "budget_code", budgetCodeTextValue(code))
+                    }
+                    budgetCodes={budgetCodes}
+                    loading={budgetCodesLoading}
                     disabled={budgetCodesLoading}
-                  >
-                    <SelectTrigger className="w-full" aria-label={`Budget code ${index + 1}`}>
-                      <SelectValue placeholder={budgetCodesLoading ? "Loading..." : "Select budget code"}>
-                        {item.budget_code
-                          ? (() => {
-                              const resolved = resolveCostCodeValue(item.budget_code);
-                              const match = costCodeOptions.find((o) => o.value === resolved);
-                              return match ? match.label : item.budget_code;
-                            })()
-                          : "No budget code"}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No budget code</SelectItem>
-                      {costCodeOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder={
+                      budgetCodeResolution.isMapped
+                        ? "Select budget code..."
+                        : budgetCodeResolution.displayCode
+                    }
+                    error={!budgetCodeResolution.isMapped}
+                    className="min-w-56"
+                  />
                 </InlineTableCell>
                 <InlineTableCell className="min-w-50">
                   <Input

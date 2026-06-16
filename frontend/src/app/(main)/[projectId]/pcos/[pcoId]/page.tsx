@@ -6,7 +6,6 @@ import { Mail, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,14 +17,22 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Text } from "@/components/ds/text";
-import { EmptyState } from "@/components/ds";
-import { PageShell } from "@/components/layout";
+import { EmptyState, ErrorState } from "@/components/ds";
+import { PageShell, PageTabs } from "@/components/layout";
 import { usePCO, useSubmitPCO } from "@/hooks/use-pcos";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { PCORecordHeader } from "@/components/domain/pcos/PCORecordHeader";
 import { StageProgressBar } from "@/components/domain/pcos/StageProgressBar";
 import { PCOTimeline } from "@/components/domain/pcos/PCOTimeline";
 import { PCOSidebar } from "@/components/domain/pcos/PCOSidebar";
+import { apiFetch } from "@/lib/api-client";
+
+interface ConvertPcoResponse {
+  id?: string;
+  pcco_number?: string;
+  commitmentChangeOrders?: unknown[];
+  commitmentErrors?: unknown[];
+}
 
 export default function PCODetailPage() {
   const router = useRouter();
@@ -34,6 +41,7 @@ export default function PCODetailPage() {
   const pcoId = params.pcoId as string;
 
   const [activeTab, setActiveTab] = useState("detail");
+  const [activeVersionTab, setActiveVersionTab] = useState<string | null>(null);
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
 
@@ -63,22 +71,13 @@ export default function PCODetailPage() {
   const handleConfirmConvert = async () => {
     setIsConverting(true);
     try {
-      const res = await fetch(
+      const data = await apiFetch<ConvertPcoResponse>(
         `/api/projects/${projectId}/pcos/${pcoId}/convert-to-co`,
-        { method: "POST" }
+        { method: "POST" },
       );
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(
-          body.error ?? `Conversion failed (${res.status})`
-        );
-      }
-
-      const data = await res.json();
       const pccoNumber = data.pcco_number ?? data.id;
       const commitmentCount =
-        (data.commitmentChangeOrders as unknown[])?.length ?? 0;
+        data.commitmentChangeOrders?.length ?? 0;
 
       toast.success(
         `Change Order #${pccoNumber} created` +
@@ -129,9 +128,10 @@ export default function PCODetailPage() {
   if (error || !pco) {
     return (
       <PageShell variant="detail" title="Error" onBack={handleBack}>
-        <Text tone="destructive">
-          {error instanceof Error ? error.message : "PCO not found"}
-        </Text>
+        <ErrorState
+          error={error instanceof Error ? error.message : "PCO not found"}
+          onRetry={handleBack}
+        />
       </PageShell>
     );
   }
@@ -139,6 +139,7 @@ export default function PCODetailPage() {
   /* Version tabs */
   const versions = pco.versions ?? [];
   const hasVersions = versions.length > 1;
+  const selectedVersionTab = activeVersionTab ?? `v${pco.current_version}`;
 
   return (
     <PageShell
@@ -158,21 +159,28 @@ export default function PCODetailPage() {
       {/* Stage progress */}
       <StageProgressBar pco={pco} />
 
-      {/* Detail / Attachments / Emails tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList variant="line">
-          <TabsTrigger value="detail">Detail</TabsTrigger>
-          <TabsTrigger value="attachments">Attachments</TabsTrigger>
-          <TabsTrigger value="emails">Emails</TabsTrigger>
-        </TabsList>
+      <PageTabs
+        variant="inline"
+        tabs={[
+          { label: "Detail", href: "detail", isActive: activeTab === "detail" },
+          {
+            label: "Attachments",
+            href: "attachments",
+            isActive: activeTab === "attachments",
+          },
+          { label: "Emails", href: "emails", isActive: activeTab === "emails" },
+        ]}
+        onTabClick={(href) => setActiveTab(href)}
+      />
 
-        <div className="pt-4">
-          <TabsContent value="detail">
-            {/* Version sub-tabs when multiple versions exist */}
+      <div className="pt-4">
+        {activeTab === "detail" && (
+          <>
             {hasVersions && (
-              <Tabs defaultValue={`v${pco.current_version}`}>
-                <TabsList variant="line">
-                  {versions
+              <>
+                <PageTabs
+                  variant="inline"
+                  tabs={versions
                     .sort((a, b) => a.version - b.version)
                     .map((ver) => {
                       const date = new Date(
@@ -183,66 +191,71 @@ export default function PCODetailPage() {
                       });
                       const isCurrent = ver.version === pco.current_version;
                       const label = isCurrent
-                        ? `v${ver.version} — ${date} (Current)`
-                        : `v${ver.version} — ${date} (${ver.client_decision === "revision_requested" ? "Revised" : "Submitted"})`;
-                      return (
-                        <TabsTrigger key={ver.id} value={`v${ver.version}`}>
-                          {label}
-                        </TabsTrigger>
-                      );
+                        ? `v${ver.version} - ${date} (Current)`
+                        : `v${ver.version} - ${date} (${ver.client_decision === "revision_requested" ? "Revised" : "Submitted"})`;
+                      const href = `v${ver.version}`;
+                      return {
+                        label,
+                        href,
+                        isActive: selectedVersionTab === href,
+                      };
                     })}
-                </TabsList>
-                {versions.map((ver) => (
-                  <TabsContent key={ver.id} value={`v${ver.version}`}>
-                    {ver.version === pco.current_version ? (
-                      <MainContent pco={pco} projectId={projectId} />
-                    ) : (
-                      <div className="rounded-lg bg-muted/50 p-6 text-center">
-                        <p className="text-sm text-muted-foreground">
-                          Snapshot of version {ver.version} submitted on{" "}
-                          {new Date(ver.submitted_at).toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "long",
-                              day: "numeric",
-                              year: "numeric",
-                            }
-                          )}
-                        </p>
-                        {ver.client_decision_note && (
-                          <p className="mt-2 text-sm text-muted-foreground italic">
-                            Client note: &ldquo;{ver.client_decision_note}
-                            &rdquo;
-                          </p>
+                  onTabClick={(href) => setActiveVersionTab(href)}
+                />
+                <div className="pt-4">
+                  {versions.map((ver) =>
+                    selectedVersionTab === `v${ver.version}` ? (
+                      <div key={ver.id}>
+                        {ver.version === pco.current_version ? (
+                          <MainContent pco={pco} projectId={projectId} />
+                        ) : (
+                          <div className="rounded-lg bg-muted/50 p-6 text-center">
+                            <p className="text-sm text-muted-foreground">
+                              Snapshot of version {ver.version} submitted on{" "}
+                              {new Date(ver.submitted_at).toLocaleDateString(
+                                "en-US",
+                                {
+                                  month: "long",
+                                  day: "numeric",
+                                  year: "numeric",
+                                }
+                              )}
+                            </p>
+                            {ver.client_decision_note && (
+                              <p className="mt-2 text-sm italic text-muted-foreground">
+                                Client note: &ldquo;{ver.client_decision_note}
+                                &rdquo;
+                              </p>
+                            )}
+                          </div>
                         )}
                       </div>
-                    )}
-                  </TabsContent>
-                ))}
-              </Tabs>
+                    ) : null,
+                  )}
+                </div>
+              </>
             )}
 
-            {/* If no version tabs, show main content directly */}
             {!hasVersions && <MainContent pco={pco} projectId={projectId} />}
-          </TabsContent>
+          </>
+        )}
 
-          <TabsContent value="attachments">
-            <EmptyState
-              icon={<Paperclip />}
-              title="No attachments"
-              description="Attachments related to this potential change order will appear here."
-            />
-          </TabsContent>
+        {activeTab === "attachments" && (
+          <EmptyState
+            icon={<Paperclip />}
+            title="No attachments"
+            description="Attachments related to this potential change order will appear here."
+          />
+        )}
 
-          <TabsContent value="emails">
-            <EmptyState
-              icon={<Mail />}
-              title="No emails"
-              description="Emails related to this potential change order will appear here."
-            />
-          </TabsContent>
-        </div>
-      </Tabs>
+        {activeTab === "emails" && (
+          <EmptyState
+            icon={<Mail />}
+            title="No emails"
+            description="Emails related to this potential change order will appear here."
+          />
+        )}
+      </div>
 
       {/* Convert to Change Order confirmation */}
       <AlertDialog open={convertDialogOpen} onOpenChange={setConvertDialogOpen}>

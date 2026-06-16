@@ -3,11 +3,11 @@
 import { useState, useMemo, useEffect } from "react";
 import {
   MoreVertical,
-  Plus,
   Percent,
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { EmptyState, InlineAddButton } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,8 +32,8 @@ import {
   InlineTableRow,
   InlineTableCell,
 } from "@/components/ds/inline-table";
-import { EmptyState } from "@/components/ds";
 import { apiFetch } from "@/lib/api-client";
+import { formatPercent } from "@/lib/format";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { InfoBox } from "@/components/misc/info-box";
@@ -91,6 +91,7 @@ interface PrimeContractFinancialMarkupTabProps {
   savedVerticalMarkups: VerticalMarkup[];
   setSavedVerticalMarkups: React.Dispatch<React.SetStateAction<VerticalMarkup[]>>;
   markupsLoading: boolean;
+  variant?: "full" | "compact";
 }
 
 export function PrimeContractFinancialMarkupTab({
@@ -101,6 +102,7 @@ export function PrimeContractFinancialMarkupTab({
   savedVerticalMarkups,
   setSavedVerticalMarkups,
   markupsLoading,
+  variant = "full",
 }: PrimeContractFinancialMarkupTabProps) {
   const [isSavingMarkupTable, setIsSavingMarkupTable] = useState(false);
   const [isSubmittingMarkup, setIsSubmittingMarkup] = useState(false);
@@ -479,7 +481,7 @@ export function PrimeContractFinancialMarkupTab({
         className="h-8 text-right"
       />
     ) : (
-      <span className="text-sm text-foreground">{Number(markup.percentage).toFixed(2)}%</span>
+      <span className="text-sm text-foreground">{formatPercent(markup.percentage, 2)}</span>
     );
 
   const renderCalcTypeField = (markup: VerticalMarkup, isEditing: boolean) =>
@@ -537,47 +539,74 @@ export function PrimeContractFinancialMarkupTab({
   );
 
   return (
-    <div className="space-y-6">
-      <SectionRuleHeading label="Financial Markup" />
-      <p className="max-w-3xl text-sm text-muted-foreground">
-        Add percentage-based markups (e.g., tax, overhead, profit, insurance) to contract values.
-      </p>
-      <div className="grid gap-4 md:grid-cols-2">
-        <InfoBox
-          icon={<Percent className="h-4 w-4 text-muted-foreground" />}
-          title="Vertical Markup"
-          className="p-4"
-        >
-          <div className="space-y-2 text-sm leading-6 text-muted-foreground">
-            <p>
-              Adds markup as a separate calculation layer. Rules run top to bottom, so row order directly changes results.
-            </p>
-            <p>
-              Use <span className="font-medium text-foreground">Maps To</span> to target all budget codes or one code.
-            </p>
-            <p>
-              <span className="font-medium text-foreground">Calculation Type:</span> Basic uses the base amount. Compound includes prior markup rows above it.
-            </p>
+    <div className={variant === "compact" ? "space-y-4" : "space-y-6"}>
+      {variant === "compact" ? (
+        <div className="flex items-center justify-between gap-4">
+          <SectionRuleHeading label="Financial Markup" className="mb-0" />
+          <div className="flex shrink-0 items-center gap-3">
+            {hasUnsavedMarkupChanges ? (
+              <Button
+                size="sm"
+                onClick={handleSaveMarkupTable}
+                disabled={isSavingMarkupTable}
+              >
+                {isSavingMarkupTable ? "Saving..." : "Save Changes"}
+              </Button>
+            ) : null}
+            <InlineAddButton
+              onClick={handleAddMarkupInline}
+              disabled={isSubmittingMarkup}
+            >
+              {isSubmittingMarkup ? "Adding..." : "Add Markup"}
+            </InlineAddButton>
           </div>
-        </InfoBox>
-        <InfoBox
-          icon={<Percent className="h-4 w-4 text-muted-foreground" />}
-          title="Horizontal Markup"
-          className="p-4"
-        >
-          <div className="space-y-2 text-sm leading-6 text-muted-foreground">
-            <p>
-              Pushes markup into line-item values instead of presenting a separate markup row in outputs.
-            </p>
-            <p>
-              Use horizontal display when markup should be distributed across scoped costs for reporting.
-            </p>
-            <p>
-              Keep display type consistent across related rules to avoid mixed output behavior.
-            </p>
+        </div>
+      ) : (
+        <SectionRuleHeading label="Financial Markup" />
+      )}
+      {variant === "full" ? (
+        <>
+          <p className="max-w-3xl text-sm text-muted-foreground">
+            Add percentage-based markups (e.g., tax, overhead, profit, insurance) to contract values.
+          </p>
+          <div className="grid gap-4 md:grid-cols-2">
+            <InfoBox
+              icon={<Percent className="h-4 w-4 text-muted-foreground" />}
+              title="Vertical Markup"
+              className="p-4"
+            >
+              <div className="space-y-2 text-sm leading-6 text-muted-foreground">
+                <p>
+                  Adds markup as a separate calculation layer. Rules run top to bottom, so row order directly changes results.
+                </p>
+                <p>
+                  Use <span className="font-medium text-foreground">Maps To</span> to target all budget codes or one code.
+                </p>
+                <p>
+                  <span className="font-medium text-foreground">Calculation Type:</span> Basic uses the base amount. Compound includes prior markup rows above it.
+                </p>
+              </div>
+            </InfoBox>
+            <InfoBox
+              icon={<Percent className="h-4 w-4 text-muted-foreground" />}
+              title="Horizontal Markup"
+              className="p-4"
+            >
+              <div className="space-y-2 text-sm leading-6 text-muted-foreground">
+                <p>
+                  Pushes markup into line-item values instead of presenting a separate markup row in outputs.
+                </p>
+                <p>
+                  Use horizontal display when markup should be distributed across scoped costs for reporting.
+                </p>
+                <p>
+                  Keep display type consistent across related rules to avoid mixed output behavior.
+                </p>
+              </div>
+            </InfoBox>
           </div>
-        </InfoBox>
-      </div>
+        </>
+      ) : null}
 
         {markupsLoading ? (
           <p className="py-10 text-sm text-muted-foreground">Loading markup settings...</p>
@@ -586,47 +615,43 @@ export function PrimeContractFinancialMarkupTab({
             icon={<Percent />}
             title="No financial markups configured"
             description="Add your first markup to define fees, overhead, insurance, or profit calculations."
-            action={
-              <Button
-                size="sm"
+            action={variant === "full" ? (
+              <InlineAddButton
                 onClick={handleAddMarkupInline}
                 disabled={isSubmittingMarkup}
               >
-                <Plus />
                 {isSubmittingMarkup ? "Adding..." : "Add Markup"}
-              </Button>
-            }
+              </InlineAddButton>
+            ) : undefined}
           />
         ) : (
           <>
-            <div className="flex flex-col gap-3 border-y border-border/60 py-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center justify-between text-xs text-muted-foreground sm:gap-6">
-                <span>{sortedMarkups.length} markup rule{sortedMarkups.length === 1 ? "" : "s"}</span>
-                <span>Applied in top-to-bottom calculation order</span>
-              </div>
-              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-                {hasUnsavedMarkupChanges ? (
-                  <Button
-                    size="sm"
-                    onClick={handleSaveMarkupTable}
-                    disabled={isSavingMarkupTable}
-                    className="w-full sm:w-auto"
+            {variant === "full" ? (
+              <div className="flex flex-col gap-3 border-y border-border/60 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center justify-between text-xs text-muted-foreground sm:gap-6">
+                  <span>{sortedMarkups.length} markup rule{sortedMarkups.length === 1 ? "" : "s"}</span>
+                  <span>Applied in top-to-bottom calculation order</span>
+                </div>
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+                  {hasUnsavedMarkupChanges ? (
+                    <Button
+                      size="sm"
+                      onClick={handleSaveMarkupTable}
+                      disabled={isSavingMarkupTable}
+                      className="w-full sm:w-auto"
+                    >
+                      {isSavingMarkupTable ? "Saving..." : "Save Changes"}
+                    </Button>
+                  ) : null}
+                  <InlineAddButton
+                    onClick={handleAddMarkupInline}
+                    disabled={isSubmittingMarkup}
                   >
-                    {isSavingMarkupTable ? "Saving..." : "Save Changes"}
-                  </Button>
-                ) : null}
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={handleAddMarkupInline}
-                  disabled={isSubmittingMarkup}
-                  className="w-full sm:w-auto"
-                >
-                  <Plus />
-                  {isSubmittingMarkup ? "Adding..." : "Add Markup"}
-                </Button>
+                    {isSubmittingMarkup ? "Adding..." : "Add Markup"}
+                  </InlineAddButton>
+                </div>
               </div>
-            </div>
+            ) : null}
 
             {/* Mobile card view */}
             <div className="space-y-3 md:hidden">
@@ -683,7 +708,7 @@ export function PrimeContractFinancialMarkupTab({
                     <InlineTableHeaderCell>Markup Name</InlineTableHeaderCell>
                     <InlineTableHeaderCell>Display In</InlineTableHeaderCell>
                     <InlineTableHeaderCell>Maps To</InlineTableHeaderCell>
-                    <InlineTableHeaderCell align="right">%</InlineTableHeaderCell>
+                    <InlineTableHeaderCell align="right" className="w-24">%</InlineTableHeaderCell>
                     <InlineTableHeaderCell>Calculation Type</InlineTableHeaderCell>
                     <InlineTableHeaderCell align="right">Actions</InlineTableHeaderCell>
                   </InlineTableHeaderRow>
@@ -708,7 +733,7 @@ export function PrimeContractFinancialMarkupTab({
                         </InlineTableCell>
                         <InlineTableCell>{renderDisplayInField(markup, isEditingRow, displayIn)}</InlineTableCell>
                         <InlineTableCell>{renderMapsToField(markup, isEditingRow, mapsTo, mapsToLabel)}</InlineTableCell>
-                        <InlineTableCell align="right">{renderPercentageField(markup, isEditingRow)}</InlineTableCell>
+                        <InlineTableCell align="right" numeric>{renderPercentageField(markup, isEditingRow)}</InlineTableCell>
                         <InlineTableCell>{renderCalcTypeField(markup, isEditingRow)}</InlineTableCell>
                         <InlineTableCell align="right">{renderActionsMenu(markup, isEditingRow)}</InlineTableCell>
                       </InlineTableRow>

@@ -195,7 +195,6 @@ export function PurchaseOrderForm({
         <TabsContent value="attachments" className="space-y-6">
           <FormSection title="Attachments">
             <FileUploadField
-              label="Upload Documents"
               value={formData.attachments || []}
               onChange={(files) =>
                 setFormData({ ...formData, attachments: files })

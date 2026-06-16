@@ -1147,17 +1147,15 @@ export function TableDisplaySettings({
                   Drag to reorder
                 </span>
               </div>
-              <div className="overflow-hidden rounded-md border">
-                <ColumnReorderList
-                  columns={columns}
-                  visibleColumns={visibleColumns}
-                  onColumnVisibilityChange={onColumnVisibilityChange}
-                  columnOrder={columnOrder}
-                  onColumnOrderChange={onColumnOrderChange}
-                  idPrefix="table-settings-column"
-                  className="max-h-80"
-                />
-              </div>
+              <ColumnReorderList
+                columns={columns}
+                visibleColumns={visibleColumns}
+                onColumnVisibilityChange={onColumnVisibilityChange}
+                columnOrder={columnOrder}
+                onColumnOrderChange={onColumnOrderChange}
+                idPrefix="table-settings-column"
+                className="max-h-80"
+              />
               <div className="flex items-center justify-between gap-2">
                 <Button
                   type="button"

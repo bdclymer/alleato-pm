@@ -6,12 +6,14 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  ChevronDown,
   Copy,
   Download,
   FileCheck2,
   FileText,
   Mail,
   MoreVertical,
+  Pencil,
   Trash2,
   X,
   XCircle,
@@ -44,12 +46,11 @@ import { Inline } from "@/components/layout/inline";
 import { Text } from "@/components/ds/text";
 import { ContentSectionStack, PageShell } from "@/components/layout";
 import { PageTabs } from "@/components/layout/PageTabs";
-import { StatusBadge, EmptyState } from "@/components/ds";
+import { StatusBadge, EmptyState, ErrorState } from "@/components/ds";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { apiFetch, apiFetchBlob } from "@/lib/api-client";
 
 import { useChangeEventDetail } from "@/hooks/use-change-event-detail";
-import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
 import { AddToCommitmentCODialog } from "@/components/domain/change-events/AddToCommitmentCODialog";
 import { AddToPrimePCODialog } from "@/components/domain/change-events/AddToPrimePCODialog";
 import { AddToBudgetChangeDialog } from "@/components/domain/change-events/AddToBudgetChangeDialog";
@@ -59,7 +60,6 @@ import { ChangeEventLineagePanel } from "@/components/domain/change-events/Chang
 import { ChangeEventLineItemsTable } from "@/components/domain/change-events/ChangeEventLineItemsTable";
 import { ChangeEventHistoryTab } from "@/components/domain/change-events/ChangeEventHistoryTab";
 import { ChangeEventRelatedItemsTab } from "@/components/domain/change-events/ChangeEventRelatedItemsTab";
-import { RelatedItemsPanel } from "@/components/domain/related-items/RelatedItemsPanel";
 import { ChangeEventRfqsTab } from "@/components/domain/change-events/ChangeEventRfqsTab";
 import { ChangeEventPrimePCOsSection } from "@/components/domain/change-events/ChangeEventPrimePCOsSection";
 import { ChangeEventCommitmentPCOsSection } from "@/components/domain/change-events/ChangeEventCommitmentPCOsSection";
@@ -191,8 +191,6 @@ export default function ChangeEventDetailPage() {
       setIsCreatingRfq(false);
     }
   }, [projectId, changeEventId, actions, contracts]);
-
-  const { markupRows } = useVerticalMarkup(projectId);
 
   const [activeTab, setActiveTab] = useState("general");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -406,16 +404,14 @@ export default function ChangeEventDetailPage() {
   if (error || !changeEvent) {
     return (
       <PageShell
-        variant="dashboard"
+        variant="detailXWide"
         title="Error"
-        actions={
-          <Button variant="ghost" size="sm" onClick={handleBack}>
-            <ArrowLeft className="mr-1 h-4 w-4" />
-            Back
-          </Button>
-        }
+        onBack={handleBack}
       >
-        <Text tone="destructive">{error || "Change event not found"}</Text>
+        <ErrorState
+          error={error || "Change event not found"}
+          onRetry={handleBack}
+        />
       </PageShell>
     );
   }
@@ -424,22 +420,38 @@ export default function ChangeEventDetailPage() {
 
   const ceNumber = changeEvent.number || `CE-${changeEvent.id}`;
   const ceTitle = `Change Event #${ceNumber}: ${changeEvent.title || "Untitled"}`;
-  const primeContractDisplayName =
-    (changeEvent.primeContract as { display_name?: string } | null)?.display_name ||
-    changeEvent.primeContract?.title ||
-    changeEvent.primeContract?.contract_number ||
-    null;
 
   const headerActions = (
     <Inline gap="sm">
-      <Button
-        variant="default"
-        size="sm"
-        onClick={() => setShowPrimePCODialog(true)}
-        disabled={!canEdit}
-      >
-        Create Prime PCO
-      </Button>
+      {normalizedStatus !== "void" && normalizedStatus !== "converted" && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="default" size="sm" className="gap-1.5" disabled={!canEdit}>
+              Add to
+              <ChevronDown />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>Add to Commitment</DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem onSelect={() => router.push(`/${projectId}/commitments/new?type=purchase_order&changeEventId=${changeEventId}`)}>
+                  New Purchase Order
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => router.push(`/${projectId}/commitments/new?type=subcontract&changeEventId=${changeEventId}`)}>
+                  New Subcontract
+                </DropdownMenuItem>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+            <DropdownMenuItem onSelect={() => setShowCommitmentCODialog(true)}>
+              Create Commitment CO
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setShowPrimePCODialog(true)}>
+              Create Prime PCO
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -448,7 +460,8 @@ export default function ChangeEventDetailPage() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => router.push(`/${projectId}/change-events/${changeEventId}/edit`)}>
-            Edit Change Event
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           {/* Status actions */}
@@ -491,7 +504,7 @@ export default function ChangeEventDetailPage() {
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setShowEmailDialog(true)}>
             <Mail className="mr-2 h-4 w-4" />
-            Email Change Event
+            Email
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleCopyId}>
             <Copy className="mr-2 h-4 w-4" />
@@ -625,14 +638,12 @@ export default function ChangeEventDetailPage() {
               projectId={projectId}
               onFieldSaved={() => void actions.refetch()}
             />
-            <div className="mt-10 -mr-4 sm:-mr-6 lg:-mr-8">
+            <div className="mt-10">
               <ChangeEventLineItemsTable
                 projectId={projectId}
                 changeEventId={changeEventId}
                 lineItems={lineItems}
-                markupRows={markupRows}
                 expectingRevenue={(changeEvent.expectingRevenue ?? changeEvent.expecting_revenue) !== false}
-                primeContractDisplayName={primeContractDisplayName}
                 onDeleteLineItem={actions.deleteLineItem}
                 onLineItemsChange={() => void actions.refetch()}
               />
@@ -675,20 +686,13 @@ export default function ChangeEventDetailPage() {
         )}
 
         {activeTab === "related-items" && (
-          <div className="space-y-6">
-            <RelatedItemsPanel
-              entityType="change_event"
-              entityId={changeEventId}
-              projectId={projectId}
-            />
-            <ChangeEventRelatedItemsTab
-              relatedItems={relatedItems}
-              isLoading={false}
-              onFetchOptions={actions.fetchRelatedItemOptions}
-              onLink={actions.linkRelatedItem}
-              onUnlink={actions.unlinkRelatedItem}
-            />
-          </div>
+          <ChangeEventRelatedItemsTab
+            relatedItems={relatedItems}
+            isLoading={false}
+            onFetchOptions={actions.fetchRelatedItemOptions}
+            onLink={actions.linkRelatedItem}
+            onUnlink={actions.unlinkRelatedItem}
+          />
         )}
 
         {activeTab === "comments" && (

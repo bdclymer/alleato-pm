@@ -1,25 +1,13 @@
 "use client";
 
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 
-import { Columns2, Edit, MoreVertical, Plus, Search, SlidersHorizontal, Trash2, X } from "lucide-react";
+import { Edit, MoreVertical, Plus, Trash2 } from "lucide-react";
 
-import {
-  InlineTable,
-  InlineTableBody,
-  InlineTableCell,
-  InlineTableFooter,
-  InlineTableFooterCell,
-  InlineTableFooterRow,
-  InlineTableHeader,
-  InlineTableHeaderCell,
-  InlineTableHeaderRow,
-  InlineTableRow,
-} from "@/components/ds/inline-table";
+import { InlineAddButton } from "@/components/ds";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,7 +17,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -37,12 +24,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  InlineTable,
+  InlineTableBody,
+  InlineTableCell,
+  InlineTableHeader,
+  InlineTableHeaderCell,
+  InlineTableRow,
+} from "@/components/ds";
 import { formatCurrency } from "@/lib/format";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
 import { MoneyField } from "@/components/forms/MoneyField";
-import type { VerticalMarkup } from "@/hooks/use-vertical-markup";
 import type { ChangeEventDetailLineItem } from "@/types/change-events";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 import { useDropdownData } from "./change-event-form/useDropdownData";
@@ -51,8 +52,10 @@ import { ContractCombobox } from "./change-event-form/ContractCombobox";
 import { UOM_OPTIONS } from "./change-event-form/types";
 import {
   fetchCommitmentSovLineItems,
+  findBudgetCode,
   resolveBudgetCodeFromSov,
 } from "@/lib/change-events/budget-code-match";
+import type { BudgetCodeOption } from "./change-event-form/types";
 
 interface LineItemFormState {
   description: string;
@@ -84,9 +87,7 @@ interface ChangeEventLineItemsTableProps {
   projectId: number;
   changeEventId?: string;
   lineItems: ChangeEventDetailLineItem[];
-  markupRows: VerticalMarkup[];
   expectingRevenue?: boolean;
-  primeContractDisplayName?: string | null;
   onDeleteLineItem?: (lineItemId: string) => Promise<void>;
   onLineItemsChange?: () => void;
 }
@@ -99,241 +100,77 @@ function safeDescription(desc: string | null | undefined): string | null {
   return UUID_RE.test(desc) ? null : desc;
 }
 
-function formatBudgetCodeText(li: ChangeEventDetailLineItem): string {
-  if (!li.budgetLine) return "--";
+function resolveLineItemBudgetCode(
+  li: ChangeEventDetailLineItem,
+  budgetCodes: BudgetCodeOption[],
+): BudgetCodeOption | undefined {
+  return (
+    findBudgetCode(li.projectBudgetCodeId ?? null, budgetCodes) ||
+    findBudgetCode(li.budgetCodeId ?? null, budgetCodes) ||
+    findBudgetCode(li.budgetLine?.cost_code?.id ?? null, budgetCodes) ||
+    findBudgetCode(li.budgetLine?.cost_code?.title ?? null, budgetCodes) ||
+    findBudgetCode(li.budgetLine?.description ?? null, budgetCodes)
+  );
+}
+
+function formatBudgetCodeText(
+  li: ChangeEventDetailLineItem,
+  budgetCodes: BudgetCodeOption[],
+): string {
+  const budgetCode = resolveLineItemBudgetCode(li, budgetCodes);
+  if (budgetCode) return `${budgetCode.code} - ${budgetCode.description}`;
+  if (!li.budgetLine) return "Unmapped";
   const cc = li.budgetLine.cost_code;
-  if (cc?.title) {
-    return cc.division_title ? `${cc.division_title} - ${cc.title}` : cc.title;
+  if (cc?.id || cc?.title) {
+    return [cc.id, cc.title].filter(Boolean).join(" - ");
   }
-  return li.budgetLine.description || "--";
+  return li.budgetLine.description || "Unmapped";
 }
 
-function BudgetCodeCell({ li }: { li: ChangeEventDetailLineItem }) {
-  if (!li.budgetLine) return <span>--</span>;
-  const cc = li.budgetLine.cost_code;
-  const codeAndTitle = cc?.title
-    ? cc.division_title ? `${cc.division_title} - ${cc.title}` : cc.title
-    : li.budgetLine.description || "--";
-  return <div className="text-xs font-medium leading-tight">{codeAndTitle}</div>;
+function BudgetCodeCell({
+  li,
+  budgetCodes,
+}: {
+  li: ChangeEventDetailLineItem;
+  budgetCodes: BudgetCodeOption[];
+}) {
+  const budgetCodeText = formatBudgetCodeText(li, budgetCodes);
+  return (
+    <div className="w-40 truncate text-xs font-medium leading-tight" title={budgetCodeText}>
+      {budgetCodeText}
+    </div>
+  );
 }
-
-const MARKUP_TYPE_LABELS: Record<string, string> = {
-  insurance: "Insurance",
-  bond: "Bond",
-  fee: "Contractor Fee",
-  overhead: "Overhead",
-  custom: "Custom",
-};
-
-function getMarkupLabel(markupType: string): string {
-  return MARKUP_TYPE_LABELS[markupType.toLowerCase()] || markupType;
-}
-
-function computeLatestPrice(li: ChangeEventDetailLineItem): number {
-  return li.revenueRom ?? 0;
-}
-
-function computeLatestCost(li: ChangeEventDetailLineItem): number {
-  if (li.nonCommittedCost != null && li.nonCommittedCost !== 0) return li.nonCommittedCost;
-  return li.costRom ?? 0;
-}
-
-function computeRfqCost(li: ChangeEventDetailLineItem): number {
-  return li.rfqCost ?? 0;
-}
-
-type GroupBy = "none" | "vendor" | "budgetCode";
-
-/* ---- Column config ---- */
-
-const REV_COLS = ["rev_qty", "rev_unitCost", "rev_rom", "rev_primePco", "rev_latestPrice"] as const;
-const COST_COLS = ["cost_qty", "cost_unitCost", "cost_rom", "cost_rfq", "cost_commitment", "cost_nonCommitted", "cost_latestCost"] as const;
-type RevCol = (typeof REV_COLS)[number];
-type CostCol = (typeof COST_COLS)[number];
-type ColId = RevCol | CostCol | "overUnder" | "budgetMod";
-
-const COL_LABELS: Record<ColId, string> = {
-  rev_qty: "Qty", rev_unitCost: "Unit Cost", rev_rom: "Rev ROM",
-  rev_primePco: "Prime PCO", rev_latestPrice: "Latest Price",
-  cost_qty: "Qty", cost_unitCost: "Unit Cost", cost_rom: "Cost ROM",
-  cost_rfq: "RFQ", cost_commitment: "Commitment",
-  cost_nonCommitted: "Non-Committed", cost_latestCost: "Latest Cost",
-  overUnder: "Over / Under", budgetMod: "Budget Mod",
-};
-
-type ColWidthKey =
-  | "budgetCode" | "description" | "vendor" | "contract" | "uom"
-  | RevCol | CostCol | "overUnder" | "budgetMod" | "action";
-
-const DEFAULT_COL_WIDTHS: Record<ColWidthKey, number> = {
-  budgetCode: 180, description: 200, vendor: 140, contract: 140, uom: 60,
-  rev_qty: 55, rev_unitCost: 100, rev_rom: 110, rev_primePco: 100, rev_latestPrice: 110,
-  cost_qty: 55, cost_unitCost: 100, cost_rom: 100, cost_rfq: 80,
-  cost_commitment: 140, cost_nonCommitted: 120, cost_latestCost: 105,
-  overUnder: 100, budgetMod: 95, action: 48,
-};
 
 export function ChangeEventLineItemsTable({
   projectId,
   changeEventId,
   lineItems,
-  markupRows,
   expectingRevenue = true,
-  primeContractDisplayName,
   onDeleteLineItem,
   onLineItemsChange,
 }: ChangeEventLineItemsTableProps) {
-  const [search, setSearch] = useState("");
-  const [searchOpen, setSearchOpen] = useState(false);
-  // Inline editor state. The editor renders as an expanded row beneath the line
-  // being edited (or at the end of the table when adding) — never a modal.
+  // Add/edit line items in a side sheet so the table keeps its scan-friendly row shape.
   const [isAdding, setIsAdding] = useState(false);
   const [editingItem, setEditingItem] = useState<ChangeEventDetailLineItem | null>(null);
   const [formState, setFormState] = useState<LineItemFormState>(EMPTY_FORM);
   const [isSaving, setIsSaving] = useState(false);
 
   const { vendors, contracts, budgetCodes } = useDropdownData({ projectId });
-  const [groupBy, setGroupBy] = useState<GroupBy>("none");
-  const [filterVendorOnly, setFilterVendorOnly] = useState(false);
-  const [filterNonZero, setFilterNonZero] = useState(false);
-
-  /* Individual column visibility — revenue columns default hidden when the
-     change event is not expecting revenue (still user-toggleable below). */
-  const [visibleCols, setVisibleCols] = useState<Record<ColId, boolean>>(() => ({
-    rev_qty: expectingRevenue, rev_unitCost: expectingRevenue, rev_rom: expectingRevenue,
-    rev_primePco: expectingRevenue, rev_latestPrice: expectingRevenue,
-    cost_qty: true, cost_unitCost: true, cost_rom: true, cost_rfq: true,
-    cost_commitment: true, cost_nonCommitted: true, cost_latestCost: true,
-    overUnder: true, budgetMod: true,
-  }));
-
-  /* Resizable column widths */
-  const [colWidths, setColWidths] = useState<Record<ColWidthKey, number>>(DEFAULT_COL_WIDTHS);
-  const resizingRef = useRef<{ col: ColWidthKey; startX: number; startW: number } | null>(null);
-
-  const startResize = (col: ColWidthKey, e: React.MouseEvent) => {
-    e.preventDefault();
-    resizingRef.current = { col, startX: e.clientX, startW: colWidths[col] };
-    const onMove = (ev: MouseEvent) => {
-      const ref = resizingRef.current;
-      if (!ref) return;
-      const delta = ev.clientX - ref.startX;
-      const newW = Math.max(40, ref.startW + delta);
-      setColWidths((prev) => ({ ...prev, [ref.col]: newW }));
-    };
-    const onUp = () => {
-      resizingRef.current = null;
-      document.removeEventListener("mousemove", onMove);
-      document.removeEventListener("mouseup", onUp);
-    };
-    document.addEventListener("mousemove", onMove);
-    document.addEventListener("mouseup", onUp);
-  };
-
-  /* Derived visibility */
-  const revenueSpan = REV_COLS.filter((c) => visibleCols[c]).length;
-  const costSpan = COST_COLS.filter((c) => visibleCols[c]).length;
-  const showRevenue = revenueSpan > 0;
-  const showCost = costSpan > 0;
-  const firstRevCol = REV_COLS.find((c) => visibleCols[c]);
-  const firstCostCol = COST_COLS.find((c) => visibleCols[c]);
-
-  /* Group toggle helpers */
-  const allRevVisible = REV_COLS.every((c) => visibleCols[c]);
-  const allCostVisible = COST_COLS.every((c) => visibleCols[c]);
-  const toggleRevGroup = () =>
-    setVisibleCols((prev) => ({
-      ...prev,
-      ...Object.fromEntries(REV_COLS.map((c) => [c, !allRevVisible])),
-    }));
-  const toggleCostGroup = () =>
-    setVisibleCols((prev) => ({
-      ...prev,
-      ...Object.fromEntries(COST_COLS.map((c) => [c, !allCostVisible])),
-    }));
-  const toggleCol = (col: ColId) =>
-    setVisibleCols((prev) => ({ ...prev, [col]: !prev[col] }));
-
-  /* Filters */
-  const activeFilterCount = [filterVendorOnly, filterNonZero].filter(Boolean).length;
-  const activeControlCount = activeFilterCount + (groupBy !== "none" ? 1 : 0);
-  const isFiltered = !!search.trim() || filterVendorOnly || filterNonZero || groupBy !== "none";
-
-  const filteredItems = useMemo(() => {
-    let items = lineItems;
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      items = items.filter(
-        (li) =>
-          (safeDescription(li.description) ?? "").toLowerCase().includes(q) ||
-          formatBudgetCodeText(li).toLowerCase().includes(q) ||
-          (li.vendor?.name ?? "").toLowerCase().includes(q),
-      );
-    }
-    if (filterVendorOnly) items = items.filter((li) => !!li.vendor?.name);
-    if (filterNonZero)
-      items = items.filter((li) => (li.costRom ?? 0) !== 0 || (li.revenueRom ?? 0) !== 0);
-    return items;
-  }, [lineItems, search, filterVendorOnly, filterNonZero]);
-
-  const groupedItems = useMemo(() => {
-    if (groupBy === "none") return [{ key: "all", label: null, items: filteredItems }];
-    const groups = new Map<string, ChangeEventDetailLineItem[]>();
-    for (const li of filteredItems) {
-      const key =
-        groupBy === "vendor" ? li.vendor?.name || "No Vendor" : formatBudgetCodeText(li);
-      if (!groups.has(key)) groups.set(key, []);
-      const bucket = groups.get(key);
-      if (bucket) bucket.push(li);
-    }
-    return Array.from(groups.entries()).map(([key, items]) => ({ key, label: key, items }));
-  }, [filteredItems, groupBy]);
 
   const lineItemSubtotals = useMemo(
     () =>
-      filteredItems.reduce(
+      lineItems.reduce(
         (acc, li) => ({
           costRom: acc.costRom + (li.costRom ?? 0),
-          rfqCost: acc.rfqCost + computeRfqCost(li),
           revenueRom: acc.revenueRom + (li.revenueRom ?? 0),
           nonCommittedCost: acc.nonCommittedCost + (li.nonCommittedCost ?? 0),
-          latestPrice: acc.latestPrice + computeLatestPrice(li),
-          latestCost: acc.latestCost + computeLatestCost(li),
         }),
-        { costRom: 0, rfqCost: 0, revenueRom: 0, nonCommittedCost: 0, latestPrice: 0, latestCost: 0 },
+        { costRom: 0, revenueRom: 0, nonCommittedCost: 0 },
       ),
-    [filteredItems],
+    [lineItems],
   );
-
-  const computedMarkups = useMemo(() => {
-    if (!expectingRevenue) return [];
-    const sorted = [...markupRows].sort((a, b) => a.calculation_order - b.calculation_order);
-    let runningRevenueBase = lineItemSubtotals.revenueRom;
-    return sorted.map((markup) => {
-      const revenueAmount = runningRevenueBase * (markup.percentage / 100);
-      if (markup.compound) runningRevenueBase += revenueAmount;
-      return { ...markup, costAmount: 0, revenueAmount };
-    });
-  }, [expectingRevenue, markupRows, lineItemSubtotals]);
-
-  const markupTotalRevenue = useMemo(
-    () => computedMarkups.reduce((sum, m) => sum + m.revenueAmount, 0),
-    [computedMarkups],
-  );
-
-  const totals = useMemo(
-    () => ({
-      costRom: lineItemSubtotals.costRom,
-      rfqCost: lineItemSubtotals.rfqCost,
-      revenueRom: lineItemSubtotals.revenueRom + markupTotalRevenue,
-      nonCommittedCost: lineItemSubtotals.nonCommittedCost,
-      latestPrice: lineItemSubtotals.latestPrice + markupTotalRevenue,
-      latestCost: lineItemSubtotals.latestCost,
-    }),
-    [lineItemSubtotals, markupTotalRevenue],
-  );
-
-  const overUnder = totals.latestPrice - totals.latestCost;
+  const overUnder = lineItemSubtotals.revenueRom - lineItemSubtotals.costRom;
 
   /**
    * Fetch the selected commitment's SOV and auto-populate the budget code, the
@@ -399,7 +236,7 @@ export function ChangeEventLineItemsTable({
         : "";
     setFormState({
       description: li.description ?? "",
-      budgetCodeId: li.projectBudgetCodeId ?? "",
+      budgetCodeId: resolveLineItemBudgetCode(li, budgetCodes)?.id ?? li.projectBudgetCodeId ?? "",
       vendorId: li.vendor?.id ?? li.vendorId ?? "",
       contractValue,
       unitOfMeasure: li.unitOfMeasure ?? "",
@@ -473,54 +310,12 @@ export function ChangeEventLineItemsTable({
     }
   };
 
-  // The inline line-item editor — the SAME fields as the change-event form,
-  // rendered in an expanded table row instead of a modal. Used for both Edit
-  // (under the row) and Add (end of table).
+  // The line-item editor uses the same fields as the change-event form.
   function renderLineItemEditor() {
     return (
-      <div className="space-y-4 border-l-2 border-primary/40 bg-muted/20 px-4 py-4">
-        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          {editingItem ? "Edit Line Item" : "Add Line Item"}
-        </div>
-
-        <div className="grid max-w-3xl gap-4 sm:grid-cols-2">
+      <div className="space-y-6">
+        <div className="space-y-4">
           {/* Budget Code */}
-          <div className="space-y-1.5">
-            <Label>Budget Code</Label>
-            <BudgetCodeSelector
-              value={formState.budgetCodeId}
-              onValueChange={(id) => setFormState((s) => ({ ...s, budgetCodeId: id }))}
-              budgetCodes={budgetCodes}
-              onCreateNew={() => {}}
-              placeholder="Select budget code..."
-              // Lock only once a code is actually resolved/chosen; never trap the
-              // user on a committed line whose budget code couldn't auto-populate.
-              disabled={!!formState.contractValue && !!formState.budgetCodeId}
-            />
-          </div>
-
-          {/* Description */}
-          <div className="space-y-1.5">
-            <Label htmlFor="li-description">Description *</Label>
-            <Input
-              id="li-description"
-              value={formState.description}
-              onChange={(e) => setFormState((s) => ({ ...s, description: e.target.value }))}
-              placeholder="Enter description"
-            />
-          </div>
-
-          {/* Vendor */}
-          <div className="space-y-1.5">
-            <Label>Vendor</Label>
-            <VendorCombobox
-              value={formState.vendorId}
-              onChange={(v) => setFormState((s) => ({ ...s, vendorId: v }))}
-              vendors={vendors}
-              onAddCompany={() => {}}
-            />
-          </div>
-
           {/* Commitment */}
           <div className="space-y-1.5">
             <Label>Commitment</Label>
@@ -538,6 +333,42 @@ export function ChangeEventLineItemsTable({
               }}
               contracts={contracts}
               disabled={!!editingItem?.commitmentId}
+            />
+          </div>
+
+          {/* Description */}
+          <div className="space-y-1.5">
+            <Label htmlFor="li-description">Description *</Label>
+            <Input
+              id="li-description"
+              value={formState.description}
+              onChange={(e) => setFormState((s) => ({ ...s, description: e.target.value }))}
+              placeholder="Enter description"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Budget Code</Label>
+            <BudgetCodeSelector
+              value={formState.budgetCodeId}
+              onValueChange={(id) => setFormState((s) => ({ ...s, budgetCodeId: id }))}
+              budgetCodes={budgetCodes}
+              onCreateNew={() => {}}
+              placeholder="Select budget code..."
+              // Lock only once a code is actually resolved/chosen; never trap the
+              // user on a committed line whose budget code couldn't auto-populate.
+              disabled={!!formState.contractValue && !!formState.budgetCodeId}
+            />
+          </div>
+
+          {/* Vendor */}
+          <div className="space-y-1.5">
+            <Label>Vendor</Label>
+            <VendorCombobox
+              value={formState.vendorId}
+              onChange={(v) => setFormState((s) => ({ ...s, vendorId: v }))}
+              vendors={vendors}
+              onAddCompany={() => {}}
             />
           </div>
 
@@ -561,9 +392,9 @@ export function ChangeEventLineItemsTable({
         </div>
 
         {/* Cost */}
-        <div className="max-w-3xl">
-          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Cost</p>
-          <div className="grid grid-cols-3 gap-3">
+        <div>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-primary">Cost</p>
+          <div className="space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="li-costQty">Quantity</Label>
               <Input
@@ -597,9 +428,9 @@ export function ChangeEventLineItemsTable({
         </div>
 
         {/* Revenue */}
-        <div className="max-w-3xl">
-          <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Revenue</p>
-          <div className="grid grid-cols-3 gap-3">
+        <div>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-primary">Revenue</p>
+          <div className="space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="li-revQty">Quantity</Label>
               <Input
@@ -634,7 +465,7 @@ export function ChangeEventLineItemsTable({
 
         {/* Non-committed cost (only when a commitment is selected) */}
         {formState.contractValue && (
-          <div className="w-48 space-y-1.5">
+          <div className="space-y-1.5">
             <Label>Non-committed Cost</Label>
             <MoneyField
               inline
@@ -647,779 +478,266 @@ export function ChangeEventLineItemsTable({
           </div>
         )}
 
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" size="sm" onClick={closeEditor} disabled={isSaving}>
-            Cancel
-          </Button>
-          <Button
-            size="sm"
-            onClick={handleSaveLineItem}
-            disabled={isSaving || !formState.description.trim()}
-          >
-            {isSaving ? "Saving…" : editingItem ? "Save Changes" : "Add Line Item"}
-          </Button>
-        </div>
       </div>
     );
   }
 
-  const detailSpan = 5;
-  const actionSpan = onDeleteLineItem || changeEventId ? 1 : 0;
-  const totalColCount =
-    detailSpan +
-    revenueSpan +
-    costSpan +
-    (visibleCols.overUnder ? 1 : 0) +
-    (visibleCols.budgetMod ? 1 : 0) +
-    actionSpan;
-
-  /* Resize handle — draggable right edge on column headers */
-  function RH({ col }: { col: ColWidthKey }) {
-    return (
-      <div
-        aria-hidden="true"
-        className="absolute right-0 top-0 h-full w-1 cursor-col-resize opacity-20 transition-opacity hover:opacity-100 hover:bg-border/60"
-        onMouseDown={(e) => startResize(col, e)}
-      />
-    );
-  }
+  const editorOpen = isAdding || editingItem !== null;
 
   return (
     <div>
-      {/* Title + toolbar in one row */}
       <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-baseline gap-2">
-          <SectionRuleHeading label="Line Items" />
-          <span
-            className={cn(
-              "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-              isFiltered
-                ? "bg-muted text-foreground"
-                : "bg-muted text-muted-foreground",
-            )}
-          >
-            {isFiltered ? `${filteredItems.length} of ${lineItems.length}` : lineItems.length}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1">
-          {changeEventId && (
-            <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={openAdd}>
-              <Plus className="h-3.5 w-3.5" />
-              Add
-            </Button>
-          )}
-          {/* Search — expandable icon */}
-          {searchOpen ? (
-            <div className="relative flex items-center">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                autoFocus
-                placeholder="Search..."
-                className="h-8 w-44 pl-8 pr-8 text-sm"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onBlur={() => { if (!search) setSearchOpen(false); }}
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") { setSearch(""); setSearchOpen(false); }
-                }}
-              />
-              {search && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-0 top-0 h-8 w-8"
-                  onClick={() => { setSearch(""); setSearchOpen(false); }}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
-          ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setSearchOpen(true)}
-              aria-label="Search line items"
-            >
-              <Search className="h-4 w-4" />
-            </Button>
-          )}
-
-          {/* Filter + grouping popover */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button size="sm" variant="ghost" className="relative h-8 w-8 p-0">
-                <SlidersHorizontal className="h-4 w-4" />
-                {activeControlCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[9px] font-bold leading-none text-primary-foreground">
-                    {activeControlCount}
-                  </span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-52 p-3" align="end">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Grouping
-              </p>
-              <div className="mb-4 space-y-1">
-                {(["none", "vendor", "budgetCode"] as GroupBy[]).map((opt) => (
-                  <Button
-                    key={opt}
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "h-auto w-full justify-start rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted",
-                      groupBy === opt
-                        ? "bg-primary/10 font-medium text-primary hover:bg-primary/10"
-                        : "text-foreground",
-                    )}
-                    onClick={() => setGroupBy(opt)}
-                  >
-                    {opt === "none" ? "No grouping" : opt === "vendor" ? "By vendor" : "By budget code"}
-                  </Button>
-                ))}
-              </div>
-
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Filters
-              </p>
-              <div className="space-y-2.5">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="filter-vendor"
-                    checked={filterVendorOnly}
-                    onCheckedChange={(v) => setFilterVendorOnly(!!v)}
-                  />
-                  <Label htmlFor="filter-vendor" className="cursor-pointer text-sm font-normal">
-                    Has vendor
-                  </Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="filter-nonzero"
-                    checked={filterNonZero}
-                    onCheckedChange={(v) => setFilterNonZero(!!v)}
-                  />
-                  <Label htmlFor="filter-nonzero" className="cursor-pointer text-sm font-normal">
-                    Hide $0 lines
-                  </Label>
-                </div>
-              </div>
-              {activeControlCount > 0 && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="mt-3 h-7 w-full text-xs text-muted-foreground"
-                  onClick={() => {
-                    setFilterVendorOnly(false);
-                    setFilterNonZero(false);
-                    setGroupBy("none");
-                    setSearch("");
-                    setSearchOpen(false);
-                  }}
-                >
-                  Clear all
-                </Button>
-              )}
-            </PopoverContent>
-          </Popover>
-
-          {/* Column visibility — individual column toggles */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                <Columns2 className="h-4 w-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-56 p-3" align="end">
-              {/* Cost group */}
-              <div className="mb-3">
-                <div className="mb-1.5 flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Cost
-                  </p>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-auto px-0 py-0 text-[10px] text-primary hover:bg-transparent hover:text-primary"
-                    onClick={toggleCostGroup}
-                  >
-                    {allCostVisible ? "Hide all" : "Show all"}
-                  </Button>
-                </div>
-                <div className="space-y-1.5">
-                  {COST_COLS.map((col) => (
-                    <div key={col} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`col-${col}`}
-                        checked={visibleCols[col]}
-                        onCheckedChange={() => toggleCol(col)}
-                      />
-                      <Label htmlFor={`col-${col}`} className="cursor-pointer text-sm font-normal">
-                        {COL_LABELS[col]}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Revenue group */}
-              <div className="mb-3">
-                <div className="mb-1.5 flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Revenue
-                  </p>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-auto px-0 py-0 text-[10px] text-primary hover:bg-transparent hover:text-primary"
-                    onClick={toggleRevGroup}
-                  >
-                    {allRevVisible ? "Hide all" : "Show all"}
-                  </Button>
-                </div>
-                <div className="space-y-1.5">
-                  {REV_COLS.map((col) => (
-                    <div key={col} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`col-${col}`}
-                        checked={visibleCols[col]}
-                        onCheckedChange={() => toggleCol(col)}
-                      />
-                      <Label htmlFor={`col-${col}`} className="cursor-pointer text-sm font-normal">
-                        {COL_LABELS[col]}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Summary columns */}
-              <div>
-                <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Summary
-                </p>
-                <div className="space-y-1.5">
-                  {(["overUnder", "budgetMod"] as ColId[]).map((col) => (
-                    <div key={col} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`col-${col}`}
-                        checked={visibleCols[col]}
-                        onCheckedChange={() => toggleCol(col)}
-                      />
-                      <Label htmlFor={`col-${col}`} className="cursor-pointer text-sm font-normal">
-                        {COL_LABELS[col]}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          <span className="pl-1 text-xs tabular-nums text-muted-foreground">
-            {filteredItems.length} item{filteredItems.length !== 1 ? "s" : ""}
-          </span>
-        </div>
+        <SectionRuleHeading label="Line Items" className="mb-0 [&_span]:text-primary" />
+        {changeEventId && (
+          <InlineAddButton onClick={openAdd}>
+            Add Line Item
+          </InlineAddButton>
+        )}
       </div>
 
-      {filteredItems.length === 0 && lineItems.length > 0 ? (
-        <div className="flex flex-col items-center justify-center gap-3 py-12">
-          <span className="text-sm text-muted-foreground">No line items match your filters</span>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setSearch("");
-              setSearchOpen(false);
-              setFilterVendorOnly(false);
-              setFilterNonZero(false);
-              setGroupBy("none");
-            }}
+      {lineItems.length > 0 ? (
+        <div className="line-items-scroll-shell relative rounded-lg">
+          <InlineTable
+            variant="edit"
+            tableClassName={cn(
+              "table-fixed",
+              expectingRevenue ? "w-[127.25rem] min-w-[127.25rem]" : "w-[95.25rem] min-w-[95.25rem]",
+            )}
           >
-            Clear filters
-          </Button>
-        </div>
-      ) : filteredItems.length > 0 || computedMarkups.length > 0 || isAdding ? (
-        <InlineTable variant="read" tableClassName="min-w-max">
-          <colgroup>
-            <col style={{ width: colWidths.budgetCode }} />
-            <col style={{ width: colWidths.description }} />
-            <col style={{ width: colWidths.vendor }} />
-            <col style={{ width: colWidths.contract }} />
-            <col style={{ width: colWidths.uom }} />
-            {REV_COLS.map((c) => visibleCols[c] && <col key={c} style={{ width: colWidths[c] }} />)}
-            {COST_COLS.map((c) => visibleCols[c] && <col key={c} style={{ width: colWidths[c] }} />)}
-            {visibleCols.overUnder && <col style={{ width: colWidths.overUnder }} />}
-            {visibleCols.budgetMod && <col style={{ width: colWidths.budgetMod }} />}
-            {(onDeleteLineItem || changeEventId) && <col style={{ width: colWidths.action }} />}
-          </colgroup>
-
-          <InlineTableHeader>
-            {/* Group header row */}
-            <InlineTableHeaderRow type="group">
-              <InlineTableHeaderCell colSpan={detailSpan}>Detail</InlineTableHeaderCell>
-              {showRevenue && (
-                <InlineTableHeaderCell colSpan={revenueSpan} divider>Revenue</InlineTableHeaderCell>
+            <colgroup>
+              <col className="w-9" />
+              <col className="w-40" />
+              <col className="w-40" />
+              <col className="w-72" />
+              <col className="w-36" />
+              <col className="w-28" />
+              <col className="w-44" />
+              <col className="w-32" />
+              {expectingRevenue && (
+                <>
+                  <col className="w-24" />
+                  <col className="w-28" />
+                  <col className="w-44" />
+                  <col className="w-32" />
+                </>
               )}
-              {showCost && (
-                <InlineTableHeaderCell colSpan={costSpan} divider>Cost</InlineTableHeaderCell>
-              )}
-              {visibleCols.overUnder && <InlineTableHeaderCell divider>Over / Under</InlineTableHeaderCell>}
-              {visibleCols.budgetMod && <InlineTableHeaderCell divider>Mod</InlineTableHeaderCell>}
-              {(onDeleteLineItem || changeEventId) && <InlineTableHeaderCell />}
-            </InlineTableHeaderRow>
+              <col className="w-36" />
+              <col className="w-32" />
+              <col className="w-12" />
+            </colgroup>
 
-            {/* Column header row */}
-            <InlineTableHeaderRow className="border-t border-border/50">
-              <InlineTableHeaderCell className="relative">
-                Budget Code <RH col="budgetCode" />
-              </InlineTableHeaderCell>
-              <InlineTableHeaderCell className="relative">
-                Description <RH col="description" />
-              </InlineTableHeaderCell>
-              <InlineTableHeaderCell className="relative">
-                Vendor <RH col="vendor" />
-              </InlineTableHeaderCell>
-              <InlineTableHeaderCell className="relative">
-                Contract <RH col="contract" />
-              </InlineTableHeaderCell>
-              <InlineTableHeaderCell className="relative">
-                UOM <RH col="uom" />
-              </InlineTableHeaderCell>
-
-              {REV_COLS.map((col) =>
-                visibleCols[col] ? (
-                  <InlineTableHeaderCell
-                    key={col}
-                    align="right"
-                    divider={col === firstRevCol}
-                    className="relative"
-                  >
-                    {COL_LABELS[col]}
-                    <RH col={col} />
+            <InlineTableHeader className="border-y-0 [&_tr]:border-b-0">
+              <InlineTableRow className="border-b border-border/60 hover:bg-transparent">
+                <InlineTableHeaderCell className="w-9 border-b border-border/60 px-1 py-1.5" />
+                <InlineTableHeaderCell colSpan={4} className="line-item-group-end border-b border-border/60 px-2 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground">
+                  Detail
+                </InlineTableHeaderCell>
+                <InlineTableHeaderCell colSpan={3} className="line-item-group-end line-item-group-start border-b border-l border-border/60 px-2 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground">
+                  Cost
+                </InlineTableHeaderCell>
+                {expectingRevenue && (
+                  <InlineTableHeaderCell colSpan={4} className="line-item-group-end line-item-group-start border-b border-l border-border/60 px-2 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground">
+                    Revenue
                   </InlineTableHeaderCell>
-                ) : null,
-              )}
-
-              {COST_COLS.map((col) =>
-                visibleCols[col] ? (
-                  <InlineTableHeaderCell
-                    key={col}
-                    align={col === "cost_commitment" ? undefined : "right"}
-                    divider={col === firstCostCol}
-                    className="relative"
-                  >
-                    {COL_LABELS[col]}
-                    <RH col={col} />
-                  </InlineTableHeaderCell>
-                ) : null,
-              )}
-
-              {visibleCols.overUnder && (
-                <InlineTableHeaderCell align="right" divider className="relative">
-                  {COL_LABELS.overUnder} <RH col="overUnder" />
-                </InlineTableHeaderCell>
-              )}
-              {visibleCols.budgetMod && (
-                <InlineTableHeaderCell align="right" divider className="relative">
-                  Amount <RH col="budgetMod" />
-                </InlineTableHeaderCell>
-              )}
-              {(onDeleteLineItem || changeEventId) && (
-                <InlineTableHeaderCell>
-                  <span className="sr-only">Actions</span>
-                </InlineTableHeaderCell>
-              )}
-            </InlineTableHeaderRow>
-          </InlineTableHeader>
-
-          <InlineTableBody>
-            {groupedItems.map((group) => (
-              <React.Fragment key={group.key}>
-                {group.label !== null && (
-                  <InlineTableRow key={`group-${group.key}`} type="group">
-                    <InlineTableCell
-                      colSpan={totalColCount}
-                      className="py-1 text-[10px] font-semibold text-muted-foreground"
-                    >
-                      {group.label}
-                      <span className="ml-1.5 font-normal opacity-60">({group.items.length})</span>
-                    </InlineTableCell>
-                  </InlineTableRow>
                 )}
+                <InlineTableHeaderCell colSpan={2} className="line-item-group-start border-b border-l border-border/60 px-2 py-1 text-right text-xs font-semibold normal-case tracking-normal text-muted-foreground">
+                  Summary
+                </InlineTableHeaderCell>
+                <InlineTableHeaderCell className="w-12 border-b border-border/60 px-1 py-1" />
+              </InlineTableRow>
+              <InlineTableRow className="border-b-0 hover:bg-transparent">
+                <InlineTableHeaderCell className="w-9 px-1 py-1.5" />
+                <InlineTableHeaderCell className="w-40 px-0.5 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Commitment</InlineTableHeaderCell>
+                <InlineTableHeaderCell className="w-40 px-0.5 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Budget Code</InlineTableHeaderCell>
+                <InlineTableHeaderCell className="w-72 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Description</InlineTableHeaderCell>
+                <InlineTableHeaderCell className="line-item-group-end w-36 px-0.5 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Vendor</InlineTableHeaderCell>
+                <InlineTableHeaderCell className="line-item-group-start w-28 border-l border-border/60 px-2 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Qty</InlineTableHeaderCell>
+                <InlineTableHeaderCell className="w-44 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Unit Cost</InlineTableHeaderCell>
+                <InlineTableHeaderCell className="line-item-group-end w-32 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Cost ROM</InlineTableHeaderCell>
+                {expectingRevenue && (
+                  <>
+                    <InlineTableHeaderCell className="line-item-group-start w-24 border-l border-border/60 px-2 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">UOM</InlineTableHeaderCell>
+                    <InlineTableHeaderCell className="w-28 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Qty</InlineTableHeaderCell>
+                    <InlineTableHeaderCell className="w-44 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Unit Cost</InlineTableHeaderCell>
+                    <InlineTableHeaderCell className="line-item-group-end w-32 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Revenue ROM</InlineTableHeaderCell>
+                  </>
+                )}
+                <InlineTableHeaderCell className="line-item-group-start w-36 border-l border-border/60 px-2 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Non-committed</InlineTableHeaderCell>
+                <InlineTableHeaderCell className="w-32 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Over / Under</InlineTableHeaderCell>
+                <InlineTableHeaderCell className="w-12 px-1 py-1.5" />
+              </InlineTableRow>
+            </InlineTableHeader>
 
-                {group.items.map((li) => {
-                  const latestPrice = computeLatestPrice(li);
-                  const latestCost = computeLatestCost(li);
-                  const rfqCost = computeRfqCost(li);
-                  const liOverUnder = latestPrice - latestCost;
+            <InlineTableBody>
+              {lineItems.map((li) => {
+                const liOverUnder = (li.revenueRom ?? 0) - (li.costRom ?? 0);
+                const commitmentLinkId = li.commitment?.id ?? li.commitmentId;
+                const commitmentDisplayName =
+                  li.commitment?.display_name ||
+                  li.commitment?.title ||
+                  li.commitment?.company_name ||
+                  li.commitment?.contract_number ||
+                  "--";
 
-                  return (
-                    <React.Fragment key={li.id}>
-                    <InlineTableRow>
-                      <InlineTableCell className="align-top">
-                        {li.budgetLine ? (
-                          <Link
-                            href={`/${projectId}/budget`}
-                            className="text-primary hover:underline"
-                          >
-                            <BudgetCodeCell li={li} />
-                          </Link>
-                        ) : (
-                          <BudgetCodeCell li={li} />
-                        )}
-                      </InlineTableCell>
-                      <InlineTableCell className="max-w-30 truncate">
+                return (
+                  <InlineTableRow key={li.id} className="group border-b-0 bg-background transition-colors hover:bg-transparent">
+                    <InlineTableCell className="w-9 px-1 py-1.5 align-top" />
+                    <InlineTableCell
+                      className="w-40 px-0.5 py-1.5 align-top text-[13px]"
+                      title={commitmentDisplayName === "--" ? undefined : commitmentDisplayName}
+                    >
+                      {commitmentLinkId ? (
                         <Link
-                          href={`/${projectId}/change-events/${li.changeEventId}/edit`}
-                          className="text-primary hover:underline"
-                          title={safeDescription(li.description) ?? undefined}
+                          href={`/${projectId}/commitments/${commitmentLinkId}`}
+                          className="block w-40 truncate text-primary hover:underline"
                         >
-                          {safeDescription(li.description) || "--"}
+                          {commitmentDisplayName}
                         </Link>
-                      </InlineTableCell>
-                      <InlineTableCell className="max-w-22.5 truncate">
-                        {li.vendor?.id && li.vendor?.name ? (
-                          <Link
-                            href={`/directory/companies/${li.vendor.id}`}
-                            className="text-primary hover:underline"
-                            title={li.vendor.name}
-                          >
-                            {li.vendor.name}
-                          </Link>
-                        ) : li.commitment?.contract_company_id && li.commitment?.company_name ? (
-                          <Link
-                            href={`/directory/companies/${li.commitment.contract_company_id}`}
-                            className="text-primary hover:underline"
-                            title={li.commitment.company_name}
-                          >
-                            {li.commitment.company_name}
-                          </Link>
-                        ) : (
-                          li.vendor?.name || li.commitment?.company_name || "--"
-                        )}
-                      </InlineTableCell>
-                      <InlineTableCell className="max-w-22.5 truncate">
-                        {li.contractId ? (
-                          <Link
-                            href={`/${projectId}/prime-contracts/${li.contractId}`}
-                            className="text-primary hover:underline"
-                            title={
-                              li.contract?.display_name ||
-                              li.contract?.title ||
-                              li.contract?.company_name ||
-                              primeContractDisplayName ||
-                              "--"
-                            }
-                          >
-                            {li.contract?.display_name ||
-                              li.contract?.title ||
-                              li.contract?.company_name ||
-                              primeContractDisplayName ||
-                              "--"}
-                          </Link>
-                        ) : (
-                          li.contract?.display_name ||
-                          li.contract?.title ||
-                          li.contract?.company_name ||
-                          primeContractDisplayName ||
-                          "--"
-                        )}
-                      </InlineTableCell>
-                      <InlineTableCell className="truncate">
-                        {li.unitOfMeasure || "--"}
-                      </InlineTableCell>
-
-                      {visibleCols.rev_qty && (
-                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_qty"}>
+                      ) : (
+                        <span className="block w-40 truncate">{commitmentDisplayName}</span>
+                      )}
+                    </InlineTableCell>
+                    <InlineTableCell className="w-40 px-0.5 py-1.5 align-top text-[13px]">
+                      <BudgetCodeCell li={li} budgetCodes={budgetCodes} />
+                    </InlineTableCell>
+                    <InlineTableCell
+                      className="w-72 px-1 py-1.5 align-top text-[13px]"
+                      title={safeDescription(li.description) ?? undefined}
+                    >
+                      <span className="block w-72 truncate">
+                        {safeDescription(li.description) || "--"}
+                      </span>
+                    </InlineTableCell>
+                    <InlineTableCell className="line-item-group-end w-36 px-0.5 py-1.5 align-top text-[13px]">
+                      {li.vendor?.id && li.vendor?.name ? (
+                        <Link
+                          href={`/directory/companies/${li.vendor.id}`}
+                          className="block w-36 truncate text-primary hover:underline"
+                          title={li.vendor.name}
+                        >
+                          {li.vendor.name}
+                        </Link>
+                      ) : li.commitment?.contract_company_id && li.commitment?.company_name ? (
+                        <Link
+                          href={`/directory/companies/${li.commitment.contract_company_id}`}
+                          className="block w-36 truncate text-primary hover:underline"
+                          title={li.commitment.company_name}
+                        >
+                          {li.commitment.company_name}
+                        </Link>
+                      ) : (
+                        <span
+                          className="block w-36 truncate"
+                          title={li.vendor?.name || li.commitment?.company_name || undefined}
+                        >
+                          {li.vendor?.name || li.commitment?.company_name || "--"}
+                        </span>
+                      )}
+                    </InlineTableCell>
+                    <InlineTableCell className="line-item-group-start w-28 border-l border-border/60 px-2 py-1.5 align-top text-right text-[13px]">
+                      {li.quantity ?? "--"}
+                    </InlineTableCell>
+                    <InlineTableCell className="w-44 px-1 py-1.5 align-top text-right text-[13px]">
+                      {li.unitCost != null ? formatCurrency(li.unitCost) : "--"}
+                    </InlineTableCell>
+                    <InlineTableCell className="line-item-group-end w-32 px-1 py-1.5 align-top text-right text-[13px] font-semibold">
+                      {formatCurrency(li.costRom)}
+                    </InlineTableCell>
+                    {expectingRevenue && (
+                      <>
+                        <InlineTableCell className="line-item-group-start w-24 border-l border-border/60 px-2 py-1.5 align-top text-[13px]">
+                          {li.unitOfMeasure || "--"}
+                        </InlineTableCell>
+                        <InlineTableCell className="w-28 px-1 py-1.5 align-top text-right text-[13px]">
                           {li.quantity ?? "--"}
                         </InlineTableCell>
-                      )}
-                      {visibleCols.rev_unitCost && (
-                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_unitCost"}>
+                        <InlineTableCell className="w-44 px-1 py-1.5 align-top text-right text-[13px]">
                           {li.unitCost != null ? formatCurrency(li.unitCost) : "--"}
                         </InlineTableCell>
-                      )}
-                      {visibleCols.rev_rom && (
-                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_rom"}>
+                        <InlineTableCell className="line-item-group-end w-32 px-1 py-1.5 align-top text-right text-[13px] font-semibold">
                           {formatCurrency(li.revenueRom)}
                         </InlineTableCell>
-                      )}
-                      {visibleCols.rev_primePco && (
-                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_primePco"}>
-                          --
-                        </InlineTableCell>
-                      )}
-                      {visibleCols.rev_latestPrice && (
-                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_latestPrice"}>
-                          {formatCurrency(latestPrice)}
-                        </InlineTableCell>
-                      )}
-
-                      {visibleCols.cost_qty && (
-                        <InlineTableCell align="right" numeric divider={firstCostCol === "cost_qty"}>
-                          {li.quantity ?? "--"}
-                        </InlineTableCell>
-                      )}
-                      {visibleCols.cost_unitCost && (
-                        <InlineTableCell align="right" numeric divider={firstCostCol === "cost_unitCost"}>
-                          {li.unitCost != null ? formatCurrency(li.unitCost) : "--"}
-                        </InlineTableCell>
-                      )}
-                      {visibleCols.cost_rom && (
-                        <InlineTableCell align="right" numeric divider={firstCostCol === "cost_rom"}>
-                          {formatCurrency(li.costRom)}
-                        </InlineTableCell>
-                      )}
-                      {visibleCols.cost_rfq && (
-                        <InlineTableCell align="right" numeric divider={firstCostCol === "cost_rfq"}>
-                          {li.rfqCost != null ? formatCurrency(rfqCost) : "--"}
-                        </InlineTableCell>
-                      )}
-                      {visibleCols.cost_commitment && (
-                        <InlineTableCell
-                          divider={firstCostCol === "cost_commitment"}
-                          className="max-w-22.5 truncate"
-                          title={li.commitment
-                            ? (li.commitment.display_name ||
-                              li.commitment.title ||
-                              li.commitment.company_name ||
-                              li.commitment.contract_number ||
-                              undefined)
-                            : undefined}
-                        >
-                          {li.commitment?.id ? (
-                            <Link
-                              href={`/${projectId}/commitments/${li.commitment.id}`}
-                              className="text-primary hover:underline"
-                            >
-                              {li.commitment.display_name ||
-                                li.commitment.title ||
-                                li.commitment.company_name ||
-                                li.commitment.contract_number ||
-                                "--"}
-                            </Link>
-                          ) : li.commitment
-                            ? (li.commitment.display_name ||
-                              li.commitment.title ||
-                              li.commitment.company_name ||
-                              li.commitment.contract_number ||
-                              "--")
-                            : "--"}
-                        </InlineTableCell>
-                      )}
-                      {visibleCols.cost_nonCommitted && (
-                        <InlineTableCell align="right" numeric divider={firstCostCol === "cost_nonCommitted"}>
-                          {formatCurrency(li.nonCommittedCost)}
-                        </InlineTableCell>
-                      )}
-                      {visibleCols.cost_latestCost && (
-                        <InlineTableCell align="right" numeric divider={firstCostCol === "cost_latestCost"}>
-                          {formatCurrency(latestCost)}
-                        </InlineTableCell>
-                      )}
-
-                      {visibleCols.overUnder && (
-                        <InlineTableCell
-                          align="right"
-                          numeric
-                          divider
-                          className={cn(
-                            liOverUnder > 0 ? "text-success" : liOverUnder < 0 ? "text-destructive" : "",
-                          )}
-                        >
-                          {formatCurrency(liOverUnder)}
-                        </InlineTableCell>
-                      )}
-                      {visibleCols.budgetMod && (
-                        <InlineTableCell align="right" numeric divider>
-                          {formatCurrency(li.extendedAmount)}
-                        </InlineTableCell>
-                      )}
-                      {(onDeleteLineItem || changeEventId) && (
-                        <InlineTableCell className="px-1 py-1">
-                          <div className="flex items-center justify-end">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 w-7 p-0 text-muted-foreground"
-                                  aria-label="More line item actions"
-                                >
-                                  <MoreVertical className="h-3.5 w-3.5" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                {changeEventId && (
-                                  <DropdownMenuItem
-                                    onSelect={(e) => { e.preventDefault(); openEdit(li); }}
-                                  >
-                                    <Edit className="mr-2 h-4 w-4" />
-                                    Edit
-                                  </DropdownMenuItem>
-                                )}
-                                {changeEventId && onDeleteLineItem && <DropdownMenuSeparator />}
-                                {onDeleteLineItem && (
-                                  <DropdownMenuItem
-                                    className="text-destructive"
-                                    onSelect={() => void onDeleteLineItem(li.id)}
-                                  >
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Delete
-                                  </DropdownMenuItem>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </InlineTableCell>
-                      )}
-                    </InlineTableRow>
-                    {editingItem?.id === li.id && (
-                      <InlineTableRow>
-                        <InlineTableCell colSpan={totalColCount} className="p-0">
-                          {renderLineItemEditor()}
-                        </InlineTableCell>
-                      </InlineTableRow>
+                      </>
                     )}
-                    </React.Fragment>
-                  );
-                })}
-              </React.Fragment>
-            ))}
-
-            {/* Inline add editor — appended at the end of the table */}
-            {isAdding && (
-              <InlineTableRow>
-                <InlineTableCell colSpan={totalColCount} className="p-0">
-                  {renderLineItemEditor()}
+                    <InlineTableCell className="line-item-group-start w-36 border-l border-border/60 px-2 py-1.5 align-top text-right text-[13px] font-semibold">
+                      {formatCurrency(li.nonCommittedCost ?? 0)}
+                    </InlineTableCell>
+                    <InlineTableCell
+                      className={cn(
+                        "w-32 px-1 py-1.5 align-top text-right text-[13px] font-semibold",
+                        liOverUnder < 0 ? "text-destructive" : liOverUnder > 0 ? "text-foreground" : "text-muted-foreground",
+                      )}
+                    >
+                      {formatCurrency(liOverUnder)}
+                    </InlineTableCell>
+                    <InlineTableCell className="w-12 px-1 py-1.5 align-top">
+                      {(onDeleteLineItem || changeEventId) && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-muted-foreground"
+                              aria-label="More line item actions"
+                            >
+                              <MoreVertical className="h-3.5 w-3.5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {changeEventId && (
+                              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openEdit(li); }}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                              </DropdownMenuItem>
+                            )}
+                            {changeEventId && onDeleteLineItem && <DropdownMenuSeparator />}
+                            {onDeleteLineItem && (
+                              <DropdownMenuItem className="text-destructive" onSelect={() => void onDeleteLineItem(li.id)}>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </InlineTableCell>
+                  </InlineTableRow>
+                );
+              })}
+              <InlineTableRow className="bg-muted/35 hover:bg-muted/35">
+                <InlineTableCell className="border-t border-border px-1.5 pb-2.5 pt-4" />
+                <InlineTableCell colSpan={4} className="border-t border-border px-1.5 pb-3 pt-4 text-sm font-semibold text-foreground">
+                  Totals
                 </InlineTableCell>
-              </InlineTableRow>
-            )}
-
-            {/* Markup rows */}
-            {computedMarkups.map((markup) => (
-              <InlineTableRow key={markup.id} type="markup">
-                <InlineTableCell className="font-medium">
-                  {getMarkupLabel(markup.markup_type)}
+                <InlineTableCell colSpan={2} className="border-t border-border px-1.5 pb-2.5 pt-4" />
+                <InlineTableCell className="border-t border-border px-1.5 pb-2.5 pt-4 text-right text-sm font-semibold text-foreground">
+                  {formatCurrency(lineItemSubtotals.costRom)}
                 </InlineTableCell>
-                <InlineTableCell>{markup.percentage}%</InlineTableCell>
-                <InlineTableCell />
-                <InlineTableCell />
-                <InlineTableCell />
-
-                {visibleCols.rev_qty && <InlineTableCell divider={firstRevCol === "rev_qty"} />}
-                {visibleCols.rev_unitCost && <InlineTableCell divider={firstRevCol === "rev_unitCost"} />}
-                {visibleCols.rev_rom && (
-                  <InlineTableCell align="right" numeric divider={firstRevCol === "rev_rom"}>
-                    {formatCurrency(markup.revenueAmount)}
-                  </InlineTableCell>
+                {expectingRevenue && (
+                  <>
+                    <InlineTableCell colSpan={3} className="border-t border-border px-1.5 pb-2.5 pt-4" />
+                    <InlineTableCell className="border-t border-border px-1.5 pb-2.5 pt-4 text-right text-sm font-semibold text-foreground">
+                      {formatCurrency(lineItemSubtotals.revenueRom)}
+                    </InlineTableCell>
+                  </>
                 )}
-                {visibleCols.rev_primePco && <InlineTableCell divider={firstRevCol === "rev_primePco"} />}
-                {visibleCols.rev_latestPrice && (
-                  <InlineTableCell align="right" numeric divider={firstRevCol === "rev_latestPrice"}>
-                    {formatCurrency(markup.revenueAmount)}
-                  </InlineTableCell>
-                )}
-
-                {visibleCols.cost_qty && <InlineTableCell divider={firstCostCol === "cost_qty"} />}
-                {visibleCols.cost_unitCost && <InlineTableCell divider={firstCostCol === "cost_unitCost"} />}
-                {visibleCols.cost_rom && (
-                  <InlineTableCell align="right" numeric divider={firstCostCol === "cost_rom"}>
-                    {formatCurrency(markup.costAmount)}
-                  </InlineTableCell>
-                )}
-                {visibleCols.cost_rfq && <InlineTableCell divider={firstCostCol === "cost_rfq"} />}
-                {visibleCols.cost_commitment && <InlineTableCell divider={firstCostCol === "cost_commitment"} />}
-                {visibleCols.cost_nonCommitted && <InlineTableCell divider={firstCostCol === "cost_nonCommitted"} />}
-                {visibleCols.cost_latestCost && (
-                  <InlineTableCell align="right" numeric divider={firstCostCol === "cost_latestCost"}>
-                    {formatCurrency(markup.costAmount)}
-                  </InlineTableCell>
-                )}
-
-                {visibleCols.overUnder && (
-                  <InlineTableCell align="right" numeric divider>
-                    {formatCurrency(markup.revenueAmount)}
-                  </InlineTableCell>
-                )}
-                {visibleCols.budgetMod && <InlineTableCell divider />}
-                {(onDeleteLineItem || changeEventId) && <InlineTableCell />}
-              </InlineTableRow>
-            ))}
-          </InlineTableBody>
-
-          {/* Totals row */}
-          <InlineTableFooter>
-            <InlineTableFooterRow type="totals">
-              <InlineTableFooterCell>Totals</InlineTableFooterCell>
-              <InlineTableFooterCell />
-              <InlineTableFooterCell />
-              <InlineTableFooterCell />
-              <InlineTableFooterCell />
-
-              {visibleCols.rev_qty && <InlineTableFooterCell divider={firstRevCol === "rev_qty"} />}
-              {visibleCols.rev_unitCost && <InlineTableFooterCell divider={firstRevCol === "rev_unitCost"} />}
-              {visibleCols.rev_rom && (
-                <InlineTableFooterCell align="right" numeric divider={firstRevCol === "rev_rom"}>
-                  {formatCurrency(totals.revenueRom)}
-                </InlineTableFooterCell>
-              )}
-              {visibleCols.rev_primePco && <InlineTableFooterCell divider={firstRevCol === "rev_primePco"} />}
-              {visibleCols.rev_latestPrice && (
-                <InlineTableFooterCell align="right" numeric divider={firstRevCol === "rev_latestPrice"}>
-                  {formatCurrency(totals.latestPrice)}
-                </InlineTableFooterCell>
-              )}
-
-              {visibleCols.cost_qty && <InlineTableFooterCell divider={firstCostCol === "cost_qty"} />}
-              {visibleCols.cost_unitCost && <InlineTableFooterCell divider={firstCostCol === "cost_unitCost"} />}
-              {visibleCols.cost_rom && (
-                <InlineTableFooterCell align="right" numeric divider={firstCostCol === "cost_rom"}>
-                  {formatCurrency(totals.costRom)}
-                </InlineTableFooterCell>
-              )}
-              {visibleCols.cost_rfq && (
-                <InlineTableFooterCell align="right" numeric divider={firstCostCol === "cost_rfq"}>
-                  {formatCurrency(totals.rfqCost)}
-                </InlineTableFooterCell>
-              )}
-              {visibleCols.cost_commitment && <InlineTableFooterCell divider={firstCostCol === "cost_commitment"} />}
-              {visibleCols.cost_nonCommitted && (
-                <InlineTableFooterCell align="right" numeric divider={firstCostCol === "cost_nonCommitted"}>
-                  {formatCurrency(totals.nonCommittedCost)}
-                </InlineTableFooterCell>
-              )}
-              {visibleCols.cost_latestCost && (
-                <InlineTableFooterCell align="right" numeric divider={firstCostCol === "cost_latestCost"}>
-                  {formatCurrency(totals.latestCost)}
-                </InlineTableFooterCell>
-              )}
-
-              {visibleCols.overUnder && (
-                <InlineTableFooterCell
-                  align="right"
-                  numeric
-                  divider
+                <InlineTableCell className="border-t border-border px-1.5 pb-2.5 pt-4 text-right text-sm font-semibold text-foreground">
+                  {formatCurrency(lineItemSubtotals.nonCommittedCost)}
+                </InlineTableCell>
+                <InlineTableCell
                   className={cn(
-                    overUnder > 0 ? "text-success" : overUnder < 0 ? "text-destructive" : "",
+                    "border-t border-border px-1.5 pb-2.5 pt-4 text-right text-sm font-semibold",
+                    overUnder < 0 ? "text-destructive" : "text-foreground",
                   )}
                 >
                   {formatCurrency(overUnder)}
-                </InlineTableFooterCell>
-              )}
-              {visibleCols.budgetMod && <InlineTableFooterCell divider />}
-              {(onDeleteLineItem || changeEventId) && <InlineTableFooterCell />}
-            </InlineTableFooterRow>
-          </InlineTableFooter>
-        </InlineTable>
+                </InlineTableCell>
+                <InlineTableCell className="border-t border-border px-1.5 pb-2.5 pt-4" />
+              </InlineTableRow>
+            </InlineTableBody>
+          </InlineTable>
+        </div>
       ) : (
         <div className="flex flex-col items-center justify-center gap-3 py-12">
           <span className="text-sm text-muted-foreground">No line items added yet</span>
@@ -1432,6 +750,36 @@ export function ChangeEventLineItemsTable({
         </div>
       )}
 
+      <Sheet
+        open={editorOpen}
+        onOpenChange={(open) => {
+          if (!open) closeEditor();
+        }}
+      >
+        <SheetContent
+          side="right"
+          className="w-full gap-0 p-0 sm:max-w-none md:w-140 md:max-w-none lg:w-150"
+        >
+          <SheetHeader className="border-b border-border px-6 py-5">
+            <SheetTitle>{editingItem ? "Edit Line Item" : "Add Line Item"}</SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto px-6 py-5">
+            {renderLineItemEditor()}
+          </div>
+          <SheetFooter className="border-t border-border px-6 py-4">
+            <Button variant="outline" size="sm" onClick={closeEditor} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSaveLineItem}
+              disabled={isSaving || !formState.description.trim()}
+            >
+              {isSaving ? "Saving…" : editingItem ? "Save Changes" : "Add Line Item"}
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

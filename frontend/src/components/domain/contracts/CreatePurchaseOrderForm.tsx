@@ -1,7 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { useForm, useWatch, FormProvider, Controller } from "react-hook-form";
+import {
+  useForm,
+  useWatch,
+  FormProvider,
+  Controller,
+  type Resolver,
+} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,6 +72,13 @@ import {
 } from "@/components/ui/popover";
 import { RichTextField } from "@/components/forms/RichTextField";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
+import {
+  budgetCodeTextValue,
+  normalizeBudgetCodesForSelector,
+  resolvePrimeCoBudgetCode,
+} from "@/lib/budget/budget-code-selection";
+import { apiFetch } from "@/lib/api-client";
+import { formatCurrency, formatNumber } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import {
@@ -115,7 +128,9 @@ interface CreatePurchaseOrderFormProps {
 interface BudgetCode {
   id: string;
   code: string;
+  legacyCostCodeId?: string | null;
   costType: string | null;
+  costTypeId?: string | null;
   description: string;
   fullLabel: string;
 }
@@ -193,12 +208,10 @@ export function CreatePurchaseOrderForm({
     const fetchVendors = async () => {
       try {
         setIsLoadingVendors(true);
-        const response = await fetch(`/api/projects/${projectId}/vendors`);
-        if (!response.ok) throw new Error("Failed to load vendors");
-        const data = (await response.json()) as Array<{
+        const data = await apiFetch<Array<{
           id: string;
           vendor_name: string;
-        }>;
+        }>>(`/api/projects/${projectId}/vendors`);
         const options = (data || []).map((v) => ({ value: v.id, label: v.vendor_name }));
 
         // Ensure the saved company appears in options even if not in project vendors
@@ -224,7 +237,7 @@ export function CreatePurchaseOrderForm({
   }, [projectId, initialData?.contractCompanyId, initialData?.contractCompanyName]);
 
   const form = useForm<CreatePurchaseOrderInput>({
-    resolver: zodResolver(CreatePurchaseOrderSchema) as any,
+    resolver: zodResolver(CreatePurchaseOrderSchema) as Resolver<CreatePurchaseOrderInput>,
     reValidateMode: "onBlur",
     defaultValues: {
       contractNumber: initialData?.contractNumber || "",
@@ -277,14 +290,11 @@ export function CreatePurchaseOrderForm({
     const fetchBudgetCodes = async () => {
       try {
         setBudgetCodesError(null);
-        const response = await fetch(`/api/projects/${projectId}/budget-codes`);
-        if (!response.ok) {
-          const payload = (await response.json().catch(() => ({}))) as { error?: string };
-          throw new Error(payload.error || "Failed to load budget codes");
-        }
-        const data = (await response.json()) as BudgetCodesResponse;
+        const data = await apiFetch<BudgetCodesResponse>(
+          `/api/projects/${projectId}/budget-codes`,
+        );
         if (!isMounted) return;
-        setBudgetCodes(data.budgetCodes || []);
+        setBudgetCodes(normalizeBudgetCodesForSelector(data.budgetCodes || []));
       } catch (error) {
         if (!isMounted) return;
         setBudgetCodesError(
@@ -331,15 +341,27 @@ export function CreatePurchaseOrderForm({
   }, [showCreateBudgetCodeModal]);
 
   const budgetCodeSet = React.useMemo(
-    () => new Set(budgetCodes.map((code) => code.code)),
+    () =>
+      new Set(
+        budgetCodes.flatMap((code) =>
+          [code.id, code.code, code.legacyCostCodeId, code.fullLabel].filter(
+            Boolean,
+          ),
+        ),
+      ),
     [budgetCodes],
   );
 
   const unbudgetedLines = React.useMemo(() => {
     return sovLines
       .map((line, index) => ({ lineNumber: index + 1, code: line.budgetCode?.trim() ?? "" }))
-      .filter(({ code }) => code.length > 0 && !budgetCodeSet.has(code));
-  }, [sovLines, budgetCodeSet]);
+      .filter(
+        ({ code }) =>
+          code.length > 0 &&
+          !budgetCodeSet.has(code) &&
+          !resolvePrimeCoBudgetCode(code, budgetCodes).isMapped,
+      );
+  }, [sovLines, budgetCodeSet, budgetCodes]);
 
   const getCostTypeLabel = (type: string) => {
     const types: Record<string, string> = {
@@ -372,30 +394,28 @@ export function CreatePurchaseOrderForm({
         toast.error("Please select a cost code");
         return;
       }
-      const response = await fetch(`/api/projects/${projectId}/budget-codes`, {
+      const { budgetCode } = await apiFetch<{ budgetCode: BudgetCode }>(
+        `/api/projects/${projectId}/budget-codes`,
+        {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           cost_code_id: newBudgetCodeData.costCodeId,
           cost_type_id: newBudgetCodeData.costType,
           description: selectedCostCode.title || null,
         }),
-      });
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error?.error || "Failed to create budget code");
-      }
-      const { budgetCode } = (await response.json()) as { budgetCode: BudgetCode };
-      setBudgetCodes((prev) => [...prev, budgetCode]);
+        },
+      );
+      const normalizedBudgetCode = normalizeBudgetCodesForSelector([budgetCode])[0];
+      setBudgetCodes((prev) => [...prev, normalizedBudgetCode]);
       const firstEmptyLineIndex = sovLines.findIndex((line) => !line.budgetCode?.trim());
       if (firstEmptyLineIndex >= 0) {
-        updateSOVLine(firstEmptyLineIndex, "budgetCode", budgetCode.code);
+        updateSOVLine(firstEmptyLineIndex, "budgetCode", budgetCodeTextValue(normalizedBudgetCode));
       } else {
         setSovLines((prev) => [
           ...prev,
           {
             lineNumber: prev.length + 1,
-            budgetCode: budgetCode.code,
+            budgetCode: budgetCodeTextValue(normalizedBudgetCode),
             description: "",
             quantity: 1,
             uom: "",
@@ -421,7 +441,16 @@ export function CreatePurchaseOrderForm({
     setIsSubmitting(true);
     try {
       // contract_company_id FK references companies(id) — send vendor ID directly
-      const submitData = { ...data, sov: sovLines, accountingMethod };
+      const submitData = {
+        ...data,
+        sov: sovLines.map((line) => ({
+          ...line,
+          budgetCode:
+            resolvePrimeCoBudgetCode(line.budgetCode, budgetCodes).storedCode ??
+            line.budgetCode,
+        })),
+        accountingMethod,
+      };
       await onSubmit(submitData);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to create purchase order";
@@ -493,9 +522,6 @@ export function CreatePurchaseOrderForm({
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
   };
-
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
 
   const totals = calculateSOVTotals();
 
@@ -693,7 +719,7 @@ export function CreatePurchaseOrderForm({
                   <Upload className="h-4 w-4 text-foreground" />
                   <span className="text-sm">{file.name}</span>
                   <span className="text-xs text-muted-foreground">
-                    ({(file.size / 1024).toFixed(1)} KB)
+                    ({formatNumber(file.size / 1024, 1)} KB)
                   </span>
                 </div>
                 <Button
@@ -793,7 +819,12 @@ export function CreatePurchaseOrderForm({
             </InlineTableHeaderRow>
           </InlineTableHeader>
           <InlineTableBody>
-            {sovLines.map((line, index) => (
+            {sovLines.map((line, index) => {
+              const budgetCodeResolution = resolvePrimeCoBudgetCode(
+                line.budgetCode,
+                budgetCodes,
+              );
+              return (
               <InlineTableRow
                 key={
                   (line as PurchaseOrderSovLineItem & { _id?: string })._id ||
@@ -803,18 +834,19 @@ export function CreatePurchaseOrderForm({
                 <InlineTableCell className="text-muted-foreground">{index + 1}</InlineTableCell>
                 <InlineTableCell>
                   <BudgetCodeSelector
-                    value={
-                      budgetCodes.find(
-                        (code) => code.code === (line.budgetCode || ""),
-                      )?.id || ""
-                    }
+                    value={budgetCodeResolution.selectorValue}
                     onValueChange={(_, code) =>
-                      updateSOVLine(index, "budgetCode", code.code)
+                      updateSOVLine(index, "budgetCode", budgetCodeTextValue(code))
                     }
                     budgetCodes={budgetCodes}
                     loading={!budgetCodesLoaded}
                     onCreateNew={() => setShowCreateBudgetCodeModal(true)}
-                    placeholder="Select budget code..."
+                    placeholder={
+                      budgetCodeResolution.isMapped
+                        ? "Select budget code..."
+                        : budgetCodeResolution.displayCode
+                    }
+                    error={!budgetCodeResolution.isMapped}
                     className="h-10"
                   />
                 </InlineTableCell>
@@ -913,7 +945,8 @@ export function CreatePurchaseOrderForm({
                   </Button>
                 </InlineTableCell>
               </InlineTableRow>
-            ))}
+              );
+            })}
           </InlineTableBody>
           <InlineTableFooter>
             <InlineTableFooterRow type="action">

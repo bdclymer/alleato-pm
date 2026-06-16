@@ -6,6 +6,7 @@ import { Calendar as CalendarIcon, Paperclip, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { apiFetch } from "@/lib/api-client";
+import { DetailField, DetailFieldGrid } from "@/components/ds";
 import { InvoiceStatusBadge } from "@/components/invoicing/InvoiceStatusBadge";
 import { LabelValueRow } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { formatPercent } from "@/lib/table-config/formatters";
 import { formatCurrency, formatDate, type InvoiceRollup } from "./shared";
 import { SectionRuleHeading } from "@/components/layout/spacing";
 
@@ -261,98 +263,90 @@ export function SummaryTab({
       {/* ── Section 1: General Information ── */}
       <section className="space-y-4">
         <SectionRuleHeading label="General Information" />
-        <div className="grid grid-cols-2 gap-x-20 gap-y-0">
-          <dl className="space-y-4 text-sm">
-            <LabelValueRow label="Period Start" missing={!editing && !invoice.period_start}>
-              {editing ? (
-                <InlineDatePicker
-                  value={fields.period_start}
-                  onChange={(v) => updateField("period_start", v)}
-                  label="Period Start"
-                />
-              ) : (
-                formatDate(invoice.period_start)
-              )}
-            </LabelValueRow>
-            <LabelValueRow label="Billing Date" missing={!editing && !invoice.billing_date}>
-              {editing ? (
-                <InlineDatePicker
-                  value={fields.billing_date}
-                  onChange={(v) => updateField("billing_date", v)}
-                  label="Billing Date"
-                />
-              ) : (
-                formatDate(invoice.billing_date)
-              )}
-            </LabelValueRow>
-            <LabelValueRow label="Commitment #" missing={!invoice.contract_number}>
-              {invoice.contract_number ?? "—"}
-              {invoice.contract_title ? ` — ${invoice.contract_title}` : ""}
-            </LabelValueRow>
-            <LabelValueRow label="Status">
-              {invoice.status ? (
-                <InvoiceStatusBadge status={invoice.status} />
-              ) : (
-                "—"
-              )}
-            </LabelValueRow>
-            <LabelValueRow label="Payment Date" missing={!invoice.approved_at}>
-              {formatDate(invoice.approved_at)}
-            </LabelValueRow>
-          </dl>
-          <dl className="space-y-4 text-sm">
-            <LabelValueRow label="Period End" missing={!editing && !invoice.period_end}>
-              {editing ? (
-                <InlineDatePicker
-                  value={fields.period_end}
-                  onChange={(v) => updateField("period_end", v)}
-                  label="Period End"
-                />
-              ) : (
-                formatDate(invoice.period_end)
-              )}
-            </LabelValueRow>
-            <LabelValueRow label="Invoice #" missing={!editing && !invoice.invoice_number}>
-              {editing ? (
-                <Input
-                  type="text"
-                  className="h-8 w-44"
-                  value={fields.invoice_number}
-                  onChange={(e) => updateField("invoice_number", e.target.value)}
-                  placeholder="Invoice number"
-                  maxLength={255}
-                />
-              ) : (
-                invoice.invoice_number ?? "—"
-              )}
-            </LabelValueRow>
-            <LabelValueRow label="Contract Company" missing={!invoice.contract_company_name}>
-              {invoice.contract_company_name ?? "—"}
-            </LabelValueRow>
-            <LabelValueRow label="Percent Complete">
-              {`${(invoice.percent_complete ?? 0).toFixed(2)}%`}
-            </LabelValueRow>
-            <LabelValueRow label="Submitted" missing={!invoice.submitted_at}>
-              {formatDate(invoice.submitted_at)}
-            </LabelValueRow>
-            <LabelValueRow
-              label="Overall Comments"
-              missing={!editing && !invoice.notes}
-              valueClassName="leading-relaxed font-normal text-foreground"
-            >
-              {editing ? (
-                <Textarea
-                  className="min-h-[60px] text-sm"
-                  value={fields.notes}
-                  onChange={(e) => updateField("notes", e.target.value)}
-                  placeholder="Add comments…"
-                />
-              ) : (
-                invoice.notes ?? "—"
-              )}
-            </LabelValueRow>
-          </dl>
-        </div>
+        <DetailFieldGrid columns={2}>
+          <DetailField label="Period Start">
+            {editing ? (
+              <InlineDatePicker
+                value={fields.period_start}
+                onChange={(v) => updateField("period_start", v)}
+                label="Period Start"
+              />
+            ) : (
+              formatDate(invoice.period_start)
+            )}
+          </DetailField>
+          <DetailField label="Period End">
+            {editing ? (
+              <InlineDatePicker
+                value={fields.period_end}
+                onChange={(v) => updateField("period_end", v)}
+                label="Period End"
+              />
+            ) : (
+              formatDate(invoice.period_end)
+            )}
+          </DetailField>
+          <DetailField label="Billing Date">
+            {editing ? (
+              <InlineDatePicker
+                value={fields.billing_date}
+                onChange={(v) => updateField("billing_date", v)}
+                label="Billing Date"
+              />
+            ) : (
+              formatDate(invoice.billing_date)
+            )}
+          </DetailField>
+          <DetailField label="Invoice #">
+            {editing ? (
+              <Input
+                type="text"
+                className="h-8 w-44"
+                value={fields.invoice_number}
+                onChange={(e) => updateField("invoice_number", e.target.value)}
+                placeholder="Invoice number"
+                maxLength={255}
+              />
+            ) : (
+              invoice.invoice_number ?? "—"
+            )}
+          </DetailField>
+          <DetailField label="Commitment #">
+            {invoice.contract_number ?? "—"}
+            {invoice.contract_title ? ` — ${invoice.contract_title}` : ""}
+          </DetailField>
+          <DetailField label="Contract Company">
+            {invoice.contract_company_name ?? "—"}
+          </DetailField>
+          <DetailField label="Status">
+            {invoice.status ? (
+              <InvoiceStatusBadge status={invoice.status} />
+            ) : (
+              "—"
+            )}
+          </DetailField>
+          <DetailField label="Percent Complete">
+            {formatPercent(invoice.percent_complete ?? 0, 2)}
+          </DetailField>
+          <DetailField label="Payment Date">
+            {formatDate(invoice.approved_at)}
+          </DetailField>
+          <DetailField label="Submitted">
+            {formatDate(invoice.submitted_at)}
+          </DetailField>
+          <DetailField label="Overall Comments" span={2}>
+            {editing ? (
+              <Textarea
+                className="min-h-16 text-sm"
+                value={fields.notes}
+                onChange={(e) => updateField("notes", e.target.value)}
+                placeholder="Add comments…"
+              />
+            ) : (
+              invoice.notes ?? "—"
+            )}
+          </DetailField>
+        </DetailFieldGrid>
       </section>
 
       {/* ── Section 2: Summary Preview (AIA G702-style) ── */}
@@ -388,26 +382,26 @@ export function SummaryTab({
           </div>
 
           {/* Right column: Project / Application metadata */}
-          <dl className="space-y-3 text-sm">
-            <LabelValueRow label="Project" missing={!invoice.project_name}>
+          <DetailFieldGrid columns={2} className="gap-x-6 gap-y-3">
+            <DetailField label="Project">
               {invoice.project_name ?? "—"}
-            </LabelValueRow>
-            <LabelValueRow label="Project Number" missing={!invoice.project_number}>
+            </DetailField>
+            <DetailField label="Project Number">
               {invoice.project_number ?? "—"}
-            </LabelValueRow>
-            <LabelValueRow label="Application No." missing={!invoice.application_number}>
+            </DetailField>
+            <DetailField label="Application No.">
               {invoice.application_number ?? "—"}
-            </LabelValueRow>
-            <LabelValueRow label="Period To" missing={!invoice.period_end}>
+            </DetailField>
+            <DetailField label="Period To">
               {formatDate(invoice.period_end)}
-            </LabelValueRow>
-            <LabelValueRow label="Subcontract Date" missing={!invoice.contract_date}>
+            </DetailField>
+            <DetailField label="Subcontract Date">
               {formatDate(invoice.contract_date)}
-            </LabelValueRow>
-            <LabelValueRow label="Contract For">
+            </DetailField>
+            <DetailField label="Contract For">
               {invoice.project_name ?? "—"}
-            </LabelValueRow>
-          </dl>
+            </DetailField>
+          </DetailFieldGrid>
         </div>
 
         {/* Subcontractor's Application for Payment (G702 rollup) */}

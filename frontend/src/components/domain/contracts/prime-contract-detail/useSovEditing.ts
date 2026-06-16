@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import type { ContractLineItem, BudgetCode } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
 import { apiFetch } from "@/lib/api-client";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
+import { resolveContractLineBudgetCode } from "./budget-code-resolution";
 
 const normalizeSovDraftItems = (items: ContractLineItem[]) =>
   items.filter((item): item is ContractLineItem => Boolean(item)).map((item, index) => {
@@ -13,19 +14,10 @@ const normalizeSovDraftItems = (items: ContractLineItem[]) =>
   });
 
 const buildSovDraftBudgetCodeIds = (items: ContractLineItem[], budgetCodes: BudgetCode[]) => {
-  const budgetCodeIdByCostCodeId = new Map<string, string>();
-  budgetCodes.forEach((bc) => {
-    if (bc.legacyCostCodeId && !budgetCodeIdByCostCodeId.has(bc.legacyCostCodeId)) {
-      budgetCodeIdByCostCodeId.set(bc.legacyCostCodeId, bc.id);
-    }
-  });
   const result: Record<string, string> = {};
   items.forEach((item) => {
-    if (item.budget_code_id) result[item.id] = item.budget_code_id;
-    else if (item.cost_code_id != null) {
-      const bcId = budgetCodeIdByCostCodeId.get(String(item.cost_code_id));
-      if (bcId) result[item.id] = bcId;
-    }
+    const budgetCodeId = resolveContractLineBudgetCode(item, budgetCodes).budgetCodeId;
+    if (budgetCodeId) result[item.id] = budgetCodeId;
   });
   return result;
 };
@@ -113,6 +105,8 @@ export function useSovEditing({ projectId, contractId, lineItems, setLineItems, 
     setLineItems((prev) => prev.filter((li) => li.id !== lineId));
     try {
       await apiFetch(`/api/projects/${projectId}/contracts/${contractId}/line-items/${lineId}`, { method: "DELETE" });
+      const refreshed = await apiFetch<ContractLineItem[]>(`/api/projects/${projectId}/contracts/${contractId}/line-items`);
+      setLineItems(refreshed ?? []);
       toast.success("Line item deleted");
     } catch (error) {
       console.error("Failed to delete line item:", error);

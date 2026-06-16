@@ -244,19 +244,19 @@ export const developerCompanyAdminTools: HeaderNavigationTool[] = [
     developerOnly: true,
   },
   {
-    name: "Deep Research Archive",
-    path: "deep-research",
-    requiresProject: false,
-    icon: BookOpen,
-    description: "Past Deep Agents wiki research projects",
-    developerOnly: true,
-  },
-  {
     name: "Assistant Eval Runs",
     path: "eval-runs",
     requiresProject: false,
     icon: FlaskConical,
     description: "AI-assistant eval results: pass/fail, tools fired, answers",
+    developerOnly: true,
+  },
+  {
+    name: "Deep Research Archive",
+    path: "deep-research",
+    requiresProject: false,
+    icon: BookOpen,
+    description: "Past Deep Agents wiki research projects",
     developerOnly: true,
   },
   {

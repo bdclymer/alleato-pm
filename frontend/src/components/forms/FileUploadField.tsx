@@ -5,6 +5,7 @@ import { Upload, X, FileText } from "lucide-react";
 import { FormField } from "./FormField";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface FileInfo {
   name: string;
@@ -14,7 +15,7 @@ interface FileInfo {
 }
 
 interface FileUploadFieldProps {
-  label: React.ReactNode;
+  label?: React.ReactNode;
   value?: FileInfo[];
   onChange?: (files: FileInfo[]) => void;
   onFilesSelected?: (files: File[]) => void;
@@ -126,7 +127,7 @@ export function FileUploadField({
 
   const isMinimal = variant === "minimal";
   const isLink = variant === "link";
-  const hasLabel = Boolean(label);
+  const hasLabel = label !== undefined && label !== null && label !== "";
 
   const control = (
     <div className={cn(isMinimal ? "space-y-2.5" : isLink ? "space-y-1" : "space-y-4")}>
@@ -160,7 +161,7 @@ export function FileUploadField({
         )}
         data-testid={dropzoneTestId}
       >
-          <input
+          <Input
             ref={inputRef}
             type="file"
             accept={accept}

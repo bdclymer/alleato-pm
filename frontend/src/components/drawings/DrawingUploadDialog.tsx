@@ -465,7 +465,6 @@ export function DrawingUploadDialog({
           <form onSubmit={form.handleSubmit(handleUpload)} className="space-y-6">
             {/* File Upload */}
             <FileUploadField
-              label=""
               accept=".pdf,.png,.jpg,.jpeg,.tiff,.tif"
               multiple
               maxSize={0}

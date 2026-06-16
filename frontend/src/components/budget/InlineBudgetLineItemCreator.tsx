@@ -5,7 +5,6 @@ import {
   Plus,
   X,
   Check,
-  Search,
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
@@ -21,38 +20,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-} from "@/components/ui/command";
-import {
   BudgetOverlay,
   BudgetOverlayBody,
   BudgetOverlayFooter,
   BudgetOverlayHeader,
 } from "@/components/ui/budget-overlay";
+import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { apiFetch, ApiError } from "@/lib/api-client";
+import {
+  type ProjectBudgetCode,
+  useProjectBudgetCodes,
+} from "@/hooks/use-project-budget-codes";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
-interface BudgetCode {
-  id: string;
-  code: string;
-  costType: string | null;
-  description: string;
-  fullLabel: string;
-}
+type BudgetCode = ProjectBudgetCode;
 
 interface CostCodeOption {
   id: string;
@@ -98,10 +81,8 @@ export function InlineBudgetLineItemCreator({
     },
   ]);
 
-  const [budgetCodes, setBudgetCodes] = React.useState<BudgetCode[]>([]);
-  const [loadingCodes, setLoadingCodes] = React.useState(false);
-  const [openPopoverId, setOpenPopoverId] = React.useState<number | null>(null);
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const { budgetCodes, loadingCodes, createBudgetCode } =
+    useProjectBudgetCodes(projectId, { enabled: isOpen });
   const [isCreating, setIsCreating] = React.useState(false);
   const [currentRowIndex, setCurrentRowIndex] = React.useState<number | null>(
     null,
@@ -126,25 +107,6 @@ export function InlineBudgetLineItemCreator({
 
   // Smart defaults toggle
   const [smartCopyUOM, setSmartCopyUOM] = React.useState(true);
-
-  // Fetch budget codes
-  React.useEffect(() => {
-    const fetchBudgetCodes = async () => {
-      if (!projectId || !isOpen) return;
-
-      try {
-        setLoadingCodes(true);
-        const { budgetCodes } = await apiFetch<{ budgetCodes: BudgetCode[] }>(`/api/projects/${projectId}/budget-codes`);
-        setBudgetCodes(budgetCodes || []);
-      } catch (error) {
-        setBudgetCodes([]);
-      } finally {
-        setLoadingCodes(false);
-      }
-    };
-
-    fetchBudgetCodes();
-  }, [projectId, isOpen]);
 
   // Fetch cost codes when modal opens
   React.useEffect(() => {
@@ -270,7 +232,6 @@ export function InlineBudgetLineItemCreator({
           : row,
       ),
     );
-    setOpenPopoverId(null);
   };
 
   const addRow = () => {
@@ -315,19 +276,11 @@ export function InlineBudgetLineItemCreator({
         return;
       }
 
-      const { budgetCode: createdCode } = await apiFetch<{ budgetCode: BudgetCode & { fullLabel: string } }>(
-        `/api/projects/${projectId}/budget-codes`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            cost_code_id: newCodeData.costCodeId,
-            cost_type_id: newCodeData.costType,
-            description: selectedCostCode.title,
-          }),
-        },
-      );
-
-      setBudgetCodes([...budgetCodes, createdCode]);
+      const createdCode = await createBudgetCode({
+        costCodeId: newCodeData.costCodeId,
+        costTypeId: newCodeData.costType,
+        description: selectedCostCode.title,
+      });
 
       // Auto-populate the newly created budget code on the row that triggered the modal
       if (currentRowIndex !== null) {
@@ -390,10 +343,6 @@ export function InlineBudgetLineItemCreator({
     }
   };
 
-  const filteredCodes = budgetCodes.filter((code) =>
-    code.fullLabel.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-
   const toggleDivision = (division: string) => {
     setExpandedDivisions((prev) => {
       const next = new Set(prev);
@@ -455,68 +404,19 @@ export function InlineBudgetLineItemCreator({
                 {/* Budget Code Selector */}
                 <div className="col-span-4">
                   <Label className="text-xs">Budget Code*</Label>
-                  <Popover
-                    open={openPopoverId === index}
-                    onOpenChange={(open) =>
-                      setOpenPopoverId(open ? index : null)
+                  <BudgetCodeSelector
+                    value={row.budgetCodeId}
+                    onValueChange={(_, code) =>
+                      handleBudgetCodeSelect(index, code)
                     }
-                  >
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        className="w-full justify-between text-left font-normal h-9"
-                      >
-                        <span className="truncate">
-                          {row.budgetCodeLabel || "Select budget code..."}
-                        </span>
-                        <Search className="shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[400px] p-0" align="start">
-                      <Command>
-                        <CommandInput
-                          placeholder="Search budget codes..."
-                          value={searchQuery}
-                          onValueChange={setSearchQuery}
-                        />
-                        <CommandList>
-                          <CommandEmpty>
-                            {loadingCodes
-                              ? "Loading..."
-                              : "No budget codes found."}
-                          </CommandEmpty>
-                          <CommandGroup>
-                            {filteredCodes.map((code) => (
-                              <CommandItem
-                                key={code.id}
-                                value={code.fullLabel}
-                                onSelect={() =>
-                                  handleBudgetCodeSelect(index, code)
-                                }
-                              >
-                                {code.fullLabel}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                          <CommandSeparator />
-                          <CommandGroup>
-                            <CommandItem
-                              onSelect={() => {
-                                setCurrentRowIndex(index);
-                                setOpenPopoverId(null);
-                                setShowCreateCodeModal(true);
-                              }}
-                              className="text-primary"
-                            >
-                              <Plus className="mr-2 h-4 w-4" />
-                              Create New Budget Code
-                            </CommandItem>
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                    budgetCodes={budgetCodes}
+                    loading={loadingCodes}
+                    onCreateNew={() => {
+                      setCurrentRowIndex(index);
+                      setShowCreateCodeModal(true);
+                    }}
+                    placeholder="Select budget code..."
+                  />
                 </div>
 
                 {/* Quantity */}
@@ -693,7 +593,7 @@ export function InlineBudgetLineItemCreator({
                   Loading cost codes...
                 </div>
               ) : (
-                <div className="border rounded-md max-h-[400px] overflow-y-auto">
+                <div className="border rounded-md max-h-96 overflow-y-auto">
                   {Object.entries(groupedCostCodes)
                     .sort(([a], [b]) => a.localeCompare(b))
                     .map(([division]) => (

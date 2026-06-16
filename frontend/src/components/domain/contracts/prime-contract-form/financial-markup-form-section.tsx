@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Plus, Percent } from "lucide-react";
+import { MoreVertical, Percent } from "lucide-react";
 import { toast } from "sonner";
 
+import { InlineAddButton } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,7 +29,6 @@ import {
   InlineTableRow,
   InlineTableCell,
 } from "@/components/ds/inline-table";
-import { MoreVertical } from "lucide-react";
 import { FormSection } from "@/components/forms/FormSection";
 import { formatPercent } from "@/lib/format";
 import type { BudgetCode, MarkupFormItem } from "./types";
@@ -272,15 +272,13 @@ export function FinancialMarkupFormSection({
       title="Financial Markup"
       description="Configure percentage-based markups that will be added as line items to the schedule of values."
       actions={
-        <Button
+        <InlineAddButton
           type="button"
-          size="sm"
           onClick={addMarkup}
           disabled={markups.length >= ALLOWED_MARKUP_TYPES.length}
         >
-          <Plus className="h-4 w-4" />
           Add Markup
-        </Button>
+        </InlineAddButton>
       }
     >
       {markups.length === 0 ? (
@@ -292,10 +290,9 @@ export function FinancialMarkupFormSection({
               Add markups to automatically include fee and insurance line items in the SOV.
             </p>
           </div>
-          <Button type="button" size="sm" onClick={addMarkup}>
-            <Plus className="h-4 w-4" />
+          <InlineAddButton onClick={addMarkup}>
             Add Markup
-          </Button>
+          </InlineAddButton>
         </div>
       ) : (
         <>

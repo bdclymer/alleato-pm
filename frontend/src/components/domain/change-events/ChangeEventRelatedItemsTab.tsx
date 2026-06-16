@@ -26,16 +26,21 @@ import {
 import { Text } from "@/components/ds/text";
 import { Stack } from "@/components/layout/stack";
 import { Spinner } from "@/components/ui/spinner";
-import { EmptyState, SectionHeader } from "@/components/ds";
+import { EmptyState } from "@/components/ds";
 import { Link2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 const RELATED_ITEM_TYPE_OPTIONS = [
   { value: "change_event", label: "Change Events" },
+  { value: "document", label: "Documents" },
+  { value: "meeting", label: "Meetings" },
   { value: "rfi", label: "RFIs" },
   { value: "submittal", label: "Submittals" },
   { value: "drawing", label: "Drawings" },
   { value: "specification", label: "Specifications" },
+  { value: "prime_contract_change_order", label: "Prime Contract Change Orders" },
+  { value: "commitment_co", label: "Commitment Change Orders" },
+  { value: "commitment", label: "Commitments" },
 ] as const;
 
 function formatRelatedTypeLabel(type: string): string {
@@ -142,12 +147,6 @@ export function ChangeEventRelatedItemsTab({
 
   return (
     <Stack gap="md">
-      <SectionHeader
-        title="Related Items"
-        count={relatedItems.length}
-        action={{ label: "Link Related Item", onClick: () => setShowDialog(true) }}
-      />
-
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <Spinner />
@@ -188,6 +187,16 @@ export function ChangeEventRelatedItemsTab({
           icon={<Link2 className="h-8 w-8 text-muted-foreground" />}
           title="No related items"
           description="Link related items such as RFIs, submittals, or other change events."
+          action={
+            <Button
+              variant="ghost"
+              className="text-primary hover:bg-primary/5 hover:text-primary"
+              onClick={() => setShowDialog(true)}
+            >
+              <Link2 className="h-4 w-4" />
+              Link Related Item
+            </Button>
+          }
         />
       )}
 

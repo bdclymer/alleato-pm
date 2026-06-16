@@ -3,8 +3,9 @@
 import { useState, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
+import { formatCurrency } from "@/lib/format";
 import type { ChangeEventDetail } from "@/types/change-events";
-import { EntityAttachments, StatusBadge } from "@/components/ds";
+import { DetailField, DetailFieldGrid, EntityAttachments } from "@/components/ds";
 import {
   ContentSectionStack,
   DetailPanel,
@@ -78,11 +79,6 @@ const REVENUE_SOURCE_OPTIONS = [
 ];
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-
-function formatCurrency(value: string | number | null | undefined): string {
-  const num = typeof value === "string" ? parseFloat(value) : (value ?? 0);
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(num);
-}
 
 function stripHtml(html: string | null | undefined): string {
   if (!html) return "";
@@ -370,129 +366,114 @@ export function ChangeEventGeneralInfoPanel({
           <div className="space-y-6">
             <DetailPanel>
               <SectionRuleHeading label="General Information" className="mb-6 pb-0" />
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-x-10 gap-y-4">
-                {/* Details */}
-                <dl className="space-y-4 text-sm">
-                  <LabelValueRow label="Number" labelClassName="w-36">
-                    {changeEvent.number || `CE-${changeEvent.id}`}
-                  </LabelValueRow>
-                  <LabelValueRow label="Title" labelClassName="w-36">
-                    <InlineText
-                      value={changeEvent.title}
-                      fieldKey="title"
-                      onSave={save}
-                    />
-                  </LabelValueRow>
-                  <LabelValueRow label="Status" labelClassName="w-36">
-                    {changeEvent.status ? (
-                      <InlineSelect
-                        value={changeEvent.status}
-                        fieldKey="status"
-                        options={STATUS_OPTIONS}
-                        onSave={save}
-                      />
-                    ) : (
-                      <InlineSelect
-                        value={null}
-                        fieldKey="status"
-                        options={STATUS_OPTIONS}
-                        onSave={save}
-                        placeholder="Set status"
-                      />
-                    )}
-                  </LabelValueRow>
-                  <LabelValueRow label="Expecting Revenue" labelClassName="w-36">
-                    <InlineBoolToggle
-                      value={expectingRevenue}
-                      fieldKey="expectingRevenue"
-                      onSave={save}
-                    />
-                  </LabelValueRow>
-                  <LabelValueRow label="Revenue Source" labelClassName="w-36" missing={!lineItemRevenueSource}>
+              <DetailFieldGrid columns={2}>
+                <DetailField label="Number">
+                  {changeEvent.number || `CE-${changeEvent.id}`}
+                </DetailField>
+                <DetailField label="Origin">
+                  <InlineSelect
+                    value={changeEvent.origin ?? null}
+                    fieldKey="origin"
+                    options={ORIGIN_OPTIONS}
+                    onSave={save}
+                    placeholder="Not set"
+                  />
+                </DetailField>
+                <DetailField label="Title">
+                  <InlineText
+                    value={changeEvent.title}
+                    fieldKey="title"
+                    onSave={save}
+                  />
+                </DetailField>
+                <DetailField label="Type">
+                  <InlineSelect
+                    value={changeEvent.type ?? null}
+                    fieldKey="type"
+                    options={TYPE_OPTIONS}
+                    onSave={save}
+                    placeholder="Not set"
+                  />
+                </DetailField>
+                <DetailField label="Status">
+                  {changeEvent.status ? (
                     <InlineSelect
-                      value={lineItemRevenueSource ?? null}
-                      fieldKey="lineItemRevenueSource"
-                      options={REVENUE_SOURCE_OPTIONS}
+                      value={changeEvent.status}
+                      fieldKey="status"
+                      options={STATUS_OPTIONS}
                       onSave={save}
-                      placeholder="Not set"
                     />
-                  </LabelValueRow>
-                  <LabelValueRow label="Prime Contract" labelClassName="w-36" missing={!primeContractId}>
-                    {primeContractId ? (
-                      <a
-                        href={`/${projectId}/prime-contracts/${primeContractId}`}
-                        className="text-primary hover:underline text-sm"
-                      >
-                        {primeContractDisplayName || "Linked Prime Contract"}
-                      </a>
-                    ) : (
-                      <span className="text-sm text-muted-foreground/50 italic">Not set</span>
-                    )}
-                  </LabelValueRow>
-                </dl>
-
-                {/* Reason for Change */}
-                <dl className="space-y-4 text-sm">
-                  <LabelValueRow label="Origin" labelClassName="w-36" missing={!changeEvent.origin}>
+                  ) : (
                     <InlineSelect
-                      value={changeEvent.origin ?? null}
-                      fieldKey="origin"
-                      options={ORIGIN_OPTIONS}
+                      value={null}
+                      fieldKey="status"
+                      options={STATUS_OPTIONS}
                       onSave={save}
-                      placeholder="Not set"
+                      placeholder="Set status"
                     />
-                  </LabelValueRow>
-                  <LabelValueRow label="Type" labelClassName="w-36" missing={!changeEvent.type}>
-                    <InlineSelect
-                      value={changeEvent.type ?? null}
-                      fieldKey="type"
-                      options={TYPE_OPTIONS}
-                      onSave={save}
-                      placeholder="Not set"
-                    />
-                  </LabelValueRow>
-                  <LabelValueRow label="Scope" labelClassName="w-36" missing={!changeEvent.scope}>
-                    <InlineSelect
-                      value={changeEvent.scope ?? null}
-                      fieldKey="scope"
-                      options={SCOPE_OPTIONS}
-                      onSave={save}
-                      placeholder="Not set"
-                    />
-                  </LabelValueRow>
-                  <LabelValueRow label="Change Reason" labelClassName="w-36" missing={!changeEvent.reason}>
-                    <InlineSelect
-                      value={changeEvent.reason ?? null}
-                      fieldKey="reason"
-                      options={REASON_OPTIONS}
-                      onSave={save}
-                      placeholder="Not set"
-                    />
-                  </LabelValueRow>
-                </dl>
-              </div>
-
-              <LabelValueRow
-                label="Description"
-                labelClassName="w-36"
-                className="mt-6"
-                missing={!changeEvent.description}
-                stacked
-              >
-                <InlineTextarea
-                  value={stripHtml(changeEvent.description)}
-                  fieldKey="description"
-                  onSave={save}
-                />
-              </LabelValueRow>
-            </DetailPanel>
-
-            <DetailPanel>
-              <EntityAttachments
-                entityType="change_order"
-                entityId={String(changeEvent.id)}
-                projectId={String(projectId)}
-              />
+                  )}
+                </DetailField>
+                <DetailField label="Scope">
+                  <InlineSelect
+                    value={changeEvent.scope ?? null}
+                    fieldKey="scope"
+                    options={SCOPE_OPTIONS}
+                    onSave={save}
+                    placeholder="Not set"
+                  />
+                </DetailField>
+                <DetailField label="Expecting Revenue">
+                  <InlineBoolToggle
+                    value={expectingRevenue}
+                    fieldKey="expectingRevenue"
+                    onSave={save}
+                  />
+                </DetailField>
+                <DetailField label="Change Reason">
+                  <InlineSelect
+                    value={changeEvent.reason ?? null}
+                    fieldKey="reason"
+                    options={REASON_OPTIONS}
+                    onSave={save}
+                    placeholder="Not set"
+                  />
+                </DetailField>
+                <DetailField label="Revenue Source">
+                  <InlineSelect
+                    value={lineItemRevenueSource ?? null}
+                    fieldKey="lineItemRevenueSource"
+                    options={REVENUE_SOURCE_OPTIONS}
+                    onSave={save}
+                    placeholder="Not set"
+                  />
+                </DetailField>
+                <DetailField label="Prime Contract">
+                  {primeContractId ? (
+                    <a
+                      href={`/${projectId}/prime-contracts/${primeContractId}`}
+                      className="text-primary hover:underline text-sm"
+                    >
+                      {primeContractDisplayName || "Linked Prime Contract"}
+                    </a>
+                  ) : (
+                    <span className="text-sm text-muted-foreground/50">—</span>
+                  )}
+                </DetailField>
+                <DetailField label="Description" span={2}>
+                  <InlineTextarea
+                    value={stripHtml(changeEvent.description)}
+                    fieldKey="description"
+                    onSave={save}
+                  />
+                </DetailField>
+                <DetailField label="Attachments" span={2}>
+                  <EntityAttachments
+                    entityType="change_order"
+                    entityId={String(changeEvent.id)}
+                    projectId={String(projectId)}
+                  />
+                </DetailField>
+              </DetailFieldGrid>
             </DetailPanel>
           </div>
 

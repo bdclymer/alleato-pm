@@ -104,8 +104,10 @@ export interface CommitmentSovLineItem {
 export interface BudgetCodeOption {
   id: string;
   code: string;
+  legacyCostCodeId?: string | null;
   description: string;
   costType: string | null;
+  costTypeId?: string | null;
   fullLabel: string;
 }
 

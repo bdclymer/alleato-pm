@@ -19,7 +19,12 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
-import { EntityAttachments, InlineEditField } from "@/components/ds";
+import {
+  DetailField,
+  DetailFieldGrid,
+  EntityAttachments,
+  InlineEditField,
+} from "@/components/ds";
 import { COMMITMENT_STATUS_OPTIONS } from "@/features/commitments/commitments-table-config";
 import { ChangeHistoryTab } from "@/components/commitments/tabs/ChangeHistoryTab";
 import { ChangeManagementTab } from "@/components/commitments/tabs/ChangeManagementTab";
@@ -446,95 +451,22 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
             {/* General Information */}
             <DetailPanel>
               <SectionRuleHeading label="General Information" className="mb-6 pb-0" />
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-x-10 gap-y-4">
-                <dl className="space-y-4 text-sm">
-                  <LabelValueRow label={isPO ? "PO #" : "Subcontract #"} labelClassName="w-36" missing={!safeNumber(commitment.number)}>
-                    {safeNumber(commitment.number) || "—"}
-                  </LabelValueRow>
-                  <LabelValueRow label="Title" labelClassName="w-36" missing={!commitment.title}>
+              <DetailFieldGrid columns={2}>
+                <DetailField label={isPO ? "PO #" : "Subcontract #"}>
+                  {safeNumber(commitment.number) || "—"}
+                </DetailField>
+                {!isPO ? (
+                  <DetailField label="Start Date">
                     <InlineEditField
-                      label="Title"
-                      value={commitment.title ?? ""}
-                      display={capitalizeWords(commitment.title) || undefined}
-                      onSave={(v) => onSaveField("title", v)}
+                      label="Start Date"
+                      type="date"
+                      value={dateInput(commitment.start_date)}
+                      display={renderDateOrDash(commitment.start_date)}
+                      onSave={(v) => onSaveField("start_date", v || null)}
                     />
-                  </LabelValueRow>
-                  <LabelValueRow label="Status" labelClassName="w-36">
-                    <InlineEditField
-                      label="Status"
-                      type="select"
-                      options={COMMITMENT_STATUS_OPTIONS}
-                      value={displayStatus}
-                      display={<StatusBadge status={displayStatus} />}
-                      onSave={(v) => onSaveField("status", v)}
-                    />
-                  </LabelValueRow>
-                  <LabelValueRow
-                    label="Contract Company"
-                    labelClassName="w-36"
-                    missing={!commitment.contract_company?.name}
-                  >
-                    {commitment.contract_company?.name ? (
-                      commitment.contract_company_id ? (
-                        <Link
-                          href={`/directory/companies/${encodeURIComponent(commitment.contract_company_id)}`}
-                          className="text-primary hover:underline"
-                        >
-                          {commitment.contract_company.name}
-                        </Link>
-                      ) : (
-                        commitment.contract_company.name
-                      )
-                    ) : (
-                      "—"
-                    )}
-                  </LabelValueRow>
-                  {commitment.invoice_contacts !== undefined && (
-                    <LabelValueRow
-                      label="Invoice Contact"
-                      labelClassName="w-36"
-                      missing={commitment.invoice_contacts.length === 0}
-                    >
-                      {commitment.invoice_contacts.length > 0
-                        ? commitment.invoice_contacts.map((contact, index) => (
-                            <span key={contact.id}>
-                              {index > 0 ? ", " : null}
-                              <Link
-                                href={`/directory/contacts/${encodeURIComponent(contact.id)}`}
-                                className="text-primary hover:underline"
-                              >
-                                {contact.name}
-                              </Link>
-                            </span>
-                          ))
-                        : "—"}
-                    </LabelValueRow>
-                  )}
-                  <LabelValueRow label="Default Retainage" labelClassName="w-36">
-                    <InlineEditField
-                      label="Default Retainage"
-                      type="number"
-                      value={String(commitment.retention_percentage ?? 0)}
-                      display={`${commitment.retention_percentage ?? 0}%`}
-                      onSave={(v) =>
-                        onSaveField("default_retainage_percent", v === "" ? null : Number(v))
-                      }
-                    />
-                  </LabelValueRow>
-                </dl>
-                <dl className="space-y-4 text-sm">
-                  {!isPO && (
-                    <LabelValueRow label="Start Date" labelClassName="w-40">
-                      <InlineEditField
-                        label="Start Date"
-                        type="date"
-                        value={dateInput(commitment.start_date)}
-                        display={renderDateOrDash(commitment.start_date)}
-                        onSave={(v) => onSaveField("start_date", v || null)}
-                      />
-                    </LabelValueRow>
-                  )}
-                  <LabelValueRow label={isPO ? "Delivery Date" : "Est. Completion"} labelClassName="w-40">
+                  </DetailField>
+                ) : (
+                  <DetailField label={isPO ? "Delivery Date" : "Est. Completion"}>
                     <InlineEditField
                       label={isPO ? "Delivery Date" : "Est. Completion"}
                       type="date"
@@ -544,83 +476,156 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete, onS
                         onSaveField(isPO ? "delivery_date" : "estimated_completion_date", v || null)
                       }
                     />
-                  </LabelValueRow>
-                  <LabelValueRow label="Contract Date" labelClassName="w-40">
+                  </DetailField>
+                )}
+                <DetailField label="Title">
+                  <InlineEditField
+                    label="Title"
+                    value={commitment.title ?? ""}
+                    display={capitalizeWords(commitment.title) || undefined}
+                    onSave={(v) => onSaveField("title", v)}
+                  />
+                </DetailField>
+                <DetailField label="Contract Date">
+                  <InlineEditField
+                    label="Contract Date"
+                    type="date"
+                    value={dateInput(commitment.executed_date)}
+                    display={renderDateOrDash(commitment.executed_date)}
+                    onSave={(v) => onSaveField("contract_date", v || null)}
+                  />
+                </DetailField>
+                <DetailField label="Status">
+                  <InlineEditField
+                    label="Status"
+                    type="select"
+                    options={COMMITMENT_STATUS_OPTIONS}
+                    value={displayStatus}
+                    display={<StatusBadge status={displayStatus} />}
+                    onSave={(v) => onSaveField("status", v)}
+                  />
+                </DetailField>
+                <DetailField label="Signed Date">
+                  <InlineEditField
+                    label="Signed Date"
+                    type="date"
+                    value={dateInput(commitment.signed_received_date)}
+                    display={renderDateOrDash(commitment.signed_received_date)}
+                    onSave={(v) =>
+                      onSaveField(
+                        isPO ? "signed_po_received_date" : "signed_contract_received_date",
+                        v || null,
+                      )
+                    }
+                  />
+                </DetailField>
+                <DetailField label="Contract Company">
+                  {commitment.contract_company?.name ? (
+                    commitment.contract_company_id ? (
+                      <Link
+                        href={`/directory/companies/${encodeURIComponent(commitment.contract_company_id)}`}
+                        className="text-primary hover:underline"
+                      >
+                        {commitment.contract_company.name}
+                      </Link>
+                    ) : (
+                      commitment.contract_company.name
+                    )
+                  ) : (
+                    "—"
+                  )}
+                </DetailField>
+                <DetailField label="Actual Completion">
+                  <InlineEditField
+                    label="Actual Completion"
+                    type="date"
+                    value={dateInput(commitment.actual_completion_date)}
+                    display={renderDateOrDash(commitment.actual_completion_date)}
+                    onSave={(v) => onSaveField("actual_completion_date", v || null)}
+                  />
+                </DetailField>
+                {commitment.invoice_contacts !== undefined && (
+                  <DetailField label="Invoice Contact">
+                    {commitment.invoice_contacts.length > 0
+                      ? commitment.invoice_contacts.map((contact, index) => (
+                          <span key={contact.id}>
+                            {index > 0 ? ", " : null}
+                            <Link
+                              href={`/directory/contacts/${encodeURIComponent(contact.id)}`}
+                              className="text-primary hover:underline"
+                            >
+                              {contact.name}
+                            </Link>
+                          </span>
+                        ))
+                      : "—"}
+                  </DetailField>
+                )}
+                <DetailField label="Issued On">
+                  <InlineEditField
+                    label="Issued On"
+                    type="date"
+                    value={dateInput(commitment.issued_on_date)}
+                    display={renderDateOrDash(commitment.issued_on_date)}
+                    onSave={(v) => onSaveField("issued_on_date", v || null)}
+                  />
+                </DetailField>
+                <DetailField label="Default Retainage">
+                  <InlineEditField
+                    label="Default Retainage"
+                    type="number"
+                    value={String(commitment.retention_percentage ?? 0)}
+                    display={`${commitment.retention_percentage ?? 0}%`}
+                    onSave={(v) =>
+                      onSaveField("default_retainage_percent", v === "" ? null : Number(v))
+                    }
+                  />
+                </DetailField>
+                <DetailField label="Accounting Method">
+                  {commitment.accounting_method === "unit"
+                    ? "Unit/Quantity"
+                    : commitment.accounting_method === "percent"
+                      ? "Percent"
+                      : "Amount Based"}
+                </DetailField>
+                {!isPO && (
+                  <DetailField label="Est. Completion">
                     <InlineEditField
-                      label="Contract Date"
+                      label="Est. Completion"
                       type="date"
-                      value={dateInput(commitment.executed_date)}
-                      display={renderDateOrDash(commitment.executed_date)}
-                      onSave={(v) => onSaveField("contract_date", v || null)}
+                      value={dateInput(commitment.substantial_completion_date)}
+                      display={renderDateOrDash(commitment.substantial_completion_date)}
+                      onSave={(v) => onSaveField("estimated_completion_date", v || null)}
                     />
-                  </LabelValueRow>
-                  <LabelValueRow label="Signed Date" labelClassName="w-40">
-                    <InlineEditField
-                      label="Signed Date"
-                      type="date"
-                      value={dateInput(commitment.signed_received_date)}
-                      display={renderDateOrDash(commitment.signed_received_date)}
-                      onSave={(v) =>
-                        onSaveField(
-                          isPO ? "signed_po_received_date" : "signed_contract_received_date",
-                          v || null,
-                        )
-                      }
-                    />
-                  </LabelValueRow>
-                  <LabelValueRow label="Actual Completion" labelClassName="w-40">
-                    <InlineEditField
-                      label="Actual Completion"
-                      type="date"
-                      value={dateInput(commitment.actual_completion_date)}
-                      display={renderDateOrDash(commitment.actual_completion_date)}
-                      onSave={(v) => onSaveField("actual_completion_date", v || null)}
-                    />
-                  </LabelValueRow>
-                  <LabelValueRow label="Issued On" labelClassName="w-40">
-                    <InlineEditField
-                      label="Issued On"
-                      type="date"
-                      value={dateInput(commitment.issued_on_date)}
-                      display={renderDateOrDash(commitment.issued_on_date)}
-                      onSave={(v) => onSaveField("issued_on_date", v || null)}
-                    />
-                  </LabelValueRow>
-                  <LabelValueRow label="Accounting Method" labelClassName="w-40">
-                    {commitment.accounting_method === "unit"
-                      ? "Unit/Quantity"
-                      : commitment.accounting_method === "percent"
-                        ? "Percent"
-                        : "Amount Based"}
-                  </LabelValueRow>
-                  <LabelValueRow label="Created By" labelClassName="w-40" missing={!commitment.created_by_name && !commitment.created_by}>
-                    {commitment.created_by_name || "—"}
-                  </LabelValueRow>
-                  <LabelValueRow label="Executed" labelClassName="w-40">
-                    <InlineEditField
-                      label="Executed"
-                      type="boolean"
-                      value={commitment.executed ? "true" : "false"}
-                      display={commitment.executed ? "Yes" : "No"}
-                      onSave={(v) => onSaveField("executed", v === "true")}
-                    />
-                  </LabelValueRow>
-                </dl>
-              </div>
-              <LabelValueRow label="Private Commitment" labelClassName="w-36" className="mt-6">
-                {commitment.private ? "Yes" : "No"}
-              </LabelValueRow>
-              <LabelValueRow label="Non-Admin SOV" labelClassName="w-36" className="mt-4">
-                {commitment.allow_non_admin_view_sov_items ? "Visible" : "Hidden"}
-              </LabelValueRow>
-              <LabelValueRow label="Attachments" labelClassName="w-36" className="mt-6">
-                <EntityAttachments
-                  entityType="commitment"
-                  entityId={commitmentId}
-                  projectId={projectId}
-                  showLabel={false}
-                />
-              </LabelValueRow>
+                  </DetailField>
+                )}
+                <DetailField label="Created By">
+                  {commitment.created_by_name || "—"}
+                </DetailField>
+                <DetailField label="Private Commitment">
+                  {commitment.private ? "Yes" : "No"}
+                </DetailField>
+                <DetailField label="Executed">
+                  <InlineEditField
+                    label="Executed"
+                    type="boolean"
+                    value={commitment.executed ? "true" : "false"}
+                    display={commitment.executed ? "Yes" : "No"}
+                    onSave={(v) => onSaveField("executed", v === "true")}
+                  />
+                </DetailField>
+                <DetailField label="Non-Admin SOV">
+                  {commitment.allow_non_admin_view_sov_items ? "Visible" : "Hidden"}
+                </DetailField>
+                <DetailField label="Attachments" span={2}>
+                  <EntityAttachments
+                    entityType="commitment"
+                    entityId={commitmentId}
+                    projectId={projectId}
+                    showLabel={false}
+                  />
+                </DetailField>
+              </DetailFieldGrid>
             </DetailPanel>
 
             {/* Shipping & Billing (PO only) */}

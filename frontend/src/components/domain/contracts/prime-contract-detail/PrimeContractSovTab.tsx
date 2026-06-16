@@ -47,8 +47,8 @@ import {
   InlineTableRow,
 } from "@/components/ds/inline-table";
 import { EmptyState } from "@/components/ds";
-import { getCostTypeLabel } from "@/constants/budget";
 import type { BudgetCode, ContractLineItem } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
+import { resolveContractLineBudgetCode } from "./budget-code-resolution";
 
 function getLineTotal(item: ContractLineItem) {
   return (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
@@ -206,9 +206,11 @@ export function PrimeContractSovTab({
         )}
 
         {lineItemsLoading ? (
-          <div className="py-8 text-center text-muted-foreground">
-            Loading schedule of values...
-          </div>
+          <EmptyState
+            icon={<FileText />}
+            title="Loading schedule of values..."
+            description="Retrieving the latest SOV lines for this prime contract."
+          />
         ) : displayedSovItems.length === 0 ? (
           <EmptyState
             icon={<FileText />}
@@ -390,23 +392,10 @@ export function PrimeContractSovTab({
                       const lineTotal = getLineTotal(item);
                       const lineBilledToDate = lineTotal * billedToDateRatio;
                       const lineAmountRemaining = lineTotal - lineBilledToDate;
-                      const selectedBudgetCode = item.budget_code_id
-                        ? budgetCodes.find((code) => code.id === item.budget_code_id)
-                        : budgetCodes.find(
-                            (code) =>
-                              (code.legacyCostCodeId && code.legacyCostCodeId === item.cost_code_id) ||
-                              (!!item.cost_code?.code && code.code === item.cost_code.code),
-                          );
+                      const budgetCodeResolution = resolveContractLineBudgetCode(item, budgetCodes);
                       const selectedBudgetCodeId =
                         (isSovEditing ? sovDraftBudgetCodeIds[item.id] : undefined) ||
-                        selectedBudgetCode?.id ||
-                        "";
-                      const displayBudgetCode = selectedBudgetCode?.code || item.cost_code?.code || "--";
-                      const displayBudgetDescription =
-                        selectedBudgetCode?.description || item.cost_code?.name || "";
-                      const displayCostType = selectedBudgetCode?.costType
-                        ? getCostTypeLabel(selectedBudgetCode.costType)
-                        : "";
+                        budgetCodeResolution.budgetCodeId;
 
                       return (
                         <SortableSovRow
@@ -440,12 +429,12 @@ export function PrimeContractSovTab({
                                 ) : (
                                   <div>
                                     <div className="text-xs font-medium leading-tight">
-                                      {displayBudgetDescription
-                                        ? `${displayBudgetCode} - ${displayBudgetDescription}`
-                                        : displayBudgetCode}
+                                      {budgetCodeResolution.displayDescription
+                                        ? `${budgetCodeResolution.displayCode} - ${budgetCodeResolution.displayDescription}`
+                                        : budgetCodeResolution.displayCode}
                                     </div>
                                     <div className="text-xs leading-tight text-muted-foreground">
-                                      {displayCostType || "—"}
+                                      {budgetCodeResolution.displayCostType || "Needs budget-code link"}
                                     </div>
                                   </div>
                                 )}

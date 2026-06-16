@@ -12,13 +12,13 @@ import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  InlineTable,
+  InlineTableBody,
+  InlineTableCell,
+  InlineTableHeader,
+  InlineTableHeaderCell,
+  InlineTableRow,
+} from "@/components/ds";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -256,15 +256,14 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
   }
 
   return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="min-w-40">Description</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead className="min-w-28 text-right">Scheduled Value</TableHead>
-            <TableHead className="min-w-28 text-right">Prev Work</TableHead>
-            <TableHead className="min-w-32 text-right">
+    <InlineTable variant="edit">
+        <InlineTableHeader>
+          <InlineTableRow>
+            <InlineTableHeaderCell className="min-w-40">Description</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Category</InlineTableHeaderCell>
+            <InlineTableHeaderCell className="min-w-28 text-right">Scheduled Value</InlineTableHeaderCell>
+            <InlineTableHeaderCell className="min-w-28 text-right">Prev Work</InlineTableHeaderCell>
+            <InlineTableHeaderCell className="min-w-32 text-right">
               {editable ? (
                 <span className="inline-flex items-center gap-1">
                   Work This Period
@@ -273,8 +272,8 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
               ) : (
                 "Work This Period"
               )}
-            </TableHead>
-            <TableHead className="min-w-32 text-right">
+            </InlineTableHeaderCell>
+            <InlineTableHeaderCell className="min-w-32 text-right">
               {editable ? (
                 <span className="inline-flex items-center gap-1">
                   Materials Stored
@@ -283,10 +282,10 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
               ) : (
                 "Materials Stored"
               )}
-            </TableHead>
-            <TableHead className="min-w-28 text-right">Total Comp. &amp; Stored</TableHead>
-            <TableHead className="min-w-20 text-right">% Complete</TableHead>
-            <TableHead className="min-w-32 text-right">
+            </InlineTableHeaderCell>
+            <InlineTableHeaderCell className="min-w-28 text-right">Total Comp. &amp; Stored</InlineTableHeaderCell>
+            <InlineTableHeaderCell className="min-w-20 text-right">% Complete</InlineTableHeaderCell>
+            <InlineTableHeaderCell className="min-w-32 text-right">
               {editable ? (
                 <span className="inline-flex items-center gap-1">
                   Retainage %
@@ -295,8 +294,8 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
               ) : (
                 "Retainage %"
               )}
-            </TableHead>
-            <TableHead className="min-w-28 text-right">
+            </InlineTableHeaderCell>
+            <InlineTableHeaderCell className="min-w-28 text-right">
               {editable ? (
                 <span className="inline-flex items-center gap-1">
                   Retainage $
@@ -305,8 +304,8 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
               ) : (
                 "Retainage $"
               )}
-            </TableHead>
-            <TableHead className="min-w-32 text-right">
+            </InlineTableHeaderCell>
+            <InlineTableHeaderCell className="min-w-32 text-right">
               {editable ? (
                 <span className="inline-flex items-center gap-1">
                   Retainage Released
@@ -315,12 +314,12 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
               ) : (
                 "Retainage Released"
               )}
-            </TableHead>
-            <TableHead className="min-w-28 text-right">Net This Period</TableHead>
-            <TableHead className="min-w-28 text-right">Balance to Finish</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
+            </InlineTableHeaderCell>
+            <InlineTableHeaderCell className="min-w-28 text-right">Net This Period</InlineTableHeaderCell>
+            <InlineTableHeaderCell className="min-w-28 text-right">Balance to Finish</InlineTableHeaderCell>
+          </InlineTableRow>
+        </InlineTableHeader>
+        <InlineTableBody>
           {lineItems.map((item) => {
             const overrides = draftMap[item.id] ?? {};
             const totalCompleted = calcTotalCompleted(item, overrides);
@@ -330,24 +329,24 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
             const balance = calcBalanceToFinish(item, overrides);
 
             return (
-              <TableRow key={item.id}>
-                <TableCell className="font-medium text-sm">
+              <InlineTableRow key={item.id}>
+                <InlineTableCell className="font-medium text-sm">
                   {item.description || "—"}
-                </TableCell>
-                <TableCell>
+                </InlineTableCell>
+                <InlineTableCell>
                   <span className="text-sm capitalize">
                     {item.category?.replace(/_/g, " ") || "—"}
                   </span>
-                </TableCell>
-                <TableCell className="text-right tabular-nums text-sm">
+                </InlineTableCell>
+                <InlineTableCell className="text-right tabular-nums text-sm">
                   {formatCurrency(item.scheduled_value)}
-                </TableCell>
-                <TableCell className="text-right tabular-nums text-sm">
+                </InlineTableCell>
+                <InlineTableCell className="text-right tabular-nums text-sm">
                   {formatCurrency(item.work_completed_previous)}
-                </TableCell>
+                </InlineTableCell>
 
                 {/* Editable: Work Completed This Period */}
-                <TableCell className="text-right">
+                <InlineTableCell className="text-right">
                   {editable ? (
                     <EditableCell
                       value={overrides.work_completed_period ?? item.work_completed_period}
@@ -357,10 +356,10 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
                   ) : (
                     <span className="tabular-nums text-sm">{formatCurrency(item.work_completed_period)}</span>
                   )}
-                </TableCell>
+                </InlineTableCell>
 
                 {/* Editable: Materials Stored */}
-                <TableCell className="text-right">
+                <InlineTableCell className="text-right">
                   {editable ? (
                     <EditableCell
                       value={overrides.materials_stored ?? item.materials_stored}
@@ -370,18 +369,18 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
                   ) : (
                     <span className="tabular-nums text-sm">{formatCurrency(item.materials_stored)}</span>
                   )}
-                </TableCell>
+                </InlineTableCell>
 
                 {/* Read-only calculated */}
-                <TableCell className="text-right tabular-nums text-sm">
+                <InlineTableCell className="text-right tabular-nums text-sm">
                   {formatCurrency(totalCompleted)}
-                </TableCell>
-                <TableCell className="text-right tabular-nums text-sm">
+                </InlineTableCell>
+                <InlineTableCell className="text-right tabular-nums text-sm">
                   {formatPercent(pctComplete)}
-                </TableCell>
+                </InlineTableCell>
 
                 {/* Editable: Retainage % */}
-                <TableCell className="text-right">
+                <InlineTableCell className="text-right">
                   {editable ? (
                     <EditableCell
                       value={overrides.retainage_pct ?? item.retainage_pct}
@@ -399,10 +398,10 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
                       {formatPercent(item.retainage_pct ?? 0, 2)}
                     </span>
                   )}
-                </TableCell>
+                </InlineTableCell>
 
                 {/* Editable: Retainage $ */}
-                <TableCell className="text-right">
+                <InlineTableCell className="text-right">
                   {editable ? (
                     <EditableCell
                       value={overrides.retainage_amount ?? retainageAmt}
@@ -416,10 +415,10 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
                   ) : (
                     <span className="tabular-nums text-sm">{formatCurrency(retainageAmt)}</span>
                   )}
-                </TableCell>
+                </InlineTableCell>
 
                 {/* Editable: Retainage Released */}
-                <TableCell className="text-right">
+                <InlineTableCell className="text-right">
                   {editable ? (
                     <EditableCell
                       value={overrides.retainage_released ?? item.retainage_released}
@@ -429,23 +428,22 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
                   ) : (
                     <span className="tabular-nums text-sm">{formatCurrency(item.retainage_released)}</span>
                   )}
-                </TableCell>
+                </InlineTableCell>
 
                 {/* Calculated: Net this period */}
-                <TableCell className="text-right tabular-nums text-sm font-medium">
+                <InlineTableCell className="text-right tabular-nums text-sm font-medium">
                   {formatCurrency(netThisPeriod)}
-                </TableCell>
+                </InlineTableCell>
 
                 {/* Calculated: Balance to finish */}
-                <TableCell className="text-right tabular-nums text-sm">
+                <InlineTableCell className="text-right tabular-nums text-sm">
                   {formatCurrency(balance)}
-                </TableCell>
-              </TableRow>
+                </InlineTableCell>
+              </InlineTableRow>
             );
           })}
-        </TableBody>
-      </Table>
-    </div>
+        </InlineTableBody>
+      </InlineTable>
   );
 }
 
@@ -1126,7 +1124,7 @@ export default function InvoiceDetailPage() {
   return (
     <>
       <PageShell
-        variant="dashboard"
+        variant="detailWide"
         title={`Invoice ${invoice.invoice_number || invoice.id}`}
         description={invoice.contract_number ?? invoice.prime_contract_id ?? undefined}
         statusBadge={<StatusBadge status={invoice.status} type="invoice" />}

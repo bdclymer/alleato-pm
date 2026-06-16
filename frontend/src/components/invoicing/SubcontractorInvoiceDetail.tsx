@@ -67,6 +67,7 @@ import {
   useDeleteSubcontractorInvoice,
 } from "@/hooks/use-subcontractor-invoices";
 import { apiFetch } from "@/lib/api-client";
+import { handleFormError } from "@/lib/handle-form-error";
 import { appToast as toast } from "@/lib/toast/app-toast";
 
 async function patchStatus(
@@ -154,7 +155,7 @@ export function SubcontractorInvoiceDetail({
       toast.success(successMsg);
       await refetch();
     } catch (err) {
-      toast.error(err instanceof Error && err.message ? err.message : "Status update failed");
+      handleFormError(err, { entity: "subcontractor invoice", action: "update status" });
     } finally {
       setBusy(false);
     }
@@ -199,7 +200,7 @@ export function SubcontractorInvoiceDetail({
       toast.success(successMsg);
       await refetch();
     } catch (err) {
-      toast.error(err instanceof Error && err.message ? err.message : "Status update failed");
+      handleFormError(err, { entity: "subcontractor invoice", action });
     } finally {
       setBusy(false);
     }
@@ -214,7 +215,7 @@ export function SubcontractorInvoiceDetail({
       toast.success("Owner approval recorded");
       await refetch();
     } catch (err) {
-      toast.error(err instanceof Error && err.message ? err.message : "Status update failed");
+      handleFormError(err, { entity: "subcontractor invoice", action: "record owner approval" });
     } finally {
       setBusy(false);
     }
@@ -276,7 +277,7 @@ export function SubcontractorInvoiceDetail({
       await refetch();
       setActiveTab("emails");
     } catch (err) {
-      toast.error(err instanceof Error && err.message ? err.message : "Failed to send email");
+      handleFormError(err, { entity: "subcontractor invoice email", action: "send" });
     } finally {
       setEmailBusy(false);
     }
@@ -293,7 +294,7 @@ export function SubcontractorInvoiceDetail({
       await refetch();
       setActiveTab("emails");
     } catch (err) {
-      toast.error(err instanceof Error && err.message ? err.message : "Failed to invite subcontractor");
+      handleFormError(err, { entity: "subcontractor invoice invitation", action: "send" });
     } finally {
       setBusy(false);
     }
@@ -315,7 +316,7 @@ export function SubcontractorInvoiceDetail({
       await refetch();
       setActiveTab("history");
     } catch (err) {
-      toast.error(err instanceof Error && err.message ? err.message : "Failed to resend");
+      handleFormError(err, { entity: "subcontractor invoice", action: "resend ERP export" });
     }
   }
 
@@ -352,7 +353,7 @@ export function SubcontractorInvoiceDetail({
       await refetch();
       setActiveTab("history");
     } catch (err) {
-      toast.error(err instanceof Error && err.message ? err.message : "Failed to mark paid");
+      handleFormError(err, { entity: "subcontractor invoice", action: "mark paid" });
     } finally {
       setBusy(false);
     }
@@ -360,7 +361,7 @@ export function SubcontractorInvoiceDetail({
 
   if (isLoading) {
     return (
-      <PageShell variant="dashboard" title="Loading invoice…">
+      <PageShell variant="detailWide" title="Loading invoice…">
         <div className="px-6 py-4">
           <p className="text-sm text-muted-foreground">Loading…</p>
         </div>
@@ -370,7 +371,7 @@ export function SubcontractorInvoiceDetail({
 
   if (error || !invoice) {
     return (
-      <PageShell variant="dashboard" title="Invoice not found">
+      <PageShell variant="detailWide" title="Invoice not found">
         <div className="px-6 py-4 space-y-3">
           <p className="text-sm text-muted-foreground">
             {error instanceof Error
@@ -416,7 +417,7 @@ export function SubcontractorInvoiceDetail({
 
   return (
     <PageShell
-      variant="dashboard"
+      variant="detailWide"
       title={title}
       description={
         invoice.contract_number
@@ -695,7 +696,7 @@ export function SubcontractorInvoiceDetail({
                   setReviewModalOpen(false);
                   await refetch();
                 } catch (err) {
-                  toast.error(err instanceof Error && err.message ? err.message : "Update failed");
+                  handleFormError(err, { entity: "subcontractor invoice", action: "update status" });
                 } finally {
                   setBusy(false);
                 }

@@ -147,7 +147,6 @@ export function CreateSubcontractForm({
                 </p>
               </div>
               <FileUploadField
-                label=""
                 value={attachments}
                 onChange={handleAttachmentListChange}
                 onFilesSelected={handleFilesSelected}

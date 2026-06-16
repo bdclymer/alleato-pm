@@ -8,7 +8,9 @@ import type { SovLineItem } from "@/lib/schemas/create-subcontract-schema";
 const code = (over: Partial<BudgetCode>): BudgetCode => ({
   id: "uuid-1",
   code: "01-100",
+  legacyCostCodeId: "01-100",
   costType: "S",
+  costTypeId: "cost-type-subcontract",
   description: "Sitework",
   fullLabel: "01-100.S",
   ...over,
@@ -46,6 +48,41 @@ describe("reconcileSovBudgetCodes", () => {
   it("matches stored code text against the dropdown's fullLabel", () => {
     const codes = [code({ id: "uuid-1", code: "01-100", fullLabel: "01-100.S" })];
     const lines = [line({ budgetCode: "01-100.S" })];
+    const result = reconcileSovBudgetCodes(lines, codes);
+    expect(result.changed).toBe(true);
+    expect(result.lines[0].budgetCodeId).toBe("uuid-1");
+  });
+
+  it("matches stored legacy cost-code text with different formatting", () => {
+    const codes = [
+      code({
+        id: "uuid-1",
+        code: "04-2200",
+        legacyCostCodeId: "04-2200",
+        description: "Concrete Unit Masonry-Block",
+        fullLabel: "04-2200.S - Concrete Unit Masonry-Block",
+      }),
+    ];
+    const lines = [line({ budgetCode: "042200" })];
+    const result = reconcileSovBudgetCodes(lines, codes);
+    expect(result.changed).toBe(true);
+    expect(result.lines[0]).toMatchObject({
+      budgetCodeId: "uuid-1",
+      budgetCode: "04-2200",
+      budgetCodeLabel: "04-2200.S - Concrete Unit Masonry-Block",
+    });
+  });
+
+  it("matches stored description text when the budget-code text was lost", () => {
+    const codes = [
+      code({
+        id: "uuid-1",
+        code: "04-2200",
+        description: "Concrete Unit Masonry-Block",
+        fullLabel: "04-2200.S - Concrete Unit Masonry-Block",
+      }),
+    ];
+    const lines = [line({ budgetCode: "concrete unit masonry-block" })];
     const result = reconcileSovBudgetCodes(lines, codes);
     expect(result.changed).toBe(true);
     expect(result.lines[0].budgetCodeId).toBe("uuid-1");
@@ -125,6 +162,12 @@ describe("synthesizeMissingBudgetCodes", () => {
   it("does not synthesize when the stored code already matches an existing option's fullLabel", () => {
     const codes = [code({ id: "uuid-1", code: "01-100", fullLabel: "01-100.S" })];
     const lines = [line({ budgetCode: "01-100.S" })];
+    expect(synthesizeMissingBudgetCodes(lines, codes)).toHaveLength(0);
+  });
+
+  it("does not synthesize when the stored code is a formatting variant of an existing option", () => {
+    const codes = [code({ id: "uuid-1", code: "04-2200", legacyCostCodeId: "04-2200" })];
+    const lines = [line({ budgetCode: "04 2200" })];
     expect(synthesizeMissingBudgetCodes(lines, codes)).toHaveLength(0);
   });
 

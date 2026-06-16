@@ -1,16 +1,38 @@
 import {
+  adminTools,
   buildToolUrl,
   companyWideHeaderTools,
+  coreTools,
   developerCompanyAdminTools,
   filterToolsByPermission,
   financialManagementTools,
   headerNavGroups,
   projectManagementTools,
+  subcontractorTools,
 } from "@/lib/navigation-config";
 
 const headerTools = headerNavGroups.flatMap((group) => group.tools);
 
 describe("navigation config", () => {
+  // Guardrail: the sidebar/header render each nav array with a React key of
+  // `${tool.path}:${tool.name}`. Two entries sharing that key throw the
+  // "Encountered two children with the same key" console error and may drop a
+  // menu item. Fail loudly here instead of shipping a duplicate.
+  it.each([
+    ["coreTools", coreTools],
+    ["projectManagementTools", projectManagementTools],
+    ["financialManagementTools", financialManagementTools],
+    ["subcontractorTools", subcontractorTools],
+    ["adminTools", adminTools],
+    ["companyWideHeaderTools", companyWideHeaderTools],
+    ["developerCompanyAdminTools", developerCompanyAdminTools],
+    ...headerNavGroups.map(
+      (group) => [`headerNavGroups:${group.label}`, group.tools] as const
+    ),
+  ])("has no duplicate path:name keys in %s", (_label, tools) => {
+    const keys = tools.map((tool) => `${tool.path}:${tool.name}`);
+    expect(keys).toHaveLength(new Set(keys).size);
+  });
   it("keeps project status report available to header active-tool matching", () => {
     const financialTool = financialManagementTools.find(
       (tool) => tool.name === "Project Status Report"

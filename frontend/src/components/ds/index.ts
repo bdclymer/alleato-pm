@@ -34,6 +34,8 @@ export type { TableColumn, DataTableProps } from "./data-table";
 export { EmptyState } from "./empty-state";
 export { ErrorState } from "./error-state";
 export { Eyebrow } from "./eyebrow";
+export { InlineAddButton } from "./inline-add-button";
+export type { InlineAddButtonProps } from "./inline-add-button";
 export { CompactSectionHeader } from "./compact-section-header";
 export { DashedActionLink } from "./dashed-action-link";
 export { DensityControl } from "./density-control";
@@ -80,6 +82,7 @@ export {
 export { BackButton } from "./BackButton";
 export { InfoAlert } from "./InfoAlert";
 export { DetailField, DetailFieldGrid } from "./DetailField";
+export { EditableDetailField, type EditableDetailFieldProps } from "./EditableDetailField";
 export { ConfirmDeleteDialog } from "./ConfirmDeleteDialog";
 export { DetailActions } from "./DetailActions";
 export { EditModeActions } from "./EditModeActions";

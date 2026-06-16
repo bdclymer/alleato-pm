@@ -1,10 +1,12 @@
 "use client";
 
 import * as React from "react";
+import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -24,7 +26,7 @@ export interface InlineEditFieldProps {
   value: string;
   /** Optional rich read-mode display (e.g. a StatusBadge or formatted date). */
   display?: React.ReactNode;
-  type?: "text" | "number" | "date" | "select" | "boolean";
+  type?: "text" | "number" | "date" | "select" | "boolean" | "textarea";
   /** Options for type="select". For "boolean" these override the Yes/No default. */
   options?: InlineEditFieldOption[];
   placeholder?: string;
@@ -44,10 +46,9 @@ const BOOLEAN_OPTIONS: InlineEditFieldOption[] = [
 
 /**
  * Click-to-edit field for detail pages. Renders as a read-only value with a
- * subtle hover affordance; clicking turns it into the matching editor
- * (text/number/date/select/boolean) that commits on blur/Enter/change and
- * reverts (with a toast) if the save throws. No pencil icons — the hover state
- * is the affordance.
+ * hover/focus edit affordance; clicking turns it into the matching editor
+ * (text/number/date/select/boolean/textarea) that commits on blur/Enter/change
+ * where appropriate and reverts (with a toast) if the save throws.
  */
 export function InlineEditField({
   value,
@@ -71,6 +72,7 @@ export function InlineEditField({
   }, [value, editing]);
 
   const isSelect = type === "select" || type === "boolean";
+  const isTextarea = type === "textarea";
   const selectOptions = type === "boolean" ? (options ?? BOOLEAN_OPTIONS) : (options ?? []);
 
   const commit = React.useCallback(
@@ -112,13 +114,22 @@ export function InlineEditField({
         }}
         title="Click to edit"
         className={cn(
-          "-mx-1.5 -my-0.5 flex h-auto w-full items-center justify-start rounded px-1.5 py-0.5 text-left text-sm font-medium hover:bg-muted/60",
+          "group/inline-edit -mx-1.5 -my-0.5 flex h-auto w-full items-center justify-start rounded px-1.5 py-0.5 text-left text-sm font-medium hover:bg-muted/60 focus-visible:bg-muted/60",
           className,
         )}
       >
-        <span className="min-w-0 flex-1 truncate">
+        <span
+          className={cn(
+            "min-w-0 flex-1",
+            isTextarea ? "whitespace-pre-wrap text-left leading-relaxed" : "truncate",
+          )}
+        >
           {display ?? (value || <span className="text-muted-foreground/60">{emptyLabel}</span>)}
         </span>
+        <Pencil
+          aria-hidden="true"
+          className="ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground/60 opacity-0 transition-opacity group-hover/inline-edit:opacity-100 group-focus-visible/inline-edit:opacity-100"
+        />
       </Button>
     );
   }
@@ -148,6 +159,31 @@ export function InlineEditField({
           ))}
         </SelectContent>
       </Select>
+    );
+  }
+
+  if (type === "textarea") {
+    return (
+      <Textarea
+        autoFocus
+        value={draft}
+        disabled={saving}
+        placeholder={placeholder}
+        className={cn("min-h-24 w-full", className)}
+        onChange={(event) => setDraft(event.target.value)}
+        onBlur={() => void commit(draft)}
+        onKeyDown={(event) => {
+          if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+            event.preventDefault();
+            void commit(draft);
+          }
+          if (event.key === "Escape") {
+            event.preventDefault();
+            setDraft(value);
+            setEditing(false);
+          }
+        }}
+      />
     );
   }
 
