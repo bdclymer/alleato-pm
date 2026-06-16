@@ -74,6 +74,35 @@ def test_alleato_crons_require_app_db_pressure_guard():
             assert env["DATABASE_URL"]["sync"] is False
 
 
+def test_root_blueprint_covers_all_db_pressure_suspend_targets():
+    services = _services_by_name(REPO_ROOT / "render.yaml")
+    expected = {
+        "alleato-acumatica-financial-sync",
+        "alleato-ai-provider-health",
+        "alleato-daily-recap",
+        "alleato-domain-packet-compiler",
+        "alleato-fireflies-sync",
+        "alleato-graph-sync",
+        "alleato-intelligence-compiler-drain",
+        "alleato-microsoft-executive-assistant-check",
+        "alleato-packet-refresh-periodic",
+        "alleato-project-synthesis-sweep",
+        "alleato-rag-health",
+        "alleato-source-rag-health",
+        "alleato-source-sync-health",
+        "alleato-task-extraction",
+        "alleato-teams-channel-sync",
+        "alleato-teams-dm-sync",
+    }
+
+    for name in expected:
+        service = services[name]
+        assert service["type"] == "cron"
+        env = {item["key"]: item for item in service["envVars"]}
+        assert env["APP_DB_PRESSURE_GUARD_REQUIRED"]["value"] == "true"
+        assert env["DATABASE_URL"]["sync"] is False
+
+
 def test_teams_dm_cron_is_tightly_bounded():
     for path in (REPO_ROOT / "render.yaml", BACKEND_ROOT / "render.yaml"):
         teams_dm = _services_by_name(path)["alleato-teams-dm-sync"]

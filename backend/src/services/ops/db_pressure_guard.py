@@ -21,6 +21,10 @@ class AppDbPressureError(RuntimeError):
     """Raised when a background job must not start because app DB is unsafe."""
 
 
+class AppDbHighChurnWriteError(RuntimeError):
+    """Raised when high-churn AI writes would target the PM app database."""
+
+
 def _env_flag(name: str, default: str = "false") -> bool:
     return (os.getenv(name, default) or "").strip().lower() in {"1", "true", "yes", "on"}
 
@@ -172,3 +176,31 @@ def enforce_app_db_pressure_guard(job_name: str) -> AppDbPressureSnapshot | None
         snapshot.max_query_age_seconds,
     )
     return snapshot
+
+
+def enforce_no_pm_app_high_churn_writes(job_name: str, *, tables: list[str] | None = None) -> None:
+    """Fail closed for high-churn AI/intelligence writes against PM Supabase.
+
+    The RAG database split removed vector/chunk churn from the PM app, but
+    intelligence compilers can still write app-facing projection tables such as
+    ``insight_cards`` and ``intelligence_packets``. Those writes must stay
+    disabled until they are moved behind a bounded projection path or an
+    operator intentionally sets ``ALLOW_PM_APP_HIGH_CHURN_WRITES=true`` for a
+    controlled one-off run.
+    """
+
+    if _env_flag("ALLOW_PM_APP_HIGH_CHURN_WRITES"):
+        logger.warning(
+            "[DBPressureGuard] PM app high-churn writes explicitly allowed for %s",
+            job_name,
+        )
+        return
+
+    table_list = ", ".join(tables or [])
+    suffix = f" Target tables: {table_list}." if table_list else ""
+    raise AppDbHighChurnWriteError(
+        f"Blocked {job_name}: high-churn AI/intelligence writes to the PM app "
+        "database are disabled after the Supabase health incident. Move this "
+        "writer to the AI database or set ALLOW_PM_APP_HIGH_CHURN_WRITES=true "
+        f"only for a controlled one-off run.{suffix}"
+    )

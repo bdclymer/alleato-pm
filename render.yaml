@@ -155,14 +155,14 @@ services:
       - key: TEAMS_DM_EXPORT_MAX_PAGES
         value: "2"
 
-  # Runs Outlook/OneDrive/SharePoint sync every 30 minutes.
-  # Embedding capped at 50 documents per run to clear backlog while staying within timeout.
+  # Runs Outlook/OneDrive/SharePoint sync every 2 hours, staggered away from
+  # Teams-only crons. Embedding is capped at 25 documents per run.
   - type: cron
     name: alleato-graph-sync
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "*/30 * * * *"
+    schedule: "20 */2 * * *"
     dockerCommand: >-
       python3 -c "
       import json, sys;
@@ -173,7 +173,9 @@ services:
         get_supabase_client(),
         run_teams=False,
         run_embedding=True,
-        embed_limit=50,
+        run_teams_compiler=False,
+        embed_limit=25,
+        teams_compiler_batch_size=25,
       );
       print(json.dumps(result, indent=2));
       errors = result.get('errors', []);
@@ -227,7 +229,7 @@ services:
       - key: GRAPH_SYNC_ONEDRIVE
         value: "true"
       - key: GRAPH_EMBEDDING_LIMIT
-        value: "50"
+        value: "25"
       - key: TEAMS_COMPILER_BATCH_SIZE
         value: "25"
 
@@ -466,6 +468,10 @@ services:
       - key: PYTHONUNBUFFERED
         value: 1
       - key: OPENAI_API_KEY
+        sync: false
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
+      - key: DATABASE_URL
         sync: false
       # Slack incoming webhook (set via Render API 2026-06-14). Secondary record.
       - key: SLACK_WEBHOOK_URL

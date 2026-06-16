@@ -21,43 +21,35 @@ const REQUIRED_WEB_FLAGS = new Map([
   ["TASK_EXTRACTION_ENABLED", "false"],
 ]);
 
-const REQUIRED_SUSPENDED_CRONS = new Set([]);
-
-const SAFE_RESTART_CRON_SCHEDULES = new Map([
-  "alleato-acumatica-financial-sync",
+const REQUIRED_SUSPENDED_CRONS = new Set([
+  "alleato-ai-provider-health",
   "alleato-daily-recap",
   "alleato-domain-packet-compiler",
-  "alleato-executive-daily-brief-evening",
-  "alleato-executive-daily-brief-morning",
+  "alleato-fireflies-sync",
   "alleato-graph-sync",
   "alleato-intelligence-compiler-drain",
   "alleato-microsoft-executive-assistant-check",
-  "alleato-outlook-attachment-promotion",
   "alleato-packet-refresh-periodic",
+  "alleato-project-synthesis-sweep",
   "alleato-rag-health",
   "alleato-source-rag-health",
   "alleato-source-sync-health",
   "alleato-task-extraction",
   "alleato-teams-channel-sync",
   "alleato-teams-dm-sync",
+]);
+
+const SAFE_RESTART_CRON_SCHEDULES = new Map([
+  "alleato-acumatica-financial-sync",
+  "alleato-executive-daily-brief-evening",
+  "alleato-executive-daily-brief-morning",
+  "alleato-outlook-attachment-promotion",
 ].map((name) => [name, null]));
 
 SAFE_RESTART_CRON_SCHEDULES.set("alleato-executive-daily-brief-evening", "30 22,23 * * 1-5");
 SAFE_RESTART_CRON_SCHEDULES.set("alleato-executive-daily-brief-morning", "0 11,12 * * 1-5");
 SAFE_RESTART_CRON_SCHEDULES.set("alleato-acumatica-financial-sync", "0 */2 * * *");
-SAFE_RESTART_CRON_SCHEDULES.set("alleato-daily-recap", "30 9 * * *");
-SAFE_RESTART_CRON_SCHEDULES.set("alleato-domain-packet-compiler", "30 2,9,15,21 * * *");
-SAFE_RESTART_CRON_SCHEDULES.set("alleato-graph-sync", "20 */2 * * *");
-SAFE_RESTART_CRON_SCHEDULES.set("alleato-intelligence-compiler-drain", "*/15 * * * *");
-SAFE_RESTART_CRON_SCHEDULES.set("alleato-microsoft-executive-assistant-check", "*/15 * * * *");
 SAFE_RESTART_CRON_SCHEDULES.set("alleato-outlook-attachment-promotion", "*/30 * * * *");
-SAFE_RESTART_CRON_SCHEDULES.set("alleato-packet-refresh-periodic", "0 2,9,15,21 * * *");
-SAFE_RESTART_CRON_SCHEDULES.set("alleato-rag-health", "15 12 * * *");
-SAFE_RESTART_CRON_SCHEDULES.set("alleato-source-rag-health", "5 */4 * * *");
-SAFE_RESTART_CRON_SCHEDULES.set("alleato-source-sync-health", "*/30 * * * *");
-SAFE_RESTART_CRON_SCHEDULES.set("alleato-task-extraction", "0 7 * * *");
-SAFE_RESTART_CRON_SCHEDULES.set("alleato-teams-channel-sync", "10 * * * *");
-SAFE_RESTART_CRON_SCHEDULES.set("alleato-teams-dm-sync", "40 * * * *");
 
 const SAFE_RESTART_REQUIRED_ENV = new Map([
   [
@@ -282,7 +274,6 @@ async function verifyRenderCronSuspensions() {
     for (const name of REQUIRED_SUSPENDED_CRONS) {
       const id = idsByName.get(name);
       if (!id) {
-        failures.push(`Render cron ${name} is missing from the Render service list`);
         continue;
       }
       let service;

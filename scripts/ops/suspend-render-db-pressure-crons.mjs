@@ -4,12 +4,15 @@ const RENDER_SERVICES_URL = "https://api.render.com/v1/services?limit=100";
 
 const DB_PRESSURE_CRON_NAMES = new Set([
   "alleato-acumatica-financial-sync",
+  "alleato-ai-provider-health",
   "alleato-daily-recap",
   "alleato-domain-packet-compiler",
+  "alleato-fireflies-sync",
   "alleato-graph-sync",
   "alleato-intelligence-compiler-drain",
   "alleato-microsoft-executive-assistant-check",
   "alleato-packet-refresh-periodic",
+  "alleato-project-synthesis-sweep",
   "alleato-rag-health",
   "alleato-source-rag-health",
   "alleato-source-sync-health",

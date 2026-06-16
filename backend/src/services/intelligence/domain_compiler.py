@@ -26,10 +26,18 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..ai_transport import get_openai_client
+from ..ops.db_pressure_guard import enforce_no_pm_app_high_churn_writes
 
 logger = logging.getLogger(__name__)
 
 DOMAIN_COMPILER_VERSION = "domain_compiler_v0_1"
+HIGH_CHURN_PM_APP_TABLES = [
+    "intelligence_packets",
+    "insight_cards",
+    "insight_card_evidence",
+    "intelligence_packet_cards",
+    "intelligence_targets",
+]
 DEFAULT_LOOKBACK_DAYS = int(os.getenv("DOMAIN_PACKET_LOOKBACK_DAYS", "60"))
 DEFAULT_DOC_LIMIT = int(os.getenv("DOMAIN_PACKET_DOC_LIMIT", "150"))
 DEFAULT_MODEL = os.getenv("DOMAIN_PACKET_MODEL", "gpt-5.5")
@@ -592,6 +600,10 @@ def compile_domain_packet(
     doc_limit: int = DEFAULT_DOC_LIMIT,
 ) -> Dict[str, Any]:
     """Compile a single company_process target into a current packet."""
+    enforce_no_pm_app_high_churn_writes(
+        "domain_compiler",
+        tables=HIGH_CHURN_PM_APP_TABLES,
+    )
     target = _fetch_target(supabase, target_id)
     started = _utc_now()
     docs = _fetch_domain_documents(
@@ -689,6 +701,10 @@ def compile_all_domain_packets(
     doc_limit: int = DEFAULT_DOC_LIMIT,
 ) -> Dict[str, Any]:
     """Compile every active company_process target. Failures don't abort the batch."""
+    enforce_no_pm_app_high_churn_writes(
+        "domain_compiler_batch",
+        tables=HIGH_CHURN_PM_APP_TABLES,
+    )
     started = _utc_now()
     targets = _rows(
         supabase.table("intelligence_targets")

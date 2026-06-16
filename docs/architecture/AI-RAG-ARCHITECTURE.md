@@ -2,6 +2,8 @@
 
 **Authoritative reference for all AI work. Read this before touching any file under `frontend/src/lib/ai/` or `backend/src/services/pipeline/`.**
 
+Last verified: 2026-06-16 (**PM DB high-churn intelligence write block after Supabase health incident**: the AI/RAG database split removed vector/chunk churn from the PM APP database, but app-facing intelligence projections (`source_signal_candidates`, `insight_cards`, `insight_card_evidence`, `intelligence_packets`, `intelligence_packet_cards`, and related task/target updates) were still written by background AI jobs against the PM Supabase project. The 2026-06-16 incident showed this is not safe: Supavisor checkout failures began during the `alleato-domain-packet-compiler` run window, and graph/project synthesis could also write cards/packets inline. Added `enforce_no_pm_app_high_churn_writes()` in `backend/src/services/ops/db_pressure_guard.py`; domain compiler and project synthesizer paths now fail closed unless `ALLOW_PM_APP_HIGH_CHURN_WRITES=true` is set for a controlled one-off run. Render containment also treats AI/RAG/source-sync cron jobs as suspended-by-default when present (`scripts/ops/suspend-render-db-pressure-crons.mjs`, `scripts/verify/verify-render-web-scheduler-disabled.mjs`, `scripts/verify/verify-live-db-incident.mjs`). Root `render.yaml` graph-sync was corrected back to the safer 2-hour cadence with `embed_limit=25` and no inline Teams compiler. No table/schema/embedding/RPC change.)
+
 Last verified: 2026-06-16 (**Outlook ingestion boundary — raw capture no longer waits on project assignment**: `backend/src/services/integrations/microsoft_graph/outlook.py` now treats project assignment as downstream enrichment, not a prerequisite for source capture. During `sync_outlook_emails`, existing `document_metadata.project_id` is preserved when present, but new Outlook messages are written to `outlook_email_intake` with `assignment_method='assignment_deferred'` and `source_metadata.project_assignment.status='deferred'` instead of calling `infer_project_id()` synchronously. This prevents Supabase/project-assignment pool pressure from blocking mailbox freshness, delta-token advancement, or Brandon/operator inbox review. Project inference/linking remains the job of the backfill/enrichment path (`backend/src/scripts/backfill_unlinked_intake_emails.py`, assignment inbox/manual feedback, and later compiler/backfill jobs). No table/schema/embedding/RPC change.)
 
 Last verified: 2026-06-15 (**intelligence — EVENT-DRIVEN extraction (stop the 2-hourly re-scan)**: email/Teams intelligence extraction was wired ONLY to a 2-hourly cron that (a) re-scanned the same docs, (b) only ever touched the first 10 project IDs (sorted asc — the other ~11 active projects never processed), and (c) relied on a best-effort `source_metadata.synthesized_at_v1` marker for dedup that barely persisted (e.g. 13/712 docs marked on project 43). Rewired to mirror meetings (which are already event-driven via the Fireflies trigger): NEW `synthesize_new_comms_since(since)` in `intelligence/project_synthesizer.py` runs INLINE at the end of `run_graph_sync` (microsoft_graph/sync.py) — it finds projects with docs ingested since the sync watermark, extracts ONLY those new docs (mini model), and refreshes each affected project's L2 synthesis. Dedup is now RELIABLE: `synthesize_project_intelligence` skips a doc if it already has a `source_signal_candidate` for the version (durable) OR carries the marker (covers zero-yield docs) — a failed marker write can no longer cause re-extraction. The standalone sweep (`run_synthesis_sweep`) is demoted from every-2h to a once-DAILY backstop (cron `alleato-project-synthesis-sweep` 0 7 * * *, updated live + render.yaml) covering ALL projects (max_projects 10→200, max_extractions 4→25) — cheap because the candidate-skip + empty-delta L2 guard make already-done docs and unchanged projects free. Net: a new email/Teams message is turned into intelligence once, in the sync cycle it arrives, then never re-processed. No table/schema/embedding/retrieval change.)
@@ -505,6 +507,18 @@ checks, task extraction, and Acumatica financial sync. `render.yaml`,
 are the enforcement surface: every Alleato Render cron must keep the guard envs,
 and live safe-restart checks must validate those envs before any suspended cron is
 resumed.
+
+Important distinction after the 2026-06-16 Supabase health incident:
+`enforce_app_db_pressure_guard()` only checks whether the PM DB is currently
+under pressure. It is not permission for high-churn AI writers to use the PM app
+database. Background intelligence writers that create/update cards, packets,
+signal candidates, evidence rows, or task projections must call
+`enforce_no_pm_app_high_churn_writes()` and fail closed by default. The only
+allowed bypass is the explicit operator override `ALLOW_PM_APP_HIGH_CHURN_WRITES=true`
+for a bounded one-off run while those writes are being moved to the AI database
+or replaced with a controlled final-projection path. Current guarded entrypoints
+include the domain compiler service, its cron entrypoint, and the project
+synthesizer service (including the graph-sync inline synthesis call).
 
 ### Embedding in the Pipeline
 

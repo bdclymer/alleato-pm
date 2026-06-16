@@ -57,10 +57,21 @@ def main() -> int:
         compile_domain_packet,
         DOMAIN_COMPILER_VERSION,
     )
-    from src.services.ops.db_pressure_guard import enforce_app_db_pressure_guard
+    from src.services.ops.db_pressure_guard import (
+        enforce_app_db_pressure_guard,
+        enforce_no_pm_app_high_churn_writes,
+    )
     from src.services.supabase_helpers import get_supabase_client
 
     enforce_app_db_pressure_guard("domain_packet_compiler")
+    enforce_no_pm_app_high_churn_writes(
+        "domain_packet_compiler",
+        tables=[
+            "intelligence_packets",
+            "insight_cards",
+            "insight_card_evidence",
+        ],
+    )
 
     supabase = get_supabase_client()
 

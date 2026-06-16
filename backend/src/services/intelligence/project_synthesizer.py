@@ -37,6 +37,7 @@ from ..supabase_helpers import (
     get_rag_write_client,
     get_supabase_client,
 )
+from ..ops.db_pressure_guard import enforce_no_pm_app_high_churn_writes
 from ..pipeline import llm
 from ..pipeline.extractor import _fetch_project_state, _upsert_task
 from .compiler import (
@@ -48,6 +49,13 @@ from .compiler import (
 logger = logging.getLogger(__name__)
 
 COMMS_COMPILER_VERSION = "project_synthesizer_v1"
+HIGH_CHURN_PM_APP_TABLES = [
+    "source_signal_candidates",
+    "insight_cards",
+    "insight_card_evidence",
+    "intelligence_packets",
+    "tasks",
+]
 
 # How far back to look when no explicit `since` is given. Kept simple and
 # deterministic — a 30-day window of recent communications.
@@ -685,6 +693,10 @@ def synthesize_new_comms_since(
     means L2 only pays for projects that actually changed. Bounded so one sync can
     never blow its time/cost budget; the daily backstop sweep catches any overflow.
     """
+    enforce_no_pm_app_high_churn_writes(
+        "project_synthesizer_event_driven",
+        tables=HIGH_CHURN_PM_APP_TABLES,
+    )
     client = get_supabase_client()
     try:
         rows = (
@@ -762,6 +774,10 @@ def run_synthesis_sweep(
     the synthesis packet is the product the page reads. Bounded: one LLM call per
     swept project.
     """
+    enforce_no_pm_app_high_churn_writes(
+        "project_synthesizer_sweep",
+        tables=HIGH_CHURN_PM_APP_TABLES,
+    )
     client = get_supabase_client()
     since = (datetime.now(timezone.utc) - timedelta(days=since_days)).isoformat()
 

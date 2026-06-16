@@ -60,3 +60,25 @@ def test_pressure_guard_blocks_high_connection_pressure(monkeypatch):
 
     with pytest.raises(db_pressure_guard.AppDbPressureError, match="total_connections=99>10"):
         db_pressure_guard.enforce_app_db_pressure_guard("graph_sync")
+
+
+def test_high_churn_pm_app_write_guard_fails_closed(monkeypatch):
+    monkeypatch.delenv("ALLOW_PM_APP_HIGH_CHURN_WRITES", raising=False)
+
+    with pytest.raises(db_pressure_guard.AppDbHighChurnWriteError, match="Blocked project_synthesizer"):
+        db_pressure_guard.enforce_no_pm_app_high_churn_writes(
+            "project_synthesizer",
+            tables=["insight_cards", "intelligence_packets"],
+        )
+
+
+def test_high_churn_pm_app_write_guard_requires_explicit_override(monkeypatch):
+    monkeypatch.setenv("ALLOW_PM_APP_HIGH_CHURN_WRITES", "true")
+
+    assert (
+        db_pressure_guard.enforce_no_pm_app_high_churn_writes(
+            "controlled_backfill",
+            tables=["insight_cards"],
+        )
+        is None
+    )

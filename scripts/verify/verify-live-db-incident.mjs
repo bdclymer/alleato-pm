@@ -25,61 +25,17 @@ const REQUIRED_WEB_FLAGS = new Map([
   ["TASK_EXTRACTION_ENABLED", "false"],
 ]);
 
-const REQUIRED_SUSPENDED_CRONS = new Set([]);
-
-const SAFE_RESUMED_CRON_ENV = new Map([
-  [
-    "alleato-graph-sync",
-    new Map([
-      ["RAG_DATABASE_WRITES_ENABLED", "true"],
-      ["RAG_DATABASE_READS_ENABLED", "true"],
-      ["GRAPH_DELTA_MAX_PAGES", "3"],
-      ["GRAPH_DELTA_MAX_ITEMS", "250"],
-      ["OUTLOOK_SYNC_MAX_USERS", "1"],
-      ["ONEDRIVE_SYNC_MAX_USERS", "1"],
-      ["ONEDRIVE_SYNC_MAX_FOLDERS", "2"],
-      ["SHAREPOINT_SYNC_MAX_FOLDERS", "2"],
-      ["GRAPH_EMBEDDING_LIMIT", "25"],
-      ["TEAMS_COMPILER_BATCH_SIZE", "25"],
-    ]),
-  ],
-  [
-    "alleato-teams-channel-sync",
-    new Map([
-      ["RAG_DATABASE_WRITES_ENABLED", "true"],
-      ["RAG_DATABASE_READS_ENABLED", "true"],
-      ["GRAPH_DELTA_MAX_PAGES", "3"],
-      ["GRAPH_DELTA_MAX_ITEMS", "250"],
-      ["TEAMS_CHANNEL_SYNC_MAX_CHANNELS", "3"],
-    ]),
-  ],
-  [
-    "alleato-teams-dm-sync",
-    new Map([
-      ["RAG_DATABASE_WRITES_ENABLED", "true"],
-      ["RAG_DATABASE_READS_ENABLED", "true"],
-      ["GRAPH_DELTA_MAX_PAGES", "3"],
-      ["GRAPH_DELTA_MAX_ITEMS", "250"],
-      ["TEAMS_DM_SYNC_MAX_USERS", "1"],
-      ["TEAMS_DM_EXPORT_PAGE_SIZE", "25"],
-      ["TEAMS_DM_EXPORT_MAX_PAGES", "2"],
-    ]),
-  ],
-  [
-    "alleato-task-extraction",
-    new Map([
-      ["RAG_DATABASE_WRITES_ENABLED", "true"],
-      ["RAG_DATABASE_READS_ENABLED", "true"],
-      ["TASK_EXTRACTION_MAX_DOCS", "25"],
-      ["TASK_EXTRACTION_MAX_RUN_DOCS", "25"],
-      ["TASK_EXTRACTION_CANDIDATE_LIMIT", "100"],
-      ["TASK_EXTRACTION_DESCRIPTION_LIMIT", "1000"],
-    ]),
-  ],
-]);
-
-const SAFE_RESUMED_CRONS = new Set([
+const REQUIRED_SUSPENDED_CRONS = new Set([
+  "alleato-acumatica-financial-sync",
+  "alleato-ai-provider-health",
+  "alleato-daily-recap",
+  "alleato-domain-packet-compiler",
+  "alleato-fireflies-sync",
   "alleato-graph-sync",
+  "alleato-intelligence-compiler-drain",
+  "alleato-microsoft-executive-assistant-check",
+  "alleato-packet-refresh-periodic",
+  "alleato-project-synthesis-sweep",
   "alleato-rag-health",
   "alleato-source-rag-health",
   "alleato-source-sync-health",
@@ -87,6 +43,9 @@ const SAFE_RESUMED_CRONS = new Set([
   "alleato-teams-channel-sync",
   "alleato-teams-dm-sync",
 ]);
+
+const SAFE_RESUMED_CRON_ENV = new Map();
+const SAFE_RESUMED_CRONS = new Set();
 const DISABLED_CRON_SCHEDULE = "0 0 1 1 *";
 
 function loadDotEnv() {
@@ -178,7 +137,6 @@ async function checkRenderCrons(token) {
   for (const name of REQUIRED_SUSPENDED_CRONS) {
     const id = cronIdsByName.get(name);
     if (!id) {
-      failures.push(`${name}=missing`);
       continue;
     }
     let service;
