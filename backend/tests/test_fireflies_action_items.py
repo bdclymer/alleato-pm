@@ -280,3 +280,48 @@ class TestMeetingMemoryExtraction:
             action_items=[],
         )
         assert result is None
+
+
+class _SkipGuardStore:
+    def find_document_by_hash(self, content_hash):  # noqa: ANN001
+        return {"id": "doc-existing", "project_id": 1009, "fireflies_id": "ff-123"}
+
+    def find_document_by_fireflies_id(self, fireflies_id):  # noqa: ANN001
+        raise AssertionError("exact-content skip should not need Fireflies-id lookup")
+
+
+class _UnexpectedWorkEmbedder:
+    def embed(self, texts):  # noqa: ANN001
+        raise AssertionError("unchanged transcripts must not be re-embedded")
+
+
+class TestIngestShortCircuitsUnchangedTranscript:
+    def test_exact_content_reingest_skips_llm_and_embedding_work(self):
+        pipeline = FirefliesIngestionPipeline.__new__(FirefliesIngestionPipeline)
+        pipeline.store = _SkipGuardStore()
+        pipeline.embedder = _UnexpectedWorkEmbedder()
+        pipeline._fireflies_api_key = None
+        pipeline._project_assigner = None
+
+        markdown = """# Weekly Design Sync
+
+**Fireflies ID:** ff-123
+**Date:** 2026-06-16
+
+## Summary
+No material updates.
+
+## Action Items
+- Follow up with architect
+
+## Transcript
+[00:01] **Brandon**: Quick project check-in.
+"""
+
+        result = pipeline.ingest_markdown_text(markdown, dry_run=False)
+
+        assert result.document_id == "doc-existing"
+        assert result.skipped is True
+        assert result.dry_run is False
+        assert result.action_item_count == 1
+        assert result.chunk_count == 0

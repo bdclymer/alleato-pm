@@ -240,6 +240,19 @@ class FirefliesIngestionPipeline:
 
         existing = self.store.find_document_by_hash(content_hash)
         existing_by_fireflies = self.store.find_document_by_fireflies_id(parsed.fireflies_id)
+        # Exact-content re-ingests must short-circuit before any LLM or embedding
+        # work. Fireflies sync polls the latest transcripts repeatedly; without
+        # this guard the same meeting is reprocessed every run, re-burning task
+        # rewrite, memory extraction, and embedding credits for unchanged content.
+        if existing is not None and not dry_run:
+            return IngestionResult(
+                document_id=str(existing.get("id") or parsed.fireflies_id or uuid4()),
+                chunk_count=0,
+                action_item_count=len(parsed.action_items),
+                content_hash=content_hash,
+                skipped=True,
+                dry_run=False,
+            )
         existing_project_id = (
             project_id
             if project_id is not None
