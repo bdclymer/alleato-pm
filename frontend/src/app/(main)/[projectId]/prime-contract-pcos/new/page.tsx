@@ -1343,208 +1343,209 @@ export default function NewPrimeContractPcoPage() {
               </div>
             </section>
 
-            <section className="space-y-4">
-              <SectionRuleHeading
-                label="Approval"
-                className="[&_span]:text-primary"
-              />
-              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2 lg:grid-cols-3">
-                <FormField
-                  control={form.control}
-                  name="designated_reviewer"
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex items-center gap-1.5">
-                        <FormLabel>Designated Reviewer</FormLabel>
-                        <ProjectTeamReviewerTooltip projectId={projectId} />
-                      </div>
-                      <Popover
-                        open={reviewerSelectOpen}
-                        onOpenChange={(open) => {
-                          setReviewerSelectOpen(open);
-                          if (open) {
-                            setContractSelectOpen(false);
-                            setPcoSelectOpen(false);
-                            setReviewedBySelectOpen(false);
-                          }
-                        }}
-                      >
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              role="combobox"
-                              aria-expanded={reviewerSelectOpen}
-                              disabled={isLoadingEmployees}
-                              className={cn(
-                                "w-full justify-between font-normal",
-                                !field.value && "text-muted-foreground",
-                              )}
-                            >
-                              <span className="truncate">
-                                {isLoadingEmployees
-                                  ? "Loading employees..."
-                                  : field.value || "Select an employee"}
-                              </span>
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent
-                          className="p-0"
-                          align="start"
-                          style={{ width: "var(--radix-popover-trigger-width)" }}
+            {!hasChangeEvents && (
+              <section className="space-y-4">
+                <SectionRuleHeading
+                  label="Approval"
+                  className="[&_span]:text-primary"
+                />
+                <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2 lg:grid-cols-3">
+                  <FormField
+                    control={form.control}
+                    name="designated_reviewer"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center gap-1.5">
+                          <FormLabel>Designated Reviewer</FormLabel>
+                          <ProjectTeamReviewerTooltip projectId={projectId} />
+                        </div>
+                        <Popover
+                          open={reviewerSelectOpen}
+                          onOpenChange={(open) => {
+                            setReviewerSelectOpen(open);
+                            if (open) {
+                              setContractSelectOpen(false);
+                              setPcoSelectOpen(false);
+                              setReviewedBySelectOpen(false);
+                            }
+                          }}
                         >
-                          <Command>
-                            <CommandInput placeholder="Search employees..." />
-                            <CommandList>
-                              <CommandEmpty>No employee found.</CommandEmpty>
-                              <CommandGroup>
-                                {employees.map((employee) => {
-                                  const employeeName = formatEmployeeName(employee);
-                                  return (
-                                    <CommandItem
-                                      key={employee.id}
-                                      value={employeeName}
-                                      onSelect={() => {
-                                        field.onChange(employeeName);
-                                        setReviewerSelectOpen(false);
-                                      }}
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4",
-                                          field.value === employeeName
-                                            ? "opacity-100"
-                                            : "opacity-0",
-                                        )}
-                                      />
-                                      <span className="truncate">
-                                        {employeeName}
-                                      </span>
-                                    </CommandItem>
-                                  );
-                                })}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={reviewerSelectOpen}
+                                disabled={isLoadingEmployees}
+                                className={cn(
+                                  "w-full justify-between font-normal",
+                                  !field.value && "text-muted-foreground",
+                                )}
+                              >
+                                <span className="truncate">
+                                  {isLoadingEmployees
+                                    ? "Loading employees..."
+                                    : field.value || "Select an employee"}
+                                </span>
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            className="p-0"
+                            align="start"
+                            style={{ width: "var(--radix-popover-trigger-width)" }}
+                          >
+                            <Command>
+                              <CommandInput placeholder="Search employees..." />
+                              <CommandList>
+                                <CommandEmpty>No employee found.</CommandEmpty>
+                                <CommandGroup>
+                                  {employees.map((employee) => {
+                                    const employeeName = formatEmployeeName(employee);
+                                    return (
+                                      <CommandItem
+                                        key={employee.id}
+                                        value={employeeName}
+                                        onSelect={() => {
+                                          field.onChange(employeeName);
+                                          setReviewerSelectOpen(false);
+                                        }}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            field.value === employeeName
+                                              ? "opacity-100"
+                                              : "opacity-0",
+                                          )}
+                                        />
+                                        <span className="truncate">
+                                          {employeeName}
+                                        </span>
+                                      </CommandItem>
+                                    );
+                                  })}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="review_date"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Review Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(e.target.value || null)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="reviewed_by"
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex items-center gap-1.5">
-                        <FormLabel>Reviewed By</FormLabel>
-                        <ProjectTeamReviewerTooltip projectId={projectId} />
-                      </div>
-                      <Popover
-                        open={reviewedBySelectOpen}
-                        onOpenChange={(open) => {
-                          setReviewedBySelectOpen(open);
-                          if (open) {
-                            setContractSelectOpen(false);
-                            setPcoSelectOpen(false);
-                            setReviewerSelectOpen(false);
-                          }
-                        }}
-                      >
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              role="combobox"
-                              aria-expanded={reviewedBySelectOpen}
-                              disabled={isLoadingEmployees}
-                              className={cn(
-                                "w-full justify-between font-normal",
-                                !field.value && "text-muted-foreground",
-                              )}
-                            >
-                              <span className="truncate">
-                                {isLoadingEmployees
-                                  ? "Loading employees..."
-                                  : field.value || "Select an employee"}
-                              </span>
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent
-                          className="p-0"
-                          align="start"
-                          style={{ width: "var(--radix-popover-trigger-width)" }}
+                  <FormField
+                    control={form.control}
+                    name="reviewed_by"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center gap-1.5">
+                          <FormLabel>Reviewer</FormLabel>
+                          <ProjectTeamReviewerTooltip projectId={projectId} />
+                        </div>
+                        <Popover
+                          open={reviewedBySelectOpen}
+                          onOpenChange={(open) => {
+                            setReviewedBySelectOpen(open);
+                            if (open) {
+                              setContractSelectOpen(false);
+                              setPcoSelectOpen(false);
+                              setReviewerSelectOpen(false);
+                            }
+                          }}
                         >
-                          <Command>
-                            <CommandInput placeholder="Search employees..." />
-                            <CommandList>
-                              <CommandEmpty>No employee found.</CommandEmpty>
-                              <CommandGroup>
-                                {employees.map((employee) => {
-                                  const employeeName = formatEmployeeName(employee);
-                                  return (
-                                    <CommandItem
-                                      key={employee.id}
-                                      value={employeeName}
-                                      onSelect={() => {
-                                        field.onChange(employeeName);
-                                        setReviewedBySelectOpen(false);
-                                      }}
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4",
-                                          field.value === employeeName
-                                            ? "opacity-100"
-                                            : "opacity-0",
-                                        )}
-                                      />
-                                      <span className="truncate">
-                                        {employeeName}
-                                      </span>
-                                    </CommandItem>
-                                  );
-                                })}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={reviewedBySelectOpen}
+                                disabled={isLoadingEmployees}
+                                className={cn(
+                                  "w-full justify-between font-normal",
+                                  !field.value && "text-muted-foreground",
+                                )}
+                              >
+                                <span className="truncate">
+                                  {isLoadingEmployees
+                                    ? "Loading employees..."
+                                    : field.value || "Select an employee"}
+                                </span>
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            className="p-0"
+                            align="start"
+                            style={{ width: "var(--radix-popover-trigger-width)" }}
+                          >
+                            <Command>
+                              <CommandInput placeholder="Search employees..." />
+                              <CommandList>
+                                <CommandEmpty>No employee found.</CommandEmpty>
+                                <CommandGroup>
+                                  {employees.map((employee) => {
+                                    const employeeName = formatEmployeeName(employee);
+                                    return (
+                                      <CommandItem
+                                        key={employee.id}
+                                        value={employeeName}
+                                        onSelect={() => {
+                                          field.onChange(employeeName);
+                                          setReviewedBySelectOpen(false);
+                                        }}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            field.value === employeeName
+                                              ? "opacity-100"
+                                              : "opacity-0",
+                                          )}
+                                        />
+                                        <span className="truncate">
+                                          {employeeName}
+                                        </span>
+                                      </CommandItem>
+                                    );
+                                  })}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              </div>
-            </section>
+                  <FormField
+                    control={form.control}
+                    name="review_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Review Date</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            value={field.value ?? ""}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </section>
+            )}
 
             <section className="space-y-4">
               <SectionRuleHeading
