@@ -2,7 +2,14 @@ export interface PrimePcoSourceChangeEvent {
   id: string;
   number: string | null;
   title: string;
+  type?: string | null;
   reason: string | null;
+  scope?: string | null;
+  status?: string | null;
+  origin?: string | null;
+  workflow_stage?: string | null;
+  workflowStage?: string | null;
+  rom?: number | string | null;
   prime_contract_id: string | null;
   prime_contract?: PrimePcoSourceContract | null;
   line_items?: PrimePcoSourceLineItem[];

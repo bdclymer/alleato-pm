@@ -131,6 +131,36 @@ type AttachmentFileInfo = {
   type: string;
 };
 
+function formatMoney(value: number | string | null | undefined): string {
+  const numeric =
+    typeof value === "number"
+      ? value
+      : typeof value === "string"
+        ? Number(value)
+        : NaN;
+
+  if (!Number.isFinite(numeric)) return "$0.00";
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  }).format(numeric);
+}
+
+function formatTableValue(value: string | null | undefined): string {
+  if (!value) return "-";
+  return value
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function isChangeEventComplete(status: string | null | undefined): boolean {
+  return ["closed", "converted", "complete", "completed"].includes(
+    (status ?? "").toLowerCase().replace(/\s+/g, "_"),
+  );
+}
+
 function normalizeSourceContract(value: unknown): PrimePcoSourceContract | null {
   if (!value || typeof value !== "object") return null;
 
@@ -463,7 +493,25 @@ export default function NewPrimeContractPcoPage() {
                 id: String(data.id),
                 number: data.number ? String(data.number) : null,
                 title: String(data.title ?? ""),
+                type: data.type ? String(data.type) : null,
                 reason: data.reason ? String(data.reason) : null,
+                scope: data.scope ? String(data.scope) : null,
+                status: data.status ? String(data.status) : null,
+                origin: data.origin ? String(data.origin) : null,
+                workflowStage: data.workflowStage
+                  ? String(data.workflowStage)
+                  : data.workflow_stage
+                    ? String(data.workflow_stage)
+                    : null,
+                rom:
+                  data.totals &&
+                  typeof data.totals === "object" &&
+                  "revenueRom" in data.totals
+                    ? String(
+                        (data.totals as Record<string, unknown>).revenueRom ??
+                          0,
+                      )
+                    : null,
                 prime_contract_id: data.prime_contract_id
                   ? String(data.prime_contract_id)
                   : data.primeContractId
@@ -900,26 +948,47 @@ export default function NewPrimeContractPcoPage() {
                     {sourceChangeEventError} The PCO cannot be created until every selected source event is loaded.
                   </InfoAlert>
                 ) : (
-                  <div className="divide-y divide-border/60">
-                    {changeEvents.map((ce) => (
-                      <Link
-                        key={ce.id}
-                        href={`/${projectId}/change-events/${ce.id}`}
-                        className="flex items-center gap-3 py-2 text-sm transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                      >
-                        <span className="font-medium text-foreground">
-                          {ce.number ? `CE ${ce.number}` : "CE"}
-                        </span>
-                        <span className="text-muted-foreground truncate">
-                          {ce.title}
-                        </span>
-                        {ce.reason && (
-                          <span className="ml-auto shrink-0 text-xs text-muted-foreground">
-                            {ce.reason}
-                          </span>
-                        )}
-                      </Link>
-                    ))}
+                  <div className="overflow-x-auto">
+                    <div className="min-w-full divide-y divide-border/60">
+                      <div className="grid grid-cols-9 gap-4 py-2 text-xs font-semibold uppercase tracking-wide text-foreground">
+                        <div>Number</div>
+                        <div>Title</div>
+                        <div>Scope</div>
+                        <div>Type</div>
+                        <div>Rhythm</div>
+                        <div>Status</div>
+                        <div>Origin</div>
+                        <div>Complete</div>
+                        <div className="text-right">ROM</div>
+                      </div>
+                      {changeEvents.map((ce) => (
+                        <div
+                          key={ce.id}
+                          className="grid grid-cols-9 gap-4 py-2.5 text-sm text-foreground/80"
+                        >
+                          <div className="truncate font-medium text-foreground">
+                            <Link
+                              href={`/${projectId}/change-events/${ce.id}`}
+                              className="transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            >
+                              {ce.number ? `CE ${ce.number}` : "CE"}
+                            </Link>
+                          </div>
+                          <div className="truncate">{ce.title}</div>
+                          <div className="truncate">{formatTableValue(ce.scope)}</div>
+                          <div className="truncate">{formatTableValue(ce.type)}</div>
+                          <div className="truncate">{formatTableValue(ce.reason)}</div>
+                          <div className="truncate">{formatTableValue(ce.status)}</div>
+                          <div className="truncate">{formatTableValue(ce.origin)}</div>
+                          <div>
+                            {isChangeEventComplete(ce.status) ? "Yes" : "No"}
+                          </div>
+                          <div className="text-right tabular-nums">
+                            {formatMoney(ce.rom)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </section>
