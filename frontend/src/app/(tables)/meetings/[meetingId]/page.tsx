@@ -74,7 +74,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
 
   const { data: meetingTasksData } = await supabase
     .from("tasks")
-    .select("id, title, description, assignee_name, assignee_email, status, priority, due_date, segment_id")
+    .select("id, title, description, assignee_person_id, assignee_name, assignee_email, status, priority, due_date, segment_id")
     .eq("metadata_id", meetingId)
     .order("created_at", { ascending: true });
 

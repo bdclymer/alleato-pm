@@ -31,17 +31,13 @@ describe("SidePanel", () => {
     expect(panel).toHaveStyle({ maxWidth: "100vw" });
     expect(panel).toHaveClass("gap-0", "overflow-hidden", "p-0");
 
-    expect(screen.getByText("Task details").closest("[data-slot='sheet-header']")).toHaveClass(
-      "border-b",
-      "px-5",
-      "py-4",
-    );
+    const header = screen.getByText("Task details").closest("[data-slot='sheet-header']");
+    expect(header).toHaveClass("px-5", "py-4");
+    expect(header).not.toHaveClass("border-b");
     expect(screen.getByText("Panel body")).toHaveClass("flex-1", "overflow-y-auto", "px-5");
-    expect(screen.getByText("Panel footer").closest("[data-slot='sheet-footer']")).toHaveClass(
-      "border-t",
-      "px-5",
-      "py-4",
-    );
+    const footer = screen.getByText("Panel footer").closest("[data-slot='sheet-footer']");
+    expect(footer).toHaveClass("px-5", "py-4");
+    expect(footer).not.toHaveClass("border-t");
   });
 
   it("supports larger shared sizes without local width classes", () => {

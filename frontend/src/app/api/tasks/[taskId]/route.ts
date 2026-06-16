@@ -79,6 +79,7 @@ const PatchBodySchema = z.object({
   category: z.union([z.string().trim().min(1), z.null()]).optional(),
   priority: z.union([TaskPrioritySchema, z.null()]).optional(),
   assignee_user_id: z.union([z.string().uuid(), z.null()]).optional(),
+  assignee_person_id: z.union([z.string().uuid(), z.null()]).optional(),
 }).refine(
   (body) =>
     body.description !== undefined ||
@@ -87,7 +88,8 @@ const PatchBodySchema = z.object({
     body.project_id !== undefined ||
     body.category !== undefined ||
     body.priority !== undefined ||
-    body.assignee_user_id !== undefined,
+    body.assignee_user_id !== undefined ||
+    body.assignee_person_id !== undefined,
   { message: "At least one task field is required." },
 );
 
@@ -162,6 +164,45 @@ async function resolveAssignee(userId: string | null) {
     assignee_person_id: personByAuthId?.id ?? personByEmail?.id ?? null,
     assignee_email: profile.email ?? null,
     assignee_name: profile.full_name ?? profile.email ?? null,
+  };
+}
+
+async function resolveAssigneePerson(personId: string | null) {
+  if (personId === null) {
+    return {
+      assignee_person_id: null,
+      assignee_email: null,
+      assignee_name: null,
+    };
+  }
+
+  const serviceClient = createServiceClient();
+  const { data: person, error: personError } = await serviceClient
+    .from("people")
+    .select("id, first_name, last_name, email")
+    .eq("id", personId)
+    .in("person_type", ["employee", "user"])
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (personError || !person) {
+    throw new GuardrailError({
+      code: "VALIDATION_ERROR",
+      where: "tasks/[taskId]#PATCH",
+      message: "Selected assignee was not found in active employees.",
+      status: 400,
+      details: { reason: personError?.message, personId },
+      cause: personError ?? undefined,
+    });
+  }
+
+  return {
+    assignee_person_id: person.id,
+    assignee_email: person.email ?? null,
+    assignee_name:
+      [person.first_name, person.last_name].filter(Boolean).join(" ").trim() ||
+      person.email ||
+      null,
   };
 }
 
@@ -273,6 +314,10 @@ export const PATCH = withApiGuardrails(
 
     if (parsed.data.assignee_user_id !== undefined) {
       Object.assign(updates, await resolveAssignee(parsed.data.assignee_user_id));
+    }
+
+    if (parsed.data.assignee_person_id !== undefined) {
+      Object.assign(updates, await resolveAssigneePerson(parsed.data.assignee_person_id));
     }
 
     if (parsed.data.category !== undefined) {

@@ -18,6 +18,9 @@ const rawSidePanelAllowedFiles = new Set([
   "frontend/src/components/ui/side-panel.tsx",
   "frontend/src/components/ui/unified-slideover.tsx",
 ]);
+const employeeAssigneePickerFiles = new Set([
+  "frontend/src/components/meetings/meeting-tasks-manager.tsx",
+]);
 
 const addedLineMatchers = [
   {
@@ -55,6 +58,12 @@ const addedLineMatchers = [
     re: /<\s*(?:SheetContent|SlideoverContent)\b|className\s*=\s*["'`][^"'`]*(?:fixed\s+inset-y-0\s+right-0|right-0\s+top-0\s+h-(?:full|dvh)|p-0[^"'`]*(?:Sheet|panel|drawer))/,
     message:
       "Do not hand-roll side panels. Use the shared SidePanel primitive so width, padding, header, body, footer, and accessibility stay consistent.",
+  },
+  {
+    name: "task assignee auth-user picker",
+    re: /["'`]\/api\/users["'`]|assignee_user_id|assigneeUserId/,
+    message:
+      "Task assignee pickers must use active employee people records, not auth-only users. Use /api/employees and assignee_person_id.",
   },
 ];
 
@@ -185,6 +194,12 @@ function findAddedLineViolations(file, addedLines) {
     if (!trimmed || trimmed.startsWith("//") || trimmed.startsWith("*")) continue;
     for (const matcher of addedLineMatchers) {
       if (matcher.name === "raw side panel primitive" && allowedRawSidePanel) {
+        continue;
+      }
+      if (
+        matcher.name === "task assignee auth-user picker" &&
+        !employeeAssigneePickerFiles.has(file)
+      ) {
         continue;
       }
       if (!matcher.re.test(line)) continue;

@@ -169,10 +169,13 @@ export const POST = withApiGuardrails<{ docId: string }>(
         assignee_email: profile.email ?? null,
       };
     } else if (body.assigneePersonId) {
-      const { data: person, error: personError } = await supabase
+      const serviceClient = createServiceClient();
+      const { data: person, error: personError } = await serviceClient
         .from("people")
         .select("id, first_name, last_name, email")
         .eq("id", body.assigneePersonId)
+        .in("person_type", ["employee", "user"])
+        .eq("status", "active")
         .maybeSingle();
 
       if (personError) {
@@ -183,7 +186,7 @@ export const POST = withApiGuardrails<{ docId: string }>(
         throw new GuardrailError({
           code: "VALIDATION_ERROR",
           where: "documents/[docId]/tasks#POST",
-          message: "Selected assignee was not found.",
+          message: "Selected assignee was not found in active employees.",
           status: 400,
         });
       }

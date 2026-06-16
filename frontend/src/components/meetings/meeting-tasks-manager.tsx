@@ -66,10 +66,13 @@ const PRIORITY_TEXT: Record<string, string> = {
 const UNASSIGNED = "__unassigned__";
 const NO_PROJECT = "__no_project__";
 
-interface UserOption {
+interface EmployeeOption {
   id: string;
+  first_name?: string | null;
+  last_name?: string | null;
   email?: string | null;
-  full_name?: string | null;
+  job_title?: string | null;
+  person_type?: string | null;
 }
 
 const SOURCE_OPTIONS = [
@@ -81,8 +84,12 @@ const SOURCE_OPTIONS = [
   { value: "manual", label: "Manual" },
 ] as const;
 
-function userLabel(user: UserOption): string {
-  return user.full_name || user.email || "Unnamed user";
+function employeeLabel(employee: EmployeeOption): string {
+  const name = [employee.first_name, employee.last_name]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  return name || employee.email || "Unnamed employee";
 }
 
 function projectLabel(project: Project): string {
@@ -217,8 +224,8 @@ export function MeetingTasksManager({
   allTasksHref: string;
 }) {
   const [tasks, setTasks] = React.useState<MeetingTask[]>(initialTasks);
-  const [users, setUsers] = React.useState<UserOption[]>([]);
-  const [usersLoaded, setUsersLoaded] = React.useState(false);
+  const [employees, setEmployees] = React.useState<EmployeeOption[]>([]);
+  const [employeesLoaded, setEmployeesLoaded] = React.useState(false);
   const [mode, setMode] = React.useState<"closed" | "view" | "create">("closed");
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [rowBusyId, setRowBusyId] = React.useState<string | null>(null);
@@ -230,24 +237,24 @@ export function MeetingTasksManager({
 
   const activeTask = tasks.find((t) => t.id === activeId) ?? null;
 
-  const loadUsers = React.useCallback(async () => {
-    if (usersLoaded) return;
+  const loadEmployees = React.useCallback(async () => {
+    if (employeesLoaded) return;
     try {
-      const result = await apiFetch<{ users?: UserOption[] }>("/api/users");
-      setUsers(result.users ?? []);
+      const result = await apiFetch<EmployeeOption[]>("/api/employees");
+      setEmployees(result);
     } catch (error) {
       reportNonCriticalFailure({
         area: "meeting-tasks",
-        operation: "load-task-assignee-options",
+        operation: "load-task-employee-assignee-options",
         error,
         userVisibleFallback:
-          "The assignee picker will keep showing stored assignee names until users can be loaded.",
+          "The assignee picker will keep showing stored assignee names until employees can be loaded.",
         metadata: { meetingId },
       });
     } finally {
-      setUsersLoaded(true);
+      setEmployeesLoaded(true);
     }
-  }, [meetingId, usersLoaded]);
+  }, [employeesLoaded, meetingId]);
 
   const patchTask = React.useCallback(
     async (taskId: string, patch: Record<string, unknown>) => {
@@ -288,15 +295,15 @@ export function MeetingTasksManager({
     (task: MeetingTask) => {
       setActiveId(task.id);
       setMode("view");
-      void loadUsers();
+      void loadEmployees();
     },
-    [loadUsers],
+    [loadEmployees],
   );
 
   const openCreate = React.useCallback(() => {
     setMode("create");
-    void loadUsers();
-  }, [loadUsers]);
+    void loadEmployees();
+  }, [loadEmployees]);
 
   const closeSheet = React.useCallback(() => {
     setMode("closed");
@@ -324,7 +331,7 @@ export function MeetingTasksManager({
       priority: string;
       status: string;
       due_date: string;
-      assignee_user_id: string | null;
+      assignee_person_id: string | null;
       project_id: number | null;
       source_system: string;
     }) => {
@@ -334,7 +341,7 @@ export function MeetingTasksManager({
         priority: draft.priority,
         status: draft.status,
         dueDate: draft.due_date || null,
-        assigneeUserId: draft.assignee_user_id,
+        assigneePersonId: draft.assignee_person_id,
         projectId: draft.project_id,
         sourceSystem: draft.source_system,
       };
@@ -343,14 +350,16 @@ export function MeetingTasksManager({
           `/api/documents/${meetingId}/tasks`,
           { method: "POST", body: JSON.stringify(payload) },
         );
+        const selectedEmployee = employees.find(
+          (employee) => employee.id === draft.assignee_person_id,
+        );
         const created: MeetingTask = {
           id: result.taskId,
           title: payload.title,
           description: payload.description,
-          assignee_name:
-            users.find((user) => user.id === draft.assignee_user_id)?.full_name ?? null,
-          assignee_email:
-            users.find((user) => user.id === draft.assignee_user_id)?.email ?? null,
+          assignee_person_id: payload.assigneePersonId,
+          assignee_name: selectedEmployee ? employeeLabel(selectedEmployee) : null,
+          assignee_email: selectedEmployee?.email ?? null,
           status: payload.status,
           priority: payload.priority,
           due_date: payload.dueDate,
@@ -367,7 +376,7 @@ export function MeetingTasksManager({
         toast.error(message);
       }
     },
-    [meetingId, closeSheet, users],
+    [meetingId, closeSheet, employees],
   );
 
   return (
@@ -432,8 +441,8 @@ export function MeetingTasksManager({
         <SidePanelContent>
           {mode === "create" ? (
             <CreateTaskForm
-              users={users}
-              usersLoaded={usersLoaded}
+              employees={employees}
+              employeesLoaded={employeesLoaded}
               projects={projects}
               projectsLoading={projectsLoading}
               defaultProjectId={projectId}
@@ -444,8 +453,8 @@ export function MeetingTasksManager({
           ) : activeTask ? (
             <TaskDetailPanel
               task={activeTask}
-              users={users}
-              usersLoaded={usersLoaded}
+              employees={employees}
+              employeesLoaded={employeesLoaded}
               projectId={projectId}
               allTasksHref={allTasksHref}
               onPatch={patchTask}
@@ -462,16 +471,16 @@ export function MeetingTasksManager({
 
 function TaskDetailPanel({
   task,
-  users,
-  usersLoaded,
+  employees,
+  employeesLoaded,
   projectId,
   allTasksHref,
   onPatch,
   onDelete,
 }: {
   task: MeetingTask;
-  users: UserOption[];
-  usersLoaded: boolean;
+  employees: EmployeeOption[];
+  employeesLoaded: boolean;
   projectId: number | null;
   allTasksHref: string;
   onPatch: (taskId: string, patch: Record<string, unknown>) => Promise<void>;
@@ -485,12 +494,14 @@ function TaskDetailPanel({
     setConfirmingDelete(false);
   }, [task.id, task.description]);
 
-  const currentAssignee = users.find(
-    (u) =>
-      u.email &&
-      task.assignee_email &&
-      u.email.toLowerCase() === task.assignee_email.toLowerCase(),
-  );
+  const currentAssignee =
+    employees.find((employee) => employee.id === task.assignee_person_id) ??
+    employees.find(
+      (employee) =>
+        employee.email &&
+        task.assignee_email &&
+        employee.email.toLowerCase() === task.assignee_email.toLowerCase(),
+    );
 
   const save = async (patch: Record<string, unknown>) => {
     try {
@@ -575,9 +586,9 @@ function TaskDetailPanel({
           <Select
             value={currentAssignee?.id ?? UNASSIGNED}
             onValueChange={(value) =>
-              void save({ assignee_user_id: value === UNASSIGNED ? null : value })
+              void save({ assignee_person_id: value === UNASSIGNED ? null : value })
             }
-            disabled={!usersLoaded}
+            disabled={!employeesLoaded}
           >
             <SelectTrigger>
               <SelectValue
@@ -588,9 +599,9 @@ function TaskDetailPanel({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
-              {users.map((user) => (
-                <SelectItem key={user.id} value={user.id}>
-                  {userLabel(user)}
+              {employees.map((employee) => (
+                <SelectItem key={employee.id} value={employee.id}>
+                  {employeeLabel(employee)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -659,8 +670,8 @@ function TaskDetailPanel({
 // ─── Create form ──────────────────────────────────────────────────────────────
 
 function CreateTaskForm({
-  users,
-  usersLoaded,
+  employees,
+  employeesLoaded,
   projects,
   projectsLoading,
   defaultProjectId,
@@ -668,8 +679,8 @@ function CreateTaskForm({
   onSubmit,
   onCancel,
 }: {
-  users: UserOption[];
-  usersLoaded: boolean;
+  employees: EmployeeOption[];
+  employeesLoaded: boolean;
   projects: Project[];
   projectsLoading: boolean;
   defaultProjectId: number | null;
@@ -680,7 +691,7 @@ function CreateTaskForm({
     priority: string;
     status: string;
     due_date: string;
-    assignee_user_id: string | null;
+    assignee_person_id: string | null;
     project_id: number | null;
     source_system: string;
   }) => Promise<void>;
@@ -691,7 +702,7 @@ function CreateTaskForm({
   const [priority, setPriority] = React.useState("medium");
   const [status, setStatus] = React.useState("open");
   const [dueDate, setDueDate] = React.useState("");
-  const [assigneeUserId, setAssigneeUserId] = React.useState(UNASSIGNED);
+  const [assigneePersonId, setAssigneePersonId] = React.useState(UNASSIGNED);
   const [projectValue, setProjectValue] = React.useState(
     defaultProjectId ? String(defaultProjectId) : NO_PROJECT,
   );
@@ -729,7 +740,7 @@ function CreateTaskForm({
       priority,
       status,
       due_date: dueDate,
-      assignee_user_id: assigneeUserId === UNASSIGNED ? null : assigneeUserId,
+      assignee_person_id: assigneePersonId === UNASSIGNED ? null : assigneePersonId,
       project_id: Number.isFinite(selectedProjectId) ? selectedProjectId : null,
       source_system: sourceSystem,
     });
@@ -739,7 +750,7 @@ function CreateTaskForm({
   return (
     <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
       <SidePanelHeader>
-        <SidePanelTitle>Add task</SidePanelTitle>
+        <SidePanelTitle>Add Task</SidePanelTitle>
       </SidePanelHeader>
 
       <SidePanelBody className="space-y-5">
@@ -810,18 +821,20 @@ function CreateTaskForm({
         <div className="space-y-1.5">
           <Label className="text-xs text-muted-foreground">Assignee</Label>
           <Select
-            value={assigneeUserId}
-            onValueChange={setAssigneeUserId}
-            disabled={!usersLoaded || submitting}
+            value={assigneePersonId}
+            onValueChange={setAssigneePersonId}
+            disabled={!employeesLoaded || submitting}
           >
             <SelectTrigger>
-              <SelectValue placeholder={usersLoaded ? "Unassigned" : "Loading users..."} />
+              <SelectValue
+                placeholder={employeesLoaded ? "Unassigned" : "Loading employees..."}
+              />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
-              {users.map((user) => (
-                <SelectItem key={user.id} value={user.id}>
-                  {userLabel(user)}
+              {employees.map((employee) => (
+                <SelectItem key={employee.id} value={employee.id}>
+                  {employeeLabel(employee)}
                 </SelectItem>
               ))}
             </SelectContent>

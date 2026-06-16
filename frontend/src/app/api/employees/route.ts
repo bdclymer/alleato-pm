@@ -18,6 +18,42 @@ const EmployeeSchema = z.object({
   person_type: z.string().nullable().optional(),
 });
 
+const TEST_EMAIL_PATTERNS: RegExp[] = [
+  /@.*\.test$/i,
+  /@test\.com$/i,
+  /@example\.com$/i,
+  /^rls-test-/i,
+  /^codex[-.](?:directory|subcontractor|ssov)/i,
+  /\+(?:alleato-(?:invite|template)-test|resend-user-invite-test|confirm-flow|inspect-invite)/i,
+  /^(?:debug|debug-resp|final-proof|working-chat|console-check|response-test|stream-test|verify|quick|demo)[-\d]/i,
+  /^testadmin\d+@/i,
+  /^test\d+@/i,
+  /^test\.user@/i,
+];
+
+const TEST_NAME_PATTERNS: RegExp[] = [
+  /^codex\b/i,
+  /\btest\b/i,
+  /\btemplate\b/i,
+  /\binvite\b/i,
+  /^support\b/i,
+  /^system$/i,
+];
+
+function isTestEmployee(person: {
+  email?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+}): boolean {
+  const email = person.email ?? "";
+  if (email && TEST_EMAIL_PATTERNS.some((re) => re.test(email))) {
+    return true;
+  }
+
+  const name = [person.first_name, person.last_name].filter(Boolean).join(" ").trim();
+  return Boolean(name && TEST_NAME_PATTERNS.some((re) => re.test(name)));
+}
+
 export const GET = withApiGuardrails("/api/employees#GET", async () => {
   const supabase = await createClient();
   const {
@@ -51,11 +87,13 @@ export const GET = withApiGuardrails("/api/employees#GET", async () => {
     });
   }
 
+  const employees = (data ?? []).filter((person) => !isTestEmployee(person));
+
   validateResponseContract(
     z.array(EmployeeSchema),
-    data ?? [],
+    employees,
     "/api/employees#GET",
   );
 
-  return NextResponse.json(data);
+  return NextResponse.json(employees);
 });

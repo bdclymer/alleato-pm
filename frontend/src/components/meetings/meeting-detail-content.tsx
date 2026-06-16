@@ -100,6 +100,7 @@ export interface MeetingTask {
   id: string;
   title: string | null;
   description: string;
+  assignee_person_id: string | null;
   assignee_name: string | null;
   assignee_email: string | null;
   status: string;

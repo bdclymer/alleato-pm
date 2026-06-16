@@ -60,7 +60,7 @@ function SidePanelHeader({
 }: React.ComponentProps<typeof SheetHeader>) {
   return (
     <SheetHeader
-      className={cn("shrink-0 border-b border-border px-5 py-4", className)}
+      className={cn("shrink-0 px-5 py-4", className)}
       {...props}
     />
   );
@@ -97,7 +97,7 @@ function SidePanelFooter({
   return (
     <SheetFooter
       className={cn(
-        "shrink-0 border-t border-border px-5 py-4",
+        "shrink-0 px-5 py-4",
         className,
       )}
       {...props}

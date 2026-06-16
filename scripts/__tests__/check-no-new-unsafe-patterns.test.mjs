@@ -104,3 +104,18 @@ test("changed-code guardrail allows raw sheet composition in shared side panel p
 
   assert.equal(report.violations.length, 0);
 });
+
+test("changed-code guardrail blocks auth-user assignee pickers in meeting tasks", () => {
+  const report = buildUnsafePatternReport(
+    ["frontend/src/components/meetings/meeting-tasks-manager.tsx"],
+    new Map([
+      [
+        "frontend/src/components/meetings/meeting-tasks-manager.tsx",
+        ['const result = await apiFetch("/api/users");'],
+      ],
+    ]),
+  );
+
+  assert.equal(report.violations.length, 1);
+  assert.equal(report.violations[0].kind, "task assignee auth-user picker");
+});
