@@ -183,26 +183,70 @@ def _microsoft_prompt(request: MicrosoftExecutiveAssistantRequest) -> str:
     )
 
 
-def _extract_actions(answer: str) -> list[MicrosoftAssistantAction]:
-    actions: list[MicrosoftAssistantAction] = []
-    for match in re.finditer(r"\{[\s\S]*?\"action\"\s*:\s*\"preview\"[\s\S]*?\}", answer):
+def _iter_json_objects(text: str) -> list[dict[str, Any]]:
+    decoder = json.JSONDecoder()
+    objects: list[dict[str, Any]] = []
+    cursor = 0
+    while cursor < len(text):
+        start = text.find("{", cursor)
+        if start == -1:
+            break
         try:
-            payload = json.loads(match.group(0))
+            parsed, end = decoder.raw_decode(text[start:])
         except Exception:
+            cursor = start + 1
             continue
-        action_type = "email_draft"
-        payload_type = str(payload.get("type") or "")
-        if "teams" in payload_type:
-            action_type = "teams_message_draft"
-        actions.append(
-            MicrosoftAssistantAction(
-                actionType=action_type,  # type: ignore[arg-type]
-                title=str(payload.get("type") or "Microsoft draft"),
-                status="drafted",
-                detail=str(payload.get("approvalReason") or "Draft prepared for review."),
-                payload=payload,
-            )
-        )
+        if isinstance(parsed, dict):
+            objects.append(parsed)
+        cursor = start + max(end, 1)
+    return objects
+
+
+def _action_from_preview_payload(payload: dict[str, Any]) -> Optional[MicrosoftAssistantAction]:
+    if payload.get("action") != "preview":
+        return None
+    payload_type = str(payload.get("type") or "")
+    action_type = "teams_message_draft" if "teams" in payload_type else "email_draft"
+    return MicrosoftAssistantAction(
+        actionType=action_type,  # type: ignore[arg-type]
+        title=str(payload.get("type") or "Microsoft draft"),
+        status="drafted",
+        detail=str(payload.get("approvalReason") or "Draft prepared for review."),
+        payload=payload,
+    )
+
+
+def _extract_preview_actions_from_text(text: str) -> list[MicrosoftAssistantAction]:
+    actions: list[MicrosoftAssistantAction] = []
+    for payload in _iter_json_objects(text):
+        action = _action_from_preview_payload(payload)
+        if action is None:
+            continue
+        actions.append(action)
+    return actions
+
+
+def _extract_actions(answer: str, result: Any | None = None) -> list[MicrosoftAssistantAction]:
+    actions = _extract_preview_actions_from_text(answer)
+    if result is not None:
+        for message in _messages_from_result(result):
+            if _message_tool_name(message) not in {
+                "draft_outlook_email_for_review",
+                "draft_teams_message_for_review",
+            }:
+                continue
+            actions.extend(_extract_preview_actions_from_text(_message_content(message)))
+
+    deduped: list[MicrosoftAssistantAction] = []
+    seen: set[str] = set()
+    for action in actions:
+        key = json.dumps(action.payload or {}, sort_keys=True, default=str)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(action)
+    actions = deduped
+
     if not actions and any(marker in answer for marker in ("FAILED:", "UNAVAILABLE:", "BLOCKED:")):
         actions.append(
             MicrosoftAssistantAction(
@@ -863,7 +907,7 @@ def run_microsoft_executive_assistant(
         return MicrosoftExecutiveAssistantResponse(
             answer=answer,
             mode="deep_agents",
-            actions=_extract_actions(answer),
+            actions=_extract_actions(answer, result),
             toolTrace=_tool_trace_from_result(result, runtime_trace=runtime_trace),
             skillsLoaded=loaded_skills,
             orchestrator=ORCHESTRATOR_NAME,

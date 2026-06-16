@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from src.services.agents.microsoft_executive_assistant import (
@@ -110,6 +111,56 @@ def test_run_microsoft_assistant_uses_deep_agents_tools_memory_and_skills():
     assert "Microsoft operator request" in prompt
     assert "Draft email or Teams payloads for review only" in prompt
     assert "Project ID supplied by caller: 983" in prompt
+
+
+def test_run_microsoft_assistant_extracts_draft_actions_from_tool_outputs():
+    class DraftToolAgent:
+        def invoke(self, *_args, **_kwargs):
+            return {
+                "messages": [
+                    {
+                        "type": "tool",
+                        "name": "read_live_outlook_inbox",
+                        "content": (
+                            '{"ok":true,"source":"microsoft_graph_live","mailbox_user_id":"bclymer@alleatogroup.com","count":1,'
+                            '"messages":['
+                            '{"subject":"RE: ULTA update needed.","from_name":"Walter Allen","from_email":"wallen@ulta.com",'
+                            '"received_at":"2026-06-09T09:59:34Z","body_text":"Can you confirm by Thursday afternoon?",'
+                            '"graph_message_id":"message-1","has_attachments":false}'
+                            ']}'
+                        ),
+                    },
+                    {
+                        "type": "tool",
+                        "name": "draft_outlook_email_for_review",
+                        "content": (
+                            '{"action":"preview","type":"outlook_email_draft",'
+                            '"approvalRequired":true,'
+                            '"approvalReason":"External communication requires Megan review.",'
+                            '"fields":{"toRecipients":["wallen@ulta.com"],"ccRecipients":[],'
+                            '"subject":"RE: ULTA update needed.",'
+                            '"body":"Thanks Walter. I will confirm the roof penetration status.",'
+                            '"replyToGraphMessageId":"message-1"}}'
+                        ),
+                    },
+                    {"content": "I found one item that needs a reply and prepared a draft for review."},
+                ]
+            }
+
+    response = run_microsoft_executive_assistant(
+        MicrosoftExecutiveAssistantRequest(
+            userId="user-1",
+            mailboxUserId="bclymer@alleatogroup.com",
+            prompt="Show me any emails from today that need a reply and draft a response.",
+        ),
+        create_agent=lambda **_kwargs: DraftToolAgent(),
+    )
+
+    assert response.mode == "deep_agents"
+    assert response.actions
+    assert response.actions[0].action_type == "email_draft"
+    assert response.actions[0].status == "drafted"
+    assert response.actions[0].payload["fields"]["replyToGraphMessageId"] == "message-1"
 
 
 def test_microsoft_prompt_uses_mailbox_owner_not_megan_for_brandon_inbox():
@@ -233,6 +284,9 @@ def test_run_microsoft_assistant_formats_urgent_inbox_into_action_buckets():
 
 
 def test_run_microsoft_assistant_limits_this_morning_to_same_day_morning_messages():
+    today = datetime.now(timezone.utc).date()
+    yesterday = today - timedelta(days=1)
+
     class MorningInboxAgent:
         def invoke(self, *_args, **_kwargs):
             return {
@@ -243,10 +297,10 @@ def test_run_microsoft_assistant_limits_this_morning_to_same_day_morning_message
                         "content": (
                             '{"ok":true,"source":"microsoft_graph_live","mailbox_user_id":"bclymer@alleatogroup.com","count":4,'
                             '"messages":['
-                            '{"subject":"RE: ULTA update needed.","from_name":"Walter Allen","from_email":"wallen@ulta.com","received_at":"2026-06-09T09:59:34Z","body_text":"Can you confirm by Thursday afternoon?","has_attachments":false},'
-                            '{"subject":"Sign in to Perplexity","from_name":"Perplexity","from_email":"team@mail.perplexity.ai","received_at":"2026-06-09T09:37:58Z","body_text":"Your verification code is 12345.","has_attachments":false},'
-                            '{"subject":"Champaign Pay App","from_name":"Glendon Griesbaum","from_email":"ggriesbaum@niemannfoods.com","received_at":"2026-06-08T20:39:00Z","body_text":"Reminder to keep invoicing timely.","has_attachments":false},'
-                            '{"subject":"Acumatica maintenance","from_name":"Revive Support","from_email":"support@reviveerp.com","received_at":"2026-06-08T18:47:00Z","body_text":"Scheduled maintenance notice.","has_attachments":false}'
+                            f'{{"subject":"RE: ULTA update needed.","from_name":"Walter Allen","from_email":"wallen@ulta.com","received_at":"{today.isoformat()}T09:59:34Z","body_text":"Can you confirm by Thursday afternoon?","has_attachments":false}},'
+                            f'{{"subject":"Sign in to Perplexity","from_name":"Perplexity","from_email":"team@mail.perplexity.ai","received_at":"{today.isoformat()}T09:37:58Z","body_text":"Your verification code is 12345.","has_attachments":false}},'
+                            f'{{"subject":"Champaign Pay App","from_name":"Glendon Griesbaum","from_email":"ggriesbaum@niemannfoods.com","received_at":"{yesterday.isoformat()}T20:39:00Z","body_text":"Reminder to keep invoicing timely.","has_attachments":false}},'
+                            f'{{"subject":"Acumatica maintenance","from_name":"Revive Support","from_email":"support@reviveerp.com","received_at":"{yesterday.isoformat()}T18:47:00Z","body_text":"Scheduled maintenance notice.","has_attachments":false}}'
                             ']}'
                         ),
                     },
