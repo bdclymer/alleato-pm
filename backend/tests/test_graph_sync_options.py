@@ -63,8 +63,8 @@ def test_limit_sync_users_selects_stalest_slice(monkeypatch):
     monkeypatch.setenv("TEAMS_DM_SYNC_MAX_USERS", "2")
     supabase = _FakeStateSupabase(
         [
-            {"resource_id": "user:newer@example.com", "last_sync_at": "2026-05-13T23:00:00Z"},
-            {"resource_id": "user:older@example.com", "last_sync_at": "2026-05-13T20:00:00Z"},
+            {"resource_id": "newer@example.com", "last_sync_at": "2026-05-13T23:00:00Z"},
+            {"resource_id": "older@example.com", "last_sync_at": "2026-05-13T20:00:00Z"},
         ]
     )
 
@@ -77,3 +77,38 @@ def test_limit_sync_users_selects_stalest_slice(monkeypatch):
     )
 
     assert selected == ["never@example.com", "older@example.com"]
+
+
+def test_outlook_mailbox_delta_does_not_load_project_keywords_by_default(monkeypatch):
+    calls = {}
+
+    def fail_project_keywords(_supabase):
+        raise AssertionError("raw Outlook mailbox sync must not query projects")
+
+    def fake_sync_outlook_emails(_supabase, user_email, project_keywords, token, since_date):
+        calls["user_email"] = user_email
+        calls["project_keywords"] = project_keywords
+        calls["token"] = token
+        calls["since_date"] = since_date
+        return 1, "inbox:next|sent:next"
+
+    monkeypatch.setattr(sync, "_get_active_project_keywords", fail_project_keywords)
+    monkeypatch.setattr(sync, "_get_delta_token", lambda *_args, **_kwargs: "")
+    monkeypatch.setattr(sync, "sync_outlook_emails", fake_sync_outlook_emails)
+    monkeypatch.setattr(sync, "_save_sync_state", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(sync, "_record_sync_run_safe", lambda *_args, **_kwargs: None)
+
+    result = sync.sync_outlook_mailbox_delta(
+        _FakeSupabase(),
+        "bclymer@alleatogroup.com",
+        reason="unit_test",
+        verify_persisted_count=False,
+    )
+
+    assert result["status"] == "succeeded"
+    assert calls == {
+        "user_email": "bclymer@alleatogroup.com",
+        "project_keywords": [],
+        "token": "",
+        "since_date": None,
+    }

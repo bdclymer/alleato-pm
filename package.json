@@ -61,6 +61,7 @@
     "quality:predeploy": "bash scripts/predeploy-quality-gate.sh",
     "verify:postdeploy": "bash scripts/postdeploy-verify.sh",
     "verify:render-web-scheduler": "node scripts/verify/verify-render-web-scheduler-disabled.mjs",
+    "verify:microsoft-assistant-health": "node scripts/verify/verify_microsoft_assistant_health.mjs",
     "verify:live-db-incident": "node scripts/verify/verify-live-db-incident.mjs",
     "verify:db-pg-net-suspensions": "node scripts/verify/verify-db-pg-net-suspensions.mjs",
     "verify:active-backend-url": "node scripts/verify/verify-active-backend-url.mjs",

@@ -218,11 +218,12 @@ def sync_outlook_mailbox_delta(
     *,
     reason: str = "scheduled",
     verify_persisted_count: bool = True,
+    load_project_keywords: bool = False,
 ) -> dict[str, Any]:
     """Sync one Outlook mailbox through the durable delta-token path."""
     started_at = datetime.now(timezone.utc)
     before_count = _count_outlook_docs_for_mailbox(supabase, user_email) if verify_persisted_count else 0
-    project_keywords = _get_active_project_keywords(supabase)
+    project_keywords = _get_active_project_keywords(supabase) if load_project_keywords else []
     token = _get_delta_token(supabase, "outlook_email", user_email)
     since_date = os.environ.get("OUTLOOK_SYNC_SINCE") or None
     effective_since = since_date if not token else None

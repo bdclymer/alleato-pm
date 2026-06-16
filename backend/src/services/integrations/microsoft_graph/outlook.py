@@ -116,6 +116,7 @@ MAX_LINKS_PER_EMAIL = int(os.environ.get("OUTLOOK_MAX_LINKS_PER_EMAIL", "10"))
 DOCUMENT_BUCKET = os.environ.get("SUPABASE_DOCUMENTS_BUCKET", "documents")
 SYNC_LEGACY_OUTLOOK_ATTACHMENTS = os.environ.get("OUTLOOK_SYNC_LEGACY_ATTACHMENTS", "false").lower() in {"1", "true", "yes"}
 SYNC_LEGACY_OUTLOOK_LINKS = os.environ.get("OUTLOOK_SYNC_LEGACY_LINKS", "false").lower() in {"1", "true", "yes"}
+SYNC_LEGACY_PROJECT_EMAILS = os.environ.get("OUTLOOK_SYNC_LEGACY_PROJECT_EMAILS", "false").lower() in {"1", "true", "yes"}
 SYNC_OUTLOOK_INTAKE = os.environ.get("OUTLOOK_SYNC_INTAKE", "true").lower() in {"1", "true", "yes"}
 SYNC_OUTLOOK_INTAKE_ATTACHMENTS = os.environ.get("OUTLOOK_SYNC_INTAKE_ATTACHMENTS", "true").lower() in {"1", "true", "yes"}
 
@@ -1558,20 +1559,21 @@ def sync_outlook_emails(
             intake_email_id: Optional[int] = None
             project_email_id: Optional[int] = None
 
-            try:
-                project_email_id = _upsert_project_outlook_email(
-                    supabase_client=supabase_client,
-                    project_id=project_id,
-                    msg=msg,
-                    user_email=user_email,
-                    body_text=body_text,
-                    sender_name=sender_name,
-                    sender_addr=sender_addr,
-                )
-            except Exception as exc:
-                message = f"project_email_failed: {exc}"
-                intake_errors.append(message[:500])
-                logger.warning("[Outlook] Project email sync failed for %s: %s", msg_id, exc)
+            if SYNC_LEGACY_PROJECT_EMAILS:
+                try:
+                    project_email_id = _upsert_project_outlook_email(
+                        supabase_client=supabase_client,
+                        project_id=project_id,
+                        msg=msg,
+                        user_email=user_email,
+                        body_text=body_text,
+                        sender_name=sender_name,
+                        sender_addr=sender_addr,
+                    )
+                except Exception as exc:
+                    message = f"project_email_failed: {exc}"
+                    intake_errors.append(message[:500])
+                    logger.warning("[Outlook] Project email sync failed for %s: %s", msg_id, exc)
 
             try:
                 intake_email_id = _upsert_outlook_intake_email(

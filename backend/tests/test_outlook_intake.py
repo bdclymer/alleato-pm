@@ -117,8 +117,8 @@ class _DeltaGraph:
 
 class _NoProjectLookupSupabase(_Supabase):
     def from_(self, name):
-        if name == "projects":
-            raise AssertionError("Outlook raw ingestion must not synchronously query projects")
+        if name in {"projects", "project_emails"}:
+            raise AssertionError(f"Outlook raw ingestion must not synchronously query {name}")
         return super().from_(name)
 
 
