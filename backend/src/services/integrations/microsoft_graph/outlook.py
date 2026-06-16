@@ -34,7 +34,6 @@ from .user_filter_rules import (
 )
 from .onedrive import SUPPORTED_EXTENSIONS, _extract_text
 from .project_documents import upsert_project_document_by_source as _upsert_project_document_by_source
-from .project_inference import infer_project_id
 
 logger = logging.getLogger(__name__)
 
@@ -1531,19 +1530,18 @@ def sync_outlook_emails(
                 existing_doc = existing_rows[0] if existing_rows else None
 
             project_id: Optional[int] = None
-            assignment_method = "unassigned"
+            assignment_method = "assignment_deferred"
             assignment_confidence = 0.0
             if existing_doc and existing_doc.get("project_id"):
                 project_id = existing_doc.get("project_id")
                 assignment_method = "existing_document"
                 assignment_confidence = 1.0
             else:
-                project_id, assignment_method, assignment_confidence = infer_project_id(
-                    supabase_client,
-                    title=f"Email: {subject}",
-                    content=body_text,
-                    participants=participants,
-                )
+                source_metadata["project_assignment"] = {
+                    "status": "deferred",
+                    "reason": "Outlook raw ingestion does not run synchronous project inference.",
+                    "deferred_at": datetime.now(timezone.utc).isoformat(),
+                }
 
             tags = ["email", "outlook"]
             if project_id:

@@ -73,6 +73,76 @@ class _Graph:
         raise AssertionError("attachment already has contentBytes")
 
 
+class _DeltaGraph:
+    def is_configured(self):
+        return True
+
+    def get_delta(self, base_path, _delta_token):
+        if "Inbox" not in base_path:
+            return [], "sent-token"
+        return [
+            {
+                "id": "message-raw-1",
+                "subject": "Project schedule coordination",
+                "from": {
+                    "emailAddress": {
+                        "name": "Walter Allen",
+                        "address": "wallen@example.com",
+                    }
+                },
+                "toRecipients": [
+                    {
+                        "emailAddress": {
+                            "name": "Brandon Clymer",
+                            "address": "bclymer@alleatogroup.com",
+                        }
+                    }
+                ],
+                "ccRecipients": [],
+                "receivedDateTime": "2026-06-16T18:00:00Z",
+                "bodyPreview": "Please confirm the project schedule coordination path.",
+                "body": {
+                    "content": "Please confirm the project schedule coordination path for the team."
+                },
+                "categories": [],
+                "importance": "normal",
+                "hasAttachments": False,
+                "webLink": "https://outlook.office.com/mail/message-raw-1",
+                "internetMessageId": "<message-raw-1@example.com>",
+                "conversationId": "conversation-raw-1",
+                "internetMessageHeaders": [],
+            }
+        ], "inbox-token"
+
+
+class _NoProjectLookupSupabase(_Supabase):
+    def from_(self, name):
+        if name == "projects":
+            raise AssertionError("Outlook raw ingestion must not synchronously query projects")
+        return super().from_(name)
+
+
+def test_sync_outlook_emails_defers_project_assignment_before_raw_intake(monkeypatch):
+    supabase = _NoProjectLookupSupabase()
+    monkeypatch.setattr(outlook, "get_graph_client", lambda: _DeltaGraph())
+
+    synced, token = outlook.sync_outlook_emails(
+        supabase,
+        "bclymer@alleatogroup.com",
+        project_keywords=[],
+    )
+
+    assert synced == 1
+    assert token == "inbox:inbox-token|sent:sent-token"
+    row = supabase.store["outlook_email_intake"][0]
+    assert row["graph_message_id"] == "message-raw-1"
+    assert row["mailbox_user_id"] == "bclymer@alleatogroup.com"
+    assert row["project_id"] is None
+    assert row["match_status"] == "unassigned"
+    assert row["assignment_method"] == "assignment_deferred"
+    assert row["source_metadata"]["project_assignment"]["status"] == "deferred"
+
+
 def test_outlook_intake_attachment_stores_bytea_hex_content():
     supabase = _Supabase()
     attachment = {
