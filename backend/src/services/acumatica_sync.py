@@ -1211,7 +1211,157 @@ class AcumaticaFinancialSyncService:
             self.supabase.table("acumatica_ar_invoice_lines").insert(list(chunk)).execute()
 
         result.upserted = len(headers)
+        result.projected = self._project_owner_invoices_from_ar_invoices()
         return result
+
+    @staticmethod
+    def _map_owner_invoice_status(acumatica_status: Optional[str]) -> str:
+        if not acumatica_status:
+            return "draft"
+
+        normalized = acumatica_status.strip().lower()
+        if normalized in {"open", "balanced"}:
+            return "submitted"
+        if normalized == "released":
+            return "approved"
+        if normalized == "closed":
+            return "paid"
+        if normalized == "voided":
+            return "void"
+        return "draft"
+
+    def _project_owner_invoices_from_ar_invoices(self) -> int:
+        prime_contracts = (
+            self.supabase.table("prime_contracts")
+            .select("id, project_id")
+            .order("created_at")
+            .execute()
+        ).data or []
+        contract_by_project_id: Dict[int, str] = {}
+        for contract in prime_contracts:
+            project_id = contract.get("project_id")
+            contract_id = contract.get("id")
+            if project_id is None or not contract_id or project_id in contract_by_project_id:
+                continue
+            contract_by_project_id[int(project_id)] = contract_id
+
+        raw_invoices = (
+            self.supabase.table("acumatica_ar_invoices")
+            .select("id, reference_nbr, type, status, date, project, project_id, amount")
+            .execute()
+        ).data or []
+        if not raw_invoices:
+            return 0
+
+        existing_owner_invoices = (
+            self.supabase.table("owner_invoices")
+            .select("id, acumatica_ref_nbr, acumatica_doc_type")
+            .not_.is_("acumatica_ref_nbr", "null")
+            .execute()
+        ).data or []
+        owner_invoice_by_key: Dict[tuple[str, str], int] = {}
+        for row in existing_owner_invoices:
+            ref = row.get("acumatica_ref_nbr")
+            if not ref:
+                continue
+            doc_type = row.get("acumatica_doc_type") or "Invoice"
+            owner_invoice_by_key[(str(ref), str(doc_type))] = int(row["id"])
+
+        raw_invoice_ids = [int(row["id"]) for row in raw_invoices if row.get("id") is not None]
+        raw_lines_by_invoice_id: Dict[int, List[Dict[str, Any]]] = {}
+        for chunk in _chunked([{"id": value} for value in raw_invoice_ids], size=150):
+            ids = [row["id"] for row in chunk]
+            line_rows = (
+                self.supabase.table("acumatica_ar_invoice_lines")
+                .select("invoice_id, line_nbr, transaction_description, amount, extended_price, account")
+                .in_("invoice_id", ids)
+                .execute()
+            ).data or []
+            for line in line_rows:
+                invoice_id = line.get("invoice_id")
+                if invoice_id is None:
+                    continue
+                raw_lines_by_invoice_id.setdefault(int(invoice_id), []).append(line)
+
+        now = _now_iso()
+        projected_count = 0
+        for invoice in raw_invoices:
+            ref_nbr = invoice.get("reference_nbr")
+            if not ref_nbr:
+                continue
+
+            project_id = invoice.get("project_id")
+            if project_id is None:
+                project_row = self._resolve_project_row(invoice.get("project"))
+                project_id = project_row.get("id") if project_row else None
+            if project_id is None:
+                continue
+
+            contract_id = contract_by_project_id.get(int(project_id))
+            if not contract_id:
+                continue
+
+            doc_type = str(invoice.get("type") or "Invoice")
+            owner_payload = {
+                "prime_contract_id": contract_id,
+                "invoice_number": ref_nbr,
+                "status": self._map_owner_invoice_status(invoice.get("status")),
+                "period_start": _iso_to_date(invoice.get("date")),
+                "period_end": None,
+                "gross_amount": _num(invoice.get("amount")),
+                "net_amount": _num(invoice.get("amount")),
+                "acumatica_ref_nbr": ref_nbr,
+                "acumatica_doc_type": doc_type,
+                "acumatica_sync_at": now,
+                "updated_at": now,
+            }
+
+            owner_invoice_id = owner_invoice_by_key.get((str(ref_nbr), doc_type))
+            if owner_invoice_id is not None:
+                self.supabase.table("owner_invoices").update(owner_payload).eq("id", owner_invoice_id).execute()
+            else:
+                inserted = (
+                    self.supabase.table("owner_invoices")
+                    .insert(owner_payload)
+                    .execute()
+                )
+                inserted_rows = getattr(inserted, "data", None) or []
+                inserted_row = inserted_rows[0] if isinstance(inserted_rows, list) and inserted_rows else inserted_rows
+                owner_invoice_id = inserted_row.get("id") if isinstance(inserted_row, dict) else None
+                if owner_invoice_id is None:
+                    lookup = (
+                        self.supabase.table("owner_invoices")
+                        .select("id")
+                        .eq("acumatica_ref_nbr", ref_nbr)
+                        .limit(1)
+                        .execute()
+                    ).data or []
+                    owner_invoice_id = lookup[0]["id"] if lookup else None
+                if owner_invoice_id is None:
+                    raise RuntimeError(
+                        f"Projected owner invoice for Acumatica ref {ref_nbr} but could not resolve inserted row id"
+                    )
+                owner_invoice_by_key[(str(ref_nbr), doc_type)] = int(owner_invoice_id)
+
+            self.supabase.table("owner_invoice_line_items").delete().eq("invoice_id", owner_invoice_id).execute()
+            raw_lines = raw_lines_by_invoice_id.get(int(invoice["id"]), [])
+            owner_line_rows = [
+                {
+                    "invoice_id": owner_invoice_id,
+                    "acumatica_line_nbr": line.get("line_nbr"),
+                    "description": line.get("transaction_description") or line.get("account"),
+                    "approved_amount": _num(line.get("amount")) or _num(line.get("extended_price")) or 0,
+                    "category": line.get("account"),
+                }
+                for line in raw_lines
+            ]
+            if owner_line_rows:
+                for chunk in _chunked(owner_line_rows):
+                    self.supabase.table("owner_invoice_line_items").insert(list(chunk)).execute()
+
+            projected_count += 1
+
+        return projected_count
 
     def _sync_checks(self, last_cursor: Optional[str]) -> EntitySyncResult:
         result = EntitySyncResult(entity="ap_checks")
