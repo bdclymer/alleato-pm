@@ -972,7 +972,7 @@ export default function NewPrimeContractPcoPage() {
                         <div>Title</div>
                         <div>Scope</div>
                         <div>Type</div>
-                        <div>Rhythm</div>
+                        <div>Reason</div>
                         <div>Status</div>
                         <div>Origin</div>
                         <div>Complete</div>
