@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  buildUnsafePatternReport,
   findSilentCatchBlocks,
   findSyntheticDataFallbacks,
 } from "../check-no-new-unsafe-patterns.mjs";
@@ -73,4 +74,33 @@ test("synthetic data fallback detector allows normal fallback UI props", () => {
   `);
 
   assert.equal(violations.length, 0);
+});
+
+test("changed-code guardrail blocks raw side panel primitives outside shared primitives", () => {
+  const report = buildUnsafePatternReport(
+    ["frontend/src/components/example/task-drawer.tsx"],
+    new Map([
+      [
+        "frontend/src/components/example/task-drawer.tsx",
+        ['<SheetContent className="p-0">'],
+      ],
+    ]),
+  );
+
+  assert.equal(report.violations.length, 1);
+  assert.equal(report.violations[0].kind, "raw side panel primitive");
+});
+
+test("changed-code guardrail allows raw sheet composition in shared side panel primitive", () => {
+  const report = buildUnsafePatternReport(
+    ["frontend/src/components/ui/side-panel.tsx"],
+    new Map([
+      [
+        "frontend/src/components/ui/side-panel.tsx",
+        ["<SheetContent className={cn(\"gap-0 overflow-hidden p-0\", className)} />"],
+      ],
+    ]),
+  );
+
+  assert.equal(report.violations.length, 0);
 });

@@ -17,15 +17,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Sheet,
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  SidePanel,
+  SidePanelBody,
+  SidePanelContent,
+  SidePanelFooter,
+  SidePanelHeader,
+  SidePanelTitle,
+} from "@/components/ui/side-panel";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/ds";
 import { apiFetch } from "@/lib/api-client";
+import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 import type { MeetingTask } from "./meeting-detail-content";
 
 // ─── Option sets ──────────────────────────────────────────────────────────────
@@ -186,12 +188,19 @@ export function MeetingTasksManager({
     try {
       const result = await apiFetch<{ users?: UserOption[] }>("/api/users");
       setUsers(result.users ?? []);
-    } catch {
-      // Non-fatal: assignee picker falls back to showing the stored name.
+    } catch (error) {
+      reportNonCriticalFailure({
+        area: "meeting-tasks",
+        operation: "load-task-assignee-options",
+        error,
+        userVisibleFallback:
+          "The assignee picker will keep showing stored assignee names until users can be loaded.",
+        metadata: { meetingId },
+      });
     } finally {
       setUsersLoaded(true);
     }
-  }, [usersLoaded]);
+  }, [meetingId, usersLoaded]);
 
   const patchTask = React.useCallback(
     async (taskId: string, patch: Record<string, unknown>) => {
@@ -359,13 +368,13 @@ export function MeetingTasksManager({
         </div>
       )}
 
-      <Sheet
+      <SidePanel
         open={mode !== "closed"}
         onOpenChange={(open) => {
           if (!open) closeSheet();
         }}
       >
-        <SheetContent className="flex w-full flex-col gap-0 sm:max-w-md">
+        <SidePanelContent>
           {mode === "create" ? (
             <CreateTaskForm onSubmit={handleCreate} onCancel={closeSheet} />
           ) : activeTask ? (
@@ -379,8 +388,8 @@ export function MeetingTasksManager({
               onDelete={handleDelete}
             />
           ) : null}
-        </SheetContent>
-      </Sheet>
+        </SidePanelContent>
+      </SidePanel>
     </div>
   );
 }
@@ -429,13 +438,13 @@ function TaskDetailPanel({
 
   return (
     <>
-      <SheetHeader className="space-y-1 border-b border-border pb-4">
-        <SheetTitle className="text-base leading-snug">
+      <SidePanelHeader>
+        <SidePanelTitle>
           {task.title || "Task"}
-        </SheetTitle>
-      </SheetHeader>
+        </SidePanelTitle>
+      </SidePanelHeader>
 
-      <div className="flex-1 space-y-5 overflow-y-auto py-5">
+      <SidePanelBody className="space-y-5">
         <div className="space-y-1.5">
           <Label htmlFor="task-description" className="text-xs text-muted-foreground">
             Description
@@ -541,9 +550,9 @@ function TaskDetailPanel({
             className="text-sm"
           />
         </div>
-      </div>
+      </SidePanelBody>
 
-      <SheetFooter className="flex-row items-center justify-between border-t border-border pt-4 sm:justify-between">
+      <SidePanelFooter className="flex-row items-center justify-between gap-2 sm:justify-between">
         {confirmingDelete ? (
           <div className="flex items-center gap-2">
             <Button
@@ -578,7 +587,7 @@ function TaskDetailPanel({
             <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
           </Link>
         </Button>
-      </SheetFooter>
+      </SidePanelFooter>
     </>
   );
 }
@@ -616,12 +625,12 @@ function CreateTaskForm({
   };
 
   return (
-    <form onSubmit={submit} className="flex h-full flex-col gap-0">
-      <SheetHeader className="border-b border-border pb-4">
-        <SheetTitle className="text-base">Add task</SheetTitle>
-      </SheetHeader>
+    <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
+      <SidePanelHeader>
+        <SidePanelTitle>Add task</SidePanelTitle>
+      </SidePanelHeader>
 
-      <div className="flex-1 space-y-5 overflow-y-auto py-5">
+      <SidePanelBody className="space-y-5">
         <div className="space-y-1.5">
           <Label htmlFor="new-task-title" className="text-xs text-muted-foreground">
             Title
@@ -699,19 +708,16 @@ function CreateTaskForm({
           />
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          You can assign this task to someone after it&apos;s created.
-        </p>
-      </div>
+      </SidePanelBody>
 
-      <SheetFooter className="flex-row justify-end gap-2 border-t border-border pt-4">
+      <SidePanelFooter className="flex-row justify-end gap-2">
         <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
           Cancel
         </Button>
         <Button type="submit" size="sm" disabled={!canSubmit}>
           {submitting ? "Adding..." : "Add task"}
         </Button>
-      </SheetFooter>
+      </SidePanelFooter>
     </form>
   );
 }

@@ -13,6 +13,11 @@ const mode = args.has("--staged") ? "staged" : "changed";
 const baseRef = baseRefFromFlag || process.env.GUARDRAIL_BASE_REF || "origin/main";
 const scanPathPrefixes = ["frontend/src/app/", "frontend/src/components/", "frontend/src/hooks/", "frontend/src/lib/"];
 const codeExtensions = /\.(ts|tsx|js|jsx)$/;
+const rawSidePanelAllowedFiles = new Set([
+  "frontend/src/components/ui/sheet.tsx",
+  "frontend/src/components/ui/side-panel.tsx",
+  "frontend/src/components/ui/unified-slideover.tsx",
+]);
 
 const addedLineMatchers = [
   {
@@ -44,6 +49,12 @@ const addedLineMatchers = [
     name: "generic toast error",
     re: /toast\.error\(\s*["'`](?:Failed|Unable|Error)(?:\s+to|\s+\w+)?[^"'`]*["'`]\s*\)/,
     message: "Do not add generic error toasts. Include the caught error detail and structured reporting.",
+  },
+  {
+    name: "raw side panel primitive",
+    re: /<\s*(?:SheetContent|SlideoverContent)\b|className\s*=\s*["'`][^"'`]*(?:fixed\s+inset-y-0\s+right-0|right-0\s+top-0\s+h-(?:full|dvh)|p-0[^"'`]*(?:Sheet|panel|drawer))/,
+    message:
+      "Do not hand-roll side panels. Use the shared SidePanel primitive so width, padding, header, body, footer, and accessibility stay consistent.",
   },
 ];
 
@@ -168,10 +179,14 @@ export function findSyntheticDataFallbacks(source) {
 
 function findAddedLineViolations(file, addedLines) {
   const violations = [];
+  const allowedRawSidePanel = rawSidePanelAllowedFiles.has(file);
   for (const line of addedLines) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith("//") || trimmed.startsWith("*")) continue;
     for (const matcher of addedLineMatchers) {
+      if (matcher.name === "raw side panel primitive" && allowedRawSidePanel) {
+        continue;
+      }
       if (!matcher.re.test(line)) continue;
       violations.push({
         file,
@@ -184,11 +199,16 @@ function findAddedLineViolations(file, addedLines) {
   return violations;
 }
 
-export function buildUnsafePatternReport(files = getCandidateFiles()) {
+export function buildUnsafePatternReport(
+  files = getCandidateFiles(),
+  addedLinesByFile = new Map(),
+) {
   const violations = [];
 
   for (const file of files) {
-    const addedLines = getAddedLinesForFile(file);
+    const addedLines = addedLinesByFile.has(file)
+      ? addedLinesByFile.get(file)
+      : getAddedLinesForFile(file);
     violations.push(...findAddedLineViolations(file, addedLines));
 
     if (!existsSync(file)) continue;
