@@ -434,6 +434,57 @@ function splitContextParagraphs(value: string): string[] {
   return paragraphs.length > 0 ? paragraphs : [normalized];
 }
 
+type ContextTextBlock =
+  | { type: "paragraph"; text: string }
+  | { type: "heading"; text: string }
+  | { type: "bullet"; text: string };
+
+function splitMeetingContextText(value: string): ContextTextBlock[] {
+  const cleanText = value
+    .replace(/\s+##\s+/g, "\n## ")
+    .replace(/\s+-\s+/g, "\n- ")
+    .replace(/[^\S\n]+/g, " ")
+    .trim();
+
+  if (!cleanText) return [];
+
+  return cleanText
+    .split(/\n+/)
+    .map((line) =>
+      line
+        .replace(/[^\S\n]+/g, " ")
+        .replace(/\s([,.;:!?])/g, "$1")
+        .trim(),
+    )
+    .filter(Boolean)
+    .map((line): ContextTextBlock => {
+      if (line.startsWith("##")) {
+        const headingText = line.replace(/^#+\s*/, "").trim();
+        if (headingText.length > 80) {
+          return {
+            type: "paragraph",
+            text: headingText,
+          };
+        }
+
+        return {
+          type: "heading",
+          text: headingText,
+        };
+      }
+
+      if (line.startsWith("-")) {
+        return {
+          type: "bullet",
+          text: line.replace(/^-\s*/, "").trim(),
+        };
+      }
+
+      return { type: "paragraph", text: line };
+    })
+    .filter((block) => block.text.length > 0);
+}
+
 function TeamsMessageRow({ message }: { message: TeamsConversationMessage }) {
   return (
     <article className="grid gap-2 border-b border-border/30 py-3 last:border-b-0 sm:grid-cols-[128px_minmax(0,1fr)]">
@@ -478,18 +529,45 @@ function MeetingContextSectionBlock({
 }: {
   section: MeetingContextSection;
 }) {
+  const bodyBlocks = section.body ? splitMeetingContextText(section.body) : [];
+
   return (
     <section className="space-y-3 border-b border-border/35 py-4 first:pt-0 last:border-b-0 last:pb-0">
       <div className="text-xs font-semibold text-foreground">
         {section.title}
       </div>
-      {section.body && (
-        <div className="space-y-2 text-xs leading-5 text-foreground">
-          {splitContextParagraphs(section.body).map((paragraph, index) => (
-            <p key={`${section.title}-${index}`} className="break-words">
-              {paragraph}
-            </p>
-          ))}
+      {bodyBlocks.length > 0 && (
+        <div className="space-y-3 text-xs leading-5 text-foreground">
+          {bodyBlocks.map((block, index) => {
+            if (block.type === "heading") {
+              return (
+                <p
+                  key={`${section.title}-heading-${index}`}
+                  className="pt-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  {block.text}
+                </p>
+              );
+            }
+
+            if (block.type === "bullet") {
+              return (
+                <div
+                  key={`${section.title}-bullet-${index}`}
+                  className="grid grid-cols-[0.625rem_minmax(0,1fr)] gap-2"
+                >
+                  <span className="mt-2 h-1 w-1 rounded-full bg-muted-foreground/60" />
+                  <p className="min-w-0 break-words">{block.text}</p>
+                </div>
+              );
+            }
+
+            return (
+              <p key={`${section.title}-paragraph-${index}`} className="break-words">
+                {block.text}
+              </p>
+            );
+          })}
         </div>
       )}
       {section.items.length > 0 && (
@@ -1195,12 +1273,16 @@ function TaskDetail({
                   variant="ghost"
                   onClick={() => setIsEditingText(true)}
                   disabled={updatingId === task.id}
-                  className="group -ml-2 h-auto w-full min-w-0 items-start justify-start gap-2 whitespace-normal px-2 py-1.5 text-left hover:bg-muted/50"
+                  aria-label="Edit task text"
+                  className="group -ml-2 h-auto w-full min-w-0 items-start justify-start gap-3 whitespace-normal px-2 py-1.5 text-left hover:bg-muted/50"
                 >
                   <span className="min-w-0 flex-1 break-words text-[15px] font-medium leading-relaxed text-foreground">
                     {task.description || task.title || "Untitled task"}
                   </span>
-                  <Pencil className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
+                  <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground">
+                    <Pencil className="h-3.5 w-3.5" />
+                    Edit
+                  </span>
                 </Button>
               </div>
             )}
