@@ -99,6 +99,8 @@ interface PrimeContract {
   contract_number: string;
   title: string | null;
   status: string | null;
+  company_name?: string | null;
+  contract_company?: { id: string; name: string } | null;
   client: { id: string; name: string } | null;
   vendor: { id: string; name: string } | null;
 }
@@ -170,6 +172,7 @@ function normalizeSourceContract(value: unknown): PrimePcoSourceContract | null 
 
   const client = contract.client;
   const vendor = contract.vendor;
+  const contractCompany = contract.contract_company;
 
   return {
     id,
@@ -179,6 +182,14 @@ function normalizeSourceContract(value: unknown): PrimePcoSourceContract | null 
         : null,
     title: typeof contract.title === "string" ? contract.title : null,
     status: typeof contract.status === "string" ? contract.status : null,
+    company_name:
+      typeof contract.company_name === "string" ? contract.company_name : null,
+    contract_company: contractCompany && typeof contractCompany === "object"
+      ? {
+          id: String((contractCompany as Record<string, unknown>).id ?? ""),
+          name: String((contractCompany as Record<string, unknown>).name ?? ""),
+        }
+      : null,
     client: client && typeof client === "object"
       ? {
           id: String((client as Record<string, unknown>).id ?? ""),
@@ -237,6 +248,8 @@ function toPrimeContractOption(contract: PrimePcoSourceContract): PrimeContract 
     contract_number: contract.contract_number ?? "Prime Contract",
     title: contract.title,
     status: contract.status ?? null,
+    company_name: contract.company_name ?? null,
+    contract_company: contract.contract_company ?? null,
     client: contract.client ?? null,
     vendor: contract.vendor ?? null,
   };
@@ -378,7 +391,11 @@ export default function NewPrimeContractPcoPage() {
   const selectedContractId = form.watch("prime_contract_id");
   const selectedContract = contracts.find((c) => c.id === selectedContractId);
   const contractCompany =
-    selectedContract?.client?.name ?? selectedContract?.vendor?.name ?? null;
+    selectedContract?.contract_company?.name ??
+    selectedContract?.client?.name ??
+    selectedContract?.vendor?.name ??
+    selectedContract?.company_name ??
+    null;
   const selectedPotentialChangeOrders = useMemo(
     () => potentialChangeOrders.filter((pco) => selectedPcoIds.includes(pco.id)),
     [potentialChangeOrders, selectedPcoIds],
@@ -1055,7 +1072,11 @@ export default function NewPrimeContractPcoPage() {
                         <SelectContent>
                           {contracts.map((c) => {
                             const partyName =
-                              c.client?.name ?? c.vendor?.name ?? null;
+                              c.contract_company?.name ??
+                              c.client?.name ??
+                              c.vendor?.name ??
+                              c.company_name ??
+                              null;
                             const label = [
                               `#${c.contract_number}`,
                               c.title,
@@ -1075,6 +1096,15 @@ export default function NewPrimeContractPcoPage() {
                     </FormItem>
                   )}
                 />
+
+                <FormItem>
+                  <FormLabel>Contract Company</FormLabel>
+                  <Input
+                    value={contractCompany ?? ""}
+                    placeholder="Auto-filled from contract"
+                    disabled
+                  />
+                </FormItem>
 
                 {!hasChangeEvents && (
                 <FormItem>
@@ -1254,6 +1284,26 @@ export default function NewPrimeContractPcoPage() {
                 />
 
                 <div className="flex items-start gap-6 pt-7">
+                  <FormField
+                    control={form.control}
+                    name="field_change"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start gap-3">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-0.5 leading-none">
+                          <FormLabel className="cursor-pointer">
+                            Field Change
+                          </FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
                   <FormField
                     control={form.control}
                     name="executed"

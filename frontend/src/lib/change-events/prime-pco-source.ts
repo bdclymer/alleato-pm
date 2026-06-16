@@ -20,6 +20,8 @@ export interface PrimePcoSourceContract {
   contract_number: string | null;
   title: string | null;
   status?: string | null;
+  company_name?: string | null;
+  contract_company?: { id: string; name: string } | null;
   client?: { id: string; name: string } | null;
   vendor?: { id: string; name: string } | null;
 }
