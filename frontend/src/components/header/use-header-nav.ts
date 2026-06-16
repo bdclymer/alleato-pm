@@ -75,7 +75,7 @@ function getCreateRouteBreadcrumbLabel(segments: string[], index: number): strin
   }
 
   if (segments[index - 1] === "prime-contract-pcos") {
-    return "New Prime Contract Change Order";
+    return "New Prime Contract PCO";
   }
 
   if (
@@ -83,7 +83,7 @@ function getCreateRouteBreadcrumbLabel(segments: string[], index: number): strin
     segments[index - 2] === "change-orders" &&
     segments[index - 4] === "prime-contracts"
   ) {
-    return "New Prime Contract Change Order";
+    return "New Prime Contract PCO";
   }
 
   return null;
