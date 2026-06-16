@@ -889,7 +889,7 @@ export default function NewPrimeContractPcoPage() {
 
   return (
     <PageShell
-      variant="form"
+      variant="dashboard"
       title={
         hasChangeEvents
           ? "Create Prime Contract PCO"
@@ -1017,7 +1017,7 @@ export default function NewPrimeContractPcoPage() {
                 label="Overview"
                 className="[&_span]:text-primary"
               />
-              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2 lg:grid-cols-3">
                 <FormItem>
                   <FormLabel>
                     {hasChangeEvents ? "PCO Number" : "PCCO Number"}
@@ -1248,7 +1248,7 @@ export default function NewPrimeContractPcoPage() {
                   control={form.control}
                   name="description"
                   render={({ field }) => (
-                    <FormItem className="md:col-span-2">
+                    <FormItem className="md:col-span-2 lg:col-span-3">
                       <FormLabel>Description</FormLabel>
                       <FormControl>
                         <Textarea
@@ -1348,7 +1348,7 @@ export default function NewPrimeContractPcoPage() {
                 label="Approval"
                 className="[&_span]:text-primary"
               />
-              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2 lg:grid-cols-3">
                 <FormField
                   control={form.control}
                   name="designated_reviewer"
@@ -1551,7 +1551,7 @@ export default function NewPrimeContractPcoPage() {
                 label="Schedule"
                 className="[&_span]:text-primary"
               />
-              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2 lg:grid-cols-3">
                 <FormField
                   control={form.control}
                   name="due_date"
@@ -1624,7 +1624,7 @@ export default function NewPrimeContractPcoPage() {
                 label="Financial"
                 className="[&_span]:text-primary"
               />
-              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2 lg:grid-cols-3">
                 <FormField
                   control={form.control}
                   name="total_amount"
@@ -1695,8 +1695,8 @@ export default function NewPrimeContractPcoPage() {
                 label="Attachments"
                 className="[&_span]:text-primary"
               />
-              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
-                <div className="md:col-span-2">
+              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2 lg:grid-cols-3">
+                <div className="md:col-span-2 lg:col-span-3">
                   <FileUploadField
                     label="Attachments"
                     value={attachmentFileInfo}
