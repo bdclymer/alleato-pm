@@ -21,11 +21,10 @@ const REQUIRED_WEB_FLAGS = new Map([
   ["TASK_EXTRACTION_ENABLED", "false"],
 ]);
 
-const REQUIRED_SUSPENDED_CRONS = new Set([
-  "alleato-acumatica-financial-sync",
-]);
+const REQUIRED_SUSPENDED_CRONS = new Set([]);
 
 const SAFE_RESTART_CRON_SCHEDULES = new Map([
+  "alleato-acumatica-financial-sync",
   "alleato-daily-recap",
   "alleato-domain-packet-compiler",
   "alleato-executive-daily-brief-evening",
@@ -45,6 +44,7 @@ const SAFE_RESTART_CRON_SCHEDULES = new Map([
 
 SAFE_RESTART_CRON_SCHEDULES.set("alleato-executive-daily-brief-evening", "30 22,23 * * 1-5");
 SAFE_RESTART_CRON_SCHEDULES.set("alleato-executive-daily-brief-morning", "0 11,12 * * 1-5");
+SAFE_RESTART_CRON_SCHEDULES.set("alleato-acumatica-financial-sync", "0 */2 * * *");
 SAFE_RESTART_CRON_SCHEDULES.set("alleato-daily-recap", "30 9 * * *");
 SAFE_RESTART_CRON_SCHEDULES.set("alleato-domain-packet-compiler", "30 2,9,15,21 * * *");
 SAFE_RESTART_CRON_SCHEDULES.set("alleato-graph-sync", "20 */2 * * *");

@@ -5,9 +5,9 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    schedule: "0 0 1 1 *"
+    schedule: "0 */2 * * *"
     dockerCommand: >-
-      echo "alleato-acumatica-financial-sync disabled while DB incident guard is active"
+      python3 scripts/run_acumatica_financial_sync.py
     envVars:
       - key: PYTHONPATH
         value: /app:/app/src:/app/src/services

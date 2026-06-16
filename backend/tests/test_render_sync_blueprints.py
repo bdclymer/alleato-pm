@@ -17,6 +17,7 @@ def test_backend_render_blueprint_keeps_high_risk_sync_crons_in_parity():
     backend_services = _services_by_name(BACKEND_ROOT / "render.yaml")
 
     expected_schedules = {
+        "alleato-acumatica-financial-sync": "0 */2 * * *",
         "alleato-source-sync-health": "*/30 * * * *",
         "alleato-teams-channel-sync": "10 * * * *",
         "alleato-teams-dm-sync": "40 * * * *",
@@ -45,12 +46,21 @@ def test_high_risk_sync_crons_are_not_disabled_echoes():
     for path in (REPO_ROOT / "render.yaml", BACKEND_ROOT / "render.yaml"):
         services = _services_by_name(path)
         for name in (
+            "alleato-acumatica-financial-sync",
             "alleato-source-sync-health",
             "alleato-teams-channel-sync",
             "alleato-teams-dm-sync",
             "alleato-graph-sync",
         ):
             assert "disabled while DB incident guard is active" not in services[name]["dockerCommand"]
+
+
+def test_acumatica_cron_uses_guarded_direct_entrypoint():
+    for path in (REPO_ROOT / "render.yaml", BACKEND_ROOT / "render.yaml"):
+        acumatica = _services_by_name(path)["alleato-acumatica-financial-sync"]
+
+        assert acumatica["schedule"] == "0 */2 * * *"
+        assert acumatica["dockerCommand"] == "python3 scripts/run_acumatica_financial_sync.py"
 
 
 def test_alleato_crons_require_app_db_pressure_guard():
