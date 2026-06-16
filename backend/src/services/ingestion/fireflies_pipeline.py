@@ -239,7 +239,6 @@ class FirefliesIngestionPipeline:
         content_hash = hashlib.sha256(parsed.raw_text.encode("utf-8")).hexdigest()
 
         existing = self.store.find_document_by_hash(content_hash)
-        existing_by_fireflies = self.store.find_document_by_fireflies_id(parsed.fireflies_id)
         # Exact-content re-ingests must short-circuit before any LLM or embedding
         # work. Fireflies sync polls the latest transcripts repeatedly; without
         # this guard the same meeting is reprocessed every run, re-burning task
@@ -253,6 +252,7 @@ class FirefliesIngestionPipeline:
                 skipped=True,
                 dry_run=False,
             )
+        existing_by_fireflies = self.store.find_document_by_fireflies_id(parsed.fireflies_id)
         existing_project_id = (
             project_id
             if project_id is not None
@@ -666,6 +666,19 @@ class FirefliesIngestionPipeline:
 
                 apps_outputs = self._fetch_apps_outputs(transcript_id)
                 markdown = self._format_transcript_markdown(transcript, apps_outputs)
+                content_hash = hashlib.sha256(markdown.encode("utf-8")).hexdigest()
+                existing = self.store.find_document_by_hash(content_hash)
+                if existing and not dry_run:
+                    results.append(
+                        {
+                            "transcript_id": transcript_id,
+                            "title": transcript.get("title"),
+                            "skipped": True,
+                            "reason": "unchanged_content",
+                            "document_id": existing.get("id"),
+                        }
+                    )
+                    continue
                 captured_at = self._parse_datetime(
                     transcript.get("dateString") or transcript.get("date")
                 )
