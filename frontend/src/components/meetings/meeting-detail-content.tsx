@@ -664,6 +664,11 @@ export function MeetingDetailContent({
                 meetingId={meeting.id}
                 initialTasks={meetingTasks}
                 projectId={assignedProjectId}
+                projects={projects}
+                projectsLoading={isLoadingProjects}
+                defaultSourceSystem={
+                  meeting.source_system ?? meeting.type ?? "meeting"
+                }
                 allTasksHref={
                   assignedProjectId ? `/${assignedProjectId}/tasks` : "/tasks"
                 }

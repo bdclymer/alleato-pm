@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/ds";
 import { apiFetch } from "@/lib/api-client";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
+import type { Project } from "@/hooks/use-projects";
 import type { MeetingTask } from "./meeting-detail-content";
 
 // ─── Option sets ──────────────────────────────────────────────────────────────
@@ -63,6 +64,7 @@ const PRIORITY_TEXT: Record<string, string> = {
 };
 
 const UNASSIGNED = "__unassigned__";
+const NO_PROJECT = "__no_project__";
 
 interface UserOption {
   id: string;
@@ -70,8 +72,47 @@ interface UserOption {
   full_name?: string | null;
 }
 
+const SOURCE_OPTIONS = [
+  { value: "meeting", label: "Meeting" },
+  { value: "fireflies", label: "Fireflies" },
+  { value: "teams", label: "Teams" },
+  { value: "email", label: "Email" },
+  { value: "document", label: "Document" },
+  { value: "manual", label: "Manual" },
+] as const;
+
 function userLabel(user: UserOption): string {
   return user.full_name || user.email || "Unnamed user";
+}
+
+function projectLabel(project: Project): string {
+  return project.project_number
+    ? `${project.project_number} - ${project.name || "Unnamed Project"}`
+    : project.name || `Project #${project.id}`;
+}
+
+function normalizeSourceValue(value: string | null | undefined): string {
+  const normalized = value?.replace(/\s+/g, "_").toLowerCase().trim();
+  if (!normalized) return "meeting";
+  if (normalized.includes("fireflies")) return "fireflies";
+  if (normalized.includes("team")) return "teams";
+  if (normalized.includes("email") || normalized.includes("outlook")) return "email";
+  if (normalized.includes("document") || normalized.includes("sharepoint") || normalized.includes("onedrive")) {
+    return "document";
+  }
+  if (normalized.includes("manual")) return "manual";
+  if (normalized.includes("meeting")) return "meeting";
+  return normalized;
+}
+
+function sourceLabel(value: string): string {
+  return SOURCE_OPTIONS.find((option) => option.value === value)?.label ??
+    value
+      .replace(/[_-]+/g, " ")
+      .split(" ")
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
 }
 
 function isDone(status: string): boolean {
@@ -162,11 +203,17 @@ export function MeetingTasksManager({
   meetingId,
   initialTasks,
   projectId,
+  projects,
+  projectsLoading,
+  defaultSourceSystem,
   allTasksHref,
 }: {
   meetingId: string;
   initialTasks: MeetingTask[];
   projectId: number | null;
+  projects: Project[];
+  projectsLoading: boolean;
+  defaultSourceSystem: string | null;
   allTasksHref: string;
 }) {
   const [tasks, setTasks] = React.useState<MeetingTask[]>(initialTasks);
@@ -277,6 +324,9 @@ export function MeetingTasksManager({
       priority: string;
       status: string;
       due_date: string;
+      assignee_user_id: string | null;
+      project_id: number | null;
+      source_system: string;
     }) => {
       const payload = {
         title: draft.title.trim(),
@@ -284,6 +334,9 @@ export function MeetingTasksManager({
         priority: draft.priority,
         status: draft.status,
         dueDate: draft.due_date || null,
+        assigneeUserId: draft.assignee_user_id,
+        projectId: draft.project_id,
+        sourceSystem: draft.source_system,
       };
       try {
         const result = await apiFetch<{ taskId: string }>(
@@ -294,8 +347,10 @@ export function MeetingTasksManager({
           id: result.taskId,
           title: payload.title,
           description: payload.description,
-          assignee_name: null,
-          assignee_email: null,
+          assignee_name:
+            users.find((user) => user.id === draft.assignee_user_id)?.full_name ?? null,
+          assignee_email:
+            users.find((user) => user.id === draft.assignee_user_id)?.email ?? null,
           status: payload.status,
           priority: payload.priority,
           due_date: payload.dueDate,
@@ -312,7 +367,7 @@ export function MeetingTasksManager({
         toast.error(message);
       }
     },
-    [meetingId, closeSheet],
+    [meetingId, closeSheet, users],
   );
 
   return (
@@ -376,7 +431,16 @@ export function MeetingTasksManager({
       >
         <SidePanelContent>
           {mode === "create" ? (
-            <CreateTaskForm onSubmit={handleCreate} onCancel={closeSheet} />
+            <CreateTaskForm
+              users={users}
+              usersLoaded={usersLoaded}
+              projects={projects}
+              projectsLoading={projectsLoading}
+              defaultProjectId={projectId}
+              defaultSourceSystem={defaultSourceSystem}
+              onSubmit={handleCreate}
+              onCancel={closeSheet}
+            />
           ) : activeTask ? (
             <TaskDetailPanel
               task={activeTask}
@@ -595,15 +659,30 @@ function TaskDetailPanel({
 // ─── Create form ──────────────────────────────────────────────────────────────
 
 function CreateTaskForm({
+  users,
+  usersLoaded,
+  projects,
+  projectsLoading,
+  defaultProjectId,
+  defaultSourceSystem,
   onSubmit,
   onCancel,
 }: {
+  users: UserOption[];
+  usersLoaded: boolean;
+  projects: Project[];
+  projectsLoading: boolean;
+  defaultProjectId: number | null;
+  defaultSourceSystem: string | null;
   onSubmit: (draft: {
     title: string;
     description: string;
     priority: string;
     status: string;
     due_date: string;
+    assignee_user_id: string | null;
+    project_id: number | null;
+    source_system: string;
   }) => Promise<void>;
   onCancel: () => void;
 }) {
@@ -612,15 +691,48 @@ function CreateTaskForm({
   const [priority, setPriority] = React.useState("medium");
   const [status, setStatus] = React.useState("open");
   const [dueDate, setDueDate] = React.useState("");
+  const [assigneeUserId, setAssigneeUserId] = React.useState(UNASSIGNED);
+  const [projectValue, setProjectValue] = React.useState(
+    defaultProjectId ? String(defaultProjectId) : NO_PROJECT,
+  );
+  const [sourceSystem, setSourceSystem] = React.useState(
+    normalizeSourceValue(defaultSourceSystem),
+  );
   const [submitting, setSubmitting] = React.useState(false);
+
+  React.useEffect(() => {
+    setProjectValue(defaultProjectId ? String(defaultProjectId) : NO_PROJECT);
+  }, [defaultProjectId]);
+
+  React.useEffect(() => {
+    setSourceSystem(normalizeSourceValue(defaultSourceSystem));
+  }, [defaultSourceSystem]);
+
+  const sourceOptions = React.useMemo(() => {
+    if (SOURCE_OPTIONS.some((option) => option.value === sourceSystem)) {
+      return SOURCE_OPTIONS;
+    }
+    return [{ value: sourceSystem, label: sourceLabel(sourceSystem) }, ...SOURCE_OPTIONS];
+  }, [sourceSystem]);
 
   const canSubmit = title.trim().length > 0 && !submitting;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
+    const selectedProjectId =
+      projectValue === NO_PROJECT ? null : Number.parseInt(projectValue, 10);
     setSubmitting(true);
-    await onSubmit({ title, description, priority, status, due_date: dueDate });
+    await onSubmit({
+      title,
+      description,
+      priority,
+      status,
+      due_date: dueDate,
+      assignee_user_id: assigneeUserId === UNASSIGNED ? null : assigneeUserId,
+      project_id: Number.isFinite(selectedProjectId) ? selectedProjectId : null,
+      source_system: sourceSystem,
+    });
     setSubmitting(false);
   };
 
@@ -693,6 +805,68 @@ function CreateTaskForm({
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Assignee</Label>
+          <Select
+            value={assigneeUserId}
+            onValueChange={setAssigneeUserId}
+            disabled={!usersLoaded || submitting}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={usersLoaded ? "Unassigned" : "Loading users..."} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
+              {users.map((user) => (
+                <SelectItem key={user.id} value={user.id}>
+                  {userLabel(user)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Project</Label>
+          <Select
+            value={projectValue}
+            onValueChange={setProjectValue}
+            disabled={projectsLoading || submitting}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={projectsLoading ? "Loading projects..." : "No project"} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_PROJECT}>No project</SelectItem>
+              {projects.map((project) => (
+                <SelectItem key={project.id} value={String(project.id)}>
+                  {projectLabel(project)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Source</Label>
+          <Select
+            value={sourceSystem}
+            onValueChange={setSourceSystem}
+            disabled={submitting}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {sourceOptions.map((source) => (
+                <SelectItem key={source.value} value={source.value}>
+                  {source.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-1.5">

@@ -5,11 +5,15 @@ import { apiErrorResponse } from "@/lib/api-error";
 import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 const CreateDocumentTaskSchema = z.object({
   title: z.string().trim().min(1).max(200),
   description: z.string().trim().min(1).max(4000),
   assigneePersonId: z.string().uuid().nullable().optional(),
+  assigneeUserId: z.string().uuid().nullable().optional(),
+  projectId: z.union([z.number().int().positive(), z.null()]).optional(),
+  sourceSystem: z.string().trim().min(1).max(80).optional(),
   dueDate: z.string().trim().min(1).nullable().optional(),
   priority: z.enum(["high", "medium", "low"]).default("medium"),
   status: z.enum(["open", "in_progress", "blocked"]).default("open"),
@@ -17,6 +21,11 @@ const CreateDocumentTaskSchema = z.object({
 
 function normalizeTaskText(value: string): string {
   return value.replace(/\s+/g, " ").trim();
+}
+
+function normalizeSourceSystem(value: string | null | undefined): string {
+  const normalized = value?.replace(/\s+/g, "_").toLowerCase().trim();
+  return normalized || "manual";
 }
 
 export const POST = withApiGuardrails<{ docId: string }>(
@@ -45,7 +54,7 @@ export const POST = withApiGuardrails<{ docId: string }>(
 
     const { data: source, error: sourceError } = await supabase
       .from("document_metadata")
-      .select("id, title, project_id, file_name, type")
+      .select("id, title, project_id, file_name, type, source_system")
       .eq("id", docId)
       .maybeSingle();
 
@@ -100,7 +109,66 @@ export const POST = withApiGuardrails<{ docId: string }>(
       assignee_email: null,
     };
 
-    if (body.assigneePersonId) {
+    if (body.assigneeUserId) {
+      const serviceClient = createServiceClient();
+      const { data: profile, error: profileError } = await serviceClient
+        .from("user_profiles")
+        .select("id, email, full_name")
+        .eq("id", body.assigneeUserId)
+        .maybeSingle();
+
+      if (profileError || !profile) {
+        throw new GuardrailError({
+          code: "VALIDATION_ERROR",
+          where: "documents/[docId]/tasks#POST",
+          message: "Selected assignee was not found.",
+          status: 400,
+          details: { reason: profileError?.message, assigneeUserId: body.assigneeUserId },
+          cause: profileError ?? undefined,
+        });
+      }
+
+      const { data: personByAuthId, error: authPersonError } = await serviceClient
+        .from("people")
+        .select("id")
+        .eq("auth_user_id", profile.id)
+        .maybeSingle();
+
+      if (authPersonError) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "documents/[docId]/tasks#POST",
+          message: "Failed to resolve assignee directory record.",
+          details: { reason: authPersonError.message, assigneeUserId: body.assigneeUserId },
+          cause: authPersonError,
+        });
+      }
+
+      const { data: personByEmail, error: emailPersonError } =
+        !personByAuthId && profile.email
+          ? await serviceClient
+              .from("people")
+              .select("id")
+              .ilike("email", profile.email)
+              .maybeSingle()
+          : { data: null, error: null };
+
+      if (emailPersonError) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "documents/[docId]/tasks#POST",
+          message: "Failed to resolve assignee email directory record.",
+          details: { reason: emailPersonError.message, assigneeUserId: body.assigneeUserId },
+          cause: emailPersonError,
+        });
+      }
+
+      assigneeFields = {
+        assignee_person_id: personByAuthId?.id ?? personByEmail?.id ?? null,
+        assignee_name: profile.full_name ?? profile.email ?? null,
+        assignee_email: profile.email ?? null,
+      };
+    } else if (body.assigneePersonId) {
       const { data: person, error: personError } = await supabase
         .from("people")
         .select("id, first_name, last_name, email")
@@ -128,6 +196,35 @@ export const POST = withApiGuardrails<{ docId: string }>(
       };
     }
 
+    const selectedProjectId =
+      body.projectId === undefined ? source.project_id ?? null : body.projectId;
+
+    if (selectedProjectId !== null) {
+      const { data: project, error: projectError } = await supabase
+        .from("projects")
+        .select("id")
+        .eq("id", selectedProjectId)
+        .maybeSingle();
+
+      if (projectError) {
+        return apiErrorResponse(projectError);
+      }
+
+      if (!project) {
+        throw new GuardrailError({
+          code: "VALIDATION_ERROR",
+          where: "documents/[docId]/tasks#POST",
+          message: "Selected project was not found.",
+          status: 400,
+          details: { projectId: selectedProjectId },
+        });
+      }
+    }
+
+    const sourceSystem = normalizeSourceSystem(
+      body.sourceSystem ?? source.source_system ?? source.type,
+    );
+
     const { data: task, error: insertError } = await supabase
       .from("tasks")
       .insert({
@@ -137,14 +234,15 @@ export const POST = withApiGuardrails<{ docId: string }>(
         due_date: body.dueDate || null,
         priority: body.priority,
         status: body.status,
-        project_id: source.project_id ?? null,
-        project_ids: source.project_id ? [source.project_id] : null,
-        source_system: "teams_conversation_review",
+        project_id: selectedProjectId,
+        project_ids: selectedProjectId ? [selectedProjectId] : null,
+        source_system: sourceSystem,
         assigned_by: user.id,
         extraction_source: "manual_thread_review",
         extraction_metadata: {
-          created_from: "teams_conversation_detail",
+          created_from: "meeting_detail",
           source_type: source.type,
+          source_system: sourceSystem,
         },
         file_name: source.file_name ?? source.title ?? null,
         ...assigneeFields,
