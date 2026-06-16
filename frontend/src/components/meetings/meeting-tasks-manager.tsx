@@ -177,11 +177,6 @@ function TaskRow({
         >
           {task.title || task.description}
         </p>
-        {task.title && task.description !== task.title && (
-          <p className="text-xs text-muted-foreground line-clamp-2">
-            {task.description}
-          </p>
-        )}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 pt-0.5">
           <span className="text-xs text-muted-foreground">
             {task.assignee_name || task.assignee_email || "Unassigned"}
