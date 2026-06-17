@@ -13,6 +13,8 @@ export interface BrandonDraftLearning {
   guidance: string[];
 }
 
+export const BRANDON_LEARNING_SUPPRESSION_PREFIX = "Suppress learning:";
+
 const DRAFT_OUTCOMES = new Set(["draft_copied", "draft_edited"]);
 
 function wordCount(value: string): number {
@@ -33,9 +35,20 @@ function startsWithoutGreeting(value: string): boolean {
   return !/^(hi|hello|hey|good morning|good afternoon)\b/i.test(firstLine);
 }
 
+function suppressedGuidance(rows: BrandonAssistantReviewLearningRow[]): Set<string> {
+  return new Set(
+    rows
+      .map((row) => row.reviewer_note?.trim() ?? "")
+      .filter((note) => note.startsWith(BRANDON_LEARNING_SUPPRESSION_PREFIX))
+      .map((note) => note.slice(BRANDON_LEARNING_SUPPRESSION_PREFIX.length).trim())
+      .filter(Boolean),
+  );
+}
+
 export function deriveBrandonDraftLearning(
   rows: BrandonAssistantReviewLearningRow[],
 ): BrandonDraftLearning {
+  const suppressed = suppressedGuidance(rows);
   const reviewedDrafts = rows
     .filter((row) => DRAFT_OUTCOMES.has(row.review_outcome))
     .map((row) => row.draft_body?.trim() ?? "")
@@ -87,7 +100,7 @@ export function deriveBrandonDraftLearning(
   return {
     reviewCount: rows.length,
     draftCount: reviewedDrafts.length,
-    guidance: guidance.slice(0, 6),
+    guidance: guidance.filter((item) => !suppressed.has(item)).slice(0, 6),
   };
 }
 

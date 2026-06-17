@@ -1,4 +1,5 @@
 import {
+  BRANDON_LEARNING_SUPPRESSION_PREFIX,
   deriveBrandonDraftLearning,
   formatBrandonDraftLearningGuidance,
 } from "../brandon-learning";
@@ -60,6 +61,45 @@ describe("deriveBrandonDraftLearning", () => {
       "Do not overcommit on internal, payment, legal, or project-risk items; acknowledge and route to the right owner when needed.",
       "Avoid drafting for low-signal messages unless there is a clear ask, deadline, or business risk.",
     ]);
+  });
+
+  it("suppresses guidance when Brandon marks a learning as wrong", () => {
+    const suppressedItem =
+      'Prefer Brandon-style closing with "Thank You" when a sign-off is needed.';
+    const learning = deriveBrandonDraftLearning([
+      {
+        review_outcome: "draft_copied",
+        draft_body: "That works for us. See you tomorrow at 3pm.\n\nThank You\nBrandon Clymer",
+        assistant_action: "reply",
+        assistant_priority: "high",
+        reviewer_note: null,
+        created_at: "2026-06-17T05:00:00Z",
+      },
+      {
+        review_outcome: "draft_edited",
+        draft_body: "Approved. Please send the ACH for $420.00.\n\nThank You\nBrandon Clymer",
+        assistant_action: "reply",
+        assistant_priority: "urgent",
+        reviewer_note: null,
+        created_at: "2026-06-17T05:05:00Z",
+      },
+      {
+        review_outcome: "marked_no_action",
+        draft_body: null,
+        assistant_action: "ignore",
+        assistant_priority: "low",
+        reviewer_note: `${BRANDON_LEARNING_SUPPRESSION_PREFIX} ${suppressedItem}`,
+        created_at: "2026-06-17T05:10:00Z",
+      },
+    ]);
+
+    expect(learning.guidance).not.toContain(suppressedItem);
+    expect(learning.guidance).toEqual(
+      expect.arrayContaining([
+        "Keep Brandon replies concise; recent approved drafts are usually under 55 words.",
+        "For active threads, start directly with the answer instead of adding a greeting.",
+      ]),
+    );
   });
 });
 

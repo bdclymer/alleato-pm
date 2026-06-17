@@ -45,6 +45,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
 import { useProjects } from "@/hooks/use-projects";
+import { BRANDON_LEARNING_SUPPRESSION_PREFIX } from "@/lib/email-assistant/brandon-learning";
 import type { InboxEmail } from "./email-inbox-client";
 import type { BrandonDraftLearning } from "@/lib/email-assistant/brandon-learning";
 import type { BrandonReviewOutcome } from "@/lib/email-assistant/brandon-review";
@@ -381,10 +382,14 @@ function DraftReplyPanel({
   onRecordReview: (
     outcome: BrandonReviewOutcome,
     draftBody?: string | null,
+    reviewerNote?: string | null,
   ) => Promise<void>;
 }) {
   const [draft, setDraft] = React.useState("");
   const [learning, setLearning] = React.useState<BrandonDraftLearning | null>(null);
+  const [suppressedGuidance, setSuppressedGuidance] = React.useState<Set<string>>(
+    () => new Set(),
+  );
   const [loading, setLoading] = React.useState(true);
   const [tone, setTone] = React.useState<"professional" | "concise" | "detailed">(
     "professional",
@@ -414,6 +419,7 @@ function DraftReplyPanel({
       );
       setDraft(result.draft);
       setLearning(result.learning ?? null);
+      setSuppressedGuidance(new Set());
       initialDraftRef.current = result.draft;
     } catch {
       toast.error("Failed to generate draft — check AI configuration.");
@@ -450,6 +456,27 @@ function DraftReplyPanel({
       toast.error("Draft copied, but the review outcome was not recorded.");
     }
   }
+
+  async function handleSuppressLearning(item: string) {
+    try {
+      await onRecordReview(
+        "marked_no_action",
+        null,
+        `${BRANDON_LEARNING_SUPPRESSION_PREFIX} ${item}`,
+      );
+      setSuppressedGuidance((current) => new Set(current).add(item));
+      toast.success("Learning correction recorded.");
+    } catch (error) {
+      toast.error("Failed to record learning correction.", {
+        description:
+          error instanceof Error ? error.message : "Unknown review ledger error.",
+      });
+    }
+  }
+
+  const visibleGuidance =
+    learning?.guidance.filter((item) => !suppressedGuidance.has(item)).slice(0, 3) ??
+    [];
 
   return (
     <div className="border-t border-border/50 bg-card flex flex-col">
@@ -504,7 +531,7 @@ function DraftReplyPanel({
           </div>
         ) : (
           <div className="space-y-2">
-            {learning && learning.guidance.length > 0 && (
+            {learning && visibleGuidance.length > 0 && (
               <div className="space-y-1 border-b border-border/30 pb-2">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[11px] font-medium text-foreground">
@@ -515,12 +542,21 @@ function DraftReplyPanel({
                   </span>
                 </div>
                 <ul className="space-y-0.5">
-                  {learning.guidance.slice(0, 3).map((item) => (
+                  {visibleGuidance.map((item) => (
                     <li
                       key={item}
-                      className="text-[11px] leading-relaxed text-muted-foreground"
+                      className="flex items-start justify-between gap-2 text-[11px] leading-relaxed text-muted-foreground"
                     >
-                      {item}
+                      <span>{item}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 shrink-0 px-1.5 text-[10px] text-muted-foreground"
+                        onClick={() => void handleSuppressLearning(item)}
+                      >
+                        Not right
+                      </Button>
                     </li>
                   ))}
                 </ul>
