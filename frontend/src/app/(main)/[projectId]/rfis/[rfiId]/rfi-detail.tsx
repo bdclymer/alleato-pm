@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { ExternalLink, FileText } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { RelatedItemsPanel } from "@/components/domain/related-items/RelatedItemsPanel";
 
@@ -32,7 +33,7 @@ import { apiFetch } from "@/lib/api-client";
 import { RfiResponses } from "@/components/rfis/rfi-responses";
 import { RHFComboboxField } from "@/components/forms/fields/RHFComboboxField";
 import { RHFMultiComboboxField } from "@/components/forms/fields/RHFMultiComboboxField";
-import { useRfiManagerOptions } from "@/components/rfis/rfi-form-fields";
+import { useRfiPeopleOptions } from "@/components/rfis/rfi-form-fields";
 import { useUpdateRfi } from "@/hooks/use-rfis";
 import {
   RFI_IMPACT_OPTIONS,
@@ -129,8 +130,8 @@ interface RfiDetailProps {
 export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps) {
   const router = useRouter();
   const updateRfi = useUpdateRfi(projectId);
-  const { options: rfiManagerOptions, isLoading: isLoadingManagerOptions } =
-    useRfiManagerOptions(projectId);
+  const { userOptions, directoryOptions, companyForPerson, isLoading: isLoadingPeople } =
+    useRfiPeopleOptions();
 
   const form = useForm<RfiEditValues>({
     resolver: zodResolver(rfiEditSchema),
@@ -154,6 +155,22 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
       drawing_number: rfi?.drawing_number ?? null,
     },
   });
+
+  // Procore: Responsible Contractor is auto-prefilled (read-only) from the
+  // company of the person chosen in Received From. Re-derive on change; skip the
+  // initial mount so a saved value isn't clobbered on load.
+  const receivedFrom = form.watch("received_from");
+  const didMountRef = useRef(false);
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+    const company = receivedFrom
+      ? companyForPerson.get(receivedFrom.toLowerCase()) ?? null
+      : null;
+    form.setValue("responsible_contractor", company, { shouldDirty: true });
+  }, [receivedFrom, companyForPerson, form]);
 
   if (!rfi) {
     return (
@@ -266,11 +283,11 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
                 control={form.control}
                 name="rfi_manager"
                 label="RFI Manager"
-                placeholder="Select from directory"
-                searchPlaceholder="Search project members..."
-                emptyMessage="No matching project member found."
-                options={rfiManagerOptions}
-                disabled={isLoadingManagerOptions}
+                placeholder="Select RFI manager"
+                searchPlaceholder="Search users..."
+                emptyMessage="No matching user found."
+                options={userOptions}
+                disabled={isLoadingPeople}
                 clearable
               />
               <RHFComboboxField
@@ -278,33 +295,40 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
                 name="received_from"
                 label="Received From"
                 placeholder="Select from directory"
-                searchPlaceholder="Search project members..."
-                emptyMessage="No matching project member found."
-                options={rfiManagerOptions}
-                disabled={isLoadingManagerOptions}
+                searchPlaceholder="Search directory..."
+                emptyMessage="No matching person found."
+                options={directoryOptions}
+                disabled={isLoadingPeople}
                 clearable
               />
-              <RHFComboboxField
+              <FormField
                 control={form.control}
                 name="responsible_contractor"
-                label="Responsible Contractor"
-                placeholder="Select from directory"
-                searchPlaceholder="Search project members..."
-                emptyMessage="No matching project member found."
-                options={rfiManagerOptions}
-                disabled={isLoadingManagerOptions}
-                clearable
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Responsible Contractor</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        value={field.value ?? ""}
+                        disabled
+                        placeholder="Auto-filled from Received From"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
               <div className="sm:col-span-2">
                 <RHFMultiComboboxField
                   control={form.control}
                   name="assignees"
                   label="Assignees"
-                  options={rfiManagerOptions}
-                  placeholder="Select assignees from directory"
-                  searchPlaceholder="Search project members..."
-                  emptyMessage="No matching project member found."
-                  disabled={isLoadingManagerOptions}
+                  options={userOptions}
+                  placeholder="Select assignees"
+                  searchPlaceholder="Search users..."
+                  emptyMessage="No matching user found."
+                  disabled={isLoadingPeople}
                 />
               </div>
               <div className="sm:col-span-2">
@@ -312,11 +336,11 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
                   control={form.control}
                   name="distribution_list"
                   label="Distribution List"
-                  options={rfiManagerOptions}
+                  options={directoryOptions}
                   placeholder="Select from directory"
-                  searchPlaceholder="Search project members..."
-                  emptyMessage="No matching project member found."
-                  disabled={isLoadingManagerOptions}
+                  searchPlaceholder="Search directory..."
+                  emptyMessage="No matching person found."
+                  disabled={isLoadingPeople}
                 />
               </div>
             </div>
@@ -563,22 +587,11 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
         <div className="mt-6 border-t border-border/40 pt-6">
           <SectionLabel>People</SectionLabel>
           <div className="mt-3 space-y-1">
-            <EditableDetailField
-              label="RFI Manager"
-              value={rfi.rfi_manager ?? ""}
-              onSave={(v) => saveField("rfi_manager", v || null)}
-            />
-            <EditableDetailField
-              label="Received From"
-              value={rfi.received_from ?? ""}
-              onSave={(v) => saveField("received_from", v || null)}
-            />
-            <EditableDetailField
-              label="Contractor"
-              editLabel="Responsible Contractor"
-              value={rfi.responsible_contractor ?? ""}
-              onSave={(v) => saveField("responsible_contractor", v || null)}
-            />
+            {/* People are picked from the directory in the Edit form (Procore
+                model), not free-typed inline — so these stay read-only here. */}
+            <DetailField label="RFI Manager" value={rfi.rfi_manager} />
+            <DetailField label="Received From" value={rfi.received_from} />
+            <DetailField label="Contractor" value={rfi.responsible_contractor} />
             <DetailField
               label="Assignees"
               value={rfi.assignees?.length ? rfi.assignees.join(", ") : null}

@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,96 +19,84 @@ import { RHFDateField } from "@/components/forms/fields/RHFDateField";
 import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
 import { RHFTextField } from "@/components/forms/fields/RHFTextField";
 import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
-import { useProjectUsers } from "@/hooks/use-project-users";
-import { apiFetch } from "@/lib/api-client";
+import { usePeople } from "@/hooks/use-people";
 import { RFI_IMPACT_OPTIONS, type RfiFormValues } from "@/lib/schemas/rfi-schema";
 
-interface ProjectTeamMember {
-  name?: string;
-  full_name?: string;
-  first_name?: string;
-  last_name?: string;
+interface DirectoryPerson {
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  person_type?: "user" | "contact";
+  company?: { id: string; name: string } | null;
 }
 
-interface ProjectWithTeamMembers {
-  team_members?: unknown[] | null;
+type PersonOption = { value: string; label: string; keywords: string[] };
+
+function fullNameOf(person: DirectoryPerson): string {
+  return `${person.first_name?.trim() || ""} ${person.last_name?.trim() || ""}`.trim();
 }
 
-/** Returns a normalized display name from a raw project team-member payload. */
-function getTeamMemberName(rawMember: unknown): string | null {
-  const parsed =
-    typeof rawMember === "string"
-      ? (() => {
-          try {
-            return JSON.parse(rawMember) as unknown;
-          } catch {
-            return { name: rawMember };
-          }
-        })()
-      : rawMember;
-
-  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
-
-  const member = parsed as ProjectTeamMember;
-  const fullName = member.full_name?.trim() || member.name?.trim();
-  if (fullName) return fullName;
-
-  const firstName = member.first_name?.trim() || "";
-  const lastName = member.last_name?.trim() || "";
-  const combined = `${firstName} ${lastName}`.trim();
-  return combined || null;
-}
-
-/**
- * Hook returning the RFI manager combobox options for a project, sourced from
- * project users + saved team_members. Shared by every RFI create/edit form so
- * the option list stays consistent.
- */
-export function useRfiManagerOptions(projectId: number) {
-  const normalizedProjectId =
-    Number.isFinite(projectId) && projectId > 0 ? String(projectId) : "";
-
-  const { users: projectUsers, isLoading: isLoadingProjectUsers } = useProjectUsers(
-    normalizedProjectId,
-    { type: "all" },
-  );
-
-  const { data: project, isLoading: isLoadingProject } = useQuery({
-    queryKey: ["project", projectId, "team-members"],
-    queryFn: () => apiFetch<ProjectWithTeamMembers>(`/api/projects/${projectId}`),
-    enabled: Number.isFinite(projectId) && projectId > 0,
-  });
-
-  const options = useMemo(() => {
-    const optionMap = new Map<string, { value: string; label: string; keywords: string[] }>();
-
-    for (const person of projectUsers) {
-      const first = person.first_name?.trim() || "";
-      const last = person.last_name?.trim() || "";
-      const fullName = `${first} ${last}`.trim();
-      if (!fullName) continue;
-
-      optionMap.set(fullName.toLowerCase(), {
+function buildPersonOptions(people: DirectoryPerson[]): PersonOption[] {
+  const map = new Map<string, PersonOption>();
+  for (const person of people) {
+    const fullName = fullNameOf(person);
+    if (!fullName) continue;
+    const key = fullName.toLowerCase();
+    if (!map.has(key)) {
+      map.set(key, {
         value: fullName,
         label: fullName,
         keywords: [person.email || "", person.company?.name || ""].filter(Boolean),
       });
     }
+  }
+  return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label));
+}
 
-    for (const rawMember of project?.team_members || []) {
-      const fullName = getTeamMemberName(rawMember);
-      if (!fullName) continue;
+/**
+ * Person/company option sources for RFI forms, modeled on Procore's field rules:
+ *  - `userOptions`      → RFI Manager + Assignees (internal users only)
+ *  - `directoryOptions` → Received From + Distribution List (full people directory)
+ *  - `companyForPerson` → maps a Received-From display name to that person's
+ *                         company, used to auto-prefill the read-only
+ *                         Responsible Contractor field.
+ *
+ * Sourced from the company-wide directory, not project_directory_memberships —
+ * the latter is empty for most projects, which left these fields blank.
+ */
+export function useRfiPeopleOptions() {
+  const { people: users, isLoading: isLoadingUsers } = usePeople({ type: "user" });
+  const { people: directory, isLoading: isLoadingDirectory } = usePeople({ type: "all" });
 
+  const userOptions = useMemo(
+    () => buildPersonOptions(users as DirectoryPerson[]),
+    [users],
+  );
+
+  const { directoryOptions, companyForPerson } = useMemo(() => {
+    const merged = [
+      ...(users as DirectoryPerson[]),
+      ...(directory as DirectoryPerson[]),
+    ];
+    const companies = new Map<string, string>();
+    for (const person of merged) {
+      const fullName = fullNameOf(person);
+      if (!fullName || !person.company?.name) continue;
       const key = fullName.toLowerCase();
-      if (!optionMap.has(key)) {
-        optionMap.set(key, { value: fullName, label: fullName, keywords: [] });
-      }
+      if (!companies.has(key)) companies.set(key, person.company.name);
     }
+    return {
+      directoryOptions: buildPersonOptions(merged),
+      companyForPerson: companies,
+    };
+  }, [users, directory]);
 
-    return Array.from(optionMap.values()).sort((a, b) => a.label.localeCompare(b.label));
-  }, [project?.team_members, projectUsers]);
-
-  return { options, isLoading: isLoadingProjectUsers || isLoadingProject };
+  return {
+    userOptions,
+    directoryOptions,
+    companyForPerson,
+    isLoading: isLoadingUsers || isLoadingDirectory,
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -136,11 +123,26 @@ interface RfiFormFieldsProps {
  */
 export function RfiFormFields({
   form,
-  projectId,
   withFormProvider = true,
 }: RfiFormFieldsProps) {
-  const { options: rfiManagerOptions, isLoading: isLoadingManagerOptions } =
-    useRfiManagerOptions(projectId);
+  const { userOptions, directoryOptions, companyForPerson, isLoading: isLoadingPeople } =
+    useRfiPeopleOptions();
+
+  // Procore: Responsible Contractor is auto-prefilled (read-only) from the
+  // company of the person chosen in Received From. Re-derive on change; skip the
+  // initial mount so a previously saved value isn't clobbered on load.
+  const receivedFrom = form.watch("received_from");
+  const didMountRef = useRef(false);
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+    const company = receivedFrom
+      ? companyForPerson.get(receivedFrom.toLowerCase()) ?? null
+      : null;
+    form.setValue("responsible_contractor", company, { shouldDirty: true });
+  }, [receivedFrom, companyForPerson, form]);
 
   const fields = (
     <>
@@ -173,10 +175,10 @@ export function RfiFormFields({
             name="rfi_manager"
             label="RFI Manager"
             placeholder="Select RFI manager"
-            searchPlaceholder="Search project members..."
-            emptyMessage="No matching project member found."
-            options={rfiManagerOptions}
-            disabled={isLoadingManagerOptions}
+            searchPlaceholder="Search users..."
+            emptyMessage="No matching user found."
+            options={userOptions}
+            disabled={isLoadingPeople}
           />
         </FormGrid>
       </FormSection>
@@ -186,11 +188,11 @@ export function RfiFormFields({
           control={form.control}
           name="assignees"
           label="Assignees (required for Open)"
-          options={rfiManagerOptions}
-          placeholder="Select assignees from project directory"
-          searchPlaceholder="Search project members..."
-          emptyMessage="No matching project member found."
-          disabled={isLoadingManagerOptions}
+          options={userOptions}
+          placeholder="Select assignees"
+          searchPlaceholder="Search users..."
+          emptyMessage="No matching user found."
+          disabled={isLoadingPeople}
         />
 
         <FormGrid columns={2}>
@@ -198,24 +200,20 @@ export function RfiFormFields({
             control={form.control}
             name="received_from"
             label="Received From"
-            placeholder="Select from project directory"
-            searchPlaceholder="Search project members..."
-            emptyMessage="No matching project member found."
-            options={rfiManagerOptions}
-            disabled={isLoadingManagerOptions}
+            placeholder="Select from directory"
+            searchPlaceholder="Search directory..."
+            emptyMessage="No matching person found."
+            options={directoryOptions}
+            disabled={isLoadingPeople}
             clearable
           />
 
-          <RHFComboboxField
+          <RHFTextField
             control={form.control}
             name="responsible_contractor"
             label="Responsible Contractor"
-            placeholder="Select from project directory"
-            searchPlaceholder="Search project members..."
-            emptyMessage="No matching project member found."
-            options={rfiManagerOptions}
-            disabled={isLoadingManagerOptions}
-            clearable
+            placeholder="Auto-filled from Received From"
+            disabled
           />
         </FormGrid>
 
@@ -223,11 +221,11 @@ export function RfiFormFields({
           control={form.control}
           name="distribution_list"
           label="Distribution List"
-          options={rfiManagerOptions}
-          placeholder="Select from project directory"
-          searchPlaceholder="Search project members..."
-          emptyMessage="No matching project member found."
-          disabled={isLoadingManagerOptions}
+          options={directoryOptions}
+          placeholder="Select from directory"
+          searchPlaceholder="Search directory..."
+          emptyMessage="No matching person found."
+          disabled={isLoadingPeople}
         />
       </FormSection>
 
