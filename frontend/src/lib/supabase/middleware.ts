@@ -3,9 +3,11 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getBestSupabaseAuthToken } from "./auth-cookie";
 import { validateCallbackUrl } from "@/lib/validation/callback-url";
 
-// Company-wide paths that require developer role
+// Company-wide paths that require developer role.
+// NOTE: "/ai-assistant" is intentionally NOT here — the AI assistant is
+// available to all authenticated users. Re-adding it must be paired with
+// re-adding `developerOnly: true` in navigation-config.ts (see guardrail tests).
 const DEVELOPER_ONLY_COMPANY_PREFIXES = [
-  "/ai-assistant",
   "/executive",
   "/financial-insights",
   "/pipeline",

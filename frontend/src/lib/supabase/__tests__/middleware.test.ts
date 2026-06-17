@@ -94,6 +94,32 @@ describe("supabase middleware", () => {
     );
   });
 
+  it("allows the AI assistant for authenticated non-developer users", async () => {
+    // Guardrail: the AI assistant is open to all authenticated users. The
+    // makeAuthCookie JWT carries no developer claim, so this exercises the
+    // non-developer path. If "/ai-assistant" is re-added to
+    // DEVELOPER_ONLY_COMPANY_PREFIXES this redirects to /access-denied and fails.
+    const futureExp = Math.floor(Date.now() / 1000) + 3600;
+
+    const response = await updateSession(
+      makeRequest("/ai-assistant", [makeAuthCookie(futureExp)]),
+    );
+
+    expect(response.headers.get("location")).toBeNull();
+  });
+
+  it("still gates a developer-only company path for non-developers", async () => {
+    const futureExp = Math.floor(Date.now() / 1000) + 3600;
+
+    const response = await updateSession(
+      makeRequest("/executive", [makeAuthCookie(futureExp)]),
+    );
+
+    expect(response.headers.get("location")).toBe(
+      "https://projects.alleatogroup.com/access-denied?reason=developer-only",
+    );
+  });
+
   it("keeps static assets out of session middleware", () => {
     expect(shouldBypassSessionMiddleware("/_next/static/chunk.js")).toBe(true);
     expect(shouldBypassSessionMiddleware("/images/logo.png")).toBe(true);
