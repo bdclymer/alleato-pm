@@ -1787,6 +1787,30 @@ export function shouldSuppressDailyBriefSolicitationItem(
   return !hasActiveAlleatoExecutionMarker;
 }
 
+export function shouldSuppressDailyBriefGenericItem(
+  item: BrandonBriefItem,
+): boolean {
+  const title = item.title.trim().toLowerCase();
+  const genericTitles = new Set([
+    "risks and exposure",
+    "recommended actions",
+    "what changed",
+    "recommended next steps",
+    "next steps",
+    "open items",
+    "project update",
+    "status update",
+  ]);
+  if (genericTitles.has(title)) return true;
+
+  const text = dailyBriefItemSearchText(item);
+  return (
+    title.length < 8 ||
+    (genericTitles.has(title.replace(/:$/, "")) &&
+      !hasAny(text, ["permit", "rfi", "submittal", "change order", "client", "owner", "deadline"]))
+  );
+}
+
 function filterSupportedSections(
   sections: BrandonDailyUpdatePacket["sections"],
 ): SupportedSectionsResult {
@@ -1809,6 +1833,12 @@ function filterSupportedSections(
         );
         return false;
       }
+      if (shouldSuppressDailyBriefGenericItem(item)) {
+        warnings.push(
+          `Suppressed ${section} item "${item.title || "(untitled)"}" because the title is a generic card heading rather than an executive-ready business issue.`,
+        );
+        return false;
+      }
       const issues = briefItemSupportIssues(item);
       if (issues.length === 0) return true;
       warnings.push(
@@ -1827,6 +1857,74 @@ function filterSupportedSections(
       ),
     },
     warnings,
+  };
+}
+
+function capExecutiveBriefSections(
+  sections: BrandonDailyUpdatePacket["sections"],
+): BrandonDailyUpdatePacket["sections"] {
+  const needsBrandon = rankBriefItems(sections.needsBrandon, "needsBrandon");
+  const waitingOnOthers = rankBriefItems(sections.waitingOnOthers, "waitingOnOthers");
+  const importantUpdates = rankBriefItems(sections.importantUpdates, "importantUpdates");
+  const needsBrandonLimit = 5;
+  const waitingLimit = 8;
+  const updatesLimit = 6;
+  const overflowFromNeeds = needsBrandon.slice(needsBrandonLimit).map((item) => ({
+    ...item,
+    recommendedAction:
+      item.recommendedAction ??
+      "Assign the project owner to confirm whether this needs Brandon.",
+  }));
+  const waitingWithOverflow = rankBriefItems(
+    [...waitingOnOthers, ...overflowFromNeeds],
+    "waitingOnOthers",
+  );
+
+  return {
+    needsBrandon: needsBrandon.slice(0, needsBrandonLimit),
+    waitingOnOthers: waitingWithOverflow.slice(0, waitingLimit),
+    importantUpdates: importantUpdates.slice(0, updatesLimit),
+  };
+}
+
+function rankBriefItems(
+  items: BrandonBriefItem[],
+  section: keyof BrandonDailyUpdatePacket["sections"],
+): BrandonBriefItem[] {
+  return [...items].sort(
+    (left, right) =>
+      scoreBriefItem(right, section).score - scoreBriefItem(left, section).score,
+  );
+}
+
+function countBriefItems(
+  sections: BrandonDailyUpdatePacket["sections"],
+): number {
+  return (
+    sections.needsBrandon.length +
+    sections.waitingOnOthers.length +
+    sections.importantUpdates.length
+  );
+}
+
+function limitSectionsForSynthesis(
+  sections: BrandonDailyUpdatePacket["sections"],
+): { sections: BrandonDailyUpdatePacket["sections"]; droppedCount: number } {
+  const originalCount = countBriefItems(sections);
+  const needsBrandon = rankBriefItems(sections.needsBrandon, "needsBrandon").slice(0, 5);
+  const waitingOnOthers = rankBriefItems(
+    sections.waitingOnOthers,
+    "waitingOnOthers",
+  ).slice(0, 5);
+  const importantUpdates = rankBriefItems(
+    sections.importantUpdates,
+    "importantUpdates",
+  ).slice(0, 2);
+  const limitedSections = { needsBrandon, waitingOnOthers, importantUpdates };
+
+  return {
+    sections: limitedSections,
+    droppedCount: Math.max(originalCount - countBriefItems(limitedSections), 0),
   };
 }
 
@@ -2246,7 +2344,7 @@ async function synthesizeSections(
         .map((value) => normalizeText(value))
         .filter((value, idx, arr) => value && arr.indexOf(value) === idx)
         .join(" "),
-      12000,
+      2500,
     ),
     existingCitationCount: item.citations.length,
   }));
@@ -2285,6 +2383,8 @@ async function synthesizeSections(
     "Write today's brief for Brandon from the source candidates below. " +
     "Lead with what genuinely needs his decision today, then what is waiting on other people, then context worth knowing. " +
     "Be honest about how much needs his attention — if it is a quiet day, a short brief is correct. Do not manufacture urgency. " +
+    "Return no more than 4 needsBrandon items, 6 waitingOnOthers items, and 4 importantUpdates items. Fewer is better. " +
+    "Never use category headings like 'Risks and exposure', 'Recommended actions', or 'What changed' as item titles. " +
     "Remember: plain language, complete sentences, spell out acronyms, one useful insight sentence per item in whyItMatters, and never paste cut-off source text.\n" +
     "\n\nSOURCE CANDIDATES:\n" +
     JSON.stringify(candidatePayload, null, 2);
@@ -3229,16 +3329,18 @@ export async function generateBrandonDailyUpdate(
   const financialPulse: FinancialPulseData = financialPulseResult;
   const useOperatingRecords =
     !sourceBackedOnly && operatingRecordResult.itemCount > 0;
-  // Phase 3 insight-card mode is now fallback-only. Operating records are the
-  // primary daily-brief input because they are already source-synthesized and do
-  // not require per-run query embeddings.
-  const useInsightCards =
-    !useOperatingRecords && isInsightCardBriefEnabled() && !sourceBackedOnly;
-  const insightCardBrief = useInsightCards
-    ? await buildBriefSectionsFromInsightCards()
-    : null;
-  let openai: ReturnType<typeof getOpenAI> | null = null;
   const preflightWarnings: string[] = [];
+  // The insight-card shortcut is intentionally disabled for executive delivery.
+  // Those cards are useful source candidates, but they are not a finished CEO
+  // brief and can carry generic headings like "Risks and exposure".
+  const insightCardFallbackSuppressed =
+    !useOperatingRecords && isInsightCardBriefEnabled() && !sourceBackedOnly;
+  if (insightCardFallbackSuppressed) {
+    preflightWarnings.push(
+      "Daily Brief insight-card shortcut was disabled for executive delivery because it can surface generic card headings without GPT synthesis.",
+    );
+  }
+  let openai: ReturnType<typeof getOpenAI> | null = null;
 
   if (sourceBackedOnly) {
     preflightWarnings.push(
@@ -3261,7 +3363,7 @@ export async function generateBrandonDailyUpdate(
   }
 
   let embeddingsBySpec: Array<{ spec: QuerySpec; queryEmbedding: string }>;
-  if (openai && !useInsightCards && !useOperatingRecords) {
+  if (openai && !useOperatingRecords) {
     try {
       embeddingsBySpec = await Promise.all(
         QUERY_SPECS.map(async (spec) => ({
@@ -3359,24 +3461,31 @@ export async function generateBrandonDailyUpdate(
     .filter((item): item is BrandonBriefItem => item !== null);
   const seededSections = useOperatingRecords
     ? operatingRecordResult.sections
-    : insightCardBrief
-    ? insightCardBrief.sections
     : mergeSeedItems(
         assignHitsToSections(dedupedHits, fallbackItems),
         operatingRecordResult.sections,
       );
+  const synthesisInput = sourceBackedOnly
+    ? { sections: seededSections, droppedCount: 0 }
+    : limitSectionsForSynthesis(seededSections);
+  const sectionsForSynthesis = synthesisInput.sections;
+  if (synthesisInput.droppedCount > 0) {
+    preflightWarnings.push(
+      `Daily Brief synthesis candidate set was capped from ${countBriefItems(seededSections)} to ${countBriefItems(sectionsForSynthesis)} item(s) before GPT synthesis to prevent timeout and raw fallback drift.`,
+    );
+  }
 
   // Pull the full embedded transcript text for every surfaced item BEFORE
   // synthesis, so both synthesis and enrichment read the complete meeting
   // instead of the lossy auto-summary the keyword-fallback path carries.
   const fullTextEnrichedCount = sourceBackedOnly || useOperatingRecords
     ? 0
-    : await enrichSectionsWithFullDocumentText(seededSections).catch(() => 0);
+    : await enrichSectionsWithFullDocumentText(sectionsForSynthesis).catch(() => 0);
 
 
   const synthesizedResult = sourceBackedOnly
     ? {
-        sections: seededSections,
+        sections: sectionsForSynthesis,
         modelUsed: "source-backed-fallback",
         warnings: [
           "Daily Brief synthesis skipped in source-backed fallback mode.",
@@ -3384,18 +3493,8 @@ export async function generateBrandonDailyUpdate(
         degraded: false,
       }
     : useOperatingRecords
-      ? await synthesizeSections(seededSections, financialPulse)
-    : insightCardBrief
-      ? {
-          // Insight cards are already curated, deduped, full-fidelity intelligence.
-          // Do NOT re-summarize them through the chunk-synthesis LLM — that is the
-          // exact compression-drift step this mode exists to remove.
-          sections: seededSections,
-          modelUsed: "insight-cards",
-          warnings: insightCardBrief.warnings,
-          degraded: false,
-        }
-      : await synthesizeSections(seededSections, financialPulse);
+      ? await synthesizeSections(sectionsForSynthesis, financialPulse)
+      : await synthesizeSections(sectionsForSynthesis, financialPulse);
   const communicationSignalResult =
     await loadRecentCommunicationSignalItems(cutoffIso);
 
@@ -3423,13 +3522,6 @@ export async function generateBrandonDailyUpdate(
             "Daily Brief evidence enrichment skipped because operating-record mode already used the single GPT synthesis call.",
           ],
         }
-    : insightCardBrief
-      ? {
-          // Insight card content is already full-fidelity — skip LLM enrichment
-          // to avoid the same re-summarization drift this mode was built to remove.
-          sections: supportedResult.sections,
-          warnings: [] as string[],
-        }
       : synthesizedResult.degraded
         ? {
             sections: mapBriefSections(supportedResult.sections, (item) => ({
@@ -3447,8 +3539,8 @@ export async function generateBrandonDailyUpdate(
   // the fully-merged, enriched brief — no matter whether it entered via the LLM,
   // the deterministic financial items, or the merge. AR stays out of the brief
   // until the Acumatica feed is trusted again (product decision, 2026-06).
-  const sections = sanitizeAccountingSections(
-    enforceExecutiveBriefBullets(numberedSections),
+  const sections = capExecutiveBriefSections(
+    sanitizeAccountingSections(enforceExecutiveBriefBullets(numberedSections)),
   );
   const operatingBrief = buildExecutiveOperatingBrief(sections);
   const sourceCoverage = await loadRecentSourceCoverage(cutoffIso);
@@ -3488,11 +3580,12 @@ export async function generateBrandonDailyUpdate(
       ...(useOperatingRecords
         ? [
             "Daily Brief source: project operating records first. No per-run query embeddings or vector chunk searches were used because source_synthesized operating records were available.",
+            `Daily Brief synthesis input: ${countBriefItems(sectionsForSynthesis)} highest-ranked item(s) were sent to GPT from ${countBriefItems(seededSections)} available operating/source candidate(s).`,
           ]
         : []),
-      ...(insightCardBrief
+      ...(insightCardFallbackSuppressed
         ? [
-            "Daily Brief source: curated insight_cards (Pipeline B), not RAG chunk search. Card content (title/summary/why-it-matters/next-action) is used verbatim — no LLM re-summarization — to avoid compression drift.",
+            "Daily Brief source: insight_cards shortcut was disabled; the brief used GPT synthesis over bounded source candidates instead of verbatim cards.",
           ]
         : []),
       `Executive briefing source of truth: recap_kind=executive_briefing. Backend recap_kind=meeting_digest is the legacy meeting digest and must not be treated as the CEO operating brief.`,

@@ -6,6 +6,7 @@ import {
   getRecencyAnchor,
   loadLiveBrandonSourceCoverage,
   shouldSuppressDailyBriefAccountingItem,
+  shouldSuppressDailyBriefGenericItem,
   shouldSuppressDailyBriefSolicitationItem,
 } from "../brandon-daily-update";
 import type {
@@ -258,6 +259,26 @@ describe("executive operating brief priority lanes", () => {
 
     expect(suppressed).toBe(true);
     expect(allowed).toBe(false);
+  });
+
+  it("suppresses generic insight-card headings from the Daily Brief", () => {
+    expect(
+      shouldSuppressDailyBriefGenericItem(
+        briefItem("Risks and exposure", {
+          summary:
+            "Track every remaining submittal, warranty letter, and closeout package to completion.",
+        }),
+      ),
+    ).toBe(true);
+
+    expect(
+      shouldSuppressDailyBriefGenericItem(
+        briefItem("Goodwill closeout documents are still missing", {
+          summary:
+            "The turnover checklist is missing warranty letters and final submittals.",
+        }),
+      ),
+    ).toBe(false);
   });
 
   it("keeps more than three owner decisions instead of suppressing them", () => {

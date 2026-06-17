@@ -168,7 +168,7 @@ export async function regenerateExecutiveBriefingAction(formData: FormData) {
     "windowDays",
     DEFAULT_EXECUTIVE_WINDOW_DAYS,
   );
-  await regenerateExecutiveBriefingDraft({ windowDays, sourceBackedOnly: true });
+  await regenerateExecutiveBriefingDraft({ windowDays, sourceBackedOnly: false });
   revalidatePath(EXECUTIVE_PATH);
 }
 
