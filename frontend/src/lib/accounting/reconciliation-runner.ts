@@ -6,6 +6,7 @@
 
 import "server-only";
 
+import type { Json } from "@/types/database.types";
 import {
   getBudget,
   getCommitmentChangeOrders,
@@ -87,6 +88,7 @@ function toRow(finding: ReconciliationFinding, runId: number) {
     external_id: finding.externalId,
     external_model: finding.externalModel,
     acumatica_checked: finding.acumaticaChecked,
+    evidence: (finding.evidence ?? null) as Json,
     is_active: true,
     last_seen_at: new Date().toISOString(),
     last_run_id: runId,

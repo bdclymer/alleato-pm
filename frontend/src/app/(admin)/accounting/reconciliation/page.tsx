@@ -13,7 +13,12 @@ import {
 import { DetailField, InfoAlert, StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { centsToUsd, type FindingKind, type FindingTier } from "@/lib/accounting/reconciliation";
+import {
+  centsToUsd,
+  type ApBillCopy,
+  type FindingKind,
+  type FindingTier,
+} from "@/lib/accounting/reconciliation";
 import {
   useReconciliationFindings,
   useResolveFinding,
@@ -28,7 +33,20 @@ import {
   tierLabels,
 } from "@/features/reconciliation/reconciliation-table-config";
 
-const ACUMATICA_PROJECTS_URL = "https://alleatogroup.acumatica.com/Main?ScreenId=PM301000";
+const ACUMATICA_BASE = "https://alleatogroup.acumatica.com";
+const ACUMATICA_PROJECTS_URL = `${ACUMATICA_BASE}/Main?ScreenId=PM301000`;
+
+// Acumatica AP "Bills and Adjustments" (AP301000) doc-type codes.
+const DOC_TYPE_CODE: Record<string, string> = {
+  Bill: "INV",
+  "Debit Adj.": "ADR",
+  "Credit Adj.": "ACR",
+};
+
+function acumaticaBillUrl(copy: ApBillCopy): string {
+  const code = DOC_TYPE_CODE[copy.docType ?? "Bill"] ?? "INV";
+  return `${ACUMATICA_BASE}/Main?ScreenId=AP301000&DocType=${code}&RefNbr=${encodeURIComponent(copy.ref ?? "")}`;
+}
 
 const tierVariant: Record<FindingTier, "error" | "warning" | "neutral"> = {
   HIGH: "error",
@@ -262,6 +280,52 @@ function FindingDetail({
         )}
       </div>
 
+      {finding.evidence?.copies?.length ? (
+        <div className="space-y-3">
+          <DetailField label="Invoice # match">
+            {finding.evidence.invoiceMatch ? (
+              <span className="inline-flex items-center gap-1.5 text-success">
+                <Check className="h-4 w-4" /> Same invoice — {finding.evidence.matchedInvoiceNo}
+              </span>
+            ) : (
+              <span className="text-warning">Different invoice numbers — open both to confirm</span>
+            )}
+          </DetailField>
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">The two bills</p>
+            {finding.evidence.copies.map((c, i) => (
+              <div key={`${c.ref}-${i}`} className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  <StatusBadge
+                    status={c.role === "keep" ? "Keep" : "Void"}
+                    variant={c.role === "keep" ? "success" : "error"}
+                  />
+                  <div className="min-w-0 text-sm">
+                    <div className="truncate">
+                      #{c.ref} · inv {c.invoiceNo ?? "—"}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {fmtDate(c.date)} · {(c.status ?? "").toLowerCase()}
+                      {c.balanceCents != null && c.balanceCents > 0
+                        ? ` · ${centsToUsd(c.balanceCents)} owed`
+                        : " · paid"}
+                    </div>
+                  </div>
+                </div>
+                <a
+                  href={acumaticaBillUrl(c)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex shrink-0 items-center gap-1 text-xs text-primary hover:underline"
+                >
+                  Open <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <div className="flex flex-col gap-2 pt-1">
         <div className="flex gap-2">
           {finding.reviewStatus !== "resolved" ? (
@@ -281,16 +345,20 @@ function FindingDetail({
             </Button>
           )}
         </div>
-        <a href={ACUMATICA_PROJECTS_URL} target="_blank" rel="noreferrer">
-          <Button variant="outline" size="sm" className="w-full justify-start">
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Open Acumatica Projects screen
-          </Button>
-        </a>
-        <p className="text-xs text-muted-foreground">
-          Search the Acumatica id above to find this exact line. Job Planner deep-links are pending
-          the JP web address.
-        </p>
+        {!finding.evidence?.copies?.length && (
+          <>
+            <a href={ACUMATICA_PROJECTS_URL} target="_blank" rel="noreferrer">
+              <Button variant="outline" size="sm" className="w-full justify-start">
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Open Acumatica Projects screen
+              </Button>
+            </a>
+            <p className="text-xs text-muted-foreground">
+              Search the Acumatica id above to find this exact line. Job Planner deep-links are
+              pending the JP web address.
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

@@ -22,7 +22,7 @@ export async function loadApBills(): Promise<{
     const { data, error } = await supabase
       .from("acumatica_ap_bills")
       .select(
-        "external_key, vendor_id, vendor_ref, amount, balance, project_code, status, hold, post_period, date, reference_nbr",
+        "external_key, vendor_id, vendor_ref, amount, balance, project_code, status, hold, post_period, date, reference_nbr, document_type",
       )
       .range(from, from + PAGE_SIZE - 1);
     if (error) throw new Error(`acumatica_ap_bills read failed: ${error.message}`);
@@ -40,6 +40,7 @@ export async function loadApBills(): Promise<{
         postPeriod: row.post_period,
         date: row.date,
         referenceNbr: row.reference_nbr,
+        documentType: row.document_type,
       });
     }
     if (data.length < PAGE_SIZE) break;

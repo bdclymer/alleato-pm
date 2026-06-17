@@ -11,7 +11,11 @@
 import { NextResponse } from "next/server";
 
 import { runReconciliation } from "@/lib/accounting/reconciliation-runner";
-import type { FindingKind, ReconciliationFinding } from "@/lib/accounting/reconciliation";
+import type {
+  FindingEvidence,
+  FindingKind,
+  ReconciliationFinding,
+} from "@/lib/accounting/reconciliation";
 import { createServiceClient } from "@/lib/supabase/service";
 import { logger } from "@/lib/logger";
 
@@ -39,6 +43,7 @@ type FindingRow = {
   external_id: string | null;
   external_model: string | null;
   acumatica_checked: boolean;
+  evidence: FindingEvidence | null;
   review_status: string;
 };
 
@@ -68,6 +73,7 @@ function toFinding(row: FindingRow): PersistedFinding {
     externalId: row.external_id,
     externalModel: row.external_model,
     acumaticaChecked: row.acumatica_checked,
+    evidence: row.evidence ?? null,
     reviewStatus: (row.review_status as PersistedFinding["reviewStatus"]) ?? "open",
   };
 }

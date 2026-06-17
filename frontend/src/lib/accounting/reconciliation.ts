@@ -67,6 +67,8 @@ export type ReconciliationFinding = {
   externalModel: string | null;
   /** True once the value has been verified against the live Acumatica ledger. */
   acumaticaChecked: boolean;
+  /** Structured supporting data (e.g. the AP bill copies behind a duplicate). */
+  evidence: FindingEvidence | null;
 };
 
 export type ProjectReport = {
@@ -109,6 +111,26 @@ export type AcuApBill = {
   postPeriod: string | null;
   date: string | null;
   referenceNbr: string | null;
+  documentType: string | null;
+};
+
+/** One AP bill copy in a duplicate cluster, for the side-by-side comparison. */
+export type ApBillCopy = {
+  ref: string | null;
+  invoiceNo: string | null;
+  status: string | null;
+  date: string | null;
+  amountCents: number;
+  balanceCents: number | null;
+  docType: string | null;
+  role: "keep" | "void";
+};
+
+/** Structured evidence persisted on a finding (currently duplicate-bill copies). */
+export type FindingEvidence = {
+  invoiceMatch?: boolean;
+  matchedInvoiceNo?: string | null;
+  copies?: ApBillCopy[];
 };
 
 const THIN_MARGIN_PCT = 3;
@@ -181,6 +203,7 @@ export function analyzeProject(
       externalId: null,
       externalModel: null,
       acumaticaChecked: false,
+      evidence: null,
       ...f,
     });
   };
@@ -409,6 +432,7 @@ function apFinding(
     externalId: null,
     externalModel: "ap_bill",
     acumaticaChecked: true,
+    evidence: null,
     ...fields,
   };
 }
@@ -453,10 +477,22 @@ export function detectDuplicateBills(
     // The vendor's own invoice number is the verification key: the same number on
     // every copy means it's literally the same invoice entered more than once.
     const vendorRefs = [...new Set(copies.map((b) => b.vendorRef).filter(Boolean))];
-    const confirmation =
-      vendorRefs.length === 1
-        ? `Same vendor invoice ${vendorRefs[0]} on every copy — confirmed duplicate.`
-        : `Same amount but the vendor invoice numbers differ (${vendorRefs.join(", ") || "none recorded"}) — open both to confirm before voiding.`;
+    const invoiceMatch = vendorRefs.length === 1;
+    const confirmation = invoiceMatch
+      ? `Same vendor invoice ${vendorRefs[0]} on every copy — confirmed duplicate.`
+      : `Same amount but the vendor invoice numbers differ (${vendorRefs.join(", ") || "none recorded"}) — open both to confirm before voiding.`;
+
+    const keepSet = new Set(keep ? [keep] : []);
+    const evidenceCopies: ApBillCopy[] = copies.map((b) => ({
+      ref: b.referenceNbr,
+      invoiceNo: b.vendorRef,
+      status: b.status,
+      date: b.date,
+      amountCents: amountCentsOf(b),
+      balanceCents: b.balance == null ? null : Math.round(b.balance * 100),
+      docType: b.documentType,
+      role: keepSet.has(b) || (paid.length === 0 && b === live[0]) ? "keep" : "void",
+    }));
 
     findings.push(
       apFinding(
@@ -472,6 +508,11 @@ export function detectDuplicateBills(
           costCodeLabel: copies[0].vendorId,
           jpModifiedOn: copies.map((b) => b.date).filter(Boolean).sort().slice(-1)[0] ?? null,
           externalId: copies.map((b) => b.referenceNbr).filter(Boolean).join(" / ") || null,
+          evidence: {
+            invoiceMatch,
+            matchedInvoiceNo: invoiceMatch ? vendorRefs[0] : null,
+            copies: evidenceCopies,
+          },
         },
         copies[0].projectCode,
         projectName,

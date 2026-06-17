@@ -25310,6 +25310,7 @@ export type Database = {
           cost_code_label: string | null
           cost_type: string | null
           detail: string
+          evidence: Json | null
           external_id: string | null
           external_model: string | null
           fingerprint: string
@@ -25338,6 +25339,7 @@ export type Database = {
           cost_code_label?: string | null
           cost_type?: string | null
           detail: string
+          evidence?: Json | null
           external_id?: string | null
           external_model?: string | null
           fingerprint: string
@@ -25366,6 +25368,7 @@ export type Database = {
           cost_code_label?: string | null
           cost_type?: string | null
           detail?: string
+          evidence?: Json | null
           external_id?: string | null
           external_model?: string | null
           fingerprint?: string

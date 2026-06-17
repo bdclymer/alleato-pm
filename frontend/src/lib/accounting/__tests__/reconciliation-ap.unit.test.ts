@@ -18,6 +18,7 @@ function bill(overrides: Partial<AcuApBill> = {}): AcuApBill {
     postPeriod: "122025",
     date: "2026-12-15",
     referenceNbr: "INV-1",
+    documentType: "Bill",
     ...overrides,
   };
 }
