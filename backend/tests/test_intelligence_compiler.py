@@ -11,9 +11,11 @@ from src.services.intelligence.compiler import (
     process_packet_refresh_job,
     process_source_document,
     process_source_document_to_packet,
+    project_pm_intelligence_packet_job,
     promote_signal_candidate,
     run_intelligence_compiler_batch,
 )
+from src.services.ops.db_pressure_guard import AppDbProjectionError
 
 _ACTIVE_FAKE_SUPABASE = None
 
@@ -129,8 +131,68 @@ class _FakeSupabase:
 def _legacy_packet_compiler_for_existing_contract_tests(monkeypatch):
     monkeypatch.setenv("INTELLIGENCE_USE_OPERATING_SUMMARY_COMPILER", "false")
     monkeypatch.setenv("INTELLIGENCE_INLINE_PACKET_REFRESH", "true")
+    monkeypatch.setenv("ALLOW_PM_APP_FINAL_PROJECTIONS", "true")
+    monkeypatch.setenv("PM_APP_PROJECTION_MAX_TOTAL_ROWS", "500")
     monkeypatch.setattr(compiler_module, "_rag_read", lambda: _ACTIVE_FAKE_SUPABASE)
     monkeypatch.setattr(compiler_module, "_rag_write", lambda: _ACTIVE_FAKE_SUPABASE)
+
+
+def _seed_staged_projection_fixture():
+    supabase = _FakeSupabase()
+    supabase.tables["intelligence_targets"] = [
+        {
+            "id": "target-1",
+            "target_type": "client_project",
+            "name": "Westfield Collective",
+            "slug": "westfield-collective",
+            "status": "active",
+            "project_id": 43,
+        }
+    ]
+    supabase.tables["insight_cards"] = [
+        {
+            "id": "card-1",
+            "primary_target_id": "target-1",
+            "title": "Schedule recovery follow-up",
+            "card_type": "task",
+            "summary": "Brandon needs to confirm the recovery path.",
+            "why_it_matters": "The owner needs a reliable delivery date.",
+            "current_status": "open",
+            "attribution_status": "auto_assigned",
+            "confidence": "high",
+            "last_seen_at": "2026-05-02T10:00:00+00:00",
+            "source_count": 1,
+            "metadata": {},
+        }
+    ]
+    supabase.tables["insight_card_evidence"] = [
+        {
+            "id": "evidence-1",
+            "insight_card_id": "card-1",
+            "source_document_id": "doc-1",
+            "source_message_id": "message-1",
+            "source_category": "meeting",
+            "source_title": "Westfield OAC",
+            "source_excerpt": "Brandon will confirm the recovery path.",
+            "source_at": "2026-05-02T10:00:00+00:00",
+            "confidence": "high",
+        }
+    ]
+    supabase.tables["packet_refresh_jobs"] = [
+        {
+            "id": "packet-job-1",
+            "target_id": "target-1",
+            "reason": "test",
+            "status": "queued",
+            "priority": 0,
+            "compiler_version": "ai_intelligence_compiler_v0_1",
+            "attempt_count": 0,
+            "projection_status": "not_staged",
+            "projection_payload": {},
+            "projection_attempt_count": 0,
+        }
+    ]
+    return supabase
 
 
 def test_confidence_label_thresholds():
@@ -158,7 +220,7 @@ def test_process_source_document_stages_candidate_and_packet_refresh():
             "id": "doc-1",
             "title": "Westfield OAC follow-up",
             "content": "Brandon needs to follow up on schedule delay exposure by Friday.",
-            "category": "teams_message",
+            "category": "fireflies_meeting",
             "source": "microsoft_graph",
             "date": "2026-05-02T12:00:00+00:00",
             "project_id": 43,
@@ -197,7 +259,7 @@ def test_promote_signal_candidate_creates_card_evidence_and_refresh():
             "id": "doc-1",
             "title": "Westfield OAC follow-up",
             "content": "Brandon needs to follow up on schedule delay exposure by Friday.",
-            "category": "teams_message",
+            "category": "fireflies_meeting",
             "source": "microsoft_graph",
             "date": "2026-05-02T12:00:00+00:00",
             "project_id": 43,
@@ -352,7 +414,7 @@ def test_process_source_document_to_packet_records_status_metadata():
             "id": "doc-1",
             "title": "Westfield OAC follow-up",
             "content": "Brandon needs to follow up on schedule delay exposure by Friday.",
-            "category": "teams_message",
+            "category": "fireflies_meeting",
             "source": "microsoft_graph",
             "date": "2026-05-02T12:00:00+00:00",
             "project_id": 43,
@@ -389,7 +451,7 @@ def test_run_intelligence_compiler_batch_drains_source_jobs():
             "id": "doc-1",
             "title": "Westfield OAC follow-up",
             "content": "Brandon needs to follow up on schedule delay exposure by Friday.",
-            "category": "teams_message",
+            "category": "fireflies_meeting",
             "source": "microsoft_graph",
             "date": "2026-05-02T12:00:00+00:00",
             "project_id": 43,
@@ -460,6 +522,63 @@ def test_run_intelligence_compiler_batch_drains_packet_jobs():
     assert supabase.tables["packet_refresh_jobs"][0]["status"] == "succeeded"
     assert len(supabase.tables["intelligence_packets"]) == 1
     assert supabase.tables["intelligence_packets"][0]["freshness_status"] == "partial"
+
+
+def test_process_packet_refresh_job_stages_projection_payload_when_enabled(monkeypatch):
+    supabase = _seed_staged_projection_fixture()
+    monkeypatch.setenv("INTELLIGENCE_STAGE_PM_PROJECTION", "true")
+
+    result = process_packet_refresh_job(supabase, "packet-job-1")
+
+    assert result["status"] == "staged"
+    assert result["row_counts"] == {
+        "intelligence_packets": 1,
+        "intelligence_packet_cards": 1,
+    }
+    assert supabase.tables["packet_refresh_jobs"][0]["status"] == "succeeded"
+    assert supabase.tables["packet_refresh_jobs"][0]["projection_status"] == "staged"
+    projection = supabase.tables["packet_refresh_jobs"][0]["projection_payload"]
+    assert projection["projection_type"] == "current_packet"
+    assert projection["packet_payload"]["target_id"] == "target-1"
+    assert projection["packet_card_rows"][0]["insight_card_id"] == "card-1"
+    assert supabase.tables.get("intelligence_packets", []) == []
+    assert supabase.tables.get("intelligence_packet_cards", []) == []
+
+
+def test_project_pm_intelligence_packet_job_applies_staged_projection(monkeypatch):
+    supabase = _seed_staged_projection_fixture()
+    monkeypatch.setenv("INTELLIGENCE_STAGE_PM_PROJECTION", "true")
+    process_packet_refresh_job(supabase, "packet-job-1")
+
+    result = project_pm_intelligence_packet_job(supabase, "packet-job-1")
+
+    assert result["status"] == "projected"
+    assert result["packet_refresh_job_id"] == "packet-job-1"
+    assert len(supabase.tables["intelligence_packets"]) == 1
+    assert supabase.tables["intelligence_packets"][0]["packet_type"] == "current"
+    assert len(supabase.tables["intelligence_packet_cards"]) == 1
+    assert supabase.tables["intelligence_packet_cards"][0]["insight_card_id"] == "card-1"
+    assert supabase.tables["packet_refresh_jobs"][0]["projection_status"] == "projected"
+    assert (
+        supabase.tables["packet_refresh_jobs"][0]["projected_output_packet_id"]
+        == result["packet_id"]
+    )
+
+
+def test_project_pm_intelligence_packet_job_records_projection_failure(monkeypatch):
+    supabase = _seed_staged_projection_fixture()
+    monkeypatch.setenv("INTELLIGENCE_STAGE_PM_PROJECTION", "true")
+    process_packet_refresh_job(supabase, "packet-job-1")
+    monkeypatch.delenv("ALLOW_PM_APP_FINAL_PROJECTIONS")
+
+    with pytest.raises(AppDbProjectionError):
+        project_pm_intelligence_packet_job(supabase, "packet-job-1")
+
+    assert supabase.tables["packet_refresh_jobs"][0]["projection_status"] == "failed"
+    assert "PM app final projection writes are disabled" in (
+        supabase.tables["packet_refresh_jobs"][0]["projection_error"]
+    )
+    assert supabase.tables.get("intelligence_packets", []) == []
 
 
 def test_get_intelligence_compiler_status_reports_healthy_state():

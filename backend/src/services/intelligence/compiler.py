@@ -1379,23 +1379,69 @@ def compile_current_packet(
             "synthesis_compiler": "project_operating_summary",
         }
 
+    projection = build_current_packet_projection(
+        supabase,
+        target_id,
+        compiler_version=compiler_version,
+    )
+    return apply_current_packet_projection(supabase, projection)
+
+
+def build_current_packet_projection(
+    supabase: Any,
+    target_id: str,
+    *,
+    compiler_version: str = COMPILER_VERSION,
+) -> Dict[str, Any]:
+    """Build a bounded final PM packet projection payload without writing it."""
+    target = _fetch_target(supabase, target_id)
     cards = _load_packet_cards_for_target(supabase, target_id)
     evidence = _load_evidence_for_cards(
         supabase,
         [card["id"] for card in cards],
-    )
-    enforce_pm_app_final_projection_guard(
-        "intelligence_compile_current_packet",
-        row_counts={
-            "intelligence_packets": 1,
-            "intelligence_packet_cards": len(cards),
-        },
     )
     payload = _packet_payload(
         target=target,
         cards=cards,
         evidence=evidence,
         compiler_version=compiler_version,
+    )
+    packet_card_rows = [
+        {
+            "insight_card_id": card["id"],
+            "section": _section_for_card(card.get("card_type") or ""),
+            "rank": index + 1,
+            "included_reason": "Active promoted card for the current intelligence packet.",
+        }
+        for index, card in enumerate(cards)
+    ]
+
+    return {
+        "projection_type": "current_packet",
+        "target_id": target_id,
+        "compiler_version": compiler_version,
+        "row_counts": {
+            "intelligence_packets": 1,
+            "intelligence_packet_cards": len(packet_card_rows),
+        },
+        "packet_payload": payload,
+        "packet_card_rows": packet_card_rows,
+        "card_count": len(cards),
+        "evidence_count": len(evidence),
+    }
+
+
+def apply_current_packet_projection(
+    supabase: Any,
+    projection: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Apply a previously staged bounded packet projection to PM tables."""
+    target_id = projection["target_id"]
+    payload = projection["packet_payload"]
+    packet_card_rows = list(projection.get("packet_card_rows") or [])
+    enforce_pm_app_final_projection_guard(
+        "intelligence_apply_current_packet_projection",
+        row_counts=projection.get("row_counts") or {},
     )
 
     existing = _single_row(
@@ -1422,14 +1468,8 @@ def compile_current_packet(
         "packet_id", packet["id"]
     ).execute()
     packet_card_rows = [
-        {
-            "packet_id": packet["id"],
-            "insight_card_id": card["id"],
-            "section": _section_for_card(card.get("card_type") or ""),
-            "rank": index + 1,
-            "included_reason": "Active promoted card for the current intelligence packet.",
-        }
-        for index, card in enumerate(cards)
+        {**row, "packet_id": packet["id"]}
+        for row in packet_card_rows
     ]
     for start in range(0, len(packet_card_rows), 500):
         supabase.table("intelligence_packet_cards").insert(
@@ -1440,8 +1480,56 @@ def compile_current_packet(
         "status": "compiled",
         "packet_id": packet.get("id"),
         "target_id": target_id,
-        "card_count": len(cards),
-        "evidence_count": len(evidence),
+        "card_count": int(projection.get("card_count") or 0),
+        "evidence_count": int(projection.get("evidence_count") or 0),
+    }
+
+
+def stage_current_packet_projection_job(
+    supabase: Any,
+    job_id: str,
+    *,
+    compiler_version: str = COMPILER_VERSION,
+) -> Dict[str, Any]:
+    """Stage a final PM packet projection payload on the RAG packet job."""
+    job = _single_row(
+        _rag_read().table("packet_refresh_jobs")
+        .select("*")
+        .eq("id", job_id)
+        .limit(1)
+        .execute()
+    )
+    if not job:
+        raise ValueError(f"packet_refresh_jobs row not found: {job_id}")
+
+    projection = build_current_packet_projection(
+        supabase,
+        job["target_id"],
+        compiler_version=compiler_version,
+    )
+    updated = _single_row(
+        _rag_write().table("packet_refresh_jobs")
+        .update(
+            {
+                "status": "succeeded",
+                "projection_status": "staged",
+                "projection_payload": projection,
+                "projection_error": None,
+                "finished_at": _utc_now(),
+                "updated_at": _utc_now(),
+            }
+        )
+        .eq("id", job_id)
+        .execute()
+    ) or job
+    return {
+        "status": "staged",
+        "packet_refresh_job_id": job_id,
+        "target_id": projection["target_id"],
+        "card_count": projection["card_count"],
+        "evidence_count": projection["evidence_count"],
+        "row_counts": projection["row_counts"],
+        "job": updated,
     }
 
 
@@ -1621,6 +1709,63 @@ def mark_packet_refresh_failed(
     ).eq("id", job_id).execute()
 
 
+def project_pm_intelligence_packet_job(
+    supabase: Any,
+    job_id: str,
+) -> Dict[str, Any]:
+    """Drain one staged RAG packet job into PM through the projection guard."""
+    job = _single_row(
+        _rag_read().table("packet_refresh_jobs")
+        .select("*")
+        .eq("id", job_id)
+        .limit(1)
+        .execute()
+    )
+    if not job:
+        raise ValueError(f"packet_refresh_jobs row not found: {job_id}")
+
+    projection = job.get("projection_payload") or {}
+    if not projection:
+        raise ValueError(f"packet_refresh_jobs row has no projection_payload: {job_id}")
+
+    _rag_write().table("packet_refresh_jobs").update(
+        {
+            "projection_status": "projecting",
+            "projection_attempt_count": int(job.get("projection_attempt_count") or 0) + 1,
+            "projection_error": None,
+            "updated_at": _utc_now(),
+        }
+    ).eq("id", job_id).execute()
+
+    try:
+        result = apply_current_packet_projection(supabase, projection)
+        _rag_write().table("packet_refresh_jobs").update(
+            {
+                "status": "succeeded",
+                "output_packet_id": result.get("packet_id"),
+                "projected_output_packet_id": str(result.get("packet_id") or ""),
+                "projection_status": "projected",
+                "projection_error": None,
+                "projected_at": _utc_now(),
+                "updated_at": _utc_now(),
+            }
+        ).eq("id", job_id).execute()
+        return {
+            **result,
+            "status": "projected",
+            "packet_refresh_job_id": job_id,
+        }
+    except Exception as exc:
+        _rag_write().table("packet_refresh_jobs").update(
+            {
+                "projection_status": "failed",
+                "projection_error": str(exc)[:2000],
+                "updated_at": _utc_now(),
+            }
+        ).eq("id", job_id).execute()
+        raise
+
+
 def process_packet_refresh_job(
     supabase: Any,
     job_id: str,
@@ -1648,6 +1793,17 @@ def process_packet_refresh_job(
     _rag_write().table("packet_refresh_jobs").update(update_payload).eq("id", job_id).execute()
 
     try:
+        if os.getenv("INTELLIGENCE_STAGE_PM_PROJECTION", "false").lower() in {"1", "true", "yes"}:
+            result = stage_current_packet_projection_job(
+                supabase,
+                job_id,
+                compiler_version=compiler_version,
+            )
+            return {
+                **result,
+                "packet_refresh_job_id": job_id,
+            }
+
         result = compile_current_packet(
             supabase,
             job["target_id"],

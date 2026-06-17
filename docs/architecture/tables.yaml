@@ -3444,7 +3444,7 @@ tables:
     domain: intelligence
     owner: pipeline
     status: live
-    purpose: "Packet refresh job queue. 1,530 rows. Canonical copy. MAIN copy is stale orphan."
+    purpose: "Packet refresh job queue and PM packet projection staging handoff. Canonical copy. MAIN copy is stale orphan. Projection payload/status columns were added 2026-06-17 so final PM writes drain through the bounded projection guard instead of high-churn compiler jobs."
     relatedTables: []
 
   - name: ingestion_jobs

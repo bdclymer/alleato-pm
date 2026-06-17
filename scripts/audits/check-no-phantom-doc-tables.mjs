@@ -46,6 +46,7 @@ const mode = args.has("--staged") ? "staged" : "changed";
 //   - system / cross-schema tables
 const KNOWN_EXTERNAL_TABLES = new Set([
   "document_chunks",
+  "packet_refresh_jobs",
   "rag_document_metadata",
   "rag_pipeline_state",
   "outlook_email_intake",
@@ -65,6 +66,12 @@ const NON_TABLE_WORDS = new Set([
   "db",
   "ctx",
   "data",
+  "fqcvmfqldlewvbsuxdvz",
+  "projection_status",
+  "projection_payload",
+  "projection_error",
+  "projection_attempt_count",
+  "projected_at",
 ]);
 
 function run(cmd) {

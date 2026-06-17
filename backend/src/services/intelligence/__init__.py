@@ -2,6 +2,8 @@
 
 from .compiler import (
     COMPILER_VERSION,
+    apply_current_packet_projection,
+    build_current_packet_projection,
     claim_queued_packet_refresh_jobs,
     claim_queued_source_jobs,
     classify_basic_signal,
@@ -18,14 +20,18 @@ from .compiler import (
     process_packet_refresh_job,
     process_source_document,
     process_source_document_to_packet,
+    project_pm_intelligence_packet_job,
     promote_signal_candidate,
     run_intelligence_compiler_batch,
+    stage_current_packet_projection_job,
     write_document_attribution_candidate,
     write_source_signal_candidate,
 )
 
 __all__ = [
     "COMPILER_VERSION",
+    "apply_current_packet_projection",
+    "build_current_packet_projection",
     "claim_queued_packet_refresh_jobs",
     "claim_queued_source_jobs",
     "classify_basic_signal",
@@ -42,8 +48,10 @@ __all__ = [
     "process_packet_refresh_job",
     "process_source_document",
     "process_source_document_to_packet",
+    "project_pm_intelligence_packet_job",
     "promote_signal_candidate",
     "run_intelligence_compiler_batch",
+    "stage_current_packet_projection_job",
     "write_document_attribution_candidate",
     "write_source_signal_candidate",
 ]
