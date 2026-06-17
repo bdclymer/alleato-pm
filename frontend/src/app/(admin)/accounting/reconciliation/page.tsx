@@ -360,9 +360,10 @@ export default function ReconciliationPage() {
         : VIEW_HELP.all
       : `${viewFindings.length} ${tabLabel(view).toLowerCase()} · ${centsToUsd(atRisk)} at risk. ${VIEW_HELP[view]}`;
 
+  const tabBase = pathname ?? "/accounting/reconciliation";
   const tabs = (Object.keys(VIEW_KINDS) as ViewKey[]).map((key) => ({
     label: tabLabel(key),
-    href: key === "all" ? pathname : `${pathname}?view=${key}`,
+    href: key === "all" ? tabBase : `${tabBase}?view=${key}`,
     isActive: view === key,
   }));
 
