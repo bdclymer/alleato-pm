@@ -46,6 +46,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
 import { useProjects } from "@/hooks/use-projects";
 import type { InboxEmail } from "./email-inbox-client";
+import type { BrandonDraftLearning } from "@/lib/email-assistant/brandon-learning";
 import type { BrandonReviewOutcome } from "@/lib/email-assistant/brandon-review";
 
 function decodeHtmlEntities(text: string): string {
@@ -383,6 +384,7 @@ function DraftReplyPanel({
   ) => Promise<void>;
 }) {
   const [draft, setDraft] = React.useState("");
+  const [learning, setLearning] = React.useState<BrandonDraftLearning | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [tone, setTone] = React.useState<"professional" | "concise" | "detailed">(
     "professional",
@@ -392,7 +394,10 @@ function DraftReplyPanel({
   async function fetchDraft(selectedTone = tone) {
     setLoading(true);
     try {
-      const result = await apiFetch<{ draft: string }>(
+      const result = await apiFetch<{
+        draft: string;
+        learning?: BrandonDraftLearning;
+      }>(
         `/api/email-inbox/${email.id}/draft-reply`,
         {
           method: "POST",
@@ -408,6 +413,7 @@ function DraftReplyPanel({
         },
       );
       setDraft(result.draft);
+      setLearning(result.learning ?? null);
       initialDraftRef.current = result.draft;
     } catch {
       toast.error("Failed to generate draft — check AI configuration.");
@@ -497,12 +503,36 @@ function DraftReplyPanel({
             Drafting reply…
           </div>
         ) : (
-          <Textarea
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            className="min-h-32 text-sm resize-none border-border/40 bg-background focus-visible:ring-primary/20"
-            placeholder="Draft will appear here…"
-          />
+          <div className="space-y-2">
+            {learning && learning.guidance.length > 0 && (
+              <div className="space-y-1 border-b border-border/30 pb-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-medium text-foreground">
+                    Learning applied
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {learning.reviewCount} reviews
+                  </span>
+                </div>
+                <ul className="space-y-0.5">
+                  {learning.guidance.slice(0, 3).map((item) => (
+                    <li
+                      key={item}
+                      className="text-[11px] leading-relaxed text-muted-foreground"
+                    >
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <Textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              className="min-h-32 text-sm resize-none border-border/40 bg-background focus-visible:ring-primary/20"
+              placeholder="Draft will appear here…"
+            />
+          </div>
         )}
       </div>
 

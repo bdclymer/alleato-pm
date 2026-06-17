@@ -117,8 +117,17 @@ describe("/api/email-inbox/[emailId]/draft-reply", () => {
       }),
       { params: Promise.resolve({ emailId: "42" }) },
     );
+    const body = await response.json();
 
     expect(response.status).toBe(200);
+    expect(body.learning).toMatchObject({
+      reviewCount: 1,
+      draftCount: 1,
+      guidance: expect.arrayContaining([
+        "Keep Brandon replies concise; recent approved drafts are usually under 55 words.",
+        'Prefer Brandon-style closing with "Thank You" when a sign-off is needed.',
+      ]),
+    });
     expect(reviewBuilder.eq).toHaveBeenCalledWith(
       "mailbox_user_id",
       "bclymer@alleatogroup.com",

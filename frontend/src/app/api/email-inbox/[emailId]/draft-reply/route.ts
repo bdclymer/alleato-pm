@@ -117,11 +117,10 @@ export const POST = withApiGuardrails<{ emailId: string }>(
       });
     }
 
-    const learningGuidance = formatBrandonDraftLearningGuidance(
-      deriveBrandonDraftLearning(
-        (reviewRows ?? []) as BrandonAssistantReviewLearningRow[],
-      ),
+    const learning = deriveBrandonDraftLearning(
+      (reviewRows ?? []) as BrandonAssistantReviewLearningRow[],
     );
+    const learningGuidance = formatBrandonDraftLearningGuidance(learning);
     const learningContext = learningGuidance ? `\n\n${learningGuidance}` : "";
 
     const { text } = await generateText({
@@ -150,6 +149,13 @@ Write a reply that:
       maxOutputTokens: 600,
     });
 
-    return NextResponse.json({ draft: text });
+    return NextResponse.json({
+      draft: text,
+      learning: {
+        reviewCount: learning.reviewCount,
+        draftCount: learning.draftCount,
+        guidance: learning.guidance,
+      },
+    });
   },
 );
