@@ -1116,8 +1116,6 @@ function TaskDetail({
   const { confirm: confirmDelete, ConfirmDialog } = useConfirm();
   const sourceLinkLabel = sourceTitle || sourceTarget?.href || sourceLabel;
   const extractionSourceLabel = formatAuditLabel(task.extraction_source);
-  const extractionModelLabel = task.extraction_model ?? "Untracked";
-  const extractionPromptLabel = task.extraction_prompt_version ?? "Untracked";
   const taskProjectId = task.project_id ?? task.project_ids?.[0] ?? null;
   const selectedProjectValue = taskProjectId
     ? String(taskProjectId)
@@ -1595,9 +1593,6 @@ function TaskDetail({
               <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
                 <span className="shrink-0 text-foreground">
                   {extractionSourceLabel}
-                </span>
-                <span className="min-w-0 truncate text-xs text-muted-foreground">
-                  {extractionModelLabel} · {extractionPromptLabel}
                 </span>
               </div>
             </TaskDetailRow>
