@@ -7,6 +7,11 @@ import { withApiGuardrails, parseJsonBody } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { getLanguageModel } from "@/lib/ai/providers";
+import {
+  deriveBrandonDraftLearning,
+  formatBrandonDraftLearningGuidance,
+  type BrandonAssistantReviewLearningRow,
+} from "@/lib/email-assistant/brandon-learning";
 
 const BodySchema = z.object({
   // Optionally pass context; if absent we fetch the email ourselves
@@ -95,12 +100,36 @@ export const POST = withApiGuardrails<{ emailId: string }>(
         : parsed.tone === "detailed"
           ? "Provide a thorough, detailed response addressing all points raised."
           : "Be professional, warm, and clear.";
+    const { data: reviewRows, error: reviewError } = await supabase
+      .from("outlook_email_assistant_reviews")
+      .select(
+        "review_outcome, draft_body, assistant_action, assistant_priority, reviewer_note, created_at",
+      )
+      .eq("mailbox_user_id", "bclymer@alleatogroup.com")
+      .order("created_at", { ascending: false })
+      .limit(25);
+
+    if (reviewError) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "email-inbox/[emailId]/draft-reply#POST",
+        message: `Failed to load Brandon email review learnings: ${reviewError.message}`,
+      });
+    }
+
+    const learningGuidance = formatBrandonDraftLearningGuidance(
+      deriveBrandonDraftLearning(
+        (reviewRows ?? []) as BrandonAssistantReviewLearningRow[],
+      ),
+    );
+    const learningContext = learningGuidance ? `\n\n${learningGuidance}` : "";
 
     const { text } = await generateText({
       model: getLanguageModel("gpt-4.1-mini"),
       system: `You are a professional construction project manager assistant drafting email replies on behalf of a PM at Alleato Group, a construction management firm based in Indianapolis.${projectContext}
 
 ${toneInstructions}
+${learningContext}
 
 Write only the body of the reply — no subject line, no headers. Do not include any opening like "Subject:" or "From:". Start directly with the greeting or first sentence.`,
       prompt: `Draft a professional reply to this email:
