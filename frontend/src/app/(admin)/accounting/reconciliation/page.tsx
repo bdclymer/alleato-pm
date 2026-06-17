@@ -10,7 +10,7 @@ import {
   type FilterValue,
   type TableColumn,
 } from "@/components/tables/unified";
-import { KpiRow, StatusBadge } from "@/components/ds";
+import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -250,11 +250,9 @@ export default function ReconciliationPage() {
 
   const summary = data?.summary;
   const generatedAt = data?.generatedAt ? fmtDate(data.generatedAt) : "—";
-  const metrics = [
-    { label: "High-confidence findings", value: summary ? String(summary.highCount) : "—" },
-    { label: "Dollars at risk (high-confidence)", value: summary ? centsToUsd(summary.dollarsAtRiskCents) : "—" },
-    { label: "Projects scanned", value: summary ? String(summary.projects) : "—" },
-  ];
+  const description = summary
+    ? `${summary.highCount} high-confidence findings · ${centsToUsd(summary.dollarsAtRiskCents)} at risk · ${summary.projects} projects · scanned ${generatedAt}. Click any row for the evidence.`
+    : "Job Planner records that disagree with Acumatica — unlinked, drifted, or mismatched. Click any row for the evidence.";
 
   const handleFilterChange = (next: Record<string, FilterValue>) => {
     tableState.setSearchParams({
@@ -264,12 +262,11 @@ export default function ReconciliationPage() {
   };
 
   return (
-    <div className="space-y-4 p-4 sm:p-6">
-      <KpiRow metrics={metrics} size="small" />
+    <>
       <UnifiedTablePage
         header={{
           title: "Reconciliation",
-          description: `Job Planner records that disagree with Acumatica — unlinked, drifted, or mismatched. Click any row to see the evidence. Phase 1 (Job Planner sync metadata) · scanned ${generatedAt}.`,
+          description,
           actions: (
             <Button size="sm" variant="outline" onClick={() => refetch()} disabled={isFetching}>
               <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
@@ -277,6 +274,7 @@ export default function ReconciliationPage() {
             </Button>
           ),
         }}
+        layout={{ fullBleedTable: false, toolbarInlineWithHeader: true }}
         toolbar={{
           totalItems: allFindings.length,
           filteredItems: filteredItems.length,
@@ -324,6 +322,6 @@ export default function ReconciliationPage() {
           )}
         </SheetContent>
       </Sheet>
-    </div>
+    </>
   );
 }
