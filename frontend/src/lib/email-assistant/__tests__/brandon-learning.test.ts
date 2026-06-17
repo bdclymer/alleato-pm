@@ -27,6 +27,14 @@ describe("deriveBrandonDraftLearning", () => {
 
     expect(learning.reviewCount).toBe(2);
     expect(learning.draftCount).toBe(2);
+    expect(learning.guidanceItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "thank_you_closing",
+          text: 'Prefer Brandon-style closing with "Thank You" when a sign-off is needed.',
+        }),
+      ]),
+    );
     expect(learning.guidance).toEqual(
       expect.arrayContaining([
         "Keep Brandon replies concise; recent approved drafts are usually under 55 words.",
@@ -63,7 +71,7 @@ describe("deriveBrandonDraftLearning", () => {
     ]);
   });
 
-  it("suppresses guidance when Brandon marks a learning as wrong", () => {
+  it("suppresses guidance by stable ID when Brandon marks a learning as wrong", () => {
     const suppressedItem =
       'Prefer Brandon-style closing with "Thank You" when a sign-off is needed.';
     const learning = deriveBrandonDraftLearning([
@@ -88,18 +96,50 @@ describe("deriveBrandonDraftLearning", () => {
         draft_body: null,
         assistant_action: "ignore",
         assistant_priority: "low",
-        reviewer_note: `${BRANDON_LEARNING_SUPPRESSION_PREFIX} ${suppressedItem}`,
+        reviewer_note: `${BRANDON_LEARNING_SUPPRESSION_PREFIX} id=thank_you_closing; text=${suppressedItem}`,
         created_at: "2026-06-17T05:10:00Z",
       },
     ]);
 
     expect(learning.guidance).not.toContain(suppressedItem);
+    expect(learning.guidanceItems).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({
+          id: "thank_you_closing",
+        }),
+      ]),
+    );
     expect(learning.guidance).toEqual(
       expect.arrayContaining([
         "Keep Brandon replies concise; recent approved drafts are usually under 55 words.",
         "For active threads, start directly with the answer instead of adding a greeting.",
       ]),
     );
+  });
+
+  it("still honors old exact-string suppression notes", () => {
+    const suppressedItem =
+      'Prefer Brandon-style closing with "Thank You" when a sign-off is needed.';
+    const learning = deriveBrandonDraftLearning([
+      {
+        review_outcome: "draft_copied",
+        draft_body: "That works for us. See you tomorrow at 3pm.\n\nThank You\nBrandon Clymer",
+        assistant_action: "reply",
+        assistant_priority: "high",
+        reviewer_note: null,
+        created_at: "2026-06-17T05:00:00Z",
+      },
+      {
+        review_outcome: "marked_no_action",
+        draft_body: null,
+        assistant_action: "ignore",
+        assistant_priority: "low",
+        reviewer_note: `${BRANDON_LEARNING_SUPPRESSION_PREFIX} ${suppressedItem}`,
+        created_at: "2026-06-17T05:10:00Z",
+      },
+    ]);
+
+    expect(learning.guidance).not.toContain(suppressedItem);
   });
 });
 

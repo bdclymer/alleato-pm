@@ -127,6 +127,12 @@ describe("/api/email-inbox/[emailId]/draft-reply", () => {
         "Keep Brandon replies concise; recent approved drafts are usually under 55 words.",
         'Prefer Brandon-style closing with "Thank You" when a sign-off is needed.',
       ]),
+      guidanceItems: expect.arrayContaining([
+        expect.objectContaining({
+          id: "thank_you_closing",
+          text: 'Prefer Brandon-style closing with "Thank You" when a sign-off is needed.',
+        }),
+      ]),
     });
     expect(reviewBuilder.eq).toHaveBeenCalledWith(
       "mailbox_user_id",

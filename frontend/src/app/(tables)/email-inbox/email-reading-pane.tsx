@@ -47,7 +47,10 @@ import { apiFetch } from "@/lib/api-client";
 import { useProjects } from "@/hooks/use-projects";
 import { BRANDON_LEARNING_SUPPRESSION_PREFIX } from "@/lib/email-assistant/brandon-learning";
 import type { InboxEmail } from "./email-inbox-client";
-import type { BrandonDraftLearning } from "@/lib/email-assistant/brandon-learning";
+import type {
+  BrandonDraftLearning,
+  BrandonDraftLearningGuidanceItem,
+} from "@/lib/email-assistant/brandon-learning";
 import type { BrandonReviewOutcome } from "@/lib/email-assistant/brandon-review";
 
 function decodeHtmlEntities(text: string): string {
@@ -387,7 +390,7 @@ function DraftReplyPanel({
 }) {
   const [draft, setDraft] = React.useState("");
   const [learning, setLearning] = React.useState<BrandonDraftLearning | null>(null);
-  const [suppressedGuidance, setSuppressedGuidance] = React.useState<Set<string>>(
+  const [suppressedGuidanceIds, setSuppressedGuidanceIds] = React.useState<Set<string>>(
     () => new Set(),
   );
   const [loading, setLoading] = React.useState(true);
@@ -419,7 +422,7 @@ function DraftReplyPanel({
       );
       setDraft(result.draft);
       setLearning(result.learning ?? null);
-      setSuppressedGuidance(new Set());
+      setSuppressedGuidanceIds(new Set());
       initialDraftRef.current = result.draft;
     } catch {
       toast.error("Failed to generate draft — check AI configuration.");
@@ -457,14 +460,14 @@ function DraftReplyPanel({
     }
   }
 
-  async function handleSuppressLearning(item: string) {
+  async function handleSuppressLearning(item: BrandonDraftLearningGuidanceItem) {
     try {
       await onRecordReview(
         "marked_no_action",
         null,
-        `${BRANDON_LEARNING_SUPPRESSION_PREFIX} ${item}`,
+        `${BRANDON_LEARNING_SUPPRESSION_PREFIX} id=${item.id}; text=${item.text}`,
       );
-      setSuppressedGuidance((current) => new Set(current).add(item));
+      setSuppressedGuidanceIds((current) => new Set(current).add(item.id));
       toast.success("Learning correction recorded.");
     } catch (error) {
       toast.error("Failed to record learning correction.", {
@@ -474,9 +477,17 @@ function DraftReplyPanel({
     }
   }
 
-  const visibleGuidance =
-    learning?.guidance.filter((item) => !suppressedGuidance.has(item)).slice(0, 3) ??
+  const guidanceItems =
+    learning?.guidanceItems ??
+    learning?.guidance.map((text) => ({
+      id: text,
+      text,
+    })) ??
     [];
+  const visibleGuidance =
+    guidanceItems
+      .filter((item) => !suppressedGuidanceIds.has(item.id))
+      .slice(0, 3);
 
   return (
     <div className="border-t border-border/50 bg-card flex flex-col">
@@ -544,10 +555,10 @@ function DraftReplyPanel({
                 <ul className="space-y-0.5">
                   {visibleGuidance.map((item) => (
                     <li
-                      key={item}
+                      key={item.id}
                       className="flex items-start justify-between gap-2 text-[11px] leading-relaxed text-muted-foreground"
                     >
-                      <span>{item}</span>
+                      <span>{item.text}</span>
                       <Button
                         type="button"
                         variant="ghost"

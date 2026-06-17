@@ -155,6 +155,7 @@ Write a reply that:
         reviewCount: learning.reviewCount,
         draftCount: learning.draftCount,
         guidance: learning.guidance,
+        guidanceItems: learning.guidanceItems,
       },
     });
   },
