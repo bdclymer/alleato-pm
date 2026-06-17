@@ -1,43 +1,36 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { PageShell } from "@/components/layout";
-import { KpiRow } from "@/components/ds";
-import { PaymentGuardrailAlerts } from "@/components/accounting/payment-guardrail-alerts";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
-  RefreshCw,
-  ArrowUpRight,
   ArrowDownRight,
-  AlertTriangle,
-  ClipboardList,
-  CircleDollarSign,
-  FileCheck2,
-  ScrollText,
-  FolderKanban,
   ArrowRight,
+  ArrowUpRight,
+  AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 import {
-  BarChart,
   Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-  PieChart,
-  Pie,
 } from "recharts";
-import { cn } from "@/lib/utils";
-import { apiFetch } from "@/lib/api-client";
-import type { FinancialGuardrailAlert } from "@/lib/accounting/aging-calculator";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+import { PaymentGuardrailAlerts } from "@/components/accounting/payment-guardrail-alerts";
+import { KpiRow } from "@/components/ds";
+import { PageShell } from "@/components/layout";
+import { Button } from "@/components/ui/button";
+import type { FinancialGuardrailAlert } from "@/lib/accounting/aging-calculator";
+import { apiFetch } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
 
 interface AgingBucket {
   label: string;
@@ -70,6 +63,23 @@ interface ProjectRevenue {
   outstandingBalance: number;
 }
 
+interface ProjectBalance {
+  projectCode: string;
+  description: string | null;
+  customer: string | null;
+  outstandingBalance: number;
+}
+
+interface ProjectNetMargin {
+  projectCode: string;
+  description: string | null;
+  customer: string | null;
+  revenue: number;
+  cost: number;
+  netMargin: number;
+  netMarginPercent: number | null;
+}
+
 interface RecentPayment {
   referenceNbr: string;
   customerName: string | null;
@@ -87,12 +97,23 @@ interface RecentCheck {
   status: string | null;
 }
 
+interface MonthlyRevenueMargin {
+  month: string;
+  revenue: number;
+  cost: number;
+  netMargin: number;
+  netMarginPercent: number | null;
+}
+
 interface DashboardResponse {
   arAging: AgingResult;
   apAging: AgingResult;
   cashPosition: CashPosition;
   revenueByProject: ProjectRevenue[];
   arByProject: ProjectRevenue[];
+  apByProject: ProjectBalance[];
+  netMarginByProject: ProjectNetMargin[];
+  monthlyRevenueMargin: MonthlyRevenueMargin[];
   recentActivity: {
     payments: RecentPayment[];
     checks: RecentCheck[];
@@ -105,18 +126,61 @@ interface DashboardResponse {
     trailingFinanceSpend: number;
     financeSpendExceptionCount: number;
   };
+  reconciliation: {
+    duplicateCount: number;
+    onHoldCount: number;
+    syncIssueCount: number;
+    dollarsAtRisk: number;
+    lastRunAt: string | null;
+  };
   generatedAt: string;
 }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+const PROJECT_SLICE_COLORS = [
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-1))",
+  "hsl(var(--status-warning))",
+  "hsl(var(--destructive))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-5))",
+  "hsl(var(--muted-foreground))",
+];
+
+const REPORT_LINKS: Array<{
+  title: string;
+  href: string;
+  detail: (data: DashboardResponse) => string;
+}> = [
+  {
+    title: "WIP Report",
+    href: "/accounting/wip",
+    detail: (data) =>
+      `${data.arByProject.length} projects with billing position`,
+  },
+  {
+    title: "Project Status Reports",
+    href: "/accounting/projects",
+    detail: () => "Income, expenses, assets, and project status",
+  },
+  {
+    title: "SOP Backlog",
+    href: "/accounting/sop-backlog",
+    detail: (data) =>
+      `${data.leadership.neededSopCount} needed, ${data.leadership.staleNeededSopCount} stale`,
+  },
+  {
+    title: "Finance Spend",
+    href: "/accounting/finance-spend",
+    detail: (data) =>
+      `${formatCurrency(data.leadership.trailingFinanceSpend)} trailing spend, ${data.leadership.financeSpendExceptionCount} exceptions`,
+  },
+];
 
 function formatCurrency(amount: number): string {
   const abs = Math.abs(amount);
   if (abs >= 1_000_000) return `$${(amount / 1_000_000).toFixed(1)}M`;
   if (abs >= 1_000) return `$${(amount / 1_000).toFixed(0)}K`;
-  return `$${amount.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  return `$${amount.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 }
 
 function formatCurrencyFull(amount: number): string {
@@ -128,100 +192,302 @@ function formatCurrencyFull(amount: number): string {
 }
 
 function formatDate(dateStr: string | null): string {
-  if (!dateStr) return "—";
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  if (!dateStr) return "No date";
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return "No date";
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function agingToArray(
-  aging: AgingResult,
-): Array<{ label: string; count: number; amount: number }> {
-  return [
-    { label: "Current", count: aging.current.count, amount: aging.current.total },
-    { label: "31–60 Days", count: aging.days31to60.count, amount: aging.days31to60.total },
-    { label: "61–90 Days", count: aging.days61to90.count, amount: aging.days61to90.total },
-    { label: "90+ Days", count: aging.days90plus.count, amount: aging.days90plus.total },
-  ];
+function formatMonthLabel(month: string): string {
+  const date = new Date(`${month}-01T00:00:00`);
+  if (Number.isNaN(date.getTime())) return month;
+  return date.toLocaleDateString("en-US", { month: "short" });
 }
 
-// ---------------------------------------------------------------------------
-// Aging Donut Chart
-// ---------------------------------------------------------------------------
+function formatPercent(value: number | null): string {
+  if (value === null) return "No revenue";
+  return `${value.toFixed(1)}%`;
+}
 
-const AGING_COLORS = [
-  "hsl(var(--primary) / 0.65)",
-  "#F59E0B",
-  "#F97316",
-  "hsl(var(--destructive))",
-];
+function overdueTotal(aging: AgingResult): number {
+  return (
+    aging.days31to60.total + aging.days61to90.total + aging.days90plus.total
+  );
+}
 
-function AgingDonutChart({
+function overdueCount(aging: AgingResult): number {
+  return (
+    aging.days31to60.count + aging.days61to90.count + aging.days90plus.count
+  );
+}
+
+function percent(value: number, total: number): number {
+  if (total <= 0) return 0;
+  return Math.round((value / total) * 100);
+}
+
+function Section({
   title,
-  aging,
+  action,
+  children,
+  className,
+}: {
+  title: string;
+  action?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={cn("space-y-4", className)}>
+      <div className="flex items-center justify-between gap-4">
+        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function TextLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
+    >
+      {children}
+      <ArrowRight className="h-3 w-3" />
+    </Link>
+  );
+}
+
+function MetricPanel({
+  label,
+  value,
+  context,
+  href,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  context: string;
+  href?: string;
+  tone?: "default" | "risk" | "good";
+}) {
+  const content = (
+    <div className="space-y-2 rounded-lg bg-card p-4">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
+      <p
+        className={cn(
+          "text-2xl font-semibold tracking-tight tabular-nums text-foreground",
+          tone === "risk" && "text-destructive",
+          tone === "good" && "text-status-success",
+        )}
+      >
+        {value}
+      </p>
+      <p className="text-xs leading-5 text-muted-foreground">{context}</p>
+    </div>
+  );
+
+  if (!href) return content;
+  return (
+    <Link href={href} className="block transition-colors hover:bg-muted/30">
+      {content}
+    </Link>
+  );
+}
+
+function AttentionStrip({
+  data,
+  arLate,
+}: {
+  data: DashboardResponse;
+  arLate: number;
+}) {
+  const items: Array<{ key: string; label: string; sub: string; href: string }> = [];
+
+  if (arLate > 0) {
+    items.push({
+      key: "ar",
+      label: `${formatCurrency(arLate)} AR overdue`,
+      sub: `${overdueCount(data.arAging)} receivables`,
+      href: "/accounting/invoices?balance=positive",
+    });
+  }
+  if (data.reconciliation.duplicateCount > 0) {
+    items.push({
+      key: "dup",
+      label: `${data.reconciliation.duplicateCount} duplicate bills`,
+      sub: `${formatCurrency(data.reconciliation.dollarsAtRisk)} at risk`,
+      href: "/accounting/reconciliation?view=duplicates",
+    });
+  }
+  if (data.reconciliation.onHoldCount > 0) {
+    items.push({
+      key: "onhold",
+      label: `${data.reconciliation.onHoldCount} bills on hold`,
+      sub: "unreviewed",
+      href: "/accounting/reconciliation?view=onhold",
+    });
+  }
+  const underwater = data.netMarginByProject.filter((p) => p.netMargin < 0).length;
+  if (underwater > 0) {
+    items.push({
+      key: "underwater",
+      label: `${underwater} ${underwater === 1 ? "job" : "jobs"} underwater`,
+      sub: "negative margin",
+      href: "/accounting/wip",
+    });
+  }
+  if (data.leadership.financeSpendExceptionCount > 0) {
+    items.push({
+      key: "spend",
+      label: `${data.leadership.financeSpendExceptionCount} spend exceptions`,
+      sub: "review",
+      href: "/accounting/finance-spend",
+    });
+  }
+
+  if (items.length === 0) return null;
+
+  return (
+    <section className="rounded-lg bg-warning/10 p-4">
+      <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+        <AlertTriangle className="h-4 w-4 text-warning" />
+        Needs attention
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {items.map((item) => (
+          <Link
+            key={item.key}
+            href={item.href}
+            className="group flex items-center gap-2 rounded-md bg-card px-3 py-2 text-sm transition-colors hover:bg-muted"
+          >
+            <span className="font-medium text-foreground">{item.label}</span>
+            <span className="text-xs text-muted-foreground">{item.sub}</span>
+            <ArrowRight className="h-3 w-3 text-muted-foreground transition-colors group-hover:text-primary" />
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ProjectDonutChart({
+  title,
+  projects,
+  total,
+  pastCurrent,
   href,
 }: {
   title: string;
-  aging: AgingResult;
-  href?: string;
+  projects: ProjectBalance[];
+  total: number;
+  pastCurrent: number;
+  href: string;
 }) {
-  const buckets = agingToArray(aging);
-  const chartData = buckets.map((b) => ({
-    name: b.label,
-    value: b.amount,
-    count: b.count,
-  }));
-  const total = aging.totalOutstanding;
-  const overdueAmount =
-    aging.days31to60.total + aging.days61to90.total + aging.days90plus.total;
-  const overduePercent =
-    total > 0 ? Math.round((overdueAmount / total) * 100) : 0;
+  const topProjects = projects.slice(0, 6);
+  const topTotal = topProjects.reduce(
+    (sum, project) => sum + project.outstandingBalance,
+    0,
+  );
+  const otherTotal = Math.max(total - topTotal, 0);
+  const chartData =
+    total > 0
+      ? [
+          ...topProjects.map((project) => ({
+            name: project.projectCode,
+            projectName: project.description ?? project.projectCode,
+            customer: project.customer,
+            value: project.outstandingBalance,
+          })),
+          ...(otherTotal > 0
+            ? [
+                {
+                  name: "Other",
+                  projectName: "Other projects",
+                  customer: null,
+                  value: otherTotal,
+                },
+              ]
+            : []),
+        ]
+      : [
+          {
+            name: "No balance",
+            projectName: "No project balance",
+            customer: null,
+            value: 1,
+          },
+        ];
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold text-foreground">{title}</p>
-        {href && (
-          <Link
-            href={href}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
-          >
-            View all <ArrowRight className="h-3 w-3" />
-          </Link>
-        )}
+    <div className="rounded-lg bg-card p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold text-foreground">{title}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {formatCurrencyFull(pastCurrent)} past current
+          </p>
+        </div>
+        <TextLink href={href}>Open</TextLink>
       </div>
 
-      <div className="relative">
-        <ResponsiveContainer width="100%" height={180}>
+      <div className="relative mt-4 h-44">
+        <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={chartData}
               cx="50%"
               cy="50%"
-              innerRadius={56}
-              outerRadius={76}
-              paddingAngle={2}
               dataKey="value"
+              innerRadius={58}
+              outerRadius={78}
+              paddingAngle={2}
               strokeWidth={0}
+              animationBegin={80}
+              animationDuration={700}
+              animationEasing="ease-out"
+              isAnimationActive
             >
-              {chartData.map((_, index) => (
-                <Cell key={index} fill={AGING_COLORS[index]} />
+              {chartData.map((entry, index) => (
+                <Cell
+                  key={entry.name}
+                  fill={
+                    total > 0
+                      ? PROJECT_SLICE_COLORS[
+                          index % PROJECT_SLICE_COLORS.length
+                        ]
+                      : "hsl(var(--muted))"
+                  }
+                />
               ))}
             </Pie>
             <Tooltip
               content={({ active, payload }) => {
-                if (!active || !payload?.length) return null;
-                const d = payload[0]?.payload as {
+                if (!active || !payload?.length || total <= 0) return null;
+                const item = payload[0]?.payload as {
                   name: string;
+                  projectName: string;
+                  customer: string | null;
                   value: number;
-                  count: number;
                 };
                 return (
-                  <div className="rounded-lg bg-popover border border-border/50 px-3 py-2 shadow-sm text-xs space-y-1">
-                    <div className="font-semibold text-foreground">{d.name}</div>
-                    <div className="tabular-nums text-foreground">
-                      {formatCurrencyFull(d.value)}
-                    </div>
-                    <div className="text-muted-foreground">{d.count} invoices</div>
+                  <div className="space-y-1 rounded-lg border border-border/50 bg-popover px-3 py-2 text-xs shadow-sm">
+                    <p className="font-medium text-foreground">
+                      {item.name}, {item.projectName}
+                    </p>
+                    {item.customer && (
+                      <p className="text-muted-foreground">{item.customer}</p>
+                    )}
+                    <p className="tabular-nums text-foreground">
+                      {formatCurrencyFull(item.value)}
+                    </p>
+                    <p className="text-muted-foreground">
+                      {percent(item.value, total)}% of total
+                    </p>
                   </div>
                 );
               }}
@@ -229,122 +495,459 @@ function AgingDonutChart({
           </PieChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-base font-bold tabular-nums text-foreground">
+          <span className="text-xl font-semibold tabular-nums text-foreground">
             {formatCurrency(total)}
           </span>
-          {overduePercent > 0 && (
-            <span className="text-[10px] font-medium text-destructive">
-              {overduePercent}% overdue
-            </span>
-          )}
+          <span className="text-[11px] text-muted-foreground">by project</span>
         </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-        {buckets.map((bucket, index) => (
-          <div key={bucket.label} className="flex items-center gap-1.5 text-[10px] min-w-0">
-            <div
-              className="h-2 w-2 shrink-0 rounded-sm"
-              style={{ background: AGING_COLORS[index] }}
-            />
-            <span className="text-muted-foreground truncate">{bucket.label}</span>
-            <span className="ml-auto tabular-nums font-medium text-foreground">
-              {formatCurrency(bucket.amount)}
-            </span>
-          </div>
-        ))}
       </div>
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Cash Flow Bar — received vs paid this month
-// ---------------------------------------------------------------------------
+function CashFlowPanel({ cashPosition }: { cashPosition: CashPosition }) {
+  const { paymentsReceivedThisMonth, checksIssuedThisMonth, netCashPosition } =
+    cashPosition;
+  const maxFlow = Math.max(paymentsReceivedThisMonth, checksIssuedThisMonth, 1);
+  const inflowWidth = percent(paymentsReceivedThisMonth, maxFlow);
+  const outflowWidth = percent(checksIssuedThisMonth, maxFlow);
 
-function CashFlowBar({
-  received,
-  paid,
-}: {
-  received: number;
-  paid: number;
-}) {
-  const data = [
-    { name: "Received", value: received },
-    { name: "Paid Out", value: paid },
-  ];
+  return (
+    <div className="rounded-lg bg-card p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold text-foreground">Cash Movement</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Current-month receipts against checks issued
+          </p>
+        </div>
+        <TextLink href="/accounting/payments">Payments</TextLink>
+      </div>
+
+      <div className="mt-6 space-y-5">
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-4 text-xs">
+            <span className="text-muted-foreground">Received</span>
+            <span className="tabular-nums text-foreground">
+              {formatCurrencyFull(paymentsReceivedThisMonth)}
+            </span>
+          </div>
+          <div className="h-3 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-status-success"
+              style={{ width: `${inflowWidth}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-4 text-xs">
+            <span className="text-muted-foreground">Paid out</span>
+            <span className="tabular-nums text-foreground">
+              {formatCurrencyFull(checksIssuedThisMonth)}
+            </span>
+          </div>
+          <div className="h-3 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-primary"
+              style={{ width: `${outflowWidth}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="flex items-baseline justify-between border-t border-border/40 pt-4">
+          <span className="text-xs font-medium text-muted-foreground">
+            Net position
+          </span>
+          <span
+            className={cn(
+              "text-2xl font-semibold tracking-tight tabular-nums",
+              netCashPosition >= 0 ? "text-status-success" : "text-destructive",
+            )}
+          >
+            {formatCurrencyFull(netCashPosition)}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProjectNetMarginChart({ projects }: { projects: ProjectNetMargin[] }) {
+  const topProjects = projects
+    .filter((project) => project.revenue > 0 || project.cost > 0)
+    .slice(0, 8);
+  const totalNetMargin = projects.reduce(
+    (sum, project) => sum + project.netMargin,
+    0,
+  );
+  const chartData = topProjects.map((project) => ({
+    projectCode: project.projectCode,
+    projectName: project.description ?? project.projectCode,
+    customer: project.customer,
+    revenue: project.revenue,
+    cost: project.cost,
+    netMargin: project.netMargin,
+    netMarginPercent: project.netMarginPercent,
+  }));
+
+  if (topProjects.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        No project margin data available.
+      </p>
+    );
+  }
 
   return (
     <div className="space-y-3">
-      <p className="text-xs font-semibold text-foreground">Cash Flow — This Month</p>
-      <ResponsiveContainer width="100%" height={164}>
-        <BarChart
-          data={data}
-          margin={{ top: 4, right: 4, bottom: 4, left: 4 }}
-          barCategoryGap="35%"
-        >
-          <CartesianGrid
-            vertical={false}
-            strokeDasharray="3 3"
-            className="stroke-border/30"
-          />
-          <XAxis
-            dataKey="name"
-            tick={{ fontSize: 10 }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis
-            tickFormatter={formatCurrency}
-            tick={{ fontSize: 10 }}
-            axisLine={false}
-            tickLine={false}
-            width={50}
-          />
-          <Tooltip
-            content={({ active, payload }) => {
-              if (!active || !payload?.length) return null;
-              return (
-                <div className="rounded-lg bg-popover border border-border/50 px-3 py-2 shadow-sm text-xs space-y-1">
-                  <div className="font-medium text-foreground">
-                    {payload[0]?.payload?.name as string}
-                  </div>
-                  <div className="tabular-nums font-semibold text-foreground">
-                    {formatCurrencyFull(payload[0]?.value as number)}
-                  </div>
-                </div>
-              );
-            }}
-          />
-          <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={52}>
-            <Cell fill="#10B981" />
-            <Cell fill="hsl(var(--primary) / 0.7)" />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-      <div className="flex items-center justify-between text-[10px]">
-        <div className="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-sm bg-status-success" />
-          <span className="text-muted-foreground">Received</span>
-          <span className="tabular-nums font-semibold text-foreground ml-1">
-            {formatCurrency(received)}
-          </span>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-foreground">
+            {formatCurrencyFull(totalNetMargin)} net margin
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Largest project margins by absolute impact
+          </p>
         </div>
-        <div className="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-sm bg-primary/70" />
-          <span className="text-muted-foreground">Paid Out</span>
-          <span className="tabular-nums font-semibold text-foreground ml-1">
-            {formatCurrency(paid)}
-          </span>
-        </div>
+        <TextLink href="/accounting/projects">All projects</TextLink>
+      </div>
+
+      <div className="h-80">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={chartData}
+            margin={{ top: 8, right: 12, bottom: 48, left: 8 }}
+            barCategoryGap="28%"
+          >
+            <CartesianGrid
+              vertical={false}
+              strokeDasharray="3 3"
+              className="stroke-border/40"
+            />
+            <XAxis
+              dataKey="projectCode"
+              axisLine={false}
+              tickLine={false}
+              interval={0}
+              angle={-32}
+              textAnchor="end"
+              height={52}
+              tick={{ fontSize: 11 }}
+              className="fill-muted-foreground"
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={formatCurrency}
+              width={58}
+              tick={{ fontSize: 11 }}
+              className="fill-muted-foreground"
+            />
+            <Tooltip
+              cursor={{ fill: "hsl(var(--muted) / 0.35)" }}
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const item = payload[0]?.payload as {
+                  projectCode: string;
+                  projectName: string;
+                  customer: string | null;
+                  revenue: number;
+                  cost: number;
+                  netMargin: number;
+                  netMarginPercent: number | null;
+                };
+                return (
+                  <div className="space-y-1 rounded-lg border border-border/50 bg-popover px-3 py-2 text-xs shadow-sm">
+                    <p className="font-medium text-foreground">
+                      {item.projectCode}, {item.projectName}
+                    </p>
+                    <p className="text-muted-foreground">
+                      {item.customer ?? "No customer listed"}
+                    </p>
+                    <div className="grid grid-cols-[4rem_auto] gap-x-4 gap-y-1">
+                      <span className="text-muted-foreground">Revenue</span>
+                      <span className="text-right tabular-nums text-foreground">
+                        {formatCurrencyFull(item.revenue)}
+                      </span>
+                      <span className="text-muted-foreground">Cost</span>
+                      <span className="text-right tabular-nums text-foreground">
+                        {formatCurrencyFull(item.cost)}
+                      </span>
+                      <span className="text-muted-foreground">Margin</span>
+                      <span className="text-right tabular-nums text-foreground">
+                        {formatCurrencyFull(item.netMargin)}
+                      </span>
+                      <span className="text-muted-foreground">Rate</span>
+                      <span className="text-right tabular-nums text-foreground">
+                        {formatPercent(item.netMarginPercent)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              }}
+            />
+            <Bar
+              dataKey="netMargin"
+              name="Net margin"
+              radius={[4, 4, 0, 0]}
+              maxBarSize={44}
+              isAnimationActive={false}
+            >
+              {chartData.map((project) => (
+                <Cell
+                  key={project.projectCode}
+                  fill={
+                    project.netMargin >= 0
+                      ? "hsl(var(--status-success))"
+                      : "hsl(var(--destructive))"
+                  }
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Activity feed row
-// ---------------------------------------------------------------------------
+function RevenueRows({ projects }: { projects: ProjectRevenue[] }) {
+  const rows = projects.slice(0, 6);
+  const maxValue = Math.max(
+    ...rows.flatMap((project) => [
+      project.totalInvoiced,
+      project.totalCollected,
+      project.outstandingBalance,
+    ]),
+    1,
+  );
+
+  if (rows.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        No project revenue data available.
+      </p>
+    );
+  }
+
+  return (
+    <div className="divide-y divide-border/40">
+      {rows.map((project) => (
+        <div
+          key={project.projectCode}
+          className="grid gap-3 py-3 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,24rem)]"
+        >
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-foreground">
+              {project.projectCode}
+              {project.description ? `, ${project.description}` : ""}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">
+              {project.customer ?? "No customer listed"}
+            </p>
+          </div>
+          <div className="grid gap-2 text-xs">
+            {[
+              {
+                label: "Invoiced",
+                value: project.totalInvoiced,
+                className: "bg-primary",
+              },
+              {
+                label: "Collected",
+                value: project.totalCollected,
+                className: "bg-status-success",
+              },
+              {
+                label: "Open",
+                value: project.outstandingBalance,
+                className: "bg-status-warning",
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="grid grid-cols-[4.5rem_minmax(0,1fr)_4.5rem] items-center gap-2"
+              >
+                <span className="text-muted-foreground">{item.label}</span>
+                <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className={cn("h-full rounded-full", item.className)}
+                    style={{
+                      width: `${Math.max(percent(item.value, maxValue), item.value > 0 ? 3 : 0)}%`,
+                    }}
+                  />
+                </div>
+                <span className="text-right tabular-nums text-foreground">
+                  {formatCurrency(item.value)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function MonthlyRevenueMarginChart({
+  series,
+}: {
+  series: MonthlyRevenueMargin[];
+}) {
+  const chartData = series.map((point) => ({
+    ...point,
+    label: formatMonthLabel(point.month),
+  }));
+
+  if (chartData.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        No monthly revenue data available.
+      </p>
+    );
+  }
+
+  const latest = chartData[chartData.length - 1];
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+      <div className="space-y-5">
+        {latest && (
+          <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Latest revenue
+              </p>
+              <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
+                {formatCurrencyFull(latest.revenue)}
+              </p>
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Net margin
+              </p>
+              <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
+                {formatCurrencyFull(latest.netMargin)}
+              </p>
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Margin rate
+              </p>
+              <p className="mt-1 text-lg font-semibold tabular-nums text-foreground">
+                {formatPercent(latest.netMarginPercent)}
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center gap-4 text-xs">
+          <span className="inline-flex items-center gap-2 text-muted-foreground">
+            <span className="h-2 w-2 rounded-full bg-primary" />
+            Revenue
+          </span>
+          <span className="inline-flex items-center gap-2 text-muted-foreground">
+            <span className="h-2 w-2 rounded-full bg-status-success" />
+            Net margin
+          </span>
+        </div>
+      </div>
+
+      <div className="h-80 min-w-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart
+            data={chartData}
+            margin={{ top: 12, right: 12, bottom: 8, left: 8 }}
+          >
+            <CartesianGrid
+              vertical={false}
+              strokeDasharray="3 3"
+              className="stroke-border/40"
+            />
+            <XAxis
+              dataKey="label"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 11 }}
+              className="fill-muted-foreground"
+            />
+            <YAxis
+              yAxisId="amount"
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={formatCurrency}
+              width={58}
+              tick={{ fontSize: 11 }}
+              className="fill-muted-foreground"
+            />
+            <Tooltip
+              cursor={{ stroke: "hsl(var(--border))" }}
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const item = payload[0]?.payload as MonthlyRevenueMargin & {
+                  label: string;
+                };
+                return (
+                  <div className="space-y-1.5 rounded-lg border border-border/50 bg-popover px-3 py-2 text-xs shadow-sm">
+                    <p className="font-medium text-foreground">{item.label}</p>
+                    <div className="flex items-center justify-between gap-5">
+                      <span className="text-muted-foreground">Revenue</span>
+                      <span className="tabular-nums text-foreground">
+                        {formatCurrencyFull(item.revenue)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-5">
+                      <span className="text-muted-foreground">Cost</span>
+                      <span className="tabular-nums text-foreground">
+                        {formatCurrencyFull(item.cost)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-5">
+                      <span className="text-muted-foreground">Net margin</span>
+                      <span className="tabular-nums text-foreground">
+                        {formatCurrencyFull(item.netMargin)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-5">
+                      <span className="text-muted-foreground">Margin rate</span>
+                      <span className="tabular-nums text-foreground">
+                        {formatPercent(item.netMarginPercent)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              }}
+            />
+            <Line
+              yAxisId="amount"
+              type="monotone"
+              dataKey="revenue"
+              name="Revenue"
+              stroke="hsl(var(--primary))"
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 4 }}
+              isAnimationActive={false}
+            />
+            <Line
+              yAxisId="amount"
+              type="monotone"
+              dataKey="netMargin"
+              name="Net margin"
+              stroke="hsl(var(--status-success))"
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 4 }}
+              connectNulls
+              isAnimationActive={false}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
 
 function ActivityRow({
   referenceNbr,
@@ -360,14 +963,14 @@ function ActivityRow({
   type: "payment" | "check";
 }) {
   return (
-    <div className="flex items-center justify-between py-2 text-xs">
-      <div className="flex items-center gap-2.5 min-w-0">
-        <div
+    <div className="grid grid-cols-[minmax(0,1fr)_3.5rem_minmax(6.5rem,auto)] gap-2 py-2.5">
+      <div className="flex min-w-0 items-center gap-2">
+        <span
           className={cn(
-            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
+            "flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
             type === "payment"
-              ? "bg-emerald-500/10 text-emerald-600"
-              : "bg-blue-500/10 text-blue-600",
+              ? "bg-status-success/10 text-status-success"
+              : "bg-primary/10 text-primary",
           )}
         >
           {type === "payment" ? (
@@ -375,358 +978,85 @@ function ActivityRow({
           ) : (
             <ArrowUpRight className="h-3 w-3" />
           )}
-        </div>
-        <div className="min-w-0">
-          <span className="font-medium text-foreground">#{referenceNbr}</span>
-          {label && (
-            <span className="ml-1.5 text-muted-foreground truncate">
-              {label}
-            </span>
-          )}
-        </div>
-      </div>
-      <div className="flex items-center gap-3 shrink-0 ml-2">
-        <span className="text-muted-foreground">{formatDate(date)}</span>
-        <span className="tabular-nums font-medium text-foreground">
-          {formatCurrencyFull(amount)}
         </span>
+        <div className="flex min-w-0 items-baseline gap-2">
+          <p className="shrink-0 text-sm font-medium text-foreground">
+            #{referenceNbr}
+          </p>
+          <p className="truncate text-xs text-muted-foreground">
+            {label ?? "No name"}
+          </p>
+        </div>
       </div>
+      <p className="self-center text-xs text-muted-foreground">
+        {formatDate(date)}
+      </p>
+      <p className="self-center text-right text-sm font-semibold tabular-nums text-foreground">
+        {formatCurrencyFull(amount)}
+      </p>
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// AR by Project horizontal bar chart
-// ---------------------------------------------------------------------------
-
-const BAR_COLORS = [
-  "hsl(var(--primary))",
-  "hsl(var(--primary) / 0.8)",
-  "hsl(var(--primary) / 0.65)",
-  "hsl(var(--primary) / 0.5)",
-  "hsl(var(--primary) / 0.38)",
-  "hsl(var(--primary) / 0.28)",
-];
-
-function ArByProjectChart({ projects }: { projects: ProjectRevenue[] }) {
-  const chartData = projects.slice(0, 12).map((p) => ({
-    name: p.description
-      ? `${p.projectCode} · ${p.description}`.slice(0, 30)
-      : p.projectCode,
-    outstanding: p.outstandingBalance,
-    fullName: p.description ?? p.projectCode,
-    customer: p.customer,
-  }));
-
-  if (chartData.length === 0) {
-    return (
-      <p className="text-xs text-muted-foreground">No outstanding AR by project</p>
-    );
-  }
-
-  const total = projects.reduce((sum, d) => sum + d.outstandingBalance, 0);
-  const barHeight = Math.max(chartData.length * 24, 80);
-
+function ReportList({ data }: { data: DashboardResponse }) {
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs font-semibold text-foreground">
-            AR Outstanding by Project
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {formatCurrencyFull(total)} across {projects.length} projects
-          </p>
-        </div>
+    <div className="divide-y divide-border/40">
+      {REPORT_LINKS.map((report) => (
         <Link
-          href="/accounting/invoices?balance=positive"
-          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+          key={report.href}
+          href={report.href}
+          className="grid gap-1 py-3 transition-colors hover:bg-muted/40 sm:grid-cols-[minmax(0,1fr)_auto]"
         >
-          View all <ArrowRight className="h-3 w-3" />
-        </Link>
-      </div>
-      <div style={{ height: barHeight }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart
-            data={chartData}
-            layout="vertical"
-            margin={{ top: 0, right: 8, bottom: 0, left: 0 }}
-            barCategoryGap={4}
-          >
-            <CartesianGrid
-              horizontal={false}
-              strokeDasharray="3 3"
-              className="stroke-border/30"
-            />
-            <XAxis
-              type="number"
-              tickFormatter={(v: number) => formatCurrency(v)}
-              tick={{ fontSize: 10 }}
-              className="fill-muted-foreground"
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              type="category"
-              dataKey="name"
-              width={170}
-              tick={{ fontSize: 10 }}
-              className="fill-muted-foreground"
-              axisLine={false}
-              tickLine={false}
-            />
-            <Tooltip
-              cursor={{ fill: "hsl(var(--muted) / 0.4)" }}
-              content={({ active, payload }) => {
-                if (!active || !payload?.length) return null;
-                const d = payload[0]?.payload as {
-                  fullName: string;
-                  customer: string | null;
-                  outstanding: number;
-                };
-                return (
-                  <div className="rounded-lg bg-popover border border-border/50 px-3 py-2 shadow-sm text-xs space-y-1">
-                    <div className="font-medium text-foreground">{d.fullName}</div>
-                    {d.customer && (
-                      <div className="text-muted-foreground">{d.customer}</div>
-                    )}
-                    <div className="font-semibold tabular-nums text-foreground">
-                      {formatCurrencyFull(d.outstanding)}
-                    </div>
-                  </div>
-                );
-              }}
-            />
-            <Bar dataKey="outstanding" radius={[0, 3, 3, 0]} maxBarSize={14}>
-              {chartData.map((_, index) => (
-                <Cell key={index} fill={BAR_COLORS[index % BAR_COLORS.length]} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Revenue Bar Chart — grouped bars per project (replaces table)
-// ---------------------------------------------------------------------------
-
-const REVENUE_COLORS = {
-  invoiced: "hsl(var(--primary) / 0.75)",
-  collected: "#10B981",
-  outstanding: "#F59E0B",
-};
-
-function RevenueBarChart({ projects }: { projects: ProjectRevenue[] }) {
-  if (projects.length === 0) {
-    return (
-      <p className="text-xs text-muted-foreground">No project data available</p>
-    );
-  }
-
-  const data = projects.slice(0, 10).map((p) => ({
-    name: p.projectCode,
-    fullName: p.description ?? p.projectCode,
-    customer: p.customer,
-    invoiced: p.totalInvoiced,
-    collected: p.totalCollected,
-    outstanding: p.outstandingBalance,
-  }));
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-5">
-        {(["invoiced", "collected", "outstanding"] as const).map((key) => (
-          <div key={key} className="flex items-center gap-1.5 text-xs">
-            <div
-              className="h-2 w-2 rounded-sm"
-              style={{ background: REVENUE_COLORS[key] }}
-            />
-            <span className="text-muted-foreground capitalize">{key}</span>
-          </div>
-        ))}
-      </div>
-      <ResponsiveContainer width="100%" height={260}>
-        <BarChart
-          data={data}
-          margin={{ top: 4, right: 4, bottom: 32, left: 0 }}
-          barCategoryGap="28%"
-          barGap={2}
-        >
-          <CartesianGrid
-            vertical={false}
-            strokeDasharray="3 3"
-            className="stroke-border/30"
-          />
-          <XAxis
-            dataKey="name"
-            tick={{ fontSize: 10 }}
-            axisLine={false}
-            tickLine={false}
-            angle={-35}
-            textAnchor="end"
-            interval={0}
-          />
-          <YAxis
-            tickFormatter={formatCurrency}
-            tick={{ fontSize: 10 }}
-            axisLine={false}
-            tickLine={false}
-            width={52}
-          />
-          <Tooltip
-            content={({ active, payload }) => {
-              if (!active || !payload?.length) return null;
-              const d = payload[0]?.payload as {
-                fullName: string;
-                customer: string | null;
-                invoiced: number;
-                collected: number;
-                outstanding: number;
-              };
-              return (
-                <div className="rounded-lg bg-popover border border-border/50 px-3 py-2 shadow-sm text-xs space-y-1.5">
-                  <div className="font-semibold text-foreground">{d.fullName}</div>
-                  {d.customer && (
-                    <div className="text-muted-foreground">{d.customer}</div>
-                  )}
-                  {payload.map((p) => (
-                    <div
-                      key={p.dataKey as string}
-                      className="flex items-center justify-between gap-4"
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <div
-                          className="h-2 w-2 rounded-sm"
-                          style={{ background: p.color }}
-                        />
-                        <span className="text-muted-foreground capitalize">
-                          {p.name}
-                        </span>
-                      </div>
-                      <span className="tabular-nums font-medium text-foreground">
-                        {formatCurrencyFull(p.value as number)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              );
-            }}
-          />
-          <Bar
-            dataKey="invoiced"
-            name="Invoiced"
-            fill={REVENUE_COLORS.invoiced}
-            radius={[3, 3, 0, 0]}
-            maxBarSize={10}
-          />
-          <Bar
-            dataKey="collected"
-            name="Collected"
-            fill={REVENUE_COLORS.collected}
-            radius={[3, 3, 0, 0]}
-            maxBarSize={10}
-          />
-          <Bar
-            dataKey="outstanding"
-            name="Outstanding"
-            fill={REVENUE_COLORS.outstanding}
-            radius={[3, 3, 0, 0]}
-            maxBarSize={10}
-          />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Featured Report Card
-// ---------------------------------------------------------------------------
-
-function ReportCard({
-  href,
-  icon,
-  title,
-  description,
-  meta,
-  accentClass,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  meta?: string;
-  accentClass: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="group flex flex-col gap-3 rounded-xl p-5 transition-all duration-200 hover:bg-muted/40 hover:-translate-y-px active:translate-y-0 border border-transparent hover:border-border/50"
-    >
-      <div
-        className={cn(
-          "flex h-10 w-10 items-center justify-center rounded-lg",
-          accentClass,
-        )}
-      >
-        {icon}
-      </div>
-      <div className="space-y-1">
-        <div className="flex items-center gap-1.5">
-          <p className="text-sm font-semibold text-foreground">{title}</p>
-          <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-        </div>
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          {description}
-        </p>
-        {meta && (
-          <p className="text-[11px] text-muted-foreground/70 font-medium pt-1">
-            {meta}
+          <p className="text-sm font-medium text-foreground">{report.title}</p>
+          <p className="text-xs text-muted-foreground sm:text-right">
+            {report.detail(data)}
           </p>
-        )}
-      </div>
-    </Link>
+        </Link>
+      ))}
+    </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Section wrapper
-// ---------------------------------------------------------------------------
+function LoadingState() {
+  return (
+    <PageShell
+      variant="dashboard"
+      title="Accounting"
+      contentClassName="space-y-8"
+    >
+      <div className="space-y-4">
+        <div className="h-24 animate-pulse rounded-lg bg-muted" />
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="h-56 animate-pulse rounded-lg bg-muted" />
+          <div className="h-56 animate-pulse rounded-lg bg-muted" />
+          <div className="h-56 animate-pulse rounded-lg bg-muted" />
+        </div>
+      </div>
+    </PageShell>
+  );
+}
 
-function Section({
-  title,
-  action,
-  children,
-  className,
+function ErrorState({
+  message,
+  onRetry,
 }: {
-  title?: string;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
+  message: string;
+  onRetry: () => void;
 }) {
   return (
-    <section className={cn("space-y-4", className)}>
-      {(title ?? action) && (
-        <div className="flex items-center justify-between">
-          {title && (
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {title}
-            </h2>
-          )}
-          {action}
-        </div>
-      )}
-      {children}
-    </section>
+    <PageShell variant="dashboard" title="Accounting">
+      <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
+        <AlertTriangle className="h-7 w-7 text-destructive" />
+        <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+          {message}
+        </p>
+        <Button variant="outline" size="sm" onClick={onRetry}>
+          Retry
+        </Button>
+      </div>
+    </PageShell>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Main Page
-// ---------------------------------------------------------------------------
 
 export default function AccountingDashboardPage() {
   const [data, setData] = useState<DashboardResponse | null>(null);
@@ -738,10 +1068,16 @@ export default function AccountingDashboardPage() {
     try {
       setLoading(true);
       setError(null);
-      const result = await apiFetch<DashboardResponse>("/api/accounting/dashboard");
+      const result = await apiFetch<DashboardResponse>(
+        "/api/accounting/dashboard",
+      );
       setData(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load dashboard");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Accounting dashboard failed to load.",
+      );
     } finally {
       setLoading(false);
     }
@@ -756,7 +1092,7 @@ export default function AccountingDashboardPage() {
       });
       await fetchDashboard();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sync failed");
+      setError(err instanceof Error ? err.message : "Acumatica sync failed.");
     } finally {
       setSyncing(false);
     }
@@ -766,255 +1102,178 @@ export default function AccountingDashboardPage() {
     fetchDashboard();
   }, [fetchDashboard]);
 
-  if (loading) {
-    return (
-      <PageShell variant="dashboard" title="Accounting">
-        <div className="flex items-center justify-center py-24">
-          <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
-          <span className="ml-2 text-sm text-muted-foreground">
-            Loading accounting data…
-          </span>
-        </div>
-      </PageShell>
-    );
-  }
-
-  if (error) {
-    return (
-      <PageShell variant="dashboard" title="Accounting">
-        <div className="flex flex-col items-center justify-center gap-3 py-24">
-          <AlertTriangle className="h-7 w-7 text-destructive" />
-          <p className="text-sm text-muted-foreground">{error}</p>
-          <Button variant="outline" size="sm" onClick={fetchDashboard}>
-            Retry
-          </Button>
-        </div>
-      </PageShell>
-    );
-  }
-
+  if (loading) return <LoadingState />;
+  if (error) return <ErrorState message={error} onRetry={fetchDashboard} />;
   if (!data) return null;
 
   const {
-    cashPosition,
     arAging,
     apAging,
-    revenueByProject,
     arByProject,
-    recentActivity,
+    apByProject,
+    cashPosition,
     guardrailAlerts,
-    leadership,
+    monthlyRevenueMargin,
+    netMarginByProject,
+    recentActivity,
+    revenueByProject,
   } = data;
-
-  const paymentsIn = recentActivity.payments.slice(0, 6).map((p) => ({
-    referenceNbr: p.referenceNbr,
-    label: p.customerName,
-    amount: p.amount,
-    date: p.date,
+  const arLate = overdueTotal(arAging);
+  const apLate = overdueTotal(apAging);
+  const paymentsIn = recentActivity.payments.slice(0, 5).map((payment) => ({
+    referenceNbr: payment.referenceNbr,
+    label: payment.customerName,
+    amount: payment.amount,
+    date: payment.date,
   }));
-  const checksOut = recentActivity.checks.slice(0, 6).map((c) => ({
-    referenceNbr: c.referenceNbr,
-    label: c.vendorName ?? c.vendorId,
-    amount: c.amount,
-    date: c.date,
+  const checksOut = recentActivity.checks.slice(0, 5).map((check) => ({
+    referenceNbr: check.referenceNbr,
+    label: check.vendorName ?? check.vendorId,
+    amount: check.amount,
+    date: check.date,
   }));
 
   return (
     <PageShell
       variant="dashboard"
       title="Accounting"
+      contentClassName="space-y-8"
       actions={
-        <div className="flex items-center gap-2">
-          <span className="hidden sm:block text-xs text-muted-foreground">
-            {new Date(data.generatedAt).toLocaleString()}
+        <div className="flex items-center gap-3">
+          <span className="hidden text-xs text-muted-foreground md:inline">
+            Updated {new Date(data.generatedAt).toLocaleString()}
           </span>
           <Button
             variant="ghost"
             size="icon"
             onClick={handleSync}
             disabled={syncing}
-            title={syncing ? "Syncing…" : "Sync from Acumatica"}
+            title={syncing ? "Syncing from Acumatica" : "Sync from Acumatica"}
             className="h-8 w-8"
           >
-            <RefreshCw
-              className={cn("h-4 w-4", syncing && "animate-spin")}
-            />
+            <RefreshCw className={cn("h-4 w-4", syncing && "animate-spin")} />
           </Button>
         </div>
       }
     >
-      {/* ── KPI row ── */}
-      <KpiRow
-        metrics={[
-          {
-            label: "AR OUTSTANDING",
-            value: formatCurrency(cashPosition.totalArOutstanding),
-            context: "Receivables from customers",
-            href: "/accounting/invoices",
-          },
-          {
-            label: "AP OUTSTANDING",
-            value: formatCurrency(cashPosition.totalApOutstanding),
-            context: "Payables to vendors",
-            href: "/accounting/bills",
-          },
-          {
-            label: "NET POSITION",
-            value: formatCurrency(cashPosition.netCashPosition),
-            delta: {
-              value: formatCurrency(Math.abs(cashPosition.netCashPosition)),
-              positive: cashPosition.netCashPosition >= 0,
-            },
-          },
-          {
-            label: "RECEIVED THIS MONTH",
-            value: formatCurrency(cashPosition.paymentsReceivedThisMonth),
-            context: `${formatCurrency(cashPosition.checksIssuedThisMonth)} paid out`,
-            href: "/accounting/payments",
-          },
-        ]}
-      />
+      <p className="text-xs text-muted-foreground">
+        Synced from Acumatica.{" "}
+        {data.reconciliation.onHoldCount > 0
+          ? `${data.reconciliation.onHoldCount} bills still on hold (unreviewed) — figures may shift as they're cleared.`
+          : "No bills on hold — figures are stable."}
+      </p>
 
-      {/* ── Featured Reports ── */}
-      <Section title="Reports">
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5">
-          <ReportCard
-            href="/accounting/wip"
-            icon={<ClipboardList className="h-5 w-5 text-primary" />}
-            title="WIP Report"
-            description="Contract value, earned revenue, billing position, and forecast margin across all active projects."
-            meta={`${arByProject.length} projects in scope`}
-            accentClass="bg-primary/10"
-          />
-          <ReportCard
-            href="/accounting/projects"
-            icon={<ScrollText className="h-5 w-5 text-primary" />}
-            title="Project Status Reports"
-            description="Per-project PSR with schedule, budget, RFIs, submittals, and change orders in a single view."
-            accentClass="bg-primary/10"
-          />
-          <ReportCard
-            href="/accounting/sop-backlog"
-            icon={<FileCheck2 className="h-5 w-5 text-primary" />}
-            title="SOP Backlog"
-            description="Missing accounting and finance SOPs by lifecycle state, owner, priority, and linked-file status."
-            meta={`${leadership.neededSopCount} needed · ${leadership.staleNeededSopCount} stale`}
-            accentClass="bg-primary/10"
-          />
-          <ReportCard
-            href="/accounting/finance-spend"
-            icon={<CircleDollarSign className="h-5 w-5 text-status-warning" />}
-            title="Finance Spend"
-            description="Trailing accounting and finance overhead classified from Acumatica AP bills with exceptions."
-            meta={`${formatCurrency(leadership.trailingFinanceSpend)} TTM · ${leadership.financeSpendExceptionCount} review`}
-            accentClass="bg-amber-500/10"
-          />
-          <ReportCard
-            href="/accounting/projects"
-            icon={<FolderKanban className="h-5 w-5 text-status-warning" />}
-            title="Projects"
-            description="All Acumatica projects with income, expenses, assets, and current status."
-            meta="Synced from Acumatica"
-            accentClass="bg-amber-500/10"
-          />
-        </div>
-      </Section>
+      <AttentionStrip data={data} arLate={arLate} />
 
-      {/* ── AR Outstanding by Project ── */}
-      <Section
-        title="AR by Project"
-        action={
-          <Link
-            href="/accounting/invoices"
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
-          >
-            All invoices <ArrowRight className="h-3 w-3" />
-          </Link>
-        }
-      >
-        <ArByProjectChart projects={arByProject} />
-      </Section>
+      <section className="grid gap-4 lg:grid-cols-4">
+        <MetricPanel
+          label="Working capital (AR − AP)"
+          value={formatCurrencyFull(cashPosition.netCashPosition)}
+          context="Receivables minus payables — a paper position, not cash on hand"
+        />
+        <MetricPanel
+          label="AR past current"
+          value={formatCurrencyFull(arLate)}
+          context={`${overdueCount(arAging)} receivables need collection review`}
+          href="/accounting/invoices?balance=positive"
+          tone={arLate > 0 ? "risk" : "default"}
+        />
+        <MetricPanel
+          label="AP past current"
+          value={formatCurrencyFull(apLate)}
+          context={`${overdueCount(apAging)} payables need payment planning`}
+          href="/accounting/bills"
+          tone={apLate > 0 ? "risk" : "default"}
+        />
+        <MetricPanel
+          label="At risk · JP ↔ Acumatica"
+          value={formatCurrency(data.reconciliation.dollarsAtRisk)}
+          context={`${data.reconciliation.duplicateCount} duplicate bills · ${data.reconciliation.onHoldCount} on hold`}
+          href="/accounting/reconciliation"
+          tone={data.reconciliation.dollarsAtRisk > 0 ? "risk" : "default"}
+        />
+      </section>
 
-      {/* ── Financial Position — 3 charts: AR aging | cash flow | AP aging ── */}
       <Section title="Financial Position">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <AgingDonutChart
-            title="Accounts Receivable"
-            aging={arAging}
-            href="/accounting/invoices"
-          />
-          <CashFlowBar
-            received={cashPosition.paymentsReceivedThisMonth}
-            paid={cashPosition.checksIssuedThisMonth}
-          />
-          <AgingDonutChart
-            title="Accounts Payable"
-            aging={apAging}
-            href="/accounting/bills"
-          />
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,0.8fr)]">
+          <div className="grid gap-4 lg:grid-cols-2">
+            <ProjectDonutChart
+              title="Accounts Receivable"
+              projects={arByProject}
+              total={cashPosition.totalArOutstanding}
+              pastCurrent={arLate}
+              href="/accounting/invoices"
+            />
+            <ProjectDonutChart
+              title="Accounts Payable"
+              projects={apByProject}
+              total={cashPosition.totalApOutstanding}
+              pastCurrent={apLate}
+              href="/accounting/bills"
+            />
+          </div>
+          <CashFlowPanel cashPosition={cashPosition} />
         </div>
       </Section>
 
-      {/* ── Revenue by Project — grouped bar chart ── */}
-      <Section
-        title="Revenue by Project"
-        action={
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="text-[11px] font-normal">
-              Top {revenueByProject.length}
-            </Badge>
-            <Link
-              href="/accounting/projects"
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
-            >
-              All projects <ArrowRight className="h-3 w-3" />
-            </Link>
-          </div>
-        }
-      >
-        <RevenueBarChart projects={revenueByProject} />
+      <Section title="Net Margin by Project">
+        <ProjectNetMarginChart projects={netMarginByProject} />
       </Section>
 
-      {/* ── Recent Activity ── */}
+      <Section title="Revenue and Net Margin">
+        <MonthlyRevenueMarginChart series={monthlyRevenueMargin} />
+      </Section>
+
+      <div className="grid gap-8 xl:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.85fr)]">
+        <Section
+          title="Revenue by Project"
+          action={<TextLink href="/accounting/projects">All projects</TextLink>}
+        >
+          <RevenueRows projects={revenueByProject} />
+        </Section>
+
+        <Section title="Reports">
+          <ReportList data={data} />
+        </Section>
+      </div>
+
       <Section title="Recent Activity">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid gap-8 lg:grid-cols-2">
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold text-foreground">
+            <div className="mb-2 flex items-center justify-between gap-4">
+              <p className="text-xs font-semibold text-muted-foreground">
                 Payments Received
               </p>
-              <Link
-                href="/accounting/payments"
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
-              >
-                View all <ArrowRight className="h-3 w-3" />
-              </Link>
+              <TextLink href="/accounting/payments">All payments</TextLink>
             </div>
             {paymentsIn.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No recent activity</p>
+              <p className="py-3 text-sm text-muted-foreground">
+                No recent payments.
+              </p>
             ) : (
               <div className="divide-y divide-border/40">
                 {paymentsIn.map((item) => (
-                  <ActivityRow key={item.referenceNbr} {...item} type="payment" />
+                  <ActivityRow
+                    key={item.referenceNbr}
+                    {...item}
+                    type="payment"
+                  />
                 ))}
               </div>
             )}
           </div>
 
-          <div className="md:border-l md:border-border/40 md:pl-8">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold text-foreground">
+          <div>
+            <div className="mb-2 flex items-center justify-between gap-4">
+              <p className="text-xs font-semibold text-muted-foreground">
                 Checks Issued
               </p>
-              <Link
-                href="/accounting/checks"
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
-              >
-                View all <ArrowRight className="h-3 w-3" />
-              </Link>
+              <TextLink href="/accounting/checks">All checks</TextLink>
             </div>
             {checksOut.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No recent activity</p>
+              <p className="py-3 text-sm text-muted-foreground">
+                No recent checks.
+              </p>
             ) : (
               <div className="divide-y divide-border/40">
                 {checksOut.map((item) => (
@@ -1026,12 +1285,46 @@ export default function AccountingDashboardPage() {
         </div>
       </Section>
 
-      {/* ── Guardrail alerts ── */}
       {guardrailAlerts.length > 0 && (
-        <Section>
-          <PaymentGuardrailAlerts alerts={guardrailAlerts} />
+        <Section title="Payment Guardrails">
+          <PaymentGuardrailAlerts
+            alerts={guardrailAlerts}
+            title="Duplicate Payment Patterns"
+          />
         </Section>
       )}
+
+      <Section title="Ledger Totals">
+        <KpiRow
+          size="small"
+          metrics={[
+            {
+              label: "AR OUTSTANDING",
+              value: formatCurrency(cashPosition.totalArOutstanding),
+              context: "Receivables",
+              href: "/accounting/invoices",
+            },
+            {
+              label: "AP OUTSTANDING",
+              value: formatCurrency(cashPosition.totalApOutstanding),
+              context: "Payables",
+              href: "/accounting/bills",
+            },
+            {
+              label: "RECEIVED THIS MONTH",
+              value: formatCurrency(cashPosition.paymentsReceivedThisMonth),
+              context: "Customer payments",
+              href: "/accounting/payments",
+            },
+            {
+              label: "PAID THIS MONTH",
+              value: formatCurrency(cashPosition.checksIssuedThisMonth),
+              context: "Vendor checks",
+              href: "/accounting/checks",
+            },
+          ]}
+        />
+      </Section>
     </PageShell>
   );
 }

@@ -3,7 +3,10 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { requireCurrentUserAppCapability } from "@/lib/app-capabilities";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createServiceClient } from "@/lib/supabase/service";
-import { classifyAgingBucket, type FinancialGuardrailAlert } from "@/lib/accounting/aging-calculator";
+import {
+  classifyAgingBucket,
+  type FinancialGuardrailAlert,
+} from "@/lib/accounting/aging-calculator";
 import { loadPaymentGuardrailAlerts } from "@/lib/accounting/payment-guardrails";
 import { buildFinanceSpendRollup } from "@/lib/accounting/finance-spend";
 import { listSopBacklog } from "@/lib/accounting/sop-backlog";
@@ -43,6 +46,23 @@ interface RevenueByProject {
   outstandingBalance: number;
 }
 
+interface BalanceByProject {
+  projectCode: string;
+  description: string | null;
+  customer: string | null;
+  outstandingBalance: number;
+}
+
+interface NetMarginByProject {
+  projectCode: string;
+  description: string | null;
+  customer: string | null;
+  revenue: number;
+  cost: number;
+  netMargin: number;
+  netMarginPercent: number | null;
+}
+
 interface RecentPayment {
   referenceNbr: string;
   customerName: string | null;
@@ -60,12 +80,23 @@ interface RecentCheck {
   status: string | null;
 }
 
+interface MonthlyRevenueMargin {
+  month: string;
+  revenue: number;
+  cost: number;
+  netMargin: number;
+  netMarginPercent: number | null;
+}
+
 interface DashboardResponse {
   arAging: AgingResult;
   apAging: AgingResult;
   cashPosition: CashPositionSummary;
   revenueByProject: RevenueByProject[];
   arByProject: RevenueByProject[];
+  apByProject: BalanceByProject[];
+  netMarginByProject: NetMarginByProject[];
+  monthlyRevenueMargin: MonthlyRevenueMargin[];
   recentActivity: {
     payments: RecentPayment[];
     checks: RecentCheck[];
@@ -77,6 +108,13 @@ interface DashboardResponse {
     linkedSopCount: number;
     trailingFinanceSpend: number;
     financeSpendExceptionCount: number;
+  };
+  reconciliation: {
+    duplicateCount: number;
+    onHoldCount: number;
+    syncIssueCount: number;
+    dollarsAtRisk: number;
+    lastRunAt: string | null;
   };
   generatedAt: string;
 }
@@ -97,12 +135,14 @@ function getDaysPastDue(dueDateStr: string | null): number {
   return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
 }
 
-function classifyIntoAging(items: Array<{ due_date: string | null; balance: number | null }>): AgingResult {
+function classifyIntoAging(
+  items: Array<{ due_date: string | null; balance: number | null }>,
+): AgingResult {
   const buckets = {
-    current:  { label: "Current (0–30 days)",  count: 0, total: 0 },
-    days31to60: { label: "31–60 days",          count: 0, total: 0 },
-    days61to90: { label: "61–90 days",          count: 0, total: 0 },
-    days90plus: { label: "90+ days",            count: 0, total: 0 },
+    current: { label: "Current (0–30 days)", count: 0, total: 0 },
+    days31to60: { label: "31–60 days", count: 0, total: 0 },
+    days61to90: { label: "61–90 days", count: 0, total: 0 },
+    days90plus: { label: "90+ days", count: 0, total: 0 },
   };
 
   for (const item of items) {
@@ -136,7 +176,10 @@ function classifyIntoAging(items: Array<{ due_date: string | null; balance: numb
     b.total = Math.round(b.total * 100) / 100;
   }
 
-  return { ...buckets, totalOutstanding: Math.round(totalOutstanding * 100) / 100 };
+  return {
+    ...buckets,
+    totalOutstanding: Math.round(totalOutstanding * 100) / 100,
+  };
 }
 
 function startOfCurrentMonth(): string {
@@ -144,268 +187,493 @@ function startOfCurrentMonth(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 }
 
+function startOfCurrentYear(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-01-01`;
+}
+
+function buildCurrentYearMonthKeys(): string[] {
+  const now = new Date();
+  return Array.from({ length: now.getMonth() + 1 }, (_, index) => {
+    const date = new Date(now.getFullYear(), index, 1);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+  });
+}
+
+function monthKey(value: string | null): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
 // ---------------------------------------------------------------------------
 // GET /api/accounting/dashboard
 // ---------------------------------------------------------------------------
 
-export const GET = withApiGuardrails("/api/accounting/dashboard#GET", async () => {
-  await requireCurrentUserAppCapability(
-    "view_accounting",
-    "/api/accounting/dashboard#GET",
-    "Accounting access required.",
-  );
+export const GET = withApiGuardrails(
+  "/api/accounting/dashboard#GET",
+  async () => {
+    await requireCurrentUserAppCapability(
+      "view_accounting",
+      "/api/accounting/dashboard#GET",
+      "Accounting access required.",
+    );
 
-  const supabase = createServiceClient();
-  const monthStart = startOfCurrentMonth();
+    const supabase = createServiceClient();
+    const monthStart = startOfCurrentMonth();
+    const yearStart = startOfCurrentYear();
 
-  // Run all independent queries in parallel for performance
-  const [
-    arInvoicesResult,
-    apBillsResult,
-    paymentsThisMonthResult,
-    checksThisMonthResult,
-    arInvoicesForProjectsResult,
-    paymentApplicationsResult,
-    recentPaymentsResult,
-    recentChecksResult,
-    guardrailAlerts,
-    sopBacklogRecords,
-    financeSpendRollup,
-  ] = await Promise.all([
-    // 1. AR invoices — outstanding only, for aging + cash position
-    supabase
-      .from("acumatica_ar_invoices")
-      .select("due_date, balance, status")
-      .not("status", "in", `(${CLOSED_STATUSES.map((s) => `"${s}"`).join(",")})`)
-      .not("balance", "is", null),
+    // Run all independent queries in parallel for performance
+    const [
+      arInvoicesResult,
+      apBillsResult,
+      paymentsThisMonthResult,
+      checksThisMonthResult,
+      arInvoicesForProjectsResult,
+      paymentApplicationsResult,
+      recentPaymentsResult,
+      recentChecksResult,
+      projectCostsResult,
+      monthlyRevenueResult,
+      monthlyCostResult,
+      guardrailAlerts,
+      sopBacklogRecords,
+      financeSpendRollup,
+    ] = await Promise.all([
+      // 1. AR invoices — outstanding only, for aging + cash position
+      supabase
+        .from("acumatica_ar_invoices")
+        .select("due_date, balance, status")
+        .not(
+          "status",
+          "in",
+          `(${CLOSED_STATUSES.map((s) => `"${s}"`).join(",")})`,
+        )
+        .not("balance", "is", null),
 
-    // 2. AP bills — outstanding only, for aging + cash position
-    supabase
-      .from("acumatica_ap_bills")
-      .select("due_date, balance, status")
-      .not("status", "in", `(${CLOSED_STATUSES.map((s) => `"${s}"`).join(",")})`)
-      .not("balance", "is", null),
+      // 2. AP bills — outstanding only, for aging + cash position
+      supabase
+        .from("acumatica_ap_bills")
+        .select("due_date, balance, status, project_code")
+        .not(
+          "status",
+          "in",
+          `(${CLOSED_STATUSES.map((s) => `"${s}"`).join(",")})`,
+        )
+        .not("balance", "is", null),
 
-    // 3. Payments received this month
-    supabase
-      .from("acumatica_payments")
-      .select("payment_amount")
-      .gte("application_date", monthStart),
+      // 3. Payments received this month
+      supabase
+        .from("acumatica_payments")
+        .select("payment_amount")
+        .gte("application_date", monthStart),
 
-    // 4. Checks issued this month
-    supabase
-      .from("acumatica_checks")
-      .select("payment_amount")
-      .gte("application_date", monthStart),
+      // 4. Checks issued this month
+      supabase
+        .from("acumatica_checks")
+        .select("payment_amount")
+        .gte("application_date", monthStart),
 
-    // 5. All AR invoices with project code for revenue grouping
-    supabase
-      .from("acumatica_ar_invoices")
-      .select("project, customer_name, amount, balance, status"),
+      // 5. All AR invoices with project code for revenue grouping
+      supabase
+        .from("acumatica_ar_invoices")
+        .select("project, customer_name, amount, balance, status"),
 
-    // 6. Payment applications for collected amounts per project
-    supabase
-      .from("acumatica_payment_applications")
-      .select("resolved_project_code, amount_applied"),
+      // 6. Payment applications for collected amounts per project
+      supabase
+        .from("acumatica_payment_applications")
+        .select("resolved_project_code, amount_applied"),
 
-    // 7. Recent 10 payments received
-    supabase
-      .from("acumatica_payments")
-      .select("reference_nbr, customer_id, customer_name, payment_amount, application_date, status")
-      .order("application_date", { ascending: false })
-      .limit(10),
+      // 7. Recent 10 payments received
+      supabase
+        .from("acumatica_payments")
+        .select(
+          "reference_nbr, customer_id, customer_name, payment_amount, application_date, status",
+        )
+        .order("application_date", { ascending: false })
+        .limit(10),
 
-    // 8. Recent 10 checks issued (exclude null dates so we get real recent ones)
-    supabase
-      .from("acumatica_checks")
-      .select("reference_nbr, vendor_id, vendor_name, payment_amount, application_date, status")
-      .not("application_date", "is", null)
-      .order("application_date", { ascending: false })
-      .limit(10),
-    loadPaymentGuardrailAlerts(),
-    listSopBacklog(supabase),
-    buildFinanceSpendRollup(supabase, 12),
-  ]);
+      // 8. Recent 10 checks issued (exclude null dates so we get real recent ones)
+      supabase
+        .from("acumatica_checks")
+        .select(
+          "reference_nbr, vendor_id, vendor_name, payment_amount, application_date, status",
+        )
+        .not("application_date", "is", null)
+        .order("application_date", { ascending: false })
+        .limit(10),
+      supabase
+        .from("acumatica_ap_bills")
+        .select("project_code, amount, status"),
+      supabase
+        .from("acumatica_ar_invoices")
+        .select("date, amount, status")
+        .not("date", "is", null)
+        .gte("date", yearStart),
+      supabase
+        .from("acumatica_ap_bills")
+        .select("date, amount, status")
+        .not("date", "is", null)
+        .gte("date", yearStart),
+      loadPaymentGuardrailAlerts(),
+      listSopBacklog(supabase),
+      buildFinanceSpendRollup(supabase, 12),
+    ]);
 
-  // Surface any query errors
-  const errors = [
-    arInvoicesResult.error,
-    apBillsResult.error,
-    paymentsThisMonthResult.error,
-    checksThisMonthResult.error,
-    arInvoicesForProjectsResult.error,
-    paymentApplicationsResult.error,
-    recentPaymentsResult.error,
-    recentChecksResult.error,
-  ].filter(Boolean);
+    // Surface any query errors
+    const errors = [
+      arInvoicesResult.error,
+      apBillsResult.error,
+      paymentsThisMonthResult.error,
+      checksThisMonthResult.error,
+      arInvoicesForProjectsResult.error,
+      paymentApplicationsResult.error,
+      recentPaymentsResult.error,
+      recentChecksResult.error,
+      projectCostsResult.error,
+      monthlyRevenueResult.error,
+      monthlyCostResult.error,
+    ].filter(Boolean);
 
-  if (errors.length > 0) {
-    throw new GuardrailError({
-      code: "INTERNAL_ERROR",
-      where: "/api/accounting/dashboard#GET",
-      message: "Failed to load accounting dashboard data.",
-      details: { reasons: errors.map((error) => error?.message).filter(Boolean) },
-    });
-  }
-
-  // ---------------------------------------------------------------------------
-  // 1 & 2. AR and AP Aging
-  // ---------------------------------------------------------------------------
-  const arAging = classifyIntoAging(arInvoicesResult.data ?? []);
-  const apAging = classifyIntoAging(apBillsResult.data ?? []);
-
-  // ---------------------------------------------------------------------------
-  // 3. Cash Position
-  // ---------------------------------------------------------------------------
-  const paymentsReceivedThisMonth = (paymentsThisMonthResult.data ?? []).reduce(
-    (sum, row) => sum + Number(row.payment_amount ?? 0),
-    0,
-  );
-
-  const checksIssuedThisMonth = (checksThisMonthResult.data ?? []).reduce(
-    (sum, row) => sum + Number(row.payment_amount ?? 0),
-    0,
-  );
-
-  const cashPosition: CashPositionSummary = {
-    totalArOutstanding: arAging.totalOutstanding,
-    totalApOutstanding: apAging.totalOutstanding,
-    netCashPosition: Math.round((arAging.totalOutstanding - apAging.totalOutstanding) * 100) / 100,
-    paymentsReceivedThisMonth: Math.round(paymentsReceivedThisMonth * 100) / 100,
-    checksIssuedThisMonth: Math.round(checksIssuedThisMonth * 100) / 100,
-  };
-
-  // ---------------------------------------------------------------------------
-  // 4. Revenue by Project (top 15)
-  // ---------------------------------------------------------------------------
-
-  // Group invoices by project code
-  const invoicesByProject = new Map<
-    string,
-    { customer: string | null; totalInvoiced: number; totalBalance: number }
-  >();
-
-  for (const inv of arInvoicesForProjectsResult.data ?? []) {
-    const code = inv.project ?? "(No Project)";
-    const existing = invoicesByProject.get(code);
-    const amount = Number(inv.amount ?? 0);
-    const balance = Number(inv.balance ?? 0);
-
-    if (existing) {
-      existing.totalInvoiced += amount;
-      existing.totalBalance += CLOSED_STATUSES.includes(inv.status ?? "") ? 0 : balance;
-    } else {
-      invoicesByProject.set(code, {
-        customer: inv.customer_name ?? null,
-        totalInvoiced: amount,
-        totalBalance: CLOSED_STATUSES.includes(inv.status ?? "") ? 0 : balance,
+    if (errors.length > 0) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "/api/accounting/dashboard#GET",
+        message: "Failed to load accounting dashboard data.",
+        details: {
+          reasons: errors.map((error) => error?.message).filter(Boolean),
+        },
       });
     }
-  }
 
-  // Sum collected amounts from payment applications per project
-  const collectedByProject = new Map<string, number>();
-  for (const pa of paymentApplicationsResult.data ?? []) {
-    const code = pa.resolved_project_code ?? "(No Project)";
-    collectedByProject.set(code, (collectedByProject.get(code) ?? 0) + Number(pa.amount_applied ?? 0));
-  }
+    // ---------------------------------------------------------------------------
+    // 1 & 2. AR and AP Aging
+    // ---------------------------------------------------------------------------
+    const arAging = classifyIntoAging(arInvoicesResult.data ?? []);
+    const apAging = classifyIntoAging(apBillsResult.data ?? []);
 
-  // Fetch ALL project descriptions (small table — only ~80 rows)
-  const projectDescriptionsResult = await supabase
-    .from("acumatica_projects")
-    .select("project_id, description, customer");
+    // ---------------------------------------------------------------------------
+    // 3. Cash Position
+    // ---------------------------------------------------------------------------
+    const paymentsReceivedThisMonth = (
+      paymentsThisMonthResult.data ?? []
+    ).reduce((sum, row) => sum + Number(row.payment_amount ?? 0), 0);
 
-  if (projectDescriptionsResult.error) {
-    throw new GuardrailError({
-      code: "INTERNAL_ERROR",
-      where: "/api/accounting/dashboard#GET",
-      message: "Failed to load project descriptions for accounting dashboard.",
-      details: { reason: projectDescriptionsResult.error.message },
-      cause: projectDescriptionsResult.error,
-    });
-  }
+    const checksIssuedThisMonth = (checksThisMonthResult.data ?? []).reduce(
+      (sum, row) => sum + Number(row.payment_amount ?? 0),
+      0,
+    );
 
-  const projectDescMap = new Map<string, { description: string | null; customer: string | null }>();
-  for (const proj of projectDescriptionsResult.data ?? []) {
-    projectDescMap.set(proj.project_id, {
-      description: proj.description ?? null,
-      customer: proj.customer ?? null,
-    });
-  }
-
-  // Build full list for chart (all projects with outstanding balance) + top 15 by invoiced for table
-  const allProjectEntries = [...invoicesByProject.entries()].map(([code, inv]) => {
-    const projMeta = projectDescMap.get(code);
-    const collected = collectedByProject.get(code) ?? 0;
-    return {
-      projectCode: code,
-      description: projMeta?.description ?? null,
-      customer: projMeta?.customer ?? inv.customer ?? null,
-      totalInvoiced: Math.round(inv.totalInvoiced * 100) / 100,
-      totalCollected: Math.round(collected * 100) / 100,
-      outstandingBalance: Math.round(inv.totalBalance * 100) / 100,
+    const cashPosition: CashPositionSummary = {
+      totalArOutstanding: arAging.totalOutstanding,
+      totalApOutstanding: apAging.totalOutstanding,
+      netCashPosition:
+        Math.round(
+          (arAging.totalOutstanding - apAging.totalOutstanding) * 100,
+        ) / 100,
+      paymentsReceivedThisMonth:
+        Math.round(paymentsReceivedThisMonth * 100) / 100,
+      checksIssuedThisMonth: Math.round(checksIssuedThisMonth * 100) / 100,
     };
-  });
 
-  const revenueByProject: RevenueByProject[] = allProjectEntries
-    .sort((a, b) => b.totalInvoiced - a.totalInvoiced)
-    .slice(0, 15);
+    // ---------------------------------------------------------------------------
+    // 4. Revenue by Project (top 15)
+    // ---------------------------------------------------------------------------
 
-  // ---------------------------------------------------------------------------
-  // 5. Recent Activity
-  // ---------------------------------------------------------------------------
-  const recentPayments: RecentPayment[] = (recentPaymentsResult.data ?? []).map((p) => ({
-    referenceNbr: p.reference_nbr,
-    customerName: p.customer_name ?? p.customer_id ?? null,
-    amount: Math.round(Number(p.payment_amount ?? 0) * 100) / 100,
-    date: p.application_date ?? null,
-    status: p.status ?? null,
-  }));
+    // Group invoices by project code
+    const invoicesByProject = new Map<
+      string,
+      { customer: string | null; totalInvoiced: number; totalBalance: number }
+    >();
 
-  const recentChecks: RecentCheck[] = (recentChecksResult.data ?? []).map((c) => ({
-    referenceNbr: c.reference_nbr,
-    vendorId: c.vendor_id ?? null,
-    vendorName: c.vendor_name ?? null,
-    amount: Math.round(Number(c.payment_amount ?? 0) * 100) / 100,
-    date: c.application_date ?? null,
-    status: c.status ?? null,
-  }));
+    for (const inv of arInvoicesForProjectsResult.data ?? []) {
+      const code = inv.project ?? "(No Project)";
+      const existing = invoicesByProject.get(code);
+      const amount = Number(inv.amount ?? 0);
+      const balance = Number(inv.balance ?? 0);
 
-  // ---------------------------------------------------------------------------
-  // Response
-  // ---------------------------------------------------------------------------
-  // All projects with outstanding balance, sorted by outstanding desc — for bar chart
-  const arByProject = allProjectEntries
-    .filter((p) => p.outstandingBalance > 0)
-    .sort((a, b) => b.outstandingBalance - a.outstandingBalance);
+      if (existing) {
+        existing.totalInvoiced += amount;
+        existing.totalBalance += CLOSED_STATUSES.includes(inv.status ?? "")
+          ? 0
+          : balance;
+      } else {
+        invoicesByProject.set(code, {
+          customer: inv.customer_name ?? null,
+          totalInvoiced: amount,
+          totalBalance: CLOSED_STATUSES.includes(inv.status ?? "")
+            ? 0
+            : balance,
+        });
+      }
+    }
 
-  const response: DashboardResponse = {
-    arAging,
-    apAging,
-    cashPosition,
-    revenueByProject,
-    arByProject,
-    recentActivity: {
-      payments: recentPayments,
-      checks: recentChecks,
-    },
-    guardrailAlerts,
-    leadership: {
-      neededSopCount: sopBacklogRecords.filter((record) => record.status === "needed").length,
-      staleNeededSopCount: sopBacklogRecords.filter(
-        (record) => record.status === "needed" && record.age_days >= 30,
+    // Sum collected amounts from payment applications per project
+    const collectedByProject = new Map<string, number>();
+    for (const pa of paymentApplicationsResult.data ?? []) {
+      const code = pa.resolved_project_code ?? "(No Project)";
+      collectedByProject.set(
+        code,
+        (collectedByProject.get(code) ?? 0) + Number(pa.amount_applied ?? 0),
+      );
+    }
+
+    // Fetch ALL project descriptions (small table — only ~80 rows)
+    const projectDescriptionsResult = await supabase
+      .from("acumatica_projects")
+      .select("project_id, description, customer");
+
+    if (projectDescriptionsResult.error) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "/api/accounting/dashboard#GET",
+        message:
+          "Failed to load project descriptions for accounting dashboard.",
+        details: { reason: projectDescriptionsResult.error.message },
+        cause: projectDescriptionsResult.error,
+      });
+    }
+
+    const projectDescMap = new Map<
+      string,
+      { description: string | null; customer: string | null }
+    >();
+    for (const proj of projectDescriptionsResult.data ?? []) {
+      projectDescMap.set(proj.project_id, {
+        description: proj.description ?? null,
+        customer: proj.customer ?? null,
+      });
+    }
+
+    // Build full list for chart (all projects with outstanding balance) + top 15 by invoiced for table
+    const allProjectEntries = [...invoicesByProject.entries()].map(
+      ([code, inv]) => {
+        const projMeta = projectDescMap.get(code);
+        const collected = collectedByProject.get(code) ?? 0;
+        return {
+          projectCode: code,
+          description: projMeta?.description ?? null,
+          customer: projMeta?.customer ?? inv.customer ?? null,
+          totalInvoiced: Math.round(inv.totalInvoiced * 100) / 100,
+          totalCollected: Math.round(collected * 100) / 100,
+          outstandingBalance: Math.round(inv.totalBalance * 100) / 100,
+        };
+      },
+    );
+
+    const revenueByProject: RevenueByProject[] = allProjectEntries
+      .sort((a, b) => b.totalInvoiced - a.totalInvoiced)
+      .slice(0, 15);
+
+    const costByProject = new Map<string, number>();
+    for (const bill of projectCostsResult.data ?? []) {
+      if (CLOSED_STATUSES.includes(bill.status ?? "")) continue;
+      const code = bill.project_code ?? "(No Project)";
+      costByProject.set(
+        code,
+        (costByProject.get(code) ?? 0) + Number(bill.amount ?? 0),
+      );
+    }
+
+    const projectCodesWithFinancials = new Set([
+      ...allProjectEntries.map((project) => project.projectCode),
+      ...costByProject.keys(),
+    ]);
+
+    const netMarginByProject: NetMarginByProject[] = [
+      ...projectCodesWithFinancials,
+    ]
+      .map((code) => {
+        const revenueEntry = allProjectEntries.find(
+          (project) => project.projectCode === code,
+        );
+        const projMeta = projectDescMap.get(code);
+        const revenue = revenueEntry?.totalInvoiced ?? 0;
+        const cost = costByProject.get(code) ?? 0;
+        const netMargin = revenue - cost;
+        return {
+          projectCode: code,
+          description:
+            revenueEntry?.description ?? projMeta?.description ?? null,
+          customer: revenueEntry?.customer ?? projMeta?.customer ?? null,
+          revenue: Math.round(revenue * 100) / 100,
+          cost: Math.round(cost * 100) / 100,
+          netMargin: Math.round(netMargin * 100) / 100,
+          netMarginPercent:
+            revenue > 0 ? Math.round((netMargin / revenue) * 1000) / 10 : null,
+        };
+      })
+      .filter((project) => project.revenue > 0 || project.cost > 0)
+      .sort((a, b) => Math.abs(b.netMargin) - Math.abs(a.netMargin));
+
+    const payablesByProject = new Map<string, number>();
+    for (const bill of apBillsResult.data ?? []) {
+      if (CLOSED_STATUSES.includes(bill.status ?? "")) continue;
+      const code = bill.project_code ?? "(No Project)";
+      payablesByProject.set(
+        code,
+        (payablesByProject.get(code) ?? 0) + Number(bill.balance ?? 0),
+      );
+    }
+
+    const apByProject: BalanceByProject[] = [...payablesByProject.entries()]
+      .map(([code, balance]) => {
+        const projMeta = projectDescMap.get(code);
+        return {
+          projectCode: code,
+          description: projMeta?.description ?? null,
+          customer: projMeta?.customer ?? null,
+          outstandingBalance: Math.round(balance * 100) / 100,
+        };
+      })
+      .filter((project) => project.outstandingBalance > 0)
+      .sort((a, b) => b.outstandingBalance - a.outstandingBalance);
+
+    // ---------------------------------------------------------------------------
+    // 5. Monthly Revenue and Net Margin
+    // ---------------------------------------------------------------------------
+    const monthlyRevenueMap = new Map<string, number>();
+    const monthlyCostMap = new Map<string, number>();
+    const currentYearMonthKeys = buildCurrentYearMonthKeys();
+    for (const key of currentYearMonthKeys) {
+      monthlyRevenueMap.set(key, 0);
+      monthlyCostMap.set(key, 0);
+    }
+
+    for (const invoice of monthlyRevenueResult.data ?? []) {
+      if (CLOSED_STATUSES.includes(invoice.status ?? "")) continue;
+      const key = monthKey(invoice.date ?? null);
+      if (!key || !monthlyRevenueMap.has(key)) continue;
+      monthlyRevenueMap.set(
+        key,
+        (monthlyRevenueMap.get(key) ?? 0) + Number(invoice.amount ?? 0),
+      );
+    }
+
+    for (const bill of monthlyCostResult.data ?? []) {
+      if (CLOSED_STATUSES.includes(bill.status ?? "")) continue;
+      const key = monthKey(bill.date ?? null);
+      if (!key || !monthlyCostMap.has(key)) continue;
+      monthlyCostMap.set(
+        key,
+        (monthlyCostMap.get(key) ?? 0) + Number(bill.amount ?? 0),
+      );
+    }
+
+    const monthlyRevenueMargin: MonthlyRevenueMargin[] =
+      currentYearMonthKeys.map((month) => {
+        const revenue = monthlyRevenueMap.get(month) ?? 0;
+        const cost = monthlyCostMap.get(month) ?? 0;
+        const netMargin = revenue - cost;
+        return {
+          month,
+          revenue: Math.round(revenue * 100) / 100,
+          cost: Math.round(cost * 100) / 100,
+          netMargin: Math.round(netMargin * 100) / 100,
+          netMarginPercent:
+            revenue > 0 ? Math.round((netMargin / revenue) * 1000) / 10 : null,
+        };
+      });
+
+    // ---------------------------------------------------------------------------
+    // 6. Recent Activity
+    // ---------------------------------------------------------------------------
+    const recentPayments: RecentPayment[] = (
+      recentPaymentsResult.data ?? []
+    ).map((p) => ({
+      referenceNbr: p.reference_nbr,
+      customerName: p.customer_name ?? p.customer_id ?? null,
+      amount: Math.round(Number(p.payment_amount ?? 0) * 100) / 100,
+      date: p.application_date ?? null,
+      status: p.status ?? null,
+    }));
+
+    const recentChecks: RecentCheck[] = (recentChecksResult.data ?? []).map(
+      (c) => ({
+        referenceNbr: c.reference_nbr,
+        vendorId: c.vendor_id ?? null,
+        vendorName: c.vendor_name ?? null,
+        amount: Math.round(Number(c.payment_amount ?? 0) * 100) / 100,
+        date: c.application_date ?? null,
+        status: c.status ?? null,
+      }),
+    );
+
+    // ---------------------------------------------------------------------------
+    // Response
+    // ---------------------------------------------------------------------------
+    // All projects with outstanding balance, sorted by outstanding desc — for bar chart
+    const arByProject = allProjectEntries
+      .filter((p) => p.outstandingBalance > 0)
+      .sort((a, b) => b.outstandingBalance - a.outstandingBalance);
+
+    // ---------------------------------------------------------------------------
+    // Reconciliation health (JP <-> Acumatica): surface the active findings.
+    const [reconFindingsResult, reconRunResult] = await Promise.all([
+      supabase
+        .from("reconciliation_findings")
+        .select("kind, tier, amount_cents")
+        .eq("is_active", true),
+      supabase
+        .from("reconciliation_runs")
+        .select("finished_at")
+        .eq("status", "complete")
+        .order("id", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+    const reconFindings = reconFindingsResult.data ?? [];
+    const reconciliation = {
+      duplicateCount: reconFindings.filter((f) => f.kind === "duplicate-ap-bill").length,
+      onHoldCount: reconFindings.filter((f) => f.kind === "stale-on-hold-bill").length,
+      syncIssueCount: reconFindings.filter(
+        (f) => f.kind !== "duplicate-ap-bill" && f.kind !== "stale-on-hold-bill",
       ).length,
-      linkedSopCount: sopBacklogRecords.filter((record) => record.linked_document_metadata_id).length,
-      trailingFinanceSpend: financeSpendRollup.totals.includedSpend,
-      financeSpendExceptionCount: financeSpendRollup.totals.uncertainBillCount,
-    },
-    generatedAt: new Date().toISOString(),
-  };
+      dollarsAtRisk:
+        reconFindings
+          .filter((f) => f.tier === "HIGH")
+          .reduce((sum, f) => sum + Math.abs(Number(f.amount_cents ?? 0)), 0) / 100,
+      lastRunAt: reconRunResult.data?.finished_at ?? null,
+    };
 
-  return NextResponse.json(response, {
-    headers: {
-      // Allow CDN/edge caching for 60 seconds; revalidate in background for up to 5 minutes
-      "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
-    },
-  });
-});
+    const response: DashboardResponse = {
+      arAging,
+      apAging,
+      cashPosition,
+      revenueByProject,
+      arByProject,
+      apByProject,
+      netMarginByProject,
+      monthlyRevenueMargin,
+      recentActivity: {
+        payments: recentPayments,
+        checks: recentChecks,
+      },
+      guardrailAlerts,
+      leadership: {
+        neededSopCount: sopBacklogRecords.filter(
+          (record) => record.status === "needed",
+        ).length,
+        staleNeededSopCount: sopBacklogRecords.filter(
+          (record) => record.status === "needed" && record.age_days >= 30,
+        ).length,
+        linkedSopCount: sopBacklogRecords.filter(
+          (record) => record.linked_document_metadata_id,
+        ).length,
+        trailingFinanceSpend: financeSpendRollup.totals.includedSpend,
+        financeSpendExceptionCount:
+          financeSpendRollup.totals.uncertainBillCount,
+      },
+      reconciliation,
+      generatedAt: new Date().toISOString(),
+    };
+
+    return NextResponse.json(response, {
+      headers: {
+        // Allow CDN/edge caching for 60 seconds; revalidate in background for up to 5 minutes
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+      },
+    });
+  },
+);
