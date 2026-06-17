@@ -51,6 +51,8 @@ const KNOWN_EXTERNAL_TABLES = new Set([
   "rag_pipeline_state",
   "source_processing_jobs",
   "outlook_email_intake",
+  "source_syntheses",
+  "project_daily_deltas",
 ]);
 const EXTERNAL_PREFIXES = ["information_schema", "pg_", "auth_", "storage_"];
 
@@ -85,6 +87,10 @@ const NON_TABLE_WORDS = new Set([
   "failed_retryable",
   "failed_permanent",
   "skipped_unchanged",
+  "confidence_notes",
+  "executive_summary",
+  "source_coverage",
+  "project_daily_delta",
 ]);
 
 function run(cmd) {

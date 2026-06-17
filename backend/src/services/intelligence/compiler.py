@@ -13,7 +13,7 @@ import hashlib
 import os
 import re
 import time
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from src.services.ops.db_pressure_guard import enforce_pm_app_final_projection_guard
@@ -93,6 +93,14 @@ def confidence_label(score: float) -> str:
 def _single_row(response: Any) -> Optional[Dict[str, Any]]:
     data = getattr(response, "data", None) or []
     return data[0] if data else None
+
+
+def _is_duplicate_intelligence_target_slug_error(exc: Exception) -> bool:
+    message = str(exc)
+    return (
+        "duplicate key value violates unique constraint" in message
+        and "intelligence_targets_slug_key" in message
+    ) or ("23505" in message and "slug" in message)
 
 
 def _rag_read() -> Any:
@@ -277,6 +285,22 @@ def _fetch_project(supabase: Any, project_id: int) -> Dict[str, Any]:
     if not row:
         raise ValueError(f"projects row not found: {project_id}")
     return row
+
+
+def _fetch_project_optional(supabase: Any, project_id: Any) -> Optional[Dict[str, Any]]:
+    if not project_id:
+        return None
+    try:
+        return _fetch_project(supabase, int(project_id))
+    except (TypeError, ValueError):
+        return None
+
+
+def _same_project_id(left: Any, right: Any) -> bool:
+    try:
+        return int(left) == int(right)
+    except (TypeError, ValueError):
+        return False
 
 
 def _fetch_target(supabase: Any, target_id: str) -> Dict[str, Any]:
@@ -653,9 +677,46 @@ def ensure_client_project_target(
             "compiler_version": compiler_version,
         },
     }
-    return _single_row(
-        supabase.table("intelligence_targets").insert(payload).execute()
-    ) or payload
+    try:
+        return _single_row(
+            supabase.table("intelligence_targets").insert(payload).execute()
+        ) or payload
+    except Exception as exc:
+        if not _is_duplicate_intelligence_target_slug_error(exc):
+            raise
+
+    # Slug creation can race with another compiler or encounter an existing
+    # manually-created target. Re-read by project first, then retry with the
+    # deterministic project-id suffix so a duplicate slug never poisons the job.
+    existing = _single_row(
+        supabase.table("intelligence_targets")
+        .select("*")
+        .eq("target_type", "client_project")
+        .eq("project_id", int(project_id))
+        .limit(1)
+        .execute()
+    )
+    if existing:
+        return existing
+
+    payload["slug"] = f"{base_slug}-{project_id}"
+    try:
+        return _single_row(
+            supabase.table("intelligence_targets").insert(payload).execute()
+        ) or payload
+    except Exception as exc:
+        if not _is_duplicate_intelligence_target_slug_error(exc):
+            raise
+        existing_by_slug = _single_row(
+            supabase.table("intelligence_targets")
+            .select("*")
+            .eq("slug", payload["slug"])
+            .limit(1)
+            .execute()
+        )
+        if existing_by_slug:
+            return existing_by_slug
+        raise
 
 
 def enqueue_source_intelligence_job(
@@ -897,8 +958,10 @@ def write_document_attribution_candidate(
 def classify_basic_signal(document: Dict[str, Any]) -> Dict[str, Any]:
     """Create a conservative, deterministic signal candidate from source text."""
     title = _clean_text(document.get("title")) or "Source update"
-    content = _clean_text(document.get("content"))
-    haystack = f"{title} {content}".lower()
+    raw_content = _clean_text(document.get("content") or document.get("raw_text"))
+    summary_content = _clean_text(document.get("summary") or document.get("overview"))
+    content = summary_content or raw_content
+    haystack = f"{title} {raw_content} {summary_content}".lower()
 
     signal_type = "project_update"
     if re.search(r"\b(change order|pco|cco|change event|cost exposure|budget|invoice|payment)\b", haystack):
@@ -927,6 +990,11 @@ def classify_basic_signal(document: Dict[str, Any]) -> Dict[str, Any]:
         signal_type = "initiative_signal"
 
     excerpt = content[:900] if content else title
+    if excerpt.startswith("# "):
+        # Fireflies markdown exports often begin with metadata before the useful
+        # summary. Avoid projecting that header as the Project Intelligence read.
+        excerpt = re.sub(r"^# .+?(?=(summary|overview|discussion|transcript)\b)", "", excerpt, flags=re.IGNORECASE).strip() or excerpt
+    excerpt = excerpt.encode("ascii", "ignore").decode("ascii").strip() or title
     normalized_key_source = f"{signal_type}:{title}:{excerpt[:160]}".lower()
     normalized_signal_key = re.sub(r"[^a-z0-9]+", "-", normalized_key_source).strip("-")[:180]
 
@@ -938,6 +1006,799 @@ def classify_basic_signal(document: Dict[str, Any]) -> Dict[str, Any]:
         "next_action": "Review the source attribution and extracted signal, then promote or reject it.",
         "excerpt": excerpt,
         "normalized_signal_key": normalized_signal_key or _slugify(title),
+    }
+
+
+def _source_family(document: Dict[str, Any]) -> str:
+    raw = " ".join(
+        str(value or "")
+        for value in [
+            document.get("source"),
+            document.get("source_system"),
+            document.get("category"),
+            document.get("type"),
+        ]
+    ).lower()
+    if "fireflies" in raw or "meeting" in raw or "transcript" in raw:
+        return "fireflies"
+    if "outlook" in raw or "email" in raw:
+        return "outlook_email"
+    if "teams" in raw or "chat" in raw or "message" in raw:
+        return "teams"
+    if "sharepoint" in raw:
+        return "sharepoint_document"
+    if "onedrive" in raw or "document" in raw:
+        return "onedrive_document"
+    if "attachment" in raw:
+        return "email_attachment"
+    if "daily" in raw:
+        return "daily_log"
+    return "other"
+
+
+def _source_occurred_at(document: Dict[str, Any]) -> Optional[str]:
+    for key in ("date", "captured_at", "created_at"):
+        value = document.get(key)
+        if value:
+            return str(value)
+    return None
+
+
+def _source_business_date(document: Dict[str, Any]) -> date:
+    parsed = _parse_timestamp(_source_occurred_at(document))
+    return (parsed or datetime.now(timezone.utc)).date()
+
+
+def _source_content(document: Dict[str, Any]) -> str:
+    return str(
+        document.get("content")
+        or document.get("raw_text")
+        or document.get("summary")
+        or document.get("overview")
+        or ""
+    )
+
+
+def _signal_json(signal: Dict[str, Any], *, source_document_id: str, confidence: str) -> Dict[str, Any]:
+    return {
+        "source_document_id": source_document_id,
+        "title": signal.get("title"),
+        "summary": signal.get("summary"),
+        "why_it_matters": signal.get("why_it_matters"),
+        "confidence": confidence,
+    }
+
+
+def write_source_synthesis(
+    supabase: Any,
+    *,
+    document: Dict[str, Any],
+    project_id: Optional[int],
+    signal: Dict[str, Any],
+    confidence_score: float,
+    compiler_version: str,
+) -> Dict[str, Any]:
+    """Persist the reusable full-source operating synthesis record.
+
+    This first implementation is deterministic and cost-free. It creates the
+    durable contract row every downstream consumer needs; a later model-backed
+    enrichment pass can update the same row without changing consumers.
+    """
+    source_document_id = str(document["id"])
+    source_hash = _source_hash(document)
+    confidence = confidence_label(confidence_score)
+    content = _source_content(document)
+    status = "succeeded" if content.strip() else "skipped_no_content"
+    signal_type = signal.get("signal_type")
+    base_signal = _signal_json(signal, source_document_id=source_document_id, confidence=confidence)
+
+    payload = {
+        "source_document_id": source_document_id,
+        "source_family": _source_family(document),
+        "project_id": int(project_id) if project_id else None,
+        "source_occurred_at": _source_occurred_at(document),
+        "source_title": document.get("title"),
+        "source_url": _metadata_dict(document.get("source_metadata")).get("url")
+        or _metadata_dict(document.get("source_metadata")).get("web_link"),
+        "full_source_hash": source_hash,
+        "synthesis_model": "deterministic_source_synthesis_v0_1",
+        "synthesis_status": status,
+        "executive_summary": signal.get("summary") if status == "succeeded" else None,
+        "what_changed": [base_signal] if signal_type == "project_update" else [],
+        "decisions": [base_signal] if signal_type == "decision" else [],
+        "risks": [base_signal] if signal_type in {"risk", "blocker", "schedule_risk"} else [],
+        "commitments": [base_signal] if signal_type == "task" else [],
+        "tasks": [base_signal] if signal_type == "task" else [],
+        "financial_signals": [base_signal] if signal_type == "financial_exposure" else [],
+        "schedule_signals": [base_signal] if signal_type == "schedule_risk" else [],
+        "change_event_signals": [base_signal] if _looks_like_change_event_signal(document, signal) else [],
+        "daily_log_signals": [base_signal] if _source_family(document) == "daily_log" else [],
+        "progress_report_signals": [base_signal]
+        if signal_type in {"project_update", "milestone", "risk", "schedule_risk", "financial_exposure"}
+        else [],
+        "confidence": confidence if status == "succeeded" else "low",
+        "confidence_notes": None if status == "succeeded" else "Source did not contain readable content.",
+        "source_quotes": [
+            {
+                "excerpt": signal.get("excerpt"),
+                "source_document_id": source_document_id,
+            }
+        ]
+        if signal.get("excerpt")
+        else [],
+        "token_usage": {},
+        "error_code": None,
+        "error_message": None,
+        "metadata": {
+            "compiler_version": compiler_version,
+            "deterministic_signal_type": signal_type,
+            "normalized_signal_key": signal.get("normalized_signal_key"),
+        },
+        "completed_at": _utc_now() if status == "succeeded" else None,
+        "updated_at": _utc_now(),
+    }
+
+    existing = _single_row(
+        _rag_read()
+        .table("source_syntheses")
+        .select("*")
+        .eq("source_document_id", source_document_id)
+        .eq("full_source_hash", source_hash)
+        .limit(1)
+        .execute()
+    )
+    if existing:
+        return _single_row(
+            _rag_write()
+            .table("source_syntheses")
+            .update(payload)
+            .eq("id", existing["id"])
+            .execute()
+        ) or {**existing, **payload}
+    return _single_row(_rag_write().table("source_syntheses").insert(payload).execute()) or payload
+
+
+def mark_source_synthesis_needs_project_review(
+    source_synthesis: Dict[str, Any],
+    *,
+    reason: str,
+) -> Dict[str, Any]:
+    """Quarantine a source synthesis when its project attribution is not valid."""
+    if not source_synthesis.get("id"):
+        return {
+            **source_synthesis,
+            "project_id": None,
+            "synthesis_status": "needs_project_review",
+            "confidence": "low",
+            "confidence_notes": reason,
+        }
+    payload = {
+        "project_id": None,
+        "synthesis_status": "needs_project_review",
+        "confidence": "low",
+        "confidence_notes": reason,
+        "completed_at": None,
+        "updated_at": _utc_now(),
+    }
+    return _single_row(
+        _rag_write()
+        .table("source_syntheses")
+        .update(payload)
+        .eq("id", source_synthesis["id"])
+        .execute()
+    ) or {**source_synthesis, **payload}
+
+
+def _count_rows(
+    supabase: Any,
+    table_name: str,
+    *,
+    project_id: int,
+    status_column: Optional[str] = None,
+) -> Dict[str, Any]:
+    result: Dict[str, Any] = {"total": 0, "byStatus": {}, "warning": None}
+    try:
+        total_response = (
+            supabase.table(table_name)
+            .select("id", count="exact")
+            .eq("project_id", int(project_id))
+            .limit(1)
+            .execute()
+        )
+        result["total"] = int(getattr(total_response, "count", None) or 0)
+        if status_column:
+            rows = getattr(
+                supabase.table(table_name)
+                .select(status_column)
+                .eq("project_id", int(project_id))
+                .limit(1000)
+                .execute(),
+                "data",
+                None,
+            ) or []
+            counts: Dict[str, int] = {}
+            for row in rows:
+                status = str(row.get(status_column) or "unknown")
+                counts[status] = counts.get(status, 0) + 1
+            result["byStatus"] = counts
+    except Exception as exc:
+        result["warning"] = f"{table_name} count failed: {str(exc)[:300]}"
+    return result
+
+
+def _project_financial_snapshot(project: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "budget": project.get("budget"),
+        "budget_used": project.get("budget_used"),
+        "estimated_revenue": project.get("est revenue"),
+        "estimated_profit": project.get("est profit"),
+        "estimated_completion": project.get("est completion"),
+        "erp_sync_status": project.get("erp_sync_status"),
+        "erp_system": project.get("erp_system"),
+        "erp_last_direct_cost_sync": project.get("erp_last_direct_cost_sync"),
+        "erp_last_job_cost_sync": project.get("erp_last_job_cost_sync"),
+    }
+
+
+def build_project_operating_snapshot_payload(
+    supabase: Any,
+    *,
+    project_id: int,
+    source_delta_id: Optional[str],
+    source_coverage: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    project = _single_row(
+        supabase.table("projects")
+        .select("*")
+        .eq("id", int(project_id))
+        .limit(1)
+        .execute()
+    ) or {"id": int(project_id)}
+
+    counts = {
+        "rfis": _count_rows(supabase, "rfis", project_id=project_id, status_column="status"),
+        "submittals": _count_rows(supabase, "submittals", project_id=project_id, status_column="status"),
+        "change_events": _count_rows(supabase, "change_events", project_id=project_id, status_column="status"),
+        "change_orders": _count_rows(supabase, "change_orders", project_id=project_id, status_column="status"),
+        "potential_change_orders": _count_rows(supabase, "potential_change_orders", project_id=project_id, status_column="status"),
+        "commitments": _count_rows(supabase, "commitments_unified", project_id=project_id, status_column="status"),
+        "drawings": _count_rows(supabase, "drawings", project_id=project_id),
+        "daily_logs": _count_rows(supabase, "daily_logs", project_id=project_id, status_column="status"),
+        "progress_reports": _count_rows(supabase, "project_progress_reports", project_id=project_id, status_column="status"),
+    }
+    warnings = [
+        value["warning"]
+        for value in counts.values()
+        if isinstance(value, dict) and value.get("warning")
+    ]
+    acumatica_sync_at = (
+        project.get("erp_last_job_cost_sync")
+        or project.get("erp_last_direct_cost_sync")
+    )
+
+    return {
+        "project_id": int(project_id),
+        "source_delta_id": source_delta_id,
+        "source_coverage": source_coverage or {},
+        "financial_snapshot": _project_financial_snapshot(project),
+        "schedule_snapshot": {
+            "start_date": project.get("start date"),
+            "substantial_completion_date": project.get("est completion"),
+            "completion_percentage": project.get("completion_percentage"),
+            "stage": project.get("stage"),
+            "phase": project.get("phase"),
+        },
+        "database_counts": counts,
+        "project_info": {
+            "id": project.get("id"),
+            "name": project.get("name"),
+            "project_number": project.get("project_number"),
+            "company_id": project.get("company_id"),
+            "health_status": project.get("health_status"),
+        },
+        "acumatica_sync_at": acumatica_sync_at,
+        "freshness": {
+            "snapshot_generated_at": _utc_now(),
+            "erp_last_direct_cost_sync": project.get("erp_last_direct_cost_sync"),
+            "erp_last_job_cost_sync": project.get("erp_last_job_cost_sync"),
+        },
+        "warnings": warnings,
+        "confidence": "medium" if not warnings else "low",
+    }
+
+
+def write_project_operating_snapshot(
+    supabase: Any,
+    *,
+    project_id: int,
+    source_delta_id: Optional[str],
+    source_coverage: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    payload = build_project_operating_snapshot_payload(
+        supabase,
+        project_id=project_id,
+        source_delta_id=source_delta_id,
+        source_coverage=source_coverage,
+    )
+    enforce_pm_app_final_projection_guard(
+        "project_operating_snapshot_projection",
+        row_counts={"project_operating_snapshots": 1},
+    )
+    return _single_row(supabase.table("project_operating_snapshots").insert(payload).execute()) or payload
+
+
+def compile_project_daily_delta(
+    supabase: Any,
+    *,
+    project_id: int,
+    business_date: date,
+    source_synthesis: Dict[str, Any],
+    compiler_version: str,
+) -> Dict[str, Any]:
+    """Upsert the RAG-side project/day delta for downstream app projections."""
+    source_id = source_synthesis.get("id")
+    start_at = datetime.combine(business_date, datetime.min.time(), tzinfo=timezone.utc).isoformat()
+    end_at = (datetime.combine(business_date, datetime.min.time(), tzinfo=timezone.utc) + timedelta(days=1)).isoformat()
+    syntheses = getattr(
+        _rag_read()
+        .table("source_syntheses")
+        .select(
+            "id,source_family,source_document_id,source_title,source_occurred_at,executive_summary,"
+            "what_changed,decisions,risks,tasks,financial_signals,schedule_signals,change_event_signals,"
+            "daily_log_signals,progress_report_signals,confidence"
+        )
+        .eq("project_id", int(project_id))
+        .gte("source_occurred_at", start_at)
+        .lt("source_occurred_at", end_at)
+        .execute(),
+        "data",
+        None,
+    ) or []
+    if not syntheses and source_synthesis:
+        syntheses = [source_synthesis]
+
+    def collect(key: str) -> List[Any]:
+        items: List[Any] = []
+        for row in syntheses:
+            value = row.get(key)
+            if isinstance(value, list):
+                items.extend(value)
+        return items
+
+    families: Dict[str, int] = {}
+    for row in syntheses:
+        family = str(row.get("source_family") or "unknown")
+        families[family] = families.get(family, 0) + 1
+
+    headline = None
+    for row in syntheses:
+        if row.get("executive_summary"):
+            headline = str(row["executive_summary"])[:500]
+            break
+    headline = headline or f"{len(syntheses)} source update(s) processed for project {project_id}."
+
+    payload = {
+        "project_id": int(project_id),
+        "business_date": business_date.isoformat(),
+        "status": "succeeded" if syntheses else "skipped_no_sources",
+        "source_synthesis_ids": [row["id"] for row in syntheses if row.get("id")],
+        "headline": headline,
+        "what_changed": collect("what_changed"),
+        "decisions": collect("decisions"),
+        "risks": collect("risks"),
+        "issues": collect("risks"),
+        "milestones": [],
+        "financial_changes": collect("financial_signals"),
+        "schedule_changes": collect("schedule_signals"),
+        "change_event_candidates": collect("change_event_signals"),
+        "task_candidates": collect("tasks"),
+        "daily_report_draft": {
+            "date": business_date.isoformat(),
+            "source_count": len(syntheses),
+            "field_activity_signals": collect("daily_log_signals"),
+            "summary": headline,
+        },
+        "progress_report_updates": {
+            "week_start": (business_date - timedelta(days=business_date.weekday())).isoformat(),
+            "source_count": len(syntheses),
+            "updates": collect("progress_report_signals"),
+            "risks": collect("risks"),
+            "financial_changes": collect("financial_signals"),
+            "schedule_changes": collect("schedule_signals"),
+        },
+        "source_coverage": {
+            "source_count": len(syntheses),
+            "families": families,
+            "latest_source_synthesis_id": source_id,
+        },
+        "confidence": _best_confidence(syntheses) if syntheses else "low",
+        "confidence_notes": "Deterministic daily delta from source_syntheses; model enrichment can update this row.",
+        "model": "deterministic_project_daily_delta_v0_1",
+        "token_usage": {},
+        "error_code": None,
+        "error_message": None,
+        "metadata": {"compiler_version": compiler_version},
+        "completed_at": _utc_now(),
+        "updated_at": _utc_now(),
+    }
+
+    existing = _single_row(
+        _rag_read()
+        .table("project_daily_deltas")
+        .select("*")
+        .eq("project_id", int(project_id))
+        .eq("business_date", business_date.isoformat())
+        .neq("status", "superseded")
+        .limit(1)
+        .execute()
+    )
+    if existing:
+        return _single_row(
+            _rag_write()
+            .table("project_daily_deltas")
+            .update(payload)
+            .eq("id", existing["id"])
+            .execute()
+        ) or {**existing, **payload}
+    return _single_row(_rag_write().table("project_daily_deltas").insert(payload).execute()) or payload
+
+
+def _looks_like_change_event_signal(document: Dict[str, Any], signal: Dict[str, Any]) -> bool:
+    haystack = f"{document.get('title') or ''} {_source_content(document)} {signal.get('summary') or ''}".lower()
+    return bool(
+        re.search(
+            r"\b(change event|change order|pco|cco|scope change|cost exposure|extra work|delay claim|backcharge)\b",
+            haystack,
+        )
+    )
+
+
+def _timeline_event_type(signal_type: str) -> str:
+    return {
+        "decision": "decision",
+        "risk": "risk",
+        "blocker": "issue",
+        "financial_exposure": "cost_exposure",
+        "schedule_risk": "schedule_impact",
+        "task": "progress_update",
+        "project_update": "progress_update",
+    }.get(signal_type, "document")
+
+
+def _timeline_priority(signal_type: str) -> str:
+    if signal_type in {"blocker", "schedule_risk", "financial_exposure"}:
+        return "high"
+    if signal_type in {"risk", "decision"}:
+        return "medium"
+    return "low"
+
+
+def _upsert_project_timeline_event(
+    supabase: Any,
+    *,
+    project_id: int,
+    source_synthesis: Dict[str, Any],
+    signal: Dict[str, Any],
+    document: Dict[str, Any],
+) -> Dict[str, Any]:
+    signal_type = str(signal.get("signal_type") or "project_update")
+    source_document_id = str(document["id"])
+    existing = _single_row(
+        supabase.table("project_intelligence_timeline_events")
+        .select("*")
+        .eq("project_id", int(project_id))
+        .eq("source_document_id", source_document_id)
+        .eq("source_synthesis_id", source_synthesis.get("id"))
+        .limit(1)
+        .execute()
+    )
+    payload = {
+        "project_id": int(project_id),
+        "event_at": _source_occurred_at(document) or _utc_now(),
+        "event_type": "change_event_signal"
+        if _looks_like_change_event_signal(document, signal)
+        else _timeline_event_type(signal_type),
+        "title": signal.get("title") or document.get("title") or "Project update",
+        "summary": signal.get("summary"),
+        "why_it_matters": signal.get("why_it_matters"),
+        "current_status": "needs_decision" if signal_type == "decision" else "monitoring",
+        "owner_label": None,
+        "priority": _timeline_priority(signal_type),
+        "source_synthesis_id": source_synthesis.get("id"),
+        "source_document_id": source_document_id,
+        "related_event_ids": [],
+        "related_record_type": "document_metadata",
+        "related_record_id": source_document_id,
+        "confidence": source_synthesis.get("confidence") or "unknown",
+        "metadata": {
+            "normalized_signal_key": signal.get("normalized_signal_key"),
+            "source_family": source_synthesis.get("source_family"),
+        },
+        "updated_at": _utc_now(),
+    }
+    enforce_pm_app_final_projection_guard(
+        "project_intelligence_timeline_projection",
+        row_counts={"project_intelligence_timeline_events": 1},
+    )
+    if existing:
+        return _single_row(
+            supabase.table("project_intelligence_timeline_events")
+            .update(payload)
+            .eq("id", existing["id"])
+            .execute()
+        ) or {**existing, **payload}
+    return _single_row(supabase.table("project_intelligence_timeline_events").insert(payload).execute()) or payload
+
+
+def _upsert_timeline_event_source(
+    supabase: Any,
+    *,
+    timeline_event: Dict[str, Any],
+    source_synthesis: Dict[str, Any],
+    document: Dict[str, Any],
+    signal: Dict[str, Any],
+) -> Dict[str, Any]:
+    existing = _single_row(
+        supabase.table("project_intelligence_timeline_event_sources")
+        .select("*")
+        .eq("timeline_event_id", timeline_event["id"])
+        .eq("source_document_id", str(document["id"]))
+        .limit(1)
+        .execute()
+    )
+    payload = {
+        "timeline_event_id": timeline_event["id"],
+        "source_synthesis_id": source_synthesis.get("id"),
+        "source_document_id": str(document["id"]),
+        "source_family": source_synthesis.get("source_family"),
+        "source_title": document.get("title"),
+        "source_excerpt": signal.get("excerpt"),
+        "source_url": source_synthesis.get("source_url"),
+        "source_occurred_at": _source_occurred_at(document),
+        "confidence": source_synthesis.get("confidence") or "unknown",
+        "metadata": {"compiler_version": COMPILER_VERSION},
+    }
+    if existing:
+        return _single_row(
+            supabase.table("project_intelligence_timeline_event_sources")
+            .update(payload)
+            .eq("id", existing["id"])
+            .execute()
+        ) or {**existing, **payload}
+    return _single_row(
+        supabase.table("project_intelligence_timeline_event_sources").insert(payload).execute()
+    ) or payload
+
+
+def _upsert_change_event_candidate(
+    supabase: Any,
+    *,
+    project_id: int,
+    source_synthesis: Dict[str, Any],
+    timeline_event: Dict[str, Any],
+    signal: Dict[str, Any],
+    document: Dict[str, Any],
+) -> Optional[Dict[str, Any]]:
+    if not _looks_like_change_event_signal(document, signal):
+        return None
+    title = f"Potential change: {signal.get('title') or document.get('title') or 'source update'}"[:180]
+    existing = _single_row(
+        supabase.table("change_event_candidates")
+        .select("*")
+        .eq("project_id", int(project_id))
+        .eq("title", title)
+        .in_("status", ["candidate", "reviewing", "draft_created"])
+        .limit(1)
+        .execute()
+    )
+    payload = {
+        "project_id": int(project_id),
+        "title": title,
+        "description": signal.get("summary"),
+        "reason": "Source language suggests a potential scope, cost, schedule, or change-order exposure.",
+        "potential_cost_impact": None,
+        "potential_schedule_impact": None,
+        "source_synthesis_ids": [source_synthesis.get("id")] if source_synthesis.get("id") else [],
+        "timeline_event_ids": [timeline_event.get("id")] if timeline_event.get("id") else [],
+        "confidence": source_synthesis.get("confidence") or "unknown",
+        "missing_information": [
+            "Confirm whether this is already covered by contract scope.",
+            "Confirm cost and schedule impact before creating a formal change event.",
+        ],
+        "status": "candidate",
+        "metadata": {
+            "source_document_id": str(document["id"]),
+            "normalized_signal_key": signal.get("normalized_signal_key"),
+        },
+        "updated_at": _utc_now(),
+    }
+    enforce_pm_app_final_projection_guard(
+        "change_event_candidate_projection",
+        row_counts={"change_event_candidates": 1},
+    )
+    if existing:
+        merged_source_ids = _append_unique(existing.get("source_synthesis_ids"), source_synthesis.get("id"))
+        merged_event_ids = _append_unique(existing.get("timeline_event_ids"), timeline_event.get("id"))
+        return _single_row(
+            supabase.table("change_event_candidates")
+            .update({**payload, "source_synthesis_ids": merged_source_ids, "timeline_event_ids": merged_event_ids})
+            .eq("id", existing["id"])
+            .execute()
+        ) or {**existing, **payload}
+    return _single_row(supabase.table("change_event_candidates").insert(payload).execute()) or payload
+
+
+def _upsert_project_report_suggestions(
+    supabase: Any,
+    *,
+    project_id: int,
+    daily_delta: Dict[str, Any],
+    snapshot: Dict[str, Any],
+    timeline_event: Dict[str, Any],
+    business_date: date,
+) -> List[Dict[str, Any]]:
+    week_start = business_date - timedelta(days=business_date.weekday())
+    suggestions = [
+        {
+            "report_type": "project_daily_report",
+            "business_date": business_date.isoformat(),
+            "week_start_date": None,
+            "title": f"Daily report draft for {business_date.isoformat()}",
+            "suggestion_payload": daily_delta.get("daily_report_draft") or {},
+        },
+        {
+            "report_type": "weekly_progress_report",
+            "business_date": None,
+            "week_start_date": week_start.isoformat(),
+            "title": f"Weekly progress report updates for week of {week_start.isoformat()}",
+            "suggestion_payload": daily_delta.get("progress_report_updates") or {},
+        },
+    ]
+    written: List[Dict[str, Any]] = []
+    for suggestion in suggestions:
+        existing_query = (
+            supabase.table("project_report_suggestions")
+            .select("*")
+            .eq("project_id", int(project_id))
+            .eq("report_type", suggestion["report_type"])
+            .eq("source_delta_id", daily_delta.get("id"))
+            .limit(1)
+        )
+        existing = _single_row(existing_query.execute())
+        payload = {
+            "project_id": int(project_id),
+            "report_type": suggestion["report_type"],
+            "business_date": suggestion["business_date"],
+            "week_start_date": suggestion["week_start_date"],
+            "source_delta_id": daily_delta.get("id"),
+            "source_snapshot_id": snapshot.get("id"),
+            "title": suggestion["title"],
+            "suggestion_payload": suggestion["suggestion_payload"],
+            "source_timeline_event_ids": [timeline_event.get("id")] if timeline_event.get("id") else [],
+            "status": "suggested",
+            "confidence": daily_delta.get("confidence") or "unknown",
+            "metadata": {"compiler_version": COMPILER_VERSION},
+            "updated_at": _utc_now(),
+        }
+        if existing:
+            written.append(
+                _single_row(
+                    supabase.table("project_report_suggestions")
+                    .update(payload)
+                    .eq("id", existing["id"])
+                    .execute()
+                )
+                or {**existing, **payload}
+            )
+        else:
+            written.append(
+                _single_row(supabase.table("project_report_suggestions").insert(payload).execute())
+                or payload
+            )
+    return written
+
+
+def apply_source_operating_record_projection(
+    supabase: Any,
+    *,
+    document: Dict[str, Any],
+    project_id: int,
+    source_synthesis: Dict[str, Any],
+    daily_delta: Dict[str, Any],
+    signal: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Write the app-facing Project Intelligence operating-record projection."""
+    source_coverage = daily_delta.get("source_coverage") if isinstance(daily_delta, dict) else {}
+    snapshot = write_project_operating_snapshot(
+        supabase,
+        project_id=project_id,
+        source_delta_id=daily_delta.get("id"),
+        source_coverage=source_coverage if isinstance(source_coverage, dict) else {},
+    )
+    timeline_event = _upsert_project_timeline_event(
+        supabase,
+        project_id=project_id,
+        source_synthesis=source_synthesis,
+        signal=signal,
+        document=document,
+    )
+    timeline_source = _upsert_timeline_event_source(
+        supabase,
+        timeline_event=timeline_event,
+        source_synthesis=source_synthesis,
+        document=document,
+        signal=signal,
+    )
+    change_candidate = _upsert_change_event_candidate(
+        supabase,
+        project_id=project_id,
+        source_synthesis=source_synthesis,
+        timeline_event=timeline_event,
+        signal=signal,
+        document=document,
+    )
+
+    current_state_payload = {
+        "project_id": int(project_id),
+        "current_summary": daily_delta.get("headline") or source_synthesis.get("executive_summary"),
+        "health_status": "watch" if daily_delta.get("risks") or daily_delta.get("issues") else "unknown",
+        "what_changed_since_last_update": daily_delta.get("what_changed") or [],
+        "needs_attention": (daily_delta.get("risks") or []) + (daily_delta.get("change_event_candidates") or []),
+        "open_decisions": daily_delta.get("decisions") or [],
+        "active_risks": daily_delta.get("risks") or [],
+        "financial_read": _clean_text((daily_delta.get("financial_changes") or [{}])[0].get("summary"))
+        if daily_delta.get("financial_changes")
+        else None,
+        "schedule_read": _clean_text((daily_delta.get("schedule_changes") or [{}])[0].get("summary"))
+        if daily_delta.get("schedule_changes")
+        else None,
+        "field_read": _clean_text((daily_delta.get("daily_report_draft") or {}).get("summary")),
+        "source_confidence": {
+            "confidence": daily_delta.get("confidence"),
+            "source_coverage": daily_delta.get("source_coverage"),
+        },
+        "last_delta_id": daily_delta.get("id"),
+        "last_snapshot_id": snapshot.get("id"),
+        "updated_at": _utc_now(),
+    }
+    existing_current_state = _single_row(
+        supabase.table("project_current_state")
+        .select("project_id")
+        .eq("project_id", int(project_id))
+        .limit(1)
+        .execute()
+    )
+    enforce_pm_app_final_projection_guard(
+        "project_current_state_projection",
+        row_counts={"project_current_state": 1},
+    )
+    if existing_current_state:
+        current_state = _single_row(
+            supabase.table("project_current_state")
+            .update(current_state_payload)
+            .eq("project_id", int(project_id))
+            .execute()
+        ) or current_state_payload
+    else:
+        current_state = _single_row(
+            supabase.table("project_current_state").insert(current_state_payload).execute()
+        ) or current_state_payload
+
+    report_suggestions = _upsert_project_report_suggestions(
+        supabase,
+        project_id=project_id,
+        daily_delta=daily_delta,
+        snapshot=snapshot,
+        timeline_event=timeline_event,
+        business_date=_source_business_date(document),
+    )
+    return {
+        "snapshot_id": snapshot.get("id"),
+        "current_state_project_id": current_state.get("project_id"),
+        "timeline_event_id": timeline_event.get("id"),
+        "timeline_event_source_id": timeline_source.get("id"),
+        "change_event_candidate_id": change_candidate.get("id") if change_candidate else None,
+        "report_suggestion_ids": [row.get("id") for row in report_suggestions if row.get("id")],
     }
 
 
@@ -2168,6 +3029,118 @@ def process_source_document(
     )
 
     if existing_job.get("status") == "succeeded" and not force:
+        output_summary = existing_job.get("output_summary") if isinstance(existing_job.get("output_summary"), dict) else {}
+        output_project_id = output_summary.get("project_id")
+        document_project_id = document.get("project_id")
+        project_id = output_project_id or document_project_id
+        invalid_project_note = None
+        if project_id:
+            project_row = _fetch_project_optional(supabase, project_id)
+            if not project_row and document_project_id and not _same_project_id(document_project_id, project_id):
+                project_row = _fetch_project_optional(supabase, document_project_id)
+                project_id = document_project_id if project_row else project_id
+            if not project_row:
+                invalid_project_note = (
+                    "Existing compiler job referenced missing project_id "
+                    f"{project_id}; source needs project attribution review."
+                )
+                project_id = None
+        existing_source_synthesis = _single_row(
+            _rag_read()
+            .table("source_syntheses")
+            .select("*")
+            .eq("source_document_id", source_document_id)
+            .eq("full_source_hash", source_hash)
+            .limit(1)
+            .execute()
+        )
+        if existing_source_synthesis and existing_source_synthesis.get("project_id"):
+            existing_project_id = existing_source_synthesis.get("project_id")
+            if not _fetch_project_optional(supabase, existing_project_id):
+                invalid_project_note = (
+                    "Existing source synthesis referenced missing project_id "
+                    f"{existing_project_id}; source needs project attribution review."
+                )
+                existing_source_synthesis = mark_source_synthesis_needs_project_review(
+                    existing_source_synthesis,
+                    reason=invalid_project_note,
+                )
+                catchup_summary = {
+                    **output_summary,
+                    "project_id": None,
+                    "source_synthesis_id": existing_source_synthesis.get("id"),
+                    "project_daily_delta_id": None,
+                    "operating_projection": None,
+                    "operating_projection_catchup": True,
+                    "operating_projection_skipped": "missing_project",
+                    "project_review_reason": invalid_project_note,
+                }
+                if existing_job.get("id"):
+                    _rag_write().table("source_intelligence_jobs").update(
+                        {
+                            "output_summary": catchup_summary,
+                            "updated_at": _utc_now(),
+                        }
+                    ).eq("id", existing_job["id"]).execute()
+                return {
+                    "status": "succeeded",
+                    **catchup_summary,
+                }
+        if not existing_source_synthesis:
+            confidence_score = float(output_summary.get("confidence_score") or (0.95 if project_id else 0.0))
+            signal = classify_basic_signal(document)
+            source_synthesis = write_source_synthesis(
+                supabase,
+                document=document,
+                project_id=int(project_id) if project_id else None,
+                signal=signal,
+                confidence_score=confidence_score,
+                compiler_version=compiler_version,
+            )
+            daily_delta = None
+            operating_projection = None
+            if invalid_project_note:
+                source_synthesis = mark_source_synthesis_needs_project_review(
+                    source_synthesis,
+                    reason=invalid_project_note,
+                )
+            if project_id and source_synthesis.get("synthesis_status") == "succeeded":
+                daily_delta = compile_project_daily_delta(
+                    supabase,
+                    project_id=int(project_id),
+                    business_date=_source_business_date(document),
+                    source_synthesis=source_synthesis,
+                    compiler_version=compiler_version,
+                )
+                operating_projection = apply_source_operating_record_projection(
+                    supabase,
+                    document=document,
+                    project_id=int(project_id),
+                    source_synthesis=source_synthesis,
+                    daily_delta=daily_delta,
+                    signal=signal,
+                )
+            catchup_summary = {
+                **output_summary,
+                "project_id": int(project_id) if project_id else None,
+                "source_synthesis_id": source_synthesis.get("id") if source_synthesis else None,
+                "project_daily_delta_id": daily_delta.get("id") if daily_delta else None,
+                "operating_projection": operating_projection,
+                "operating_projection_catchup": True,
+                "operating_projection_skipped": "missing_project" if invalid_project_note else None,
+                "project_review_reason": invalid_project_note,
+            }
+            if existing_job.get("id"):
+                _rag_write().table("source_intelligence_jobs").update(
+                    {
+                        "output_summary": catchup_summary,
+                        "updated_at": _utc_now(),
+                    }
+                ).eq("id", existing_job["id"]).execute()
+            return {
+                "status": "succeeded",
+                **catchup_summary,
+            }
         return {
             "status": "skipped",
             "reason": "source already processed with this compiler version and hash",
@@ -2192,6 +3165,7 @@ def process_source_document(
         confidence_score = 0.95 if project_id else 0.0
         corrected_project_attribution = False
         inferred_missing_project_attribution = False
+        invalid_project_note = None
         project_name: Optional[str] = None
         target: Optional[Dict[str, Any]] = None
 
@@ -2225,20 +3199,29 @@ def process_source_document(
             inferred_missing_project_attribution = bool(project_id)
 
         if project_id:
-            project = _fetch_project(supabase, int(project_id))
-            project_name = project.get("name")
-            if (corrected_project_attribution or inferred_missing_project_attribution) and project_name:
-                supabase.table("document_metadata").update(
-                    {
-                        "project_id": int(project_id),
-                        "project": project_name,
-                    }
-                ).eq("id", source_document_id).execute()
-            target = ensure_client_project_target(
-                supabase,
-                int(project_id),
-                compiler_version=compiler_version,
-            )
+            project = _fetch_project_optional(supabase, project_id)
+            if not project:
+                invalid_project_note = (
+                    "Source referenced missing project_id "
+                    f"{project_id}; source needs project attribution review."
+                )
+                project_id = None
+                confidence_score = 0.0
+                attribution_method = "missing_project_review"
+            else:
+                project_name = project.get("name")
+                if (corrected_project_attribution or inferred_missing_project_attribution) and project_name:
+                    supabase.table("document_metadata").update(
+                        {
+                            "project_id": int(project_id),
+                            "project": project_name,
+                        }
+                    ).eq("id", source_document_id).execute()
+                target = ensure_client_project_target(
+                    supabase,
+                    int(project_id),
+                    compiler_version=compiler_version,
+                )
 
         attribution = write_document_attribution_candidate(
             supabase,
@@ -2262,6 +3245,8 @@ def process_source_document(
                 else ["document_metadata.title", "document_metadata.content"]
                 if inferred_missing_project_attribution
                 else ["document_metadata.project_id"]
+                if invalid_project_note
+                else ["document_metadata.project_id"]
                 if document.get("project_id")
                 else []
             ),
@@ -2271,6 +3256,9 @@ def process_source_document(
                 else
                 "Missing document_metadata.project_id was filled from project inference."
                 if inferred_missing_project_attribution
+                else
+                invalid_project_note
+                if invalid_project_note
                 else
                 "Existing document_metadata.project_id was trusted as the project attribution."
                 if document.get("project_id")
@@ -2285,6 +3273,37 @@ def process_source_document(
         )
 
         signal = classify_basic_signal(document)
+        source_synthesis = write_source_synthesis(
+            supabase,
+            document=document,
+            project_id=int(project_id) if project_id else None,
+            signal=signal,
+            confidence_score=confidence_score,
+            compiler_version=compiler_version,
+        )
+        if invalid_project_note:
+            source_synthesis = mark_source_synthesis_needs_project_review(
+                source_synthesis,
+                reason=invalid_project_note,
+            )
+        daily_delta = None
+        operating_projection = None
+        if project_id and source_synthesis.get("synthesis_status") == "succeeded":
+            daily_delta = compile_project_daily_delta(
+                supabase,
+                project_id=int(project_id),
+                business_date=_source_business_date(document),
+                source_synthesis=source_synthesis,
+                compiler_version=compiler_version,
+            )
+            operating_projection = apply_source_operating_record_projection(
+                supabase,
+                document=document,
+                project_id=int(project_id),
+                source_synthesis=source_synthesis,
+                daily_delta=daily_delta,
+                signal=signal,
+            )
         signal_candidate = None
         packet_refresh_job = None
         if target:
@@ -2327,6 +3346,11 @@ def process_source_document(
             "attribution_candidate_id": attribution.get("id"),
             "signal_candidate_id": signal_candidate.get("id") if signal_candidate else None,
             "packet_refresh_job_id": packet_refresh_job.get("id") if packet_refresh_job else None,
+            "source_synthesis_id": source_synthesis.get("id") if source_synthesis else None,
+            "project_daily_delta_id": daily_delta.get("id") if daily_delta else None,
+            "operating_projection": operating_projection,
+            "operating_projection_skipped": "missing_project" if invalid_project_note else None,
+            "project_review_reason": invalid_project_note,
             "confidence": confidence_label(confidence_score),
             "confidence_score": confidence_score,
         }
