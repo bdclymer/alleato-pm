@@ -20,6 +20,10 @@ import {
   getAppDatabaseUrl,
   getRagDatabaseUrl,
 } from "./app-db-connection.mjs";
+import {
+  classifyProjectApplicability,
+  isProjectRequired,
+} from "./source_lifecycle_project_applicability.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), "../..");
@@ -99,6 +103,39 @@ function matchesLifecycle(row, job) {
   );
 }
 
+function latestLifecycleFor(row, lifecycleByDocumentId) {
+  const jobs = lifecycleByDocumentId.get(String(row.id)) ?? [];
+  return jobs[0] ?? null;
+}
+
+function applicabilityFor(row, lifecycleByDocumentId) {
+  const metadata = latestLifecycleFor(row, lifecycleByDocumentId)?.metadata ?? {};
+  const storedApplicability = metadata?.project_applicability;
+  if (storedApplicability) {
+    return {
+      project_applicability: storedApplicability,
+      project_required: metadata.project_required === true || isProjectRequired(storedApplicability),
+      project_applicability_reason: metadata.project_applicability_reason ?? "source_processing_jobs.metadata",
+    };
+  }
+
+  return classifyProjectApplicability(row);
+}
+
+function hasTerminalEmbeddingFailure(row, lifecycleByDocumentId) {
+  const terminalCodes = new Set([
+    "graph_content_missing",
+    "graph_content_empty",
+    "skipped_low_content",
+    "no_chunks",
+    "interview_title_excluded",
+    "ocr_failed",
+  ]);
+  return (lifecycleByDocumentId.get(String(row.id)) ?? []).some((job) =>
+    job.status === "failed_permanent" && terminalCodes.has(String(job.error_code ?? "")),
+  );
+}
+
 function pushFailure(failures, message, details) {
   failures.push({ message, details });
 }
@@ -130,8 +167,24 @@ const ragPool = new pg.Pool({
   max: 1,
 });
 
-const appClient = await appPool.connect();
-const ragClient = await ragPool.connect();
+async function connectOrFail(pool, label) {
+  try {
+    return await pool.connect();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const code = error?.code ? ` code=${error.code}` : "";
+    console.error(`${label} connection failed:${code} ${message}`);
+    console.error(
+      label === "RAG database"
+        ? "RAG source-lifecycle verification cannot prove ingestion, embeddings, task assignment, or Project Intelligence freshness while the AI/RAG database is unreachable."
+        : "App database verification cannot prove source metadata, generated tasks, or Project Intelligence packet state while the PM app database is unreachable.",
+    );
+    process.exit(1);
+  }
+}
+
+const appClient = await connectOrFail(appPool, "App database");
+const ragClient = await connectOrFail(ragPool, "RAG database");
 
 try {
   const recentSourcesResult = await appClient.query(
@@ -176,7 +229,7 @@ try {
   const lifecycleRows = (await ragClient.query(
     `
       select source_system, source_item_id, source_document_id, content_hash, project_id,
-        status, updated_at, completed_at, retry_count, error_code, error_message
+        status, updated_at, completed_at, retry_count, error_code, error_message, metadata
       from public.source_processing_jobs
       where source_system <> 'verification'
         and (
@@ -234,9 +287,20 @@ try {
   const families = ["fireflies", "teams", "outlook_email", "onedrive_document"];
   const sourceFamilySummary = families.map((family) => {
     const rows = sourceRows.filter((row) => row.source_family === family);
-    const withProject = rows.filter((row) => row.project_id !== null && row.project_id !== undefined).length;
+    const rowsWithApplicability = rows.map((row) => ({
+      ...row,
+      project_applicability: applicabilityFor(row, lifecycleByDocumentId),
+    }));
+    const projectRequiredRows = rowsWithApplicability.filter((row) =>
+      row.project_applicability.project_required === true,
+    );
+    const withProject = projectRequiredRows.filter((row) => row.project_id !== null && row.project_id !== undefined).length;
+    const terminalEmbeddingFailures = rows.filter((row) => hasTerminalEmbeddingFailure(row, lifecycleByDocumentId));
+    const embeddingRequiredRows = rows.filter((row) => !hasTerminalEmbeddingFailure(row, lifecycleByDocumentId));
     const withChunks = rows.filter((row) => Number(chunkByDocumentId.get(String(row.id))?.chunks ?? 0) > 0).length;
-    const withEmbeddings = rows.filter((row) => Number(chunkByDocumentId.get(String(row.id))?.embedded_chunks ?? 0) > 0).length;
+    const withEmbeddings = embeddingRequiredRows.filter((row) =>
+      Number(chunkByDocumentId.get(String(row.id))?.embedded_chunks ?? 0) > 0,
+    ).length;
     const withLifecycle = rows.filter((row) => (lifecycleByDocumentId.get(String(row.id)) ?? []).length > 0).length;
     const withProjectAssignmentLifecycle = rows.filter((row) =>
       (lifecycleByDocumentId.get(String(row.id)) ?? []).some((job) =>
@@ -248,15 +312,25 @@ try {
         ["project_intelligence_updated", "complete"].includes(job.status),
       ),
     ).length;
+    const applicabilityCounts = rowsWithApplicability.reduce((counts, row) => {
+      const key = row.project_applicability.project_applicability;
+      counts[key] = (counts[key] ?? 0) + 1;
+      return counts;
+    }, {});
 
     return {
       family,
       recent_sources: rows.length,
+      project_required_sources: projectRequiredRows.length,
+      project_not_required_sources: rows.length - projectRequiredRows.length,
+      project_applicability: applicabilityCounts,
       with_project: withProject,
-      project_assigned_ratio: ratio(withProject, rows.length),
+      project_assigned_ratio: ratio(withProject, projectRequiredRows.length),
+      embedding_required_sources: embeddingRequiredRows.length,
+      terminal_embedding_failures: terminalEmbeddingFailures.length,
       with_chunks: withChunks,
       with_embeddings: withEmbeddings,
-      embedded_ratio: ratio(withEmbeddings, rows.length),
+      embedded_ratio: ratio(withEmbeddings, embeddingRequiredRows.length),
       with_lifecycle: withLifecycle,
       lifecycle_ratio: ratio(withLifecycle, rows.length),
       with_project_assignment_lifecycle: withProjectAssignmentLifecycle,
@@ -272,8 +346,38 @@ try {
           type: row.type,
           created_at: row.created_at,
         })),
+      project_assignment_review_samples: rowsWithApplicability
+        .filter((row) =>
+          row.project_applicability.project_required === true &&
+          (row.project_id === null || row.project_id === undefined)
+        )
+        .slice(0, 5)
+        .map((row) => compactRow({
+          id: row.id,
+          title: row.title,
+          category: row.category,
+          type: row.type,
+          project_applicability: row.project_applicability.project_applicability,
+          project_applicability_reason: row.project_applicability.project_applicability_reason,
+          created_at: row.created_at,
+        })),
+      not_project_required_samples: rowsWithApplicability
+        .filter((row) => row.project_applicability.project_required !== true)
+        .slice(0, 5)
+        .map((row) => compactRow({
+          id: row.id,
+          title: row.title,
+          category: row.category,
+          type: row.type,
+          project_applicability: row.project_applicability.project_applicability,
+          project_applicability_reason: row.project_applicability.project_applicability_reason,
+          created_at: row.created_at,
+        })),
       unembedded_samples: rows
-        .filter((row) => Number(chunkByDocumentId.get(String(row.id))?.embedded_chunks ?? 0) === 0)
+        .filter((row) =>
+          Number(chunkByDocumentId.get(String(row.id))?.embedded_chunks ?? 0) === 0 &&
+          !hasTerminalEmbeddingFailure(row, lifecycleByDocumentId)
+        )
         .slice(0, 5)
         .map((row) => compactRow({
           id: row.id,
@@ -282,6 +386,22 @@ try {
           type: row.type,
           created_at: row.created_at,
         })),
+      terminal_unembeddable_samples: terminalEmbeddingFailures
+        .slice(0, 5)
+        .map((row) => {
+          const job = (lifecycleByDocumentId.get(String(row.id)) ?? []).find((item) =>
+            item.status === "failed_permanent",
+          );
+          return compactRow({
+            id: row.id,
+            title: row.title,
+            category: row.category,
+            type: row.type,
+            error_code: job?.error_code,
+            error_message: job?.error_message,
+            created_at: row.created_at,
+          });
+        }),
     };
   });
 

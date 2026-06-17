@@ -96,10 +96,10 @@ _intelligence_compiler_semaphore = threading.BoundedSemaphore(
 def _public_backend_error(prefix: str, exc: Exception) -> str:
     message = str(exc)
     lowered = message.lower()
-    if "cloudflare" in lowered or "error code 521" in lowered or "code': 521" in lowered:
-        return f"{prefix}: Supabase is unavailable (Cloudflare 521 Web server is down)."
     if "error code 522" in lowered or "code': 522" in lowered:
         return f"{prefix}: Supabase timed out (Cloudflare 522 Connection timed out)."
+    if "cloudflare" in lowered or "error code 521" in lowered or "code': 521" in lowered:
+        return f"{prefix}: Supabase is unavailable (Cloudflare 521 Web server is down)."
     compact = re.sub(r"<[^>]+>", " ", message)
     compact = re.sub(r"\s+", " ", compact).strip()
     return f"{prefix}: {compact[:500]}"
@@ -1255,6 +1255,16 @@ async def pipeline_process_endpoint(
     Returns:
         Dict with status "queued" and the metadataId.
     """
+    try:
+        from src.services.supabase_helpers import get_rag_read_client
+
+        get_rag_read_client().table("rag_document_metadata").select("id").limit(1).execute()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=_public_backend_error("RAG pipeline is unavailable", exc),
+        ) from exc
+
     background_tasks.add_task(_run_pipeline_limited, payload.metadataId)
     return {"status": "queued", "metadataId": payload.metadataId}
 
