@@ -13,7 +13,7 @@ import {
 import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { centsToUsd, type FindingTier } from "@/lib/accounting/reconciliation";
+import { centsToUsd, type FindingKind, type FindingTier } from "@/lib/accounting/reconciliation";
 import {
   useReconciliationFindings,
   useResolveFinding,
@@ -48,6 +48,38 @@ const recordTypeLabels: Record<ReconciliationFindingItem["recordType"], string> 
   prime_co: "Prime CO",
   budget: "Budget",
   ap_bill: "AP bill",
+};
+
+// Each tab is a focused "job": one task, one view.
+type ViewKey = "all" | "duplicates" | "onhold" | "sync";
+
+const VIEW_KINDS: Record<ViewKey, FindingKind[] | null> = {
+  all: null,
+  duplicates: ["duplicate-ap-bill"],
+  onhold: ["stale-on-hold-bill"],
+  sync: [
+    "unlinked-budget-line",
+    "drift-budget-line",
+    "value-mismatch-actuals",
+    "unlinked-cco",
+    "unlinked-pcco",
+    "underwater-budget",
+    "thin-margin",
+    "billed-over-contract",
+  ],
+};
+
+function tabLabel(view: ViewKey): string {
+  return { all: "All findings", duplicates: "Duplicate bills", onhold: "On-hold bills", sync: "Sync issues" }[view];
+}
+
+const VIEW_HELP: Record<ViewKey, string> = {
+  all: "Everything that disagrees between Job Planner and Acumatica. Use the tabs to focus on one job.",
+  duplicates:
+    "Vendors billed more than once for the same job in the same period. Open a row — it tells you which copy to keep and which to void in Acumatica.",
+  onhold:
+    "Subcontractor bills synced from Job Planner but never released in Acumatica. Work the oldest down; rows marked High are also duplicates.",
+  sync: "Job Planner budget records that disagree with Acumatica — unlinked, drifted, or value-mismatched.",
 };
 
 function fmtDate(value: string | null): string {
@@ -310,20 +342,40 @@ export default function ReconciliationPage() {
     [searchParams],
   );
 
+  const rawView = searchParams?.get("view") ?? "all";
+  const view: ViewKey = (rawView in VIEW_KINDS ? rawView : "all") as ViewKey;
+  const viewKinds = VIEW_KINDS[view];
+
   const allFindings = data?.findings ?? [];
+  const viewFindings = useMemo(
+    () => (viewKinds ? allFindings.filter((f) => viewKinds.includes(f.kind)) : allFindings),
+    [allFindings, viewKinds],
+  );
   const filteredItems = useMemo(() => {
-    return allFindings.filter((f) => {
+    return viewFindings.filter((f) => {
       if (activeFilters.tier && f.tier !== activeFilters.tier) return false;
       if (activeFilters.kind && f.kind !== activeFilters.kind) return false;
       return true;
     });
-  }, [allFindings, activeFilters]);
+  }, [viewFindings, activeFilters]);
 
   const summary = data?.summary;
   const generatedAt = data?.generatedAt ? fmtDate(data.generatedAt) : "—";
-  const description = summary
-    ? `${summary.highCount} high-confidence findings · ${centsToUsd(summary.dollarsAtRiskCents)} at risk · ${summary.projects} projects · verified against Acumatica · scanned ${generatedAt}. Click any row for the evidence.`
-    : "Job Planner records that disagree with Acumatica — unlinked, drifted, or mismatched. Click any row for the evidence.";
+  const atRisk = viewFindings
+    .filter((f) => f.tier === "HIGH")
+    .reduce((sum, f) => sum + Math.abs(f.amountCents ?? 0), 0);
+  const description =
+    view === "all"
+      ? summary
+        ? `${summary.highCount} high-confidence findings · ${centsToUsd(summary.dollarsAtRiskCents)} at risk · ${summary.projects} projects · scanned ${generatedAt}. ${VIEW_HELP.all}`
+        : VIEW_HELP.all
+      : `${viewFindings.length} ${tabLabel(view).toLowerCase()} · ${centsToUsd(atRisk)} at risk. ${VIEW_HELP[view]}`;
+
+  const tabs = (Object.keys(VIEW_KINDS) as ViewKey[]).map((key) => ({
+    label: tabLabel(key),
+    href: key === "all" ? pathname : `${pathname}?view=${key}`,
+    isActive: view === key,
+  }));
 
   const handleFilterChange = (next: Record<string, FilterValue>) => {
     tableState.setSearchParams({
@@ -355,9 +407,10 @@ export default function ReconciliationPage() {
             </Button>
           ),
         }}
+        tabs={tabs}
         layout={{ fullBleedTable: false, toolbarInlineWithHeader: true }}
         toolbar={{
-          totalItems: allFindings.length,
+          totalItems: viewFindings.length,
           filteredItems: filteredItems.length,
           searchValue: tableState.searchInput,
           onSearchChange: tableState.setSearchInput,

@@ -439,13 +439,14 @@ export function detectDuplicateBills(
     if (liveCount === 0) continue; // all paid history — not an active overstatement
 
     const amountCents = amountCentsOf(copies[0]);
-    // Still-preventable exposure: if one copy is already paid (Closed), every live
-    // copy is a duplicate; otherwise one live copy is the legitimate one.
-    const hasPaidCopy = copies.some(isClosed);
-    const duplicateCopies = hasPaidCopy ? liveCount : liveCount - 1;
-    const refs = copies
-      .map((b) => `${b.referenceNbr ?? "?"} (${(b.status ?? "?").toLowerCase()})`)
-      .join("; ");
+    const live = copies.filter(isLive);
+    const paid = copies.filter(isClosed);
+    // Keep one legitimate copy (the already-paid one if there is one, else the
+    // first live copy); every other live copy is a duplicate to void.
+    const keep = paid[0] ?? live[0];
+    const toVoid = paid.length > 0 ? live : live.slice(1);
+    const ref = (b: AcuApBill) => `${b.referenceNbr ?? "?"} (${(b.status ?? "?").toLowerCase()})`;
+    const voidList = toVoid.map(ref).join(", ");
 
     findings.push(
       apFinding(
@@ -455,8 +456,8 @@ export function detectDuplicateBills(
           recordRef: key,
           kind: "duplicate-ap-bill",
           tier: "HIGH",
-          detail: `${copies.length}× ${centsToUsd(amountCents)} to ${copies[0].vendorId} on ${projectLabel(copies[0].projectCode, projectName)} in period ${copies[0].postPeriod ?? "?"} — duplicate billing (${liveCount} still live). Copies: ${refs}.`,
-          amountCents: amountCents * duplicateCopies,
+          detail: `${copies[0].vendorId} was billed ${centsToUsd(amountCents)} ${copies.length}× on ${projectLabel(copies[0].projectCode, projectName)} (period ${copies[0].postPeriod ?? "?"}). Keep ${keep ? ref(keep) : "?"}; void ${voidList} in Acumatica.`,
+          amountCents: amountCents * toVoid.length,
           acuValueCents: amountCents,
           costCodeLabel: copies[0].vendorId,
           jpModifiedOn: copies.map((b) => b.date).filter(Boolean).sort().slice(-1)[0] ?? null,
