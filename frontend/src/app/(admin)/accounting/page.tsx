@@ -16,8 +16,6 @@ import {
   Cell,
   Line,
   LineChart,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -136,15 +134,6 @@ interface DashboardResponse {
   generatedAt: string;
 }
 
-const PROJECT_SLICE_COLORS = [
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-1))",
-  "hsl(var(--status-warning))",
-  "hsl(var(--destructive))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-5))",
-  "hsl(var(--muted-foreground))",
-];
 
 const REPORT_LINKS: Array<{
   title: string;
@@ -375,53 +364,27 @@ function AttentionStrip({
   );
 }
 
-function ProjectDonutChart({
+function AgingBarChart({
   title,
-  projects,
-  total,
-  pastCurrent,
+  aging,
   href,
 }: {
   title: string;
-  projects: ProjectBalance[];
-  total: number;
-  pastCurrent: number;
+  aging: AgingResult;
   href: string;
 }) {
-  const topProjects = projects.slice(0, 6);
-  const topTotal = topProjects.reduce(
-    (sum, project) => sum + project.outstandingBalance,
-    0,
-  );
-  const otherTotal = Math.max(total - topTotal, 0);
-  const chartData =
-    total > 0
-      ? [
-          ...topProjects.map((project) => ({
-            name: project.projectCode,
-            projectName: project.description ?? project.projectCode,
-            customer: project.customer,
-            value: project.outstandingBalance,
-          })),
-          ...(otherTotal > 0
-            ? [
-                {
-                  name: "Other",
-                  projectName: "Other projects",
-                  customer: null,
-                  value: otherTotal,
-                },
-              ]
-            : []),
-        ]
-      : [
-          {
-            name: "No balance",
-            projectName: "No project balance",
-            customer: null,
-            value: 1,
-          },
-        ];
+  const data = [
+    { bucket: "Current", value: aging.current.total, count: aging.current.count, idx: 0 },
+    { bucket: "31–60", value: aging.days31to60.total, count: aging.days31to60.count, idx: 1 },
+    { bucket: "61–90", value: aging.days61to90.total, count: aging.days61to90.count, idx: 2 },
+    { bucket: "90+", value: aging.days90plus.total, count: aging.days90plus.count, idx: 3 },
+  ];
+  const colors = [
+    "hsl(var(--chart-2))",
+    "hsl(var(--status-warning))",
+    "hsl(var(--chart-5))",
+    "hsl(var(--destructive))",
+  ];
 
   return (
     <div className="rounded-lg bg-card p-5">
@@ -429,77 +392,69 @@ function ProjectDonutChart({
         <div>
           <p className="text-sm font-semibold text-foreground">{title}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {formatCurrencyFull(pastCurrent)} past current
+            {formatCurrencyFull(aging.totalOutstanding)} outstanding ·{" "}
+            {formatCurrencyFull(overdueTotal(aging))} overdue
           </p>
         </div>
         <TextLink href={href}>Open</TextLink>
       </div>
 
-      <div className="relative mt-4 h-44">
+      <div className="mt-4 h-44">
         <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              dataKey="value"
-              innerRadius={58}
-              outerRadius={78}
-              paddingAngle={2}
-              strokeWidth={0}
-              animationBegin={80}
-              animationDuration={700}
-              animationEasing="ease-out"
-              isAnimationActive
-            >
-              {chartData.map((entry, index) => (
-                <Cell
-                  key={entry.name}
-                  fill={
-                    total > 0
-                      ? PROJECT_SLICE_COLORS[
-                          index % PROJECT_SLICE_COLORS.length
-                        ]
-                      : "hsl(var(--muted))"
-                  }
-                />
-              ))}
-            </Pie>
+          <BarChart
+            data={data}
+            margin={{ top: 8, right: 8, bottom: 4, left: 8 }}
+            barCategoryGap="24%"
+          >
+            <CartesianGrid
+              vertical={false}
+              strokeDasharray="3 3"
+              className="stroke-border/40"
+            />
+            <XAxis
+              dataKey="bucket"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 11 }}
+              className="fill-muted-foreground"
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={formatCurrency}
+              width={50}
+              tick={{ fontSize: 11 }}
+              className="fill-muted-foreground"
+            />
             <Tooltip
+              cursor={{ fill: "hsl(var(--muted) / 0.35)" }}
               content={({ active, payload }) => {
-                if (!active || !payload?.length || total <= 0) return null;
+                if (!active || !payload?.length) return null;
                 const item = payload[0]?.payload as {
-                  name: string;
-                  projectName: string;
-                  customer: string | null;
+                  bucket: string;
                   value: number;
+                  count: number;
                 };
                 return (
                   <div className="space-y-1 rounded-lg border border-border/50 bg-popover px-3 py-2 text-xs shadow-sm">
-                    <p className="font-medium text-foreground">
-                      {item.name}, {item.projectName}
+                    <p className="font-medium text-foreground">{item.bucket}</p>
+                    <p className="text-muted-foreground">
+                      {item.count} item{item.count === 1 ? "" : "s"}
                     </p>
-                    {item.customer && (
-                      <p className="text-muted-foreground">{item.customer}</p>
-                    )}
                     <p className="tabular-nums text-foreground">
                       {formatCurrencyFull(item.value)}
-                    </p>
-                    <p className="text-muted-foreground">
-                      {percent(item.value, total)}% of total
                     </p>
                   </div>
                 );
               }}
             />
-          </PieChart>
+            <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={48} isAnimationActive={false}>
+              {data.map((d) => (
+                <Cell key={d.bucket} fill={colors[d.idx]} />
+              ))}
+            </Bar>
+          </BarChart>
         </ResponsiveContainer>
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-xl font-semibold tabular-nums text-foreground">
-            {formatCurrency(total)}
-          </span>
-          <span className="text-[11px] text-muted-foreground">by project</span>
-        </div>
       </div>
     </div>
   );
@@ -1109,8 +1064,6 @@ export default function AccountingDashboardPage() {
   const {
     arAging,
     apAging,
-    arByProject,
-    apByProject,
     cashPosition,
     guardrailAlerts,
     monthlyRevenueMargin,
@@ -1197,18 +1150,14 @@ export default function AccountingDashboardPage() {
       <Section title="Financial Position">
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,0.8fr)]">
           <div className="grid gap-4 lg:grid-cols-2">
-            <ProjectDonutChart
-              title="Accounts Receivable"
-              projects={arByProject}
-              total={cashPosition.totalArOutstanding}
-              pastCurrent={arLate}
+            <AgingBarChart
+              title="Accounts Receivable aging"
+              aging={arAging}
               href="/accounting/invoices"
             />
-            <ProjectDonutChart
-              title="Accounts Payable"
-              projects={apByProject}
-              total={cashPosition.totalApOutstanding}
-              pastCurrent={apLate}
+            <AgingBarChart
+              title="Accounts Payable aging"
+              aging={apAging}
               href="/accounting/bills"
             />
           </div>
