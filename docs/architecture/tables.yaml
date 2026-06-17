@@ -88,10 +88,13 @@ tables:
     domain: projects
     owner: core
     status: live
-    purpose: "Project-scoped uploaded documents. Parallel to document_metadata (the AI-ready catalog)."
+    purpose: "Project-scoped uploaded + OneDrive/SharePoint-synced documents (full file inventory). Parallel to document_metadata (the AI-ready catalog). document_type is auto-derived from the source folder path."
+    gotchas: "document_type is set by trigger trg_project_documents_classify via classify_document_type(source_web_url) — folder-name based, number-agnostic. Do not set it manually for synced files. category is a generic source label ('OneDrive Document'); document_type is the meaningful construction type (psr, schedule, pay_app, submittal, etc.)."
+    notesForAi: "Holds the full categorized SharePoint/OneDrive file inventory (most files are NOT promoted into document_metadata). findProjectDocuments searches this in addition to document_metadata. Filter by document_type for PSR/schedule/pay_app/submittal/etc."
     relatedTables:
       - projects
       - document_metadata
+      - document_type_taxonomy
 
   - name: sop_backlog
     db: MAIN
@@ -1636,8 +1639,8 @@ tables:
     domain: documents
     owner: pipeline
     status: live
-    purpose: "Primary document catalog. 36,511 rows. Dual-written with RAG.rag_document_metadata on every ingestion. Full business metadata including project_id, source_type, storage path."
-    gotchas: "Always written alongside rag_document_metadata via upsert_document_metadata() — never write to one without the other."
+    purpose: "Primary document catalog. 36,511 rows. Dual-written with RAG.rag_document_metadata on every ingestion. Full business metadata including project_id, source_type, storage path. document_type (FK to document_type_taxonomy) is auto-classified for folder-backed rows."
+    gotchas: "Always written alongside rag_document_metadata via upsert_document_metadata() — never write to one without the other. document_type for onedrive/sharepoint/microsoft_graph rows is auto-set by trigger trg_document_metadata_classify via classify_document_type(); communication rows (email/teams/meeting) keep document_type NULL and use the legacy `type`/`category` columns instead."
     relatedTables:
       - rag_document_metadata
       - document_chunks
@@ -1916,12 +1919,12 @@ tables:
     db: MAIN
     domain: communications
     owner: pipeline
-    status: orphan-mirror
-    purpose: "STALE copy of the RAG meeting ingest queue. 27,095 rows. RAG.fireflies_ingestion_jobs is canonical."
-    gotchas: "RAG project is canonical. Do not write to MAIN copy."
-    cleanupPriority: high
+    status: live
+    purpose: "Pipeline ingest-job stage queue (MAIN side). ~27k rows. As of 2026-06-17 the pipeline DUAL-WRITES stage rows here AND into RAG.fireflies_ingestion_jobs via supabase_helpers.update_ingestion_job_state(); the document-insert trigger creates the MAIN row. No longer a passive stale orphan — keeping MAIN current lets the app UI / admin tooling read stages without crossing to the RAG DB."
+    gotchas: "Both copies are now kept in sync. Key is COALESCE(document_metadata.fireflies_id, id) (on_conflict=fireflies_id), so generic uploads are keyed by metadata id and real Fireflies meetings keep their external id — never assume the key is always a fireflies id. Always update both DBs through update_ingestion_job_state(), never one side directly."
     relatedTables:
       - meeting_segments
+      - rag_document_metadata
 
   - name: meeting_segments
     db: MAIN
@@ -3470,9 +3473,11 @@ tables:
     domain: communications
     owner: pipeline
     status: live
-    purpose: "Meeting ingestion job queue. 27,230 rows. Canonical copy. MAIN.fireflies_ingestion_jobs is stale."
+    purpose: "Pipeline ingest-job stage queue (RAG side). ~27k rows. As of 2026-06-17 written in lockstep with MAIN.fireflies_ingestion_jobs via supabase_helpers.update_ingestion_job_state() — every pipeline stage transition (segmented/chunked/embedded/done/error) upserts both copies keyed by COALESCE(fireflies_id, id)."
+    gotchas: "Both copies are now kept in sync — MAIN is no longer stale. Always update both DBs through update_ingestion_job_state(), never one side directly."
     relatedTables:
       - document_chunks
+      - rag_document_metadata
 
   - name: document_attribution_candidates
     db: RAG

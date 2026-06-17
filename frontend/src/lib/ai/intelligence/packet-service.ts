@@ -21,6 +21,8 @@ import type {
 import { PACKET_STALE_AFTER_HOURS } from "./types";
 
 type AlleatoSupabaseClient = SupabaseClient<Database>;
+type ProjectOperatingRecordContext = ClientProjectIntelligencePacket["operatingRecord"];
+
 type SourceDocumentPreview = Pick<
   Database["public"]["Tables"]["document_metadata"]["Row"],
   "id" | "type" | "category" | "summary" | "overview" | "description" | "notes"
@@ -30,6 +32,59 @@ type SourceDocumentPreview = Pick<
 };
 
 const SUPABASE_IN_FILTER_CHUNK_SIZE = 100;
+
+async function withAppDbClient<T>(callback: (client: import("pg").PoolClient) => Promise<T>): Promise<T> {
+  const databaseUrl =
+    process.env.APP_DATABASE_URL ?? process.env.DATABASE_URL ?? process.env.SUPABASE_DB_URL;
+  if (!databaseUrl) {
+    throw new Error("App database URL is not configured for Project Intelligence fallback.");
+  }
+
+  const pg = await import("pg");
+  const url = new URL(databaseUrl);
+  url.searchParams.delete("sslmode");
+
+  let lastError: unknown = null;
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const pool = new pg.Pool({
+      connectionString: url.toString(),
+      ssl: { rejectUnauthorized: false },
+      max: 1,
+      connectionTimeoutMillis: 8_000,
+      idleTimeoutMillis: 1_000,
+    });
+
+    try {
+      const client = await pool.connect();
+      try {
+        await client.query("set statement_timeout = '15000ms'");
+        return await callback(client);
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      lastError = error;
+      if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 750));
+    } finally {
+      await pool.end();
+    }
+  }
+
+  throw lastError;
+}
+
+function normalizeDbRow<T extends Record<string, unknown>>(row: T): T {
+  return Object.fromEntries(
+    Object.entries(row).map(([key, value]) => [
+      key,
+      value instanceof Date ? value.toISOString() : value,
+    ]),
+  ) as T;
+}
+
+function normalizeDbRows<T extends Record<string, unknown>>(rows: T[]): T[] {
+  return rows.map((row) => normalizeDbRow(row));
+}
 
 function chunkArray<T>(items: T[], size = SUPABASE_IN_FILTER_CHUNK_SIZE): T[][] {
   const chunks: T[][] = [];
@@ -301,6 +356,69 @@ function mapPacket(row: IntelligencePacketRow, cards: InsightCard[]): ClientProj
   };
 }
 
+async function loadProjectOperatingRecordContext(input: {
+  projectId: number;
+  supabase: AlleatoSupabaseClient;
+}): Promise<ProjectOperatingRecordContext> {
+  const supabase = input.supabase;
+  const [
+    { data: currentState },
+    { data: latestSnapshot },
+    { data: timelineEvents },
+    { data: changeEventCandidates },
+  ] = await Promise.all([
+    supabase
+      .from("project_current_state")
+      .select(
+        "project_id,current_summary,health_status,what_changed_since_last_update,needs_attention,open_decisions,active_risks,financial_read,schedule_read,field_read,source_confidence,updated_at",
+      )
+      .eq("project_id", input.projectId)
+      .maybeSingle(),
+    supabase
+      .from("project_operating_snapshots")
+      .select(
+        "id,project_id,snapshot_at,source_coverage,financial_snapshot,schedule_snapshot,database_counts,project_info,acumatica_sync_at,freshness,warnings,confidence",
+      )
+      .eq("project_id", input.projectId)
+      .order("snapshot_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("project_intelligence_timeline_events")
+      .select(
+        "id,event_at,event_type,title,summary,why_it_matters,current_status,owner_label,priority,source_document_id,confidence",
+      )
+      .eq("project_id", input.projectId)
+      .in("current_status", ["open", "monitoring", "needs_decision"])
+      .order("event_at", { ascending: false })
+      .limit(12),
+    supabase
+      .from("change_event_candidates")
+      .select(
+        "id,title,description,reason,potential_cost_impact,potential_schedule_impact,confidence,missing_information,status,created_at",
+      )
+      .eq("project_id", input.projectId)
+      .in("status", ["candidate", "reviewing"])
+      .order("created_at", { ascending: false })
+      .limit(8),
+  ]);
+
+  return {
+    currentState: currentState
+      ? normalizeDbRow(currentState as Record<string, unknown>)
+      : null,
+    latestSnapshot: latestSnapshot
+      ? normalizeDbRow(latestSnapshot as Record<string, unknown>)
+      : null,
+    timelineEvents: ((timelineEvents ?? []) as Record<string, unknown>[]).map((row) =>
+      normalizeDbRow(row),
+    ),
+    changeEventCandidates: ((changeEventCandidates ?? []) as Record<string, unknown>[]).map((row) =>
+      normalizeDbRow(row),
+    ),
+  };
+}
+
 export async function resolveIntelligenceTarget(input: {
   query: string;
   selectedProjectId?: number;
@@ -390,28 +508,52 @@ export async function loadCurrentIntelligencePacket(input: {
   targetId: string;
   supabase: AlleatoSupabaseClient;
   includeSourcePreview?: boolean;
+  projectId?: number | null;
 }): Promise<ClientProjectIntelligencePacket | null> {
-  const { data, error } = await input.supabase
-    .from("intelligence_packets")
-    .select("*")
-    .eq("target_id", input.targetId)
-    .eq("packet_type", "current")
-    .order("generated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  try {
+    const { data, error } = await input.supabase
+      .from("intelligence_packets")
+      .select("*")
+      .eq("target_id", input.targetId)
+      .eq("packet_type", "current")
+      .order("generated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  if (error) {
-    throw new Error(`Failed to load current intelligence packet: ${error.message}`);
+    if (error) {
+      throw new Error(`Failed to load current intelligence packet: ${error.message}`);
+    }
+    if (!data) return loadCurrentIntelligencePacketFromAppDb(input);
+
+    const cards = await loadPacketCards({
+      targetId: input.targetId,
+      supabase: input.supabase,
+      includeSourcePreview: input.includeSourcePreview,
+    });
+
+    const packet = mapPacket(data, cards);
+    const operatingRecord = typeof input.projectId === "number"
+      ? await loadProjectOperatingRecordContext({
+          projectId: input.projectId,
+          supabase: input.supabase,
+        }).catch(() => null)
+      : null;
+
+    return {
+      ...packet,
+      operatingRecord,
+    };
+  } catch (error) {
+    try {
+      return await loadCurrentIntelligencePacketFromAppDb(input);
+    } catch (fallbackError) {
+      const primaryMessage = error instanceof Error ? error.message : String(error);
+      const fallbackMessage = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+      throw new Error(
+        `Failed to load current intelligence packet: ${primaryMessage}; direct database fallback also failed: ${fallbackMessage}`,
+      );
+    }
   }
-  if (!data) return null;
-
-  const cards = await loadPacketCards({
-    targetId: input.targetId,
-    supabase: input.supabase,
-    includeSourcePreview: input.includeSourcePreview,
-  });
-
-  return mapPacket(data, cards);
 }
 
 export async function loadPacketCards(input: {
@@ -420,129 +562,157 @@ export async function loadPacketCards(input: {
   includeCandidate?: boolean;
   includeSourcePreview?: boolean;
 }): Promise<InsightCard[]> {
-  const { data: packet, error: packetError } = await input.supabase
-    .from("intelligence_packets")
-    .select("id")
-    .eq("target_id", input.targetId)
-    .eq("packet_type", "current")
-    .order("generated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  try {
+    const { data: packet, error: packetError } = await input.supabase
+      .from("intelligence_packets")
+      .select("id")
+      .eq("target_id", input.targetId)
+      .eq("packet_type", "current")
+      .order("generated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  if (packetError) {
-    throw new Error(`Failed to load packet card index: ${packetError.message}`);
-  }
-  if (!packet) return [];
+    if (packetError) {
+      throw new Error(`Failed to load packet card index: ${packetError.message}`);
+    }
+    if (!packet) return [];
 
-  const { data: packetCards, error: packetCardsError } = await input.supabase
-    .from("intelligence_packet_cards")
-    .select("*")
-    .eq("packet_id", packet.id)
-    .order("rank", { ascending: true });
+    const { data: packetCards, error: packetCardsError } = await input.supabase
+      .from("intelligence_packet_cards")
+      .select("*")
+      .eq("packet_id", packet.id)
+      .order("rank", { ascending: true });
 
-  if (packetCardsError) {
-    throw new Error(`Failed to load packet cards: ${packetCardsError.message}`);
-  }
+    if (packetCardsError) {
+      throw new Error(`Failed to load packet cards: ${packetCardsError.message}`);
+    }
 
-  const packetCardRows = packetCards ?? [];
-  const cardIds = Array.from(new Set(packetCardRows.map((row) => row.insight_card_id)));
-  if (cardIds.length === 0) return [];
+    const packetCardRows = packetCards ?? [];
+    const cardIds = Array.from(new Set(packetCardRows.map((row) => row.insight_card_id)));
+    if (cardIds.length === 0) return [];
 
-  const cardResults = await Promise.all(
-    chunkArray(cardIds).map((ids) =>
-      input.includeCandidate
-        ? input.supabase
-            .from("insight_cards")
-            .select("*")
-            .in("id", ids)
-        : input.supabase
-            .from("insight_cards")
-            .select("*")
-            .in("id", ids)
-            .neq("attribution_status", "rejected"),
-    ),
-  );
-  const cardsError = cardResults.find((result) => result.error)?.error;
-  if (cardsError) {
-    throw new Error(`Failed to load insight cards: ${cardsError.message}`);
-  }
-  const cardRows = cardResults.flatMap((result) => result.data ?? []);
+    const cardResults = await Promise.all(
+      chunkArray(cardIds).map((ids) =>
+        input.includeCandidate
+          ? input.supabase
+              .from("insight_cards")
+              .select("*")
+              .in("id", ids)
+          : input.supabase
+              .from("insight_cards")
+              .select("*")
+              .in("id", ids)
+              .neq("attribution_status", "rejected"),
+      ),
+    );
+    const cardsError = cardResults.find((result) => result.error)?.error;
+    if (cardsError) {
+      throw new Error(`Failed to load insight cards: ${cardsError.message}`);
+    }
+    const cardRows = cardResults.flatMap((result) => result.data ?? []);
 
-  const evidenceResults = await Promise.all(
-    chunkArray(cardIds).map((ids) =>
-      input.supabase
-        .from("insight_card_evidence")
-        .select("*")
-        .in("insight_card_id", ids)
-        .order("source_occurred_at", { ascending: false, nullsFirst: false }),
-    ),
-  );
-  const evidenceError = evidenceResults.find((result) => result.error)?.error;
-  if (evidenceError) {
-    throw new Error(`Failed to load insight card evidence: ${evidenceError.message}`);
-  }
-  const evidenceRows = evidenceResults.flatMap((result) => result.data ?? []);
+    const evidenceResults = await Promise.all(
+      chunkArray(cardIds).map((ids) =>
+        input.supabase
+          .from("insight_card_evidence")
+          .select("*")
+          .in("insight_card_id", ids)
+          .order("source_occurred_at", { ascending: false, nullsFirst: false }),
+      ),
+    );
+    const evidenceError = evidenceResults.find((result) => result.error)?.error;
+    if (evidenceError) {
+      throw new Error(`Failed to load insight card evidence: ${evidenceError.message}`);
+    }
+    const evidenceRows = evidenceResults.flatMap((result) => result.data ?? []);
 
-  const sourceDocumentIds = input.includeSourcePreview === false
-    ? []
-    : Array.from(
-        new Set(
-          evidenceRows
-            .map((row) => row.source_document_id)
-            .filter((value): value is string => Boolean(value)),
-        ),
+    const sourceDocumentIds = input.includeSourcePreview === false
+      ? []
+      : Array.from(
+          new Set(
+            evidenceRows
+              .map((row) => row.source_document_id)
+              .filter((value): value is string => Boolean(value)),
+          ),
+        );
+    const sourceDocumentResults = sourceDocumentIds.length > 0
+      ? await Promise.all(
+          chunkArray(sourceDocumentIds).map((ids) =>
+            input.supabase
+              .from("document_metadata")
+              .select("id,type,category,summary,overview,description,notes")
+              .in("id", ids),
+          ),
+        )
+      : [];
+    const sourceDocumentError = sourceDocumentResults.find((result) => result.error)?.error;
+    if (sourceDocumentError) {
+      throw new Error(`Failed to load insight card source content: ${sourceDocumentError.message}`);
+    }
+    const sourceDocumentRows = sourceDocumentResults.flatMap((result) => result.data ?? []);
+
+    const reviewResults = await Promise.all(
+      chunkArray(cardIds).map((ids) =>
+        input.supabase
+          .from("intelligence_reviews")
+          .select("*")
+          .eq("review_type", "packet_card_feedback")
+          .in("insight_card_id", ids)
+          .order("created_at", { ascending: false }),
+      ),
+    );
+    const reviewError = reviewResults.find((result) => result.error)?.error;
+    if (reviewError) {
+      throw new Error(`Failed to load insight card feedback: ${reviewError.message}`);
+    }
+    const reviewRows = reviewResults.flatMap((result) => result.data ?? []);
+
+    return mapPacketCards({
+      packetCardRows,
+      cardRows,
+      evidenceRows,
+      sourceDocumentRows,
+      reviewRows,
+    });
+  } catch (error) {
+    try {
+      return await loadPacketCardsFromAppDb(input);
+    } catch (fallbackError) {
+      const primaryMessage = error instanceof Error ? error.message : String(error);
+      const fallbackMessage = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+      throw new Error(
+        `Failed to load packet cards: ${primaryMessage}; direct database fallback also failed: ${fallbackMessage}`,
       );
-  const sourceDocumentResults = sourceDocumentIds.length > 0
-    ? await Promise.all(
-        chunkArray(sourceDocumentIds).map((ids) =>
-          input.supabase
-            .from("document_metadata")
-            .select("id,type,category,summary,overview,description,notes")
-            .in("id", ids),
-        ),
-      )
-    : [];
-  const sourceDocumentError = sourceDocumentResults.find((result) => result.error)?.error;
-  if (sourceDocumentError) {
-    throw new Error(`Failed to load insight card source content: ${sourceDocumentError.message}`);
+    }
   }
-  const sourceDocumentRows = sourceDocumentResults.flatMap((result) => result.data ?? []);
+}
 
-  const reviewResults = await Promise.all(
-    chunkArray(cardIds).map((ids) =>
-      input.supabase
-        .from("intelligence_reviews")
-        .select("*")
-        .eq("review_type", "packet_card_feedback")
-        .in("insight_card_id", ids)
-        .order("created_at", { ascending: false }),
-    ),
-  );
-  const reviewError = reviewResults.find((result) => result.error)?.error;
-  if (reviewError) {
-    throw new Error(`Failed to load insight card feedback: ${reviewError.message}`);
-  }
-  const reviewRows = reviewResults.flatMap((result) => result.data ?? []);
-
+function mapPacketCards(input: {
+  packetCardRows: IntelligencePacketCardRow[];
+  cardRows: InsightCardRow[];
+  evidenceRows: InsightCardEvidenceRow[];
+  sourceDocumentRows: SourceDocumentPreview[];
+  reviewRows: Database["public"]["Tables"]["intelligence_reviews"]["Row"][];
+}): InsightCard[] {
   const sourceDocumentById = new Map(
-    (sourceDocumentRows as SourceDocumentPreview[]).map((row) => [row.id, row]),
+    input.sourceDocumentRows.map((row) => [row.id, row]),
   );
   const evidenceByCard = new Map<string, InsightCardEvidence[]>();
-  for (const row of evidenceRows) {
+  for (const row of input.evidenceRows) {
     const existing = evidenceByCard.get(row.insight_card_id) ?? [];
     existing.push(mapEvidence(row, row.source_document_id ? sourceDocumentById.get(row.source_document_id) : undefined));
     evidenceByCard.set(row.insight_card_id, existing);
   }
 
   const feedbackByCard = new Map<string, InsightCardReviewFeedback>();
-  for (const row of reviewRows) {
+  for (const row of input.reviewRows) {
     if (!row.insight_card_id || feedbackByCard.has(row.insight_card_id)) continue;
     const feedback = mapReviewFeedback(row);
     if (feedback) feedbackByCard.set(row.insight_card_id, feedback);
   }
 
-  const cardsById = new Map(cardRows.map((row) => [row.id, row]));
-  return packetCardRows
+  const cardsById = new Map(input.cardRows.map((row) => [row.id, row]));
+  return input.packetCardRows
     .map((packetCard) => {
       const card = cardsById.get(packetCard.insight_card_id);
       return card
@@ -555,6 +725,132 @@ export async function loadPacketCards(input: {
         : null;
     })
     .filter((card): card is InsightCard => Boolean(card));
+}
+
+async function loadCurrentIntelligencePacketFromAppDb(input: {
+  targetId: string;
+  includeSourcePreview?: boolean;
+}): Promise<ClientProjectIntelligencePacket | null> {
+  return withAppDbClient(async (client) => {
+    const packetResult = await client.query(
+      `
+        select *
+        from public.intelligence_packets
+        where target_id = $1
+          and packet_type = 'current'
+        order by generated_at desc nulls last
+        limit 1
+      `,
+      [input.targetId],
+    );
+    const packet = packetResult.rows[0]
+      ? (normalizeDbRow(packetResult.rows[0]) as IntelligencePacketRow)
+      : null;
+    if (!packet) return null;
+
+    const cards = await loadPacketCardsFromAppDb(input);
+    return mapPacket(packet, cards);
+  });
+}
+
+async function loadPacketCardsFromAppDb(input: {
+  targetId: string;
+  includeCandidate?: boolean;
+  includeSourcePreview?: boolean;
+}): Promise<InsightCard[]> {
+  return withAppDbClient(async (client) => {
+    const packetResult = await client.query(
+      `
+        select id
+        from public.intelligence_packets
+        where target_id = $1
+          and packet_type = 'current'
+        order by generated_at desc nulls last
+        limit 1
+      `,
+      [input.targetId],
+    );
+    const packetId = packetResult.rows[0]?.id;
+    if (!packetId) return [];
+
+    const packetCardsResult = await client.query(
+      `
+        select *
+        from public.intelligence_packet_cards
+        where packet_id = $1
+        order by rank asc nulls last
+      `,
+      [packetId],
+    );
+    const packetCardRows = normalizeDbRows(packetCardsResult.rows) as IntelligencePacketCardRow[];
+    const cardIds = Array.from(new Set(packetCardRows.map((row) => row.insight_card_id)));
+    if (cardIds.length === 0) return [];
+
+    const cardsResult = await client.query(
+      `
+        select *
+        from public.insight_cards
+        where id = any($1::uuid[])
+          and ($2::boolean or attribution_status <> 'rejected')
+      `,
+      [cardIds, input.includeCandidate === true],
+    );
+    const evidenceResult = await client.query(
+      `
+        select *
+        from public.insight_card_evidence
+        where insight_card_id = any($1::uuid[])
+        order by source_occurred_at desc nulls last
+      `,
+      [cardIds],
+    );
+    const evidenceRows = normalizeDbRows(evidenceResult.rows) as InsightCardEvidenceRow[];
+    const sourceDocumentIds = input.includeSourcePreview === false
+      ? []
+      : Array.from(
+          new Set(
+            evidenceRows
+              .map((row) => row.source_document_id)
+              .filter((value): value is string => Boolean(value)),
+          ),
+        );
+    const sourceDocumentRows = sourceDocumentIds.length > 0
+      ? normalizeDbRows(
+          (
+            await client.query(
+              `
+                select id, type, category, summary, overview, description, notes, content, raw_text
+                from public.document_metadata
+                where id = any($1::text[])
+              `,
+              [sourceDocumentIds],
+            )
+          ).rows,
+        ) as SourceDocumentPreview[]
+      : [];
+    const reviewRows = normalizeDbRows(
+      (
+        await client.query(
+          `
+            select *
+            from public.intelligence_reviews
+            where review_type = 'packet_card_feedback'
+              and insight_card_id = any($1::uuid[])
+            order by created_at desc nulls last
+          `,
+          [cardIds],
+        )
+      ).rows,
+    ) as Database["public"]["Tables"]["intelligence_reviews"]["Row"][];
+
+    return mapPacketCards({
+      packetCardRows,
+      cardRows: normalizeDbRows(cardsResult.rows) as InsightCardRow[],
+      evidenceRows,
+      sourceDocumentRows,
+      reviewRows,
+    });
+  });
 }
 
 /**
@@ -601,30 +897,80 @@ export async function loadProjectTimeline(input: {
   supabase: AlleatoSupabaseClient;
   limit?: number;
 }): Promise<ProjectTimelineEntry[]> {
-  const { data, error } = await input.supabase
-    .from("insight_cards")
-    .select(
-      "id, card_type, title, summary, why_it_matters, occurred_at, severity, current_status, suggested_owner_label",
-    )
-    .eq("primary_target_id", input.targetId)
-    .neq("attribution_status", "rejected")
-    .in("card_type", [...TIMELINE_EVENT_CARD_TYPES])
-    .order("occurred_at", { ascending: false, nullsFirst: false })
-    .limit(input.limit ?? 200);
+  try {
+    const { data, error } = await input.supabase
+      .from("insight_cards")
+      .select(
+        "id, card_type, title, summary, why_it_matters, occurred_at, severity, current_status, suggested_owner_label",
+      )
+      .eq("primary_target_id", input.targetId)
+      .neq("attribution_status", "rejected")
+      .in("card_type", [...TIMELINE_EVENT_CARD_TYPES])
+      .order("occurred_at", { ascending: false, nullsFirst: false })
+      .limit(input.limit ?? 200);
 
-  if (error) {
-    throw new Error(`Failed to load project timeline: ${error.message}`);
+    if (error) {
+      throw new Error(`Failed to load project timeline: ${error.message}`);
+    }
+
+    return mapProjectTimelineRows(data ?? []);
+  } catch (error) {
+    try {
+      return await loadProjectTimelineFromAppDb(input);
+    } catch (fallbackError) {
+      const primaryMessage = error instanceof Error ? error.message : String(error);
+      const fallbackMessage = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+      throw new Error(
+        `Failed to load project timeline: ${primaryMessage}; direct database fallback also failed: ${fallbackMessage}`,
+      );
+    }
   }
+}
 
-  return (data ?? []).map((row) => ({
+type ProjectTimelineRow = {
+  id: string;
+  card_type: string | null;
+  title: string | null;
+  summary: string | null;
+  why_it_matters: string | null;
+  occurred_at: string | null;
+  severity: number | null;
+  current_status: string | null;
+  suggested_owner_label: string | null;
+};
+
+function mapProjectTimelineRows(rows: ProjectTimelineRow[]): ProjectTimelineEntry[] {
+  return rows.map((row) => ({
     id: row.id,
-    cardType: row.card_type,
-    title: row.title,
-    summary: row.summary,
+    cardType: row.card_type ?? "",
+    title: row.title ?? "",
+    summary: row.summary ?? "",
     whyItMatters: row.why_it_matters,
     occurredAt: row.occurred_at,
     severity: row.severity,
-    currentStatus: row.current_status,
+    currentStatus: row.current_status ?? "",
     suggestedOwnerLabel: row.suggested_owner_label,
   }));
+}
+
+async function loadProjectTimelineFromAppDb(input: {
+  targetId: string;
+  limit?: number;
+}): Promise<ProjectTimelineEntry[]> {
+  return withAppDbClient(async (client) => {
+    const result = await client.query(
+      `
+        select id, card_type, title, summary, why_it_matters, occurred_at, severity, current_status, suggested_owner_label
+        from public.insight_cards
+        where primary_target_id = $1
+          and attribution_status <> 'rejected'
+          and card_type = any($2::text[])
+        order by occurred_at desc nulls last
+        limit $3
+      `,
+      [input.targetId, [...TIMELINE_EVENT_CARD_TYPES], input.limit ?? 200],
+    );
+
+    return mapProjectTimelineRows(normalizeDbRows(result.rows) as ProjectTimelineRow[]);
+  });
 }

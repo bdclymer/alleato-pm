@@ -2,7 +2,7 @@
 
 > **AUTO-GENERATED — DO NOT EDIT BY HAND.**
 > Regenerate with `npm run db:inventory`. Source: `docs/architecture/tables.yaml` + live Supabase stats.
-> Last generated: 2026-06-17T08:45:56.204Z
+> Last generated: 2026-06-17T09:31:24.662Z
 
 This file lists every table in both Supabase projects with its current status, row count, code-reference count, one-line purpose, and any gotchas/notes. It is the fastest way to answer "does table X exist, what does it do, is it live, does anything use it?"
 
@@ -81,11 +81,11 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `billing_invitations` | auth | dormant | 0 | 0 | Dormant billing/invite infrastructure. |  |
 | `organization_members` | auth | dormant | 0 | 0 | Multi-tenant infrastructure scaffolding. Not in use. |  |
 | `organizations` | auth | dormant | 0 | 0 | Multi-tenant infrastructure scaffolding. Not in use. |  |
-| `user_email_notifications` | auth | live-empty | 2 | 5 | Email notification preferences per user. UI present, no rows. |  |
-| `user_profiles` | auth | live | 16 | 133 | Per-user app preferences and is_admin flag. Read by 123+ code paths for permission checks. | CRITICAL BUG: Table appears empty but 123+ code paths read it. Every permission check silently falls back to null/non-admin. Investigate RLS or actual data sta… |
+| `user_email_notifications` | auth | live-empty | 0 | 5 | Email notification preferences per user. UI present, no rows. |  |
+| `user_profiles` | auth | live | 0 | 133 | Per-user app preferences and is_admin flag. Read by 123+ code paths for permission checks. | CRITICAL BUG: Table appears empty but 123+ code paths read it. Every permission check silently falls back to null/non-admin. Investigate RLS or actual data sta… |
 | `user_schedule_notifications` | auth | live-empty | 0 | 2 | Schedule notification preferences per user. UI present, no rows. |  |
 | `user_table_views` | auth | live | 0 | 7 | Per-user named presets for UnifiedTablePage — captures visible columns, column order, sort, and filters. Lets PMs/testers save 'Quick view', 'Full detail', etc. | scope_key is project-agnostic (e.g. 'meetings'), not 'meetings-25125'. A view created on project A's meetings page applies on project B's. is_default is enforc… |
-| `users_auth` | auth | live | 15 | 35 | Bridge between Supabase auth user (UUID) and people.id. Critical for all permission checks. | CRITICAL BUG: Only 1 row despite ~7 writer paths. Most signups not producing the bridge row. Silent privilege degradation for all users without a row. |
+| `users_auth` | auth | live | 0 | 35 | Bridge between Supabase auth user (UUID) and people.id. Critical for all permission checks. | CRITICAL BUG: Only 1 row despite ~7 writer paths. Most signups not producing the bridge row. Silent privilege degradation for all users without a row. |
 | `bot_debug_log` | communications | live | 518 | 1 | Observability log for Teams bot. 336 rows. Written by teams-chat.ts. Not read in app. |  |
 | `bot_user_mappings` | communications | live | 4 | 16 | Maps (platform, platform_user_id) to supabase_user_id. Drives Teams and Telegram bot identity. 1 active row. |  |
 | `email_attachments` | communications | live | 935 | 11 | In-app attachment store. 419 rows, 391 MB. Covers manual uploads and change-event/contract/commitment/prime-CO/submittal attachments. NOT the same as outlook_e… | Do not confuse with outlook_email_intake_attachments. This stores in-app uploads. |
@@ -94,8 +94,8 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `email_messages` | communications | dead | 0 | 0 | Dead schema. No code references. Drop candidate. |  |
 | `meeting_preps` | communications | dormant | 0 | 9 | Dormant meeting preparation records. |  |
 | `meeting_segments` | communications | live | 24.4k | 17 | Meeting transcript chunks and summary embeddings. 19,527 rows. Written by parser.py, embedder.py. Read by meeting pages and project intelligence. |  |
-| `outlook_email_assistant_reviews` | communications | live-empty | 0 | 2 | Human review ledger for Brandon Outlook assistant decisions, draft outcomes, and feedback signals. | Admin/service-role table. It records review outcomes only; raw email source remains outlook_email_intake and project-matched email remains project_emails. |
-| `outlook_email_intake` | communications | live | 2.1k | 16 | Raw Outlook email sync. 812 rows. Every email from the Graph sync lands here first. Source for document_metadata (AI-relevant) and project_emails (project-matc… |  |
+| `outlook_email_assistant_reviews` | communications | live-empty | 0 | 3 | Human review ledger for Brandon Outlook assistant decisions, draft outcomes, and feedback signals. | Admin/service-role table. It records review outcomes only; raw email source remains outlook_email_intake and project-matched email remains project_emails. |
+| `outlook_email_intake` | communications | live | 2.1k | 17 | Raw Outlook email sync. 812 rows. Every email from the Graph sync lands here first. Source for document_metadata (AI-relevant) and project_emails (project-matc… |  |
 | `outlook_email_intake_attachments` | communications | live | 1.6k | 8 | Attachments from synced Outlook emails. 627 rows, 355 MB. Written by outlook.py and attachment_promotion.py. |  |
 | `outlook_email_skip_audit` | communications | dormant | 123 | 1 | Dormant audit log for skipped Outlook emails. |  |
 | `team_chat_channels` | communications | live | 4 | 5 | Teams chat channel registry. 2 rows. |  |
@@ -103,11 +103,11 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `teams_conversation_refs` | communications | live | 2 | 6 | Per-user proactive Teams thread cache. Upserted on every inbound Teams message so the bot can reply in the same thread. |  |
 | `teams_link_codes` | communications | live-empty | 6 | 4 | Short-lived link codes for Teams bot↔account linking. Empty = no in-progress flows. |  |
 | `telegram_link_codes` | communications | live-empty | 1 | 4 | Short-lived link codes for Telegram bot↔account linking. Empty = no in-progress flows. |  |
-| `companies` | directory | live | 562 | 94 | Master company directory — vendors, clients, subs. is_vendor flag drives Acumatica sync. FK target for vendor-related forms. | FK-validation gate: vendor dropdown sources from vendors view but FK targets companies table. ~50 read sites. |
+| `companies` | directory | live | 0 | 94 | Master company directory — vendors, clients, subs. is_vendor flag drives Acumatica sync. FK target for vendor-related forms. | FK-validation gate: vendor dropdown sources from vendors view but FK targets companies table. ~50 read sites. |
 | `company_context` | directory | live-empty | 0 | 5 | Admin singleton doc for company-level AI context. Not yet populated. |  |
-| `people` | directory | live | 1.3k | 136 | Master person directory. UUID id. Bridged to auth via users_auth.auth_user_id. |  |
+| `people` | directory | live | 0 | 136 | Master person directory. UUID id. Bridged to auth via users_auth.auth_user_id. |  |
 | `prospects` | directory | live-empty | 0 | 2 | Prospects directory page exists and reads/writes. Never used in production. |  |
-| `vendor_contacts` | directory | live-empty | 3 | 3 | UI tries to read vendor contacts. No writer found in codebase. |  |
+| `vendor_contacts` | directory | live-empty | 0 | 3 | UI tries to read vendor contacts. No writer found in codebase. |  |
 | `change_order_documents` | documents | live | 0 | 0 | Pattern C junction: change orders ↔ document_metadata. TODO: expand metadata, identify writers/readers. |  |
 | `commitment_change_order_documents` | documents | live | 0 | 0 | Pattern C junction: commitment change orders ↔ document_metadata. Replaces cco_attachments writers. |  |
 | `company_documents` | documents | live | 0 | 0 | Pattern C junction: companies ↔ document_metadata. TODO: expand metadata, identify writers/readers. |  |
@@ -325,11 +325,11 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `groups` | permissions | dormant | 0 | 0 | Dormant. No active code references. |  |
 | `permission_audit_log` | permissions | live | 6 | 5 | Auto-written by lib/permissions.ts on permission changes. 7 rows. |  |
 | `permission_templates` | permissions | live | 15 | 25 | 11 active permission templates. Managed via admin UI at /permissions/templates. |  |
-| `person_company_templates` | permissions | live-empty | 14 | 8 | Permission templates per person-company pair. Feature defined, no data. |  |
+| `person_company_templates` | permissions | live-empty | 0 | 8 | Permission templates per person-company pair. Feature defined, no data. |  |
 | `user_directory_permissions` | permissions | live-empty | 0 | 3 | Admin-only per-user directory permission overrides. No rows set. |  |
-| `user_granular_permission_overrides` | permissions | live | 4 | 9 | Fine-grained permission overrides. 4 active rows. |  |
+| `user_granular_permission_overrides` | permissions | live | 0 | 9 | Fine-grained permission overrides. 4 active rows. |  |
 | `user_module_permissions` | permissions | live-empty | 0 | 9 | Per-module tool access overrides per user. Same null-fallback bug as user_profiles. |  |
-| `graph_subscriptions` | pipeline | live | 1 | 7 | Microsoft Graph webhook subscriptions. RLS-protected row count. Auto-renewed by subscriptions.py and webhooks.py. |  |
+| `graph_subscriptions` | pipeline | live | 2 | 7 | Microsoft Graph webhook subscriptions. RLS-protected row count. Auto-renewed by subscriptions.py and webhooks.py. |  |
 | `graph_sync_state` | pipeline | live | 322 | 4 | Per-resource delta sync tokens for Microsoft Graph. Per-user mailbox rows key resource_id by the bare mailbox email, not user:<email>. | Do not prefix mailbox resource_id values when reading graph_sync_state for stale-first sync selection; prefixed lookups match zero rows and collapse the limite… |
 | `pipeline_config` | pipeline | dormant | 1 | 1 | Dormant pipeline configuration table. |  |
 | `processing_queue` | pipeline | dormant | 3 | 0 | Dormant processing queue. |  |
@@ -352,7 +352,7 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `project_transmittals` | projects | live-empty | 0 | 6 | Transmittals feature — routes wired, no data yet. |  |
 | `project_vendors` | projects | live | 5 | 6 | User-managed vendor associations per project. |  |
 | `projects` | projects | live | 116 | 152 | Master project record. Integer id is the FK target for nearly every project-scoped table. Acumatica sync AND manual API can both write — race conditions possib… | id is INTEGER (not UUID). Several columns are mostly null: address, city, state, client, current_phase. project_manager FK→people.id (uuid). team_members is uu… |
-| `projects_audit` | projects | live | 18.7k | 0 | Append-only audit trail of changes to the projects table. Written by a Postgres trigger only — no app code touches it directly. | Only useful via direct SQL. No UI. Cannot be queried via normal app routes. |
+| `projects_audit` | projects | live | 18.8k | 0 | Append-only audit trail of changes to the projects table. Written by a Postgres trigger only — no app code touches it directly. | Only useful via direct SQL. No UI. Cannot be queried via normal app routes. |
 | `projects_sync` | projects | dormant | 1 | 0 | Leftover staging table from early project sync work. No code references found. |  |
 | `user_project_preferences` | projects | live-empty | 0 | 3 | Per-user per-project UI preferences. Service exists, no rows saved. |  |
 | `user_project_roles` | projects | dormant | 0 | 0 | Dormant. No writer or reader found in codebase. |  |
@@ -435,7 +435,7 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 
 | Table | Domain | Status | Rows | Code refs | Purpose | Notes |
 |---|---|---|---:|---:|---|---|
-| `fireflies_ingestion_jobs` | communications | live | 27.2k | 23 | Meeting ingestion job queue. 27,230 rows. Canonical copy. MAIN.fireflies_ingestion_jobs is stale. |  |
+| `fireflies_ingestion_jobs` | communications | live | 27.2k | 23 | Pipeline ingest-job stage queue (RAG side). ~27k rows. As of 2026-06-17 written in lockstep with MAIN.fireflies_ingestion_jobs via supabase_helpers.update_inge… | Both copies are now kept in sync — MAIN is no longer stale. Always update both DBs through update_ingestion_job_state(), never one side directly. |
 | `document_attribution_candidates` | documents | live | 14.1k | 10 | Low-confidence project attribution review queue. 13,193 rows. Canonical copy. Written when project confidence < 0.70. |  |
 | `document_chunks` | documents | live | 144.6k | 41 | THE unified vector store. 109,171 rows. halfvec 3072 embeddings. Written by pipeline/embedder.py. Read by rpc('search_document_chunks'). Canonical source for a… | MAIN.document_chunks (103K rows) is a stale orphan. Always use the RAG copy for reads and writes. |
 | `rag_document_metadata` | documents | live | 38.6k | 14 | Embedding-side document catalog. 36,657 rows. app_document_id FK back to MAIN.document_metadata. Only backend pipeline reads this directly. |  |
@@ -446,7 +446,7 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `ingestion_jobs` | pipeline | live | 601 | 4 | Generic ingestion audit log. 436 rows. Canonical copy. |  |
 | `pipeline_model_usage` | pipeline | live-empty | 41 | 2 | Durable model usage and estimated-cost ledger for source processing, embeddings, daily briefs, Brandon email review, and project intelligence. Used by the dail… | High-volume telemetry belongs in RAG, not PM APP. Cost is an estimate based on configured pricing; provider billing remains authoritative. |
 | `rag_pipeline_state` | pipeline | live-empty | 1 | 0 | RAG pipeline state metadata. Wired but empty. |  |
-| `source_processing_jobs` | pipeline | live-empty | 1 | 1 | Durable per-source lifecycle ledger tracking source item hashes through assignment, RAG indexing, signal extraction, project intelligence, routing, and termina… | This is the cross-source status contract for Fireflies, Outlook, Teams, OneDrive, SharePoint, and future Acumatica-derived intelligence. Keep high-churn lifecy… |
+| `source_processing_jobs` | pipeline | live-empty | 708 | 1 | Durable per-source lifecycle ledger tracking source item hashes through assignment, RAG indexing, signal extraction, project intelligence, routing, and termina… | This is the cross-source status contract for Fireflies, Outlook, Teams, OneDrive, SharePoint, and future Acumatica-derived intelligence. Keep high-churn lifecy… |
 | `source_sync_health_snapshots` | pipeline | live | 336 | 2 | Source sync health rollup snapshots. 330 rows. Canonical copy. |  |
 | `source_sync_runs` | pipeline | live | 16.2k | 12 | Per-sync-run audit log. 3,639 rows. Canonical copy. |  |
 
