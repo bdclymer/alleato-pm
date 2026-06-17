@@ -2171,7 +2171,8 @@ export function UnifiedTablePage<T>({
                           width || headerPinnedStyle
                             ? ({
                                 width,
-                                minWidth: columnWidths[column.id] ?? undefined,
+                                minWidth:
+                                  columnWidths[column.id] ?? column.width,
                                 maxWidth:
                                   column.width && !columnWidths[column.id]
                                     ? column.width
@@ -2537,7 +2538,7 @@ export function UnifiedTablePage<T>({
                                       width:
                                         columnWidths[column.id] ?? column.width,
                                       minWidth:
-                                        columnWidths[column.id] ?? undefined,
+                                        columnWidths[column.id] ?? column.width,
                                       maxWidth:
                                         column.width && !columnWidths[column.id]
                                           ? column.width

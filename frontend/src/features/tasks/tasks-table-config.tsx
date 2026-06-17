@@ -61,7 +61,7 @@ export const tasksColumns: ColumnConfig[] = [
   { id: "source_record", label: "Created From", defaultVisible: true },
   { id: "source_date", label: "Source Date", defaultVisible: true },
   { id: "assignee_email", label: "Assignee Email", defaultVisible: false },
-  { id: "created_at", label: "Created Date", defaultVisible: true },
+  { id: "created_at", label: "Created Date", defaultVisible: false },
   { id: "due_date", label: "Due Date", defaultVisible: true },
   { id: "priority", label: "Priority", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
@@ -136,11 +136,12 @@ export function buildTasksTableColumns(
       case "description":
         return {
           ...column,
+          width: 380,
           render: (item) => (
             <Button
               type="button"
               variant="link"
-              className="h-auto min-w-0 justify-start whitespace-normal p-0 text-left text-xs font-medium text-foreground/90 underline-offset-2 hover:text-primary"
+              className="h-auto min-w-0 max-w-full justify-start whitespace-normal p-0 pr-2 text-left text-sm font-medium leading-5 text-foreground underline-offset-2 hover:text-primary"
               title={item.description ?? ""}
               onClick={() => onOpenPanel?.(item)}
             >
@@ -153,6 +154,7 @@ export function buildTasksTableColumns(
       case "feedback":
         return {
           ...column,
+          width: 88,
           render: (item) => {
             const taskId = item.id;
             if (!taskId) {
@@ -179,6 +181,7 @@ export function buildTasksTableColumns(
       case "assignee_name":
         return {
           ...column,
+          width: 196,
           render: (item) => {
             return item.assignee_name ? (
               <span className="flex min-w-0 max-w-56 items-center gap-2">
@@ -215,6 +218,7 @@ export function buildTasksTableColumns(
       case "project_name":
         return {
           ...column,
+          width: 196,
           render: (item) => {
             return (
               <span className="block max-w-56 text-xs text-foreground truncate">
@@ -243,6 +247,7 @@ export function buildTasksTableColumns(
       case "source_system":
         return {
           ...column,
+          width: 112,
           render: (item) => (
             <TableTagBadge label={getTaskSourceLabel(item)} variant="outline" />
           ),
@@ -252,6 +257,7 @@ export function buildTasksTableColumns(
       case "source_record":
         return {
           ...column,
+          width: 220,
           render: (item) => {
             const target = getTaskSourceTarget(item, projectId);
             const label = getTaskSourceTitle(item);
@@ -281,6 +287,7 @@ export function buildTasksTableColumns(
       case "assignee_email":
         return {
           ...column,
+          width: 220,
           render: (item) => (
             <span className="block max-w-44 text-xs text-muted-foreground truncate">
               {item.assignee_email || "—"}
@@ -292,6 +299,7 @@ export function buildTasksTableColumns(
       case "source_date":
         return {
           ...column,
+          width: 124,
           render: (item) => <TableDateValue value={item.source_date} />,
           sortValue: (item) => item.source_date ?? "",
           sortable: true,
@@ -299,6 +307,7 @@ export function buildTasksTableColumns(
       case "due_date":
         return {
           ...column,
+          width: 124,
           render: (item) => <TableDateValue value={item.due_date} />,
           sortValue: (item) => item.due_date ?? "",
           sortable: true,
@@ -310,6 +319,7 @@ export function buildTasksTableColumns(
       case "created_at":
         return {
           ...column,
+          width: 124,
           render: (item) => <TableDateValue value={item.created_at} />,
           sortValue: (item) => item.created_at ?? "",
           sortable: true,
@@ -317,6 +327,7 @@ export function buildTasksTableColumns(
       case "priority":
         return {
           ...column,
+          width: 112,
           render: (item) => (
             <TableTagBadge
               label={item.priority}
@@ -338,6 +349,7 @@ export function buildTasksTableColumns(
       case "status":
         return {
           ...column,
+          width: 120,
           render: (item) => (
             <TableTagBadge
               label={item.status}
