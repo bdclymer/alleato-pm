@@ -52,6 +52,12 @@ export function isRagDatabaseWritesEnabled() {
   );
 }
 
+export function isBackendApiOnly() {
+  return (
+    (process.env.BACKEND_API_ONLY ?? "").trim().toLowerCase() === "true"
+  );
+}
+
 export function createRagServiceClient(): SupabaseClient<RagDatabase> {
   const supabaseUrl = process.env.RAG_SUPABASE_URL;
   const supabaseServiceKey =
@@ -78,4 +84,14 @@ export function createRagServiceClient(): SupabaseClient<RagDatabase> {
       persistSession: false,
     },
   });
+}
+
+export function createOutlookIntakeServiceClient(): SupabaseClient<Database> {
+  // Outlook intake tables (`outlook_email_intake*`) are typed against the main
+  // `Database`. When RAG_SUPABASE_URL is set the rows physically live in the AI
+  // database, but the table shape is identical, so we surface the main typing.
+  if (process.env.RAG_SUPABASE_URL) {
+    return createRagServiceClient() as unknown as SupabaseClient<Database>;
+  }
+  return createServiceClient();
 }

@@ -274,7 +274,7 @@ export function BudgetLineItemCreatorModal({
               budgetCodeId: code.id,
               budgetCodeLabel: code.fullLabel,
               costCodeId: code.code,
-              costTypeId: code.costTypeId,
+              costTypeId: code.costTypeId ?? null,
             }
           : row,
       ),

@@ -369,9 +369,9 @@ export function EmailInboxClient() {
             }
           }}
           reviewSaving={reviewMutation.isPending}
-          onRecordReview={(reviewOutcome, draftBody, reviewerNote) => {
-            if (!selectedEmail) return Promise.resolve();
-            return reviewMutation.mutateAsync({
+          onRecordReview={async (reviewOutcome, draftBody, reviewerNote) => {
+            if (!selectedEmail) return;
+            await reviewMutation.mutateAsync({
               email: selectedEmail,
               reviewOutcome,
               draftBody,

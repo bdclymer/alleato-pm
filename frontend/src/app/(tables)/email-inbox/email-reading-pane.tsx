@@ -46,23 +46,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
 import { useProjects } from "@/hooks/use-projects";
 import { BRANDON_LEARNING_SUPPRESSION_PREFIX } from "@/lib/email-assistant/brandon-learning";
+import { cleanEmailBody } from "./email-body";
 import type { InboxEmail } from "./email-inbox-client";
 import type {
   BrandonDraftLearning,
+  BrandonDraftLearningGuidanceId,
   BrandonDraftLearningGuidanceItem,
 } from "@/lib/email-assistant/brandon-learning";
 import type { BrandonReviewOutcome } from "@/lib/email-assistant/brandon-review";
-
-function decodeHtmlEntities(text: string): string {
-  return text
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&apos;/g, "'");
-}
 
 const ATTACHMENT_TYPES = [
   "Contract",
@@ -480,7 +471,9 @@ function DraftReplyPanel({
   const guidanceItems =
     learning?.guidanceItems ??
     learning?.guidance.map((text) => ({
-      id: text,
+      // Fallback display items have no canonical guidance id; the text itself is
+      // a stable key for React + the suppression set (compared as strings).
+      id: text as BrandonDraftLearningGuidanceId,
       text,
     })) ??
     [];
@@ -855,11 +848,11 @@ export function EmailReadingPane({
           />
         ) : email.bodyText ? (
           <pre className="text-sm text-foreground whitespace-pre-wrap font-sans leading-relaxed">
-            {decodeHtmlEntities(email.bodyText)}
+            {cleanEmailBody(email.bodyText)}
           </pre>
         ) : email.body ? (
           <pre className="text-sm text-foreground whitespace-pre-wrap font-sans leading-relaxed">
-            {decodeHtmlEntities(email.body)}
+            {cleanEmailBody(email.body)}
           </pre>
         ) : (
           <p className="text-sm text-muted-foreground">(No body content)</p>

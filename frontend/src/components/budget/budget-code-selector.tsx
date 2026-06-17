@@ -21,6 +21,7 @@ interface BudgetCode {
   id: string
   code: string
   costType: string | null
+  costTypeId?: string | null
   description: string
   fullLabel: string
 }

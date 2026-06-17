@@ -36,8 +36,11 @@ type Action = "create" | "update" | "delete" | "load" | "save";
 interface HandleFormErrorOptions {
   /** What entity was being acted on (e.g., "budget code", "change order", "drawing") */
   entity: string;
-  /** What action was being performed */
-  action: Action;
+  /**
+   * What action was being performed. The known verbs get a friendly gerund
+   * ("creating", "saving"); any other descriptive string is used verbatim.
+   */
+  action: Action | (string & {});
   /**
    * Custom message for 409 Conflict. MUST be provided for any create/update
    * on a uniquely-constrained resource. Should name the specific duplicate
@@ -81,7 +84,7 @@ export function handleFormError(
   options: HandleFormErrorOptions,
 ): FormErrorResult {
   const { entity, action, duplicateMessage, permissionMessage, notFoundMessage, silent } = options;
-  const verb = ACTION_VERBS[action];
+  const verb = ACTION_VERBS[action as Action] ?? action;
 
   let message: string;
   let status = 0;

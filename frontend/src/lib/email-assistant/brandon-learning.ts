@@ -190,9 +190,11 @@ export function formatBrandonDraftLearningGuidance(
     return "";
   }
 
-  const guidance = (learning.guidanceItems?.length ?? 0) > 0
-    ? learning.guidanceItems.map((item) => item.text)
-    : learning.guidance;
+  const guidanceItems = learning.guidanceItems;
+  const guidance =
+    guidanceItems && guidanceItems.length > 0
+      ? guidanceItems.map((item) => item.text)
+      : learning.guidance;
 
   return [
     "Brandon review learnings from prior human-reviewed drafts:",

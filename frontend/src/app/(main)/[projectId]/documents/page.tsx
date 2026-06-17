@@ -11,6 +11,5 @@ export default async function ProjectDocumentsPage({
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = await params;
-
   return <DocumentsClient projectId={projectId} />;
 }

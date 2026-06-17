@@ -209,7 +209,7 @@ function normalizeSourceLineItems(value: unknown): PrimePcoSourceLineItem[] {
   if (!Array.isArray(value)) return [];
 
   return value
-    .map((item) => {
+    .map((item): PrimePcoSourceLineItem | null => {
       if (!item || typeof item !== "object") return null;
 
       const lineItem = item as Record<string, unknown>;

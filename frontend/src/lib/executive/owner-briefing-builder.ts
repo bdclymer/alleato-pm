@@ -45,20 +45,22 @@ const OWNER_RELEVANT_CARD_TYPES: InsightCardType[] = [
 
 // Cards in these states are considered "live" — open or needing attention.
 // We skip resolved/closed cards entirely.
-const ACTIVE_CARD_STATUSES = new Set([
+const ACTIVE_CARD_STATUS_VALUES = [
   "open",
   "blocked",
   "needs_review",
   "stale",
-]);
+] as const;
+const ACTIVE_CARD_STATUSES = new Set<string>(ACTIVE_CARD_STATUS_VALUES);
 
 // Only fully-attributed or manually approved cards surface.
 // needs_review and candidate are still in the review queue — their content is
 // often placeholder boilerplate and should not appear in the owner brief.
-const VALID_ATTRIBUTION_STATUSES = new Set([
+const VALID_ATTRIBUTION_STATUS_VALUES = [
   "auto_assigned",
   "approved",
-]);
+] as const;
+const VALID_ATTRIBUTION_STATUSES = new Set<string>(VALID_ATTRIBUTION_STATUS_VALUES);
 
 // -----------------------------------------------------------------------------
 // Confidence ranking — Postgres alpha-sorts confidence wrong, so we sort
@@ -125,6 +127,43 @@ export type OwnerBriefingData = {
   topProjects: OwnerBriefingProject[];
 };
 
+type OwnerBriefingTargetRow = {
+  id: string;
+  name: string | null;
+  project_id: number | null;
+};
+
+type OwnerBriefingPacketRow = {
+  id: string;
+  target_id: string;
+  generated_at: string | null;
+  freshness_status: string | null;
+};
+
+type OwnerBriefingCardRow = {
+  id: string;
+  primary_target_id: string;
+  title: string;
+  summary: string | null;
+  why_it_matters: string | null;
+  current_status: string;
+  card_type: InsightCardType;
+  confidence: ConfidenceLevel | null;
+  attribution_status: string | null;
+  suggested_owner_label: string | null;
+  next_action: string | null;
+  first_seen_at: string | null;
+  last_seen_at: string | null;
+  stale_after: string | null;
+  source_count: number | null;
+};
+
+type OwnerBriefingRows = {
+  targets: OwnerBriefingTargetRow[];
+  packetRows: OwnerBriefingPacketRow[];
+  cardRows: OwnerBriefingCardRow[];
+};
+
 // -----------------------------------------------------------------------------
 // Tuning constants
 // -----------------------------------------------------------------------------
@@ -155,48 +194,21 @@ export async function buildOwnerBriefingData(
   const now = input.now ?? new Date();
   const supabase = createServiceClient();
 
-  // ---------------------------------------------------------------------------
-  // 1. Resolve active targets (client_project only, status=active).
-  // ---------------------------------------------------------------------------
-  let targetQuery = supabase
-    .from("intelligence_targets")
-    .select("id,name,project_id,target_type,status")
-    .eq("status", "active")
-    .eq("target_type", "client_project");
+  const { targets, packetRows, cardRows } = await loadOwnerBriefingRows({
+    supabase,
+    input,
+    now,
+  });
 
-  if (input.targetIds && input.targetIds.length > 0) {
-    targetQuery = targetQuery.in("id", input.targetIds);
-  }
-
-  const { data: targetRows, error: targetError } = await targetQuery;
-  if (targetError) {
-    throw new Error(`Failed to load intelligence targets: ${targetError.message}`);
-  }
-  const targets = targetRows ?? [];
   if (targets.length === 0) {
     return emptyBriefing({ now, recipientName: input.recipientName });
   }
 
-  const targetIds = targets.map((t) => t.id);
-
-  // ---------------------------------------------------------------------------
-  // 2. Pull the current packet per target — for freshness signal.
-  //    We don't render packet exec_summary in the card; we only use generated_at
-  //    to flag stale packets and packet_id for the deep link.
-  // ---------------------------------------------------------------------------
-  const { data: packetRows, error: packetError } = await supabase
-    .from("intelligence_packets")
-    .select("id,target_id,generated_at,freshness_status")
-    .in("target_id", targetIds)
-    .eq("packet_type", "current");
-  if (packetError) {
-    throw new Error(`Failed to load intelligence packets: ${packetError.message}`);
-  }
   const packetByTarget = new Map<
     string,
     { id: string; generatedAt: string | null; freshnessStatus: string | null }
   >();
-  for (const row of packetRows ?? []) {
+  for (const row of packetRows) {
     // If multiple rows somehow exist for a target, keep the freshest.
     const prev = packetByTarget.get(row.target_id);
     if (
@@ -212,41 +224,6 @@ export async function buildOwnerBriefingData(
   }
 
   // ---------------------------------------------------------------------------
-  // 3. Pull owner-relevant insight cards for every target in ONE query.
-  //    We over-fetch (up to SOFT_CARD_LIMIT * targets) then trim per project.
-  // ---------------------------------------------------------------------------
-  const nowIso = now.toISOString();
-  const { data: cardRows, error: cardError } = await supabase
-    .from("insight_cards")
-    .select(
-      `id,
-       primary_target_id,
-       title,
-       summary,
-       why_it_matters,
-       current_status,
-       card_type,
-       confidence,
-       attribution_status,
-       suggested_owner_label,
-       next_action,
-       first_seen_at,
-       last_seen_at,
-       stale_after,
-       source_count`,
-    )
-    .in("primary_target_id", targetIds)
-    .in("card_type", OWNER_RELEVANT_CARD_TYPES)
-    // Snoozed cards (stale_after in the future) are filtered. Cards with no
-    // stale_after set are always eligible.
-    .or(`stale_after.is.null,stale_after.lte.${nowIso}`)
-    .order("last_seen_at", { ascending: false })
-    .limit(SOFT_CARD_LIMIT_PER_TARGET * targets.length);
-  if (cardError) {
-    throw new Error(`Failed to load insight cards: ${cardError.message}`);
-  }
-
-  // ---------------------------------------------------------------------------
   // 4. Group cards by target, apply filters, rank, and trim.
   // ---------------------------------------------------------------------------
   const newSinceThresholdMs = now.getTime() - NEW_SINCE_HOURS * 3_600_000;
@@ -257,9 +234,11 @@ export async function buildOwnerBriefingData(
   // not real actionable intelligence — skip them.
   const ATTRIBUTION_PLACEHOLDER = "This source contains project-relevant language";
 
-  for (const row of cardRows ?? []) {
+  for (const row of cardRows) {
+    // These mirror the database filters above and keep the function safe if a
+    // future caller supplies preloaded rows or the query changes.
     if (!ACTIVE_CARD_STATUSES.has(row.current_status)) continue;
-    if (!VALID_ATTRIBUTION_STATUSES.has(row.attribution_status)) continue;
+    if (!row.attribution_status || !VALID_ATTRIBUTION_STATUSES.has(row.attribution_status)) continue;
     if (row.why_it_matters?.startsWith(ATTRIBUTION_PLACEHOLDER)) continue;
 
     const firstSeenAt = row.first_seen_at;
@@ -322,7 +301,7 @@ export async function buildOwnerBriefingData(
     return {
       targetId: target.id,
       projectId: target.project_id,
-      projectName: target.name,
+      projectName: target.name ?? "Untitled project",
       packetId: packet?.id ?? null,
       packetGeneratedAt: generatedAt,
       packetIsStale: isStale,
@@ -419,6 +398,217 @@ function computeUrgency(params: {
   // shouldn't outrank a project with live signal.
   if (params.isStale) score -= 3;
   return score;
+}
+
+async function loadOwnerBriefingRows(params: {
+  supabase: ReturnType<typeof createServiceClient>;
+  input: BuildOwnerBriefingInput;
+  now: Date;
+}): Promise<OwnerBriefingRows> {
+  try {
+    return await loadOwnerBriefingRowsFromSupabase(params);
+  } catch (error) {
+    const fallback = await loadOwnerBriefingRowsFromAppDb(params);
+    if (fallback.targets.length > 0) return fallback;
+    throw error;
+  }
+}
+
+async function loadOwnerBriefingRowsFromSupabase(params: {
+  supabase: ReturnType<typeof createServiceClient>;
+  input: BuildOwnerBriefingInput;
+  now: Date;
+}): Promise<OwnerBriefingRows> {
+  let targetQuery = params.supabase
+    .from("intelligence_targets")
+    .select("id,name,project_id,target_type,status")
+    .eq("status", "active")
+    .eq("target_type", "client_project");
+
+  if (params.input.targetIds && params.input.targetIds.length > 0) {
+    targetQuery = targetQuery.in("id", params.input.targetIds);
+  }
+
+  const { data: targetRows, error: targetError } = await targetQuery;
+  if (targetError) {
+    throw new Error(`Failed to load intelligence targets: ${targetError.message}`);
+  }
+  const targets = (targetRows ?? []) as OwnerBriefingTargetRow[];
+  if (targets.length === 0) return { targets: [], packetRows: [], cardRows: [] };
+
+  const targetIds = targets.map((target) => target.id);
+  const { data: packetRows, error: packetError } = await params.supabase
+    .from("intelligence_packets")
+    .select("id,target_id,generated_at,freshness_status")
+    .in("target_id", targetIds)
+    .eq("packet_type", "current");
+  if (packetError) {
+    throw new Error(`Failed to load intelligence packets: ${packetError.message}`);
+  }
+
+  const { data: cardRows, error: cardError } = await params.supabase
+    .from("insight_cards")
+    .select(
+      `id,
+       primary_target_id,
+       title,
+       summary,
+       why_it_matters,
+       current_status,
+       card_type,
+       confidence,
+       attribution_status,
+       suggested_owner_label,
+       next_action,
+       first_seen_at,
+       last_seen_at,
+       stale_after,
+       source_count`,
+    )
+    .in("primary_target_id", targetIds)
+    .in("card_type", OWNER_RELEVANT_CARD_TYPES)
+    .in("current_status", ACTIVE_CARD_STATUS_VALUES)
+    .in("attribution_status", VALID_ATTRIBUTION_STATUS_VALUES)
+    .or(`stale_after.is.null,stale_after.lte.${params.now.toISOString()}`)
+    .order("last_seen_at", { ascending: false })
+    .limit(SOFT_CARD_LIMIT_PER_TARGET * targets.length);
+  if (cardError) {
+    throw new Error(`Failed to load insight cards: ${cardError.message}`);
+  }
+
+  return {
+    targets,
+    packetRows: (packetRows ?? []) as OwnerBriefingPacketRow[],
+    cardRows: (cardRows ?? []) as OwnerBriefingCardRow[],
+  };
+}
+
+async function loadOwnerBriefingRowsFromAppDb(params: {
+  input: BuildOwnerBriefingInput;
+  now: Date;
+}): Promise<OwnerBriefingRows> {
+  const databaseUrl =
+    process.env.APP_DATABASE_URL ?? process.env.DATABASE_URL ?? process.env.SUPABASE_DB_URL;
+  if (!databaseUrl) {
+    throw new Error("Failed to load owner briefing rows: app database URL is not configured.");
+  }
+
+  const pg = await import("pg");
+  let lastError: unknown = null;
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const pool = new pg.Pool({
+      connectionString: buildAppDatabaseConnectionString(databaseUrl),
+      ssl: { rejectUnauthorized: false },
+      max: 1,
+      connectionTimeoutMillis: 8_000,
+      idleTimeoutMillis: 1_000,
+    });
+    try {
+      const client = await pool.connect();
+      try {
+        await client.query("set statement_timeout = '15000ms'");
+        const targetParams: unknown[] = [];
+        let targetFilter = "";
+        if (params.input.targetIds && params.input.targetIds.length > 0) {
+          targetParams.push(params.input.targetIds);
+          targetFilter = "and id = any($1::uuid[])";
+        }
+
+        const targetResult = await client.query<OwnerBriefingTargetRow>(
+          `
+            select id, name, project_id
+            from public.intelligence_targets
+            where status = 'active'
+              and target_type = 'client_project'
+              ${targetFilter}
+          `,
+          targetParams,
+        );
+        const targets = targetResult.rows;
+        if (targets.length === 0) return { targets: [], packetRows: [], cardRows: [] };
+
+        const targetIds = targets.map((target) => target.id);
+        const packetResult = await client.query<OwnerBriefingPacketRow>(
+          `
+            select id, target_id, generated_at, freshness_status
+            from public.intelligence_packets
+            where target_id = any($1::uuid[])
+              and packet_type = 'current'
+          `,
+          [targetIds],
+        );
+        const cardResult = await client.query<OwnerBriefingCardRow>(
+          `
+            select id,
+              primary_target_id,
+              title,
+              summary,
+              why_it_matters,
+              current_status,
+              card_type,
+              confidence,
+              attribution_status,
+              suggested_owner_label,
+              next_action,
+              first_seen_at,
+              last_seen_at,
+              stale_after,
+              source_count
+            from public.insight_cards
+            where primary_target_id = any($1::uuid[])
+              and card_type = any($2::text[])
+              and current_status = any($3::text[])
+              and attribution_status = any($4::text[])
+              and (stale_after is null or stale_after <= $5::timestamptz)
+            order by last_seen_at desc nulls last
+            limit $6
+          `,
+          [
+            targetIds,
+            OWNER_RELEVANT_CARD_TYPES,
+            ACTIVE_CARD_STATUS_VALUES,
+            VALID_ATTRIBUTION_STATUS_VALUES,
+            params.now.toISOString(),
+            SOFT_CARD_LIMIT_PER_TARGET * targets.length,
+          ],
+        );
+
+        return {
+          targets,
+          packetRows: packetResult.rows.map((row) => ({
+            ...row,
+            generated_at: normalizeBriefingTimestamp(row.generated_at),
+          })),
+          cardRows: cardResult.rows.map((row) => ({
+            ...row,
+            first_seen_at: normalizeBriefingTimestamp(row.first_seen_at),
+            last_seen_at: normalizeBriefingTimestamp(row.last_seen_at),
+            stale_after: normalizeBriefingTimestamp(row.stale_after),
+          })),
+        };
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      lastError = error;
+      if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 750));
+    } finally {
+      await pool.end();
+    }
+  }
+  throw lastError;
+}
+
+function normalizeBriefingTimestamp(value: unknown): string | null {
+  if (!value) return null;
+  if (value instanceof Date) return value.toISOString();
+  return String(value);
+}
+
+function buildAppDatabaseConnectionString(databaseUrl: string): string {
+  const url = new URL(databaseUrl);
+  url.searchParams.delete("sslmode");
+  return url.toString();
 }
 
 function emptyBriefing(params: {
