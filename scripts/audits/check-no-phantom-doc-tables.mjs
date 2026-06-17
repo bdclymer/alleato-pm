@@ -49,6 +49,7 @@ const KNOWN_EXTERNAL_TABLES = new Set([
   "packet_refresh_jobs",
   "rag_document_metadata",
   "rag_pipeline_state",
+  "source_processing_jobs",
   "outlook_email_intake",
 ]);
 const EXTERNAL_PREFIXES = ["information_schema", "pg_", "auth_", "storage_"];
@@ -72,6 +73,18 @@ const NON_TABLE_WORDS = new Set([
   "projection_error",
   "projection_attempt_count",
   "projected_at",
+  "captured",
+  "project_assigned",
+  "project_assignment_review",
+  "text_extracted",
+  "indexed_for_rag",
+  "signals_extracted",
+  "project_intelligence_updated",
+  "actions_routed",
+  "complete",
+  "failed_retryable",
+  "failed_permanent",
+  "skipped_unchanged",
 ]);
 
 function run(cmd) {

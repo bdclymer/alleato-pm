@@ -122,7 +122,7 @@ Use one durable ledger, for example `source_processing_jobs`, keyed by
 
 | Table/status | Purpose |
 |---|---|
-| source_processing_jobs | Proposed durable row per source item hash, with stage status, retry count, model usage, and error details |
+| source_processing_jobs | Implemented RAG-side durable row per source item hash, with lifecycle status, retry count, error details, source document, and project |
 | source_project_assignments | Proposed optional ledger of assignment method, confidence, reviewed_by, reviewed_at |
 | project_alerts | Proposed homepage-visible urgent alerts sourced from extracted signals |
 | change_event_candidates | Proposed potential change-order/change-event leads before a user creates a formal change event |
@@ -235,7 +235,9 @@ only active alerts with source evidence and a clear action.
 ## Implementation Slices
 
 1. Create the `source_processing_jobs` contract and write adapters from Graph
-   sync and Fireflies into it.
+   sync and Fireflies into it. Implemented first slice: Fireflies ingestion,
+   Graph embedding, communication signal extraction, and project-intelligence
+   synthesis now write lifecycle rows.
 2. Move Teams, Outlook, OneDrive, and Fireflies embedding behind one
    `indexed_for_rag` stage.
 3. Move task, urgent-item, and change-event-candidate extraction behind one

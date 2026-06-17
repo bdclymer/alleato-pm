@@ -45,6 +45,7 @@ from ..supabase_helpers import (
 )
 from ..ops.db_pressure_guard import enforce_pm_app_final_projection_guard
 from ..pipeline.model_usage import ModelUsageContext
+from ..pipeline.source_processing import SourceProcessingContext, record_source_processing_status
 from .client import COMPILER_MODEL, extract_with_retry
 from .compiler import ensure_client_project_target
 from .project_synthesizer import _classify_comm_type, _participants
@@ -220,7 +221,8 @@ def _load_delta_docs(
         client.table("document_metadata")
         .select(
             "id,title,type,category,source,source_system,date,captured_at,"
-            "participants,participants_array"
+            "participants,participants_array,source_item_id,source_web_url,"
+            "source_path,content_hash,project_id"
         )
         .eq("project_id", int(project_id))
         .or_(f"date.gte.{since},captured_at.gte.{since}")
@@ -266,6 +268,13 @@ def _load_delta_docs(
                 "category": doc.get("category"),
                 "type": doc.get("type"),
                 "participants": _participants(doc),
+                "source": doc.get("source"),
+                "source_system": doc.get("source_system"),
+                "source_item_id": doc.get("source_item_id"),
+                "source_web_url": doc.get("source_web_url"),
+                "source_path": doc.get("source_path"),
+                "content_hash": doc.get("content_hash"),
+                "project_id": doc.get("project_id"),
                 "text": full_text,
             }
         )
@@ -732,6 +741,25 @@ def refresh_project_intelligence(
 
     result["packet_id"] = packet_id
     result["covered_end_at"] = covered_end_at
+    for doc in docs:
+        record_source_processing_status(
+            SourceProcessingContext(
+                source_system=str(doc.get("source_system") or doc.get("comm_type") or doc.get("source") or "communication"),
+                source_item_id=str(doc.get("source_item_id") or doc.get("id")),
+                content_hash=str(doc.get("content_hash") or ""),
+                source_document_id=str(doc.get("id")) if doc.get("id") else None,
+                project_id=int(project_id),
+                source_title=doc.get("title"),
+                source_url=doc.get("source_web_url") or doc.get("source_path"),
+                occurred_at=doc.get("date"),
+                metadata={
+                    "packet_id": packet_id,
+                    "compiler_version": SYNTHESIS_COMPILER_VERSION,
+                    "path": "project_intelligence.refresh_project_intelligence",
+                },
+            ),
+            status="project_intelligence_updated",
+        )
     logger.info(
         "[ProjectIntelligence] wrote synthesis packet project=%s packet=%s docs=%d "
         "covered_end=%s fabricated_cites=%d confidence=%s",

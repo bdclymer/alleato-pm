@@ -40,6 +40,7 @@ from ..supabase_helpers import (
 from ..ops.db_pressure_guard import enforce_no_pm_app_high_churn_writes
 from ..pipeline import llm
 from ..pipeline.extractor import _fetch_project_state, _upsert_task
+from ..pipeline.source_processing import SourceProcessingContext, record_source_processing_status
 from .compiler import (
     ensure_client_project_target,
     promote_signal_candidate,
@@ -346,7 +347,8 @@ def synthesize_project_intelligence(
             client.table("document_metadata")
             .select(
                 "id,title,type,category,source,source_system,date,captured_at,"
-                "participants,participants_array,source_metadata"
+                "participants,participants_array,source_metadata,source_item_id,"
+                "source_web_url,source_path,content_hash,project_id"
             )
             .eq("project_id", int(project_id))
             .or_(f"date.gte.{effective_since},captured_at.gte.{effective_since}")
@@ -405,6 +407,21 @@ def synthesize_project_intelligence(
         result["docs_seen"] += 1
         doc_id = doc.get("id")
         comm_type = _classify_comm_type(doc)
+        source_context = SourceProcessingContext(
+            source_system=str(doc.get("source_system") or comm_type or doc.get("source") or "communication"),
+            source_item_id=str(doc.get("source_item_id") or doc_id),
+            content_hash=str(doc.get("content_hash") or ""),
+            source_document_id=str(doc_id) if doc_id else None,
+            project_id=int(project_id),
+            source_title=doc.get("title"),
+            source_url=doc.get("source_web_url") or doc.get("source_path"),
+            occurred_at=doc.get("date") or doc.get("captured_at"),
+            metadata={
+                "compiler_version": COMMS_COMPILER_VERSION,
+                "comm_type": comm_type,
+                "path": "project_synthesizer.synthesize_new_comms_since",
+            },
+        )
 
         if comm_type is None:
             result["skipped"] += 1
@@ -424,6 +441,11 @@ def synthesize_project_intelligence(
             already_marked = isinstance(sm, dict) and sm.get("synthesized_at_v1")
             if doc_id in processed_doc_ids or already_marked:
                 result["skipped"] += 1
+                record_source_processing_status(
+                    source_context,
+                    status="signals_extracted",
+                    metadata={"reason": "already_synthesized"},
+                )
                 continue
 
         try:
@@ -440,6 +462,12 @@ def synthesize_project_intelligence(
             if not full_text:
                 result["skipped"] += 1
                 logger.info("[ProjectSynthesizer] skipping doc %s — no raw text in RAG DB", doc_id)
+                record_source_processing_status(
+                    source_context,
+                    status="failed_permanent",
+                    error_code="rag_text_missing",
+                    error_message="No content/raw_text available in RAG metadata for communication extraction.",
+                )
                 continue
 
             # (d) Deep extraction.
@@ -456,6 +484,12 @@ def synthesize_project_intelligence(
             if getattr(structured, "extraction_failed", False):
                 result["errors"].append({"doc_id": doc_id, "error": "extraction_failed (LLM call failed)"})
                 logger.error("[ProjectSynthesizer] extraction FAILED for doc %s (%s)", doc_id, comm_type)
+                record_source_processing_status(
+                    source_context,
+                    status="failed_retryable",
+                    error_code="extraction_failed",
+                    error_message=getattr(structured, "extraction_error", None) or "LLM extraction failed.",
+                )
                 if not dry_run:
                     continue
 
@@ -491,6 +525,8 @@ def synthesize_project_intelligence(
                 continue
 
             # (f) Signals -> candidates -> promotion.
+            cards_before = result["cards_written"]
+            tasks_before = result["tasks_written"]
             for payload in payloads:
                 candidate = write_source_signal_candidate(
                     client,
@@ -533,10 +569,26 @@ def synthesize_project_intelligence(
                 result["emails"] += 1
             elif comm_type == "teams":
                 result["teams"] += 1
+            record_source_processing_status(
+                source_context,
+                status="signals_extracted",
+                metadata={
+                    "cards_written": result["cards_written"] - cards_before,
+                    "tasks_written": result["tasks_written"] - tasks_before,
+                    "signal_count": len(payloads),
+                    "task_count": len(structured.tasks),
+                },
+            )
 
         except Exception as exc:  # noqa: BLE001 — one bad doc must not abort batch
             logger.error("[ProjectSynthesizer] doc %s failed: %s", doc_id, exc, exc_info=True)
             result["errors"].append({"doc_id": doc_id, "error": str(exc)})
+            record_source_processing_status(
+                source_context,
+                status="failed_retryable",
+                error_code=exc.__class__.__name__,
+                error_message=str(exc),
+            )
 
     logger.info(
         "[ProjectSynthesizer] project=%s seen=%d emails=%d teams=%d skipped=%d cards=%d tasks=%d errors=%d",

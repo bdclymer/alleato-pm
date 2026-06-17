@@ -18,6 +18,11 @@ from uuid import NAMESPACE_URL, uuid4, uuid5
 import requests
 
 from ..ai_transport import get_openai_client, retry_ai_call
+from ..pipeline.source_processing import (
+    SourceProcessingContext,
+    record_source_processing_status,
+    status_for_project_assignment,
+)
 from ..task_assignees import TaskAssigneeResolver
 from .fireflies_task_rewriter import REWRITER_PROMPT_VERSION, rewrite_action_items
 
@@ -256,6 +261,18 @@ class FirefliesIngestionPipeline:
                 # Fall back to provided content if Fireflies API is unavailable.
                 pass
         content_hash = hashlib.sha256(parsed.raw_text.encode("utf-8")).hexdigest()
+        source_item_id = parsed.fireflies_id or content_hash
+        source_context = SourceProcessingContext(
+            source_system="fireflies",
+            source_item_id=source_item_id,
+            content_hash=content_hash,
+            source_title=parsed.title,
+            source_url=storage_url,
+            occurred_at=parsed.captured_at.isoformat() if parsed.captured_at else None,
+            metadata={"ingest_path": "fireflies_pipeline.ingest_markdown_text"},
+        )
+        if not dry_run:
+            record_source_processing_status(source_context, status="captured")
 
         existing = self.store.find_document_by_hash(content_hash)
         # Exact-content re-ingests must short-circuit before any LLM or embedding
@@ -263,6 +280,17 @@ class FirefliesIngestionPipeline:
         # this guard the same meeting is reprocessed every run, re-burning task
         # rewrite, memory extraction, and embedding credits for unchanged content.
         if existing is not None and not dry_run:
+            record_source_processing_status(
+                SourceProcessingContext(
+                    **{
+                        **source_context.__dict__,
+                        "source_document_id": str(existing.get("id") or parsed.fireflies_id or source_item_id),
+                        "project_id": existing.get("project_id"),
+                    }
+                ),
+                status="skipped_unchanged",
+                metadata={"reason": "content_hash_already_ingested"},
+            )
             return IngestionResult(
                 document_id=str(existing.get("id") or parsed.fireflies_id or uuid4()),
                 chunk_count=0,
@@ -297,6 +325,23 @@ class FirefliesIngestionPipeline:
             or parsed.fireflies_id
             or str(uuid4())
         )
+        source_context = SourceProcessingContext(
+            source_system=source_context.source_system,
+            source_item_id=source_context.source_item_id,
+            content_hash=source_context.content_hash,
+            source_document_id=str(document_id),
+            project_id=effective_project_id,
+            source_title=source_context.source_title,
+            source_url=source_context.source_url,
+            occurred_at=source_context.occurred_at,
+            metadata=source_context.metadata,
+        )
+        if not dry_run:
+            record_source_processing_status(
+                source_context,
+                status=status_for_project_assignment(effective_project_id),
+                metadata={"project_assignment_source": "fireflies_context_inference"},
+            )
         skipped = existing is not None and not dry_run
 
         # Prepare metadata payload
@@ -382,6 +427,12 @@ class FirefliesIngestionPipeline:
                     }
                 )
                 self.store.complete_ingestion_job(job_id, status="completed")
+                record_source_processing_status(
+                    source_context,
+                    status="failed_permanent",
+                    error_code="interview_title_excluded",
+                    error_message=reason,
+                )
                 return IngestionResult(
                     document_id=document_id,
                     chunk_count=0,
@@ -433,6 +484,11 @@ class FirefliesIngestionPipeline:
             # transcript formats cannot survive after a re-sync.
             self.store.delete_chunks_for_document(document_id)
             self.store.upsert_chunks(chunks)
+            record_source_processing_status(
+                source_context,
+                status="indexed_for_rag",
+                metadata={"chunk_count": len(chunks), "summary_embedded": bool(summary_text)},
+            )
 
             # NOTE: Task extraction is handled by the pipeline extractor
             # (pipeline/extractor.py → _upsert_task) which writes LLM-enriched
@@ -475,8 +531,15 @@ class FirefliesIngestionPipeline:
                 logger.warning("Memory extraction failed for %s: %s", document_id, mem_exc)
 
             self.store.complete_ingestion_job(job_id, status="completed")
+            record_source_processing_status(source_context, status="complete")
         except Exception as exc:  # pragma: no cover - network errors
             self.store.complete_ingestion_job(job_id, status="failed", error=str(exc))
+            record_source_processing_status(
+                source_context,
+                status="failed_retryable",
+                error_code=exc.__class__.__name__,
+                error_message=str(exc),
+            )
             raise
 
         return IngestionResult(

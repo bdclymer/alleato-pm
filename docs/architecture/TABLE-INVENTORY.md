@@ -12,6 +12,7 @@ Several claims in the original inventory were wrong or have been resolved by Wav
 
 | Table / claim | Prior state in this doc | Reality (verified by SQL or commit) |
 |---|---|---|
+| `source_processing_jobs` | not previously listed | **Created in the RAG/AI database on 2026-06-17.** It is the cross-source lifecycle ledger for Fireflies, Graph, signal extraction, and project-intelligence synthesis stages. |
 | `pipeline_model_usage` | not previously listed | **Created in the RAG/AI database on 2026-06-17.** It is the high-volume model usage and estimated-cost ledger for source processing, embeddings, daily briefs, Brandon email review, and project intelligence budget checks. |
 | `user_profiles` | "empty — 123 code references; CRITICAL privilege bug" | **53 rows (= every auth.users row).** Backfilled in migration `20260516000000` (commit `2f32ca2c6`). Trigger keeps auth.users → user_profiles in sync going forward. Privilege bug resolved. |
 | `acumatica_sync_runs` | "empty despite a writer" | **53 rows, growing every 2h.** Cron firing on schedule. |
@@ -731,7 +732,7 @@ Compiler version stamp: `ai_intelligence_compiler_v0_1`.
 
 ---
 
-# RAG database tables (12 total)
+# RAG database tables (14 total)
 
 The RAG project (`fqcvmfqldlewvbsuxdvz`) holds the embedding/content layer plus pipeline state. Most tables are mirrors of MAIN counterparts; rows in RAG are CANONICAL for these.
 
@@ -744,6 +745,8 @@ The RAG project (`fqcvmfqldlewvbsuxdvz`) holds the embedding/content layer plus 
 | `source_intelligence_jobs` | 11,071 | ✅ canonical | Compiler job queue |
 | `source_signal_candidates` | 7,527 | ✅ canonical | Pre-promotion candidates |
 | `source_sync_runs` | 3,639 | ✅ canonical | Per-run audit log |
+| `source_processing_jobs` | empty | ✅ canonical | Per-source lifecycle/status ledger across assignment, RAG indexing, signals, and project intelligence |
+| `pipeline_model_usage` | growing | ✅ canonical | Model usage, estimated-cost, and daily budget-block ledger |
 | `packet_refresh_jobs` | 1,530 | ✅ canonical | Packet refresh queue |
 | `ingestion_jobs` | 436 | ✅ canonical | Generic ingest audit |
 | `source_sync_health_snapshots` | 330 | ✅ canonical | Sync health rollup |

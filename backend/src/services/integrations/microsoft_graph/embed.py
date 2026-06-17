@@ -23,6 +23,11 @@ from ...pipeline.model_usage import (
     record_model_usage,
 )
 from ...ai_transport import get_openai_client, retry_ai_call
+from ...pipeline.source_processing import (
+    SourceProcessingContext,
+    record_source_processing_status,
+    status_for_project_assignment,
+)
 from ...supabase_helpers import get_rag_read_client, get_rag_write_client, get_supabase_client, rag_database_writes_enabled
 
 logger = logging.getLogger(__name__)
@@ -167,6 +172,29 @@ def _min_embeddable_chars(doc: Dict[str, Any]) -> int:
     )
 
 
+
+def _source_processing_context(doc: Dict[str, Any]) -> SourceProcessingContext:
+    metadata_id = str(doc.get("id") or "")
+    source_system = str(doc.get("source_system") or doc.get("category") or "microsoft_graph")
+    source_item_id = str(doc.get("source_item_id") or metadata_id)
+    return SourceProcessingContext(
+        source_system=source_system,
+        source_item_id=source_item_id,
+        content_hash=str(doc.get("content_hash") or ""),
+        source_document_id=metadata_id,
+        project_id=doc.get("project_id"),
+        source_title=doc.get("title"),
+        source_url=doc.get("source_web_url") or doc.get("source_path"),
+        occurred_at=doc.get("date"),
+        metadata={
+            "category": doc.get("category"),
+            "source": doc.get("source"),
+            "type": doc.get("type"),
+            "embedding_path": "microsoft_graph.embed_graph_document",
+        },
+    )
+
+
 def _substantive_text_length(text: str) -> int:
     without_markers = re.sub(r"\[[^\]]+\]", " ", text)
     tokens = re.findall(r"[A-Za-z0-9][A-Za-z0-9'-]*", without_markers.lower())
@@ -243,7 +271,11 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
     try:
         resp = (
             supabase_client.from_("document_metadata")
-            .select("id, title, category, source, date, participants, tags, project_id, type")
+            .select(
+                "id, title, category, source, date, participants, tags, project_id, type, "
+                "status, source_system, source_item_id, source_path, source_web_url, "
+                "content_hash"
+            )
             .eq("id", metadata_id)
             .single()
             .execute()
@@ -258,6 +290,12 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         return 0
 
     title = doc.get("title") or "Untitled"
+    source_context = _source_processing_context(doc)
+    record_source_processing_status(
+        source_context,
+        status=status_for_project_assignment(doc.get("project_id")),
+        metadata={"document_status": doc.get("status")},
+    )
     if _is_interview_title(title):
         reason = (
             'INTENTIONALLY_EXCLUDED: Document title contains "Interview", '
@@ -265,6 +303,12 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         )
         _mark_intentionally_excluded(supabase_client, rag_client, doc, reason)
         _clear_ingestion_error("done")
+        record_source_processing_status(
+            source_context,
+            status="failed_permanent",
+            error_code="interview_title_excluded",
+            error_message=reason,
+        )
         logger.info("[GraphEmbed] %s intentionally excluded from embedding: interview title", metadata_id)
         return 0
 
@@ -291,6 +335,12 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
             {"embedding_status": "embedded"}
         ).eq("id", metadata_id).execute()
         _clear_ingestion_error("embedded")
+        record_source_processing_status(
+            source_context,
+            status="failed_permanent",
+            error_code="graph_content_empty",
+            error_message="Graph source item had no embeddable text content.",
+        )
         return 0
 
     substantive_chars = _substantive_text_length(content)
@@ -310,6 +360,12 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
             {"embedding_status": "skipped"}
         ).eq("id", metadata_id).execute()
         _clear_ingestion_error("embedded")
+        record_source_processing_status(
+            source_context,
+            status="failed_permanent",
+            error_code="skipped_low_content",
+            error_message=f"Substantive text length {substantive_chars} below minimum {min_chars}.",
+        )
         return 0
 
     # Prepend title for better retrieval context
@@ -321,6 +377,12 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
             {"embedding_status": "embedded"}
         ).eq("id", metadata_id).execute()
         _clear_ingestion_error("embedded")
+        record_source_processing_status(
+            source_context,
+            status="failed_permanent",
+            error_code="no_chunks",
+            error_message="Text was present but produced no chunks.",
+        )
         return 0
 
     # Embed all chunks. Do not write unembedded chunks or mark the document
@@ -368,6 +430,12 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         supabase_client.from_("document_metadata").update(
             {"status": "error"}
         ).eq("id", metadata_id).execute()
+        record_source_processing_status(
+            source_context,
+            status="failed_retryable",
+            error_code=e.__class__.__name__,
+            error_message=str(e),
+        )
         return 0
 
     # Mark embedded in PM APP
@@ -387,6 +455,12 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         logger.warning("[GraphEmbed] Could not update RAG embedding_status for %s: %s", metadata_id, e)
 
     _clear_ingestion_error("embedded")
+    record_source_processing_status(
+        source_context,
+        status="indexed_for_rag",
+        metadata={"chunk_count": len(rows), "source_type": source_type},
+    )
+    record_source_processing_status(source_context, status="complete")
     _run_source_intelligence_compiler(supabase_client, metadata_id)
 
     logger.info("[GraphEmbed] %s → %d chunks embedded", metadata_id, len(rows))
