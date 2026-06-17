@@ -375,8 +375,14 @@ async def health_check() -> Dict[str, Any]:
     Returns:
         Dict containing health status and AI provider configuration status.
     """
-    openai_key = os.getenv("OPENAI_API_KEY")
-    openai_configured = bool(openai_key and len(openai_key) > 0)
+    from src.services.ai_transport import (
+        ai_gateway_configured,
+        ai_gateway_required,
+        embedding_provider_configured,
+        get_ai_provider_path,
+        openai_configured,
+    )
+
     supabase_service_configured = bool(
         os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_SERVICE_KEY")
     )
@@ -390,8 +396,11 @@ async def health_check() -> Dict[str, Any]:
 
     return {
         "status": "healthy",
-        "openai_configured": openai_configured,
-        "embedding_provider_configured": openai_configured,
+        "ai_provider_path": get_ai_provider_path(),
+        "ai_gateway_configured": ai_gateway_configured(),
+        "ai_gateway_required": ai_gateway_required(),
+        "openai_configured": openai_configured(),
+        "embedding_provider_configured": embedding_provider_configured(),
         "supabase_service_configured": supabase_service_configured,
         "deep_agent_storage": deep_agent_storage,
         "timestamp": datetime.now().isoformat()

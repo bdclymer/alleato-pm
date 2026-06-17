@@ -1,8 +1,8 @@
 """
 AI Provider Health Check
 
-Canary for the backend LLM provider (OpenAI direct, via
-``src.services.ai_transport.get_openai_client``). The backend intelligence
+Canary for the backend LLM provider (AI Gateway by default, direct OpenAI
+fallback, via ``src.services.ai_transport.get_openai_client``). The backend intelligence
 pipeline — meeting deep-extraction, project synthesizer, Teams/email compilers,
 task extraction — funnels every LLM call through that client and swallows
 failures into empty results (``_extraction_failed``). When the OpenAI account
@@ -95,10 +95,27 @@ def check_ai_provider_health(model: str = AI_PROVIDER_HEALTH_MODEL) -> dict[str,
     Never raises — returns a verdict dict. status="down" means the backend
     intelligence pipeline cannot reach the LLM provider right now.
     """
-    if not os.getenv("OPENAI_API_KEY"):
+    from src.services.ai_transport import (
+        ai_gateway_configured,
+        get_ai_provider_path,
+        openai_configured,
+    )
+
+    provider_path = get_ai_provider_path()
+    if provider_path == "vercel_gateway" and not ai_gateway_configured():
         return {
             "status": "down",
             "model": model,
+            "provider_path": provider_path,
+            "reason": "missing_key",
+            "http_status": None,
+            "detail": "AI_GATEWAY_API_KEY is not set on this service",
+        }
+    if provider_path == "openai" and not openai_configured():
+        return {
+            "status": "down",
+            "model": model,
+            "provider_path": provider_path,
             "reason": "missing_key",
             "http_status": None,
             "detail": "OPENAI_API_KEY is not set on this service",
@@ -120,6 +137,7 @@ def check_ai_provider_health(model: str = AI_PROVIDER_HEALTH_MODEL) -> dict[str,
         return {
             "status": "ok",
             "model": model,
+            "provider_path": provider_path,
             "reason": None,
             "http_status": 200,
             "detail": None,
@@ -136,6 +154,7 @@ def check_ai_provider_health(model: str = AI_PROVIDER_HEALTH_MODEL) -> dict[str,
         return {
             "status": "down",
             "model": model,
+            "provider_path": provider_path,
             "reason": verdict["reason"],
             "http_status": verdict["http_status"],
             "detail": str(exc)[:300],

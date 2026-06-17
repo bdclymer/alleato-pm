@@ -11,6 +11,8 @@ T = TypeVar("T")
 
 logger = logging.getLogger(__name__)
 
+AI_GATEWAY_BASE_URL = os.getenv("AI_GATEWAY_BASE_URL", "https://ai-gateway.vercel.sh/v1")
+
 _TRANSIENT_MESSAGE_SNIPPETS = (
     "streamidtoolowerror",
     "stream id too low",
@@ -50,15 +52,68 @@ def is_transient_ai_error(exc: Exception) -> bool:
     return is_transient_ai_error_message(str(exc))
 
 
-def get_openai_client():
-    """Return an OpenAI client using OPENAI_API_KEY directly.
+def ai_gateway_required() -> bool:
+    return (os.getenv("AI_GATEWAY_REQUIRED") or "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
-    All AI calls go to OpenAI — the Vercel AI Gateway is not used.
+
+def get_ai_provider_path() -> str:
+    if ai_gateway_required():
+        return "vercel_gateway"
+
+    explicit_path = (os.getenv("AI_PROVIDER_PATH") or "").strip().lower()
+    if explicit_path in {"openai", "direct", "direct_openai"}:
+        return "openai"
+    if explicit_path in {"vercel_gateway", "ai_gateway", "gateway", "vercel"}:
+        return "vercel_gateway"
+    if explicit_path:
+        raise RuntimeError(
+            f"Unsupported AI_PROVIDER_PATH '{explicit_path}'. Use 'openai' or 'vercel_gateway'."
+        )
+    return "vercel_gateway" if os.getenv("AI_GATEWAY_API_KEY") else "openai"
+
+
+def ai_gateway_configured() -> bool:
+    return bool((os.getenv("AI_GATEWAY_API_KEY") or "").strip())
+
+
+def openai_configured() -> bool:
+    return bool((os.getenv("OPENAI_API_KEY") or "").strip())
+
+
+def embedding_provider_configured() -> bool:
+    provider_path = get_ai_provider_path()
+    if provider_path == "vercel_gateway":
+        return ai_gateway_configured()
+    return openai_configured()
+
+
+def get_openai_client():
+    """Return an OpenAI-compatible client for the configured backend provider.
+
+    Vercel AI Gateway is preferred when AI_GATEWAY_API_KEY is present. Direct
+    OpenAI is only used when explicitly selected or no gateway key is available.
     """
     from openai import OpenAI
-    api_key = os.getenv("OPENAI_API_KEY")
+
+    provider_path = get_ai_provider_path()
+    if provider_path == "vercel_gateway":
+        api_key = (os.getenv("AI_GATEWAY_API_KEY") or "").strip()
+        if not api_key:
+            raise RuntimeError(
+                "AI_GATEWAY_API_KEY is required when AI_PROVIDER_PATH=vercel_gateway."
+            )
+        return OpenAI(api_key=api_key, base_url=AI_GATEWAY_BASE_URL)
+
+    api_key = (os.getenv("OPENAI_API_KEY") or "").strip()
     if not api_key:
-        raise RuntimeError("OPENAI_API_KEY is required")
+        raise RuntimeError(
+            "OPENAI_API_KEY is required when AI_PROVIDER_PATH=openai or AI_GATEWAY_API_KEY is unavailable."
+        )
     return OpenAI(api_key=api_key)
 
 
