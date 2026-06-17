@@ -9,6 +9,7 @@ function bill(overrides: Partial<AcuApBill> = {}): AcuApBill {
   return {
     externalKey: overrides.externalKey ?? `k${Math.random()}`,
     vendorId: "BEAM",
+    vendorRef: "PI-0001",
     amount: 374416,
     balance: null,
     projectCode: "24115",
@@ -72,6 +73,22 @@ describe("detectDuplicateBills", () => {
       bill({ externalKey: "c", projectCode: "25109" }),
     ];
     expect(detectDuplicateBills(bills)).toHaveLength(0);
+  });
+
+  it("confirms a duplicate when copies share a vendor invoice number", () => {
+    const bills = [
+      bill({ externalKey: "a", vendorRef: "PI-7654-0007", status: "Closed" }),
+      bill({ externalKey: "b", vendorRef: "PI-7654-0007", status: "Open" }),
+    ];
+    expect(detectDuplicateBills(bills)[0].detail).toMatch(/confirmed duplicate/i);
+  });
+
+  it("asks for confirmation when copies have different vendor invoice numbers", () => {
+    const bills = [
+      bill({ externalKey: "a", vendorRef: "PI-1", status: "Open" }),
+      bill({ externalKey: "b", vendorRef: "PI-2", status: "Open" }),
+    ];
+    expect(detectDuplicateBills(bills)[0].detail).toMatch(/confirm before voiding/i);
   });
 
   it("resolves a project name when a name map is provided", () => {

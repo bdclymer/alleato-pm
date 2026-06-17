@@ -99,6 +99,8 @@ export type AcumaticaActuals = {
 export type AcuApBill = {
   externalKey: string;
   vendorId: string | null;
+  /** The vendor's own invoice number — same value on two bills = same invoice. */
+  vendorRef: string | null;
   amount: number;
   balance: number | null;
   projectCode: string | null;
@@ -448,6 +450,14 @@ export function detectDuplicateBills(
     const ref = (b: AcuApBill) => `${b.referenceNbr ?? "?"} (${(b.status ?? "?").toLowerCase()})`;
     const voidList = toVoid.map(ref).join(", ");
 
+    // The vendor's own invoice number is the verification key: the same number on
+    // every copy means it's literally the same invoice entered more than once.
+    const vendorRefs = [...new Set(copies.map((b) => b.vendorRef).filter(Boolean))];
+    const confirmation =
+      vendorRefs.length === 1
+        ? `Same vendor invoice ${vendorRefs[0]} on every copy — confirmed duplicate.`
+        : `Same amount but the vendor invoice numbers differ (${vendorRefs.join(", ") || "none recorded"}) — open both to confirm before voiding.`;
+
     findings.push(
       apFinding(
         {
@@ -456,7 +466,7 @@ export function detectDuplicateBills(
           recordRef: key,
           kind: "duplicate-ap-bill",
           tier: "HIGH",
-          detail: `${copies[0].vendorId} was billed ${centsToUsd(amountCents)} ${copies.length}× on ${projectLabel(copies[0].projectCode, projectName)} (period ${copies[0].postPeriod ?? "?"}). Keep ${keep ? ref(keep) : "?"}; void ${voidList} in Acumatica.`,
+          detail: `${copies[0].vendorId} was billed ${centsToUsd(amountCents)} ${copies.length}× on ${projectLabel(copies[0].projectCode, projectName)} (period ${copies[0].postPeriod ?? "?"}). ${confirmation} Keep ${keep ? ref(keep) : "?"}; void ${voidList} in Acumatica.`,
           amountCents: amountCents * toVoid.length,
           acuValueCents: amountCents,
           costCodeLabel: copies[0].vendorId,

@@ -10,7 +10,7 @@ import {
   type FilterValue,
   type TableColumn,
 } from "@/components/tables/unified";
-import { StatusBadge } from "@/components/ds";
+import { DetailField, InfoAlert, StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { centsToUsd, type FindingKind, type FindingTier } from "@/lib/accounting/reconciliation";
@@ -207,17 +207,6 @@ const columns: TableColumn<ReconciliationFindingItem>[] = [
 
 const defaultVisibleColumns = columns.map((c) => c.id);
 
-function EvidenceRow({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex items-start gap-4 py-2">
-      <span className="w-40 shrink-0 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        {label}
-      </span>
-      <span className="flex-1 text-sm">{value}</span>
-    </div>
-  );
-}
-
 function FindingDetail({
   finding,
   onReview,
@@ -229,51 +218,51 @@ function FindingDetail({
 }) {
   const showValues = (finding.jpValueCents ?? 0) !== 0 || (finding.acuValueCents ?? 0) !== 0;
   return (
-    <div className="mt-4 space-y-6">
-      <div className="rounded-md bg-muted p-4 text-sm">{kindMeaning[finding.kind]}</div>
+    <div className="space-y-5 px-6 pb-6">
+      <InfoAlert variant="info">{kindMeaning[finding.kind]}</InfoAlert>
 
-      <div className="divide-y divide-border">
-        <EvidenceRow
-          label="Project"
-          value={finding.jpProjectId > 0 ? `${finding.jpProjectName} (JP #${finding.jpProjectId})` : finding.jpProjectName}
-        />
+      <div className="space-y-3">
+        <DetailField label="Project">
+          {finding.jpProjectId > 0
+            ? `${finding.jpProjectName} (JP #${finding.jpProjectId})`
+            : finding.jpProjectName}
+        </DetailField>
         {finding.costCodeLabel && (
-          <EvidenceRow
-            label={finding.recordType === "ap_bill" ? "Vendor" : "Cost code"}
-            value={finding.costCodeLabel}
-          />
+          <DetailField label={finding.recordType === "ap_bill" ? "Vendor" : "Cost code"}>
+            {finding.costCodeLabel}
+          </DetailField>
         )}
-        <EvidenceRow label="Record" value={recordTypeLabels[finding.recordType]} />
-        <EvidenceRow label="Detail" value={finding.detail} />
+        <DetailField label="Record">{recordTypeLabels[finding.recordType]}</DetailField>
+        <DetailField label="What to do">{finding.detail}</DetailField>
         {showValues && (
-          <EvidenceRow
-            label="Values"
-            value={
-              <span className="tabular-nums">
-                {finding.jpValueCents != null && (
-                  <>Job Planner {centsToUsd(finding.jpValueCents)}{finding.acuValueCents != null && " · "}</>
-                )}
-                {finding.acuValueCents != null && <>Acumatica {centsToUsd(finding.acuValueCents)}</>}
-                {finding.acumaticaChecked && (
-                  <span className="ml-2 text-xs text-muted-foreground">✓ verified against Acumatica ledger</span>
-                )}
-              </span>
-            }
-          />
+          <DetailField label="Values">
+            <span className="tabular-nums">
+              {finding.jpValueCents != null && (
+                <>Job Planner {centsToUsd(finding.jpValueCents)}{finding.acuValueCents != null && " · "}</>
+              )}
+              {finding.acuValueCents != null && <>Acumatica {centsToUsd(finding.acuValueCents)}</>}
+              {finding.acumaticaChecked && (
+                <span className="ml-2 text-xs text-muted-foreground">✓ verified against Acumatica</span>
+              )}
+            </span>
+          </DetailField>
         )}
-        <EvidenceRow label="Date" value={`${fmtDate(finding.jpModifiedOn)} (${relativeDays(finding.jpModifiedOn) || "—"})`} />
+        <DetailField label="Date">
+          {`${fmtDate(finding.jpModifiedOn)}${
+            relativeDays(finding.jpModifiedOn) ? ` (${relativeDays(finding.jpModifiedOn)})` : ""
+          }`}
+        </DetailField>
         {finding.recordType !== "ap_bill" && (
-          <EvidenceRow label="Last synced to Acumatica" value={fmtDate(finding.lastSyncedOn)} />
+          <DetailField label="Last synced">{fmtDate(finding.lastSyncedOn)}</DetailField>
         )}
         {finding.externalId && (
-          <EvidenceRow
-            label="Acumatica record id"
-            value={<code className="break-all text-xs">{finding.externalModel}: {finding.externalId}</code>}
-          />
+          <DetailField label="Acumatica id">
+            <code className="break-all text-xs">{finding.externalModel}: {finding.externalId}</code>
+          </DetailField>
         )}
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 pt-1">
         <div className="flex gap-2">
           {finding.reviewStatus !== "resolved" ? (
             <Button size="sm" onClick={() => onReview("resolved")} disabled={isUpdating}>
@@ -299,8 +288,8 @@ function FindingDetail({
           </Button>
         </a>
         <p className="text-xs text-muted-foreground">
-          Search the Acumatica record id above to find this exact line. Job Planner deep-links are
-          pending the JP web address.
+          Search the Acumatica id above to find this exact line. Job Planner deep-links are pending
+          the JP web address.
         </p>
       </div>
     </div>
@@ -442,7 +431,7 @@ export default function ReconciliationPage() {
       />
 
       <Sheet open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
+        <SheetContent className="overflow-y-auto">
           {selected && (
             <>
               <SheetHeader>
