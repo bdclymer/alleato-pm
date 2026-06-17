@@ -86,7 +86,7 @@ def chunked(items: list[Any], size: int) -> Iterable[list[Any]]:
 def load_projects(client) -> list[ProjectTerm]:
     rows = (
         client.table("projects")
-        .select("id,name,project_number,client,aliases,archived")
+        .select("id,name,project_number,aliases,archived")
         .eq("archived", False)
         .execute()
         .data

@@ -2191,6 +2191,7 @@ def process_source_document(
         attribution_method = "existing_project_id" if project_id else "project_inference"
         confidence_score = 0.95 if project_id else 0.0
         corrected_project_attribution = False
+        inferred_missing_project_attribution = False
         project_name: Optional[str] = None
         target: Optional[Dict[str, Any]] = None
 
@@ -2221,13 +2222,15 @@ def process_source_document(
             project_id = inferred_project_id
             attribution_method = method
             confidence_score = confidence
+            inferred_missing_project_attribution = bool(project_id)
 
         if project_id:
             project = _fetch_project(supabase, int(project_id))
             project_name = project.get("name")
-            if corrected_project_attribution and project_name:
+            if (corrected_project_attribution or inferred_missing_project_attribution) and project_name:
                 supabase.table("document_metadata").update(
                     {
+                        "project_id": int(project_id),
                         "project": project_name,
                     }
                 ).eq("id", source_document_id).execute()
@@ -2256,11 +2259,18 @@ def process_source_document(
             matched_fields=(
                 ["document_metadata.title"]
                 if corrected_project_attribution
-                else ["document_metadata.project_id"] if document.get("project_id") else []
+                else ["document_metadata.title", "document_metadata.content"]
+                if inferred_missing_project_attribution
+                else ["document_metadata.project_id"]
+                if document.get("project_id")
+                else []
             ),
             reasoning=(
                 "Existing document_metadata.project_id was corrected because the source title strongly matched another project."
                 if corrected_project_attribution
+                else
+                "Missing document_metadata.project_id was filled from project inference."
+                if inferred_missing_project_attribution
                 else
                 "Existing document_metadata.project_id was trusted as the project attribution."
                 if document.get("project_id")
