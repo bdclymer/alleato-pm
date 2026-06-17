@@ -47,6 +47,7 @@ const recordTypeLabels: Record<ReconciliationFindingItem["recordType"], string> 
   commitment_co: "Commitment CO",
   prime_co: "Prime CO",
   budget: "Budget",
+  ap_bill: "AP bill",
 };
 
 function fmtDate(value: string | null): string {
@@ -133,7 +134,7 @@ const columns: TableColumn<ReconciliationFindingItem>[] = [
   },
   {
     id: "modified",
-    label: "Changed in JP",
+    label: "Date",
     defaultVisible: true,
     sortable: true,
     sortValue: (f) => (f.jpModifiedOn ? new Date(f.jpModifiedOn).getTime() : 0),
@@ -200,8 +201,16 @@ function FindingDetail({
       <div className="rounded-md bg-muted p-4 text-sm">{kindMeaning[finding.kind]}</div>
 
       <div className="divide-y divide-border">
-        <EvidenceRow label="Project" value={`${finding.jpProjectName} (JP #${finding.jpProjectId})`} />
-        {finding.costCodeLabel && <EvidenceRow label="Cost code" value={finding.costCodeLabel} />}
+        <EvidenceRow
+          label="Project"
+          value={finding.jpProjectId > 0 ? `${finding.jpProjectName} (JP #${finding.jpProjectId})` : finding.jpProjectName}
+        />
+        {finding.costCodeLabel && (
+          <EvidenceRow
+            label={finding.recordType === "ap_bill" ? "Vendor" : "Cost code"}
+            value={finding.costCodeLabel}
+          />
+        )}
         <EvidenceRow label="Record" value={recordTypeLabels[finding.recordType]} />
         <EvidenceRow label="Detail" value={finding.detail} />
         {showValues && (
@@ -209,8 +218,10 @@ function FindingDetail({
             label="Values"
             value={
               <span className="tabular-nums">
-                Job Planner {centsToUsd(finding.jpValueCents)}
-                {finding.acuValueCents != null && <> · Acumatica {centsToUsd(finding.acuValueCents)}</>}
+                {finding.jpValueCents != null && (
+                  <>Job Planner {centsToUsd(finding.jpValueCents)}{finding.acuValueCents != null && " · "}</>
+                )}
+                {finding.acuValueCents != null && <>Acumatica {centsToUsd(finding.acuValueCents)}</>}
                 {finding.acumaticaChecked && (
                   <span className="ml-2 text-xs text-muted-foreground">✓ verified against Acumatica ledger</span>
                 )}
@@ -218,8 +229,10 @@ function FindingDetail({
             }
           />
         )}
-        <EvidenceRow label="Changed in JP" value={`${fmtDate(finding.jpModifiedOn)} (${relativeDays(finding.jpModifiedOn) || "—"})`} />
-        <EvidenceRow label="Last synced to Acumatica" value={fmtDate(finding.lastSyncedOn)} />
+        <EvidenceRow label="Date" value={`${fmtDate(finding.jpModifiedOn)} (${relativeDays(finding.jpModifiedOn) || "—"})`} />
+        {finding.recordType !== "ap_bill" && (
+          <EvidenceRow label="Last synced to Acumatica" value={fmtDate(finding.lastSyncedOn)} />
+        )}
         {finding.externalId && (
           <EvidenceRow
             label="Acumatica record id"

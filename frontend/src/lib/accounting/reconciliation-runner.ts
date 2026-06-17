@@ -21,12 +21,15 @@ import {
 import {
   analyzeProject,
   applyAcumaticaActuals,
+  detectDuplicateBills,
+  detectOnHoldBills,
   summarize,
   type ProjectReport,
   type ReconciliationFinding,
   type ReconciliationSummary,
 } from "./reconciliation";
 import { loadAcumaticaActuals } from "./acumatica-actuals";
+import { loadApBills } from "./acumatica-ap-bills";
 import { createServiceClient } from "@/lib/supabase/service";
 import { logger } from "@/lib/logger";
 
@@ -129,9 +132,32 @@ export async function runReconciliation(
 
     const actuals = await loadAcumaticaActuals();
     const { reports, cleared } = applyAcumaticaActuals(reports0, actuals);
-    const summary = summarize(reports, { acumaticaChecked: true, cleared });
 
-    const rows = reports.flatMap((r) => r.findings).map((f) => toRow(f, runId));
+    // Acumatica AP detectors: duplicate billing + on-hold pile.
+    const { bills, projectNameByCode } = await loadApBills();
+    const projectName = (code: string) => projectNameByCode.get(code) ?? code;
+    const dupFindings = detectDuplicateBills(bills, projectName);
+    const dupKeys = new Set(dupFindings.map((f) => f.fingerprint));
+    const onHoldFindings = detectOnHoldBills(
+      bills,
+      new Date().toISOString(),
+      dupKeys,
+      projectName,
+    );
+    const apReport: ProjectReport = {
+      jpProjectId: 0,
+      jpProjectName: "(Acumatica AP)",
+      state: null,
+      lineCount: 0,
+      ccoCount: 0,
+      pccoCount: 0,
+      findings: [...dupFindings, ...onHoldFindings],
+    };
+
+    const reportsAll = [...reports, apReport];
+    const summary = summarize(reportsAll, { acumaticaChecked: true, cleared });
+
+    const rows = reportsAll.flatMap((r) => r.findings).map((f) => toRow(f, runId));
     for (let i = 0; i < rows.length; i += UPSERT_CHUNK) {
       const { error } = await supabase
         .from("reconciliation_findings")

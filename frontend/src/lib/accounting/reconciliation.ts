@@ -37,7 +37,9 @@ export type FindingKind =
   | "unlinked-pcco"
   | "underwater-budget"
   | "thin-margin"
-  | "billed-over-contract";
+  | "billed-over-contract"
+  | "duplicate-ap-bill"
+  | "stale-on-hold-bill";
 
 export type ReconciliationFinding = {
   /** Stable fingerprint for cross-run dedup / triage. */
@@ -45,7 +47,7 @@ export type ReconciliationFinding = {
   jpProjectId: number;
   jpProjectName: string;
   state: string | null;
-  recordType: "budget_line" | "commitment_co" | "prime_co" | "budget";
+  recordType: "budget_line" | "commitment_co" | "prime_co" | "budget" | "ap_bill";
   recordRef: string;
   /** Resolved cost code, e.g. "013120 · Vice President". */
   costCodeLabel: string | null;
@@ -91,6 +93,20 @@ export type ReconciliationSummary = {
 export type AcumaticaActuals = {
   byKey: Map<string, number>;
   knownProjectCodes: Set<string>;
+};
+
+/** A synced Acumatica AP bill (from `acumatica_ap_bills`). Amounts are dollars. */
+export type AcuApBill = {
+  externalKey: string;
+  vendorId: string | null;
+  amount: number;
+  balance: number | null;
+  projectCode: string | null;
+  status: string | null;
+  hold: boolean;
+  postPeriod: string | null;
+  date: string | null;
+  referenceNbr: string | null;
 };
 
 const THIN_MARGIN_PCT = 3;
@@ -329,6 +345,186 @@ export function applyAcumaticaActuals(
   return { reports: enriched, cleared };
 }
 
+// ---------------------------------------------------------------------------
+// Acumatica AP bill detectors: duplicate billing + on-hold pile.
+
+function amountCentsOf(bill: AcuApBill): number {
+  return Math.round(Number(bill.amount || 0) * 100);
+}
+
+// Status drives the logic — the `hold` boolean is unreliable (almost always false);
+// Acumatica's on-hold state lives in `status` ("Hold"). Closed = paid history.
+function isVoided(bill: AcuApBill): boolean {
+  return /void/i.test(bill.status ?? "");
+}
+function isClosed(bill: AcuApBill): boolean {
+  return /clos|paid/i.test(bill.status ?? "");
+}
+function isOnHold(bill: AcuApBill): boolean {
+  return /hold/i.test(bill.status ?? "");
+}
+/** Live = still affecting current AP (Hold or Open) — not paid, not voided. */
+function isLive(bill: AcuApBill): boolean {
+  return !isVoided(bill) && !isClosed(bill);
+}
+
+/**
+ * Semantic dedup key: vendor + amount + project + post period. reference_nbr is
+ * unreliable (Job Planner regenerates it). Including the period means legitimate
+ * recurring charges (same vendor/amount/job in different months) never cluster.
+ */
+export function apDuplicateKey(bill: AcuApBill): string {
+  return `${bill.vendorId ?? ""}|${amountCentsOf(bill)}|${bill.projectCode ?? ""}|${bill.postPeriod ?? ""}`;
+}
+
+function projectLabel(code: string | null, projectName: (code: string) => string): string {
+  if (!code) return "(no project)";
+  const name = projectName(code);
+  return name && name !== code ? `${code} · ${name}` : code;
+}
+
+function apFinding(
+  fields: Pick<
+    ReconciliationFinding,
+    "fingerprint" | "recordType" | "recordRef" | "kind" | "tier" | "detail"
+  > &
+    Partial<ReconciliationFinding>,
+  projectCode: string | null,
+  projectName: (code: string) => string,
+): ReconciliationFinding {
+  return {
+    jpProjectId: 0,
+    jpProjectName: projectCode ? projectLabel(projectCode, projectName) : "(Acumatica AP)",
+    state: null,
+    costCodeLabel: null,
+    costCode: null,
+    costType: null,
+    amountCents: null,
+    jpValueCents: null,
+    acuValueCents: null,
+    jpModifiedOn: null,
+    lastSyncedOn: null,
+    externalId: null,
+    externalModel: "ap_bill",
+    acumaticaChecked: true,
+    ...fields,
+  };
+}
+
+/**
+ * Duplicate AP bills: the same vendor billed the same amount on the same job in
+ * the same post period more than once. This is exactly how the accountants spot
+ * them by hand. Only clusters with at least one *live* (Hold/Open) copy are
+ * reported — all-Closed clusters are paid history, not actionable. All are HIGH
+ * (same-period duplication is unambiguous; recurring charges land in different
+ * periods and never cluster).
+ */
+export function detectDuplicateBills(
+  bills: AcuApBill[],
+  projectName: (code: string) => string = (c) => c,
+): ReconciliationFinding[] {
+  const groups = new Map<string, AcuApBill[]>();
+  for (const bill of bills) {
+    if (isVoided(bill) || amountCentsOf(bill) <= 0 || !bill.vendorId || !bill.projectCode) continue;
+    const key = apDuplicateKey(bill);
+    const list = groups.get(key) ?? [];
+    list.push(bill);
+    groups.set(key, list);
+  }
+
+  const findings: ReconciliationFinding[] = [];
+  for (const [key, copies] of groups) {
+    if (copies.length < 2) continue;
+    const liveCount = copies.filter(isLive).length;
+    if (liveCount === 0) continue; // all paid history — not an active overstatement
+
+    const amountCents = amountCentsOf(copies[0]);
+    // Still-preventable exposure: if one copy is already paid (Closed), every live
+    // copy is a duplicate; otherwise one live copy is the legitimate one.
+    const hasPaidCopy = copies.some(isClosed);
+    const duplicateCopies = hasPaidCopy ? liveCount : liveCount - 1;
+    const refs = copies
+      .map((b) => `${b.referenceNbr ?? "?"} (${(b.status ?? "?").toLowerCase()})`)
+      .join("; ");
+
+    findings.push(
+      apFinding(
+        {
+          fingerprint: `dup-ap:${key}`,
+          recordType: "ap_bill",
+          recordRef: key,
+          kind: "duplicate-ap-bill",
+          tier: "HIGH",
+          detail: `${copies.length}× ${centsToUsd(amountCents)} to ${copies[0].vendorId} on ${projectLabel(copies[0].projectCode, projectName)} in period ${copies[0].postPeriod ?? "?"} — duplicate billing (${liveCount} still live). Copies: ${refs}.`,
+          amountCents: amountCents * duplicateCopies,
+          acuValueCents: amountCents,
+          costCodeLabel: copies[0].vendorId,
+          jpModifiedOn: copies.map((b) => b.date).filter(Boolean).sort().slice(-1)[0] ?? null,
+          externalId: copies.map((b) => b.referenceNbr).filter(Boolean).join(" / ") || null,
+        },
+        copies[0].projectCode,
+        projectName,
+      ),
+    );
+  }
+  return findings;
+}
+
+function ageDays(fromIso: string | null, asOfIso: string): number | null {
+  const from = parseDate(fromIso);
+  const asOf = parseDate(asOfIso);
+  if (!from || !asOf) return null;
+  return Math.max(0, Math.floor((asOf.getTime() - from.getTime()) / 86_400_000));
+}
+
+function ageBucket(days: number | null): string {
+  if (days == null) return "unknown age";
+  if (days < 30) return "0–30 days";
+  if (days < 60) return "30–60 days";
+  if (days < 90) return "60–90 days";
+  if (days < 180) return "90–180 days";
+  return "180+ days";
+}
+
+/**
+ * On-hold AP bills: synced but never reviewed/released. One finding per bill.
+ *   - HIGH  bill is also part of a duplicate cluster (likely the copy to void).
+ *   - INFO  otherwise, bucketed by age so the pile gets worked down.
+ */
+export function detectOnHoldBills(
+  bills: AcuApBill[],
+  asOfIso: string,
+  duplicateKeys: Set<string> = new Set(),
+  projectName: (code: string) => string = (c) => c,
+): ReconciliationFinding[] {
+  const findings: ReconciliationFinding[] = [];
+  for (const bill of bills) {
+    if (!isOnHold(bill) || amountCentsOf(bill) === 0) continue;
+    const days = ageDays(bill.date ?? bill.postPeriod, asOfIso);
+    const isDup = duplicateKeys.has(`dup-ap:${apDuplicateKey(bill)}`);
+    findings.push(
+      apFinding(
+        {
+          fingerprint: `onhold:${bill.externalKey}`,
+          recordType: "ap_bill",
+          recordRef: bill.externalKey,
+          kind: "stale-on-hold-bill",
+          tier: isDup ? "HIGH" : "INFO",
+          detail: `On hold ${ageBucket(days)}: ${centsToUsd(amountCentsOf(bill))} to ${bill.vendorId ?? "?"} on ${projectLabel(bill.projectCode, projectName)} (period ${bill.postPeriod ?? "?"}).${isDup ? " Also appears in a duplicate cluster — likely the copy to void." : ""}`,
+          amountCents: amountCentsOf(bill),
+          acuValueCents: amountCentsOf(bill),
+          costCodeLabel: bill.vendorId,
+          jpModifiedOn: bill.date,
+          externalId: bill.referenceNbr,
+        },
+        bill.projectCode,
+        projectName,
+      ),
+    );
+  }
+  return findings;
+}
+
 export function summarize(
   reports: ProjectReport[],
   opts: { acumaticaChecked?: boolean; cleared?: number } = {},
@@ -344,7 +540,7 @@ export function summarize(
     }
   }
   return {
-    projects: reports.length,
+    projects: reports.filter((r) => r.jpProjectId > 0).length,
     totalFindings: reports.reduce((n, r) => n + r.findings.length, 0),
     highCount,
     byKind,
