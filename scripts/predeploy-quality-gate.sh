@@ -65,6 +65,9 @@ npm run guardrails:db-type-overrides
 echo "2n) RAG client boundary gate"
 npm run rag:verify:client-boundary
 
+echo "2o) Backend RAG table boundary gate"
+npm run rag:verify:backend-client-boundary
+
 echo "3) Frontend lint + typecheck + build"
 cd frontend
 npm run quality:build-routes

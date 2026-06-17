@@ -143,6 +143,92 @@ function renderStrategicReport(packet: Record<string, unknown>): string {
   ].join("\n\n");
 }
 
+function renderProjectOperatingRecord(packet: Record<string, unknown>): string {
+  const operatingRecord = asRecord(packet.operatingRecord ?? packet.operating_record);
+  if (Object.keys(operatingRecord).length === 0) return "";
+
+  const currentState = asRecord(operatingRecord.currentState);
+  const snapshot = asRecord(operatingRecord.latestSnapshot);
+  const timelineEvents = asArray(operatingRecord.timelineEvents)
+    .slice(0, 8)
+    .map((item) => {
+      const record = asRecord(item);
+      const title = compactText(record.title, 180);
+      if (!title) return null;
+      const status = compactText(record.current_status, 80);
+      const priority = compactText(record.priority, 80);
+      const summary = compactText(record.summary, 280);
+      const why = compactText(record.why_it_matters, 220);
+      return `- ${title}${status ? ` (${status}${priority ? `, ${priority}` : ""})` : ""}: ${[summary, why].filter(Boolean).join(" ")}`;
+    })
+    .filter((value): value is string => Boolean(value));
+
+  const changeCandidates = asArray(operatingRecord.changeEventCandidates)
+    .slice(0, 6)
+    .map((item) => {
+      const record = asRecord(item);
+      const title = compactText(record.title, 180);
+      if (!title) return null;
+      const status = compactText(record.status, 80);
+      const reason = compactText(record.reason ?? record.description, 280);
+      const cost = compactText(record.potential_cost_impact, 140);
+      const schedule = compactText(record.potential_schedule_impact, 140);
+      return `- ${title}${status ? ` (${status})` : ""}: ${[reason, cost, schedule].filter(Boolean).join(" ")}`;
+    })
+    .filter((value): value is string => Boolean(value));
+
+  const databaseCounts = asRecord(snapshot.database_counts);
+  const financialSnapshot = asRecord(snapshot.financial_snapshot);
+  const countLine = Object.entries(databaseCounts)
+    .slice(0, 10)
+    .map(([key, value]) => `${key}=${compactText(value, 40) ?? "0"}`)
+    .join(", ");
+  const financialLine = [
+    compactText(currentState.financial_read, 360),
+    Object.keys(financialSnapshot).length > 0
+      ? Object.entries(financialSnapshot)
+          .slice(0, 8)
+          .map(([key, value]) => `${key}=${compactText(value, 80) ?? ""}`)
+          .join(", ")
+      : null,
+  ].filter(Boolean).join(" ");
+
+  const lines = ["## Source-Synthesized Operating Record"];
+  const summary = compactText(currentState.current_summary, 900);
+  if (summary) lines.push(`### Current State\n${summary}`);
+
+  const changed = renderTitledItems(currentState.what_changed_since_last_update, ["summary", "impact"], 5);
+  if (changed) lines.push(`### What Changed Since Last Update\n${changed}`);
+
+  const attention = renderTitledItems(currentState.needs_attention, ["summary", "owner", "priority"], 5);
+  if (attention) lines.push(`### Needs Attention\n${attention}`);
+
+  const decisions = renderTitledItems(currentState.open_decisions, ["summary", "owner", "neededBy"], 5);
+  if (decisions) lines.push(`### Open Decisions\n${decisions}`);
+
+  const risks = renderTitledItems(currentState.active_risks, ["summary", "recommendedAction", "severity"], 5);
+  if (risks) lines.push(`### Active Risks\n${risks}`);
+
+  if (timelineEvents.length > 0) {
+    lines.push(`### Recent Timeline\n${timelineEvents.join("\n")}`);
+  }
+  if (changeCandidates.length > 0) {
+    lines.push(`### Potential Change Events\n${changeCandidates.join("\n")}`);
+  }
+  if (financialLine) {
+    lines.push(`### Financial / ERP Snapshot\n${financialLine}`);
+  }
+  if (countLine) {
+    lines.push(`### Record Counts\n${countLine}`);
+  }
+
+  if (lines.length === 1) return "";
+  lines.push(
+    "Use this operating record as the running project brief. For exact proof, drill into the source document, email, Teams message, meeting transcript, or record-system tool before presenting a quote or final number.",
+  );
+  return lines.join("\n\n");
+}
+
 function renderDocumentIntelligence(packet: Record<string, unknown>): string {
   const coverage = asRecord(packet.sourceCoverage ?? packet.source_coverage);
   const packetJson = asRecord(packet.packetJson ?? packet.packet_json);
@@ -250,6 +336,11 @@ function renderIntelligencePacket(raw: unknown): string {
   const strategicReport = renderStrategicReport(packet);
   if (strategicReport) {
     lines.push(strategicReport);
+  }
+
+  const operatingRecord = renderProjectOperatingRecord(packet);
+  if (operatingRecord) {
+    lines.push(operatingRecord);
   }
 
   const documentIntelligence = renderDocumentIntelligence(packet);

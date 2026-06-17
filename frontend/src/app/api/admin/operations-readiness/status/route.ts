@@ -236,7 +236,7 @@ async function loadSourceFallbackStatus(now: Date): Promise<SourceSyncStatus> {
       .from("source_intelligence_jobs")
       .select("status,source_document_id")
       .limit(SOURCE_HEALTH_JOB_LIMIT),
-    supabase
+    ragSupabase
       .from("graph_sync_state")
       .select(
         "source,resource_id,resource_name,last_sync_at,sync_status,error_message,items_synced,updated_at",

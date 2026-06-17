@@ -11,6 +11,8 @@ const ragTables = [
   "document_attribution_candidates",
   "document_chunks",
   "fireflies_ingestion_jobs",
+  "graph_subscriptions",
+  "graph_sync_state",
   "ingestion_dead_letter",
   "ingestion_jobs",
   "packet_refresh_jobs",

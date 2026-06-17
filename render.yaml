@@ -259,6 +259,10 @@ services:
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
         value: "true"
+      - key: ALLOW_PM_APP_FINAL_PROJECTIONS
+        value: "true"
+      - key: PM_APP_PROJECTION_MAX_TOTAL_ROWS
+        value: "50"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -588,6 +592,10 @@ services:
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
         value: "true"
+      - key: ALLOW_PM_APP_FINAL_PROJECTIONS
+        value: "true"
+      - key: PM_APP_PROJECTION_MAX_TOTAL_ROWS
+        value: "100"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -674,6 +682,10 @@ services:
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
         value: "true"
+      - key: ALLOW_PM_APP_FINAL_PROJECTIONS
+        value: "true"
+      - key: PM_APP_PROJECTION_MAX_TOTAL_ROWS
+        value: "100"
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -721,11 +733,27 @@ services:
         value: 1
       - key: APP_DB_PRESSURE_GUARD_REQUIRED
         value: "true"
+      - key: ALLOW_PM_APP_FINAL_PROJECTIONS
+        value: "true"
+      - key: PM_APP_PROJECTION_MAX_TOTAL_ROWS
+        value: "50"
+      - key: ALLEATO_SYSTEM_MCP_ENABLED
+        value: "true"
+      - key: ALLEATO_SYSTEM_MCP_BEARER_TOKEN
+        sync: false
       # The web service should only serve API traffic. Background sync jobs run
       # as explicit Render cron services so they can be suspended/throttled.
+      - key: BACKEND_API_ONLY
+        value: "true"
       - key: DISABLE_SCHEDULER
         value: "true"
+      - key: GRAPH_API_INGESTION_ENABLED
+        value: "false"
       - key: GRAPH_SYNC_ENABLED
+        value: "false"
+      - key: GRAPH_SUBSCRIPTIONS_ENABLED
+        value: "false"
+      - key: GRAPH_WEBHOOK_DRAIN_ENABLED
         value: "false"
       - key: GRAPH_SYNC_OUTLOOK
         value: "false"

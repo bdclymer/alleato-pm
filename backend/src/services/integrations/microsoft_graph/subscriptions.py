@@ -9,10 +9,20 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
+from src.services.supabase_helpers import get_rag_read_client, get_rag_write_client
+
 from .client import get_graph_client
 from .webhooks import expected_client_state
 
 logger = logging.getLogger(__name__)
+
+
+def _get_graph_subscription_read_client() -> Any:
+    return get_rag_read_client()
+
+
+def _get_graph_subscription_write_client() -> Any:
+    return get_rag_write_client()
 
 
 @dataclass(frozen=True)
@@ -145,7 +155,8 @@ def configured_subscription_targets() -> List[GraphSubscriptionTarget]:
 
 def _existing_subscription(supabase: Any, target: GraphSubscriptionTarget) -> Optional[Dict[str, Any]]:
     response = (
-        supabase.table("graph_subscriptions")
+        _get_graph_subscription_read_client()
+        .table("graph_subscriptions")
         .select("*")
         .eq("source", target.source)
         .eq("resource_id", target.resource_id)
@@ -186,7 +197,8 @@ def _upsert_subscription(
         "metadata": metadata or {},
     }
     response = (
-        supabase.table("graph_subscriptions")
+        _get_graph_subscription_write_client()
+        .table("graph_subscriptions")
         .upsert(payload, on_conflict="source,resource_id")
         .execute()
     )
@@ -307,7 +319,8 @@ def delete_subscription(
     graph_client = graph or get_graph_client()
     graph_client.delete(f"/subscriptions/{graph_subscription_id}")
     response = (
-        supabase.table("graph_subscriptions")
+        _get_graph_subscription_write_client()
+        .table("graph_subscriptions")
         .update({"status": "removed", "last_error_message": None})
         .eq("graph_subscription_id", graph_subscription_id)
         .execute()

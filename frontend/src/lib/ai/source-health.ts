@@ -22,7 +22,7 @@ type SourceHealthSnapshotQueryRow = Pick<
   | "updated_at"
 >;
 type GraphSubscriptionHealthRow = Pick<
-  Database["public"]["Tables"]["graph_subscriptions"]["Row"],
+  RagDatabase["public"]["Tables"]["graph_subscriptions"]["Row"],
   "source" | "resource_id" | "resource_name" | "status" | "expiration_at" | "last_error_message"
 >;
 
@@ -172,7 +172,7 @@ export async function loadAssistantSourceHealthContext(params: {
       )
       .order("updated_at", { ascending: false })
       .limit(30),
-    params.supabase
+    ragSupabase
       .from("graph_subscriptions")
       .select("source,resource_id,resource_name,status,expiration_at,last_error_message")
       .order("updated_at", { ascending: false })

@@ -59,17 +59,73 @@ class _FakeStateSupabase:
         return _FakeQuery(self.rows)
 
 
+class _StateResult:
+    def __init__(self, data):
+        self.data = data
+
+
+class _MutableStateQuery:
+    def __init__(self, db, table_name):
+        self.db = db
+        self.table_name = table_name
+        self.rows = list(db.tables.setdefault(table_name, []))
+        self.action = "select"
+        self.payload = None
+
+    def select(self, *_args, **_kwargs):
+        return self
+
+    def eq(self, key, value):
+        self.rows = [row for row in self.rows if row.get(key) == value]
+        return self
+
+    def update(self, payload):
+        self.action = "update"
+        self.payload = payload
+        return self
+
+    def insert(self, payload):
+        self.action = "insert"
+        self.payload = payload
+        return self
+
+    def execute(self):
+        table = self.db.tables.setdefault(self.table_name, [])
+        if self.action == "update":
+            matched = {id(row) for row in self.rows}
+            updated = []
+            for row in table:
+                if id(row) in matched:
+                    row.update(self.payload)
+                    updated.append(dict(row))
+            return _StateResult(updated)
+        if self.action == "insert":
+            row = dict(self.payload)
+            table.append(row)
+            return _StateResult([row])
+        return _StateResult([dict(row) for row in self.rows])
+
+
+class _MutableStateSupabase:
+    def __init__(self, tables):
+        self.tables = tables
+
+    def from_(self, table_name):
+        return _MutableStateQuery(self, table_name)
+
+
 def test_limit_sync_users_selects_stalest_slice(monkeypatch):
     monkeypatch.setenv("TEAMS_DM_SYNC_MAX_USERS", "2")
-    supabase = _FakeStateSupabase(
+    rag_supabase = _FakeStateSupabase(
         [
             {"resource_id": "newer@example.com", "last_sync_at": "2026-05-13T23:00:00Z"},
             {"resource_id": "older@example.com", "last_sync_at": "2026-05-13T20:00:00Z"},
         ]
     )
+    monkeypatch.setattr(sync, "_get_graph_sync_state_read_client", lambda: rag_supabase)
 
     selected = sync._limit_sync_users(
-        supabase,
+        _FakeSupabase(),
         source="teams_chat_export",
         users=["newer@example.com", "never@example.com", "older@example.com"],
         env_key="TEAMS_DM_SYNC_MAX_USERS",
@@ -112,3 +168,49 @@ def test_outlook_mailbox_delta_does_not_load_project_keywords_by_default(monkeyp
         "token": "",
         "since_date": None,
     }
+
+
+def test_drain_pending_outlook_mailboxes_processes_queued_rows(monkeypatch):
+    rag_supabase = _MutableStateSupabase(
+        {
+            "graph_sync_state": [
+                {
+                    "source": "outlook_email",
+                    "resource_id": "older@example.com",
+                    "resource_name": "Outlook: older@example.com",
+                    "sync_status": "webhook_pending",
+                    "updated_at": "2026-06-17T12:00:00Z",
+                },
+                {
+                    "source": "outlook_email",
+                    "resource_id": "newer@example.com",
+                    "resource_name": "Outlook: newer@example.com",
+                    "sync_status": "webhook_pending",
+                    "updated_at": "2026-06-17T12:05:00Z",
+                },
+            ]
+        }
+    )
+    processed = []
+    monkeypatch.setattr(sync, "_get_graph_sync_state_read_client", lambda: rag_supabase)
+    monkeypatch.setattr(sync, "_get_graph_sync_state_write_client", lambda: rag_supabase)
+    monkeypatch.setattr(
+        sync,
+        "sync_outlook_mailbox_delta",
+        lambda _supabase, mailbox, *, reason, verify_persisted_count: processed.append(
+            (mailbox, reason, verify_persisted_count)
+        )
+        or {"status": "succeeded", "items_synced": 2},
+    )
+
+    result = sync.drain_pending_outlook_mailboxes(_FakeSupabase(), limit=1)
+
+    assert result == {
+        "status": "ok",
+        "queued": 1,
+        "processed": 1,
+        "failed": 0,
+        "items_synced": 2,
+        "mailboxes": ["older@example.com"],
+    }
+    assert processed == [("older@example.com", "graph_webhook_drain", False)]

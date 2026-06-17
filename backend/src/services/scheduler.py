@@ -96,6 +96,10 @@ def _env_flag_enabled(name: str, default: str = "true") -> bool:
     return os.getenv(name, default).lower() not in ("0", "false", "no")
 
 
+def _backend_api_only() -> bool:
+    return os.getenv("BACKEND_API_ONLY", "").lower() in ("1", "true", "yes")
+
+
 def _missing_required_vars(*names: str) -> list[str]:
     return [name for name in names if not os.getenv(name)]
 
@@ -127,6 +131,13 @@ def _guard_background_app_db(job_name: str) -> None:
 def init_scheduler() -> None:
     """Initialize and start the scheduler. Called from FastAPI startup."""
     global scheduler
+
+    if _backend_api_only():
+        logger.critical(
+            "[Scheduler] Refusing to start in-process jobs because BACKEND_API_ONLY=true. "
+            "The web service is API-only; background work must run in explicit cron services."
+        )
+        return
 
     if os.getenv("DISABLE_SCHEDULER", "").lower() in ("1", "true", "yes"):
         logger.info("[Scheduler] Disabled via DISABLE_SCHEDULER env var")
@@ -261,6 +272,11 @@ def init_scheduler() -> None:
         graph_subscription_setting in ("1", "true", "yes")
         or (graph_subscription_setting == "auto" and graph_subscription_configured)
     )
+    graph_webhook_drain_setting = os.getenv("GRAPH_WEBHOOK_DRAIN_ENABLED", "auto").lower()
+    graph_webhook_drain_enabled = (
+        graph_webhook_drain_setting in ("1", "true", "yes")
+        or (graph_webhook_drain_setting == "auto" and graph_subscriptions_enabled)
+    )
     if graph_subscriptions_enabled:
         subscription_interval_minutes = max(
             15,
@@ -281,6 +297,30 @@ def init_scheduler() -> None:
     elif graph_subscription_setting not in ("0", "false", "no") and graph_has_creds:
         logger.warning(
             "[Scheduler] Microsoft Graph subscription reconcile disabled because webhook URL/clientState are not configured."
+        )
+
+    if graph_webhook_drain_enabled:
+        webhook_drain_interval_minutes = max(
+            1,
+            int(os.getenv("GRAPH_WEBHOOK_DRAIN_INTERVAL_MINUTES", "3")),
+        )
+        webhook_drain_limit = min(
+            10,
+            max(1, int(os.getenv("GRAPH_WEBHOOK_DRAIN_MAX_MAILBOXES", "3"))),
+        )
+        scheduler.add_job(
+            run_graph_webhook_drain_job,
+            IntervalTrigger(minutes=webhook_drain_interval_minutes),
+            id="graph_webhook_drain",
+            name="Microsoft Graph Webhook Mailbox Drain",
+            replace_existing=True,
+            max_instances=1,
+            kwargs={"limit": webhook_drain_limit},
+        )
+        logger.info(
+            "[Scheduler] Microsoft Graph webhook drain every %d min (limit=%d)",
+            webhook_drain_interval_minutes,
+            webhook_drain_limit,
         )
 
     if graph_sync_enabled:
@@ -1227,6 +1267,21 @@ async def run_graph_subscription_reconcile_job() -> None:
         logger.warning("[Scheduler] Microsoft Graph subscription reconcile failed (will retry): %s", e, exc_info=True)
 
 
+async def run_graph_webhook_drain_job(limit: int = 3) -> None:
+    """Scheduled job: drain queued Outlook mailboxes from Graph webhook notifications."""
+    import asyncio
+
+    logger.info("[Scheduler] Running Microsoft Graph webhook drain job (limit=%d)", limit)
+    try:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, _run_graph_webhook_drain, limit)
+        logger.info("[Scheduler] Microsoft Graph webhook drain complete: %s", result)
+        if result.get("failed"):
+            logger.warning("[Scheduler] Graph webhook drain reported failures: %s", result)
+    except Exception as e:
+        logger.warning("[Scheduler] Microsoft Graph webhook drain failed (will retry): %s", e, exc_info=True)
+
+
 async def run_intelligence_compiler_job(
     source_limit: int = 10,
     packet_limit: int = 10,
@@ -1335,6 +1390,15 @@ def _run_graph_subscription_reconcile() -> dict:
         renew_within_hours=renew_within_hours,
         expiration_hours=expiration_hours,
     )
+
+
+def _run_graph_webhook_drain(limit: int = 3) -> dict:
+    """Synchronous wrapper for draining queued Outlook webhook mailbox work."""
+    from .supabase_helpers import get_supabase_client
+    from .integrations.microsoft_graph.sync import drain_pending_outlook_mailboxes
+
+    _guard_background_app_db("graph_webhook_drain")
+    return drain_pending_outlook_mailboxes(get_supabase_client(), limit=limit)
 
 
 def _run_graph_embedding(limit: int = 100) -> dict:

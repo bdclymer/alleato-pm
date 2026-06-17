@@ -361,7 +361,7 @@ function DocsChrome({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex min-h-full flex-1 flex-col bg-background">
       <div className="border-b border-border/70 bg-background">
         <div className="mx-auto flex w-full max-w-screen-2xl items-center gap-8 px-4 sm:px-6 lg:px-8">
           <nav className="flex min-h-12 items-end gap-6 overflow-x-auto" aria-label="Documentation sections">
@@ -375,7 +375,7 @@ function DocsChrome({
         </div>
       </div>
 
-      <div className="mx-auto grid w-full max-w-screen-2xl grid-cols-1 gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[16rem_minmax(0,1fr)] lg:px-8 xl:grid-cols-[16rem_minmax(0,48rem)_14rem]">
+      <div className="mx-auto grid w-full max-w-screen-2xl flex-1 content-start grid-cols-1 gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[16rem_minmax(0,1fr)] lg:px-8 xl:grid-cols-[16rem_minmax(0,48rem)_14rem]">
         <DocsSidebar
           activeTab={activeTab}
           articles={articles}
@@ -897,14 +897,7 @@ function filterTechnicalDocsByTab(docs: TechnicalDoc[], activeTab: DocsTab) {
 }
 
 function isAiHelpArticle(article: HelpArticle) {
-  const tokens = [
-    article.frontmatter.module,
-    article.frontmatter.category,
-    article.frontmatter.tags.join(" "),
-    article.frontmatter.title,
-  ].join(" ").toLowerCase();
-
-  return tokens.includes("ai") || tokens.includes("assistant");
+  return article.section === "ai-features";
 }
 
 function isAiTechnicalDoc(doc: TechnicalDoc) {

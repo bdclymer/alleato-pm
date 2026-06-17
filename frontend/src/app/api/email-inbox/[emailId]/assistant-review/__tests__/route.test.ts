@@ -4,10 +4,15 @@ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
 import { NextRequest } from "next/server";
 import { POST } from "../route";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import { createOutlookIntakeServiceClient } from "@/lib/supabase/service";
 
 jest.mock("@/lib/supabase/server", () => ({
   createClient: jest.fn(),
   getApiRouteUser: jest.fn(),
+}));
+
+jest.mock("@/lib/supabase/service", () => ({
+  createOutlookIntakeServiceClient: jest.fn(),
 }));
 
 const createClientMock = createClient as jest.MockedFunction<
@@ -16,6 +21,10 @@ const createClientMock = createClient as jest.MockedFunction<
 const getApiRouteUserMock = getApiRouteUser as jest.MockedFunction<
   typeof getApiRouteUser
 >;
+const createOutlookIntakeServiceClientMock =
+  createOutlookIntakeServiceClient as jest.MockedFunction<
+    typeof createOutlookIntakeServiceClient
+  >;
 
 interface QueryResult {
   data: unknown;
@@ -98,6 +107,7 @@ describe("/api/email-inbox/[emailId]/assistant-review", () => {
     createClientMock.mockResolvedValue(
       supabase as Awaited<ReturnType<typeof createClient>>,
     );
+    createOutlookIntakeServiceClientMock.mockReturnValue(supabase as never);
 
     const response = await POST(
       request({
@@ -134,6 +144,7 @@ describe("/api/email-inbox/[emailId]/assistant-review", () => {
     createClientMock.mockResolvedValue(
       supabase as Awaited<ReturnType<typeof createClient>>,
     );
+    createOutlookIntakeServiceClientMock.mockReturnValue(supabase as never);
 
     const response = await POST(
       request({

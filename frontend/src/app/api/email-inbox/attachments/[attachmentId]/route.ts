@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { withApiGuardrails, parseJsonBody } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import { createOutlookIntakeServiceClient } from "@/lib/supabase/service";
 
 const PatchSchema = z.object({
   attachmentType: z.string().trim().max(100).nullable(),
@@ -14,6 +15,7 @@ export const PATCH = withApiGuardrails<{ attachmentId: string }>(
   "email-inbox/attachments/[attachmentId]#PATCH",
   async ({ request, params }) => {
     const supabase = await createClient();
+    const intakeService = createOutlookIntakeServiceClient();
     const user = await getApiRouteUser();
 
     if (!user) {
@@ -43,7 +45,7 @@ export const PATCH = withApiGuardrails<{ attachmentId: string }>(
     );
 
     // Fetch existing record to merge source_metadata
-    const { data: existing, error: fetchErr } = await supabase
+    const { data: existing, error: fetchErr } = await intakeService
       .from("outlook_email_intake_attachments")
       .select("id, source_metadata, intake_email_id")
       .eq("id", attachmentId)
@@ -68,7 +70,7 @@ export const PATCH = withApiGuardrails<{ attachmentId: string }>(
     const isAdmin = profile?.is_admin === true;
 
     if (!isAdmin) {
-      const { data: parentEmail } = await supabase
+      const { data: parentEmail } = await intakeService
         .from("outlook_email_intake")
         .select("mailbox_user_id")
         .eq("id", existing.intake_email_id)
@@ -95,7 +97,7 @@ export const PATCH = withApiGuardrails<{ attachmentId: string }>(
       },
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await intakeService
       .from("outlook_email_intake_attachments")
       .update({ source_metadata: updatedMeta })
       .eq("id", attachmentId)

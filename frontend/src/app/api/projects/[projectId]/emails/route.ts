@@ -12,6 +12,42 @@ interface RouteParams {
   params: Promise<{ projectId: string }>;
 }
 
+const EMAIL_SELECT = `
+  *,
+  projects!project_emails_project_id_fkey (
+    id,
+    name,
+    project_number
+  )
+`;
+
+type EmailProjectRow = {
+  id: number;
+  name: string | null;
+  project_number: string | null;
+};
+
+type EmailRow = {
+  id: number;
+  project_id: number;
+  projects: EmailProjectRow | null;
+  [key: string]: unknown;
+};
+
+function mapEmailProject<T extends EmailRow>(email: T) {
+  const { projects, ...rest } = email;
+  return {
+    ...rest,
+    project: projects
+      ? {
+          id: projects.id,
+          name: projects.name,
+          project_number: projects.project_number,
+        }
+      : null,
+  };
+}
+
 const createEmailSchema = z.object({
   subject: z.string().min(1, "Subject is required").max(500),
   body: z.string().optional().nullable(),
@@ -61,11 +97,13 @@ export const GET = withApiGuardrails(
     const starred = searchParams.get("starred");
     const relatedTool = searchParams.get("related_tool");
     const relatedId = searchParams.get("related_id");
-    const source = searchParams.get("source") ?? "app";
+    // No source param => return all sources (app-composed + Outlook-synced).
+    // Callers pass an explicit "app" or "outlook" to narrow.
+    const source = searchParams.get("source") ?? "all";
 
     let query = supabase
       .from("project_emails")
-      .select("*")
+      .select(EMAIL_SELECT)
       .eq("project_id", parseInt(projectId, 10))
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
@@ -122,7 +160,7 @@ export const GET = withApiGuardrails(
       );
     }
 
-    return NextResponse.json(data ?? []);
+    return NextResponse.json(((data ?? []) as EmailRow[]).map(mapEmailProject));
     },
 );
 
@@ -176,7 +214,7 @@ export const POST = withApiGuardrails(
         created_by: user.id,
         sent_at: validated.status === "Sent" ? new Date().toISOString() : null,
       })
-      .select()
+      .select(EMAIL_SELECT)
       .single();
 
     if (error) {
@@ -184,6 +222,6 @@ export const POST = withApiGuardrails(
       return apiErrorResponse(error);
     }
 
-    return NextResponse.json(data, { status: 201 });
+    return NextResponse.json(mapEmailProject(data as EmailRow), { status: 201 });
     },
 );

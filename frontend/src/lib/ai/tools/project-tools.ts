@@ -136,6 +136,48 @@ function compactRows(rows: AnyRow[], limit = 8): AnyRow[] {
   return rows.slice(0, limit);
 }
 
+function sanitizeDocumentLookupTerm(value: string): string {
+  return value.trim().replace(/[%,'"]/g, "");
+}
+
+export function shouldFallbackToPsrLookup(input: {
+  category?: string;
+  documentType?: string;
+  titleKeyword?: string;
+}): boolean {
+  if (input.documentType) return false;
+  if (input.category === "financial_document") return true;
+  return /\b(psr|project status report)\b/i.test(input.titleKeyword ?? "");
+}
+
+export function buildDocumentLookupFallbackTerms(input: {
+  category?: string;
+  titleKeyword?: string;
+}): string[] {
+  const terms = new Set<string>();
+  const titleKeyword = sanitizeDocumentLookupTerm(input.titleKeyword ?? "");
+  if (titleKeyword) terms.add(titleKeyword);
+  if (shouldFallbackToPsrLookup(input)) {
+    terms.add("PSR");
+    terms.add("Project Status Report");
+  }
+  return [...terms];
+}
+
+export function buildDocumentLookupOrFilter(terms: string[]): string | null {
+  const filters = terms.flatMap((term) => {
+    const clean = sanitizeDocumentLookupTerm(term);
+    if (!clean) return [];
+    return [
+      `file_name.ilike.%${clean}%`,
+      `title.ilike.%${clean}%`,
+      `description.ilike.%${clean}%`,
+      `source_path.ilike.%${clean}%`,
+    ];
+  });
+  return filters.length > 0 ? filters.join(",") : null;
+}
+
 function isoDateOnly(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
@@ -2502,6 +2544,27 @@ export function createProjectTools(
           ),
         documentType: z
           .enum([
+            // Canonical folder-derived construction document types
+            // (classify_document_type / document_type_taxonomy).
+            "psr",
+            "schedule",
+            "submittal",
+            "pay_app",
+            "proposal",
+            "estimate",
+            "bid",
+            "drawing",
+            "specification",
+            "permit",
+            "rfi",
+            "change_order",
+            "subcontract",
+            "contract",
+            "safety",
+            "closeout",
+            "design",
+            "photo",
+            // Legacy taxonomy keys (still valid for older rows).
             "executed_contract",
             "contract_proposal",
             "change_order_executed",
@@ -2512,7 +2575,6 @@ export function createProjectTools(
             "closeout_manual",
             "closeout_warranty",
             "closeout_asbuilt",
-            "permit",
             "permit_inspection",
             "drawing_revision",
             "progress_photo",
@@ -2520,7 +2582,6 @@ export function createProjectTools(
             "teams_message",
             "meeting_transcript",
             "invoice_document",
-            "submittal",
             "rfi_response",
             "daily_report",
             "email_attachment",
@@ -2528,11 +2589,16 @@ export function createProjectTools(
           ])
           .optional()
           .describe(
-            "Filter by structured document type taxonomy key. " +
-            "More precise than category — use this when you know the exact document type. " +
-            "Examples: 'find the executed contract' → documentType='executed_contract'; " +
-            "'show lien waivers' → documentType='lien_waiver_progress' or 'lien_waiver_final'; " +
-            "'get COI' → documentType='insurance_certificate'.",
+            "Filter by structured document type. Prefer the canonical keys derived " +
+            "from the SharePoint/OneDrive folder structure: " +
+            "'show PSRs' → 'psr'; 'find the schedule' → 'schedule'; " +
+            "'latest pay app' → 'pay_app'; 'submittals' → 'submittal'; " +
+            "'the proposal' → 'proposal'; 'estimate' → 'estimate'; " +
+            "'bid responses' → 'bid'; 'drawings' → 'drawing'; 'permit' → 'permit'; " +
+            "'RFIs' → 'rfi'; 'change orders' → 'change_order'; " +
+            "'subcontracts' → 'subcontract'; 'owner contract' → 'contract'; " +
+            "'closeout / warranty / lien waiver' → 'closeout'. " +
+            "(WIP financials live in PSR folders → use 'psr'.)",
           ),
         titleKeyword: z
           .string()
@@ -2580,7 +2646,7 @@ export function createProjectTools(
           let q = supabase
             .from("document_metadata")
             .select(
-              "id, file_name, title, type, category, document_type, date, summary, description, file_path, file_id, project_id, captured_at",
+              "id, file_name, title, type, category, document_type, date, summary, description, file_path, file_id, project_id, captured_at, source_path, source_web_url",
             )
             .order("date", { ascending: false, nullsFirst: false })
             .order("captured_at", { ascending: false })
@@ -2601,7 +2667,7 @@ export function createProjectTools(
           }
 
           if (titleKeyword && titleKeyword.trim()) {
-            const keyword = titleKeyword.trim().replace(/[%]/g, "");
+            const keyword = sanitizeDocumentLookupTerm(titleKeyword);
             q = q.or(
               `file_name.ilike.%${keyword}%,title.ilike.%${keyword}%,description.ilike.%${keyword}%`,
             );
@@ -2616,13 +2682,109 @@ export function createProjectTools(
             return { error: `findProjectDocuments failed: ${error.message}` };
           }
 
-          const rows = (data ?? []) as AnyRow[];
+          let rows = (data ?? []) as AnyRow[];
+          let secondaryLookupApplied: string | null = null;
+
+          const secondaryLookupTerms = buildDocumentLookupFallbackTerms({
+            category,
+            titleKeyword,
+          });
+          const secondaryLookupOrFilter = buildDocumentLookupOrFilter(secondaryLookupTerms);
+          if (rows.length === 0 && secondaryLookupOrFilter) {
+            let secondaryLookupQuery = supabase
+              .from("document_metadata")
+              .select(
+                "id, file_name, title, type, category, document_type, date, summary, description, file_path, file_id, project_id, captured_at, source_path, source_web_url",
+              )
+              .order("date", { ascending: false, nullsFirst: false })
+              .order("captured_at", { ascending: false })
+              .limit(limit ?? 15);
+
+            if (resolvedProjectId) {
+              secondaryLookupQuery = secondaryLookupQuery.eq("project_id", resolvedProjectId);
+            } else if (scopedProjectIds.length > 0) {
+              secondaryLookupQuery = secondaryLookupQuery.in("project_id", scopedProjectIds);
+            }
+
+            if (sinceIso) {
+              secondaryLookupQuery = secondaryLookupQuery.gte("date", sinceIso);
+            }
+
+            const { data: secondaryLookupData, error: secondaryLookupError } = await secondaryLookupQuery.or(
+              secondaryLookupOrFilter,
+            );
+            if (secondaryLookupError) {
+              return { error: `findProjectDocuments failed: ${secondaryLookupError.message}` };
+            }
+            rows = (secondaryLookupData ?? []) as AnyRow[];
+            secondaryLookupApplied = "source_path_keyword_secondary_lookup";
+          }
+
+          // Complementary source: project_documents holds the full synced
+          // OneDrive/SharePoint file inventory (categorized by folder path via
+          // document_type), most of which is not promoted into document_metadata.
+          let pq = supabase
+            .from("project_documents")
+            .select(
+              "id, file_name, title, document_type, category, description, folder, source_path, source_web_url, created_at, project_id",
+            )
+            .is("deleted_at", null)
+            .order("created_at", { ascending: false })
+            .limit(limit ?? 15);
+
+          if (resolvedProjectId) {
+            pq = pq.eq("project_id", resolvedProjectId);
+          } else if (scopedProjectIds.length > 0) {
+            pq = pq.in("project_id", scopedProjectIds);
+          }
+          if (documentType) {
+            pq = pq.eq("document_type", documentType);
+          }
+          if (titleKeyword && titleKeyword.trim()) {
+            const keyword = sanitizeDocumentLookupTerm(titleKeyword);
+            pq = pq.or(
+              `file_name.ilike.%${keyword}%,title.ilike.%${keyword}%,description.ilike.%${keyword}%`,
+            );
+          }
+          if (sinceIso) {
+            pq = pq.gte("created_at", sinceIso);
+          }
+
+          const { data: pdData } = await pq;
+          const seenKeys = new Set(
+            rows.map((d) => String(d.source_web_url ?? d.title ?? d.id)),
+          );
+          for (const d of (pdData ?? []) as AnyRow[]) {
+            const key = String(d.source_web_url ?? d.title ?? d.id);
+            if (seenKeys.has(key)) continue;
+            seenKeys.add(key);
+            rows.push({
+              id: d.id,
+              file_name: d.file_name,
+              title: d.title,
+              type: null,
+              category: d.category,
+              document_type: d.document_type,
+              date: d.created_at,
+              captured_at: d.created_at,
+              summary: null,
+              description: d.description,
+              file_path: null,
+              file_id: null,
+              project_id: d.project_id,
+              source_path: d.source_path,
+              source_web_url: d.source_web_url,
+            } as AnyRow);
+          }
+          rows = rows.slice(0, limit ?? 15);
+
           return {
             resolvedProjectId: resolvedProjectId ?? null,
             documentCount: rows.length,
             documentType: documentType ?? null,
             category: category ?? "any",
             titleKeyword: titleKeyword ?? null,
+            secondaryLookupApplied,
             documents: rows.map((d) => ({
               id: d.id,
               fileName: d.file_name,
@@ -2643,6 +2805,8 @@ export function createProjectTools(
                   : null,
               fileId: d.file_id,
               filePath: d.file_path,
+              sourcePath: d.source_path,
+              sourceWebUrl: d.source_web_url,
             })),
             note:
               rows.length === 0

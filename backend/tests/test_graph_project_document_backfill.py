@@ -14,9 +14,11 @@ class _Table:
         self.name = name
         self.filters = {}
         self.in_filters = {}
+        self.or_filters = []
         self.payload = None
         self.action = "select"
         self.limit_count = None
+        self.negate_next = False
 
     def select(self, *_args, **_kwargs):
         return self
@@ -26,15 +28,34 @@ class _Table:
         return self
 
     def is_(self, key, value):
-        self.filters[key] = None if value == "null" else value
+        parsed = None if value == "null" else value
+        if self.negate_next:
+            self.filters[key] = ("__not_is__", parsed)
+            self.negate_next = False
+            return self
+        self.filters[key] = parsed
         return self
 
     def in_(self, key, values):
         self.in_filters[key] = set(values)
         return self
 
+    def or_(self, filters):
+        self.or_filters.extend(part.strip() for part in filters.split(",") if part.strip())
+        return self
+
+    @property
+    def not_(self):
+        self.negate_next = True
+        return self
+
     def limit(self, value):
         self.limit_count = value
+        return self
+
+    def range(self, start, end):
+        self.range_start = start
+        self.range_end = end
         return self
 
     def insert(self, payload):
@@ -52,8 +73,31 @@ class _Table:
         matches = [
             row
             for row in rows
-            if all(row.get(key) == value for key, value in self.filters.items())
+            if all(
+                row.get(key) != value[1]
+                if isinstance(value, tuple) and value[0] == "__not_is__"
+                else row.get(key) == value
+                for key, value in self.filters.items()
+            )
             and all(row.get(key) in values for key, values in self.in_filters.items())
+            and (
+                not self.or_filters
+                or any(
+                    (
+                        part.startswith("source_system.eq.")
+                        and row.get("source_system") == part.split("source_system.eq.", 1)[1]
+                    )
+                    or (
+                        part.startswith("id.like.onedrive_%")
+                        and str(row.get("id", "")).startswith("onedrive_")
+                    )
+                    or (
+                        part.startswith("id.like.sharepoint_%")
+                        and str(row.get("id", "")).startswith("sharepoint_")
+                    )
+                    for part in self.or_filters
+                )
+            )
         ]
 
         if self.action == "insert":
@@ -68,6 +112,8 @@ class _Table:
 
         if self.limit_count is not None:
             matches = matches[: self.limit_count]
+        if hasattr(self, "range_start") and hasattr(self, "range_end"):
+            matches = matches[self.range_start : self.range_end + 1]
         return _Result([dict(row) for row in matches])
 
 
@@ -151,3 +197,27 @@ def test_graph_project_document_backfill_dry_run_does_not_write_existing_or_miss
     assert result["skipped_existing"] == 1
     assert result["inserted"] == 0
     assert len(supabase.store["project_documents"]) == 1
+
+
+def test_graph_project_document_backfill_paginates_beyond_first_page():
+    supabase = _Supabase()
+    rows = []
+    for index in range(1005):
+        rows.append(
+            {
+                "id": f"onedrive_drive-item-{index}",
+                "title": f"Doc {index}.pdf",
+                "source_system": "onedrive",
+                "source_item_id": f"drive-item-{index}",
+                "project_id": 25125,
+                "source_web_url": f"https://microsoft.example/{index}",
+            }
+        )
+    supabase.store["document_metadata"] = rows
+    supabase.store["project_documents"] = []
+
+    result = run_graph_project_document_backfill(supabase, limit=1005, dry_run=True)
+
+    assert result["scanned"] == 1005
+    assert result["eligible"] == 1005
+    assert result["missing"] == 1005

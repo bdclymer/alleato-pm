@@ -1,6 +1,9 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { createServiceClient } from "@/lib/supabase/service";
+import {
+  createRagServiceClient,
+  createServiceClient,
+} from "@/lib/supabase/service";
 import { createToolGuardrails } from "./guardrails";
 import { type ToolTracePayload, withTrace as _withTrace } from "./tool-utils";
 import { listOutlookCalendarEvents } from "@/lib/microsoft-graph/calendar-events";
@@ -61,6 +64,7 @@ export function createOutlookOperationsTools(
   options: CreateOutlookOperationsToolsOptions = {},
 ) {
   const supabase = createServiceClient();
+  const ragSupabase = createRagServiceClient();
   const guardrails = createToolGuardrails(userId, {
     pinnedProjectId: options.pinnedProjectId,
   });
@@ -90,14 +94,14 @@ export function createOutlookOperationsTools(
           if (!access.ok) return { error: access.error };
 
           const targetSource = source ?? "outlook_email";
-          let subscriptionQuery = supabase
+          let subscriptionQuery = ragSupabase
             .from("graph_subscriptions")
             .select(
               "id,source,resource,resource_id,resource_name,change_type,status,expiration_at,last_notification_at,last_lifecycle_event_at,last_renewed_at,last_error_message",
             )
             .order("updated_at", { ascending: false })
             .limit(20);
-          let syncQuery = supabase
+          let syncQuery = ragSupabase
             .from("graph_sync_state")
             .select("id,source,resource_id,resource_name,sync_status,last_sync_at,items_synced,error_message,updated_at")
             .order("updated_at", { ascending: false })

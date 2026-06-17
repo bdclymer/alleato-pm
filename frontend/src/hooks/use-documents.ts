@@ -21,6 +21,7 @@ export interface ProjectDocument {
   version: number | null;
   status: "Draft" | "Published" | "Superseded" | "Archived";
   category: string | null;
+  document_type: string | null;
   is_private: boolean | null;
   source_system: string | null;
   source_drive_id: string | null;

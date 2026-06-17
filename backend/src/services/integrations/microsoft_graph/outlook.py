@@ -20,7 +20,12 @@ from typing import Optional
 from urllib.parse import urlparse
 
 from ...intelligence.compiler import process_source_document_to_packet
-from ...supabase_helpers import SupabaseRagStore, storage_upload_with_retry
+from ...supabase_helpers import (
+    SupabaseRagStore,
+    get_outlook_intake_read_client,
+    get_outlook_intake_write_client,
+    storage_upload_with_retry,
+)
 from .client import get_graph_client
 from .email_classification import (
     EmailIntakeAction,
@@ -118,6 +123,14 @@ SYNC_LEGACY_OUTLOOK_ATTACHMENTS = os.environ.get("OUTLOOK_SYNC_LEGACY_ATTACHMENT
 SYNC_LEGACY_OUTLOOK_LINKS = os.environ.get("OUTLOOK_SYNC_LEGACY_LINKS", "false").lower() in {"1", "true", "yes"}
 SYNC_LEGACY_PROJECT_EMAILS = os.environ.get("OUTLOOK_SYNC_LEGACY_PROJECT_EMAILS", "false").lower() in {"1", "true", "yes"}
 SYNC_OUTLOOK_INTAKE = os.environ.get("OUTLOOK_SYNC_INTAKE", "true").lower() in {"1", "true", "yes"}
+
+
+def _outlook_intake_read_client():
+    return get_outlook_intake_read_client()
+
+
+def _outlook_intake_write_client():
+    return get_outlook_intake_write_client()
 SYNC_OUTLOOK_INTAKE_ATTACHMENTS = os.environ.get("OUTLOOK_SYNC_INTAKE_ATTACHMENTS", "true").lower() in {"1", "true", "yes"}
 
 URL_RE = re.compile(r"https?://[^\s<>\"]+", re.IGNORECASE)
@@ -548,8 +561,10 @@ def _upsert_outlook_intake_email(
         "updated_at": now_iso,
     }
 
+    intake_read = _outlook_intake_read_client()
+    intake_write = _outlook_intake_write_client()
     existing = (
-        supabase_client.from_("outlook_email_intake")
+        intake_read.from_("outlook_email_intake")
         .select("id")
         .eq("graph_message_id", msg_id)
         .limit(1)
@@ -558,11 +573,11 @@ def _upsert_outlook_intake_email(
     rows = existing.data or []
     if rows:
         email_id = rows[0]["id"]
-        supabase_client.from_("outlook_email_intake").update(payload).eq("id", email_id).execute()
+        intake_write.from_("outlook_email_intake").update(payload).eq("id", email_id).execute()
         return int(email_id)
 
     inserted = (
-        supabase_client.from_("outlook_email_intake")
+        intake_write.from_("outlook_email_intake")
         .insert({**payload, "created_at": now_iso})
         .execute()
     )
@@ -571,7 +586,7 @@ def _upsert_outlook_intake_email(
         return int(inserted_rows[0]["id"])
 
     inserted_lookup = (
-        supabase_client.from_("outlook_email_intake")
+        intake_read.from_("outlook_email_intake")
         .select("id")
         .eq("graph_message_id", msg_id)
         .limit(1)
@@ -691,7 +706,7 @@ def _record_outlook_skip_audit(
         "last_seen_at": now_iso,
     }
 
-    supabase_client.from_("outlook_email_skip_audit").upsert(
+    _outlook_intake_write_client().from_("outlook_email_skip_audit").upsert(
         payload,
         on_conflict="graph_message_id",
     ).execute()
@@ -766,10 +781,11 @@ def _reconcile_outlook_project_assignment(
     if document_metadata_id:
         intake_update["document_metadata_id"] = document_metadata_id
 
+    intake_write = _outlook_intake_write_client()
     if intake_email_id:
-        supabase_client.from_("outlook_email_intake").update(intake_update).eq("id", intake_email_id).execute()
+        intake_write.from_("outlook_email_intake").update(intake_update).eq("id", intake_email_id).execute()
     elif msg_id:
-        supabase_client.from_("outlook_email_intake").update(intake_update).eq("graph_message_id", msg_id).execute()
+        intake_write.from_("outlook_email_intake").update(intake_update).eq("graph_message_id", msg_id).execute()
 
     return canonical_project_id
 
@@ -899,8 +915,10 @@ def _upsert_outlook_intake_attachment(
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
 
+    intake_read = _outlook_intake_read_client()
+    intake_write = _outlook_intake_write_client()
     existing = (
-        supabase_client.from_("outlook_email_intake_attachments")
+        intake_read.from_("outlook_email_intake_attachments")
         .select("id")
         .eq("intake_email_id", intake_email_id)
         .eq("graph_attachment_id", attachment_id)
@@ -909,9 +927,9 @@ def _upsert_outlook_intake_attachment(
     )
     rows = existing.data or []
     if rows:
-        supabase_client.from_("outlook_email_intake_attachments").update(payload).eq("id", rows[0]["id"]).execute()
+        intake_write.from_("outlook_email_intake_attachments").update(payload).eq("id", rows[0]["id"]).execute()
     else:
-        supabase_client.from_("outlook_email_intake_attachments").insert(payload).execute()
+        intake_write.from_("outlook_email_intake_attachments").insert(payload).execute()
     return True
 
 
@@ -1757,7 +1775,7 @@ def sync_outlook_emails(
                     })
 
                 if intake_email_id:
-                    supabase_client.from_("outlook_email_intake").update(
+                    _outlook_intake_write_client().from_("outlook_email_intake").update(
                         {"document_metadata_id": doc_id, "updated_at": datetime.now(timezone.utc).isoformat()}
                     ).eq("id", intake_email_id).execute()
 

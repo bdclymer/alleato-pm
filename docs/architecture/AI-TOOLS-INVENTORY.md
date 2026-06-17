@@ -102,6 +102,7 @@ Sort: Layer, then File, then tool name. Status legend: `active` = wired into a l
 | createCommitment | frontend/src/lib/ai/tools/action-tools.ts | multiple (supabase_table:subcontracts or purchase_orders + companies) | FE | active | keep |
 | createProjectCompany | frontend/src/lib/ai/tools/action-tools.ts | multiple (project_companies + companies) | FE | active | keep |
 | createProjectContact | frontend/src/lib/ai/tools/action-tools.ts | multiple (project_directory_memberships + people) | FE | active | keep |
+| createContact | frontend/src/lib/ai/tools/action-tools.ts | supabase_table:people (+ companies read for link) | FE | active | keep |
 | submitFeedback | frontend/src/lib/ai/tools/action-tools.ts | multiple (admin_feedback_items + ai_feedback_events) | FE | active | keep |
 | addBoardItem | frontend/src/lib/ai/tools/action-tools.ts | supabase_table:admin_feedback_items | FE | active | keep |
 | createOutlookCalendarInvite | frontend/src/lib/ai/tools/action-tools.ts | microsoft_graph_live | FE | active | keep |
@@ -297,7 +298,7 @@ Grouped by file. Each entry: 1-line purpose, source, current caller, `Recommenda
 
 All write tools. Test coverage is comprehensive (`__tests__/action-tools.test.ts`). Every tool returns a preview payload that the chat UI confirms before performing the write through the same Supabase client.
 
-- **createChangeOrder / createChangeEvent / createRFI / createSubmittal / createTask / createGeneratedTask / updateGeneratedTask / deleteGeneratedTask / updateRFIStatus / createCommitment / createMeetingNote / logDailyReport / createInitiativeCard / createProjectCompany / createProjectContact / addBoardItem / submitFeedback / flagProjectRisk / updateProjectStatus / generateProjectSummary** — all `keep`. Why: every one has user-facing call paths and tests.
+- **createChangeOrder / createChangeEvent / createRFI / createSubmittal / createTask / createGeneratedTask / updateGeneratedTask / deleteGeneratedTask / updateRFIStatus / createCommitment / createMeetingNote / logDailyReport / createInitiativeCard / createProjectCompany / createProjectContact / createContact / addBoardItem / submitFeedback / flagProjectRisk / updateProjectStatus / generateProjectSummary** — all `keep`. Why: every one has user-facing call paths and tests.
 - **createOutlookCalendarInvite / draftOutlookEmail / sendTeamsMessage** — `keep`. Why: only live-Graph write tools in FE; they are the canonical write path for outbound comms and are referenced explicitly by `agents/strategist.ts` Outlook Operations Protocol.
 
 #### acumatica.ts — 9 ERP read tools

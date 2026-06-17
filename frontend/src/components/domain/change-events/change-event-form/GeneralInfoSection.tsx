@@ -123,7 +123,7 @@ export function GeneralInfoSection({
         <SelectField
           label="Origin"
           options={ORIGIN_OPTIONS}
-          value={formData.origin || ""}
+          value={formData.origin || undefined}
           onValueChange={(value) => {
             updateFormData({ origin: value as ChangeEventOrigin, originId: undefined });
           }}
@@ -133,7 +133,7 @@ export function GeneralInfoSection({
           <SelectField
             label="Origin Record"
             options={originRecordOptions}
-            value={formData.originId || ""}
+            value={formData.originId || undefined}
             onValueChange={(value) => updateFormData({ originId: value })}
             placeholder={loadingOriginRecords ? "Loading..." : `Select ${ORIGIN_OPTIONS.find((o) => o.value === formData.origin)?.label || "record"}`}
             disabled={loadingOriginRecords || originRecordOptions.length === 0}

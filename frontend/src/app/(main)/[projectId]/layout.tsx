@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 import { redirect } from "next/navigation";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { getIsAdmin } from "@/lib/auth/current-user";
 
 /**
  * Cached authorization check per user+project pair.
@@ -14,25 +15,13 @@ function getProjectAuthorization(userId: string, projectId: number) {
     async () => {
       const serviceClient = createServiceClient();
 
-      // Run admin check and auth-link lookup in parallel — they are independent.
-      const [{ data: profile }, { data: authLink }] = await Promise.all([
-        serviceClient
-          .from("user_profiles")
-          .select("is_admin")
-          .eq("id", userId)
-          .maybeSingle(),
-        serviceClient
-          .from("users_auth")
-          .select("person_id")
-          .eq("auth_user_id", userId)
-          .maybeSingle(),
-      ]);
+      const { data: authLink } = await serviceClient
+        .from("users_auth")
+        .select("person_id")
+        .eq("auth_user_id", userId)
+        .maybeSingle();
 
-      if (profile?.is_admin === true) {
-        return { authorized: true, isAdmin: true } as const;
-      }
-
-      if (!authLink) {
+      if (!authLink?.person_id) {
         return { authorized: false, reason: "no-profile" } as const;
       }
 
@@ -87,6 +76,10 @@ export default async function ProjectLayout({
 
   if (!user) {
     redirect("/auth/login");
+  }
+
+  if (await getIsAdmin()) {
+    return <div className="flex flex-1 flex-col">{children}</div>;
   }
 
   const result = await getProjectAuthorization(user.id, projectIdNum);

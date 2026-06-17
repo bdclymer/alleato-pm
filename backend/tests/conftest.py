@@ -58,6 +58,34 @@ def _stub_modules():
     stubs["langchain_core"] = langchain_core_mod
     stubs["langchain_core.tools"] = langchain_core_tools_mod
 
+    mcp_mod = types.ModuleType("mcp")
+    mcp_server_mod = types.ModuleType("mcp.server")
+    mcp_fastmcp_mod = types.ModuleType("mcp.server.fastmcp")
+
+    class _FakeFastMCP:
+        def __init__(self, *args, **kwargs):
+            self.args = args
+            self.kwargs = kwargs
+            self.session_manager = MagicMock()
+            self.session_manager.run.return_value = MagicMock()
+
+        def tool(self, *args, **kwargs):
+            def _decorator(func):
+                return func
+
+            return _decorator
+
+        def streamable_http_app(self):
+            async def _app(scope, receive, send):
+                return None
+
+            return _app
+
+    mcp_fastmcp_mod.FastMCP = _FakeFastMCP
+    stubs["mcp"] = mcp_mod
+    stubs["mcp.server"] = mcp_server_mod
+    stubs["mcp.server.fastmcp"] = mcp_fastmcp_mod
+
     sqlalchemy_mod = types.ModuleType("sqlalchemy")
     sqlalchemy_engine_mod = types.ModuleType("sqlalchemy.engine")
     sqlalchemy_exc_mod = types.ModuleType("sqlalchemy.exc")

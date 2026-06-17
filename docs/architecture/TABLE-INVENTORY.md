@@ -12,6 +12,7 @@ Several claims in the original inventory were wrong or have been resolved by Wav
 
 | Table / claim | Prior state in this doc | Reality (verified by SQL or commit) |
 |---|---|---|
+| `fireflies_ingestion_jobs` (MAIN) | "STALE orphan-mirror — RAG copy is canonical, do not write to MAIN" | **No longer stale (2026-06-17).** `supabase_helpers.update_ingestion_job_state()` now dual-writes every pipeline stage transition into BOTH MAIN and RAG `fireflies_ingestion_jobs`, keyed by `COALESCE(document_metadata.fireflies_id, id)` (on_conflict=fireflies_id). MAIN status flipped orphan-mirror → live. Adopted by parser/document_parser/financial_parser/embedder/extractor/orchestrator. Always update both DBs via this helper, never one side directly. |
 | `source_processing_jobs` | not previously listed | **Created in the RAG/AI database on 2026-06-17.** It is the cross-source lifecycle ledger for Fireflies, Graph, signal extraction, and project-intelligence synthesis stages. |
 | `pipeline_model_usage` | not previously listed | **Created in the RAG/AI database on 2026-06-17.** It is the high-volume model usage and estimated-cost ledger for source processing, embeddings, daily briefs, Brandon email review, and project intelligence budget checks. |
 | `user_profiles` | "empty — 123 code references; CRITICAL privilege bug" | **53 rows (= every auth.users row).** Backfilled in migration `20260516000000` (commit `2f32ca2c6`). Trigger keeps auth.users → user_profiles in sync going forward. Privilege bug resolved. |

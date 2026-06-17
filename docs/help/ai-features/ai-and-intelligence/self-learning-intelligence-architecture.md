@@ -132,12 +132,12 @@ create table public.ai_feedback_events (
 
 Allowed event families:
 
-- `retrieval`
-- `attribution`
-- `assistant_response`
-- `tool_action`
-- `task_generation`
-- `packet_quality`
+- retrieval
+- attribution
+- assistant_response
+- tool_action
+- task_generation
+- packet_quality
 - `document_review`
 - `user_preference`
 - `workflow_outcome`
@@ -145,15 +145,15 @@ Allowed event families:
 
 Allowed signals:
 
-- `positive`
-- `negative`
-- `corrected`
-- `accepted`
-- `ignored`
-- `completed`
-- `failed`
+- positive
+- negative
+- corrected
+- accepted
+- ignored
+- completed
+- failed
 - `needs_review`
-- `stale`
+- stale
 - `conflicting`
 
 Required indexes:
@@ -242,7 +242,7 @@ Allowed outcomes:
 - `helpful`
 - `unhelpful`
 - `wrong_project`
-- `stale`
+- stale
 - `unsupported`
 - `unknown`
 
@@ -251,7 +251,7 @@ Allowed outcomes:
 ### Microsoft Graph Teams, Outlook, And SharePoint
 
 1. Backend Graph service ingests messages, files, and attachments.
-2. Source row lands in `document_metadata` with source IDs, source URL/path, title/subject, participants, source timestamps, `source_system`, `source_metadata`, and `raw_text` or summary.
+2. Source row lands in `document_metadata` with source IDs, source URL/path, title/subject, participants, source timestamps, source_system, source_metadata, and raw_text or summary.
 3. Text is chunked into `document_chunks` when it has durable retrieval value.
 4. Project attribution scores explicit IDs, project aliases, client names, addresses, participants, thread/channel/path/title context.
 5. High-confidence attribution updates `document_metadata.project_id`.
@@ -298,14 +298,14 @@ Allowed outcomes:
 
 | Event | Surface | Event family | Signal | Destination |
 |---|---|---|---|---|
-| Assistant thumbs up/down | AI assistant | `assistant_response` | `positive` / `negative` | `ai_feedback_events`, `agent_learning_usages`, possible `agent_learnings` |
-| Task thumbs up/down with reason | Tasks / assistant widget | `task_generation` | `positive` / `negative` | `ai_task_feedback`, `ai_feedback_events` |
-| Project attribution correction | Admin review / source review | `attribution` | `corrected` | `document_attribution_candidates`, `ai_feedback_events` |
-| Packet card marked wrong/stale/useful | Project Intelligence | `packet_quality` | `positive` / `negative` / `stale` | `intelligence_reviews`, `ai_feedback_events` |
-| Source/chunk cited in final answer | AI assistant | `retrieval` | `accepted` | `ai_retrieval_feedback` |
-| Source/chunk behind rejected answer | AI assistant | `retrieval` | `negative` | `ai_retrieval_feedback` |
-| User edited generated owner update/email/summary | Assistant widgets | `assistant_response` | `corrected` | `ai_feedback_events`, promotion candidate |
-| Tool action accepted/cancelled/completed | Assistant action preview | `tool_action` | `accepted` / `ignored` / `completed` / `failed` | `ai_feedback_events` |
+| Assistant thumbs up/down | AI assistant | assistant_response | positive / negative | `ai_feedback_events`, `agent_learning_usages`, possible `agent_learnings` |
+| Task thumbs up/down with reason | Tasks / assistant widget | task_generation | positive / negative | `ai_task_feedback`, `ai_feedback_events` |
+| Project attribution correction | Admin review / source review | attribution | corrected | `document_attribution_candidates`, `ai_feedback_events` |
+| Packet card marked wrong/stale/useful | Project Intelligence | packet_quality | positive / negative / stale | `intelligence_reviews`, `ai_feedback_events` |
+| Source/chunk cited in final answer | AI assistant | retrieval | accepted | `ai_retrieval_feedback` |
+| Source/chunk behind rejected answer | AI assistant | retrieval | negative | `ai_retrieval_feedback` |
+| User edited generated owner update/email/summary | Assistant widgets | assistant_response | corrected | `ai_feedback_events`, promotion candidate |
+| Tool action accepted/cancelled/completed | Assistant action preview | tool_action | accepted / ignored / completed / failed | `ai_feedback_events` |
 
 ## Promotion Rules
 

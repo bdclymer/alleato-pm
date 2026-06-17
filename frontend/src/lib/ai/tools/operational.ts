@@ -3244,7 +3244,7 @@ export function createOperationalTools(
             "id, subject, from_name, from_email, to_list, cc_list, received_at, mailbox_user_id, body_text, has_attachments, project_id, web_link, graph_message_id, conversation_id, match_status, source_metadata";
 
           const buildEmailQuery = (sinceIso?: string) => {
-            let query = supabase
+            let query = ragSupabase
               .from("outlook_email_intake")
               .select(emailSelect)
               .is("deleted_at", null)
@@ -3265,7 +3265,7 @@ export function createOperationalTools(
 
           const [emailResult, syncStateResult] = await Promise.all([
             buildEmailQuery(since.toISOString()),
-            supabase
+            ragSupabase
               .from("graph_sync_state")
               .select("last_sync_at")
               .eq("source", "outlook_email")

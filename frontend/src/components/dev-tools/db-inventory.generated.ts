@@ -1,7 +1,7 @@
 // AUTO-GENERATED — DO NOT EDIT BY HAND.
 // Regenerate with: npm run db:inventory
 // Source: docs/architecture/tables.yaml + live Supabase (MAIN + RAG) + codebase grep.
-// Generated: 2026-06-17T02:01:59.606Z
+// Generated: 2026-06-17T09:31:24.662Z
 
 import inventoryJson from "./db-inventory.generated.json";
 

@@ -44,11 +44,6 @@ function formatEmailDate(value: string | null): string {
   return format(d, "MMM d");
 }
 
-function senderInitial(email: InboxEmail): string {
-  const name = email.fromName ?? email.fromEmail ?? "";
-  return name.charAt(0).toUpperCase() || "?";
-}
-
 function senderLabel(email: InboxEmail): string {
   return email.fromName ?? email.fromEmail ?? "Unknown";
 }
@@ -104,7 +99,6 @@ function EmailRow({
   isSelected: boolean;
   onSelect: () => void;
 }) {
-  const initial = senderInitial(email);
   const sender = senderLabel(email);
   const date = formatEmailDate(email.receivedAt);
   const isUnread = email.matchStatus === "unassigned" && !email.projectId;
@@ -120,18 +114,6 @@ function EmailRow({
       )}
     >
       <div className="flex items-start gap-2.5">
-        {/* Sender avatar */}
-        <div
-          className={cn(
-            "size-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 mt-0.5",
-            isSelected
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground",
-          )}
-        >
-          {initial}
-        </div>
-
         <div className="flex-1 min-w-0">
           {/* Top row: sender + date */}
           <div className="flex items-baseline justify-between gap-2 mb-0.5">
@@ -279,7 +261,6 @@ export function EmailListPanel({
           <div className="flex flex-col gap-0">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="px-3 py-2.5 flex items-start gap-2.5">
-                <div className="size-8 rounded-full bg-muted animate-pulse shrink-0 mt-0.5" />
                 <div className="flex-1 space-y-1.5">
                   <div className="h-3 bg-muted animate-pulse rounded w-3/4" />
                   <div className="h-2.5 bg-muted animate-pulse rounded w-full" />

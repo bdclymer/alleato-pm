@@ -4,10 +4,19 @@ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-anon-key";
 import { NextRequest } from "next/server";
 import { GET } from "../route";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import {
+  createOutlookIntakeServiceClient,
+  createServiceClient,
+} from "@/lib/supabase/service";
 
 jest.mock("@/lib/supabase/server", () => ({
   createClient: jest.fn(),
   getApiRouteUser: jest.fn(),
+}));
+
+jest.mock("@/lib/supabase/service", () => ({
+  createOutlookIntakeServiceClient: jest.fn(),
+  createServiceClient: jest.fn(),
 }));
 
 const createClientMock = createClient as jest.MockedFunction<
@@ -16,6 +25,12 @@ const createClientMock = createClient as jest.MockedFunction<
 const getApiRouteUserMock = getApiRouteUser as jest.MockedFunction<
   typeof getApiRouteUser
 >;
+const createServiceClientMock =
+  createServiceClient as jest.MockedFunction<typeof createServiceClient>;
+const createOutlookIntakeServiceClientMock =
+  createOutlookIntakeServiceClient as jest.MockedFunction<
+    typeof createOutlookIntakeServiceClient
+  >;
 
 interface QueryResult {
   data: unknown;
@@ -137,6 +152,8 @@ describe("/api/outlook-intake", () => {
     createClientMock.mockResolvedValue(
       supabase as Awaited<ReturnType<typeof createClient>>,
     );
+    createServiceClientMock.mockReturnValue(supabase as never);
+    createOutlookIntakeServiceClientMock.mockReturnValue(supabase as never);
 
     const response = await GET(
       new NextRequest("http://localhost/api/outlook-intake"),
@@ -201,6 +218,8 @@ describe("/api/outlook-intake", () => {
     createClientMock.mockResolvedValue(
       supabase as Awaited<ReturnType<typeof createClient>>,
     );
+    createServiceClientMock.mockReturnValue(supabase as never);
+    createOutlookIntakeServiceClientMock.mockReturnValue(supabase as never);
 
     const response = await GET(
       new NextRequest("http://localhost/api/outlook-intake"),
@@ -244,6 +263,8 @@ describe("/api/outlook-intake", () => {
     createClientMock.mockResolvedValue(
       supabase as Awaited<ReturnType<typeof createClient>>,
     );
+    createServiceClientMock.mockReturnValue(supabase as never);
+    createOutlookIntakeServiceClientMock.mockReturnValue(supabase as never);
 
     const response = await GET(
       new NextRequest(
@@ -289,6 +310,8 @@ describe("/api/outlook-intake", () => {
     createClientMock.mockResolvedValue(
       supabase as Awaited<ReturnType<typeof createClient>>,
     );
+    createServiceClientMock.mockReturnValue(supabase as never);
+    createOutlookIntakeServiceClientMock.mockReturnValue(supabase as never);
 
     const response = await GET(
       new NextRequest(

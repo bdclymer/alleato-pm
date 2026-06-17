@@ -1728,6 +1728,211 @@ export function createActionTools(
       }),
     }),
 
+    createContact: tool({
+      description:
+        "Create a contact in the global directory (public.people). Use when the user wants to 'add a contact', " +
+        "'create a new contact', or 'add [person] to the directory' WITHOUT tying them to a specific project " +
+        "(use createProjectContact when a project is involved). This renders an interactive, prefilled contact " +
+        "form widget: fill in every field you already know (first/last name, email, phone, job title, company, " +
+        "department, notes) so the user only completes what's missing, then submits. Reuses an existing person by " +
+        "email and links the company by id or exact name. Always previews the form before writing.",
+      inputSchema: z.object({
+        firstName: z.string().describe("Contact first name"),
+        lastName: z.string().describe("Contact last name"),
+        email: z.string().email().optional().describe("Contact email; used to de-duplicate existing people"),
+        phone: z.string().optional().describe("Primary phone number (stored as phone_mobile)"),
+        jobTitle: z.string().optional().describe("Job title, e.g. Project Manager"),
+        department: z.string().optional().describe("Department / business unit, e.g. Operations"),
+        companyId: z.string().uuid().optional().describe("Existing companies.id when known"),
+        companyName: z.string().optional().describe("Company name to link by exact match when companyId is unknown"),
+        notes: z.string().optional().describe("Freeform relationship notes"),
+        confirmed: z.boolean().default(false).describe("Set to true only after the user submits the form"),
+        idempotencyKey: z.string().optional(),
+      }),
+      needsApproval: needsConfirmedWriteApproval,
+      execute: withWriteTrace("createContact", options, async (input) => {
+        const firstName = normalizeDirectoryText(input.firstName);
+        const lastName = normalizeDirectoryText(input.lastName);
+        if (!firstName || !lastName) {
+          return { success: false, error: "First name and last name are required." };
+        }
+
+        const normalized = {
+          firstName,
+          lastName,
+          email: normalizeDirectoryText(input.email),
+          phone: normalizeDirectoryText(input.phone),
+          jobTitle: normalizeDirectoryText(input.jobTitle),
+          department: normalizeDirectoryText(input.department),
+          companyName: normalizeDirectoryText(input.companyName),
+          notes: normalizeDirectoryText(input.notes),
+        };
+
+        const buildWidget = (
+          status: "draft" | "created",
+          extra: { companyId?: string | null; contactHref?: string | null },
+        ) => ({
+          type: "create_contact" as const,
+          id: status === "created" ? "create-contact-created" : "create-contact-preview",
+          title: "Create contact",
+          status,
+          defaultFirstName: normalized.firstName,
+          defaultLastName: normalized.lastName,
+          defaultEmail: normalized.email ?? undefined,
+          defaultPhone: normalized.phone ?? undefined,
+          defaultJobTitle: normalized.jobTitle ?? undefined,
+          defaultDepartment: normalized.department ?? undefined,
+          defaultCompanyName: normalized.companyName ?? undefined,
+          defaultNotes: normalized.notes ?? undefined,
+          companyId: extra.companyId ?? input.companyId ?? null,
+          contactHref: extra.contactHref ?? null,
+          confirmPrompt:
+            "Create this contact in the directory with createContact (confirmed). Show the final form first and wait for my confirmation.",
+        });
+
+        if (!input.confirmed) {
+          return {
+            action: "preview",
+            message:
+              "Here's the contact I'll add to the directory. Edit any field, then submit to create it.",
+            preview: {
+              table: "people",
+              fields: {
+                first_name: normalized.firstName,
+                last_name: normalized.lastName,
+                email: normalized.email,
+                phone_mobile: normalized.phone,
+                job_title: normalized.jobTitle,
+                business_unit: normalized.department,
+                company_id: input.companyId ?? null,
+                company: normalized.companyName,
+                notes: normalized.notes,
+                person_type: "contact",
+                status: "active",
+              },
+            },
+            widget: buildWidget("draft", {}),
+          };
+        }
+
+        const idempotencyKey = resolveIdempotencyKey("createContact", input);
+        const replay = await getReplayResponse("createContact", idempotencyKey);
+        if (replay) return replay;
+
+        try {
+          let companyId = input.companyId ?? null;
+          let companyName = normalized.companyName;
+          let companyMatched = Boolean(companyId);
+          if (!companyId && normalized.companyName) {
+            const company = await findCompanyByName(normalized.companyName);
+            if (company) {
+              companyId = company.id;
+              companyName = company.name;
+              companyMatched = true;
+            }
+          }
+
+          const existingPerson = await findPersonByEmail(normalized.email);
+          let person = existingPerson;
+
+          if (person) {
+            const updates: Record<string, unknown> = {
+              status: "active",
+              person_type: person.person_type || "contact",
+            };
+            if (companyId && person.company_id !== companyId) updates.company_id = companyId;
+            if (companyName) updates.company = companyName;
+            if (normalized.jobTitle) updates.job_title = normalized.jobTitle;
+            if (normalized.phone) updates.phone_mobile = normalized.phone;
+            if (normalized.department) updates.business_unit = normalized.department;
+            if (normalized.notes) updates.notes = normalized.notes;
+
+            const { data, error } = await supabase
+              .from("people")
+              .update(updates)
+              .eq("id", person.id)
+              .select("id,first_name,last_name,email,company_id,company,person_type,status,job_title,business_unit,phone_mobile,notes")
+              .single();
+
+            if (error) {
+              throw new Error(`Failed to update existing contact: ${error.message}`);
+            }
+            person = data;
+          } else {
+            const { data, error } = await supabase
+              .from("people")
+              .insert({
+                first_name: normalized.firstName,
+                last_name: normalized.lastName,
+                email: normalized.email,
+                phone_mobile: normalized.phone,
+                job_title: normalized.jobTitle,
+                business_unit: normalized.department,
+                notes: normalized.notes,
+                company_id: companyId,
+                company: companyName,
+                person_type: "contact",
+                status: "active",
+              })
+              .select("id,first_name,last_name,email,company_id,company,person_type,status,job_title,business_unit,phone_mobile,notes")
+              .single();
+
+            if (error) {
+              throw new Error(`Failed to create contact: ${error.message}`);
+            }
+            person = data;
+          }
+
+          const fullName = [person.first_name, person.last_name].filter(Boolean).join(" ");
+          const contactHref = `/directory/contacts/${person.id}`;
+          const unmatchedCompanyNote =
+            !companyMatched && normalized.companyName
+              ? ` I kept the company name "${normalized.companyName}" on the record but couldn't match it to an existing company — add the company to link it.`
+              : "";
+          const response = {
+            success: true,
+            message:
+              (existingPerson
+                ? `Contact **${fullName}** already existed, so I updated their details.`
+                : `Contact **${fullName}** was added to the directory.`) + unmatchedCompanyNote,
+            record: {
+              person,
+              personAction: existingPerson ? "reused_existing_person" : "created_person",
+              companyMatched,
+            },
+            links: {
+              contact: contactHref,
+              contactDirectory: "/directory/contacts",
+            },
+            widget: buildWidget("created", { companyId, contactHref }),
+          };
+          await recordWriteAudit({
+            toolName: "createContact",
+            idempotencyKey,
+            projectId: null,
+            input,
+            status: "success",
+            response,
+          });
+          return response;
+        } catch (error) {
+          const failure = {
+            success: false,
+            error: error instanceof Error ? error.message : String(error),
+          };
+          await recordWriteAudit({
+            toolName: "createContact",
+            idempotencyKey,
+            projectId: null,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
+      }),
+    }),
+
     updateGeneratedTask: tool({
       description:
         "Update an existing task in the main Tasks page task register (public.tasks). " +

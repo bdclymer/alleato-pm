@@ -787,8 +787,14 @@ function DensityOptions({
           type="button"
           variant={density === option.value ? "secondary" : "ghost"}
           size="sm"
-          className="h-8 px-2 text-xs font-medium"
+          className={cn(
+            "h-8 px-2 text-xs font-medium shadow-none",
+            density === option.value
+              ? "bg-background text-foreground ring-1 ring-border"
+              : "text-muted-foreground hover:text-foreground",
+          )}
           onClick={() => onDensityChange?.(option.value)}
+          aria-pressed={density === option.value}
         >
           {option.label}
         </Button>

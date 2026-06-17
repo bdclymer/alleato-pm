@@ -60,7 +60,12 @@ jest.mock("../outlook-operations", () => ({
   }),
 }));
 
-import { createProjectTools } from "../project-tools";
+import {
+  buildDocumentLookupFallbackTerms,
+  buildDocumentLookupOrFilter,
+  createProjectTools,
+  shouldFallbackToPsrLookup,
+} from "../project-tools";
 
 // Tools that were extracted into new modules in this PR — these are the most
 // likely to be accidentally dropped from the barrel
@@ -119,5 +124,37 @@ describe("createProjectTools barrel (#294 regression)", () => {
       const t = tools[name as keyof typeof tools] as { execute?: unknown } | undefined;
       expect(typeof t?.execute).toBe("function");
     }
+  });
+
+  it("flags PSR-style document lookups for fallback search", () => {
+    expect(
+      shouldFallbackToPsrLookup({
+        category: "financial_document",
+      }),
+    ).toBe(true);
+    expect(
+      shouldFallbackToPsrLookup({
+        titleKeyword: "PSR",
+      }),
+    ).toBe(true);
+    expect(
+      shouldFallbackToPsrLookup({
+        documentType: "executed_contract",
+        titleKeyword: "PSR",
+      }),
+    ).toBe(false);
+  });
+
+  it("includes source_path in PSR fallback filters", () => {
+    const terms = buildDocumentLookupFallbackTerms({
+      category: "financial_document",
+      titleKeyword: "Project Status Report",
+    });
+    expect(terms).toEqual(
+      expect.arrayContaining(["Project Status Report", "PSR"]),
+    );
+    expect(buildDocumentLookupOrFilter(terms)).toContain(
+      "source_path.ilike.%PSR%",
+    );
   });
 });

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Check, ChevronsUpDown, ExternalLink, Tag } from "lucide-react";
+import { Check, ChevronsUpDown, ExternalLink, Loader2, Tag } from "lucide-react";
 import {
   UnifiedTablePage,
   type ColumnConfig,
@@ -164,19 +164,29 @@ function InlineProjectSelect({
     projectName: string | null,
   ) => void;
 }) {
+  const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const handleChange = async (value: string) => {
-    const projectId = value === "__none__" ? null : parseInt(value, 10);
+  const handleSelect = async (projectId: number | null) => {
+    if (projectId === item.project_id) {
+      setOpen(false);
+      return;
+    }
+
     const project = projects.find((p) => p.id === projectId) ?? null;
+    const previousProjectId = item.project_id ?? null;
+    const previousProjectName = item.project ?? null;
+
+    onSave(item.id, projectId, project?.name ?? null);
     setSaving(true);
+    setOpen(false);
     try {
       await apiFetch(`/api/documents/${item.id}/assign-project`, {
         method: "PATCH",
         body: JSON.stringify({ project_id: projectId }),
       });
-      onSave(item.id, projectId, project?.name ?? null);
     } catch (error) {
+      onSave(item.id, previousProjectId, previousProjectName);
       reportDocumentMetadataFailure({
         operation: "assign-project",
         error,
@@ -189,32 +199,62 @@ function InlineProjectSelect({
   };
 
   return (
-    <Select
-      value={item.project_id != null ? String(item.project_id) : "__none__"}
-      onValueChange={handleChange}
-      disabled={saving}
-    >
-      <SelectTrigger
-        className="h-7 w-full max-w-55 border-0 bg-transparent px-1.5 text-sm shadow-none focus:ring-0 hover:bg-muted/60 data-[state=open]:bg-muted/60"
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={saving}
+          onClick={(e) => e.stopPropagation()}
+          className="h-7 w-full justify-between px-1.5 text-sm font-normal hover:bg-muted/60 data-[state=open]:bg-muted/60"
+        >
+          {item.project ? (
+            <span className="truncate text-left text-foreground">{item.project}</span>
+          ) : (
+            <span className="truncate text-left text-muted-foreground/50 italic">
+              Assign project...
+            </span>
+          )}
+          {saving ? (
+            <Loader2 className="ml-2 h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground" />
+          ) : (
+            <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 opacity-40" />
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-72 p-0"
         onClick={(e) => e.stopPropagation()}
       >
-        <SelectValue>
-          {item.project ?? (
-            <span className="text-muted-foreground/50 italic">Unassigned</span>
-          )}
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent className="max-h-72">
-        <SelectItem value="__none__">
-          <span className="text-muted-foreground italic">Unassigned</span>
-        </SelectItem>
-        {projects.map((p) => (
-          <SelectItem key={p.id} value={String(p.id)}>
-            {p.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+        <Command>
+          <CommandInput placeholder="Search projects..." autoFocus />
+          <CommandList>
+            <CommandEmpty>No projects found.</CommandEmpty>
+            <CommandGroup>
+              <CommandItem value="__none__" onSelect={() => void handleSelect(null)}>
+                <Check
+                  className={`mr-2 h-3.5 w-3.5 ${item.project_id == null ? "opacity-100" : "opacity-0"}`}
+                />
+                <span className="text-muted-foreground italic">Unassigned</span>
+              </CommandItem>
+              {projects.map((project) => (
+                <CommandItem
+                  key={project.id}
+                  value={project.name}
+                  onSelect={() => void handleSelect(project.id)}
+                >
+                  <Check
+                    className={`mr-2 h-3.5 w-3.5 ${project.id === item.project_id ? "opacity-100" : "opacity-0"}`}
+                  />
+                  <span className="truncate">{project.name}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -495,38 +535,52 @@ function InlineStringSelect({
   );
 }
 
-// Bulk category dialog
+// Bulk metadata dialog
 
-function BulkCategoryDialog({
+function BulkMetadataDialog({
   open,
   onOpenChange,
   selectedCount,
-  options,
+  categoryOptions,
+  projects,
   onApply,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   selectedCount: number;
-  options: string[];
-  onApply: (category: string | null) => Promise<void>;
+  categoryOptions: string[];
+  projects: Project[];
+  onApply: (fields: {
+    project_id?: number | null;
+    category?: string | null;
+  }) => Promise<void>;
 }) {
-  const [selected, setSelected] = useState<string | null>(null);
-  const [touched, setTouched] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [projectValue, setProjectValue] = useState("__unchanged__");
+  const [projectTouched, setProjectTouched] = useState(false);
+  const [categoryTouched, setCategoryTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setSelected(null);
-      setTouched(false);
+      setSelectedCategory(null);
+      setProjectValue("__unchanged__");
+      setProjectTouched(false);
+      setCategoryTouched(false);
       setSubmitting(false);
     }
   }, [open]);
 
   const handleSubmit = async () => {
-    if (!touched) return;
+    if (!projectTouched && !categoryTouched) return;
     setSubmitting(true);
     try {
-      await onApply(selected);
+      await onApply({
+        ...(projectTouched
+          ? { project_id: projectValue === "__none__" ? null : Number(projectValue) }
+          : {}),
+        ...(categoryTouched ? { category: selectedCategory } : {}),
+      });
       onOpenChange(false);
     } finally {
       setSubmitting(false);
@@ -538,36 +592,95 @@ function BulkCategoryDialog({
       <ModalContent size="md">
         <ModalHeader>
           <ModalTitle>
-            Set category for {selectedCount} file
+            Bulk edit {selectedCount} file
             {selectedCount === 1 ? "" : "s"}
           </ModalTitle>
           <ModalDescription>
-            Choose an existing category or type a new one. Choose "Clear
-            category" to remove.
+            Update project assignment and category for the current selection.
+            Leave either field unchanged if you only want to edit the other.
           </ModalDescription>
         </ModalHeader>
-        <div className="rounded-md border border-border">
-          <StringCombobox
-            value={selected}
-            options={options}
-            placeholder="Search or create category..."
-            clearLabel="Clear category"
-            onSelect={(next) => {
-              setSelected(next);
-              setTouched(true);
-            }}
-            autoFocus
-          />
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Project</label>
+            <Select
+              value={projectValue}
+              onValueChange={(value) => {
+                setProjectValue(value);
+                setProjectTouched(value !== "__unchanged__");
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Leave unchanged" />
+              </SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="__unchanged__">Leave unchanged</SelectItem>
+                <SelectItem value="__none__">Clear project</SelectItem>
+                {projects.map((project) => (
+                  <SelectItem key={project.id} value={String(project.id)}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Category</label>
+            <div className="rounded-md border border-border">
+              <StringCombobox
+                value={selectedCategory}
+                options={categoryOptions}
+                placeholder="Search or create category..."
+                clearLabel="Clear category"
+                onSelect={(next) => {
+                  setSelectedCategory(next);
+                  setCategoryTouched(true);
+                }}
+                autoFocus
+              />
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 px-0 text-xs text-muted-foreground"
+              onClick={() => {
+                setSelectedCategory(null);
+                setCategoryTouched(false);
+              }}
+            >
+              Leave category unchanged
+            </Button>
+          </div>
         </div>
-        {touched && (
-          <p className="text-sm text-muted-foreground">
-            Will set category to:{" "}
-            {selected === null ? (
-              <span className="italic">cleared</span>
-            ) : (
-              <span className="font-medium text-foreground">{selected}</span>
-            )}
-          </p>
+        {(projectTouched || categoryTouched) && (
+          <div className="space-y-1 text-sm text-muted-foreground">
+            {projectTouched ? (
+              <p>
+                Project:{" "}
+                {projectValue === "__none__" ? (
+                  <span className="italic">cleared</span>
+                ) : (
+                  <span className="font-medium text-foreground">
+                    {projects.find((project) => String(project.id) === projectValue)?.name ??
+                      "Selected project"}
+                  </span>
+                )}
+              </p>
+            ) : null}
+            {categoryTouched ? (
+              <p>
+                Category:{" "}
+                {selectedCategory === null ? (
+                  <span className="italic">cleared</span>
+                ) : (
+                  <span className="font-medium text-foreground">
+                    {selectedCategory}
+                  </span>
+                )}
+              </p>
+            ) : null}
+          </div>
         )}
         <ModalFooter>
           <Button
@@ -577,7 +690,10 @@ function BulkCategoryDialog({
           >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={!touched || submitting}>
+          <Button
+            onClick={handleSubmit}
+            disabled={(!projectTouched && !categoryTouched) || submitting}
+          >
             {submitting ? "Applying..." : `Apply to ${selectedCount}`}
           </Button>
         </ModalFooter>
@@ -986,7 +1102,7 @@ export function FilesClient() {
   >({});
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [bulkCategoryOpen, setBulkCategoryOpen] = useState(false);
+  const [bulkMetadataOpen, setBulkMetadataOpen] = useState(false);
 
   const handleProjectSave = useCallback(
     (docId: string, projectId: number | null, projectName: string | null) => {
@@ -1282,30 +1398,48 @@ export function FilesClient() {
     });
   }, []);
 
-  const handleBulkCategoryApply = useCallback(
-    async (category: string | null) => {
+  const handleBulkMetadataApply = useCallback(
+    async (fields: { project_id?: number | null; category?: string | null }) => {
       if (selectedIds.length === 0) return;
       try {
         await apiFetch(`/api/documents/bulk-update`, {
           method: "PATCH",
-          body: JSON.stringify({ doc_ids: selectedIds, fields: { category } }),
+          body: JSON.stringify({ doc_ids: selectedIds, fields }),
         });
-        setCategoryOverrides((prev) => {
-          const next = { ...prev };
-          for (const id of selectedIds) next[id] = category;
-          return next;
-        });
+        if ("category" in fields) {
+          setCategoryOverrides((prev) => {
+            const next = { ...prev };
+            for (const id of selectedIds) next[id] = fields.category ?? null;
+            return next;
+          });
+        }
+        if ("project_id" in fields) {
+          const projectName =
+            fields.project_id == null
+              ? null
+              : projects.find((project) => project.id === fields.project_id)?.name ?? null;
+          setProjectOverrides((prev) => {
+            const next = { ...prev };
+            for (const id of selectedIds) {
+              next[id] = {
+                project_id: fields.project_id ?? null,
+                project: projectName,
+              };
+            }
+            return next;
+          });
+        }
         setSelectedIds([]);
       } catch (error) {
         reportDocumentMetadataFailure({
-          operation: "bulk-set-category",
+          operation: "bulk-set-metadata",
           error,
-          userVisibleFallback: "Selected file categories could not be saved.",
+          userVisibleFallback: "Selected file updates could not be saved.",
         });
         throw error;
       }
     },
-    [selectedIds],
+    [projects, selectedIds],
   );
 
   return (
@@ -1348,11 +1482,11 @@ export function FilesClient() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setBulkCategoryOpen(true)}
+                onClick={() => setBulkMetadataOpen(true)}
                 className="h-8"
               >
                 <Tag className="h-3.5 w-3.5 mr-1.5" />
-                Set category
+                Bulk edit
               </Button>
             ) : null,
         }}
@@ -1393,12 +1527,13 @@ export function FilesClient() {
           onPerPageChange: handlePerPageChange,
         }}
       />
-      <BulkCategoryDialog
-        open={bulkCategoryOpen}
-        onOpenChange={setBulkCategoryOpen}
+      <BulkMetadataDialog
+        open={bulkMetadataOpen}
+        onOpenChange={setBulkMetadataOpen}
         selectedCount={selectedIds.length}
-        options={categoryOptions}
-        onApply={handleBulkCategoryApply}
+        categoryOptions={categoryOptions}
+        projects={projects}
+        onApply={handleBulkMetadataApply}
       />
     </>
   );

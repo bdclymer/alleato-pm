@@ -156,10 +156,16 @@ class EvalReport:
 # ---------------------------------------------------------------------------
 
 
-def get_clients() -> Tuple[Any, OpenAI]:
-    """Initialize Supabase and OpenAI clients from environment variables."""
+def get_clients() -> Tuple[Any, Any, OpenAI]:
+    """Initialize PM APP, AI DB, and OpenAI clients from environment variables."""
     supabase_url = os.environ.get("SUPABASE_URL") or os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
     supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY")
+    rag_supabase_url = os.environ.get("RAG_SUPABASE_URL") or supabase_url
+    rag_supabase_key = (
+        os.environ.get("RAG_SUPABASE_SERVICE_ROLE_KEY")
+        or os.environ.get("RAG_SUPABASE_SERVICE_KEY")
+        or supabase_key
+    )
     openai_key = os.environ.get("OPENAI_API_KEY")
 
     if not supabase_url:
@@ -168,14 +174,21 @@ def get_clients() -> Tuple[Any, OpenAI]:
     if not supabase_key:
         logger.error("Missing SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SERVICE_KEY in .env")
         sys.exit(1)
+    if not rag_supabase_url:
+        logger.error("Missing RAG_SUPABASE_URL (or SUPABASE_URL fallback) in .env")
+        sys.exit(1)
+    if not rag_supabase_key:
+        logger.error("Missing RAG_SUPABASE_SERVICE_ROLE_KEY or RAG_SUPABASE_SERVICE_KEY in .env")
+        sys.exit(1)
     if not openai_key:
         logger.error("Missing OPENAI_API_KEY in .env")
         sys.exit(1)
 
     options = ClientOptions(postgrest_client_timeout=60)
     supabase_client = create_client(supabase_url, supabase_key, options)
+    rag_supabase_client = create_client(rag_supabase_url, rag_supabase_key, options)
     openai_client = OpenAI(api_key=openai_key)
-    return supabase_client, openai_client
+    return supabase_client, rag_supabase_client, openai_client
 
 
 # ---------------------------------------------------------------------------
@@ -183,10 +196,10 @@ def get_clients() -> Tuple[Any, OpenAI]:
 # ---------------------------------------------------------------------------
 
 
-def fetch_sync_state(supabase) -> List[SyncStateRow]:
+def fetch_sync_state(rag_supabase) -> List[SyncStateRow]:
     """Fetch all rows from graph_sync_state table."""
     try:
-        result = supabase.table("graph_sync_state").select(
+        result = rag_supabase.table("graph_sync_state").select(
             "source, last_sync_at, sync_status, items_synced, error_message"
         ).execute()
         rows = []
@@ -393,7 +406,7 @@ def check_items_synced(sync_rows: List[SyncStateRow]) -> List[CheckResult]:
 # ---------------------------------------------------------------------------
 
 
-def check_chunks_exist(supabase, verbose: bool = False) -> List[CheckResult]:
+def check_chunks_exist(rag_supabase, verbose: bool = False) -> List[CheckResult]:
     """
     Check 5: document_chunks has rows for each Graph source type.
     Check 6: Chunks have non-null embeddings.
@@ -407,7 +420,7 @@ def check_chunks_exist(supabase, verbose: bool = False) -> List[CheckResult]:
         try:
             # Count total chunks for this source type
             count_result = (
-                supabase.table("document_chunks")
+                rag_supabase.table("document_chunks")
                 .select("chunk_id", count="exact")
                 .eq("source_type", source_type)
                 .execute()
@@ -442,7 +455,7 @@ def check_chunks_exist(supabase, verbose: bool = False) -> List[CheckResult]:
 
             # Check embeddings: count chunks where embedding IS NOT NULL
             embedded_result = (
-                supabase.table("document_chunks")
+                rag_supabase.table("document_chunks")
                 .select("chunk_id", count="exact")
                 .eq("source_type", source_type)
                 .not_.is_("embedding", "null")
@@ -503,7 +516,7 @@ def embed_query(openai_client: OpenAI, query_text: str) -> List[float]:
 
 
 def search_document_chunks(
-    supabase,
+    rag_supabase,
     embedding: List[float],
     match_count: int = 10,
     match_threshold: float = RAG_SIMILARITY_THRESHOLD,
@@ -515,7 +528,7 @@ def search_document_chunks(
     """
     emb_str = json.dumps(embedding)
     try:
-        result = supabase.rpc(
+        result = rag_supabase.rpc(
             "search_document_chunks",
             {
                 "query_embedding": emb_str,
@@ -528,11 +541,11 @@ def search_document_chunks(
         return result.data or []
     except Exception as rpc_exc:
         logger.warning(f"search_document_chunks RPC failed ({rpc_exc}), falling back to direct query")
-        return _fallback_vector_search(supabase, embedding, match_count, match_threshold)
+        return _fallback_vector_search(rag_supabase, embedding, match_count, match_threshold)
 
 
 def _fallback_vector_search(
-    supabase,
+    rag_supabase,
     embedding: List[float],
     match_count: int,
     match_threshold: float,
@@ -545,7 +558,7 @@ def _fallback_vector_search(
         return []
 
     result = (
-        supabase.table("document_chunks")
+        rag_supabase.table("document_chunks")
         .select("chunk_id, source_type, chunk_text, embedding, metadata")
         .not_.is_("embedding", "null")
         .order("created_at", desc=True)
@@ -586,7 +599,7 @@ def _fallback_vector_search(
 
 
 def run_rag_retrieval_checks(
-    supabase,
+    rag_supabase,
     openai_client: OpenAI,
     verbose: bool = False,
 ) -> Tuple[List[CheckResult], List[RagCheckResult]]:
@@ -608,7 +621,7 @@ def run_rag_retrieval_checks(
         t0 = time.time()
         try:
             embedding = embed_query(openai_client, question_text)
-            chunks = search_document_chunks(supabase, embedding, match_count=10)
+            chunks = search_document_chunks(rag_supabase, embedding, match_count=10)
             latency_ms = (time.time() - t0) * 1000
 
             similarities = [c.get("similarity", 0.0) for c in chunks]
@@ -958,11 +971,11 @@ def main() -> None:
     logger.info("=" * 70)
 
     # Initialize clients
-    supabase_client, openai_client = get_clients()
+    _supabase_client, rag_supabase_client, openai_client = get_clients()
 
     # ── Phase 1: graph_sync_state checks ──────────────────────────────────
     logger.info("\n[Phase 1/4] Checking graph_sync_state table...")
-    sync_rows = fetch_sync_state(supabase_client)
+    sync_rows = fetch_sync_state(rag_supabase_client)
 
     if args.verbose:
         for row in sync_rows:
@@ -983,13 +996,13 @@ def main() -> None:
 
     # ── Phase 2: document_chunks checks ────────────────────────────
     logger.info("\n[Phase 2/4] Checking document_chunks...")
-    chunk_checks = check_chunks_exist(supabase_client, verbose=args.verbose)
+    chunk_checks = check_chunks_exist(rag_supabase_client, verbose=args.verbose)
     report.checks.extend(chunk_checks)
 
     # ── Phase 3: RAG retrieval checks ─────────────────────────────────────
     logger.info("\n[Phase 3/4] Running RAG retrieval checks...")
     rag_checks, rag_details = run_rag_retrieval_checks(
-        supabase_client, openai_client, verbose=args.verbose
+        rag_supabase_client, openai_client, verbose=args.verbose
     )
     report.checks.extend(rag_checks)
     report.rag_results = rag_details

@@ -25,7 +25,11 @@ except Exception:
     from dotenv import load_dotenv
     load_dotenv(Path(__file__).resolve().parents[3] / ".env")
 
-from services.supabase_helpers import get_supabase_client
+from services.supabase_helpers import (
+    get_outlook_intake_read_client,
+    get_outlook_intake_write_client,
+    get_supabase_client,
+)
 from services.intelligence.compiler import process_source_document_to_packet
 from services.integrations.microsoft_graph.project_inference import infer_project_id
 
@@ -35,12 +39,14 @@ LOOKBACK_DAYS = int(os.environ.get("BACKFILL_LOOKBACK_DAYS", "30"))
 
 def backfill():
     supabase = get_supabase_client()
+    intake_read = get_outlook_intake_read_client()
+    intake_write = get_outlook_intake_write_client()
     print(f"=== Backfilling unlinked intake emails (last {LOOKBACK_DAYS} days) ===")
 
     from datetime import timedelta
     since = (datetime.now(timezone.utc) - timedelta(days=LOOKBACK_DAYS)).isoformat()
     rows = (
-        supabase.from_("outlook_email_intake")
+        intake_read.from_("outlook_email_intake")
         .select("id, graph_message_id, mailbox_user_id, subject, body_text, from_name, from_email, to_list, received_at, has_attachments, web_link, internet_message_id, conversation_id, project_id, match_status")
         .is_("document_metadata_id", "null")
         .is_("deleted_at", "null")
@@ -154,7 +160,7 @@ def backfill():
                 print(f"  [OK] document_metadata already exists for {doc_id}")
 
             # Link the intake row to the metadata doc
-            supabase.from_("outlook_email_intake").update({
+            intake_write.from_("outlook_email_intake").update({
                 "document_metadata_id": doc_id,
                 "updated_at": datetime.now(timezone.utc).isoformat(),
             }).eq("id", intake_id).execute()

@@ -12,6 +12,10 @@ import {
 import { toast } from "sonner";
 
 import { StatusBadge } from "@/components/ds";
+import {
+  DOCUMENT_TYPE_OPTIONS,
+  documentTypeLabel,
+} from "@/features/documents/document-types";
 import type {
   ColumnConfig,
   FilterConfig,
@@ -46,6 +50,7 @@ export type PipelineDoc = {
   status: string | null;
   type: string | null;
   category: string | null;
+  document_type: string | null;
   source: string | null;
   source_system: string | null;
   source_web_url: string | null;
@@ -125,8 +130,9 @@ export const documentColumns: ColumnConfig[] = [
   { id: "view", label: "", defaultVisible: true },
   { id: "title", label: "Document", alwaysVisible: true },
   { id: "project", label: "Project", defaultVisible: true },
-  { id: "type", label: "Type", defaultVisible: true },
-  { id: "category", label: "Category", defaultVisible: true },
+  { id: "document_type", label: "Doc Type", defaultVisible: true },
+  { id: "type", label: "Type", defaultVisible: false },
+  { id: "category", label: "Category", defaultVisible: false },
   { id: "source", label: "Source", defaultVisible: true },
   { id: "pipeline_stage", label: "Pipeline Stage", defaultVisible: true },
   { id: "created_at", label: "Created", defaultVisible: true },
@@ -139,6 +145,12 @@ export const documentFilters: FilterConfig[] = [
     label: "Source",
     type: "select",
     options: SOURCE_FILTER_OPTIONS,
+  },
+  {
+    id: "document_type",
+    label: "Doc Type",
+    type: "select",
+    options: [...DOCUMENT_TYPE_OPTIONS],
   },
   {
     id: "type",
@@ -363,9 +375,20 @@ export function buildDocumentTableColumns(opts?: {
         </Popover>
       ),
     },
-    // Type
+    // Doc Type (folder-derived construction document type)
     {
       ...documentColumns[3],
+      render: (item) => (
+        <span className="text-sm text-muted-foreground">
+          {documentTypeLabel(item.document_type)}
+        </span>
+      ),
+      sortValue: (item) => item.document_type ?? "",
+      sortable: true,
+    },
+    // Type
+    {
+      ...documentColumns[4],
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {item.type || "-"}
@@ -379,7 +402,7 @@ export function buildDocumentTableColumns(opts?: {
     },
     // Category
     {
-      ...documentColumns[4],
+      ...documentColumns[5],
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {item.category || "-"}
@@ -393,7 +416,7 @@ export function buildDocumentTableColumns(opts?: {
     },
     // Source
     {
-      ...documentColumns[5],
+      ...documentColumns[6],
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {item.source || "-"}
@@ -404,7 +427,7 @@ export function buildDocumentTableColumns(opts?: {
     },
     // Pipeline Stage
     {
-      ...documentColumns[6],
+      ...documentColumns[7],
       render: (item) => (
         <StatusBadge
           status={stageLabel(item.pipeline_stage)}
@@ -422,7 +445,7 @@ export function buildDocumentTableColumns(opts?: {
     },
     // Created
     {
-      ...documentColumns[7],
+      ...documentColumns[8],
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {formatDate(item.created_at)}
@@ -433,7 +456,7 @@ export function buildDocumentTableColumns(opts?: {
     },
     // Error
     {
-      ...documentColumns[8],
+      ...documentColumns[9],
       render: (item) =>
         item.error_message ? (
           <span className="text-xs text-destructive line-clamp-2">

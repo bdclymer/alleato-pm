@@ -3,18 +3,13 @@ import type { Dirent } from "node:fs";
 import path from "node:path";
 
 import { getUnknownHelpActionIds } from "./help-actions";
-import {
-  canArticleAppearInClientHelpCenter,
-  canArticleAppearInDefaultAiHelp,
-  validateHelpVisibilityPolicy,
-} from "./help-visibility";
 
 const repoRoot =
   path.basename(process.cwd()) === "frontend"
     ? path.join(process.cwd(), "..")
     : process.cwd();
 
-export const HELP_ARTICLES_ROOT = path.join(repoRoot, "docs", "help", "articles");
+export const HELP_ARTICLES_ROOT = path.join(repoRoot, "docs", "help");
 
 export const HELP_ARTICLE_AUDIENCES = [
   "internal",
@@ -32,6 +27,7 @@ export const HELP_ARTICLE_VISIBILITIES = [
 
 export type HelpArticleAudience = (typeof HELP_ARTICLE_AUDIENCES)[number];
 export type HelpArticleVisibility = (typeof HELP_ARTICLE_VISIBILITIES)[number];
+export type HelpArticleSection = "project-tools" | "ai-features";
 
 export type HelpArticleFrontmatter = {
   title: string;
@@ -53,6 +49,7 @@ export type HelpArticle = {
   slug: string;
   href: string;
   filePath: string;
+  section: HelpArticleSection;
   frontmatter: HelpArticleFrontmatter;
   content: string;
 };
@@ -71,21 +68,24 @@ export type HelpArticleValidationResult = {
 
 type RawFrontmatter = Record<string, unknown>;
 
-const REQUIRED_FIELDS: Array<keyof HelpArticleFrontmatter> = [
-  "title",
-  "description",
-  "audience",
-  "visibility",
-  "module",
-  "category",
-  "tags",
-  "featured",
-  "client_visible",
-  "ai_visible",
-  "order",
-  "related_routes",
-  "related_actions",
-];
+type SimpleFrontmatter = {
+  title: string;
+  description: string;
+  featured: boolean;
+  order: number;
+  related_routes: string[];
+  related_actions: string[];
+};
+
+const HELP_SECTION_DIRECTORIES: Record<HelpArticleSection, string> = {
+  "project-tools": path.join(HELP_ARTICLES_ROOT, "project-tools"),
+  "ai-features": path.join(HELP_ARTICLES_ROOT, "ai-features"),
+};
+
+const CATEGORY_LABEL_OVERRIDES: Record<string, string> = {
+  "ai-and-intelligence": "AI & Intelligence",
+  "users-and-permissions": "Users & Permissions",
+};
 
 export async function getHelpArticles(options?: {
   audience?: HelpArticleAudience;
@@ -105,21 +105,9 @@ export async function getHelpArticles(options?: {
   return result.articles
     .filter((article) => {
       const meta = article.frontmatter;
-      if (!options?.includeDrafts && meta.visibility !== "published") return false;
       if (options?.audience && meta.audience !== options.audience) return false;
-      if (options?.clientVisibleOnly && !meta.client_visible) return false;
-      if (
-        options?.clientHelpCenterOnly &&
-        !canArticleAppearInClientHelpCenter(meta)
-      ) {
-        return false;
-      }
-      if (options?.aiVisibleOnly && !meta.ai_visible) return false;
-      if (options?.defaultAiHelpOnly && !canArticleAppearInDefaultAiHelp(meta)) {
-        return false;
-      }
-      if (options?.featuredOnly && !meta.featured) return false;
       if (options?.category && meta.category !== options.category) return false;
+      if (options?.featuredOnly && !meta.featured) return false;
       return true;
     })
     .sort((a, b) => {
@@ -187,30 +175,53 @@ export async function searchHelpArticles(
 export async function validateHelpArticles(): Promise<HelpArticleValidationResult> {
   const errors: string[] = [];
   const articles: HelpArticle[] = [];
+  const seenSlugs = new Map<string, string>();
 
-  const files = await getMarkdownFiles(HELP_ARTICLES_ROOT);
+  for (const [section, root] of Object.entries(HELP_SECTION_DIRECTORIES) as Array<
+    [HelpArticleSection, string]
+  >) {
+    const files = await getMarkdownFiles(root);
 
-  for (const filePath of files) {
-    const relativePath = path.relative(HELP_ARTICLES_ROOT, filePath).replace(/\\/g, "/");
-    const raw = await fs.readFile(filePath, "utf8");
-    const parsed = parseFrontmatter(raw);
+    for (const filePath of files) {
+      const relativePath = path.relative(HELP_ARTICLES_ROOT, filePath).replace(/\\/g, "/");
+      const location = parseArticleLocation(relativePath, errors);
+      if (!location) continue;
 
-    if (!parsed) {
-      errors.push(`${relativePath}: missing required frontmatter block`);
-      continue;
+      const raw = await fs.readFile(filePath, "utf8");
+      const parsed = parseFrontmatter(raw);
+      if (!parsed) {
+        errors.push(`${relativePath}: missing required frontmatter block`);
+        continue;
+      }
+
+      const frontmatter = normalizeFrontmatter(
+        parsed.frontmatter,
+        relativePath,
+        section,
+        location.categorySlug,
+        location.slug,
+        errors,
+      );
+      if (!frontmatter) continue;
+
+      const duplicatePath = seenSlugs.get(location.slug);
+      if (duplicatePath) {
+        errors.push(
+          `${relativePath}: slug "${location.slug}" already used by ${duplicatePath}. File names under docs/help must be unique.`,
+        );
+        continue;
+      }
+
+      seenSlugs.set(location.slug, relativePath);
+      articles.push({
+        slug: location.slug,
+        href: `/docs/${location.slug}`,
+        filePath,
+        section,
+        frontmatter,
+        content: stripNonRenderingMarkers(parsed.content).trim(),
+      });
     }
-
-    const meta = normalizeFrontmatter(parsed.frontmatter, relativePath, errors);
-    if (!meta) continue;
-
-    const slug = relativePath.replace(/\.mdx?$/i, "");
-    articles.push({
-      slug,
-      href: `/docs/${slug}`,
-      filePath,
-      frontmatter: meta,
-      content: stripNonRenderingMarkers(parsed.content).trim(),
-    });
   }
 
   return {
@@ -248,6 +259,39 @@ async function getMarkdownFiles(root: string): Promise<string[]> {
   return files;
 }
 
+function parseArticleLocation(relativePath: string, errors: string[]) {
+  const segments = relativePath.split("/");
+  if (segments.length !== 3) {
+    errors.push(
+      `${relativePath}: docs must live in docs/help/<section>/<category>/<file>.md`,
+    );
+    return null;
+  }
+
+  const [section, categorySlug, fileName] = segments;
+  if (
+    section !== "project-tools" &&
+    section !== "ai-features"
+  ) {
+    errors.push(
+      `${relativePath}: section must be "project-tools" or "ai-features"`,
+    );
+    return null;
+  }
+
+  const slug = fileName.replace(/\.mdx?$/i, "");
+  if (!slug) {
+    errors.push(`${relativePath}: article file name must not be empty`);
+    return null;
+  }
+
+  return {
+    section: section as HelpArticleSection,
+    categorySlug,
+    slug,
+  };
+}
+
 function stripNonRenderingMarkers(content: string): string {
   return content.replace(/<!--\s*allow-outside-documentation\s*-->\s*/g, "");
 }
@@ -278,18 +322,19 @@ function scoreHelpArticle(
   let score = 0;
   if (title.includes(normalizedQuery)) score += 20;
   if (description.includes(normalizedQuery)) score += 12;
-  if (actions.includes(normalizedQuery)) score += 10;
-  if (routes.includes(normalizedQuery)) score += 8;
-  if (content.includes(normalizedQuery)) score += 6;
+  if (category.includes(normalizedQuery)) score += 8;
+  if (moduleName.includes(normalizedQuery)) score += 8;
+  if (tags.includes(normalizedQuery)) score += 6;
+  if (routes.includes(normalizedQuery)) score += 5;
+  if (actions.includes(normalizedQuery)) score += 4;
+  if (content.includes(normalizedQuery)) score += 3;
 
   for (const term of queryTerms) {
-    if (title.includes(term)) score += 8;
-    if (description.includes(term)) score += 5;
-    if (actions.includes(term)) score += 5;
-    if (routes.includes(term)) score += 4;
-    if (tags.includes(term)) score += 4;
-    if (moduleName.includes(term)) score += 3;
+    if (title.includes(term)) score += 5;
+    if (description.includes(term)) score += 3;
+    if (moduleName.includes(term)) score += 2;
     if (category.includes(term)) score += 2;
+    if (tags.includes(term)) score += 1;
     if (content.includes(term)) score += 1;
   }
 
@@ -298,21 +343,26 @@ function scoreHelpArticle(
 
 function createHelpArticleExcerpt(content: string, queryTerms: string[]): string {
   const plain = content
-    .replace(/```[\s\S]*?```/g, " ")
-    .replace(/`([^`]+)`/g, "$1")
     .replace(/^#{1,6}\s+/gm, "")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/[`*_>#-]/g, "")
     .replace(/\s+/g, " ")
     .trim();
+
   if (!plain) return "";
+  if (queryTerms.length === 0) return plain.slice(0, 180);
 
   const lower = plain.toLowerCase();
   const firstMatch = queryTerms
     .map((term) => lower.indexOf(term.toLowerCase()))
     .filter((index) => index >= 0)
     .sort((a, b) => a - b)[0];
-  const start = firstMatch === undefined ? 0 : Math.max(0, firstMatch - 120);
-  const excerpt = plain.slice(start, start + 420).trim();
+
+  if (firstMatch === undefined) {
+    return plain.slice(0, 180);
+  }
+
+  const start = Math.max(0, firstMatch - 60);
+  const excerpt = plain.slice(start, start + 220).trim();
   return start > 0 ? `...${excerpt}` : excerpt;
 }
 
@@ -378,14 +428,55 @@ function unquote(value: string): string {
 function normalizeFrontmatter(
   frontmatter: RawFrontmatter,
   relativePath: string,
+  section: HelpArticleSection,
+  categorySlug: string,
+  slug: string,
   errors: string[],
 ): HelpArticleFrontmatter | null {
-  for (const field of REQUIRED_FIELDS) {
-    if (!(field in frontmatter)) {
-      errors.push(`${relativePath}: missing required field "${field}"`);
-    }
+  const simple = normalizeSimpleFrontmatter(frontmatter, relativePath, errors);
+  if (!simple) return null;
+
+  const category = formatCategoryLabel(categorySlug);
+  const moduleName = slug.replace(/-/g, "_");
+  const sectionTag = section === "ai-features" ? "ai-features" : "project-tools";
+  const tags = uniqueStrings([
+    sectionTag,
+    categorySlug,
+    ...simple.title
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter(Boolean),
+  ]);
+
+  const unknownActionIds = getUnknownHelpActionIds(simple.related_actions);
+  if (unknownActionIds.length > 0) {
+    errors.push(
+      `${relativePath}: unknown related_actions value(s): ${unknownActionIds.join(", ")}`,
+    );
   }
 
+  return {
+    title: simple.title,
+    description: simple.description,
+    audience: "client",
+    visibility: "published",
+    module: moduleName,
+    category,
+    tags,
+    featured: simple.featured,
+    client_visible: true,
+    ai_visible: true,
+    order: simple.order,
+    related_routes: simple.related_routes,
+    related_actions: simple.related_actions,
+  };
+}
+
+function normalizeSimpleFrontmatter(
+  frontmatter: RawFrontmatter,
+  relativePath: string,
+  errors: string[],
+): SimpleFrontmatter | null {
   const title = requireString(frontmatter.title, relativePath, "title", errors);
   const description = requireString(
     frontmatter.description,
@@ -393,39 +484,27 @@ function normalizeFrontmatter(
     "description",
     errors,
   );
-  const audience = requireEnum(
-    frontmatter.audience,
-    HELP_ARTICLE_AUDIENCES,
+  const featured = requireOptionalBoolean(
+    frontmatter.featured,
     relativePath,
-    "audience",
+    "featured",
     errors,
+    false,
   );
-  const visibility = requireEnum(
-    frontmatter.visibility,
-    HELP_ARTICLE_VISIBILITIES,
+  const order = requireOptionalNumber(
+    frontmatter.order,
     relativePath,
-    "visibility",
+    "order",
     errors,
+    1000,
   );
-  const moduleName = requireString(frontmatter.module, relativePath, "module", errors);
-  const category = requireString(frontmatter.category, relativePath, "category", errors);
-  const tags = requireStringArray(frontmatter.tags, relativePath, "tags", errors);
-  const featured = requireBoolean(frontmatter.featured, relativePath, "featured", errors);
-  const clientVisible = requireBoolean(
-    frontmatter.client_visible,
-    relativePath,
-    "client_visible",
-    errors,
-  );
-  const aiVisible = requireBoolean(frontmatter.ai_visible, relativePath, "ai_visible", errors);
-  const order = requireNumber(frontmatter.order, relativePath, "order", errors);
-  const relatedRoutes = requireStringArray(
+  const relatedRoutes = requireOptionalStringArray(
     frontmatter.related_routes,
     relativePath,
     "related_routes",
     errors,
   );
-  const relatedActions = requireStringArray(
+  const relatedActions = requireOptionalStringArray(
     frontmatter.related_actions,
     relativePath,
     "related_actions",
@@ -435,14 +514,7 @@ function normalizeFrontmatter(
   if (
     !title ||
     !description ||
-    !audience ||
-    !visibility ||
-    !moduleName ||
-    !category ||
-    !tags ||
     featured === null ||
-    clientVisible === null ||
-    aiVisible === null ||
     order === null ||
     !relatedRoutes ||
     !relatedActions
@@ -450,52 +522,32 @@ function normalizeFrontmatter(
     return null;
   }
 
-  if (visibility !== "published" && clientVisible) {
-    errors.push(`${relativePath}: only published articles can set client_visible: true`);
-  }
-
-  if (visibility !== "published" && aiVisible) {
-    errors.push(`${relativePath}: only published articles can set ai_visible: true`);
-  }
-
-  errors.push(...validateHelpVisibilityPolicy({
-    title,
-    description,
-    audience,
-    visibility,
-    module: moduleName,
-    category,
-    tags,
-    featured,
-    client_visible: clientVisible,
-    ai_visible: aiVisible,
-    order,
-    related_routes: relatedRoutes,
-    related_actions: relatedActions,
-  }, relativePath));
-
-  const unknownActionIds = getUnknownHelpActionIds(relatedActions);
-  if (unknownActionIds.length > 0) {
-    errors.push(
-      `${relativePath}: unknown related_actions value(s): ${unknownActionIds.join(", ")}`,
-    );
-  }
-
   return {
     title,
     description,
-    audience,
-    visibility,
-    module: moduleName,
-    category,
-    tags,
     featured,
-    client_visible: clientVisible,
-    ai_visible: aiVisible,
     order,
     related_routes: relatedRoutes,
     related_actions: relatedActions,
   };
+}
+
+function formatCategoryLabel(categorySlug: string): string {
+  const override = CATEGORY_LABEL_OVERRIDES[categorySlug];
+  if (override) return override;
+
+  return categorySlug
+    .split("-")
+    .filter(Boolean)
+    .map((segment) => {
+      if (segment === "ai") return "AI";
+      return segment.charAt(0).toUpperCase() + segment.slice(1);
+    })
+    .join(" ");
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
 }
 
 function requireString(
@@ -509,49 +561,42 @@ function requireString(
   return null;
 }
 
-function requireBoolean(
+function requireOptionalBoolean(
   value: unknown,
   relativePath: string,
   field: string,
   errors: string[],
+  fallback: boolean,
 ): boolean | null {
+  if (value === undefined) return fallback;
   if (typeof value === "boolean") return value;
   errors.push(`${relativePath}: "${field}" must be true or false`);
   return null;
 }
 
-function requireNumber(
+function requireOptionalNumber(
   value: unknown,
   relativePath: string,
   field: string,
   errors: string[],
+  fallback: number,
 ): number | null {
+  if (value === undefined) return fallback;
   if (typeof value === "number" && Number.isInteger(value)) return value;
   errors.push(`${relativePath}: "${field}" must be an integer`);
   return null;
 }
 
-function requireStringArray(
+function requireOptionalStringArray(
   value: unknown,
   relativePath: string,
   field: string,
   errors: string[],
 ): string[] | null {
+  if (value === undefined) return [];
   if (Array.isArray(value) && value.every((item) => typeof item === "string")) {
     return value.map((item) => item.trim()).filter(Boolean);
   }
   errors.push(`${relativePath}: "${field}" must be a string array`);
-  return null;
-}
-
-function requireEnum<T extends readonly string[]>(
-  value: unknown,
-  allowed: T,
-  relativePath: string,
-  field: string,
-  errors: string[],
-): T[number] | null {
-  if (typeof value === "string" && allowed.includes(value)) return value;
-  errors.push(`${relativePath}: "${field}" must be one of ${allowed.join(", ")}`);
   return null;
 }

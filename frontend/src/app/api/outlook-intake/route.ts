@@ -1,6 +1,10 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import {
+  createOutlookIntakeServiceClient,
+  createServiceClient,
+} from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 
 interface IntakeProjectRow {
@@ -39,7 +43,6 @@ interface OutlookIntakeRow {
   web_link: string | null;
   created_at: string | null;
   source_metadata: Record<string, unknown> | null;
-  projects: IntakeProjectRow | null;
   outlook_email_intake_attachments: IntakeAttachmentRow[] | null;
 }
 
@@ -87,12 +90,14 @@ export const GET = withApiGuardrails(
   "outlook-intake#GET",
   async ({ request }) => {
     const supabase = await assertAdminAccess("outlook-intake#GET");
+    const appService = createServiceClient();
+    const intakeService = createOutlookIntakeServiceClient();
     const { searchParams } = new URL(request.url);
     const matchStatus = searchParams.get("match_status");
     const classificationAction = searchParams.get("classification_action");
     const unassigned = searchParams.get("unassigned") === "true";
 
-    let query = supabase
+    let query = intakeService
       .from("outlook_email_intake")
       .select(
         `
@@ -117,11 +122,6 @@ export const GET = withApiGuardrails(
 	        web_link,
 	        created_at,
 	        source_metadata,
-	        projects!outlook_email_intake_project_id_fkey (
-          id,
-          name,
-          project_number
-        ),
         outlook_email_intake_attachments (
           id,
           file_name,
@@ -162,6 +162,34 @@ export const GET = withApiGuardrails(
     }
 
     const intakeRows: OutlookIntakeRow[] = (data ?? []) as OutlookIntakeRow[];
+    const projectIds = [
+      ...new Set(
+        intakeRows
+          .map((row) => row.project_id)
+          .filter((projectId): projectId is number => Number.isInteger(projectId)),
+      ),
+    ];
+    const projectsById = new Map<number, IntakeProjectRow>();
+
+    if (projectIds.length > 0) {
+      const { data: projectRows, error: projectError } = await appService
+        .from("projects")
+        .select("id, name, project_number")
+        .in("id", projectIds);
+
+      if (projectError) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "outlook-intake#GET",
+          message: projectError.message,
+        });
+      }
+
+      for (const project of (projectRows ?? []) as IntakeProjectRow[]) {
+        projectsById.set(project.id, project);
+      }
+    }
+
     const documentMetadataIds = [
       ...new Set(
         intakeRows
@@ -198,48 +226,54 @@ export const GET = withApiGuardrails(
       }
     }
 
-    const rows = intakeRows.map((row) => ({
-      id: row.id,
-      graphMessageId: row.graph_message_id,
-      mailboxUserId: row.mailbox_user_id,
-      documentMetadataId: row.document_metadata_id,
-      documentStatus: row.document_metadata_id
-        ? (documentStatusById.get(row.document_metadata_id) ??
-          "missing_metadata")
-        : null,
-      conversationId: row.conversation_id,
-      subject: row.subject,
-      body: row.body,
-      bodyHtml: row.body_html,
-      bodyText: row.body_text,
-      fromName: row.from_name,
-      fromEmail: row.from_email,
-      toList: row.to_list ?? [],
-      matchStatus: row.match_status,
-      assignmentMethod: row.assignment_method,
-      assignmentConfidence: row.assignment_confidence,
-      receivedAt: row.received_at,
-      hasAttachments: row.has_attachments,
-      webLink: row.web_link,
-      createdAt: row.created_at,
-      intakeClassification: normalizeIntakeClassification(row.source_metadata),
-      project: row.projects
-        ? {
-            id: row.projects.id,
-            name: row.projects.name,
-            projectNumber: row.projects.project_number,
-          }
-        : null,
-      attachments: (row.outlook_email_intake_attachments ?? []).map(
-        (attachment) => ({
-          id: attachment.id,
-          fileName: attachment.file_name,
-          fileSize: attachment.file_size,
-          contentType: attachment.content_type,
-          createdAt: attachment.created_at,
-        }),
-      ),
-    }));
+    const rows = intakeRows.map((row) => {
+      const project = row.project_id
+        ? projectsById.get(row.project_id) ?? null
+        : null;
+
+      return {
+        id: row.id,
+        graphMessageId: row.graph_message_id,
+        mailboxUserId: row.mailbox_user_id,
+        documentMetadataId: row.document_metadata_id,
+        documentStatus: row.document_metadata_id
+          ? (documentStatusById.get(row.document_metadata_id) ??
+            "missing_metadata")
+          : null,
+        conversationId: row.conversation_id,
+        subject: row.subject,
+        body: row.body,
+        bodyHtml: row.body_html,
+        bodyText: row.body_text,
+        fromName: row.from_name,
+        fromEmail: row.from_email,
+        toList: row.to_list ?? [],
+        matchStatus: row.match_status,
+        assignmentMethod: row.assignment_method,
+        assignmentConfidence: row.assignment_confidence,
+        receivedAt: row.received_at,
+        hasAttachments: row.has_attachments,
+        webLink: row.web_link,
+        createdAt: row.created_at,
+        intakeClassification: normalizeIntakeClassification(row.source_metadata),
+        project: project
+          ? {
+              id: project.id,
+              name: project.name,
+              projectNumber: project.project_number,
+            }
+          : null,
+        attachments: (row.outlook_email_intake_attachments ?? []).map(
+          (attachment) => ({
+            id: attachment.id,
+            fileName: attachment.file_name,
+            fileSize: attachment.file_size,
+            contentType: attachment.content_type,
+            createdAt: attachment.created_at,
+          }),
+        ),
+      };
+    });
 
     return NextResponse.json(rows);
   },

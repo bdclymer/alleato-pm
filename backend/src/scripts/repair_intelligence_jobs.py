@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 from datetime import datetime, timedelta, timezone
@@ -18,6 +19,8 @@ TRANSIENT_ERROR_MARKERS = (
     "connection terminated",
     "timeout",
     "temporarily unavailable",
+    "final projection writes are disabled",
+    "projection row count",
 )
 
 
@@ -124,28 +127,40 @@ def main() -> int:
     parser.add_argument("--source-limit", type=int, default=25)
     parser.add_argument("--packet-limit", type=int, default=25)
     parser.add_argument("--max-processing-time-ms", type=int, default=120000)
+    parser.add_argument(
+        "--use-operating-summary-compiler",
+        action="store_true",
+        help=(
+            "Opt into the LLM-backed project operating summary compiler during repair. "
+            "By default repairs use the deterministic packet compiler to avoid bulk credit burn."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
+    if not args.use_operating_summary_compiler:
+        os.environ["INTELLIGENCE_USE_OPERATING_SUMMARY_COMPILER"] = "false"
+
     from src.services.intelligence.compiler import run_intelligence_compiler_batch
-    from src.services.supabase_helpers import get_supabase_client
+    from src.services.supabase_helpers import get_rag_write_client, get_supabase_client
 
     supabase = get_supabase_client()
+    rag = get_rag_write_client()
     cutoff = datetime.now(timezone.utc) - timedelta(minutes=max(1, args.stale_minutes))
     cutoff_iso = cutoff.isoformat()
     limit = max(1, args.limit)
 
-    source_rows = _find_stale_running(supabase, "source_intelligence_jobs", cutoff_iso, limit)
-    source_rows.extend(_find_transient_failed(supabase, "source_intelligence_jobs", limit))
+    source_rows = _find_stale_running(rag, "source_intelligence_jobs", cutoff_iso, limit)
+    source_rows.extend(_find_transient_failed(rag, "source_intelligence_jobs", limit))
     packet_rows = [
-        *_find_stale_running(supabase, "packet_refresh_jobs", cutoff_iso, limit),
-        *_find_transient_failed(supabase, "packet_refresh_jobs", limit),
+        *_find_stale_running(rag, "packet_refresh_jobs", cutoff_iso, limit),
+        *_find_transient_failed(rag, "packet_refresh_jobs", limit),
     ]
 
     source_by_id = {row["id"]: row for row in source_rows}
     packet_by_id = {row["id"]: row for row in packet_rows}
-    source_requeue = _requeue_rows(supabase, "source_intelligence_jobs", list(source_by_id.values()), dry_run=args.dry_run)
-    packet_requeue = _requeue_rows(supabase, "packet_refresh_jobs", list(packet_by_id.values()), dry_run=args.dry_run)
+    source_requeue = _requeue_rows(rag, "source_intelligence_jobs", list(source_by_id.values()), dry_run=args.dry_run)
+    packet_requeue = _requeue_rows(rag, "packet_refresh_jobs", list(packet_by_id.values()), dry_run=args.dry_run)
 
     compiler_result = None
     if not args.dry_run and (source_requeue["requeued"] or packet_requeue["requeued"]):

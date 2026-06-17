@@ -72,9 +72,18 @@ from src.services.agents.microsoft_executive_assistant import (
 )
 from src.services.agents.research_agent import ResearchRequest, run_research_agent
 from src.services.agents.app_expert import AppExpertRequest, run_app_expert_agent
+from src.services.mcp.alleato_system import (
+    alleato_system_mcp_enabled,
+    alleato_system_mcp_status,
+    create_alleato_system_mcp_app,
+    create_alleato_system_mcp_lifespan,
+)
 from src.services.microsoft_project_parser import (
     MicrosoftProjectParseError,
     parse_microsoft_project_file,
+)
+from src.services.integrations.microsoft_graph.ingestion_control import (
+    graph_ingestion_disabled_reason,
 )
 
 # Configure logging
@@ -105,6 +114,17 @@ def _public_backend_error(prefix: str, exc: Exception) -> str:
     return f"{prefix}: {compact[:500]}"
 
 
+def _graph_ingestion_blocked_reason(mode: str = "manual") -> Optional[str]:
+    """Return a public reason when Graph write-heavy API work must fail closed."""
+    return graph_ingestion_disabled_reason(mode=mode)
+
+
+def _require_graph_ingestion_enabled() -> None:
+    reason = _graph_ingestion_blocked_reason()
+    if reason:
+        raise HTTPException(status_code=503, detail=reason)
+
+
 def _run_pipeline_limited(metadata_id: str) -> None:
     """Run pipeline with bounded in-process concurrency to prevent DB overload."""
     logger.info(
@@ -116,21 +136,6 @@ def _run_pipeline_limited(metadata_id: str) -> None:
         logger.info("[Pipeline] acquired slot metadata_id=%s", metadata_id)
         run_full_pipeline(metadata_id)
         logger.info("[Pipeline] released slot metadata_id=%s", metadata_id)
-
-
-def _process_graph_notification_realtime(notification: Dict[str, Any]) -> None:
-    """Drain Microsoft Graph webhook work after the endpoint has acknowledged it."""
-    from src.services.integrations.microsoft_graph.webhooks import process_graph_notification_realtime
-    from src.services.agents.microsoft_executive_assistant.triggers import (
-        run_outlook_event_microsoft_executive_assistant,
-    )
-    from src.services.supabase_helpers import get_supabase_client
-
-    client = get_supabase_client()
-    result = process_graph_notification_realtime(client, notification)
-    logger.info("[GraphWebhook] realtime processing result: %s", result)
-    assistant_result = run_outlook_event_microsoft_executive_assistant(sync_result=result)
-    logger.info("[GraphWebhook] Microsoft Executive Assistant trigger result: %s", assistant_result)
 
 
 def _run_intelligence_compiler_limited(
@@ -208,6 +213,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*", "sentry-trace", "baggage"],
 )
+
+if alleato_system_mcp_enabled():
+    app.mount("/mcp", create_alleato_system_mcp_app())
 
 
 class ChatRequest(BaseModel):
@@ -405,6 +413,11 @@ async def health_check() -> Dict[str, Any]:
         "deep_agent_storage": deep_agent_storage,
         "timestamp": datetime.now().isoformat()
     }
+
+
+@app.get("/api/mcp/status", tags=["System"], summary="Hosted MCP status")
+async def hosted_mcp_status() -> Dict[str, Any]:
+    return alleato_system_mcp_status()
 
 
 def _select_keyword(message: str) -> Optional[str]:
@@ -851,6 +864,7 @@ async def graph_embed_endpoint(
     """Vectorize pending document_metadata rows (status raw_ingested/segmented/compiled).
     Does not fetch new data from Graph — use /api/graph/sync for that.
     Safe to call frequently. Idempotent."""
+    _require_graph_ingestion_enabled()
     from src.services.supabase_helpers import get_supabase_client
     from src.services.integrations.microsoft_graph.embed import embed_pending_graph_documents
     import asyncio
@@ -878,6 +892,7 @@ async def graph_sync_endpoint(
     Returns:
         Dict with status and counts per source.
     """
+    _require_graph_ingestion_enabled()
     from src.services.supabase_helpers import get_supabase_client
     from src.services.integrations.microsoft_graph.sync import run_graph_sync
     from src.services.integrations.microsoft_graph.client import get_graph_client
@@ -924,6 +939,7 @@ async def graph_outlook_mailbox_sync_endpoint(
     _: None = Depends(require_admin_api_key),
 ) -> Dict[str, Any]:
     """Manually sync one Outlook mailbox without touching other configured users."""
+    _require_graph_ingestion_enabled()
     user_email = payload.user_email.strip().lower()
     if not user_email or "@" not in user_email:
         raise HTTPException(status_code=400, detail="user_email must be a valid mailbox address")
@@ -1000,6 +1016,7 @@ async def graph_outlook_intake_reclassify_endpoint(
     _: None = Depends(require_admin_api_key),
 ) -> Dict[str, Any]:
     """Apply current Outlook intake classification rules to already stored rows."""
+    _require_graph_ingestion_enabled()
     if payload.days_back < 0:
         raise HTTPException(status_code=422, detail="days_back must be zero or greater")
     if payload.limit < 1 or payload.limit > 5000:
@@ -1044,6 +1061,7 @@ async def graph_outlook_mailbox_subscribe_endpoint(
     _: None = Depends(require_admin_api_key),
 ) -> Dict[str, Any]:
     """Create or renew one Outlook mailbox webhook subscription without touching other users."""
+    _require_graph_ingestion_enabled()
     user_email = payload.user_email.strip().lower()
     if not user_email or "@" not in user_email:
         raise HTTPException(status_code=400, detail="user_email must be a valid mailbox address")
@@ -1096,7 +1114,6 @@ async def graph_outlook_mailbox_subscribe_endpoint(
 )
 async def graph_webhook_notifications_endpoint(
     request: Request,
-    background_tasks: BackgroundTasks,
     validationToken: Optional[str] = Query(default=None),
 ) -> Any:
     """Accept Microsoft Graph webhook validation and change notifications.
@@ -1107,6 +1124,10 @@ async def graph_webhook_notifications_endpoint(
     """
     if validationToken is not None:
         return PlainTextResponse(validationToken, status_code=200)
+    blocked_reason = _graph_ingestion_blocked_reason(mode="webhook")
+    if blocked_reason:
+        logger.warning("[GraphWebhook] notification accepted without DB writes: %s", blocked_reason)
+        return {"status": "disabled", "recorded": 0, "reason": blocked_reason}
 
     try:
         payload = await request.json()
@@ -1124,13 +1145,7 @@ async def graph_webhook_notifications_endpoint(
         from src.services.supabase_helpers import get_supabase_client
 
         client = get_supabase_client()
-        result = handle_graph_notifications(
-            client,
-            payload,
-            on_realtime_notification=lambda notification: (
-                background_tasks.add_task(_process_graph_notification_realtime, dict(notification)) or True
-            ),
-        )
+        result = handle_graph_notifications(client, payload)
         return result
     except GraphWebhookAuthError as exc:
         logger.warning("[GraphWebhook] rejected notification: %s", exc)
@@ -1152,6 +1167,10 @@ async def graph_webhook_lifecycle_endpoint(
     """Accept Graph lifecycle validation and mark subscription action-required states."""
     if validationToken is not None:
         return PlainTextResponse(validationToken, status_code=200)
+    blocked_reason = _graph_ingestion_blocked_reason(mode="webhook")
+    if blocked_reason:
+        logger.warning("[GraphWebhook] lifecycle notification accepted without DB writes: %s", blocked_reason)
+        return {"status": "disabled", "recorded": 0, "reason": blocked_reason}
 
     try:
         payload = await request.json()
@@ -1188,6 +1207,7 @@ async def graph_subscriptions_reconcile_endpoint(
     _: None = Depends(require_admin_api_key),
 ) -> Dict[str, Any]:
     """Ensure configured Microsoft Graph subscriptions exist and are fresh."""
+    _require_graph_ingestion_enabled()
     try:
         from src.services.integrations.microsoft_graph.subscriptions import ensure_subscriptions
         from src.services.supabase_helpers import get_supabase_client
@@ -1914,6 +1934,10 @@ async def start_scheduler():
     except Exception as e:
         logger.warning("Scheduler init failed (non-critical): %s", e)
 
+    if alleato_system_mcp_enabled():
+        app.state.alleato_system_mcp_lifespan = create_alleato_system_mcp_lifespan()
+        await app.state.alleato_system_mcp_lifespan.__aenter__()
+
 
 @app.on_event("startup")
 async def emit_langsmith_tracing_probe() -> None:
@@ -1960,6 +1984,10 @@ async def stop_scheduler():
         shutdown_scheduler()
     except Exception:
         pass
+
+    mcp_lifespan = getattr(app.state, "alleato_system_mcp_lifespan", None)
+    if mcp_lifespan is not None:
+        await mcp_lifespan.__aexit__(None, None, None)
 
 
 # === Digest Endpoints ===

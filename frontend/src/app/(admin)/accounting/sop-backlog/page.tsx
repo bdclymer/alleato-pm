@@ -3,20 +3,24 @@
 import * as React from "react";
 import { CheckCircle2, FileText, Link2, Plus } from "lucide-react";
 import { PageShell } from "@/components/layout";
-import { InfoAlert, StatusBadge } from "@/components/ds";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
+  Button,
+  DataTable,
+  EmptyState,
+  InfoAlert,
+  Input,
+  Label,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+  SectionHeader,
+  StatusBadge,
+  Textarea,
+  KpiRow,
+} from "@/components/ds";
 import { apiFetch } from "@/lib/api-client";
-import { cn } from "@/lib/utils";
 
 type SopStatus = "needed" | "draft" | "in_review" | "published" | "archived";
 type BusinessArea = "accounting" | "finance";
@@ -65,9 +69,13 @@ const INITIAL_FORM: FormState = {
   description: "",
 };
 
-function formatStatus(status: string): string {
-  return status.replace(/_/g, " ");
-}
+const SOP_STATUS_OPTIONS: Array<{ value: SopStatus; label: string }> = [
+  { value: "needed", label: "Needed" },
+  { value: "draft", label: "Draft" },
+  { value: "in_review", label: "In review" },
+  { value: "published", label: "Published" },
+  { value: "archived", label: "Archived" },
+];
 
 function formatAge(days: number): string {
   if (days <= 0) return "Today";
@@ -75,9 +83,9 @@ function formatAge(days: number): string {
   return `${days} days`;
 }
 
-function priorityTone(priority: number): string {
-  if (priority <= 10) return "text-destructive";
-  if (priority <= 30) return "text-amber-600";
+function priorityToneClass(priority: number): string {
+  if (priority <= 10) return "text-danger";
+  if (priority <= 30) return "text-warning";
   return "text-muted-foreground";
 }
 
@@ -109,6 +117,11 @@ export default function SopBacklogPage() {
 
   async function createRecord(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!form.title.trim()) {
+      setError("SOP title is required.");
+      return;
+    }
+
     setIsSaving(true);
     setError(null);
 
@@ -167,29 +180,28 @@ export default function SopBacklogPage() {
     <PageShell
       variant="dashboard"
       title="SOP Backlog"
-      description="Structured accounting and finance SOP requirements before or after a file exists."
+      description="Track accounting and finance SOP items that still need a linked process or file."
     >
       <div className="space-y-8">
-        <section className="grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-border bg-border md:grid-cols-3">
-          <div className="bg-card p-4">
-            <p className="text-xs text-muted-foreground">Needed SOPs</p>
-            <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">
-              {neededRecords.length}
-            </p>
-          </div>
-          <div className="bg-card p-4">
-            <p className="text-xs text-muted-foreground">Linked to files</p>
-            <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">
-              {linkedRecords.length}
-            </p>
-          </div>
-          <div className="bg-card p-4">
-            <p className="text-xs text-muted-foreground">Needed over 30 days</p>
-            <p className="mt-1 text-2xl font-semibold tabular-nums text-foreground">
-              {overdueRecords.length}
-            </p>
-          </div>
-        </section>
+        <KpiRow
+          metrics={[
+            {
+              label: "Needed SOPs",
+              value: String(neededRecords.length),
+              context: "Waiting on closure action",
+            },
+            {
+              label: "Linked records",
+              value: String(linkedRecords.length),
+              context: "Associated with a file",
+            },
+            {
+              label: "Needed over 30 days",
+              value: String(overdueRecords.length),
+              context: "Needs immediate follow-up",
+            },
+          ]}
+        />
 
         {error && (
           <InfoAlert variant="error" role="alert">
@@ -197,13 +209,11 @@ export default function SopBacklogPage() {
           </InfoAlert>
         )}
 
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">Create placeholder SOP</h2>
-            <p className="text-sm text-muted-foreground">
-              Add the missing requirement now; link the uploaded SOP file later.
-            </p>
-          </div>
+        <section aria-label="Create placeholder SOP" className="space-y-4">
+          <SectionHeader title="Create placeholder SOP" />
+          <p className="max-w-3xl text-sm text-muted-foreground">
+            Add the requirement now and link the SOP file later in document intake.
+          </p>
 
           <form onSubmit={createRecord} className="grid grid-cols-1 gap-4 lg:grid-cols-12">
             <div className="space-y-2 lg:col-span-4">
@@ -216,6 +226,7 @@ export default function SopBacklogPage() {
                 required
               />
             </div>
+
             <div className="space-y-2 lg:col-span-2">
               <Label>Area</Label>
               <Select
@@ -233,6 +244,7 @@ export default function SopBacklogPage() {
                 </SelectContent>
               </Select>
             </div>
+
             <div className="space-y-2 lg:col-span-2">
               <Label htmlFor="sop-priority">Priority</Label>
               <Input
@@ -240,9 +252,12 @@ export default function SopBacklogPage() {
                 type="number"
                 min={0}
                 value={form.priority}
-                onChange={(event) => setForm((current) => ({ ...current, priority: event.target.value }))}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, priority: event.target.value }))
+                }
               />
             </div>
+
             <div className="space-y-2 lg:col-span-2">
               <Label>Priority label</Label>
               <Select
@@ -262,6 +277,7 @@ export default function SopBacklogPage() {
                 </SelectContent>
               </Select>
             </div>
+
             <div className="space-y-2 lg:col-span-2">
               <Label htmlFor="sop-owner">Owner</Label>
               <Input
@@ -271,15 +287,19 @@ export default function SopBacklogPage() {
                 placeholder="Owner"
               />
             </div>
+
             <div className="space-y-2 lg:col-span-10">
               <Label htmlFor="sop-description">Description</Label>
               <Textarea
                 id="sop-description"
                 value={form.description}
-                onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, description: event.target.value }))
+                }
                 placeholder="What gap does leadership need closed?"
               />
             </div>
+
             <div className="flex items-end lg:col-span-2">
               <Button type="submit" className="w-full gap-2" disabled={isSaving}>
                 <Plus className="h-4 w-4" />
@@ -289,116 +309,131 @@ export default function SopBacklogPage() {
           </form>
         </section>
 
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">Leadership backlog</h2>
+        <section aria-label="Leadership backlog" className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <SectionHeader title="Leadership backlog" count={records.length} />
             <Button variant="outline" size="sm" onClick={loadRecords} disabled={isLoading}>
               Refresh
             </Button>
           </div>
 
-          <div className="overflow-hidden rounded-lg border border-border">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-xs text-muted-foreground">
-                  <tr>
-                    <th className="px-4 py-3 text-left font-medium">SOP</th>
-                    <th className="px-4 py-3 text-left font-medium">Area</th>
-                    <th className="px-4 py-3 text-left font-medium">Status</th>
-                    <th className="px-4 py-3 text-left font-medium">Priority</th>
-                    <th className="px-4 py-3 text-left font-medium">Owner</th>
-                    <th className="px-4 py-3 text-left font-medium">Linked document</th>
-                    <th className="px-4 py-3 text-left font-medium">Age</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {isLoading ? (
-                    <tr>
-                      <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                        Loading SOP backlog...
-                      </td>
-                    </tr>
-                  ) : records.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                        No SOP backlog records yet.
-                      </td>
-                    </tr>
-                  ) : (
-                    records.map((record) => (
-                      <tr key={record.id} className="bg-background align-top">
-                        <td className="px-4 py-3">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2 font-medium text-foreground">
-                              <FileText className="h-4 w-4 text-muted-foreground" />
-                              {record.title}
-                            </div>
-                            {record.description && (
-                              <p className="max-w-md text-xs text-muted-foreground">
-                                {record.description}
-                              </p>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 capitalize text-foreground">{record.business_area}</td>
-                        <td className="px-4 py-3">
-                          <Select
-                            value={record.status}
-                            onValueChange={(value: SopStatus) => updateStatus(record, value)}
-                          >
-                            <SelectTrigger size="sm" className="w-36">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="needed">Needed</SelectItem>
-                              <SelectItem value="draft">Draft</SelectItem>
-                              <SelectItem value="in_review">In review</SelectItem>
-                              <SelectItem value="published">Published</SelectItem>
-                              <SelectItem value="archived">Archived</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="space-y-1">
-                            <span className={cn("font-medium tabular-nums", priorityTone(record.priority))}>
-                              {record.priority}
-                            </span>
-                            {record.priority_label && (
-                              <div className="text-xs capitalize text-muted-foreground">
-                                {record.priority_label}
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-foreground">{record.owner ?? "-"}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            {record.linked_document_metadata_id ? (
-                              <CheckCircle2 className="h-4 w-4 text-status-success" />
-                            ) : (
-                              <Link2 className="h-4 w-4 text-muted-foreground" />
-                            )}
-                            <div>
-                              <StatusBadge status={record.linked_document_status} />
-                              {record.linked_document_title && (
-                                <p className="mt-1 text-xs text-muted-foreground">
-                                  {record.linked_document_title}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          <div>{formatAge(record.age_days)}</div>
-                          <div className="text-xs">Updated {formatAge(record.last_updated_days)}</div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          {isLoading ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">Loading SOP backlog...</p>
+          ) : records.length === 0 ? (
+            <EmptyState
+              title="No SOP backlog"
+              description="Create one placeholder now to make follow-up ownership explicit."
+              action={
+                <Button variant="outline" size="sm" onClick={loadRecords}>
+                  Reload
+                </Button>
+              }
+            />
+          ) : (
+            <DataTable
+              columns={[
+                {
+                  key: "title",
+                  header: "SOP",
+                  primary: true,
+                  render: (record) => (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <span className="font-medium text-foreground">{record.title}</span>
+                      </div>
+                      {record.description ? (
+                        <p className="max-w-md text-xs leading-relaxed text-muted-foreground">
+                          {record.description}
+                        </p>
+                      ) : null}
+                    </div>
+                  ),
+                },
+                {
+                  key: "business_area",
+                  header: "Area",
+                  render: (record) => <span className="capitalize">{record.business_area}</span>,
+                },
+                {
+                  key: "status",
+                  header: "Status",
+                  render: (record) => (
+                    <Select
+                      value={record.status}
+                      onValueChange={(value: SopStatus) => {
+                        void updateStatus(record, value);
+                      }}
+                    >
+                      <SelectTrigger size="sm" className="w-36 min-h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SOP_STATUS_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ),
+                },
+                {
+                  key: "priority",
+                  header: "Priority",
+                  align: "right",
+                  render: (record) => (
+                    <div className="text-right">
+                      <span className={`font-medium tabular-nums ${priorityToneClass(record.priority)}`}>
+                        {record.priority}
+                      </span>
+                      {record.priority_label ? (
+                        <p className="text-xs capitalize text-muted-foreground">
+                          {record.priority_label}
+                        </p>
+                      ) : null}
+                    </div>
+                  ),
+                },
+                {
+                  key: "owner",
+                  header: "Owner",
+                  render: (record) => <span>{record.owner ?? "-"}</span>,
+                },
+                {
+                  key: "linked",
+                  header: "Linked document",
+                  render: (record) => (
+                    <div className="flex min-w-0 items-start gap-2">
+                      {record.linked_document_metadata_id ? (
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 text-success" />
+                      ) : (
+                        <Link2 className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                      )}
+                      <div className="min-w-0">
+                        <StatusBadge status={record.linked_document_status || "Draft"} />
+                        {record.linked_document_title ? (
+                          <p className="mt-1 text-xs text-muted-foreground">{record.linked_document_title}</p>
+                        ) : null}
+                      </div>
+                    </div>
+                  ),
+                },
+                {
+                  key: "age",
+                  header: "Age",
+                  render: (record) => (
+                    <div className="text-muted-foreground">
+                      <p>{formatAge(record.age_days)}</p>
+                      <p className="text-xs">Updated {formatAge(record.last_updated_days)}</p>
+                    </div>
+                  ),
+                },
+              ]}
+              rows={records}
+              emptyMessage="No SOP backlog records yet."
+            />
+          )}
         </section>
       </div>
     </PageShell>

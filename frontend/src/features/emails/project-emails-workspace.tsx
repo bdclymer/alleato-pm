@@ -1,37 +1,93 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  CheckIcon,
   CalendarIcon,
+  ChevronDownIcon,
   ClockIcon,
   Cross2Icon,
-  DotsHorizontalIcon,
   EnvelopeClosedIcon,
   FileTextIcon,
   Link2Icon,
   MagnifyingGlassIcon,
   MixerHorizontalIcon,
+  OpenInNewWindowIcon,
   PaperPlaneIcon,
   Pencil1Icon,
   PlusIcon,
+  ReloadIcon,
   StarFilledIcon,
   TrashIcon,
 } from "@radix-ui/react-icons";
+import { Check, FolderOpen, ImageIcon, ListTodo, Loader2, Paperclip, Plus, Sparkles } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
-import { StatusBadge } from "@/components/ds";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
+import {
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/unified-modal";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
-import type { ProjectEmail } from "@/hooks/use-emails";
+import type { EmailSource, ProjectEmail } from "@/hooks/use-emails";
+import { useProjects } from "@/hooks/use-projects";
+import { EmailImportanceFeedbackDialog } from "@/features/emails/email-importance-feedback-dialog";
 import {
   EmailDetailSheet,
   projectEmailToDetailRecord,
 } from "@/features/emails/email-detail-sheet";
+import {
+  buildEmailContentBlocks,
+  latestReadableMessage,
+  type EmailContentBlock,
+} from "@/features/emails/email-thread";
+import { toast } from "sonner";
+
+const PdfDocument = dynamic(
+  async () => {
+    const mod = await import("react-pdf");
+    mod.pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+    return mod.Document;
+  },
+  { ssr: false },
+);
+
+const PdfPage = dynamic(
+  async () => {
+    const mod = await import("react-pdf");
+    mod.pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+    return mod.Page;
+  },
+  { ssr: false },
+);
 
 interface WorkspaceTab {
   label: string;
@@ -48,45 +104,86 @@ interface ProjectEmailsWorkspaceProps {
   onSearchChange: (value: string) => void;
   statusFilter?: string;
   onStatusFilterChange: (status?: string) => void;
+  /** Show the All / App / Outlook source toggle (unified Emails view). */
+  showSourceFilter?: boolean;
+  sourceFilter?: EmailSource;
+  onSourceFilterChange?: (source: EmailSource) => void;
+  /** Returns false for read-only (Outlook-synced) emails so Edit is hidden. */
+  canEdit?: (email: ProjectEmail) => boolean;
   onCompose: () => void;
   onEdit: (email: ProjectEmail) => void;
   onDelete: (email: ProjectEmail) => void;
 }
 
-const statusOptions = [
-  { label: "Received", value: "Received" },
-  { label: "Sent", value: "Sent" },
-  { label: "All mail", value: undefined },
-  { label: "Drafts", value: "Draft" },
-];
+interface EmailAttachmentRecord {
+  id: number;
+  emailId: number;
+  fileName: string;
+  fileUrl: string;
+  fileSize: number | null;
+  contentType: string | null;
+  createdAt: string | null;
+  textLength: number;
+  graphAttachmentId: string | null;
+  checksumSha256: string | null;
+  attachmentType: string | null;
+  attachmentCategory: string | null;
+  email: {
+    id: number;
+    subject: string;
+    fromName: string | null;
+    fromEmail: string | null;
+    receivedAt: string | null;
+    sentAt: string | null;
+    createdAt: string | null;
+  } | null;
+}
+
+const ATTACHMENT_TYPES = [
+  "Drawings",
+  "Submittal",
+  "Invoice",
+  "Pay App",
+  "RFI",
+  "Contract",
+  "Specifications",
+  "Photos",
+  "Correspondence",
+  "Report",
+  "Other",
+] as const;
 
 function formatPaneTimestamp(value: string | null | undefined): string {
   if (!value) return "No timestamp";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "No timestamp";
 
-  const now = new Date();
-  const sameYear = date.getFullYear() === now.getFullYear();
-  const sameDay =
-    sameYear &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate();
-
-  if (sameDay) {
-    return date.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  }
-
-  return date.toLocaleDateString("en-US", {
+  const dateLabel = date.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
-    ...(sameYear ? {} : { year: "numeric" }),
   });
+  const timeLabel = date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return `${dateLabel} ${timeLabel}`;
 }
 
 function formatLongTimestamp(value: string | null | undefined): string {
+  if (!value) return "Not available";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Not available";
+
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function formatMetaDate(value: string | null | undefined): string {
   if (!value) return "Not available";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Not available";
@@ -106,14 +203,111 @@ function formatRecipientLine(recipients: string[] | null | undefined): string {
 }
 
 function plainTextBody(email: ProjectEmail): string {
-  const source = email.body?.trim() || email.body_html?.replace(/<[^>]+>/g, " ").trim() || "";
-  return source.replace(/\s+\n/g, "\n").replace(/\n{3,}/g, "\n\n");
+  const source = email.body_text?.trim() || email.body?.trim() || email.body_html?.trim() || "";
+  return latestReadableMessage(source);
+}
+
+function emailBodyBlocks(email: ProjectEmail): EmailContentBlock[] {
+  const source = email.body_text?.trim() || email.body?.trim() || email.body_html?.trim() || "";
+  return buildEmailContentBlocks(source);
+}
+
+function suggestedTaskTitle(email: ProjectEmail): string {
+  const subject = email.subject?.trim();
+  if (!subject) return "Follow up on email";
+  return subject.length > 160 ? `${subject.slice(0, 157)}...` : subject;
+}
+
+function suggestedTaskDescription(email: ProjectEmail): string {
+  const sender = email.from_name || email.from_email || "Unknown sender";
+  const recipients = formatRecipientLine(email.to_list);
+  const timestamp = formatMetaDate(email.received_at || email.sent_at || email.created_at);
+  const body = plainTextBody(email).replace(/\s+/g, " ").trim();
+  const excerpt = body.length > 1200 ? `${body.slice(0, 1197)}...` : body;
+
+  return [
+    `Follow up from email: ${email.subject || "Untitled email"}`,
+    `From: ${sender}`,
+    `To: ${recipients}`,
+    `Date: ${timestamp}`,
+    "",
+    excerpt || "Add the task details here.",
+  ].join("\n");
+}
+
+function projectLabel(project: ProjectEmail["project"] | null | undefined): string | null {
+  if (!project) return null;
+  if (project.project_number && project.name) return `${project.project_number} - ${project.name}`;
+  return project.name || project.project_number || `Project ${project.id}`;
+}
+
+function attachmentUrl(projectId: number, attachmentId: number): string {
+  return `/api/projects/${projectId}/email-attachments/${attachmentId}/download`;
+}
+
+function patchAttachmentUrl(projectId: number, attachmentId: number): string {
+  return `/api/projects/${projectId}/email-attachments/${attachmentId}`;
+}
+
+function previewUrl(projectId: number, attachmentId: number): string {
+  return `${attachmentUrl(projectId, attachmentId)}?disposition=inline`;
+}
+
+function isImageAttachment(attachment: EmailAttachmentRecord): boolean {
+  return (attachment.contentType?.toLowerCase() ?? "").startsWith("image/");
+}
+
+function isPdfAttachment(attachment: EmailAttachmentRecord): boolean {
+  return (attachment.contentType?.toLowerCase() ?? "").includes("pdf");
+}
+
+function isPreviewableAttachment(attachment: EmailAttachmentRecord): boolean {
+  return isImageAttachment(attachment) || isPdfAttachment(attachment);
+}
+
+function formatBytes(value: number | null): string {
+  if (!value) return "Unknown";
+  const units = ["B", "KB", "MB", "GB"];
+  let size = value;
+  let unitIndex = 0;
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024;
+    unitIndex += 1;
+  }
+  return `${size.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+}
+
+function buildAttachmentTypeOptions(attachments: EmailAttachmentRecord[]): string[] {
+  const defaults = [...ATTACHMENT_TYPES];
+  const known = new Set(defaults.map((value) => value.toLowerCase()));
+  const custom = attachments
+    .map((attachment) => attachment.attachmentType?.trim() ?? "")
+    .filter(Boolean)
+    .filter((value, index, values) => values.indexOf(value) === index)
+    .filter((value) => !known.has(value.toLowerCase()))
+    .sort((a, b) => a.localeCompare(b));
+
+  return [...defaults, ...custom];
+}
+
+function normalizeCustomOption(value: string): string {
+  return value.trim().replace(/\s+/g, " ");
 }
 
 function previewText(email: ProjectEmail): string {
   const body = plainTextBody(email).replace(/\s+/g, " ").trim();
   if (body.length > 120) return `${body.slice(0, 117)}...`;
   return body || "No message preview yet.";
+}
+
+function counterpartyLabel(email: ProjectEmail): string {
+  if (email.status === "Received") {
+    const recipients = formatRecipientLine(email.to_list);
+    return recipients === "No recipients" ? "To unknown" : `To ${recipients}`;
+  }
+
+  const sender = email.from_name || email.from_email || "Unknown sender";
+  return `From ${sender}`;
 }
 
 function getInitials(value: string): string {
@@ -192,51 +386,322 @@ function InboxRow({
   isActive: boolean;
   onSelect: () => void;
 }) {
+  const isReceived = email.status === "Received";
+
   return (
     <Button
       type="button"
       onClick={onSelect}
       variant="ghost"
       className={cn(
-        "group h-auto w-full justify-start rounded-none border-l-2 px-5 py-3.5 text-left transition-colors duration-200",
+        "group h-auto w-full justify-start overflow-hidden rounded-none border-l-2 px-4 py-3 text-left transition-colors duration-200",
         isActive
-          ? "border-primary bg-primary/5"
+          ? "border-primary bg-accent/60"
           : "border-transparent hover:bg-accent/50",
       )}
     >
-      <div className="flex items-start">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-3">
-            <div className="truncate text-sm font-semibold text-foreground">
+      <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_7.5rem] gap-3">
+        <div className="min-w-0 pr-3">
+          <div className="flex items-center gap-1.5">
+            <span
+              className={cn(
+                "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
+                isReceived
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "bg-amber-50 text-amber-700",
+              )}
+              aria-label={isReceived ? "Received email" : "Sent email"}
+            >
+              {isReceived ? (
+                <EnvelopeClosedIcon className="h-3.5 w-3.5" />
+              ) : (
+                <PaperPlaneIcon className="h-3.5 w-3.5" />
+              )}
+            </span>
+            <div className="truncate text-[13px] font-semibold leading-5 text-foreground">
               {email.from_name || email.from_email || "Unknown sender"}
             </div>
-            <div className="shrink-0 text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-              {formatPaneTimestamp(email.received_at || email.sent_at || email.created_at)}
-            </div>
           </div>
-          <div className="mt-1 flex items-center gap-2">
-            <p className="truncate text-sm font-medium text-foreground">
-              {email.subject || "Untitled email"}
-            </p>
-            {email.is_starred ? (
-              <StarFilledIcon className="h-3.5 w-3.5 shrink-0 text-status-warning" />
-            ) : null}
-          </div>
-          <p className="mt-1 line-clamp-2 text-[13px] leading-5 text-muted-foreground">
-            {previewText(email)}
+          <p className="mt-0.5 truncate pr-2 text-[13px] font-medium leading-5 text-foreground">
+            {email.subject || "Untitled email"}
           </p>
-          <div className="mt-2.5 flex items-center gap-2 text-[11px] text-muted-foreground">
-            <StatusBadge status={email.status} />
+          <p className="mt-0.5 truncate pr-2 text-[11px] leading-4 text-muted-foreground">
+            {counterpartyLabel(email)}
+          </p>
+          <div className="mt-0.5 flex items-center gap-2 pr-2">
+            <p className="min-w-0 truncate text-[11px] leading-4 text-muted-foreground">
+              {previewText(email)}
+            </p>
             {email.has_attachments ? (
-              <span className="inline-flex items-center gap-1">
-                <FileTextIcon className="h-3.5 w-3.5" />
-                Attachment
-              </span>
+              <FileTextIcon className="h-3 w-3 shrink-0 text-muted-foreground" />
             ) : null}
+          </div>
+        </div>
+        <div className="flex flex-col items-end text-right">
+          <div className="whitespace-nowrap text-[11px] font-medium tabular-nums text-muted-foreground">
+            {formatPaneTimestamp(email.received_at || email.sent_at || email.created_at)}
           </div>
         </div>
       </div>
     </Button>
+  );
+}
+
+function ProjectAssignmentPopover({
+  email,
+  variant = "default",
+}: {
+  email: ProjectEmail;
+  variant?: "default" | "toolbar";
+}) {
+  const router = useRouter();
+  const [open, setOpen] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+  const { projects, isLoading } = useProjects({ enabled: open, limit: 250 });
+  const currentLabel = projectLabel(email.project);
+
+  async function handleSelect(nextProjectId: number) {
+    if (nextProjectId === email.project_id) {
+      setOpen(false);
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await apiFetch<ProjectEmail>(`/api/projects/${email.project_id}/emails/${email.id}`, {
+        method: "PUT",
+        body: JSON.stringify({ project_id: nextProjectId }),
+      });
+      setOpen(false);
+      router.push(`/${nextProjectId}/emails`);
+      router.refresh();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        {variant === "toolbar" ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={saving}
+            className="h-auto max-w-full items-center gap-2 rounded-md px-0 py-0 text-left shadow-none hover:bg-transparent"
+          >
+            <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="truncate text-[15px] font-medium text-foreground/85">
+              {currentLabel ?? "Assign project"}
+            </span>
+            {saving ? (
+              <ReloadIcon className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+            ) : (
+              <ChevronDownIcon className="h-3.5 w-3.5 text-muted-foreground" />
+            )}
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={saving}
+            className="h-8 max-w-full justify-start gap-1.5 rounded-full px-3 text-xs font-medium shadow-none"
+          >
+            {saving ? (
+              <ReloadIcon className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+            ) : (
+              <ChevronDownIcon className="h-3.5 w-3.5 text-muted-foreground" />
+            )}
+            <span className="truncate">{currentLabel ?? "Assign project"}</span>
+          </Button>
+        )}
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Search projects..." />
+          <CommandList>
+            <CommandEmpty>{isLoading ? "Loading..." : "No projects found."}</CommandEmpty>
+            <CommandGroup>
+              {projects.map((project) => (
+                <CommandItem
+                  key={project.id}
+                  value={`${project.project_number ?? ""} ${project.name ?? ""}`}
+                  onSelect={() => handleSelect(project.id)}
+                >
+                  <CheckIcon
+                    className={cn(
+                      "mr-2 h-3.5 w-3.5",
+                      project.id === email.project_id ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                  <span className="truncate">
+                    {project.project_number
+                      ? `${project.project_number} - ${project.name ?? `Project ${project.id}`}`
+                      : (project.name ?? `Project ${project.id}`)}
+                  </span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function AttachmentTypePopover({
+  attachment,
+  projectId,
+  availableTypes,
+  onUpdated,
+}: {
+  attachment: EmailAttachmentRecord;
+  projectId: number;
+  availableTypes: string[];
+  onUpdated: (attachmentId: number, nextType: string | null) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
+  const [saving, setSaving] = React.useState(false);
+
+  const trimmedSearch = normalizeCustomOption(search);
+  const hasExactMatch = availableTypes.some(
+    (type) => type.toLowerCase() === trimmedSearch.toLowerCase(),
+  );
+
+  const handleChange = async (value: string | null) => {
+    const next = value === "__clear__" ? null : value;
+    setSaving(true);
+    try {
+      await apiFetch(patchAttachmentUrl(projectId, attachment.id), {
+        method: "PATCH",
+        body: JSON.stringify({ attachmentType: next }),
+      });
+      onUpdated(attachment.id, next);
+      setOpen(false);
+      setSearch("");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (!nextOpen) setSearch("");
+      }}
+    >
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={saving}
+          className="h-7 justify-between gap-1 rounded-full px-2.5 text-[11px] font-medium shadow-none"
+        >
+          <span className={cn("truncate", attachment.attachmentType ? "text-foreground" : "text-muted-foreground")}>
+            {attachment.attachmentType ?? "Set type"}
+          </span>
+          {saving ? (
+            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+          ) : (
+            <ChevronDownIcon className="h-3 w-3 text-muted-foreground" />
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-0" align="start" onOpenAutoFocus={(event) => event.preventDefault()}>
+        <Command shouldFilter>
+          <CommandInput
+            placeholder="Search or create type..."
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList>
+            <CommandEmpty>No matching types.</CommandEmpty>
+            <CommandGroup>
+              {attachment.attachmentType ? (
+                <CommandItem value="__clear__" onSelect={() => void handleChange("__clear__")} className="text-muted-foreground">
+                  Clear type
+                </CommandItem>
+              ) : null}
+              {trimmedSearch && !hasExactMatch ? (
+                <CommandItem value={`create ${trimmedSearch}`} onSelect={() => void handleChange(trimmedSearch)}>
+                  <Plus className="mr-2 h-3.5 w-3.5" />
+                  Create "{trimmedSearch}"
+                </CommandItem>
+              ) : null}
+              {availableTypes.map((type) => (
+                <CommandItem key={type} value={type} onSelect={() => void handleChange(type)}>
+                  <Check className={cn("mr-2 h-3.5 w-3.5", attachment.attachmentType === type ? "opacity-100" : "opacity-0")} />
+                  <span className="truncate">{type}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function AttachmentPreviewModal({
+  attachment,
+  projectId,
+  open,
+  onOpenChange,
+}: {
+  attachment: EmailAttachmentRecord | null;
+  projectId: number;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <Modal open={open} onOpenChange={onOpenChange}>
+      <ModalContent size="xl" className="h-full max-h-screen max-w-5xl overflow-hidden p-0">
+        <ModalHeader className="border-b border-border/70 px-6 py-4">
+          <ModalTitle>{attachment?.fileName ?? "Attachment preview"}</ModalTitle>
+          <ModalDescription>{attachment?.contentType || "Attachment preview"}</ModalDescription>
+        </ModalHeader>
+        {attachment ? (
+          <div className="h-full min-h-0 bg-muted/20">
+            {isImageAttachment(attachment) ? (
+              <div className="flex h-full items-center justify-center overflow-auto p-6">
+                <img
+                  src={previewUrl(projectId, attachment.id)}
+                  alt={attachment.fileName}
+                  className="max-h-full max-w-full object-contain"
+                />
+              </div>
+            ) : isPdfAttachment(attachment) ? (
+              <div className="h-full overflow-auto p-6">
+                <PdfDocument
+                  file={previewUrl(projectId, attachment.id)}
+                  loading={<div className="flex h-full items-center justify-center text-sm text-muted-foreground">Loading preview...</div>}
+                  error={<div className="flex h-full items-center justify-center text-sm text-muted-foreground">Preview failed to load.</div>}
+                  className="mx-auto flex w-fit flex-col gap-4"
+                >
+                  <PdfPage
+                    pageNumber={1}
+                    width={900}
+                    renderAnnotationLayer
+                    renderTextLayer
+                    className="overflow-hidden rounded-md bg-background shadow-sm"
+                  />
+                </PdfDocument>
+              </div>
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                No preview is available for this attachment type.
+              </div>
+            )}
+          </div>
+        ) : null}
+      </ModalContent>
+    </Modal>
   );
 }
 
@@ -277,23 +742,19 @@ function EmailDetailsPanel({
               </div>
             ) : null}
 
-            <div className="space-y-5 border-b border-border/70 pb-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-16 w-16 border border-border/70">
+              <div className="space-y-5 border-b border-border/70 pb-6">
+              <div className="flex items-start gap-4">
+                <div className="flex items-center gap-4">
+                    <Avatar className="h-14 w-14">
                       <AvatarFallback className="bg-muted text-sm font-semibold text-foreground">
                         {getInitials(primaryContact.displayName)}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <div className="text-sm font-semibold break-all text-foreground [overflow-wrap:anywhere]">
-                        {primaryContact.displayName}
-                      </div>
-                      <div className="mt-1 text-sm text-muted-foreground">
-                        {primaryContact.roleLabel}
-                      </div>
+                  <div className="min-w-0">
+                    <div className="text-xl font-semibold tracking-[-0.02em] break-all text-foreground [overflow-wrap:anywhere]">
+                      {primaryContact.displayName}
                     </div>
+                    <div className="mt-1 text-sm text-muted-foreground">{primaryContact.roleLabel}</div>
                   </div>
                 </div>
               </div>
@@ -311,15 +772,17 @@ function EmailDetailsPanel({
             </div>
 
             <div className="space-y-4 py-6">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.26em] text-muted-foreground">
-                Message context
+              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                Details
               </div>
               {contextItems.map((item) => (
-                <div key={item.label} className="flex gap-3 text-sm">
-                  <div className="mt-0.5 shrink-0 text-muted-foreground">{item.icon}</div>
+                <div key={item.label} className="grid grid-cols-[5rem_minmax(0,1fr)] gap-3 text-sm">
+                  <div className="inline-flex items-center gap-2 text-muted-foreground">
+                    <span className="shrink-0">{item.icon}</span>
+                    <span>{item.label}</span>
+                  </div>
                   <div className="min-w-0">
-                    <div className="text-muted-foreground">{item.label}</div>
-                    <div className="mt-1 break-all text-foreground [overflow-wrap:anywhere]">
+                    <div className="break-all text-foreground [overflow-wrap:anywhere]">
                       {item.value}
                     </div>
                   </div>
@@ -328,7 +791,7 @@ function EmailDetailsPanel({
             </div>
 
             <div className="space-y-4 border-t border-border/70 pt-6">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.26em] text-muted-foreground">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                 Related
               </div>
               <div className="flex flex-wrap gap-2">
@@ -350,7 +813,7 @@ function EmailDetailsPanel({
           </>
         ) : (
           <div className="space-y-6">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.26em] text-muted-foreground">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
               Workspace notes
             </div>
             <div className="space-y-4">
@@ -362,8 +825,8 @@ function EmailDetailsPanel({
                 },
                 {
                   icon: <MixerHorizontalIcon className="h-4 w-4" />,
-                  title: "Filters",
-                  body: "Use search and status chips to narrow the workspace without dropping back into a generic table.",
+                  title: "Search",
+                  body: "Keep the left rail quiet, then expand search only when you need to narrow a busy project thread.",
                 },
                 {
                   icon: <FileTextIcon className="h-4 w-4" />,
@@ -394,34 +857,67 @@ export function ProjectEmailsWorkspace({
   tabs,
   searchValue,
   onSearchChange,
-  statusFilter,
-  onStatusFilterChange,
+  canEdit,
   onCompose,
   onEdit,
   onDelete,
 }: ProjectEmailsWorkspaceProps) {
+  const router = useRouter();
   const [selectedEmailId, setSelectedEmailId] = React.useState<number | null>(null);
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = React.useState(false);
+  const [isSearchExpanded, setIsSearchExpanded] = React.useState(
+    () => searchValue.trim().length > 0,
+  );
+  const [importanceDialogOpen, setImportanceDialogOpen] = React.useState(false);
+  const [importanceSignal, setImportanceSignal] = React.useState<"important" | "not_important" | null>(null);
+  const [leftFilter, setLeftFilter] = React.useState<"all" | "attachments" | "starred">("all");
+  const [createTaskOpen, setCreateTaskOpen] = React.useState(false);
+  const [taskTitle, setTaskTitle] = React.useState("");
+  const [taskDescription, setTaskDescription] = React.useState("");
+  const [taskPriority, setTaskPriority] = React.useState<"high" | "medium" | "low">("medium");
+  const [taskStatus, setTaskStatus] = React.useState<"open" | "in_progress" | "blocked">("open");
+  const [taskDueDate, setTaskDueDate] = React.useState("");
+  const [isCreatingTask, setIsCreatingTask] = React.useState(false);
+  const [previewAttachment, setPreviewAttachment] = React.useState<EmailAttachmentRecord | null>(null);
+  const [attachmentOverrides, setAttachmentOverrides] = React.useState<Record<number, string | null>>({});
 
   React.useEffect(() => {
-    if (emails.length === 0) {
+    if (searchValue.trim().length > 0) {
+      setIsSearchExpanded(true);
+    }
+  }, [searchValue]);
+
+  const visibleEmails = React.useMemo(() => {
+    return emails.filter((email) => {
+      if (leftFilter === "attachments") return Boolean(email.has_attachments);
+      if (leftFilter === "starred") return Boolean(email.is_starred);
+      return true;
+    });
+  }, [emails, leftFilter]);
+
+  React.useEffect(() => {
+    if (visibleEmails.length === 0) {
       setSelectedEmailId(null);
       return;
     }
 
     setSelectedEmailId((current) => {
-      if (current && emails.some((email) => email.id === current)) return current;
-      return emails[0]?.id ?? null;
+      if (current && visibleEmails.some((email) => email.id === current)) return current;
+      return visibleEmails[0]?.id ?? null;
     });
-  }, [emails]);
+  }, [visibleEmails]);
 
   const selectedEmail = React.useMemo(
-    () => emails.find((email) => email.id === selectedEmailId) ?? null,
-    [emails, selectedEmailId],
+    () => visibleEmails.find((email) => email.id === selectedEmailId) ?? null,
+    [visibleEmails, selectedEmailId],
   );
 
   const selectedBody = React.useMemo(
     () => (selectedEmail ? plainTextBody(selectedEmail) : ""),
+    [selectedEmail],
+  );
+  const selectedBodyBlocks = React.useMemo(
+    () => (selectedEmail ? emailBodyBlocks(selectedEmail) : []),
     [selectedEmail],
   );
 
@@ -439,85 +935,223 @@ export function ProjectEmailsWorkspace({
     () => (selectedEmail ? projectEmailToDetailRecord(selectedEmail) : null),
     [selectedEmail],
   );
+  const { data: projectAttachments = [] } = useQuery<EmailAttachmentRecord[]>({
+    queryKey: ["email-attachments", selectedEmail?.project_id],
+    queryFn: ({ signal }) =>
+      apiFetch<EmailAttachmentRecord[]>(
+        `/api/projects/${selectedEmail?.project_id}/email-attachments`,
+        { signal },
+      ),
+    enabled: Boolean(selectedEmail?.project_id),
+  });
+  const selectedAttachments = React.useMemo(
+    () =>
+      projectAttachments
+        .filter((attachment) => attachment.emailId === selectedEmail?.id)
+        .map((attachment) => ({
+          ...attachment,
+          attachmentType:
+            attachmentOverrides[attachment.id] !== undefined
+              ? attachmentOverrides[attachment.id]
+              : attachment.attachmentType,
+        })),
+    [attachmentOverrides, projectAttachments, selectedEmail?.id],
+  );
+  const attachmentTypeOptions = React.useMemo(
+    () => buildAttachmentTypeOptions(projectAttachments),
+    [projectAttachments],
+  );
+
+  const selectedEmailEditable = selectedEmail
+    ? canEdit
+      ? canEdit(selectedEmail)
+      : true
+    : false;
 
   const handleSelectEmail = React.useCallback((email: ProjectEmail) => {
     setSelectedEmailId(email.id);
-    setIsDetailsPanelOpen(true);
+    setIsDetailsPanelOpen(false);
   }, []);
+
+  const handleImportanceIntent = React.useCallback(
+    (signal: "important" | "not_important") => {
+      setImportanceSignal(signal);
+      setImportanceDialogOpen(true);
+    },
+    [],
+  );
+  const handleAttachmentTypeUpdate = React.useCallback(
+    (attachmentId: number, nextType: string | null) => {
+      setAttachmentOverrides((current) => ({ ...current, [attachmentId]: nextType }));
+    },
+    [],
+  );
+
+  const handleOpenCreateTask = React.useCallback(() => {
+    if (!selectedEmail) return;
+    setTaskTitle(suggestedTaskTitle(selectedEmail));
+    setTaskDescription(suggestedTaskDescription(selectedEmail));
+    setTaskPriority("medium");
+    setTaskStatus("open");
+    setTaskDueDate("");
+    setCreateTaskOpen(true);
+  }, [selectedEmail]);
+
+  const handleCreateTask = React.useCallback(async () => {
+    if (!selectedEmail) return;
+
+    const trimmedTitle = taskTitle.trim();
+    const trimmedDescription = taskDescription.trim();
+
+    if (!trimmedTitle || !trimmedDescription) {
+      toast.error("Task title and description are required.");
+      return;
+    }
+
+    setIsCreatingTask(true);
+    try {
+      await apiFetch(`/api/projects/${selectedEmail.project_id}/emails/${selectedEmail.id}/tasks`, {
+        method: "POST",
+        body: JSON.stringify({
+          title: trimmedTitle,
+          description: trimmedDescription,
+          dueDate: taskDueDate || null,
+          priority: taskPriority,
+          status: taskStatus,
+        }),
+      });
+      setCreateTaskOpen(false);
+      toast.success("Task created from email.");
+      router.refresh();
+    } catch (error) {
+      const message =
+        error instanceof Error && /already exists/i.test(error.message)
+          ? "A matching task already exists for this email."
+          : error instanceof Error
+            ? error.message
+            : "Could not create task from email.";
+      toast.error(message);
+    } finally {
+      setIsCreatingTask(false);
+    }
+  }, [router, selectedEmail, taskDescription, taskDueDate, taskPriority, taskStatus, taskTitle]);
 
   return (
     <div className="relative flex min-h-[calc(100dvh-8.5rem)] flex-col">
-      <div className="grid min-h-0 flex-1 grid-cols-1 xl:grid-cols-[22rem_minmax(0,1fr)] 2xl:grid-cols-[22rem_minmax(0,1fr)_20rem]">
-        <div className="min-h-0 border-b border-border/70 xl:border-b-0 xl:border-r">
-          <div className="space-y-4 border-b border-border/70 px-4 py-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                {tabs.map((tab) => (
-                  <Link
-                    key={tab.href}
-                    href={tab.href}
-                    className={cn(
-                      "border-b pb-2 transition-colors",
-                      tab.isActive
-                        ? "border-primary text-foreground"
-                        : "border-transparent hover:text-foreground",
-                    )}
-                  >
-                    {tab.label}
-                  </Link>
-                ))}
+      <div className="grid min-h-0 flex-1 grid-cols-1 xl:grid-cols-[24rem_minmax(0,1fr)] 2xl:grid-cols-[24rem_minmax(0,1fr)_21rem]">
+        <div className="flex min-h-0 flex-col border-b border-border/70 xl:border-b-0 xl:border-r">
+          <div className="border-b border-border/70 px-5 py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <div className="text-[28px] font-semibold tracking-[-0.03em] text-foreground">
+                  Emails
+                </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onCompose}
-                aria-label="Compose"
-                title="Compose"
-                className="h-8 w-8 rounded-full text-muted-foreground shadow-none"
-              >
-                <Pencil1Icon className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsSearchExpanded((current) => !current)}
+                  aria-label="Search email"
+                  className="h-8 w-8 rounded-full text-muted-foreground shadow-none"
+                >
+                  <MagnifyingGlassIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onCompose}
+                  aria-label="Compose"
+                  title="Compose"
+                  className="h-8 w-8 rounded-full text-muted-foreground shadow-none"
+                >
+                  <Pencil1Icon className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
-            <div className="relative">
-              <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={searchValue}
-                onChange={(event) => onSearchChange(event.target.value)}
-                placeholder="Search project email"
-                className="h-11 rounded-full border-border bg-muted/40 pl-10 pr-4 shadow-none focus-visible:ring-1"
-              />
+            <div className="mt-3 flex items-center gap-5 text-sm text-muted-foreground">
+              {tabs.map((tab) => (
+                <Link
+                  key={tab.href}
+                  href={tab.href}
+                  className={cn(
+                    "border-b pb-2 transition-colors",
+                    tab.isActive
+                      ? "border-primary text-foreground"
+                      : "border-transparent hover:text-foreground",
+                  )}
+                >
+                  {tab.label}
+                </Link>
+              ))}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              {statusOptions.map((option) => {
-                const isActive = statusFilter === option.value;
-                return (
-                  <Button
-                    key={option.label}
-                    type="button"
-                    variant={isActive ? "default" : "secondary"}
-                    size="xs"
-                    onClick={() => onStatusFilterChange(option.value)}
-                    className={cn(
-                      "rounded-full px-3 py-1.5 transition-colors",
-                      !isActive && "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    {option.label}
-                  </Button>
-                );
-              })}
+            <div className="mt-3 flex items-center gap-2">
+              {[
+                { key: "all", label: "All" },
+                { key: "attachments", label: "Attachments" },
+                { key: "starred", label: "Starred" },
+              ].map((filter) => (
+                <Button
+                  key={filter.key}
+                  type="button"
+                  variant={leftFilter === filter.key ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setLeftFilter(filter.key as typeof leftFilter)}
+                  className="h-7 rounded-full px-3 text-xs shadow-none"
+                >
+                  {filter.label}
+                </Button>
+              ))}
             </div>
+
+            <AnimatePresence initial={false}>
+              {isSearchExpanded ? (
+                <motion.div
+                  key="expanded-search"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.18, ease: "easeOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="relative mt-3">
+                    <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      autoFocus
+                      value={searchValue}
+                      onChange={(event) => onSearchChange(event.target.value)}
+                      placeholder="Search email"
+                      className="h-10 rounded-full border-border bg-muted/40 pl-10 pr-10 shadow-none focus-visible:ring-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        onSearchChange("");
+                        setIsSearchExpanded(false);
+                      }}
+                      aria-label="Close search"
+                      className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full text-muted-foreground"
+                    >
+                      <Cross2Icon className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           </div>
 
-          <ScrollArea className="xl:h-full" style={{ height: "28rem" }}>
+          <ScrollArea className="min-h-0 flex-1">
             {isLoading ? (
-              <div className="space-y-3 px-4 py-4">
+              <div className="space-y-1 px-0 py-2">
                 {Array.from({ length: 6 }).map((_, index) => (
                   <div key={index} className="space-y-3 border-l-2 border-transparent px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <Skeleton className="h-9 w-9 rounded-full" />
                       <div className="min-w-0 flex-1 space-y-2">
                         <Skeleton className="h-4 w-28" />
                         <Skeleton className="h-4 w-40" />
@@ -534,7 +1168,7 @@ export function ProjectEmailsWorkspace({
                   <p className="mt-2 leading-6">{error.message}</p>
                 </div>
               </div>
-            ) : emails.length === 0 ? (
+            ) : visibleEmails.length === 0 ? (
               <div className="px-6 py-10 text-sm text-muted-foreground">
                 <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
                   <EnvelopeClosedIcon className="h-5 w-5" />
@@ -559,8 +1193,9 @@ export function ProjectEmailsWorkspace({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.24, ease: "easeOut" }}
+                className="divide-y divide-border/60"
               >
-                {emails.map((email) => (
+                {visibleEmails.map((email) => (
                   <InboxRow
                     key={email.id}
                     email={email}
@@ -585,112 +1220,238 @@ export function ProjectEmailsWorkspace({
                 className="flex h-full flex-col"
                 style={{ minHeight: "30rem" }}
               >
-                <div className="px-6 py-4">
-                  <div className="flex items-start justify-between gap-4">
+                <div className="border-b border-border/70 px-8 py-4 xl:px-10">
+                  <div className="flex items-start justify-between gap-6">
                     <div className="min-w-0">
                       <div className="flex items-center gap-3">
-                        {selectedEmail.is_starred ? (
-                          <StarFilledIcon className="h-4 w-4 text-status-warning" />
-                        ) : null}
-                        <div className="truncate text-xl font-semibold tracking-[-0.02em] text-foreground">
+                        <div className="truncate text-[15px] font-semibold tracking-[-0.01em] text-foreground">
                           {selectedEmail.subject || "Untitled email"}
                         </div>
                       </div>
-                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-muted-foreground">
-                        <span className="font-semibold text-foreground">
-                          {selectedEmail.from_name || "Unknown sender"}
+                      <div className="mt-3 grid gap-y-1.5 text-[13px] text-muted-foreground sm:grid-cols-[3.25rem_minmax(0,1fr)_auto] sm:gap-x-3">
+                        <span className="font-medium text-foreground/75">From</span>
+                        <span className="min-w-0 truncate text-foreground">
+                          <span className="font-medium">{selectedEmail.from_name || "Unknown sender"}</span>
+                          {selectedEmail.from_email ? `  ${selectedEmail.from_email}` : ""}
                         </span>
-                        <span>{selectedEmail.from_email || "No sender email"}</span>
+                        <span className="row-span-3 hidden whitespace-nowrap text-right text-[12px] text-muted-foreground sm:block">
+                          {formatMetaDate(
+                            selectedEmail.received_at ||
+                              selectedEmail.sent_at ||
+                              selectedEmail.created_at,
+                          )}
+                        </span>
+                        <span className="font-medium text-foreground/75">To</span>
+                        <span className="min-w-0 truncate text-foreground">
+                          {formatRecipientLine(selectedEmail.to_list)}
+                        </span>
+                        <span className="font-medium text-foreground/75 sm:hidden">Date</span>
+                        <span className="text-foreground sm:hidden">
+                          {formatMetaDate(
+                            selectedEmail.received_at ||
+                              selectedEmail.sent_at ||
+                              selectedEmail.created_at,
+                          )}
+                        </span>
+                        <span className="font-medium text-foreground/75">Project</span>
+                        <span className="min-w-0 truncate text-foreground">
+                          {projectLabel(selectedEmail.project) ?? "No project assigned"}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-muted-foreground">
+                    <div className="flex items-center gap-1 text-muted-foreground">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleImportanceIntent("important")}
+                        aria-label="Importance feedback"
+                        className="h-8 w-8 rounded-full"
+                      >
+                        <Sparkles className="h-4 w-4" />
+                      </Button>
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
                         onClick={() => setIsDetailsPanelOpen(true)}
                         aria-label="Open email content panel"
-                        className="hidden h-9 w-9 rounded-full text-muted-foreground xl:inline-flex 2xl:hidden"
+                        className="hidden h-8 w-8 rounded-full text-muted-foreground xl:inline-flex 2xl:hidden"
                       >
                         <MixerHorizontalIcon className="h-4 w-4" />
                       </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onEdit(selectedEmail)}
-                        className="rounded-full border border-transparent"
-                        aria-label="Edit email"
-                      >
-                        <Pencil1Icon className="h-4 w-4" />
-                      </Button>
+                      {selectedEmailEditable ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onEdit(selectedEmail)}
+                          className="h-8 w-8 rounded-full"
+                          aria-label="Edit email"
+                        >
+                          <Pencil1Icon className="h-4 w-4" />
+                        </Button>
+                      ) : null}
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
                         onClick={() => onDelete(selectedEmail)}
-                        className="rounded-full border border-transparent"
+                        className="h-8 w-8 rounded-full"
                         aria-label="Delete email"
                       >
                         <TrashIcon className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="rounded-full border border-transparent"
-                        aria-label="More actions"
-                      >
-                        <DotsHorizontalIcon className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
                 </div>
 
                 <ScrollArea className="flex-1">
-                  <div className="flex flex-col gap-4 px-6 pb-6 pt-4">
-                    <div className="rounded-md border border-border/70 bg-background p-5 shadow-none">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <div className="text-base font-semibold text-foreground">
-                            {selectedEmail.from_name || selectedEmail.from_email || "Unknown sender"}
-                          </div>
-                          <div className="mt-1 text-sm text-muted-foreground">
-                            to {formatRecipientLine(selectedEmail.to_list)}
-                          </div>
-                        </div>
-                        <div className="shrink-0 text-sm text-muted-foreground">
-                          {formatPaneTimestamp(selectedEmail.received_at || selectedEmail.sent_at || selectedEmail.created_at)}
-                        </div>
-                      </div>
+                  <div className="flex flex-col gap-8 px-8 pb-8 pt-8 xl:px-10">
+                    <div className="space-y-5 text-[16px] leading-8 text-foreground [overflow-wrap:anywhere]">
+                      {selectedBody ? (
+                        selectedBodyBlocks.map((block) => {
+                          if (block.kind === "metadata" || block.kind === "quote-header") {
+                            return null;
+                          }
 
-                      <div className="mt-4 space-y-4 text-[15px] leading-7 text-foreground">
-                        {selectedBody ? (
-                          selectedBody.split(/\n{2,}/).map((paragraph, index) => (
-                            <p key={`${selectedEmail.id}-paragraph-${index}`}>{paragraph}</p>
-                          ))
-                        ) : (
-                          <p className="text-muted-foreground">This draft does not have body copy yet.</p>
-                        )}
-                      </div>
+                          if (block.kind === "warning") {
+                            return (
+                              <div
+                                key={block.id}
+                                className="inline-flex rounded-full bg-warning/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-warning-foreground"
+                              >
+                                {block.lines.join(" ")}
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div key={block.id} className="space-y-3">
+                              {block.lines.map((line) => (
+                                <p key={`${block.id}-${line}`} className="whitespace-pre-wrap break-words">
+                                  {line}
+                                </p>
+                              ))}
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p className="text-muted-foreground">This draft does not have body copy yet.</p>
+                      )}
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                      {[
-                        selectedEmail.status === "Draft" ? "Open draft" : "Reply",
-                        "Mark important",
-                        "Share update",
-                      ].map((label) => (
+                    {selectedAttachments.length > 0 ? (
+                      <div className="space-y-3 border-t border-border/60 pt-5">
+                        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                          <Paperclip className="h-4 w-4 text-muted-foreground" />
+                          Attachments
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                          {selectedAttachments.map((attachment) => (
+                            <div
+                              key={attachment.id}
+                              className="space-y-3 rounded-2xl border border-border/70 p-3"
+                            >
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => setPreviewAttachment(attachment)}
+                                className={cn(
+                                  "flex h-28 w-full items-center justify-center overflow-hidden rounded-xl bg-muted/30 p-0",
+                                  isPreviewableAttachment(attachment) && "hover:bg-muted/50",
+                                )}
+                              >
+                                {isImageAttachment(attachment) ? (
+                                  <img
+                                    src={previewUrl(selectedEmail.project_id, attachment.id)}
+                                    alt=""
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : isPdfAttachment(attachment) ? (
+                                  <PdfDocument
+                                    file={previewUrl(selectedEmail.project_id, attachment.id)}
+                                    loading={<FileTextIcon className="h-5 w-5 text-muted-foreground" />}
+                                    error={<FileTextIcon className="h-5 w-5 text-muted-foreground" />}
+                                  >
+                                    <PdfPage pageNumber={1} width={160} renderAnnotationLayer={false} renderTextLayer={false} />
+                                  </PdfDocument>
+                                ) : (
+                                  <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                                )}
+                              </Button>
+                              <div className="space-y-1">
+                                <div className="truncate text-sm font-medium text-foreground">
+                                  {attachment.fileName}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {formatBytes(attachment.fileSize)}
+                                </div>
+                              </div>
+                              <div className="flex items-center justify-between gap-2">
+                                <AttachmentTypePopover
+                                  attachment={attachment}
+                                  projectId={selectedEmail.project_id}
+                                  availableTypes={attachmentTypeOptions}
+                                  onUpdated={handleAttachmentTypeUpdate}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 rounded-full"
+                                  onClick={() => setPreviewAttachment(attachment)}
+                                  aria-label={`Preview ${attachment.fileName}`}
+                                >
+                                  <OpenInNewWindowIcon className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-border/60 pt-5">
+                      <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
+                        <ProjectAssignmentPopover email={selectedEmail} variant="toolbar" />
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                          <div className="inline-flex items-center gap-2 text-muted-foreground">
+                            <Sparkles className="h-4 w-4" />
+                            <span className="text-[15px] font-medium">AI feedback</span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleImportanceIntent("important")}
+                            className="h-auto rounded-md px-0 py-0 text-[15px] font-medium text-foreground/78 shadow-none hover:bg-transparent hover:text-foreground"
+                          >
+                            Mark important
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleImportanceIntent("not_important")}
+                            className="h-auto rounded-md px-0 py-0 text-[15px] font-medium text-foreground/78 shadow-none hover:bg-transparent hover:text-foreground"
+                          >
+                            Not important
+                          </Button>
+                        </div>
                         <Button
-                          key={label}
                           type="button"
-                          variant="link"
-                          className="h-auto px-0 text-sm text-muted-foreground"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleOpenCreateTask}
+                          disabled={!selectedEmail.project_id}
+                          className="h-auto rounded-md px-0 py-0 text-[15px] font-medium text-foreground/85 shadow-none hover:bg-transparent hover:text-foreground"
                         >
-                          {label}
+                          <ListTodo className="mr-2 h-4 w-4 text-muted-foreground" />
+                          Create task
                         </Button>
-                      ))}
+                      </div>
                     </div>
                   </div>
                 </ScrollArea>
@@ -744,16 +1505,18 @@ export function ProjectEmailsWorkspace({
         actions={
           selectedEmail ? (
             <div className="flex items-center gap-1">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => onEdit(selectedEmail)}
-                aria-label="Edit email"
-                className="h-8 w-8"
-              >
-                <Pencil1Icon className="h-4 w-4" />
-              </Button>
+              {selectedEmailEditable ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onEdit(selectedEmail)}
+                  aria-label="Edit email"
+                  className="h-8 w-8"
+                >
+                  <Pencil1Icon className="h-4 w-4" />
+                </Button>
+              ) : null}
               <Button
                 type="button"
                 variant="ghost"
@@ -768,6 +1531,118 @@ export function ProjectEmailsWorkspace({
           ) : null
         }
       />
+      <EmailImportanceFeedbackDialog
+        email={selectedEmail}
+        open={importanceDialogOpen}
+        signal={importanceSignal}
+        existingFeedback={null}
+        onOpenChange={(open) => {
+          setImportanceDialogOpen(open);
+          if (!open) {
+            setImportanceSignal(null);
+          }
+        }}
+        onRecorded={() => {
+          setImportanceDialogOpen(false);
+          setImportanceSignal(null);
+        }}
+      />
+      <AttachmentPreviewModal
+        attachment={previewAttachment}
+        projectId={selectedEmail?.project_id ?? 0}
+        open={Boolean(previewAttachment)}
+        onOpenChange={(open) => {
+          if (!open) setPreviewAttachment(null);
+        }}
+      />
+      <Modal open={createTaskOpen} onOpenChange={setCreateTaskOpen}>
+        <ModalContent size="lg">
+          <ModalHeader>
+            <ModalTitle>Create task from email</ModalTitle>
+            <ModalDescription>
+              Capture a follow-up without leaving the thread.
+            </ModalDescription>
+          </ModalHeader>
+          <div className="grid gap-4">
+            <div className="grid gap-1.5">
+              <div className="text-xs font-medium text-muted-foreground">Title</div>
+              <Input
+                value={taskTitle}
+                onChange={(event) => setTaskTitle(event.target.value)}
+                placeholder="What needs to happen?"
+                autoFocus
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <div className="text-xs font-medium text-muted-foreground">Description</div>
+              <Textarea
+                value={taskDescription}
+                onChange={(event) => setTaskDescription(event.target.value)}
+                rows={8}
+                placeholder="Add task detail"
+                className="min-h-40 resize-y"
+              />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-1.5">
+                <div className="text-xs font-medium text-muted-foreground">Priority</div>
+                <Select
+                  value={taskPriority}
+                  onValueChange={(value) => setTaskPriority(value as "high" | "medium" | "low")}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-1.5">
+                <div className="text-xs font-medium text-muted-foreground">Status</div>
+                <Select
+                  value={taskStatus}
+                  onValueChange={(value) =>
+                    setTaskStatus(value as "open" | "in_progress" | "blocked")
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="open">Open</SelectItem>
+                    <SelectItem value="in_progress">In progress</SelectItem>
+                    <SelectItem value="blocked">Blocked</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-1.5">
+                <div className="text-xs font-medium text-muted-foreground">Due date</div>
+                <Input
+                  type="date"
+                  value={taskDueDate}
+                  onChange={(event) => setTaskDueDate(event.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+          <ModalFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCreateTaskOpen(false)}
+              disabled={isCreatingTask}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={() => void handleCreateTask()} disabled={isCreatingTask}>
+              {isCreatingTask ? "Creating..." : "Create task"}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </div>
   );
 }

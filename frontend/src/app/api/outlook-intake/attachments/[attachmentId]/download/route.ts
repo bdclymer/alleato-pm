@@ -1,6 +1,7 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import { createOutlookIntakeServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 
 interface RouteParams {
@@ -90,11 +91,12 @@ export const GET = withApiGuardrails<RouteParams>(
       });
     }
 
-    const supabase = await assertAdminAccess(
+    await assertAdminAccess(
       "outlook-intake/attachments/[attachmentId]/download#GET",
     );
+    const intakeService = createOutlookIntakeServiceClient();
 
-    const { data, error } = await supabase
+    const { data, error } = await intakeService
       .from("outlook_email_intake_attachments")
       .select("id, file_name, content, content_type")
       .eq("id", attachmentIdNumber)

@@ -180,6 +180,28 @@ def get_rag_read_client() -> Client:
     return get_supabase_client()
 
 
+def get_outlook_intake_write_client() -> Client:
+    """Return the client that owns Outlook intake control-plane tables.
+
+    `outlook_email_intake`, `outlook_email_intake_attachments`, and
+    `outlook_email_skip_audit` are AI-ingestion state, not PM APP operational
+    records. When the AI DB is configured, background Outlook ingestion must
+    write there to avoid PM APP pressure.
+    """
+
+    if rag_supabase_configured():
+        return get_rag_write_client()
+    return get_supabase_client()
+
+
+def get_outlook_intake_read_client() -> Client:
+    """Return the client used for Outlook intake control-plane reads."""
+
+    if rag_supabase_configured():
+        return get_rag_read_client()
+    return get_supabase_client()
+
+
 def fetch_optional_row(
     client: Client,
     table_name: str,
@@ -200,6 +222,78 @@ def fetch_optional_row(
     if not rows:
         return {}
     return rows[0]
+
+
+def resolve_ingestion_job_fireflies_id(
+    metadata_id: str,
+    *,
+    client: Optional[Client] = None,
+    fallback_fireflies_id: Optional[str] = None,
+) -> str:
+    """Resolve the canonical fireflies_ingestion_jobs key for a document.
+
+    Document-triggered jobs use `COALESCE(document_metadata.fireflies_id, id)`,
+    so generic uploads have a job row keyed by their metadata id while genuine
+    Fireflies meetings keep their external fireflies id. We resolve that same
+    key here so pipeline state stays mirrored across the app DB and the RAG DB.
+    """
+
+    if fallback_fireflies_id:
+        normalized = str(fallback_fireflies_id).strip()
+        if normalized:
+            return normalized
+
+    document_client = client or get_supabase_client()
+    metadata = fetch_optional_row(
+        document_client,
+        "document_metadata",
+        "fireflies_id",
+        "id",
+        metadata_id,
+    )
+    resolved = str(metadata.get("fireflies_id") or "").strip()
+    return resolved or metadata_id
+
+
+def update_ingestion_job_state(
+    metadata_id: str,
+    *,
+    stage: str,
+    error_message: Optional[str] = None,
+    client: Optional[Client] = None,
+    fireflies_id: Optional[str] = None,
+) -> None:
+    """Mirror ingestion-job state into both the app DB and RAG DB.
+
+    The document insert trigger creates `fireflies_ingestion_jobs` rows in the
+    PM app database. The parser/embedder/extractor pipeline also needs stage
+    visibility in the isolated RAG database. Updating both prevents the UI and
+    admin tooling from reading stale stages from either side.
+    """
+
+    app_client = client or get_supabase_client()
+    resolved_fireflies_id = resolve_ingestion_job_fireflies_id(
+        metadata_id,
+        client=app_client,
+        fallback_fireflies_id=fireflies_id,
+    )
+    payload = {
+        "fireflies_id": resolved_fireflies_id,
+        "metadata_id": metadata_id,
+        "stage": stage,
+        "error_message": error_message[:500] if error_message else None,
+    }
+
+    app_client.table("fireflies_ingestion_jobs").upsert(
+        payload,
+        on_conflict="fireflies_id",
+    ).execute()
+
+    rag_client = get_rag_write_client()
+    rag_client.table("fireflies_ingestion_jobs").upsert(
+        payload,
+        on_conflict="fireflies_id",
+    ).execute()
 
 
 # ── Storage upload throttle ────────────────────────────────────────────────────
@@ -737,6 +831,8 @@ class SupabaseRagStore:
 __all__ = [
     "DocumentChunk",
     "SupabaseRagStore",
+    "get_outlook_intake_read_client",
+    "get_outlook_intake_write_client",
     "get_rag_read_client",
     "get_rag_supabase_client",
     "get_rag_write_client",

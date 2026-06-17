@@ -135,6 +135,12 @@ export type ClientProjectIntelligencePacket = {
   recommendedNextMoves: string[];
   confidenceSummary: ConfidenceSummary;
   sourceCoverage: SourceCoverageSummary;
+  operatingRecord?: {
+    currentState?: Record<string, unknown> | null;
+    latestSnapshot?: Record<string, unknown> | null;
+    timelineEvents?: Record<string, unknown>[];
+    changeEventCandidates?: Record<string, unknown>[];
+  } | null;
   reviewQueueCount: number;
   staleItemCount: number;
   packetJson: Record<string, unknown>;

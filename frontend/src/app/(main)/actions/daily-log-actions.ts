@@ -1,10 +1,15 @@
 "use server";
 
+import {
+  serializeSiteManagementChecklist,
+  type SiteManagementChecklistState,
+} from "@/lib/daily-log/site-management-checklist";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
 import { revalidatePath } from "next/cache";
 
 type DailyLogInsert = Database["public"]["Tables"]["daily_logs"]["Insert"];
+type DailyLogRow = Database["public"]["Tables"]["daily_logs"]["Row"];
 type DailyLogWeatherInsert =
   Database["public"]["Tables"]["daily_log_weather"]["Insert"];
 type DailyLogManpowerInsert =
@@ -126,6 +131,14 @@ function cleanNumber(value: number | null | undefined): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
+function formatChecklistSchemaError(message?: string) {
+  if (!message || !message.includes("site_management_checklist")) {
+    return null;
+  }
+
+  return "Daily log checklist submissions require Supabase migration 20260616231500_daily_logs_site_management_checklist.sql before this template can be saved.";
+}
+
 async function deleteExistingSectionRows(dailyLogId: string) {
   const supabase = await createClient();
   const deleteResults = await Promise.all([
@@ -144,6 +157,7 @@ export async function saveDailyLogWithCoreSections(params: {
   logDate: string;
   status: DailyLogStatus;
   generalNotes?: string;
+  siteManagementChecklist?: SiteManagementChecklistState;
   weather: DailyLogWeatherInput[];
   manpower: DailyLogManpowerInput[];
   equipment: DailyLogEquipmentInput[];
@@ -181,27 +195,34 @@ export async function saveDailyLogWithCoreSections(params: {
     .filter(Boolean)
     .join("\n");
 
+  const dailyLogPayload: DailyLogInsert = {
+    project_id: params.projectId,
+    log_date: params.logDate,
+    status: params.status,
+    completed_at: completedAt,
+    completed_by: completedBy,
+    created_by: user.id,
+    general_notes: cleanString(params.generalNotes),
+    weather_conditions: weatherSummary || null,
+    updated_at: new Date().toISOString(),
+    site_management_checklist: serializeSiteManagementChecklist(
+      params.siteManagementChecklist ?? {},
+    ),
+  };
+
   const { data: dailyLog, error: logError } = await supabase
     .from("daily_logs")
-    .upsert(
-      {
-        project_id: params.projectId,
-        log_date: params.logDate,
-        status: params.status,
-        completed_at: completedAt,
-        completed_by: completedBy,
-        created_by: user.id,
-        general_notes: cleanString(params.generalNotes),
-        weather_conditions: weatherSummary || null,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "project_id,log_date" },
-    )
+    .upsert(dailyLogPayload, { onConflict: "project_id,log_date" })
     .select()
     .single();
 
   if (logError || !dailyLog) {
-    return { error: logError?.message ?? "Daily log was not saved." };
+    return {
+      error:
+        formatChecklistSchemaError(logError?.message) ??
+        logError?.message ??
+        "Daily log was not saved.",
+    };
   }
 
   const deleteError = await deleteExistingSectionRows(dailyLog.id);
@@ -284,6 +305,7 @@ export async function saveDailyLogWithCoreSections(params: {
 
   revalidatePath(`/${params.projectId}/daily-log`);
   revalidatePath(`/${params.projectId}/daily-log/new`);
+  revalidatePath(`/${params.projectId}/daily-log/${dailyLog.id}/edit`);
   return { success: true, data: dailyLog } as const;
 }
 
@@ -425,6 +447,7 @@ export async function updateDailyLogWithCoreSections(
     logDate: string;
     status: DailyLogStatus;
     generalNotes?: string;
+    siteManagementChecklist?: SiteManagementChecklistState;
     weather: DailyLogWeatherInput[];
     manpower: DailyLogManpowerInput[];
     equipment: DailyLogEquipmentInput[];
@@ -454,17 +477,22 @@ export async function updateDailyLogWithCoreSections(
     .filter(Boolean)
     .join("\n");
 
+  const dailyLogPayload: DailyLogInsert = {
+    log_date: params.logDate,
+    status: params.status,
+    completed_at: completedAt,
+    completed_by: completedBy,
+    general_notes: cleanString(params.generalNotes),
+    weather_conditions: weatherSummary || null,
+    updated_at: new Date().toISOString(),
+    site_management_checklist: serializeSiteManagementChecklist(
+      params.siteManagementChecklist ?? {},
+    ),
+  };
+
   const { data: dailyLog, error: logError } = await supabase
     .from("daily_logs")
-    .update({
-      log_date: params.logDate,
-      status: params.status,
-      completed_at: completedAt,
-      completed_by: completedBy,
-      general_notes: cleanString(params.generalNotes),
-      weather_conditions: weatherSummary || null,
-      updated_at: new Date().toISOString(),
-    })
+    .update(dailyLogPayload)
     .eq("id", dailyLogId)
     .eq("project_id", params.projectId)
     .select()
@@ -473,9 +501,10 @@ export async function updateDailyLogWithCoreSections(
   if (logError) {
     return {
       error:
-        logError.code === "PGRST116"
+        formatChecklistSchemaError(logError.message) ??
+        (logError.code === "PGRST116"
           ? "Daily log was not found for this project."
-          : logError.message,
+          : logError.message),
     };
   }
 

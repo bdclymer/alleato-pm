@@ -6,6 +6,7 @@ import { createContractSchema } from "./validation";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 import { logger } from "@/lib/logger";
+import { getCurrentUser, getIsAdmin } from "@/lib/auth/current-user";
 import {
   fetchLivePrimeContractChangeTotals,
   type LivePrimeContractChangeTotals,
@@ -118,12 +119,11 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     }
 
     // Privacy filter: remove private contracts the current user is not allowed to see
-    const { data: { user } } = await supabase.auth.getUser();
-    const currentUserId = user?.id ?? "";
-    const { data: profile } = currentUserId
-      ? await supabase.from("user_profiles").select("is_admin").eq("id", currentUserId).maybeSingle()
-      : { data: null };
-    const currentUserIsAdmin = profile?.is_admin === true;
+    const [currentUser, currentUserIsAdmin] = await Promise.all([
+      getCurrentUser(),
+      getIsAdmin(),
+    ]);
+    const currentUserId = currentUser?.id ?? "";
 
     const visibleContracts = (contractsResult.data ?? []).filter((contract) => {
       if (!contract.is_private) return true;

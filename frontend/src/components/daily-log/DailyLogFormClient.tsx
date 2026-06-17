@@ -35,7 +35,16 @@ import {
   type DailyLogStatus,
   type DailyLogWeatherInput,
 } from "@/app/(main)/actions/daily-log-actions";
-import { PageShell } from "@/components/layout";
+import {
+  createEmptySiteManagementChecklist,
+  getSiteManagementChecklistSummary,
+  siteManagementChecklistSections,
+  validateSiteManagementChecklist,
+  type SiteManagementChecklistEntry,
+  type SiteManagementChecklistState,
+  type SiteManagementChecklistValue,
+} from "@/lib/daily-log/site-management-checklist";
+import { PageShell, SectionRuleHeading } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -56,6 +65,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Collapsible,
@@ -360,11 +370,49 @@ function CollapsibleSectionShell({
   );
 }
 
+function ChecklistChoiceGroup({
+  itemId,
+  value,
+  onValueChange,
+}: {
+  itemId: string;
+  value: SiteManagementChecklistValue | null;
+  onValueChange: (value: SiteManagementChecklistValue) => void;
+}) {
+  return (
+    <RadioGroup
+      value={value ?? ""}
+      onValueChange={(nextValue) => onValueChange(nextValue as SiteManagementChecklistValue)}
+      className="flex flex-wrap items-center gap-4"
+    >
+      {[
+        { value: "yes", label: "Yes" },
+        { value: "no", label: "No" },
+        { value: "na", label: "N/A" },
+      ].map((option) => {
+        const optionId = `${itemId}-${option.value}`;
+
+        return (
+          <label
+            key={option.value}
+            htmlFor={optionId}
+            className="flex items-center gap-2 text-xs font-medium text-foreground"
+          >
+            <RadioGroupItem value={option.value} id={optionId} />
+            {option.label}
+          </label>
+        );
+      })}
+    </RadioGroup>
+  );
+}
+
 export type DailyLogInitialData = {
   dailyLogId: string;
   logDate: string;
   status: DailyLogStatus;
   generalNotes: string;
+  siteManagementChecklist: SiteManagementChecklistState;
   weather: WeatherRow[];
   manpower: ManpowerRow[];
   equipment: EquipmentRow[];
@@ -393,6 +441,10 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
   const [logDate, setLogDate] = React.useState(initialData?.logDate ?? today);
   const [status, setStatus] = React.useState<DailyLogStatus>(initialData?.status ?? "draft");
   const [generalNotes, setGeneralNotes] = React.useState(initialData?.generalNotes ?? "");
+  const [siteManagementChecklist, setSiteManagementChecklist] =
+    React.useState<SiteManagementChecklistState>(
+      initialData?.siteManagementChecklist ?? createEmptySiteManagementChecklist(),
+    );
   const [weatherRows, setWeatherRows] = React.useState<WeatherRow[]>(
     initialData?.weather && initialData.weather.length > 0 ? initialData.weather : [emptyWeather()],
   );
@@ -422,6 +474,11 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
     );
   }, [manpowerRows]);
 
+  const checklistSummary = React.useMemo(
+    () => getSiteManagementChecklistSummary(siteManagementChecklist),
+    [siteManagementChecklist],
+  );
+
   const updateRow = <T extends { id: string }>(
     rows: T[],
     setRows: React.Dispatch<React.SetStateAction<T[]>>,
@@ -440,9 +497,28 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
     setRows(rows.filter((row) => row.id !== id));
   };
 
+  const updateChecklistEntry = React.useCallback(
+    (itemId: string, patch: Partial<SiteManagementChecklistEntry>) => {
+      setSiteManagementChecklist((current) => ({
+        ...current,
+        [itemId]: {
+          ...current[itemId],
+          ...patch,
+        },
+      }));
+    },
+    [],
+  );
+
   const submit = async () => {
     if (!logDate) {
       toast.error("Daily log date is required.");
+      return;
+    }
+
+    const checklistErrors = validateSiteManagementChecklist(siteManagementChecklist);
+    if (checklistErrors.length > 0) {
+      toast.error(`Add a follow-up note for each failed checklist item: ${checklistErrors[0]}`);
       return;
     }
 
@@ -463,6 +539,7 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
         logDate,
         status,
         generalNotes,
+        siteManagementChecklist,
         weather,
         manpower,
         equipment,
@@ -474,6 +551,7 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
         logDate,
         status,
         generalNotes,
+        siteManagementChecklist,
         weather,
         manpower,
         equipment,
@@ -498,7 +576,14 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
 
   const navSections = quickLog
     ? QUICK_LOG_SECTIONS
-    : ["Weather", "Manpower", "Notes", "Equipment", ...pendingSections.map((s) => s.label)];
+    : [
+        "Site Lead Checklist",
+        "Weather",
+        "Manpower",
+        "Notes",
+        "Equipment",
+        ...pendingSections.map((s) => s.label),
+      ];
 
   return (
     <PageShell
@@ -589,6 +674,73 @@ export function DailyLogFormClient({ projectId, mode, initialData }: DailyLogFor
           </aside>
 
           <div className="min-w-0 space-y-2">
+            {!quickLog && (
+              <CollapsibleSectionShell
+                id="site-lead-checklist"
+                icon={ClipboardList}
+                title="Site Lead Checklist"
+                meta={`${checklistSummary.answered}/${checklistSummary.total} answered${checklistSummary.failures > 0 ? ` • ${checklistSummary.failures} need follow-up` : ""}`}
+                defaultOpen
+              >
+                <div className="space-y-6">
+                  {siteManagementChecklistSections.map((section) => (
+                    <section key={section.id} className="space-y-2">
+                      <div className="flex items-center justify-between gap-4">
+                        <SectionRuleHeading label={section.title} className="mb-0 pb-0" />
+                      </div>
+                      <div className="divide-y divide-border/70">
+                        {section.items.map((item) => {
+                          const entry = siteManagementChecklist[item.id] ?? { value: null, note: "" };
+                          const needsNote = entry.value === "no";
+
+                          return (
+                            <div key={item.id} className="space-y-3 py-3">
+                              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-center">
+                                <div className="min-w-0">
+                                  <p className="text-sm text-foreground">{item.label}</p>
+                                </div>
+                                <ChecklistChoiceGroup
+                                  itemId={item.id}
+                                  value={entry.value}
+                                  onValueChange={(value) => {
+                                    updateChecklistEntry(item.id, {
+                                      value,
+                                      note: value === "no" ? entry.note : "",
+                                    });
+                                  }}
+                                />
+                              </div>
+                              {needsNote ? (
+                                <div className="max-w-2xl space-y-1">
+                                  <Label
+                                    htmlFor={`${item.id}-note`}
+                                    className="text-[11px] font-medium text-destructive"
+                                  >
+                                    Required follow-up note
+                                  </Label>
+                                  <Textarea
+                                    id={`${item.id}-note`}
+                                    value={entry.note}
+                                    rows={2}
+                                    placeholder="Explain the issue, corrective action, or what is blocking completion."
+                                    onChange={(event) =>
+                                      updateChecklistEntry(item.id, {
+                                        note: event.target.value,
+                                      })
+                                    }
+                                  />
+                                </div>
+                              ) : null}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              </CollapsibleSectionShell>
+            )}
+
             <CollapsibleSectionShell
               id="weather"
               icon={CloudSun}

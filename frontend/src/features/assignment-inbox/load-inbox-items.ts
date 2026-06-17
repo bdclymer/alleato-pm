@@ -1,4 +1,5 @@
 import {
+  createOutlookIntakeServiceClient,
   createRagServiceClient,
   createServiceClient,
 } from "@/lib/supabase/service";
@@ -274,6 +275,7 @@ export async function loadInboxItems(
   const windowLimit = Math.min(offset + limit, MAX_WINDOW);
 
   const supabase = createServiceClient();
+  const intakeSupabase = createOutlookIntakeServiceClient();
 
   const [
     docCountResult,
@@ -288,7 +290,7 @@ export async function loadInboxItems(
       .select("id", { count: "exact", head: true })
       .is("project_id", null)
       .is("deleted_at", null),
-    supabase
+    intakeSupabase
       .from("outlook_email_intake")
       .select("id", { count: "exact", head: true })
       .is("project_id", null)
@@ -303,7 +305,7 @@ export async function loadInboxItems(
       .is("deleted_at", null)
       .order("created_at", { ascending: false, nullsFirst: false })
       .limit(windowLimit),
-    supabase
+    intakeSupabase
       .from("outlook_email_intake")
       .select(
         "id, subject, from_email, from_name, body_text, to_list, cc_list, conversation_id, received_at, created_at",
@@ -381,7 +383,7 @@ export async function loadInboxItems(
   const emailThreadByConversationId = new Map<string, EmailThreadContext>();
   if (pageConversationIds.length > 0) {
     for (const ids of chunk(pageConversationIds, 100)) {
-      const { data: threadRows } = await supabase
+      const { data: threadRows } = await intakeSupabase
         .from("outlook_email_intake")
         .select(
           "id, subject, from_email, from_name, body_text, to_list, cc_list, conversation_id, received_at, created_at",

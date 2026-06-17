@@ -11,6 +11,42 @@ interface RouteParams {
   params: Promise<{ projectId: string; emailId: string }>;
 }
 
+const EMAIL_SELECT = `
+  *,
+  projects!project_emails_project_id_fkey (
+    id,
+    name,
+    project_number
+  )
+`;
+
+type EmailProjectRow = {
+  id: number;
+  name: string | null;
+  project_number: string | null;
+};
+
+type EmailRow = {
+  id: number;
+  project_id: number;
+  projects: EmailProjectRow | null;
+  [key: string]: unknown;
+};
+
+function mapEmailProject<T extends EmailRow>(email: T) {
+  const { projects, ...rest } = email;
+  return {
+    ...rest,
+    project: projects
+      ? {
+          id: projects.id,
+          name: projects.name,
+          project_number: projects.project_number,
+        }
+      : null,
+  };
+}
+
 const updateEmailSchema = z.object({
   subject: z.string().min(1).max(500).optional(),
   body: z.string().optional().nullable(),
@@ -28,6 +64,7 @@ const updateEmailSchema = z.object({
   related_id: z.string().optional().nullable(),
   distribution_group: z.string().optional().nullable(),
   thread_id: z.string().optional().nullable(),
+  project_id: z.number().int().positive().optional(),
 });
 
 /**
@@ -56,7 +93,7 @@ export const GET = withApiGuardrails(
 
     let query = supabase
       .from("project_emails")
-      .select("*")
+      .select(EMAIL_SELECT)
       .eq("id", parseInt(emailId, 10))
       .eq("project_id", parseInt(projectId, 10))
       .is("deleted_at", null);
@@ -78,7 +115,7 @@ export const GET = withApiGuardrails(
       return apiErrorResponse(error);
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json(mapEmailProject(data as EmailRow));
     },
 );
 
@@ -134,23 +171,46 @@ export const PUT = withApiGuardrails(
       updateData.sent_at = new Date().toISOString();
     }
 
-    const { data, error } = await supabase
+    const numericEmailId = parseInt(emailId, 10);
+    const numericProjectId = parseInt(projectId, 10);
+
+    const { data: existingEmail, error: existingEmailError } = await supabase
       .from("project_emails")
-      .update(updateData)
-      .eq("id", parseInt(emailId, 10))
-      .eq("project_id", parseInt(projectId, 10))
+      .select("id, project_id")
+      .eq("id", numericEmailId)
+      .eq("project_id", numericProjectId)
       .is("deleted_at", null)
-      .select()
       .single();
 
-    if (error) {
-      if (error.code === "PGRST116") {
+    if (existingEmailError) {
+      if (existingEmailError.code === "PGRST116") {
         return NextResponse.json({ error: "Email not found" }, { status: 404 });
       }
+      return apiErrorResponse(existingEmailError);
+    }
+
+    const { error } = await supabase
+      .from("project_emails")
+      .update(updateData)
+      .eq("id", existingEmail.id)
+      .is("deleted_at", null);
+
+    if (error) {
       return apiErrorResponse(error);
     }
 
-    return NextResponse.json(data);
+    const { data: updatedEmail, error: updatedEmailError } = await supabase
+      .from("project_emails")
+      .select(EMAIL_SELECT)
+      .eq("id", existingEmail.id)
+      .is("deleted_at", null)
+      .single();
+
+    if (updatedEmailError) {
+      return apiErrorResponse(updatedEmailError);
+    }
+
+    return NextResponse.json(mapEmailProject(updatedEmail as EmailRow));
     },
 );
 

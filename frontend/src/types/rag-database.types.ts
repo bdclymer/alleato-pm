@@ -164,6 +164,357 @@ export type Database = {
         }
         Relationships: []
       }
+      graph_subscriptions: {
+        Row: {
+          change_type: string
+          client_state_hash: string | null
+          created_at: string
+          expiration_at: string | null
+          graph_subscription_id: string | null
+          id: string
+          last_error_message: string | null
+          last_lifecycle_event_at: string | null
+          last_notification_at: string | null
+          last_renewed_at: string | null
+          lifecycle_notification_url: string | null
+          metadata: Json
+          notification_url: string | null
+          resource: string
+          resource_id: string
+          resource_name: string | null
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          change_type: string
+          client_state_hash?: string | null
+          created_at?: string
+          expiration_at?: string | null
+          graph_subscription_id?: string | null
+          id?: string
+          last_error_message?: string | null
+          last_lifecycle_event_at?: string | null
+          last_notification_at?: string | null
+          last_renewed_at?: string | null
+          lifecycle_notification_url?: string | null
+          metadata?: Json
+          notification_url?: string | null
+          resource: string
+          resource_id?: string
+          resource_name?: string | null
+          source: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          change_type?: string
+          client_state_hash?: string | null
+          created_at?: string
+          expiration_at?: string | null
+          graph_subscription_id?: string | null
+          id?: string
+          last_error_message?: string | null
+          last_lifecycle_event_at?: string | null
+          last_notification_at?: string | null
+          last_renewed_at?: string | null
+          lifecycle_notification_url?: string | null
+          metadata?: Json
+          notification_url?: string | null
+          resource?: string
+          resource_id?: string
+          resource_name?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      graph_sync_state: {
+        Row: {
+          created_at: string
+          delta_token: string | null
+          error_message: string | null
+          id: string
+          items_synced: number
+          last_sync_at: string | null
+          resource_id: string
+          resource_name: string | null
+          source: string
+          sync_status: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          delta_token?: string | null
+          error_message?: string | null
+          id?: string
+          items_synced?: number
+          last_sync_at?: string | null
+          resource_id: string
+          resource_name?: string | null
+          source: string
+          sync_status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          delta_token?: string | null
+          error_message?: string | null
+          id?: string
+          items_synced?: number
+          last_sync_at?: string | null
+          resource_id?: string
+          resource_name?: string | null
+          source?: string
+          sync_status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      outlook_email_intake: {
+        Row: {
+          assignment_confidence: number | null
+          assignment_method: string | null
+          bcc_list: string[] | null
+          body: string | null
+          body_html: string | null
+          body_text: string | null
+          cc_list: string[] | null
+          conversation_id: string | null
+          created_at: string | null
+          deleted_at: string | null
+          document_metadata_id: string | null
+          from_email: string | null
+          from_name: string | null
+          graph_message_id: string
+          has_attachments: boolean | null
+          id: number
+          internet_message_id: string | null
+          last_synced_at: string | null
+          mailbox_user_id: string
+          match_status: string
+          project_email_id: number | null
+          project_id: number | null
+          received_at: string | null
+          source_metadata: Json
+          status: string
+          subject: string
+          to_list: string[] | null
+          updated_at: string | null
+          web_link: string | null
+        }
+        Insert: {
+          assignment_confidence?: number | null
+          assignment_method?: string | null
+          bcc_list?: string[] | null
+          body?: string | null
+          body_html?: string | null
+          body_text?: string | null
+          cc_list?: string[] | null
+          conversation_id?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          document_metadata_id?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          graph_message_id: string
+          has_attachments?: boolean | null
+          id?: number
+          internet_message_id?: string | null
+          last_synced_at?: string | null
+          mailbox_user_id: string
+          match_status?: string
+          project_email_id?: number | null
+          project_id?: number | null
+          received_at?: string | null
+          source_metadata?: Json
+          status?: string
+          subject: string
+          to_list?: string[] | null
+          updated_at?: string | null
+          web_link?: string | null
+        }
+        Update: {
+          assignment_confidence?: number | null
+          assignment_method?: string | null
+          bcc_list?: string[] | null
+          body?: string | null
+          body_html?: string | null
+          body_text?: string | null
+          cc_list?: string[] | null
+          conversation_id?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          document_metadata_id?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          graph_message_id?: string
+          has_attachments?: boolean | null
+          id?: number
+          internet_message_id?: string | null
+          last_synced_at?: string | null
+          mailbox_user_id?: string
+          match_status?: string
+          project_email_id?: number | null
+          project_id?: number | null
+          received_at?: string | null
+          source_metadata?: Json
+          status?: string
+          subject?: string
+          to_list?: string[] | null
+          updated_at?: string | null
+          web_link?: string | null
+        }
+        Relationships: []
+      }
+      outlook_email_intake_attachments: {
+        Row: {
+          checksum_sha256: string | null
+          content: string | null
+          content_type: string | null
+          created_at: string | null
+          document_metadata_id: string | null
+          email_attachment_id: number | null
+          extracted_text: string | null
+          file_name: string
+          file_size: number | null
+          file_url: string
+          graph_attachment_id: string
+          id: number
+          intake_email_id: number
+          is_inline: boolean | null
+          project_document_id: number | null
+          project_id: number | null
+          promoted_at: string | null
+          promotion_attempt_count: number
+          promotion_reason: string | null
+          promotion_status: string
+          source_metadata: Json
+          updated_at: string | null
+        }
+        Insert: {
+          checksum_sha256?: string | null
+          content?: string | null
+          content_type?: string | null
+          created_at?: string | null
+          document_metadata_id?: string | null
+          email_attachment_id?: number | null
+          extracted_text?: string | null
+          file_name: string
+          file_size?: number | null
+          file_url: string
+          graph_attachment_id: string
+          id?: number
+          intake_email_id: number
+          is_inline?: boolean | null
+          project_document_id?: number | null
+          project_id?: number | null
+          promoted_at?: string | null
+          promotion_attempt_count?: number
+          promotion_reason?: string | null
+          promotion_status?: string
+          source_metadata?: Json
+          updated_at?: string | null
+        }
+        Update: {
+          checksum_sha256?: string | null
+          content?: string | null
+          content_type?: string | null
+          created_at?: string | null
+          document_metadata_id?: string | null
+          email_attachment_id?: number | null
+          extracted_text?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          graph_attachment_id?: string
+          id?: number
+          intake_email_id?: number
+          is_inline?: boolean | null
+          project_document_id?: number | null
+          project_id?: number | null
+          promoted_at?: string | null
+          promotion_attempt_count?: number
+          promotion_reason?: string | null
+          promotion_status?: string
+          source_metadata?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      outlook_email_skip_audit: {
+        Row: {
+          body_preview: string | null
+          classification_action: string
+          classification_category: string
+          classification_confidence: number | null
+          classification_reason: string
+          classification_signals: Json
+          conversation_id: string | null
+          created_at: string
+          first_seen_at: string
+          from_email: string | null
+          from_name: string | null
+          graph_message_id: string
+          id: number
+          internet_message_id: string | null
+          last_seen_at: string
+          mailbox_user_id: string
+          received_at: string | null
+          source_metadata: Json
+          subject: string
+          updated_at: string
+          web_link: string | null
+        }
+        Insert: {
+          body_preview?: string | null
+          classification_action?: string
+          classification_category: string
+          classification_confidence?: number | null
+          classification_reason: string
+          classification_signals?: Json
+          conversation_id?: string | null
+          created_at?: string
+          first_seen_at?: string
+          from_email?: string | null
+          from_name?: string | null
+          graph_message_id: string
+          id?: number
+          internet_message_id?: string | null
+          last_seen_at?: string
+          mailbox_user_id: string
+          received_at?: string | null
+          source_metadata?: Json
+          subject: string
+          updated_at?: string
+          web_link?: string | null
+        }
+        Update: {
+          body_preview?: string | null
+          classification_action?: string
+          classification_category?: string
+          classification_confidence?: number | null
+          classification_reason?: string
+          classification_signals?: Json
+          conversation_id?: string | null
+          created_at?: string
+          first_seen_at?: string
+          from_email?: string | null
+          from_name?: string | null
+          graph_message_id?: string
+          id?: number
+          internet_message_id?: string | null
+          last_seen_at?: string
+          mailbox_user_id?: string
+          received_at?: string | null
+          source_metadata?: Json
+          subject?: string
+          updated_at?: string
+          web_link?: string | null
+        }
+        Relationships: []
+      }
       ingestion_dead_letter: {
         Row: {
           created_at: string

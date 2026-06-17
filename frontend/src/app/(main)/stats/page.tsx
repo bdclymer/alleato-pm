@@ -1,863 +1,763 @@
-"use client";
-/* eslint-disable design-system/no-raw-heading */
-
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { createClient } from "@/lib/supabase/client";
-import {
-  format,
-  isToday,
-  isTomorrow,
-  isThisWeek,
-  startOfDay,
-  parseISO,
-  differenceInDays,
-  addDays,
-} from "date-fns";
+import type { Metadata } from "next";
 import Link from "next/link";
+import { PageShell, SectionRuleHeading } from "@/components/layout";
+import { KpiRow } from "@/components/ds";
+import { createServiceClient } from "@/lib/supabase/service";
+import type { Database } from "@/types/database.types";
 
-// UI Components
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
-  UnifiedTablePage,
-  type TableColumn,
-  type ViewMode,
-} from "@/components/tables/unified";
+export const metadata: Metadata = {
+  title: "Today's Stats",
+};
 
-// Icons
-import {
-  Calendar,
-  Clock,
-  Users,
-  ChevronDown,
-  ChevronRight,
-  ExternalLink,
-  Video,
-  Folder,
-  CalendarDays,
-  ArrowRight,
-  Play,
-  LayoutGrid,
-  LayoutList,
-  Sun,
-  Sunrise,
-} from "lucide-react";
-import { EmptyState } from "@/components/ds";
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
-// Types
-interface Meeting {
+const TIME_ZONE = "America/Indiana/Indianapolis";
+const MAX_LIST_ITEMS = 8;
+const MAX_ACTIVITY_ROWS = 12;
+
+type DocumentRecord = Pick<
+  Database["public"]["Tables"]["document_metadata"]["Row"],
+  | "id"
+  | "title"
+  | "file_name"
+  | "project"
+  | "project_id"
+  | "date"
+  | "created_at"
+  | "captured_at"
+  | "duration_minutes"
+  | "fireflies_link"
+  | "source_web_url"
+  | "url"
+  | "category"
+  | "type"
+>;
+
+type TaskProjectRef = {
+  id: number;
+  name: string | null;
+  project_number: string | null;
+};
+
+type TaskRecord = Pick<
+  Database["public"]["Tables"]["tasks"]["Row"],
+  "id" | "title" | "status" | "created_at" | "project_id"
+> & {
+  project: TaskProjectRef | TaskProjectRef[] | null;
+};
+
+type MeetingItem = {
   id: string;
-  title: string | null;
-  date: string | null;
-  duration_minutes: number | null;
-  participants: string | null;
-  participants_array: string[] | null;
-  summary: string | null;
-  project_id: string | null;
-  project: string | null;
-  status: string | null;
-  fireflies_link: string | null;
-  action_items: string | null;
-  topics: string[] | null;
+  title: string;
+  at: string | null;
+  durationMinutes: number | null;
+  projectLabel: string | null;
+  href: string;
+};
+
+type SourceItem = {
+  id: string;
+  title: string;
+  at: string | null;
+  projectLabel: string | null;
+  href: string;
+};
+
+type TaskItem = {
+  id: string;
+  title: string;
+  status: string;
+  at: string;
+  projectId: number | null;
+  projectLabel: string | null;
+  href: string;
+};
+
+type ActivityGroup = {
+  key: string;
+  projectLabel: string;
+  meetingCount: number;
+  taskCount: number;
+  emailCount: number;
+  documentCount: number;
+  teamsCount: number;
+  latestAt: string | null;
+  href: string;
+};
+
+function normalizeOffset(value: string) {
+  if (value === "GMT" || value === "UTC") return "+00:00";
+  const match = value.match(/^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/);
+  if (!match) return "+00:00";
+  const [, sign, hourText, minuteText] = match;
+  const hour = hourText.padStart(2, "0");
+  const minute = (minuteText ?? "00").padStart(2, "0");
+  return `${sign}${hour}:${minute}`;
 }
 
-interface ProjectGroup {
-  projectId: string | null;
-  projectName: string;
-  meetings: Meeting[];
+function getTimeZoneParts(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+    timeZoneName: "shortOffset",
+  }).formatToParts(date);
+
+  const read = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+
+  return {
+    year: read("year"),
+    month: read("month"),
+    day: read("day"),
+    offset: normalizeOffset(read("timeZoneName")),
+  };
 }
 
-// Utility functions
-const formatDuration = (minutes: number | null): string => {
-  if (!minutes) return "-";
+function getTodayKey(timeZone: string) {
+  const { year, month, day } = getTimeZoneParts(new Date(), timeZone);
+  return `${year}-${month}-${day}`;
+}
+
+function getTodayStartIso(timeZone: string) {
+  const { year, month, day, offset } = getTimeZoneParts(new Date(), timeZone);
+  return `${year}-${month}-${day}T00:00:00${offset}`;
+}
+
+function getDateKey(value: string | null | undefined, timeZone: string) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  const { year, month, day } = getTimeZoneParts(date, timeZone);
+  return `${year}-${month}-${day}`;
+}
+
+function formatLongDate(value: Date, timeZone: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(value);
+}
+
+function formatTime(value: string | null | undefined, timeZone: string) {
+  if (!value) return "No time";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "No time";
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function formatRelativeMoment(value: string | null | undefined, timeZone: string) {
+  if (!value) return "No timestamp";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "No timestamp";
+  const dayKey = getDateKey(value, timeZone);
+  const todayKey = getTodayKey(timeZone);
+  if (dayKey === todayKey) {
+    return formatTime(value, timeZone);
+  }
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function formatDuration(minutes: number | null) {
+  if (!minutes || minutes <= 0) return null;
   if (minutes < 60) return `${minutes}m`;
   const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-};
+  const remainder = minutes % 60;
+  return remainder > 0 ? `${hours}h ${remainder}m` : `${hours}h`;
+}
 
-const getRelativeDateLabel = (dateStr: string | null): string => {
-  if (!dateStr) return "";
-  const date = parseISO(dateStr);
-  if (isToday(date)) return "Today";
-  if (isTomorrow(date)) return "Tomorrow";
-  const daysDiff = differenceInDays(startOfDay(date), startOfDay(new Date()));
-  if (daysDiff > 0 && daysDiff <= 7) return format(date, "EEEE");
-  return format(date, "MMM d");
-};
+function countLabel(count: number, singular: string, plural = `${singular}s`) {
+  return `${count.toLocaleString()} ${count === 1 ? singular : plural}`;
+}
 
-const getTimeFromDate = (dateStr: string | null): string => {
-  if (!dateStr) return "";
-  try {
-    return format(parseISO(dateStr), "h:mm a");
-  } catch {
-    return "";
-  }
-};
+function sentenceCase(value: string | null | undefined) {
+  if (!value) return "Unknown";
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
 
-// Meeting Card Component
-function MeetingCard({
-  meeting,
-  showDate = false,
-  compact = false,
-}: {
-  meeting: Meeting;
-  showDate?: boolean;
-  compact?: boolean;
-}) {
-  const participantCount = meeting.participants_array?.length || 0;
+function getDocumentMoment(record: DocumentRecord) {
+  return record.date ?? record.captured_at ?? record.created_at ?? null;
+}
 
+function isMeetingRecord(record: DocumentRecord) {
   return (
-    <Link href={`/meetings/${meeting.id}`}>
-      <Card
-        className={`group hover:shadow-sm transition-all cursor-pointer ${compact ? "p-4" : ""}`}
-      >
-        <CardHeader className={compact ? "p-0 pb-2" : "pb-4"}>
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <CardTitle
-                className={`${compact ? "text-sm" : "text-base"} line-clamp-2 group-hover:text-primary transition-colors`}
-              >
-                {meeting.title || "Untitled Meeting"}
-              </CardTitle>
-              {meeting.project && (
-                <div className="flex items-center gap-2 mt-1">
-                  <Folder className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">
-                    {meeting.project}
-                  </span>
-                </div>
-              )}
-            </div>
-            {meeting.fireflies_link && (
-              <a
-                href={meeting.fireflies_link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary shrink-0"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Video className="h-4 w-4" />
-              </a>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent className={compact ? "p-0" : "pt-0"}>
-          {meeting.summary && !compact && (
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-              {meeting.summary}
-            </p>
-          )}
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            {showDate && meeting.date && (
-              <div className="flex items-center gap-2">
-                <Calendar className="h-3 w-3" />
-                <span>{format(parseISO(meeting.date), "MMM d")}</span>
-              </div>
-            )}
-            {meeting.date && (
-              <div className="flex items-center gap-2">
-                <Clock className="h-3 w-3" />
-                <span>{getTimeFromDate(meeting.date)}</span>
-              </div>
-            )}
-            {meeting.duration_minutes && (
-              <div className="flex items-center gap-2">
-                <Play className="h-3 w-3" />
-                <span>{formatDuration(meeting.duration_minutes)}</span>
-              </div>
-            )}
-            {participantCount > 0 && (
-              <div className="flex items-center gap-2">
-                <Users className="h-3 w-3" />
-                <span>{participantCount}</span>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+    record.category === "meeting" ||
+    record.type === "meeting" ||
+    record.type === "meeting_transcript"
+  );
+}
+
+function getDocumentTitle(record: DocumentRecord) {
+  return (
+    record.title?.trim() ||
+    record.file_name?.trim() ||
+    sentenceCase(record.category ?? record.type)
+  );
+}
+
+function sortByMomentDescending<T extends { at: string | null }>(items: T[]) {
+  return [...items].sort((left, right) => {
+    const leftTime = left.at ? new Date(left.at).getTime() : 0;
+    const rightTime = right.at ? new Date(right.at).getTime() : 0;
+    return rightTime - leftTime;
+  });
+}
+
+function sortMeetingsChronologically(items: MeetingItem[]) {
+  return [...items].sort((left, right) => {
+    const leftTime = left.at ? new Date(left.at).getTime() : 0;
+    const rightTime = right.at ? new Date(right.at).getTime() : 0;
+    return leftTime - rightTime;
+  });
+}
+
+function getMeetingHref(record: DocumentRecord) {
+  if (record.project_id) {
+    return `/${record.project_id}/meetings/${record.id}`;
+  }
+  return `/meetings/${record.id}`;
+}
+
+function getTaskProjectRef(project: TaskRecord["project"]): TaskProjectRef | null {
+  if (!project) return null;
+  if (Array.isArray(project)) {
+    return project[0] ?? null;
+  }
+  return project;
+}
+
+function buildProjectLabel(projectId: number | null, name: string | null, projectNumber?: string | null) {
+  const trimmedName = name?.trim() ?? null;
+  const trimmedNumber = projectNumber?.trim() ?? null;
+  if (trimmedNumber && trimmedName) return `${trimmedNumber} - ${trimmedName}`;
+  if (trimmedName) return trimmedName;
+  if (trimmedNumber) return trimmedNumber;
+  if (projectId) return `Project ${projectId}`;
+  return null;
+}
+
+function buildEmailHref(projectId: number | null) {
+  return projectId ? `/${projectId}/emails` : "/emails";
+}
+
+function buildDocumentHref(projectId: number | null) {
+  return projectId ? `/${projectId}/documents` : "/documents";
+}
+
+function buildTeamsHref() {
+  return "/teams-conversations";
+}
+
+function buildTaskHref(projectId: number | null) {
+  return projectId ? `/${projectId}/tasks` : "/tasks";
+}
+
+function buildProjectHref(projectId: number | null) {
+  return projectId ? `/${projectId}/home` : "/projects";
+}
+
+function buildActivitySummary(group: ActivityGroup) {
+  const parts = [
+    group.meetingCount > 0 ? countLabel(group.meetingCount, "meeting") : null,
+    group.taskCount > 0 ? countLabel(group.taskCount, "task") : null,
+    group.emailCount > 0 ? countLabel(group.emailCount, "email") : null,
+    group.documentCount > 0 ? countLabel(group.documentCount, "document") : null,
+    group.teamsCount > 0 ? countLabel(group.teamsCount, "Teams message") : null,
+  ].filter(Boolean);
+
+  return parts.join(", ");
+}
+
+function EmptySection({ message }: { message: string }) {
+  return <p className="py-3 text-sm text-muted-foreground">{message}</p>;
+}
+
+function SectionLink({ href }: { href: string }) {
+  return (
+    <Link href={href} className="text-xs font-medium text-primary">
+      Open
     </Link>
   );
 }
 
-// Today's Meetings Section
-function TodaysMeetings({ meetings }: { meetings: Meeting[] }) {
-  if (meetings.length === 0) {
-    return (
-      <EmptyState
-        icon={<Sun />}
-        title="No meetings today"
-        description="Enjoy your meeting-free day! Check upcoming meetings below."
-      />
-    );
-  }
-
+function Section({
+  title,
+  href,
+  children,
+}: {
+  title: string;
+  href: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="rounded-full bg-status-warning/10 p-1.5">
-            <Sun className="h-4 w-4 text-status-warning" />
-          </div>
-          <h2 className="font-semibold">Today</h2>
-          <Badge variant="secondary" className="ml-1">
-            {meetings.length}
-          </Badge>
-        </div>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {meetings.map((meeting) => (
-          <MeetingCard key={meeting.id} meeting={meeting} />
-        ))}
-      </div>
-    </div>
+    <section className="space-y-4">
+      <SectionRuleHeading label={title} actions={<SectionLink href={href} />} />
+      <div className="divide-y divide-border">{children}</div>
+    </section>
   );
 }
 
-// Upcoming Meetings Section
-function UpcomingMeetings({ meetings }: { meetings: Meeting[] }) {
-  // Group by relative date
-  const groupedByDate = useMemo(() => {
-    const groups: Record<string, Meeting[]> = {};
-    meetings.forEach((meeting) => {
-      const label = getRelativeDateLabel(meeting.date);
-      if (!groups[label]) groups[label] = [];
-      groups[label].push(meeting);
-    });
-    return groups;
-  }, [meetings]);
+async function loadDailyStats() {
+  const supabase = createServiceClient();
+  const todayStartIso = getTodayStartIso(TIME_ZONE);
+  const todayKey = getTodayKey(TIME_ZONE);
+  const todayWindowFilter = `date.gte.${todayStartIso},created_at.gte.${todayStartIso},captured_at.gte.${todayStartIso}`;
 
-  if (meetings.length === 0) {
-    return (
-      <EmptyState
-        icon={<CalendarDays />}
-        title="No upcoming meetings this week"
-        description="No meetings are scheduled for the current week."
-      />
-    );
+  const [
+    meetingsCountResult,
+    emailsCountResult,
+    documentsCountResult,
+    teamsCountResult,
+    tasksCountResult,
+    recordsResult,
+    tasksResult,
+  ] = await Promise.all([
+    supabase
+      .from("document_metadata")
+      .select("id", { count: "exact", head: true })
+      .is("deleted_at", null)
+      .or("type.eq.meeting,category.eq.meeting,type.eq.meeting_transcript")
+      .or(todayWindowFilter),
+    supabase
+      .from("document_metadata")
+      .select("id", { count: "exact", head: true })
+      .is("deleted_at", null)
+      .eq("category", "email")
+      .or(todayWindowFilter),
+    supabase
+      .from("document_metadata")
+      .select("id", { count: "exact", head: true })
+      .is("deleted_at", null)
+      .eq("category", "document")
+      .or(todayWindowFilter),
+    supabase
+      .from("document_metadata")
+      .select("id", { count: "exact", head: true })
+      .is("deleted_at", null)
+      .eq("category", "teams_message")
+      .or(todayWindowFilter),
+    supabase
+      .from("tasks")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", todayStartIso),
+    supabase
+      .from("document_metadata")
+      .select(
+        "id,title,file_name,project,project_id,date,created_at,captured_at,duration_minutes,fireflies_link,source_web_url,url,category,type",
+      )
+      .is("deleted_at", null)
+      .or(
+        "type.eq.meeting,category.eq.meeting,type.eq.meeting_transcript,category.eq.email,category.eq.document,category.eq.teams_message",
+      )
+      .or(todayWindowFilter)
+      .order("created_at", { ascending: false, nullsFirst: false })
+      .limit(250),
+    supabase
+      .from("tasks")
+      .select("id,title,status,created_at,project_id,project:projects(id,name,project_number)")
+      .gte("created_at", todayStartIso)
+      .order("created_at", { ascending: false })
+      .limit(150),
+  ]);
+
+  if (meetingsCountResult.error) {
+    throw new Error(`Failed to load today's meeting count: ${meetingsCountResult.error.message}`);
+  }
+  if (emailsCountResult.error) {
+    throw new Error(`Failed to load today's email count: ${emailsCountResult.error.message}`);
+  }
+  if (documentsCountResult.error) {
+    throw new Error(`Failed to load today's document count: ${documentsCountResult.error.message}`);
+  }
+  if (teamsCountResult.error) {
+    throw new Error(`Failed to load today's Teams count: ${teamsCountResult.error.message}`);
+  }
+  if (tasksCountResult.error) {
+    throw new Error(`Failed to load today's task count: ${tasksCountResult.error.message}`);
+  }
+  if (recordsResult.error) {
+    throw new Error(`Failed to load today's source records: ${recordsResult.error.message}`);
+  }
+  if (tasksResult.error) {
+    throw new Error(`Failed to load today's tasks: ${tasksResult.error.message}`);
   }
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <div className="rounded-full bg-blue-500/10 p-1.5">
-          <Sunrise className="h-4 w-4 text-info" />
-        </div>
-        <h2 className="font-semibold">Upcoming This Week</h2>
-        <Badge variant="secondary" className="ml-1">
-          {meetings.length}
-        </Badge>
-      </div>
-      <div className="space-y-4">
-        {Object.entries(groupedByDate).map(([dateLabel, dateMeetings]) => (
-          <div key={dateLabel}>
-            <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
-              <Calendar className="h-3.5 w-3.5" />
-              {dateLabel}
-              <span className="text-xs">({dateMeetings.length})</span>
-            </h3>
-            <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-              {dateMeetings.map((meeting) => (
-                <MeetingCard key={meeting.id} meeting={meeting} compact />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+  const allRecords = ((recordsResult.data ?? []) as DocumentRecord[]).filter(
+    (record) => getDateKey(getDocumentMoment(record), TIME_ZONE) === todayKey,
   );
-}
 
-// Project Grouped View
-function ProjectGroupedView({ groups }: { groups: ProjectGroup[] }) {
-  const [openProjects, setOpenProjects] = useState<Set<string>>(new Set());
+  const meetings = sortMeetingsChronologically(
+    allRecords
+      .filter(isMeetingRecord)
+      .map((record) => ({
+        id: record.id,
+        title: getDocumentTitle(record),
+        at: getDocumentMoment(record),
+        durationMinutes: record.duration_minutes,
+        projectLabel: buildProjectLabel(record.project_id, record.project),
+        href: getMeetingHref(record),
+      })),
+  ).slice(0, MAX_LIST_ITEMS);
 
-  const toggleProject = (projectId: string) => {
-    const newOpen = new Set(openProjects);
-    if (newOpen.has(projectId)) {
-      newOpen.delete(projectId);
-    } else {
-      newOpen.add(projectId);
-    }
-    setOpenProjects(newOpen);
+  const emails = sortByMomentDescending(
+    allRecords
+      .filter((record) => record.category === "email")
+      .map((record) => ({
+        id: record.id,
+        title: getDocumentTitle(record),
+        at: getDocumentMoment(record),
+        projectLabel: buildProjectLabel(record.project_id, record.project),
+        href: buildEmailHref(record.project_id),
+      })),
+  ).slice(0, MAX_LIST_ITEMS);
+
+  const documents = sortByMomentDescending(
+    allRecords
+      .filter((record) => record.category === "document")
+      .map((record) => ({
+        id: record.id,
+        title: getDocumentTitle(record),
+        at: getDocumentMoment(record),
+        projectLabel: buildProjectLabel(record.project_id, record.project),
+        href: buildDocumentHref(record.project_id),
+      })),
+  ).slice(0, MAX_LIST_ITEMS);
+
+  const teamsMessages = sortByMomentDescending(
+    allRecords
+      .filter((record) => record.category === "teams_message")
+      .map((record) => ({
+        id: record.id,
+        title: getDocumentTitle(record),
+        at: getDocumentMoment(record),
+        projectLabel: buildProjectLabel(record.project_id, record.project),
+        href: buildTeamsHref(),
+      })),
+  ).slice(0, MAX_LIST_ITEMS);
+
+  const tasks = ((tasksResult.data ?? []) as TaskRecord[])
+    .filter((task) => getDateKey(task.created_at, TIME_ZONE) === todayKey)
+    .map((task) => {
+      const project = getTaskProjectRef(task.project);
+      const projectLabel = buildProjectLabel(
+        task.project_id,
+        project?.name ?? null,
+        project?.project_number ?? null,
+      );
+
+      return {
+        id: task.id,
+        title: task.title?.trim() || "Untitled task",
+        status: sentenceCase(task.status),
+        at: task.created_at,
+        projectId: task.project_id,
+        projectLabel,
+        href: buildTaskHref(task.project_id),
+      } satisfies TaskItem;
+    })
+    .slice(0, MAX_LIST_ITEMS);
+
+  const activityMap = new Map<string, ActivityGroup>();
+
+  const ensureGroup = (
+    projectId: number | null,
+    projectLabel: string | null,
+    href: string,
+  ) => {
+    const key = projectId ? `project:${projectId}` : `project:${projectLabel ?? "unlinked"}`;
+    const existing = activityMap.get(key);
+    if (existing) return existing;
+    const created: ActivityGroup = {
+      key,
+      projectLabel: projectLabel ?? "Unlinked activity",
+      meetingCount: 0,
+      taskCount: 0,
+      emailCount: 0,
+      documentCount: 0,
+      teamsCount: 0,
+      latestAt: null,
+      href,
+    };
+    activityMap.set(key, created);
+    return created;
   };
 
-  // Sort by meeting count
-  const sortedGroups = [...groups].sort(
-    (a, b) => b.meetings.length - a.meetings.length,
-  );
-
-  return (
-    <div className="space-y-2">
-      {sortedGroups.map((group) => {
-        const projectKey = group.projectId || "unassigned";
-        const isOpen = openProjects.has(projectKey);
-        const recentMeetings = group.meetings.slice(0, 3);
-        const hasMore = group.meetings.length > 3;
-
-        return (
-          <Collapsible
-            key={projectKey}
-            open={isOpen}
-            onOpenChange={() => toggleProject(projectKey)}
-          >
-            <Card>
-              <CollapsibleTrigger className="w-full">
-                <CardHeader className="py-4 px-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      {isOpen ? (
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      )}
-                      <div className="flex items-center gap-2">
-                        <Folder className="h-4 w-4 text-primary" />
-                        <span className="font-medium">{group.projectName}</span>
-                      </div>
-                      <Badge variant="outline" className="ml-2">
-                        {group.meetings.length} meeting
-                        {group.meetings.length !== 1 ? "s" : ""}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      {group.meetings[0]?.date && (
-                        <span>
-                          Latest:{" "}
-                          {format(parseISO(group.meetings[0].date), "MMM d")}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <CardContent className="pt-0 pb-4 px-4">
-                  <div className="ml-7 space-y-2">
-                    {(isOpen ? group.meetings : recentMeetings).map(
-                      (meeting) => (
-                        <Link key={meeting.id} href={`/meetings/${meeting.id}`}>
-                          <div className="flex items-center justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors group">
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm line-clamp-1 group-hover:text-primary transition-colors">
-                                {meeting.title || "Untitled Meeting"}
-                              </p>
-                              {meeting.summary && (
-                                <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                                  {meeting.summary}
-                                </p>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-4 ml-4 text-xs text-muted-foreground shrink-0">
-                              {meeting.date && (
-                                <span>
-                                  {format(parseISO(meeting.date), "MMM d")}
-                                </span>
-                              )}
-                              {meeting.duration_minutes && (
-                                <span>
-                                  {formatDuration(meeting.duration_minutes)}
-                                </span>
-                              )}
-                              <ArrowRight className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            </div>
-                          </div>
-                        </Link>
-                      ),
-                    )}
-                    {!isOpen && hasMore && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full text-xs"
-                      >
-                        Show {group.meetings.length - 3} more meetings
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </CollapsibleContent>
-            </Card>
-          </Collapsible>
-        );
-      })}
-    </div>
-  );
-}
-
-// All Meetings Table View
-function AllMeetingsTable({ meetings }: { meetings: Meeting[] }) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [currentView, setCurrentView] = useState<ViewMode>("table");
-
-  const filteredMeetings = useMemo(() => {
-    if (!searchQuery) return meetings;
-    const query = searchQuery.toLowerCase();
-    return meetings.filter(
-      (m) =>
-        m.title?.toLowerCase().includes(query) ||
-        m.project?.toLowerCase().includes(query) ||
-        m.participants?.toLowerCase().includes(query) ||
-        m.summary?.toLowerCase().includes(query),
+  for (const record of allRecords) {
+    const at = getDocumentMoment(record);
+    const projectLabel = buildProjectLabel(record.project_id, record.project);
+    const group = ensureGroup(
+      record.project_id,
+      projectLabel,
+      buildProjectHref(record.project_id),
     );
-  }, [meetings, searchQuery]);
 
-  const columns = useMemo<TableColumn<Meeting>[]>(
-    () => [
-      {
-        id: "meeting",
-        label: "Meeting",
-        alwaysVisible: true,
-        sortable: true,
-        render: (meeting) => (
-          <Link href={`/meetings/${meeting.id}`} className="block min-w-0">
-            <div className="line-clamp-1 text-sm font-medium text-foreground transition-colors hover:text-primary">
-              {meeting.title || "Untitled Meeting"}
-            </div>
-            {meeting.summary && (
-              <div className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-                {meeting.summary}
-              </div>
-            )}
-          </Link>
-        ),
-        sortValue: (meeting) => meeting.title ?? "",
-        csvValue: (meeting) => meeting.title || "Untitled Meeting",
-        width: 320,
-      },
-      {
-        id: "date",
-        label: "Date",
-        sortable: true,
-        render: (meeting) =>
-          meeting.date ? (
-            <div className="text-sm">
-              <div>{format(parseISO(meeting.date), "MMM d, yyyy")}</div>
-              <div className="text-xs text-muted-foreground">
-                {getTimeFromDate(meeting.date)}
-              </div>
-            </div>
-          ) : (
-            <span className="text-sm text-muted-foreground">-</span>
-          ),
-        sortValue: (meeting) =>
-          meeting.date ? parseISO(meeting.date).getTime() : 0,
-        csvValue: (meeting) =>
-          meeting.date
-            ? format(parseISO(meeting.date), "yyyy-MM-dd HH:mm")
-            : "",
-        width: 160,
-      },
-      {
-        id: "duration",
-        label: "Duration",
-        sortable: true,
-        render: (meeting) => (
-          <span className="text-sm text-muted-foreground">
-            {formatDuration(meeting.duration_minutes)}
-          </span>
-        ),
-        sortValue: (meeting) => meeting.duration_minutes ?? 0,
-        csvValue: (meeting) => formatDuration(meeting.duration_minutes),
-        width: 120,
-      },
-      {
-        id: "participants",
-        label: "Participants",
-        render: (meeting) => (
-          <div className="line-clamp-1 max-w-44 text-sm text-muted-foreground">
-            {meeting.participants || "-"}
-          </div>
-        ),
-        csvValue: (meeting) => meeting.participants ?? "",
-        width: 180,
-      },
-      {
-        id: "project",
-        label: "Project",
-        sortable: true,
-        render: (meeting) =>
-          meeting.project ? (
-            <Badge variant="outline" className="text-xs">
-              {meeting.project}
-            </Badge>
-          ) : (
-            <span className="text-xs text-muted-foreground">Unassigned</span>
-          ),
-        sortValue: (meeting) => meeting.project ?? "",
-        csvValue: (meeting) => meeting.project ?? "Unassigned",
-        width: 180,
-      },
-      {
-        id: "recording",
-        label: "",
-        render: (meeting) =>
-          meeting.fireflies_link ? (
-            <a
-              href={meeting.fireflies_link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-primary"
-              onClick={(event) => event.stopPropagation()}
-              aria-label="Open recording"
-            >
-              <ExternalLink className="h-4 w-4" />
-            </a>
-          ) : null,
-        csvValue: (meeting) => meeting.fireflies_link ?? "",
-        width: 56,
-      },
-    ],
-    [],
-  );
+    if (isMeetingRecord(record)) group.meetingCount += 1;
+    else if (record.category === "email") group.emailCount += 1;
+    else if (record.category === "document") group.documentCount += 1;
+    else if (record.category === "teams_message") group.teamsCount += 1;
 
-  return (
-    <UnifiedTablePage
-      header={{
-        title: "All Meetings",
-        description:
-          "Search recordings, transcripts, projects, and participants.",
-        variant: "compact",
-      }}
-      toolbar={{
-        totalItems: meetings.length,
-        filteredItems: filteredMeetings.length,
-        searchValue: searchQuery,
-        onSearchChange: setSearchQuery,
-        searchPlaceholder: "Search meetings...",
-        currentView,
-        onViewChange: (view) => {
-          if (view === "table") setCurrentView(view);
-        },
-        enabledViews: ["table"],
-      }}
-      data={{
-        items: filteredMeetings,
-        isLoading: false,
-        error: null,
-      }}
-      table={{
-        columns,
-        getRowId: (meeting) => meeting.id,
-        density: "compact",
-        stickyHeader: true,
-      }}
-      features={{
-        enableViews: false,
-        enableColumnToggle: true,
-        enableExport: true,
-        enablePagination: true,
-        enableBulkDelete: false,
-        enableRowSelection: false,
-      }}
-      layout={{
-        containerPadding: false,
-        toolbarInlineWithHeader: true,
-        minWidth: 980,
-      }}
-      emptyState={{
-        title: "No meetings found",
-        description: "Meetings will appear here after recordings are synced.",
-        filteredDescription: "No meetings match your search.",
-        isFiltered: Boolean(searchQuery),
-      }}
-    />
-  );
-}
-
-// Stats Cards
-function MeetingStats({ meetings }: { meetings: Meeting[] }) {
-  const stats = useMemo(() => {
-    const today = meetings.filter(
-      (m) => m.date && isToday(parseISO(m.date)),
-    ).length;
-    const thisWeek = meetings.filter(
-      (m) => m.date && isThisWeek(parseISO(m.date)),
-    ).length;
-    const totalDuration = meetings.reduce(
-      (sum, m) => sum + (m.duration_minutes || 0),
-      0,
-    );
-    const uniqueProjects = new Set(
-      meetings.map((m) => m.project).filter(Boolean),
-    ).size;
-
-    return {
-      today,
-      thisWeek,
-      totalDuration,
-      uniqueProjects,
-      total: meetings.length,
-    };
-  }, [meetings]);
-
-  return (
-    <div className="grid gap-4 md:grid-cols-4">
-      <Card>
-        <CardContent className="pt-4">
-          <div className="text-2xl font-bold">{stats.total}</div>
-          <p className="text-xs text-muted-foreground">Total Meetings</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="pt-4">
-          <div className="text-2xl font-bold">{stats.thisWeek}</div>
-          <p className="text-xs text-muted-foreground">This Week</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="pt-4">
-          <div className="text-2xl font-bold">
-            {formatDuration(stats.totalDuration)}
-          </div>
-          <p className="text-xs text-muted-foreground">Total Duration</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="pt-4">
-          <div className="text-2xl font-bold">{stats.uniqueProjects}</div>
-          <p className="text-xs text-muted-foreground">Projects</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// Loading Skeleton
-function LoadingSkeleton() {
-  return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <Card key={i}>
-            <CardContent className="pt-4">
-              <Skeleton className="h-8 w-16 mb-2" />
-              <Skeleton className="h-4 w-24" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      <Skeleton className="h-48" />
-      <Skeleton className="h-64" />
-    </div>
-  );
-}
-
-// Main Page Component
-export default function MeetingsPage() {
-  const [activeTab, setActiveTab] = useState("overview");
-  const supabase = createClient();
-
-  // Fetch meetings
-  const {
-    data: meetings = [],
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["meetings"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("document_metadata")
-        .select("*")
-        .eq("type", "meeting")
-        .order("date", { ascending: false })
-        .limit(500);
-
-      if (error) throw error;
-      return (data || []) as unknown as Meeting[];
-    },
-  });
-
-  // Derived data
-  const { todayMeetings, upcomingMeetings, projectGroups } = useMemo(() => {
-    const today: Meeting[] = [];
-    const upcoming: Meeting[] = [];
-    const projectMap: Map<string | null, Meeting[]> = new Map();
-
-    const now = new Date();
-    const weekEnd = addDays(now, 7);
-
-    meetings.forEach((meeting) => {
-      // Group by project
-      const key = meeting.project_id;
-      if (!projectMap.has(key)) projectMap.set(key, []);
-      projectMap.get(key)!.push(meeting);
-
-      // Time-based grouping
-      if (meeting.date) {
-        const date = parseISO(meeting.date);
-        if (isToday(date)) {
-          today.push(meeting);
-        } else if (date > now && date <= weekEnd) {
-          upcoming.push(meeting);
-        }
-      }
-    });
-
-    // Sort upcoming by date
-    upcoming.sort((a, b) => {
-      if (!a.date || !b.date) return 0;
-      return parseISO(a.date).getTime() - parseISO(b.date).getTime();
-    });
-
-    // Create project groups
-    const groups: ProjectGroup[] = [];
-    projectMap.forEach((projectMeetings, projectId) => {
-      groups.push({
-        projectId,
-        projectName: projectMeetings[0]?.project || "Unassigned",
-        meetings: projectMeetings,
-      });
-    });
-
-    return {
-      todayMeetings: today,
-      upcomingMeetings: upcoming,
-      projectGroups: groups,
-    };
-  }, [meetings]);
-
-  if (error) {
-    return (
-      <div className="container mx-auto p-6">
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="text-destructive">
-              Error Loading Meetings
-            </CardTitle>
-            <CardDescription>{(error as Error).message}</CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
+    if (!group.latestAt || (at && new Date(at).getTime() > new Date(group.latestAt).getTime())) {
+      group.latestAt = at;
+    }
   }
 
-  return (
-    <div className="container mx-auto p-6 max-w-7xl">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Meetings</h1>
-          <p className="text-muted-foreground">
-            Review and manage your meeting recordings and transcripts
-          </p>
+  for (const task of tasks) {
+    const group = ensureGroup(
+      task.projectId,
+      task.projectLabel,
+      buildProjectHref(task.projectId),
+    );
+    group.taskCount += 1;
+    if (!group.latestAt || new Date(task.at).getTime() > new Date(group.latestAt).getTime()) {
+      group.latestAt = task.at;
+    }
+  }
+
+  const projectActivity = [...activityMap.values()]
+    .filter(
+      (group) =>
+        group.meetingCount +
+          group.taskCount +
+          group.emailCount +
+          group.documentCount +
+          group.teamsCount >
+        0,
+    )
+    .sort((left, right) => {
+      const leftTotal =
+        left.meetingCount +
+        left.taskCount +
+        left.emailCount +
+        left.documentCount +
+        left.teamsCount;
+      const rightTotal =
+        right.meetingCount +
+        right.taskCount +
+        right.emailCount +
+        right.documentCount +
+        right.teamsCount;
+
+      if (rightTotal !== leftTotal) return rightTotal - leftTotal;
+      const leftTime = left.latestAt ? new Date(left.latestAt).getTime() : 0;
+      const rightTime = right.latestAt ? new Date(right.latestAt).getTime() : 0;
+      return rightTime - leftTime;
+    })
+    .slice(0, MAX_ACTIVITY_ROWS);
+
+  return {
+    counts: {
+      meetings: meetingsCountResult.count ?? meetings.length,
+      tasks: tasksCountResult.count ?? tasks.length,
+      emails: emailsCountResult.count ?? emails.length,
+      documents: documentsCountResult.count ?? documents.length,
+      teamsMessages: teamsCountResult.count ?? teamsMessages.length,
+      activeProjects: projectActivity.length,
+    },
+    meetings,
+    tasks,
+    emails,
+    documents,
+    teamsMessages,
+    projectActivity,
+  };
+}
+
+function MeetingRows({ items }: { items: MeetingItem[] }) {
+  if (items.length === 0) {
+    return <EmptySection message="No meetings recorded today." />;
+  }
+
+  return items.map((meeting) => (
+    <div key={meeting.id} className="flex items-start justify-between gap-4 py-3">
+      <div className="min-w-0 space-y-1">
+        <Link href={meeting.href} className="block text-sm font-medium text-foreground hover:text-primary">
+          {meeting.title}
+        </Link>
+        <div className="text-xs text-muted-foreground">
+          {meeting.projectLabel ?? "No project linked"}
         </div>
       </div>
-
-      {isLoading ? (
-        <LoadingSkeleton />
-      ) : (
-        <>
-          {/* Stats */}
-          <MeetingStats meetings={meetings} />
-
-          {/* Main Content with Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-            <TabsList variant="line" className="mb-4">
-              <TabsTrigger value="overview" className="gap-2">
-                <LayoutGrid className="h-4 w-4" />
-                Overview
-              </TabsTrigger>
-              <TabsTrigger value="by-project" className="gap-2">
-                <Folder className="h-4 w-4" />
-                By Project
-              </TabsTrigger>
-              <TabsTrigger value="all" className="gap-2">
-                <LayoutList className="h-4 w-4" />
-                All Meetings
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="overview" className="space-y-6">
-              {/* Today's Meetings */}
-              <TodaysMeetings meetings={todayMeetings} />
-
-              {/* Upcoming This Week */}
-              <UpcomingMeetings meetings={upcomingMeetings} />
-
-              {/* Recent by Project (preview) */}
-              {projectGroups.length > 0 && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h2 className="font-semibold flex items-center gap-2">
-                      <Folder className="h-4 w-4 text-muted-foreground" />
-                      Recent by Project
-                    </h2>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setActiveTab("by-project")}
-                      className="text-xs"
-                    >
-                      View All Projects
-                      <ArrowRight />
-                    </Button>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {projectGroups.slice(0, 6).map((group) => (
-                      <Card
-                        key={group.projectId || "unassigned"}
-                        className="hover:shadow-sm transition-shadow"
-                      >
-                        <CardHeader className="py-4 px-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Folder className="h-4 w-4 text-primary" />
-                              <CardTitle className="text-sm">
-                                {group.projectName}
-                              </CardTitle>
-                            </div>
-                            <Badge variant="secondary" className="text-xs">
-                              {group.meetings.length}
-                            </Badge>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="pt-0 pb-4 px-4">
-                          <div className="space-y-1">
-                            {group.meetings.slice(0, 2).map((meeting) => (
-                              <Link
-                                key={meeting.id}
-                                href={`/meetings/${meeting.id}`}
-                              >
-                                <div className="text-xs text-muted-foreground hover:text-primary truncate">
-                                  {meeting.title || "Untitled"}
-                                </div>
-                              </Link>
-                            ))}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="by-project">
-              <ProjectGroupedView groups={projectGroups} />
-            </TabsContent>
-
-            <TabsContent value="all">
-              <AllMeetingsTable meetings={meetings} />
-            </TabsContent>
-          </Tabs>
-        </>
-      )}
+      <div className="shrink-0 text-right text-xs text-muted-foreground">
+        <div>{formatTime(meeting.at, TIME_ZONE)}</div>
+        {formatDuration(meeting.durationMinutes) ? (
+          <div>{formatDuration(meeting.durationMinutes)}</div>
+        ) : null}
+      </div>
     </div>
+  ));
+}
+
+function TaskRows({ items }: { items: TaskItem[] }) {
+  if (items.length === 0) {
+    return <EmptySection message="No tasks were generated today." />;
+  }
+
+  return items.map((task) => (
+    <div key={task.id} className="flex items-start justify-between gap-4 py-3">
+      <div className="min-w-0 space-y-1">
+        <Link href={task.href} className="block text-sm font-medium text-foreground hover:text-primary">
+          {task.title}
+        </Link>
+        <div className="text-xs text-muted-foreground">
+          {task.projectLabel ?? "No project linked"}
+        </div>
+      </div>
+      <div className="shrink-0 text-right text-xs text-muted-foreground">
+        <div>{task.status}</div>
+        <div>{formatRelativeMoment(task.at, TIME_ZONE)}</div>
+      </div>
+    </div>
+  ));
+}
+
+function SourceRows({
+  items,
+  emptyMessage,
+}: {
+  items: SourceItem[];
+  emptyMessage: string;
+}) {
+  if (items.length === 0) {
+    return <EmptySection message={emptyMessage} />;
+  }
+
+  return items.map((item) => (
+    <div key={item.id} className="flex items-start justify-between gap-4 py-3">
+      <div className="min-w-0 space-y-1">
+        <Link href={item.href} className="block text-sm font-medium text-foreground hover:text-primary">
+          {item.title}
+        </Link>
+        <div className="text-xs text-muted-foreground">
+          {item.projectLabel ?? "No project linked"}
+        </div>
+      </div>
+      <div className="shrink-0 text-right text-xs text-muted-foreground">
+        {formatRelativeMoment(item.at, TIME_ZONE)}
+      </div>
+    </div>
+  ));
+}
+
+function ProjectActivityRows({ items }: { items: ActivityGroup[] }) {
+  if (items.length === 0) {
+    return <EmptySection message="No project activity has been captured today." />;
+  }
+
+  return items.map((group) => (
+    <div key={group.key} className="flex items-start justify-between gap-4 py-3">
+      <div className="min-w-0 space-y-1">
+        <Link href={group.href} className="block text-sm font-medium text-foreground hover:text-primary">
+          {group.projectLabel}
+        </Link>
+        <div className="text-xs text-muted-foreground">{buildActivitySummary(group)}</div>
+      </div>
+      <div className="shrink-0 text-right text-xs text-muted-foreground">
+        {formatRelativeMoment(group.latestAt, TIME_ZONE)}
+      </div>
+    </div>
+  ));
+}
+
+export default async function TodayStatsPage() {
+  const dailyStats = await loadDailyStats();
+
+  return (
+    <PageShell
+      variant="dashboard"
+      title="Today's Stats"
+      eyebrow={formatLongDate(new Date(), TIME_ZONE)}
+    >
+      <div className="space-y-10">
+        <KpiRow
+          size="small"
+          metrics={[
+            {
+              label: "Meetings",
+              value: dailyStats.counts.meetings.toLocaleString(),
+              context: "Recorded today",
+            },
+            {
+              label: "Tasks",
+              value: dailyStats.counts.tasks.toLocaleString(),
+              context: "Generated today",
+            },
+            {
+              label: "Emails",
+              value: dailyStats.counts.emails.toLocaleString(),
+              context: "Synced today",
+            },
+            {
+              label: "Documents",
+              value: dailyStats.counts.documents.toLocaleString(),
+              context: "Synced today",
+            },
+            {
+              label: "Teams",
+              value: dailyStats.counts.teamsMessages.toLocaleString(),
+              context: "Messages synced today",
+            },
+            {
+              label: "Projects",
+              value: dailyStats.counts.activeProjects.toLocaleString(),
+              context: "With activity today",
+            },
+          ]}
+        />
+
+        <Section title="Project Activity" href="/projects">
+          <ProjectActivityRows items={dailyStats.projectActivity} />
+        </Section>
+
+        <div className="grid gap-10 xl:grid-cols-2">
+          <Section title="Meetings" href="/meetings">
+            <MeetingRows items={dailyStats.meetings} />
+          </Section>
+
+          <Section title="Tasks Generated" href="/tasks">
+            <TaskRows items={dailyStats.tasks} />
+          </Section>
+
+          <Section title="Emails Synced" href="/emails">
+            <SourceRows
+              items={dailyStats.emails}
+              emptyMessage="No emails have been synced today."
+            />
+          </Section>
+
+          <Section title="Documents Synced" href="/documents">
+            <SourceRows
+              items={dailyStats.documents}
+              emptyMessage="No documents have been synced today."
+            />
+          </Section>
+
+          <Section title="Teams Messages" href="/teams-conversations">
+            <SourceRows
+              items={dailyStats.teamsMessages}
+              emptyMessage="No Teams messages have been synced today."
+            />
+          </Section>
+        </div>
+      </div>
+    </PageShell>
   );
 }

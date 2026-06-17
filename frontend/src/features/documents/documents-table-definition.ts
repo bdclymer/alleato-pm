@@ -12,6 +12,7 @@ import {
 export type DocumentFilterState = {
   source: FilterValue;
   type: FilterValue;
+  document_type: FilterValue;
   category: FilterValue;
   pipeline_stage: FilterValue;
   date_from: FilterValue;
@@ -21,6 +22,7 @@ export type DocumentFilterState = {
 export const EMPTY_DOCUMENT_FILTERS: DocumentFilterState = {
   source: undefined,
   type: undefined,
+  document_type: undefined,
   category: undefined,
   pipeline_stage: undefined,
   date_from: undefined,
@@ -32,6 +34,7 @@ const DOCUMENT_SORT_FIELDS = new Set([
   "date",
   "title",
   "type",
+  "document_type",
   "category",
   "source",
 ]);
@@ -51,6 +54,7 @@ type DocumentsTableDefinitionOptions = {
   defaultSortDirection?: "asc" | "desc";
   columns?: ColumnConfig[];
   defaultVisibleColumns?: string[];
+  forcedProjectId?: number;
 };
 
 export function createDocumentsTableDefinition(
@@ -76,6 +80,7 @@ export function createDocumentsTableDefinition(
       return {
         source: readFilter(searchParams, "source"),
         type: readFilter(searchParams, "type"),
+        document_type: readFilter(searchParams, "document_type"),
         category: readFilter(searchParams, "category"),
         pipeline_stage: readFilter(searchParams, "pipeline_stage"),
         date_from: readFilter(searchParams, "date_from"),
@@ -86,6 +91,10 @@ export function createDocumentsTableDefinition(
       return {
         source: typeof filters.source === "string" ? filters.source : null,
         type: typeof filters.type === "string" ? filters.type : null,
+        document_type:
+          typeof filters.document_type === "string"
+            ? filters.document_type
+            : null,
         category: typeof filters.category === "string" ? filters.category : null,
         pipeline_stage:
           typeof filters.pipeline_stage === "string"
@@ -106,8 +115,17 @@ export function createDocumentsTableDefinition(
       if (typeof query.filters.type === "string" && query.filters.type) {
         params.set("type", query.filters.type);
       }
+      if (
+        typeof query.filters.document_type === "string" &&
+        query.filters.document_type
+      ) {
+        params.set("document_type", query.filters.document_type);
+      }
       if (typeof query.filters.category === "string" && query.filters.category) {
         params.set("category", query.filters.category);
+      }
+      if (typeof options.forcedProjectId === "number") {
+        params.set("project_id", String(options.forcedProjectId));
       }
       if (
         typeof query.filters.pipeline_stage === "string" &&

@@ -46,6 +46,7 @@ export function useChangeEventFormData({
     title: initialData?.title || "",
     status: initialData?.status || "Open",
     origin: initialData?.origin,
+    originId: initialData?.originId,
     type: initialData?.type,
     changeReason: initialData?.changeReason,
     scope: initialData?.scope || "",

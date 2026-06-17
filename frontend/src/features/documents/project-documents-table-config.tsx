@@ -40,6 +40,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { ProjectDocument } from "@/hooks/use-documents";
+import {
+  DOCUMENT_TYPE_OPTIONS,
+  documentTypeLabel,
+} from "@/features/documents/document-types";
 
 // =============================================================================
 // Filter Options
@@ -69,7 +73,8 @@ const CATEGORY_OPTIONS = [
 
 export const projectDocumentColumns: ColumnConfig[] = [
   { id: "title", label: "Title", alwaysVisible: true },
-  { id: "category", label: "Category", defaultVisible: true },
+  { id: "document_type", label: "Type", defaultVisible: true },
+  { id: "category", label: "Category", defaultVisible: false },
   { id: "created_at", label: "Date", defaultVisible: true },
   { id: "uploaded_by", label: "Uploaded By", defaultVisible: true },
   { id: "content_type", label: "Format", defaultVisible: true },
@@ -85,6 +90,12 @@ export const projectDocumentColumns: ColumnConfig[] = [
 ];
 
 export const projectDocumentFilters: FilterConfig[] = [
+  {
+    id: "document_type",
+    label: "Type",
+    type: "select",
+    options: [...DOCUMENT_TYPE_OPTIONS],
+  },
   {
     id: "status",
     label: "Status",
@@ -262,6 +273,18 @@ export function buildDocumentTableColumns(opts?: {
       },
       csvValue: (item) => item.title,
       sortValue: (item) => item.title,
+      sortable: true,
+    },
+    {
+      ...getProjectDocumentColumn("document_type"),
+      width: 150,
+      render: (item) => (
+        <span className="text-muted-foreground">
+          {documentTypeLabel(item.document_type)}
+        </span>
+      ),
+      csvValue: (item) => documentTypeLabel(item.document_type),
+      sortValue: (item) => item.document_type ?? "",
       sortable: true,
     },
     {

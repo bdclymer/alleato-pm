@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { GuardrailError } from "@/lib/guardrails/errors";
+import { createOutlookIntakeServiceClient } from "@/lib/supabase/service";
 import type { Database } from "@/types/database.types";
 
 type ServerSupabaseClient = SupabaseClient<Database>;
@@ -91,6 +92,7 @@ export async function reassignEmailAttachmentProject({
   const now = new Date().toISOString();
   const parentEmailId = attachment.project_emails.id;
   const graphMessageId = attachment.project_emails.graph_message_id;
+  const intakeSupabase = createOutlookIntakeServiceClient();
 
   const { error: emailUpdateError } = await supabase
     .from("project_emails")
@@ -118,7 +120,7 @@ export async function reassignEmailAttachmentProject({
     updated_at: now,
   };
 
-  const { error: intakeByProjectEmailError } = await supabase
+  const { error: intakeByProjectEmailError } = await intakeSupabase
     .from("outlook_email_intake")
     .update(intakeUpdate)
     .eq("project_email_id", parentEmailId);
@@ -133,7 +135,7 @@ export async function reassignEmailAttachmentProject({
   }
 
   if (graphMessageId) {
-    const { error: intakeByGraphError } = await supabase
+    const { error: intakeByGraphError } = await intakeSupabase
       .from("outlook_email_intake")
       .update(intakeUpdate)
       .eq("graph_message_id", graphMessageId);

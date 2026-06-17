@@ -9,7 +9,10 @@ import re
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional
 
+from src.services.supabase_helpers import get_rag_read_client, get_rag_write_client
+
 logger = logging.getLogger(__name__)
+OUTLOOK_WEBHOOK_PENDING_STATUS = "webhook_pending"
 
 
 class GraphWebhookAuthError(ValueError):
@@ -79,7 +82,8 @@ def _mailbox_from_subscription(supabase: Any, subscription_id: str) -> Optional[
         return None
     try:
         response = (
-            supabase.table("graph_subscriptions")
+            get_rag_read_client()
+            .table("graph_subscriptions")
             .select("source, resource_id")
             .eq("graph_subscription_id", subscription_id)
             .limit(1)
@@ -164,6 +168,73 @@ def record_notification(supabase: Any, notification: Dict[str, Any]) -> None:
     _record_webhook_notification(supabase, notification)
 
 
+def queue_outlook_notification_work(
+    supabase: Any,
+    notification: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Mark an Outlook mailbox as pending delta sync without doing the sync inline."""
+    validate_client_state(notification.get("clientState"))
+    work_item = outlook_notification_work_item(notification, supabase=supabase)
+    if not work_item:
+        return {"status": "ignored", "reason": "unsupported_resource"}
+
+    mailbox = str(work_item["mailbox"])
+    message_id = work_item.get("message_id")
+    change_type = str(work_item.get("change_type") or "unknown")
+    resource_name = f"Outlook: {mailbox}"
+    queue_note = (
+        f"Webhook pending for mailbox {mailbox}"
+        f" change_type={change_type}"
+        f" message_id={message_id or 'unknown'}"
+    )
+
+    read_client = get_rag_read_client()
+    write_client = get_rag_write_client()
+    existing = (
+        read_client.from_("graph_sync_state")
+        .select("resource_id,sync_status")
+        .eq("source", "outlook_email")
+        .eq("resource_id", mailbox)
+        .limit(1)
+        .execute()
+    )
+    rows = existing.data or []
+    queue_status = OUTLOOK_WEBHOOK_PENDING_STATUS
+    if rows:
+        existing_status = str(rows[0].get("sync_status") or "").strip().lower()
+        update_payload: Dict[str, Any] = {
+            "resource_name": resource_name,
+            "error_message": queue_note,
+        }
+        if existing_status != "running":
+            update_payload["sync_status"] = OUTLOOK_WEBHOOK_PENDING_STATUS
+        else:
+            queue_status = "running"
+        write_client.from_("graph_sync_state").update(update_payload).eq(
+            "source", "outlook_email"
+        ).eq("resource_id", mailbox).execute()
+    else:
+        write_client.from_("graph_sync_state").insert(
+            {
+                "source": "outlook_email",
+                "resource_id": mailbox,
+                "resource_name": resource_name,
+                "sync_status": OUTLOOK_WEBHOOK_PENDING_STATUS,
+                "error_message": queue_note,
+                "items_synced": 0,
+            }
+        ).execute()
+
+    return {
+        "status": "queued",
+        "mailbox": mailbox,
+        "message_id": message_id,
+        "subscription_id": work_item.get("subscription_id"),
+        "change_type": change_type,
+        "queue_status": queue_status,
+    }
+
+
 def _lifecycle_status(lifecycle_event: str) -> str:
     normalized = lifecycle_event.strip()
     if normalized == "reauthorizationRequired":
@@ -186,7 +257,7 @@ def handle_lifecycle_event(supabase: Any, notification: Dict[str, Any]) -> bool:
     now = datetime.now(timezone.utc).isoformat()
     status = _lifecycle_status(lifecycle_event)
     try:
-        supabase.table("graph_subscriptions").update(
+        get_rag_write_client().table("graph_subscriptions").update(
             {
                 "status": status,
                 "last_lifecycle_event_at": now,
@@ -217,24 +288,8 @@ def handle_lifecycle_event(supabase: Any, notification: Dict[str, Any]) -> bool:
 
 
 def process_graph_notification_realtime(supabase: Any, notification: Dict[str, Any]) -> Dict[str, Any]:
-    """Process one accepted Graph notification into current assistant-readable state."""
-    validate_client_state(notification.get("clientState"))
-    work_item = outlook_notification_work_item(notification, supabase=supabase)
-    if not work_item:
-        return {"status": "ignored", "reason": "unsupported_resource"}
-
-    from .sync import sync_outlook_mailbox_delta
-
-    mailbox = str(work_item["mailbox"])
-    result = sync_outlook_mailbox_delta(
-        supabase,
-        mailbox,
-        reason="graph_webhook",
-        verify_persisted_count=False,
-    )
-    result["message_id"] = work_item.get("message_id")
-    result["subscription_id"] = work_item.get("subscription_id")
-    return result
+    """Compatibility wrapper that now only queues mailbox work."""
+    return queue_outlook_notification_work(supabase, notification)
 
 
 def handle_graph_notifications(
@@ -245,9 +300,16 @@ def handle_graph_notifications(
 ) -> Dict[str, Any]:
     values = notification_values(payload)
     if not values:
-        return {"status": "accepted", "notification_count": 0, "recorded": 0, "queued_realtime": 0}
+        return {
+            "status": "accepted",
+            "notification_count": 0,
+            "recorded": 0,
+            "queued_mailboxes": 0,
+            "queued_realtime": 0,
+        }
 
     recorded = 0
+    queued_mailboxes = 0
     queued_realtime = 0
     for notification in values:
         validate_client_state(notification.get("clientState"))
@@ -261,13 +323,28 @@ def handle_graph_notifications(
                 notification.get("resource"),
                 exc,
             )
-        if on_realtime_notification and outlook_notification_work_item(notification, supabase=supabase):
+        work_item = outlook_notification_work_item(notification, supabase=supabase)
+        if not work_item:
+            continue
+        try:
+            queue_result = queue_outlook_notification_work(supabase, notification)
+            if queue_result.get("status") == "queued":
+                queued_mailboxes += 1
+        except Exception as exc:
+            logger.warning(
+                "[GraphWebhook] Could not mark mailbox pending for subscription=%s resource=%s: %s",
+                notification.get("subscriptionId"),
+                notification.get("resource"),
+                exc,
+            )
+            continue
+        if on_realtime_notification:
             try:
                 if on_realtime_notification(notification):
                     queued_realtime += 1
             except Exception as exc:
                 logger.warning(
-                    "[GraphWebhook] Could not enqueue realtime processing for subscription=%s resource=%s: %s",
+                    "[GraphWebhook] Realtime callback failed for subscription=%s resource=%s: %s",
                     notification.get("subscriptionId"),
                     notification.get("resource"),
                     exc,
@@ -277,6 +354,7 @@ def handle_graph_notifications(
         "status": "accepted",
         "notification_count": len(values),
         "recorded": recorded,
+        "queued_mailboxes": queued_mailboxes,
         "queued_realtime": queued_realtime,
     }
 

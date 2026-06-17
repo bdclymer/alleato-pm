@@ -107,7 +107,7 @@ export default function EditChangeEventPage() {
       origin:
         ORIGIN_NORMALIZE[changeEvent.origin ?? ""] ??
         changeEvent.origin ??
-        "",
+        undefined,
       originId: changeEvent.originId ?? changeEvent.origin_id ?? undefined,
       changeReason: changeEvent.reason ?? "",
       description: changeEvent.description ?? "",
@@ -176,8 +176,11 @@ export default function EditChangeEventPage() {
             reason: data.changeReason
               ? (REASON_MAP[data.changeReason] ?? data.changeReason)
               : undefined,
-            origin: ORIGIN_MAP[data.origin || ""] || data.origin || "Internal",
-            originId: data.originId || undefined,
+            origin:
+              data.origin === undefined
+                ? undefined
+                : (ORIGIN_MAP[data.origin] ?? data.origin ?? null),
+            originId: data.origin ? (data.originId || undefined) : null,
             expectingRevenue: data.expectingRevenue ?? true,
             lineItemRevenueSource: data.lineItemRevenueSource || undefined,
             primeContractId: data.primeContractId || undefined,
@@ -263,9 +266,37 @@ export default function EditChangeEventPage() {
         toast.error(
           `Change event saved but ${failed.length} line item(s) failed: ${reasons}`,
         );
-      } else {
-        toast.success("Change event updated");
       }
+
+      const attachmentResults = await Promise.allSettled(
+        data.attachments.map(async (file) => {
+          const formData = new FormData();
+          formData.append("file", file);
+          return apiFetch(
+            `/api/projects/${projectId}/change-events/${changeEventId}/attachments`,
+            {
+              method: "POST",
+              body: formData,
+            },
+          );
+        }),
+      );
+
+      const failedAttachments = attachmentResults.filter(
+        (result) => result.status === "rejected",
+      );
+      if (failedAttachments.length > 0) {
+        const reasons = failedAttachments
+          .map((result) => (result as PromiseRejectedResult).reason?.message)
+          .filter(Boolean)
+          .join("; ");
+        const message = `Change event saved but ${failedAttachments.length} attachment(s) failed: ${reasons}`;
+        setSaveError(message);
+        toast.error(message);
+        return;
+      }
+
+      toast.success("Change event updated");
 
       router.push(`/${projectId}/change-events/${changeEventId}`);
     } catch (err) {

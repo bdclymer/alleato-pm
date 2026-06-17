@@ -78,6 +78,45 @@ describe("teams recency anchoring", () => {
     expect(anchor).toBe("2026-03-23T00:00:00.000Z");
   });
 
+  it("uses the freshest timestamp for document rows so newly ingested files are not marked stale", () => {
+    const anchor = getRecencyAnchor({
+      category: "document",
+      type: "document",
+      date: "2025-05-16T00:00:00.000Z",
+      created_at: "2026-06-17T08:54:09.313Z",
+      captured_at: null,
+    });
+
+    expect(anchor).toBe("2026-06-17T08:54:09.313Z");
+  });
+
+  it("uses the freshest timestamp for ranked document hits", () => {
+    const anchor = getHitDateAnchor({
+      id: "hit-1",
+      spec: {
+        section: "importantUpdates",
+        title: "New document",
+        query: "document update",
+      },
+      sourceGroup: {
+        label: "Document",
+        sourceTypes: ["onedrive_document"],
+        detail: "Documents",
+      },
+      metadata: {
+        category: "document",
+        captured_at: null,
+      },
+      row: {
+        doc_category: "document",
+        doc_date: "2025-05-16T00:00:00.000Z",
+        doc_created_at: "2026-06-17T08:54:09.313Z",
+      },
+    } as const);
+
+    expect(anchor).toBe("2026-06-17T08:54:09.313Z");
+  });
+
   it("does not count stale Teams source coverage just because it was ingested recently", async () => {
     jest.useFakeTimers().setSystemTime(new Date("2026-05-08T16:00:00.000Z"));
     const coverageFilters: string[] = [];

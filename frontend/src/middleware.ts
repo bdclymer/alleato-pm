@@ -1,4 +1,4 @@
-import { type NextRequest } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 
 import { updateSession } from '@/lib/supabase/middleware'
 import { validateEnvVars } from '@/lib/guardrails/env'
@@ -17,6 +17,16 @@ function ensureRuntimeEnv() {
 }
 
 export async function middleware(request: NextRequest) {
+  if ((process.env.DB_INCIDENT_MAINTENANCE ?? '').trim().toLowerCase() === 'true') {
+    return new NextResponse('Alleato PM is temporarily paused while database recovery is in progress.', {
+      status: 503,
+      headers: {
+        'Cache-Control': 'no-store',
+        'Retry-After': '300',
+      },
+    })
+  }
+
   ensureRuntimeEnv()
   return await updateSession(request)
 }
@@ -29,9 +39,7 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public folder and static assets
      * - monitoring (Sentry tunnel)
-     * - api routes (route handlers own auth and timeout budgets)
-     * - auth routes (entire /auth path)
      */
-    '/((?!api/|monitoring|_next/|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|mjs|map|txt|xml)$|auth).*)',
+    '/((?!monitoring|_next/|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|mjs|map|txt|xml)$).*)',
   ],
 }

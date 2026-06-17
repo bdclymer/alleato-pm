@@ -243,6 +243,14 @@ function resolveSupabaseConfig() {
   return { url, key };
 }
 
+function resolveRagSupabaseConfig() {
+  const url = process.env.RAG_SUPABASE_URL;
+  const key =
+    process.env.RAG_SUPABASE_SERVICE_ROLE_KEY ??
+    process.env.RAG_SUPABASE_SERVICE_KEY;
+  return { url, key };
+}
+
 async function supabaseRest(pathname, key, init = {}) {
   const headers = {
     apikey: key,
@@ -257,9 +265,9 @@ async function verifyCachedIntake(options, mailbox) {
     return result("cached_intake", true, "Skipped Supabase cache check.", { skipped: true });
   }
 
-  const { url, key } = resolveSupabaseConfig();
+  const { url, key } = resolveRagSupabaseConfig();
   if (!url || !key) {
-    return result("cached_intake", false, "Missing Supabase URL or service-role key.");
+    return result("cached_intake", false, "Missing RAG Supabase URL or service-role key.");
   }
 
   try {
@@ -323,9 +331,9 @@ async function verifySyncLedger(options, mailbox) {
     return result("sync_ledger", true, "Skipped Supabase sync ledger check.", { skipped: true });
   }
 
-  const { url, key } = resolveSupabaseConfig();
+  const { url, key } = resolveRagSupabaseConfig();
   if (!url || !key) {
-    return result("sync_ledger", false, "Missing Supabase URL or service-role key.");
+    return result("sync_ledger", false, "Missing RAG Supabase URL or service-role key.");
   }
 
   try {

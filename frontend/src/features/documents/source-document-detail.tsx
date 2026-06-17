@@ -15,6 +15,7 @@ import {
   type ReadableEmailMessage,
 } from "@/lib/email/readable-email";
 import {
+  createOutlookIntakeServiceClient,
   createRagServiceClient,
   createServiceClient,
   isRagDatabaseReadsEnabled,
@@ -187,9 +188,10 @@ export async function loadSourceDocumentDetail(
   }
 
   const ragSupabase = isRagDatabaseReadsEnabled() ? createRagServiceClient() : null;
+  const intakeSupabase = createOutlookIntakeServiceClient();
   const attachmentLinkResult =
     typeof source.project_id === "number"
-      ? await supabase
+      ? await intakeSupabase
           .from("outlook_email_intake_attachments")
           .select("*")
           .eq("document_metadata_id", options.sourceDocumentId)

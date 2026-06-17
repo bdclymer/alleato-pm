@@ -236,6 +236,17 @@ try {
   }
 }
 
+if (versions.some((version) => !remoteVersions.has(version))) {
+  try {
+    const managementApiRemoteVersions = await loadRemoteVersionsViaManagementApi();
+    for (const version of managementApiRemoteVersions) {
+      remoteVersions.add(version);
+    }
+  } catch {
+    // Fall through to the best available ledger source.
+  }
+}
+
 if (assertClean) {
   const remoteOnly = [...remoteVersions].filter((version) => !localRows.has(version));
   if (remoteOnly.length > 0) {

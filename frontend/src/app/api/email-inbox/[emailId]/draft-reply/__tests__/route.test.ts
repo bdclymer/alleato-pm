@@ -5,6 +5,10 @@ import { NextRequest } from "next/server";
 import { generateText } from "ai";
 import { POST } from "../route";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import {
+  createOutlookIntakeServiceClient,
+  createServiceClient,
+} from "@/lib/supabase/service";
 
 jest.mock("ai", () => ({
   generateText: jest.fn(),
@@ -19,12 +23,23 @@ jest.mock("@/lib/supabase/server", () => ({
   getApiRouteUser: jest.fn(),
 }));
 
+jest.mock("@/lib/supabase/service", () => ({
+  createOutlookIntakeServiceClient: jest.fn(),
+  createServiceClient: jest.fn(),
+}));
+
 const createClientMock = createClient as jest.MockedFunction<
   typeof createClient
 >;
 const getApiRouteUserMock = getApiRouteUser as jest.MockedFunction<
   typeof getApiRouteUser
 >;
+const createServiceClientMock =
+  createServiceClient as jest.MockedFunction<typeof createServiceClient>;
+const createOutlookIntakeServiceClientMock =
+  createOutlookIntakeServiceClient as jest.MockedFunction<
+    typeof createOutlookIntakeServiceClient
+  >;
 const generateTextMock = generateText as jest.MockedFunction<typeof generateText>;
 
 interface QueryResult {
@@ -80,6 +95,10 @@ describe("/api/email-inbox/[emailId]/draft-reply", () => {
         messages: [],
       },
     } as Awaited<ReturnType<typeof generateText>>);
+    createServiceClientMock.mockReturnValue({ from: jest.fn() } as never);
+    createOutlookIntakeServiceClientMock.mockReturnValue(
+      { from: jest.fn() } as never,
+    );
   });
 
   it("injects bounded Brandon review learnings into the draft system prompt", async () => {

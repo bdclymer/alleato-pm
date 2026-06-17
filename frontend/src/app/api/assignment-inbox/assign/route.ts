@@ -6,7 +6,10 @@ import { z } from "zod";
 import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
-import { createServiceClient } from "@/lib/supabase/service";
+import {
+  createOutlookIntakeServiceClient,
+  createServiceClient,
+} from "@/lib/supabase/service";
 import {
   extractTitleKeywords,
   recordAttributionAssignmentFeedback,
@@ -34,6 +37,7 @@ export const POST = withApiGuardrails(WHERE, async ({ request }) => {
 
   const body = await parseJsonBody(request, AssignSchema, WHERE);
   const supabase = createServiceClient();
+  const intakeSupabase = createOutlookIntakeServiceClient();
 
   // Resolve + validate the destination project.
   const { data: project, error: projectError } = await supabase
@@ -101,7 +105,7 @@ export const POST = withApiGuardrails(WHERE, async ({ request }) => {
       });
     }
 
-    const { data: email, error: emailError } = await supabase
+    const { data: email, error: emailError } = await intakeSupabase
       .from("outlook_email_intake")
       .select(`
         id,
@@ -164,7 +168,7 @@ export const POST = withApiGuardrails(WHERE, async ({ request }) => {
       }
     }
 
-    const { error: updateError } = await supabase
+    const { error: updateError } = await intakeSupabase
       .from("outlook_email_intake")
       .update({
         project_id: project.id,

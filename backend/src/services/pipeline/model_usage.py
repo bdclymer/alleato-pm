@@ -47,6 +47,11 @@ _MODEL_PRICING_USD_PER_1M: dict[str, tuple[Decimal, Decimal, Decimal]] = {
         _env_decimal("OPENAI_PRICE_GPT_5_5_CACHED_INPUT_PER_1M", "0.50"),
         _env_decimal("OPENAI_PRICE_GPT_5_5_OUTPUT_PER_1M", "30.00"),
     ),
+    "gpt-5.5-mini": (
+        _env_decimal("OPENAI_PRICE_GPT_5_5_MINI_INPUT_PER_1M", "1.00"),
+        _env_decimal("OPENAI_PRICE_GPT_5_5_MINI_CACHED_INPUT_PER_1M", "0.10"),
+        _env_decimal("OPENAI_PRICE_GPT_5_5_MINI_OUTPUT_PER_1M", "6.00"),
+    ),
     "gpt-5.4": (
         _env_decimal("OPENAI_PRICE_GPT_5_4_INPUT_PER_1M", "2.50"),
         _env_decimal("OPENAI_PRICE_GPT_5_4_CACHED_INPUT_PER_1M", "0.25"),

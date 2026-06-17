@@ -4,9 +4,19 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { deriveBrandonEmailAssistantDecision } from "@/lib/email-assistant/brandon-triage";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import {
+  createOutlookIntakeServiceClient,
+  createServiceClient,
+} from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 
 const BRANDON_MAILBOX = "bclymer@alleatogroup.com";
+
+interface ProjectRow {
+  id: number;
+  name: string | null;
+  project_number: string | null;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -14,6 +24,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 export const GET = withApiGuardrails("email-inbox#GET", async ({ request }) => {
   const supabase = await createClient();
+  const appService = createServiceClient();
+  const intakeService = createOutlookIntakeServiceClient();
   const user = await getApiRouteUser();
 
   if (!user) {
@@ -35,7 +47,7 @@ export const GET = withApiGuardrails("email-inbox#GET", async ({ request }) => {
   const tab = searchParams.get("tab") ?? "needs-assignment";
   const q = searchParams.get("q") ?? "";
 
-  let query = supabase
+  let query = intakeService
     .from("outlook_email_intake")
     .select(
       `
@@ -58,11 +70,6 @@ export const GET = withApiGuardrails("email-inbox#GET", async ({ request }) => {
       has_attachments,
       web_link,
       source_metadata,
-      projects!outlook_email_intake_project_id_fkey (
-        id,
-        name,
-        project_number
-      ),
       outlook_email_intake_attachments (
         id,
         file_name,
@@ -107,10 +114,41 @@ export const GET = withApiGuardrails("email-inbox#GET", async ({ request }) => {
     });
   }
 
+  const projectIds = [
+    ...new Set(
+      (data ?? [])
+        .map((email) => email.project_id)
+        .filter((projectId): projectId is number => Number.isInteger(projectId)),
+    ),
+  ];
+  const projectsById = new Map<number, ProjectRow>();
+
+  if (projectIds.length > 0) {
+    const { data: projectRows, error: projectError } = await appService
+      .from("projects")
+      .select("id, name, project_number")
+      .in("id", projectIds);
+
+    if (projectError) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "email-inbox#GET",
+        message: projectError.message,
+      });
+    }
+
+    for (const project of (projectRows ?? []) as ProjectRow[]) {
+      projectsById.set(project.id, project);
+    }
+  }
+
   const enriched = (data ?? []).map((email) => {
     const sourceMetadata = isRecord(email.source_metadata)
       ? email.source_metadata
       : {};
+    const project = email.project_id
+      ? projectsById.get(email.project_id) ?? null
+      : null;
     const assistantDecision = deriveBrandonEmailAssistantDecision({
       subject: email.subject,
       bodyText: email.body_text ?? email.body,
@@ -125,6 +163,13 @@ export const GET = withApiGuardrails("email-inbox#GET", async ({ request }) => {
 
     return {
       ...email,
+      projects: project
+        ? {
+            id: project.id,
+            name: project.name,
+            project_number: project.project_number,
+          }
+        : null,
       source_metadata: {
         ...sourceMetadata,
         _assistant: assistantDecision,

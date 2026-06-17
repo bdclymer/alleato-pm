@@ -111,6 +111,27 @@ def test_scheduled_graph_embedding_uses_pending_worker(monkeypatch):
     assert result == {"client": client, "limit": 17, "embedded": 0, "errors": 0}
 
 
+def test_scheduled_graph_webhook_drain_uses_pending_worker(monkeypatch):
+    client = object()
+    calls = {}
+
+    monkeypatch.setattr(
+        "src.services.supabase_helpers.get_supabase_client",
+        lambda: client,
+    )
+    monkeypatch.setattr(
+        "src.services.integrations.microsoft_graph.sync.drain_pending_outlook_mailboxes",
+        lambda supabase_client, *, limit: calls.setdefault(
+            "drain",
+            {"client": supabase_client, "limit": limit, "processed": 0, "failed": 0},
+        ),
+    )
+
+    result = scheduler._run_graph_webhook_drain(limit=4)
+
+    assert result == {"client": client, "limit": 4, "processed": 0, "failed": 0}
+
+
 def test_fireflies_backlog_drain_processes_retryable_jobs(monkeypatch):
     client = object()
     processed = []

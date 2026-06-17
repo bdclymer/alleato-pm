@@ -7,6 +7,11 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from ...supabase_helpers import (
+    get_outlook_intake_read_client,
+    get_outlook_intake_write_client,
+    rag_supabase_configured,
+)
 from .email_classification import EmailIntakeAction, classify_graph_email_for_intake
 
 
@@ -22,7 +27,7 @@ def run_outlook_intake_reclassification(
     apply: bool = False,
     applied_by: str = "outlook_intake_reclassification",
 ) -> dict[str, Any]:
-    """Reclassify stored Outlook intake rows in the app database."""
+    """Reclassify stored Outlook intake rows in the AI DB-owned intake store."""
 
     since = _start_of_day(max(days_back, 0), time_zone)
     safe_page_size = max(1, min(page_size, 500))
@@ -75,7 +80,7 @@ def run_outlook_intake_reclassification(
 
             if apply and should_update:
                 payload = _update_payload(row, classification, applied_by=applied_by)
-                client.from_("outlook_email_intake").update(payload).eq("id", row["id"]).execute()
+                get_outlook_intake_write_client().from_("outlook_email_intake").update(payload).eq("id", row["id"]).execute()
                 updated += 1
 
             scanned += 1
@@ -87,7 +92,7 @@ def run_outlook_intake_reclassification(
     return {
         "status": "complete",
         "mode": "apply" if apply else "dry_run",
-        "database": "app",
+        "database": "rag" if rag_supabase_configured() else "app",
         "table": "outlook_email_intake",
         "mailbox": mailbox,
         "intakeIds": intake_ids or [],
@@ -160,7 +165,7 @@ def _fetch_page(
     offset: int,
 ) -> list[dict[str, Any]]:
     query = (
-        client.from_("outlook_email_intake")
+        get_outlook_intake_read_client().from_("outlook_email_intake")
         .select(
             "id,graph_message_id,mailbox_user_id,subject,body,body_text,from_name,from_email,"
             "match_status,assignment_method,assignment_confidence,received_at,has_attachments,"

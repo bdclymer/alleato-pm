@@ -77,6 +77,15 @@ const forbiddenPhrases = [
   "retrieval",
 ];
 
+function includesForbiddenPhrase(answer, phrase) {
+  const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const isAcronym = /^[A-Z0-9]+$/.test(phrase);
+  const pattern = isAcronym
+    ? new RegExp(`(^|[^A-Za-z0-9])${escaped}([^A-Za-z0-9]|$)`, "i")
+    : new RegExp(escaped, "i");
+  return pattern.test(answer);
+}
+
 const client = await pool.connect();
 try {
   const targetResult = await client.query(
@@ -117,7 +126,7 @@ try {
     if (!answer.includes(phrase)) failures.push(`missing phrase: ${phrase}`);
   }
   for (const phrase of forbiddenPhrases) {
-    if (answer.toLowerCase().includes(phrase.toLowerCase())) {
+    if (includesForbiddenPhrase(answer, phrase)) {
       failures.push(`forbidden phrase: ${phrase}`);
     }
   }

@@ -729,6 +729,7 @@ def persist_source_sync_alerts(
     active_keys = {_alert_key(alert) for alert in alerts}
     upserted = 0
     resolved = 0
+    rag_client = get_rag_write_client()
 
     for alert in alerts:
         alert_key = _alert_key(alert)
@@ -747,7 +748,7 @@ def persist_source_sync_alerts(
             "metadata": _alert_metadata(alert),
         }
         existing = _single_row(
-            supabase.table("system_alerts")
+            rag_client.table("system_alerts")
             .select("id,first_seen_at")
             .eq("alert_key", alert_key)
             .limit(1)
@@ -757,12 +758,12 @@ def persist_source_sync_alerts(
             payload["first_seen_at"] = existing["first_seen_at"]
         else:
             payload["first_seen_at"] = now
-        supabase.table("system_alerts").upsert(payload, on_conflict="alert_key").execute()
+        rag_client.table("system_alerts").upsert(payload, on_conflict="alert_key").execute()
         upserted += 1
 
     if resolve_missing:
         existing_active = (
-            supabase.table("system_alerts")
+            rag_client.table("system_alerts")
             .select("id,alert_key")
             .eq("category", "source_sync")
             .eq("status", "active")
@@ -772,7 +773,7 @@ def persist_source_sync_alerts(
         for row in existing_active.data or []:
             if row.get("alert_key") in active_keys:
                 continue
-            supabase.table("system_alerts").update(
+            rag_client.table("system_alerts").update(
                 {"status": "resolved", "resolved_at": now, "last_seen_at": now}
             ).eq("id", row["id"]).execute()
             resolved += 1
@@ -934,7 +935,7 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
     now = _utcnow()
 
     graph_states = _table_rows(
-        supabase,
+        get_rag_read_client(),
         "graph_sync_state",
         "source,resource_id,resource_name,last_sync_at,sync_status,error_message,items_synced,updated_at",
         order_by="last_sync_at",
@@ -984,7 +985,7 @@ def get_source_sync_health(supabase: Any) -> Dict[str, Any]:
         "source,resource_id,resource_name,status,last_sync_at,last_success_at,last_error_at,last_error_message,items_synced,unprocessed_count,unembedded_count,uncompiled_count,stale_minutes,metadata",
     )
     subscriptions = _table_rows(
-        supabase,
+        get_rag_read_client(),
         "graph_subscriptions",
         "source,resource_id,resource_name,status,expiration_at,last_notification_at,last_error_message",
     )

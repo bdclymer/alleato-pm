@@ -5,7 +5,10 @@ import { NextRequest } from "next/server";
 
 import { GET } from "../route";
 import { createClient } from "@/lib/supabase/server";
-import { createServiceClient } from "@/lib/supabase/service";
+import {
+  createOutlookIntakeServiceClient,
+  createServiceClient,
+} from "@/lib/supabase/service";
 
 jest.mock("@/lib/supabase/server", () => ({
   createClient: jest.fn(),
@@ -13,6 +16,7 @@ jest.mock("@/lib/supabase/server", () => ({
 
 jest.mock("@/lib/supabase/service", () => ({
   createServiceClient: jest.fn(),
+  createOutlookIntakeServiceClient: jest.fn(),
 }));
 
 const createClientMock = createClient as jest.MockedFunction<
@@ -21,6 +25,10 @@ const createClientMock = createClient as jest.MockedFunction<
 const createServiceClientMock = createServiceClient as jest.MockedFunction<
   typeof createServiceClient
 >;
+const createOutlookIntakeServiceClientMock =
+  createOutlookIntakeServiceClient as jest.MockedFunction<
+    typeof createOutlookIntakeServiceClient
+  >;
 
 type DocumentRow = {
   id: number;
@@ -141,6 +149,7 @@ describe("project document download route", () => {
     const service = buildServiceClient();
     createClientMock.mockResolvedValue(supabase.client);
     createServiceClientMock.mockReturnValue(service.client);
+    createOutlookIntakeServiceClientMock.mockReturnValue(service.client);
 
     const response = await GET(makeRequest(), {
       params: Promise.resolve({ projectId: "1009", documentId: "42" }),
@@ -170,6 +179,7 @@ describe("project document download route", () => {
     const service = buildServiceClient();
     createClientMock.mockResolvedValue(supabase.client);
     createServiceClientMock.mockReturnValue(service.client);
+    createOutlookIntakeServiceClientMock.mockReturnValue(service.client);
 
     const response = await GET(makeRequest(), {
       params: Promise.resolve({ projectId: "1009", documentId: "42" }),
@@ -206,6 +216,7 @@ describe("project document download route", () => {
     });
     createClientMock.mockResolvedValue(supabase.client);
     createServiceClientMock.mockReturnValue(service.client);
+    createOutlookIntakeServiceClientMock.mockReturnValue(service.client);
 
     const response = await GET(makeRequest("?disposition=inline"), {
       params: Promise.resolve({ projectId: "1009", documentId: "42" }),
@@ -236,6 +247,7 @@ describe("project document download route", () => {
     const service = buildServiceClient();
     createClientMock.mockResolvedValue(supabase.client);
     createServiceClientMock.mockReturnValue(service.client);
+    createOutlookIntakeServiceClientMock.mockReturnValue(service.client);
 
     const response = await GET(makeRequest("?disposition=inline"), {
       params: Promise.resolve({ projectId: "1009", documentId: "42" }),
@@ -277,6 +289,7 @@ describe("project document download route", () => {
     });
     createClientMock.mockResolvedValue(supabase.client);
     createServiceClientMock.mockReturnValue(service.client);
+    createOutlookIntakeServiceClientMock.mockReturnValue(service.client);
 
     const response = await GET(makeRequest(), {
       params: Promise.resolve({ projectId: "1009", documentId: "42" }),

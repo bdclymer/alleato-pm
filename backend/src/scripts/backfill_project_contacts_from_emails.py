@@ -23,7 +23,10 @@ from collections import defaultdict
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
-from src.services.supabase_helpers import get_supabase_client
+from src.services.supabase_helpers import (
+    get_outlook_intake_read_client,
+    get_supabase_client,
+)
 
 INTERNAL_DOMAINS = set(
     d.strip().lower()
@@ -64,12 +67,13 @@ def _collect_participants(row: dict) -> list[tuple[str, str]]:
 
 def run(min_confidence: float = 0.70, dry_run: bool = False) -> dict:
     supabase = get_supabase_client()
+    intake_client = get_outlook_intake_read_client()
 
     print(f"[contact-backfill] Starting (min_confidence={min_confidence}, dry_run={dry_run})")
 
     # 1. Load high-confidence email assignments
     resp = (
-        supabase.from_("outlook_email_intake")
+        intake_client.from_("outlook_email_intake")
         .select("project_id, assignment_confidence, from_email, to_list, cc_list")
         .not_.is_("project_id", "null")
         .gte("assignment_confidence", min_confidence)

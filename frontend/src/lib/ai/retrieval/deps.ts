@@ -97,7 +97,11 @@ export function buildExecutorDeps({ supabase, userId, sessionId }: BuildExecutor
       supabase,
     });
     if (!target) return null;
-    return loadCurrentIntelligencePacket({ targetId: target.id, supabase });
+    return loadCurrentIntelligencePacket({
+      targetId: target.id,
+      supabase,
+      projectId: target.projectId,
+    });
   };
 
   // 2. loadProjectSnapshot

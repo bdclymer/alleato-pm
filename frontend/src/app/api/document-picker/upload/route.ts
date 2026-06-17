@@ -32,7 +32,16 @@ function taxonomyEntityType(entityType: string): string {
  *   projectId    — the project integer id (for storage path + document_metadata)
  *   documentType — (optional) taxonomy type_key
  *
- * Returns: { documentMetadataId, title, fileName, fileSize, signedUrl }
+ * Returns:
+ *   {
+ *     documentMetadataId,
+ *     title,
+ *     fileName,
+ *     fileSize,
+ *     signedUrl,
+ *     pipelineQueued,
+ *     pipelineMessage
+ *   }
  */
 
 export async function POST(req: NextRequest) {

@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
+import src.services.integrations.microsoft_graph.subscriptions as subscriptions_mod
 from src.services.integrations.microsoft_graph import subscriptions
 
 
@@ -67,6 +68,19 @@ class _FakeSupabase:
 
     def table(self, table_name):
         return _TableQuery(self, table_name)
+
+
+def _route_graph_subscriptions_to_fake_rag(supabase):
+    original_read = subscriptions_mod.get_rag_read_client
+    original_write = subscriptions_mod.get_rag_write_client
+    subscriptions_mod.get_rag_read_client = lambda: supabase
+    subscriptions_mod.get_rag_write_client = lambda: supabase
+    return original_read, original_write
+
+
+def _restore_graph_subscriptions_clients(original_read, original_write):
+    subscriptions_mod.get_rag_read_client = original_read
+    subscriptions_mod.get_rag_write_client = original_write
 
 
 class _FakeGraph:
@@ -139,12 +153,16 @@ def test_ensure_subscriptions_caps_target_expiration(monkeypatch):
         max_expiration_hours=1,
     )
 
-    subscriptions.ensure_subscriptions(
-        supabase,
-        targets=[target],
-        graph=graph,
-        expiration_hours=48,
-    )
+    original_read, original_write = _route_graph_subscriptions_to_fake_rag(supabase)
+    try:
+        subscriptions.ensure_subscriptions(
+            supabase,
+            targets=[target],
+            graph=graph,
+            expiration_hours=48,
+        )
+    finally:
+        _restore_graph_subscriptions_clients(original_read, original_write)
 
     expiration = datetime.fromisoformat(
         graph.posts[0][1]["expirationDateTime"].replace("Z", "+00:00")
@@ -166,7 +184,11 @@ def test_ensure_subscriptions_creates_missing_subscription(monkeypatch):
         change_type="created,updated",
     )
 
-    result = subscriptions.ensure_subscriptions(supabase, targets=[target], graph=graph)
+    original_read, original_write = _route_graph_subscriptions_to_fake_rag(supabase)
+    try:
+        result = subscriptions.ensure_subscriptions(supabase, targets=[target], graph=graph)
+    finally:
+        _restore_graph_subscriptions_clients(original_read, original_write)
 
     assert result["created"] == 1
     assert graph.posts[0][0] == "/subscriptions"
@@ -199,7 +221,11 @@ def test_ensure_subscriptions_renews_expiring_subscription(monkeypatch):
         change_type="created,updated",
     )
 
-    result = subscriptions.ensure_subscriptions(supabase, targets=[target], graph=graph)
+    original_read, original_write = _route_graph_subscriptions_to_fake_rag(supabase)
+    try:
+        result = subscriptions.ensure_subscriptions(supabase, targets=[target], graph=graph)
+    finally:
+        _restore_graph_subscriptions_clients(original_read, original_write)
 
     assert result["renewed"] == 1
     assert graph.patches[0][0] == "/subscriptions/sub-existing"
@@ -213,11 +239,15 @@ def test_delete_subscription_marks_removed():
     ]
     graph = _FakeGraph()
 
-    result = subscriptions.delete_subscription(
-        supabase,
-        graph_subscription_id="sub-existing",
-        graph=graph,
-    )
+    original_read, original_write = _route_graph_subscriptions_to_fake_rag(supabase)
+    try:
+        result = subscriptions.delete_subscription(
+            supabase,
+            graph_subscription_id="sub-existing",
+            graph=graph,
+        )
+    finally:
+        _restore_graph_subscriptions_clients(original_read, original_write)
 
     assert result["status"] == "removed"
     assert graph.deletes == ["/subscriptions/sub-existing"]

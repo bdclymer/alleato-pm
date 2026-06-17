@@ -115,8 +115,8 @@ export function SiteFooter() {
     profile?.isAdmin === true && adminDropdownAllowedUserIds.has(profile.id);
 
   return (
-    <footer className="contents">
-      <div className="flex shrink-0 flex-col items-center gap-3 bg-transparent px-4 py-1 sm:flex-row sm:justify-between sm:px-6 lg:px-8">
+    <footer className="mt-auto shrink-0">
+      <div className="flex flex-col items-center gap-3 bg-transparent px-4 py-1 sm:flex-row sm:justify-between sm:px-6 lg:px-8">
         <nav className="flex flex-wrap items-center gap-x-4 gap-y-1">
           {canViewAdminDropdown ? <AdminDropdown /> : null}
         </nav>

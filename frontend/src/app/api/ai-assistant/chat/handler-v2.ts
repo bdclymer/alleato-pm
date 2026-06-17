@@ -1527,6 +1527,7 @@ async function tryWriteProjectPacketFastPath(params: {
     targetId: target.id,
     supabase: params.supabase,
     includeSourcePreview: false,
+    projectId: target.projectId,
   });
   const trace = createClientPacketTrace({
     durationMs: Date.now() - startedAt,

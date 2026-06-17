@@ -51,6 +51,9 @@ if (typeof window !== "undefined") {
 const TARGET_LONGEST_SIDE_PX = 2500;
 const RENDER_FORMAT: "image/jpeg" | "image/png" = "image/jpeg";
 const RENDER_QUALITY = 0.85;
+const ZOOM_STEP = 1.18;
+const SCROLL_ZOOM_PER_TICK = 1.08;
+const FULLSCREEN_LOADING_OVERLAY_DELAY_MS = 180;
 
 // ─── Annotation types ───────────────────────────────────────────────────────
 
@@ -176,6 +179,7 @@ export function OsdDrawingViewer({
   const viewerRef = useRef<OpenSeadragon.Viewer | null>(null);
   const blobUrlRef = useRef<string | null>(null);
   const renderTokenRef = useRef(0);
+  const hasOpenedPageRef = useRef(false);
   // Cache rendered pages so re-visiting a page is instant. Keyed by page number; value is a JPEG blob URL.
   // Reset whenever the underlying PDF document changes.
   const pageCacheRef = useRef<Map<number, string>>(new Map());
@@ -192,6 +196,7 @@ export function OsdDrawingViewer({
   const [renderMs, setRenderMs] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
+  const [showBlockingLoader, setShowBlockingLoader] = useState(true);
 
   // Local (uncontrolled) tool state — fallback when no controlledTool is provided.
   const [localTool, setLocalTool] = useState<AnnotationTool>("select");
@@ -262,6 +267,7 @@ export function OsdDrawingViewer({
       pageCacheRef.current.clear();
       pageSizeCacheRef.current.clear();
       pdfIdRef.current = pdf;
+      hasOpenedPageRef.current = false;
     }
   }, [pdf]);
 
@@ -322,8 +328,16 @@ export function OsdDrawingViewer({
     const myToken = ++renderTokenRef.current;
     const isCancelled = () => myToken !== renderTokenRef.current;
     setIsRendering(true);
+    setShowBlockingLoader(!hasOpenedPageRef.current);
     setRenderMs(null);
     setError(null);
+
+    let loaderTimeout: number | null = null;
+    if (hasOpenedPageRef.current) {
+      loaderTimeout = window.setTimeout(() => {
+        if (!isCancelled()) setShowBlockingLoader(true);
+      }, FULLSCREEN_LOADING_OVERLAY_DELAY_MS);
+    }
 
     (async () => {
       const t0 = performance.now();
@@ -343,6 +357,7 @@ export function OsdDrawingViewer({
             prefixUrl: "/openseadragon-images/",
             tileSources: { type: "image", url },
             showNavigationControl: false,
+            preserveViewport: true,
             gestureSettingsMouse: {
               scrollToZoom: true,
               clickToZoom: false,
@@ -354,28 +369,37 @@ export function OsdDrawingViewer({
               scrollToZoom: false,
               dragToPan: true,
             },
-            animationTime: 0.4,
-            blendTime: 0.15,
-            springStiffness: 8.5,
+            animationTime: 0.65,
+            blendTime: 0.22,
+            springStiffness: 6.5,
             constrainDuringPan: true,
             visibilityRatio: 1,
             minZoomImageRatio: 0.5,
             maxZoomPixelRatio: 5,
-            zoomPerScroll: 1.2,
+            zoomPerScroll: SCROLL_ZOOM_PER_TICK,
             preserveImageSizeOnResize: true,
           });
         } else if (viewerRef.current) {
           viewerRef.current.open({ type: "image", url });
         }
 
+        hasOpenedPageRef.current = true;
         setImageSize({ width, height });
         setRenderMs(Math.round(performance.now() - t0));
       } catch (e: unknown) {
         if (!isCancelled()) setError(e instanceof Error ? e.message : "Failed to render page");
       } finally {
-        if (!isCancelled()) setIsRendering(false);
+        if (loaderTimeout) window.clearTimeout(loaderTimeout);
+        if (!isCancelled()) {
+          setShowBlockingLoader(false);
+          setIsRendering(false);
+        }
       }
     })();
+
+    return () => {
+      if (loaderTimeout) window.clearTimeout(loaderTimeout);
+    };
   }, [pdf, pageNumber, renderPageToBlobUrl]);
 
   // ── Prefetch adjacent pages during browser idle time ─────────────────────
@@ -503,10 +527,10 @@ export function OsdDrawingViewer({
   }, []);
 
   const zoomIn = () => {
-    viewerRef.current?.viewport.zoomBy(1.4);
+    viewerRef.current?.viewport.zoomBy(ZOOM_STEP);
   };
   const zoomOut = () => {
-    viewerRef.current?.viewport.zoomBy(1 / 1.4);
+    viewerRef.current?.viewport.zoomBy(1 / ZOOM_STEP);
   };
   const home = () => viewerRef.current?.viewport.goHome();
   const fullscreen = () => viewerRef.current?.setFullScreen(true);
@@ -679,9 +703,14 @@ export function OsdDrawingViewer({
         )}
 
         <div className="relative flex-1 bg-muted/30">
-          {isRendering && (
+          {isRendering && showBlockingLoader && (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 pointer-events-none">
               <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+          {isRendering && !showBlockingLoader && (
+            <div className="absolute right-3 top-3 z-10 rounded-full bg-background/85 px-2 py-1 text-[10px] text-muted-foreground shadow-sm pointer-events-none">
+              Updating page…
             </div>
           )}
           <div ref={containerRef} className="absolute inset-0" />

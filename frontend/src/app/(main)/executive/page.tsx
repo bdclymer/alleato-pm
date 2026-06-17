@@ -14,6 +14,7 @@ import type { ExecutiveRelatedTask } from "@/components/executive/executive-sign
 import type { ExecutiveProjectOption } from "@/components/executive/executive-project-link-form";
 import type { ExecutiveTaskAssigneeOption } from "@/components/executive/executive-task-draft-form";
 import { PageShell, SectionRuleHeading } from "@/components/layout";
+import { Button } from "@/components/ui/button";
 import { canCurrentUserAccessAppCapability } from "@/lib/app-capabilities";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
@@ -390,41 +391,74 @@ function TopExecutiveFocusSection({
         count={brief.topExecutiveFocus.length}
       />
       <div className="divide-y divide-border/70">
-        {brief.topExecutiveFocus.map((entry) => (
-          <article
-            key={`${entry.item.title}-${entry.item.sourceId ?? entry.item.sourceDetail}`}
-            className="py-4 first:pt-0"
-          >
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-              <span className="font-medium text-primary">{entry.item.project}</span>
-              <span>{LANE_LABELS[entry.lane]}</span>
-              {entry.owner ? <span>Owner: {entry.owner}</span> : null}
-            </div>
-            <div className="mt-1 text-base font-semibold text-foreground">
-              {entry.item.title}
-            </div>
-            <dl className="mt-3 grid gap-3 text-sm leading-6 md:grid-cols-3">
-              <div>
-                <dt className="text-xs font-medium text-muted-foreground">
-                  What changed
-                </dt>
-                <dd>{entry.whatChanged}</dd>
+        {brief.topExecutiveFocus.map((entry) => {
+          const projectHref = projectHrefFromItem(entry.item);
+          const sourceHref = entry.item.sourceUrl;
+          return (
+            <article
+              key={`${entry.item.title}-${entry.item.sourceId ?? entry.item.sourceDetail}`}
+              className="py-4 first:pt-0"
+            >
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                {projectHref ? (
+                  <Link
+                    href={projectHref}
+                    className="font-medium text-primary hover:underline"
+                  >
+                    {entry.item.project}
+                  </Link>
+                ) : (
+                  <span className="font-medium text-primary">
+                    {entry.item.project}
+                  </span>
+                )}
+                <span>{LANE_LABELS[entry.lane]}</span>
+                {entry.owner ? <span>Owner: {entry.owner}</span> : null}
               </div>
-              <div>
-                <dt className="text-xs font-medium text-muted-foreground">
-                  Why it matters
-                </dt>
-                <dd>{entry.whyItMatters}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium text-muted-foreground">
-                  Recommended next move
-                </dt>
-                <dd>{entry.recommendedNextMove}</dd>
-              </div>
-            </dl>
-          </article>
-        ))}
+              {sourceHref ? (
+                <a
+                  href={sourceHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 block text-base font-semibold text-foreground hover:text-primary hover:underline"
+                >
+                  {entry.item.title}
+                </a>
+              ) : projectHref ? (
+                <Link
+                  href={projectHref}
+                  className="mt-1 block text-base font-semibold text-foreground hover:text-primary hover:underline"
+                >
+                  {entry.item.title}
+                </Link>
+              ) : (
+                <div className="mt-1 text-base font-semibold text-foreground">
+                  {entry.item.title}
+                </div>
+              )}
+              <dl className="mt-3 space-y-3 text-sm leading-6">
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground">
+                    What changed
+                  </dt>
+                  <dd>{entry.whatChanged}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground">
+                    Why it matters
+                  </dt>
+                  <dd>{entry.whyItMatters}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-muted-foreground">
+                    Recommended next move
+                  </dt>
+                  <dd>{entry.recommendedNextMove}</dd>
+                </div>
+              </dl>
+            </article>
+          );
+        })}
       </div>
     </section>
   );
@@ -886,6 +920,9 @@ export default async function ExecutiveDailyInsightsPage({
       }`}
       actions={
         <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="outline">
+            <Link href="/executive/capabilities">Brandon dashboard</Link>
+          </Button>
           <ExecutiveBriefingWindowToggle windowDays={windowDays} />
           <ExecutiveBriefingRefreshButton windowDays={windowDays} />
           <ExecutiveChatSheet packet={packet} />

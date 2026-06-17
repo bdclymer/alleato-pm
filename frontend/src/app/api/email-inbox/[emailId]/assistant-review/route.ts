@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { withApiGuardrails, parseJsonBody } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import { createOutlookIntakeServiceClient } from "@/lib/supabase/service";
 import { BrandonAssistantReviewPayloadSchema } from "@/lib/email-assistant/brandon-review";
 import type { Database, Json } from "@/types/database.types";
 
@@ -14,6 +15,7 @@ export const POST = withApiGuardrails<{ emailId: string }>(
   "email-inbox/[emailId]/assistant-review#POST",
   async ({ request, params }) => {
     const supabase = await createClient();
+    const intakeService = createOutlookIntakeServiceClient();
     const user = await getApiRouteUser();
 
     if (!user) {
@@ -50,7 +52,7 @@ export const POST = withApiGuardrails<{ emailId: string }>(
 
     const isAdmin = profile?.is_admin === true;
 
-    const { data: email, error: fetchError } = await supabase
+    const { data: email, error: fetchError } = await intakeService
       .from("outlook_email_intake")
       .select("id, graph_message_id, mailbox_user_id")
       .eq("id", emailId)

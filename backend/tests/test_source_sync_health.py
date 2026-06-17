@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
+import src.services.health.source_sync_health as source_sync_health_mod
 from src.services.health.source_sync_health import (
     get_source_sync_health,
     persist_source_sync_alerts,
@@ -118,6 +119,15 @@ def _seed_empty_tables(supabase):
         supabase.tables.setdefault(table, [])
 
 
+def _get_source_sync_health_with_fake_rag(supabase):
+    original_get_rag_read_client = source_sync_health_mod.get_rag_read_client
+    source_sync_health_mod.get_rag_read_client = lambda: supabase
+    try:
+        return get_source_sync_health(supabase)
+    finally:
+        source_sync_health_mod.get_rag_read_client = original_get_rag_read_client
+
+
 def test_record_sync_run_writes_loud_run_ledger_row():
     supabase = _FakeSupabase()
 
@@ -216,7 +226,7 @@ def test_get_source_sync_health_surfaces_stale_graph_and_vector_backlog():
         {"source_document_id": "doc-2", "status": "queued", "updated_at": recent},
     ]
 
-    health = get_source_sync_health(supabase)
+    health = _get_source_sync_health_with_fake_rag(supabase)
 
     assert health["status"] == "degraded"
     assert health["counts"]["unembedded"] == 1
@@ -273,7 +283,7 @@ def test_get_source_sync_health_includes_recent_runs_and_stuck_items():
         }
     ]
 
-    health = get_source_sync_health(supabase)
+    health = _get_source_sync_health_with_fake_rag(supabase)
 
     assert health["recentRuns"][0]["source"] == "fireflies"
     assert health["recentRuns"][0]["itemsFailed"] == 2
@@ -327,7 +337,7 @@ def test_get_source_sync_health_attributes_shared_queue_stuck_items_by_real_sour
         },
     ]
 
-    health = get_source_sync_health(supabase)
+    health = _get_source_sync_health_with_fake_rag(supabase)
 
     stuck_sources = {item["resourceId"]: item["source"] for item in health["stuckItems"]}
     assert stuck_sources["doc-email"] == "outlook_email"
@@ -349,7 +359,7 @@ def test_get_source_sync_health_reports_task_extraction_freshness():
         }
     ]
 
-    health = get_source_sync_health(supabase)
+    health = _get_source_sync_health_with_fake_rag(supabase)
 
     task_source = next(row for row in health["sources"] if row["source"] == "task_extraction")
     assert task_source["status"] == "healthy"
@@ -382,7 +392,7 @@ def test_get_source_sync_health_surfaces_acumatica_payment_application_failure()
         },
     ]
 
-    health = get_source_sync_health(supabase)
+    health = _get_source_sync_health_with_fake_rag(supabase)
 
     row = next(source for source in health["sources"] if source["source"] == "acumatica_financial_sync")
     assert health["status"] == "degraded"
@@ -431,7 +441,7 @@ def test_get_source_sync_health_alerts_when_graph_docs_missing_project_documents
         }
     ]
 
-    health = get_source_sync_health(supabase)
+    health = _get_source_sync_health_with_fake_rag(supabase)
 
     promotion = health["pipeline"]["graphProjectDocumentPromotion"]
     assert promotion["promoted"] == 1
@@ -464,7 +474,7 @@ def test_get_source_sync_health_caps_returned_sources_and_alerts():
         for index in range(120)
     ]
 
-    health = get_source_sync_health(supabase)
+    health = _get_source_sync_health_with_fake_rag(supabase)
 
     assert health["counts"]["sources"] == 120
     assert health["counts"]["alerts"] >= 120
@@ -476,20 +486,25 @@ def test_persist_source_sync_alerts_upserts_and_resolves():
     supabase = _FakeSupabase()
     _seed_empty_tables(supabase)
 
-    first = persist_source_sync_alerts(
-        supabase,
-        [
-            {
-                "severity": "warning",
-                "code": "embedding_backlog",
-                "source": "vectorization",
-                "resourceId": "document_chunks",
-                "message": "Backlog detected.",
-                "detectedAt": "2026-05-07T00:00:00+00:00",
-            }
-        ],
-    )
-    second = persist_source_sync_alerts(supabase, [])
+    original_get_rag_write_client = source_sync_health_mod.get_rag_write_client
+    source_sync_health_mod.get_rag_write_client = lambda: supabase
+    try:
+        first = persist_source_sync_alerts(
+            supabase,
+            [
+                {
+                    "severity": "warning",
+                    "code": "embedding_backlog",
+                    "source": "vectorization",
+                    "resourceId": "document_chunks",
+                    "message": "Backlog detected.",
+                    "detectedAt": "2026-05-07T00:00:00+00:00",
+                }
+            ],
+        )
+        second = persist_source_sync_alerts(supabase, [])
+    finally:
+        source_sync_health_mod.get_rag_write_client = original_get_rag_write_client
 
     assert first == {"upserted": 1, "resolved": 0}
     assert second == {"upserted": 0, "resolved": 1}
@@ -503,19 +518,24 @@ def test_persist_source_sync_alerts_bounds_payload_fields():
     supabase = _FakeSupabase()
     _seed_empty_tables(supabase)
 
-    persist_source_sync_alerts(
-        supabase,
-        [
-            {
-                "severity": "critical",
-                "code": "source_sync_error",
-                "source": "teams_chat",
-                "resourceId": "chat:" + ("a" * 1200),
-                "message": "Client error " + ("403 Forbidden " * 200),
-                "detectedAt": "2026-05-07T00:00:00+00:00",
-            }
-        ],
-    )
+    original_get_rag_write_client = source_sync_health_mod.get_rag_write_client
+    source_sync_health_mod.get_rag_write_client = lambda: supabase
+    try:
+        persist_source_sync_alerts(
+            supabase,
+            [
+                {
+                    "severity": "critical",
+                    "code": "source_sync_error",
+                    "source": "teams_chat",
+                    "resourceId": "chat:" + ("a" * 1200),
+                    "message": "Client error " + ("403 Forbidden " * 200),
+                    "detectedAt": "2026-05-07T00:00:00+00:00",
+                }
+            ],
+        )
+    finally:
+        source_sync_health_mod.get_rag_write_client = original_get_rag_write_client
 
     alert = supabase.tables["system_alerts"][0]
     assert len(alert["resource_id"]) <= 500
@@ -536,7 +556,12 @@ def test_persist_source_sync_alerts_can_skip_resolving_missing_alerts():
         }
     ]
 
-    result = persist_source_sync_alerts(supabase, [], resolve_missing=False)
+    original_get_rag_write_client = source_sync_health_mod.get_rag_write_client
+    source_sync_health_mod.get_rag_write_client = lambda: supabase
+    try:
+        result = persist_source_sync_alerts(supabase, [], resolve_missing=False)
+    finally:
+        source_sync_health_mod.get_rag_write_client = original_get_rag_write_client
 
     assert result == {"upserted": 0, "resolved": 0}
     assert supabase.tables["system_alerts"][0]["status"] == "active"

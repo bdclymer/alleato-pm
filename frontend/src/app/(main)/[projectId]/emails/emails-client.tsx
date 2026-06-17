@@ -29,6 +29,7 @@ import {
   type FilterValue,
 } from "@/components/tables/unified";
 import {
+  isOutlookSourced,
   useAllEmails,
   useDeleteEmail,
   useEmails,
@@ -200,6 +201,28 @@ export function EmailsClient({
   const [importanceFeedbackByEmailId, setImportanceFeedbackByEmailId] =
     React.useState<Record<string, EmailImportanceFeedbackState>>({});
 
+  // When the page is mounted with source="all" (the unified project Emails
+  // view), `emails` already contains both app-composed and Outlook-synced
+  // messages. `sourceFilter` narrows the displayed set client-side so the user
+  // can switch between All / App / Outlook without a refetch.
+  const isMerged = source === "all";
+  const [sourceFilter, setSourceFilter] = React.useState<EmailSource>(() => {
+    const param = searchParams.get("source");
+    return param === "app" || param === "outlook" ? param : "all";
+  });
+
+  const handleSourceFilterChange = React.useCallback(
+    (next: EmailSource) => {
+      setSourceFilter(next);
+      tableState.setSearchParams({
+        source: next === "all" ? null : next,
+        page: "1",
+      });
+      tableState.setPage(1);
+    },
+    [tableState],
+  );
+
   // Sync URL status filter
   React.useEffect(() => {
     const nextFilters: FilterState = {
@@ -254,6 +277,11 @@ export function EmailsClient({
   const searchTerm = tableState.debouncedSearch.trim().toLowerCase();
 
   const filteredEmails = emails.filter((email) => {
+    if (isMerged && sourceFilter !== "all") {
+      const outlook = isOutlookSourced(email);
+      if (sourceFilter === "outlook" && !outlook) return false;
+      if (sourceFilter === "app" && outlook) return false;
+    }
     if (statusFilter && email.status !== statusFilter) return false;
     if (projectFilter && String(email.project_id) !== projectFilter) return false;
     if (fromFilter) {
@@ -385,7 +413,7 @@ export function EmailsClient({
           userVisibleFallback:
             "Importance training state could not be loaded for these emails.",
           metadata: {
-            emailIds: importanceFeedbackEmailIds,
+            emailIds: importanceFeedbackEmailIds.join(","),
             projectId,
             scope,
           },
@@ -456,8 +484,15 @@ export function EmailsClient({
     setSelectedEmail(item);
   };
 
+  // Outlook-synced emails are read-only — only app-composed emails can be
+  // edited. Delete remains available for both (it only removes our copy).
+  const canEditEmail = React.useCallback(
+    (item: ProjectEmail) => !noWriteActions && !isOutlookSourced(item),
+    [noWriteActions],
+  );
+
   const handleEdit = (item: ProjectEmail) => {
-    if (noWriteActions) return;
+    if (!canEditEmail(item)) return;
     setEditingEmail(item);
     setComposeOpen(true);
   };
@@ -631,6 +666,10 @@ export function EmailsClient({
           onSearchChange={tableState.setSearchInput}
           statusFilter={statusFilter}
           onStatusFilterChange={(status) => handleFilterChange({ status })}
+          showSourceFilter={isMerged}
+          sourceFilter={sourceFilter}
+          onSourceFilterChange={handleSourceFilterChange}
+          canEdit={canEditEmail}
           onCompose={() => {
             setEditingEmail(null);
             setComposeOpen(true);

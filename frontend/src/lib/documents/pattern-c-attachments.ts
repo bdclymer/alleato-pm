@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
+import { triggerDocumentPipeline } from "@/lib/documents/pipeline-trigger";
 
 export type PatternCEntityType =
   | "project"
@@ -133,6 +134,8 @@ export type UploadedPatternCDocument = {
   mimeType: string;
   attachedAt: string;
   signedUrl: string | null;
+  pipelineQueued: boolean;
+  pipelineMessage: string | null;
 };
 
 type AppClient = SupabaseClient<Database>;
@@ -346,6 +349,8 @@ export async function uploadAndLinkPatternCDocument({
     throw new Error(`Failed to sign uploaded document URL: ${signError.message}`);
   }
 
+  const pipeline = await triggerDocumentPipeline(docId);
+
   return {
     documentMetadataId: docId,
     title: file.name,
@@ -355,6 +360,8 @@ export async function uploadAndLinkPatternCDocument({
     mimeType: contentType,
     attachedAt,
     signedUrl: signedData?.signedUrl ?? null,
+    pipelineQueued: pipeline.queued,
+    pipelineMessage: pipeline.message,
   };
 }
 

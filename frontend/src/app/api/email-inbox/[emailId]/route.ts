@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { withApiGuardrails, parseJsonBody } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import { createOutlookIntakeServiceClient } from "@/lib/supabase/service";
 
 const PatchSchema = z.object({
   project_id: z.number().int().positive().nullable().optional(),
@@ -16,6 +17,7 @@ export const PATCH = withApiGuardrails<{ emailId: string }>(
   "email-inbox/[emailId]#PATCH",
   async ({ request, params }) => {
     const supabase = await createClient();
+    const intakeService = createOutlookIntakeServiceClient();
     const user = await getApiRouteUser();
 
     if (!user) {
@@ -47,7 +49,7 @@ export const PATCH = withApiGuardrails<{ emailId: string }>(
     const isAdmin = profile?.is_admin === true;
 
     // Verify the user can modify this email
-    const { data: existing, error: fetchError } = await supabase
+    const { data: existing, error: fetchError } = await intakeService
       .from("outlook_email_intake")
       .select("id, mailbox_user_id, project_id, source_metadata")
       .eq("id", emailId)
@@ -98,7 +100,7 @@ export const PATCH = withApiGuardrails<{ emailId: string }>(
       return NextResponse.json({ id: emailId });
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await intakeService
       .from("outlook_email_intake")
       .update(update)
       .eq("id", emailId)

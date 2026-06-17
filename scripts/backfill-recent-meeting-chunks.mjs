@@ -8,13 +8,23 @@
  * non-zero if any selected meeting could not be chunked and embedded.
  */
 
-import "dotenv/config";
+import dotenv from "dotenv";
 import { createHash } from "crypto";
 import postgres from "postgres";
+
+dotenv.config({ path: ".env", quiet: true });
+dotenv.config({ path: "frontend/.env.local", override: true, quiet: true });
 
 const databaseUrl = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
 const ragDatabaseUrl = process.env.RAG_DATABASE_URL;
 const ragWritesEnabled = String(process.env.RAG_DATABASE_WRITES_ENABLED ?? "").toLowerCase() === "true";
+const appRestUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const appRestKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.SUPABASE_SERVICE_KEY ||
+  process.env.SUPABASE_SECRET_KEY;
+const ragRestUrl = process.env.RAG_SUPABASE_URL;
+const ragRestKey = process.env.RAG_SUPABASE_SERVICE_ROLE_KEY;
 const aiGatewayKey = process.env.AI_GATEWAY_API_KEY;
 const openAiKey = process.env.OPENAI_API_KEY;
 const days = Number(process.argv.find((arg) => arg.startsWith("--days="))?.split("=")[1] ?? 14);
@@ -33,6 +43,14 @@ if (ragWritesEnabled && !ragDatabaseUrl) {
 
 if (!aiGatewayKey && !openAiKey) {
   console.error("[FATAL] AI_GATEWAY_API_KEY or OPENAI_API_KEY is required.");
+  process.exit(1);
+}
+
+if ((!databaseUrl || !ragDatabaseUrl) && (!appRestUrl || !appRestKey || !ragRestUrl || !ragRestKey)) {
+  console.error(
+    "[FATAL] Direct DB URLs are missing and REST fallback is not fully configured. " +
+      "Need SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY and RAG_SUPABASE_URL/RAG_SUPABASE_SERVICE_ROLE_KEY."
+  );
   process.exit(1);
 }
 
@@ -119,30 +137,82 @@ async function embed(texts) {
   throw new Error(`Embedding failed across all providers: ${errors.join(" | ")}`);
 }
 
-try {
-  const candidates = await sql`
-    select dm.id, dm.title, dm.date, dm.project_id, dm.participants_array, dm.content, dm.summary, dm.overview
-    from public.document_metadata dm
-    where (dm.source = 'fireflies'
-       or dm.type in ('meeting', 'meeting_transcript')
-       or dm.category = 'meeting'
-       or dm.fireflies_id is not null)
-      and coalesce(dm.captured_at, dm.date, dm.created_at::timestamptz) >= now() - (${days} || ' days')::interval
-      and length(coalesce(dm.content, dm.summary, dm.overview, '')) >= 100
-    order by coalesce(dm.captured_at, dm.date, dm.created_at::timestamptz) desc nulls last
-    limit ${limit}
-  `;
-  const existingChunkRows = candidates.length
-    ? await ragSql`
-        select distinct document_id
-        from public.document_chunks
-        where embedding is not null
-          and document_id in ${ragSql(candidates.map((row) => row.id))}
-      `
-    : [];
-  const existingChunkDocumentIds = new Set(existingChunkRows.map((row) => String(row.document_id)));
-  const rows = candidates.filter((row) => !existingChunkDocumentIds.has(String(row.id)));
+async function restSelect(baseUrl, key, path, { timeoutMs = 30_000 } = {}) {
+  const response = await fetch(`${baseUrl.replace(/\/$/, "")}/rest/v1/${path}`, {
+    signal: AbortSignal.timeout(timeoutMs),
+    headers: {
+      apikey: key,
+      authorization: `Bearer ${key}`,
+      Prefer: "count=exact",
+    },
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(`${path} returned ${response.status}: ${text.slice(0, 300)}`);
+  }
+  return {
+    data: JSON.parse(text || "[]"),
+    count: Number((response.headers.get("content-range") || "0/0").split("/").pop() || 0),
+  };
+}
 
+async function restUpsert(baseUrl, key, path, records, { timeoutMs = 120_000 } = {}) {
+  const response = await fetch(`${baseUrl.replace(/\/$/, "")}/rest/v1/${path}`, {
+    method: "POST",
+    signal: AbortSignal.timeout(timeoutMs),
+    headers: {
+      apikey: key,
+      authorization: `Bearer ${key}`,
+      "Content-Type": "application/json",
+      Prefer: "resolution=merge-duplicates,return=minimal",
+    },
+    body: JSON.stringify(records),
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(`${path} returned ${response.status}: ${text.slice(0, 300)}`);
+  }
+}
+
+async function fetchRestCandidates() {
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+  const rows = await restSelect(
+    appRestUrl,
+    appRestKey,
+    "document_metadata?" +
+      "select=id,title,date,project_id,participants_array,content,summary,overview,source,type,category,fireflies_id,captured_at,created_at" +
+      `&or=${encodeURIComponent("(source.eq.fireflies,type.eq.meeting,type.eq.meeting_transcript,category.eq.meeting,fireflies_id.not.is.null)")}` +
+      `&or=${encodeURIComponent("(deleted_at.is.null,deleted_at.is.null)")}` +
+      `&created_at=gte.${encodeURIComponent(since)}` +
+      "&limit=1000"
+  );
+
+  return rows.data
+    .filter((row) => {
+      const effectiveAt = row.captured_at || row.date || row.created_at;
+      const contentLength = String(row.content || row.summary || row.overview || "").trim().length;
+      return Boolean(effectiveAt) && new Date(effectiveAt).getTime() >= Date.now() - days * 24 * 60 * 60 * 1000 && contentLength >= 100;
+    })
+    .sort((a, b) => {
+      const aTime = new Date(a.captured_at || a.date || a.created_at || 0).getTime();
+      const bTime = new Date(b.captured_at || b.date || b.created_at || 0).getTime();
+      return bTime - aTime;
+    })
+    .slice(0, limit);
+}
+
+async function fetchExistingChunkDocumentIdsViaRest(rows) {
+  if (rows.length === 0) return new Set();
+  const idFilter = `(${rows.map((row) => `"${row.id}"`).join(",")})`;
+  const chunkRows = await restSelect(
+    ragRestUrl,
+    ragRestKey,
+    `document_chunks?select=document_id&document_id=in.${encodeURIComponent(idFilter)}&embedding=not.is.null&limit=${rows.length * 10}`
+  );
+  return new Set(chunkRows.data.map((row) => String(row.document_id)));
+}
+
+async function processRows(rows, insertRecords) {
   console.log(`Recent meetings missing chunks: ${rows.length}`);
   if (dryRun || rows.length === 0) {
     if (dryRun) console.log("Dry run: no writes performed.");
@@ -189,6 +259,59 @@ try {
       };
     });
 
+    await insertRecords(records);
+    inserted += records.length;
+    process.stdout.write(`\rInserted chunks: ${inserted}, failed meetings: ${failed}`);
+  }
+
+  console.log(`\nDone. Inserted chunks: ${inserted}. Failed meetings: ${failed}.`);
+  if (failed > 0) process.exit(1);
+}
+
+async function runRestFallback(originalError) {
+  if (!appRestUrl || !appRestKey || !ragRestUrl || !ragRestKey) {
+    throw originalError;
+  }
+
+  console.warn(
+    `[WARN] Direct Postgres path failed (${originalError.code || originalError.message}); ` +
+      "falling back to Supabase REST for meeting chunk backfill."
+  );
+
+  const candidates = await fetchRestCandidates();
+  const existingChunkDocumentIds = await fetchExistingChunkDocumentIdsViaRest(candidates);
+  const rows = candidates.filter((row) => !existingChunkDocumentIds.has(String(row.id)));
+
+  await processRows(rows, async (records) => {
+    await restUpsert(ragRestUrl, ragRestKey, "document_chunks?on_conflict=chunk_id", records);
+  });
+}
+
+try {
+  const candidates = await sql`
+    select dm.id, dm.title, dm.date, dm.project_id, dm.participants_array, dm.content, dm.summary, dm.overview
+    from public.document_metadata dm
+    where (dm.source = 'fireflies'
+       or dm.type in ('meeting', 'meeting_transcript')
+       or dm.category = 'meeting'
+       or dm.fireflies_id is not null)
+      and coalesce(dm.captured_at, dm.date, dm.created_at::timestamptz) >= now() - (${days} || ' days')::interval
+      and length(coalesce(dm.content, dm.summary, dm.overview, '')) >= 100
+    order by coalesce(dm.captured_at, dm.date, dm.created_at::timestamptz) desc nulls last
+    limit ${limit}
+  `;
+  const existingChunkRows = candidates.length
+    ? await ragSql`
+        select distinct document_id
+        from public.document_chunks
+        where embedding is not null
+          and document_id in ${ragSql(candidates.map((row) => row.id))}
+      `
+    : [];
+  const existingChunkDocumentIds = new Set(existingChunkRows.map((row) => String(row.document_id)));
+  const rows = candidates.filter((row) => !existingChunkDocumentIds.has(String(row.id)));
+
+  await processRows(rows, async (records) => {
     await ragSql`
       insert into public.document_chunks ${ragSql(records)}
       on conflict (chunk_id) do update set
@@ -199,12 +322,9 @@ try {
         source_type = excluded.source_type,
         updated_at = now()
     `;
-    inserted += records.length;
-    process.stdout.write(`\rInserted chunks: ${inserted}, failed meetings: ${failed}`);
-  }
-
-  console.log(`\nDone. Inserted chunks: ${inserted}. Failed meetings: ${failed}.`);
-  if (failed > 0) process.exit(1);
+  });
+} catch (error) {
+  await runRestFallback(error);
 } finally {
   await sql.end();
   if (ragSql !== sql) await ragSql.end();

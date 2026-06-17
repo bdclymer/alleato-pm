@@ -1,4 +1,6 @@
 import {
+  buildEmailContentBlocks,
+  latestReadableMessage,
   latestMessageOnly,
   stripLeadingPseudoHeader,
   stripQuotedReplyHistory,
@@ -92,5 +94,78 @@ describe("latestMessageOnly", () => {
     expect(result).toContain("Thank You Brandon Clymer CEO at Alleato Group");
     expect(result).not.toContain("Bob Wright");
     expect(result).not.toMatch(/Subject:|Date:|^From:/m);
+  });
+});
+
+describe("latestReadableMessage", () => {
+  it("decodes entities and strips mashed forwarded metadata into readable body text", () => {
+    const raw =
+      "Subject: Re: Exol Morrisville Laydown Areas Date: 2026-06-11T13:40:08Z " +
+      "From: Brandon Clymer <bclymer@alleatogroup.com> To: Parker Hollingsworth <phollingsworth@alleatogroup.com> " +
+      "Parker, Where do you have the storage for the dock equipment at?&nbsp; Thank You&nbsp; Brandon Clymer " +
+      "CEO at Alleato Group&nbsp; Mobile&nbsp; 317.760.0088&nbsp; | &nbsp; Email&nbsp; bclymer@alleatogroup.com " +
+      "From: Parker Hollingsworth <phollingsworth@alleatogroup.com> Sent: Wednesday, June 10, 2026 1:18 PM To: Bob Wright";
+
+    const result = latestReadableMessage(raw);
+
+    expect(result).toContain("Parker, Where do you have the storage for the dock equipment at?");
+    expect(result).toContain("Thank You Brandon Clymer");
+    expect(result).not.toContain("&nbsp;");
+    expect(result).not.toContain("Sent: Wednesday, June 10, 2026 1:18 PM");
+    expect(result).not.toMatch(/^Subject:/m);
+  });
+
+  it("promotes inline sign-off and signature lines into separate lines", () => {
+    const raw =
+      "Parker, Where do you have the storage for the dock equipment at? Thank You Brandon Clymer CEO at Alleato Group";
+
+    const result = latestReadableMessage(raw);
+
+    expect(result).toContain(
+      "Parker, Where do you have the storage for the dock equipment at?\n\nThank You\nBrandon Clymer\nCEO at Alleato Group",
+    );
+  });
+
+  it("formats flattened file-list emails and strips vendor disclaimer blocks", () => {
+    const raw =
+      "Hello, The below files have been uploaded to the SharePoint " +
+      "250-05901-Exol, Morrisville, Phase 1, (Overall Plan Layout) Rev D " +
+      "Rev D: Updated to match latest Revit Model " +
+      "250-05908-Exol, Morrisville, Phase 1, (Pit Locations and Details) Rev B " +
+      "Rev B: Updated mezzanine columns to match the latest Revit Model " +
+      "4.01.2 - Current Layout WILLIAM BLANK | senior project engineer e: wblank@symbotic.com " +
+      "www.symbotic.com SYMBOTIC 200 Research Drive Wilmington, MA 01887 " +
+      "Reinvent the warehouse | Reimagine the supply chain® **Symbotic Confidential** " +
+      "This e-mail and any attachments contain Symbotic confidential information.";
+
+    const result = latestReadableMessage(raw);
+
+    expect(result).toContain("Hello, The below files have been uploaded to the SharePoint");
+    expect(result).toContain("\n250-05901-Exol, Morrisville, Phase 1, (Overall Plan Layout) Rev D");
+    expect(result).toContain("\nRev D: Updated to match latest Revit Model");
+    expect(result).toContain("\n250-05908-Exol, Morrisville, Phase 1, (Pit Locations and Details) Rev B");
+    expect(result).not.toContain("Symbotic Confidential");
+    expect(result).not.toContain("wblank@symbotic.com");
+  });
+});
+
+describe("buildEmailContentBlocks", () => {
+  it("keeps flattened upload emails readable as multiple paragraphs", () => {
+    const raw =
+      "Hello, The below files have been uploaded to the SharePoint " +
+      "250-05901-Exol, Morrisville, Phase 1, (Overall Plan Layout) Rev D " +
+      "Rev D: Updated to match latest Revit Model " +
+      "250-05908-Exol, Morrisville, Phase 1, (Pit Locations and Details) Rev B " +
+      "Rev B: Updated mezzanine columns to match the latest Revit Model " +
+      "4.01.2 - Current Layout WILLIAM BLANK | senior project engineer e: wblank@symbotic.com " +
+      "www.symbotic.com **Symbotic Confidential** footer";
+
+    const blocks = buildEmailContentBlocks(raw);
+    const text = blocks.flatMap((block) => block.lines).join("\n");
+
+    expect(blocks.length).toBeGreaterThan(1);
+    expect(text).toContain("250-05901-Exol, Morrisville, Phase 1, (Overall Plan Layout) Rev D");
+    expect(text).toContain("Rev B: Updated mezzanine columns to match the latest Revit Model");
+    expect(text).not.toContain("Symbotic Confidential");
   });
 });

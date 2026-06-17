@@ -24,7 +24,10 @@ import {
 import { OWNER_BRIEFING_RECIPIENTS } from "@/lib/executive/owner-briefing-recipients";
 import { listAllProgressReports } from "@/lib/progress-reports/server";
 import type { ProgressReportAllListItem } from "@/lib/progress-reports/types";
-import { createServiceClient } from "@/lib/supabase/service";
+import {
+  createOutlookIntakeServiceClient,
+  createServiceClient,
+} from "@/lib/supabase/service";
 
 export const metadata: Metadata = {
   title: "Brandon Dashboard | Alleato",
@@ -338,6 +341,7 @@ export default async function BrandonDashboardPage() {
   }
 
   const db = createServiceClient();
+  const intakeDb = createOutlookIntakeServiceClient();
   const monthStart = new Date();
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
@@ -361,7 +365,7 @@ export default async function BrandonDashboardPage() {
       .order("received_at", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
       .limit(36),
-    db
+    intakeDb
       .from("outlook_email_intake")
       .select(
         "id, project_id, subject, from_name, from_email, body, body_text, to_list, cc_list, mailbox_user_id, received_at, created_at, has_attachments, web_link",

@@ -3,6 +3,7 @@ export type AssistantWidgetKind =
   | "outlook_email_draft"
   | "calendar_invite"
   | "create_task"
+  | "create_contact"
   | "task_summary"
   | "meeting_intelligence"
   | "outlook_inbox_summary"
@@ -106,6 +107,24 @@ export type CreateTaskWidgetPayload = {
   defaultAssignee?: string;
   defaultPriority: "low" | "normal" | "high" | "critical";
   projectId?: number | null;
+};
+
+export type CreateContactWidgetPayload = {
+  type: "create_contact";
+  id: string;
+  title: string;
+  status: "draft" | "created";
+  defaultFirstName: string;
+  defaultLastName: string;
+  defaultEmail?: string;
+  defaultPhone?: string;
+  defaultJobTitle?: string;
+  defaultDepartment?: string;
+  defaultCompanyName?: string;
+  defaultNotes?: string;
+  companyId?: string | null;
+  contactHref?: string | null;
+  confirmPrompt: string;
 };
 
 export type TaskSummaryWidgetItem = {
@@ -535,6 +554,7 @@ export type AssistantWidgetPayload =
   | OutlookEmailDraftWidgetPayload
   | CalendarInviteWidgetPayload
   | CreateTaskWidgetPayload
+  | CreateContactWidgetPayload
   | TaskSummaryWidgetPayload
   | MeetingIntelligenceWidgetPayload
   | OutlookInboxSummaryWidgetPayload
@@ -566,6 +586,7 @@ export const ASSISTANT_WIDGET_TYPES = [
   "outlook_email_draft",
   "calendar_invite",
   "create_task",
+  "create_contact",
   "task_summary",
   "meeting_intelligence",
   "outlook_inbox_summary",

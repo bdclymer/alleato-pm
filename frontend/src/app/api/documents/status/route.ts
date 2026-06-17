@@ -32,6 +32,7 @@ const ALLOWED_SORT_COLUMNS: Record<string, string> = {
   title: "title",
   type: "type",
   category: "category",
+  document_type: "document_type",
   source: "source",
 };
 
@@ -69,7 +70,9 @@ export const GET = withApiGuardrails(
     const { searchParams } = new URL(request.url);
     const source = searchParams.get("source") || undefined;
     const typeFilter = searchParams.get("type") || undefined;
+    const documentType = searchParams.get("document_type") || undefined;
     const category = searchParams.get("category") || undefined;
+    const projectIdParam = searchParams.get("project_id") || undefined;
     const search = searchParams.get("search") || undefined;
     const dateFrom = searchParams.get("date_from") || undefined;
     const dateTo = searchParams.get("date_to") || undefined;
@@ -95,6 +98,7 @@ export const GET = withApiGuardrails(
         status,
         type,
         category,
+        document_type,
         source,
         source_system,
         source_web_url,
@@ -140,9 +144,21 @@ export const GET = withApiGuardrails(
       }
     }
 
+    // Document type filter (folder-derived construction document type)
+    if (documentType) {
+      query = query.eq("document_type", documentType);
+    }
+
     // Category filter
     if (category) {
       query = query.eq("category", category);
+    }
+
+    if (projectIdParam) {
+      const projectId = Number.parseInt(projectIdParam, 10);
+      if (Number.isFinite(projectId)) {
+        query = query.eq("project_id", projectId);
+      }
     }
 
     // Full-text search on title
@@ -203,6 +219,7 @@ export const GET = withApiGuardrails(
           status: doc.status,
           type: doc.type,
           category: doc.category,
+          document_type: doc.document_type,
           source: doc.source,
           source_system: doc.source_system,
           source_web_url: doc.source_web_url,

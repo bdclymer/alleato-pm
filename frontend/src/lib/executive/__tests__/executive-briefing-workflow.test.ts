@@ -395,4 +395,108 @@ describe("executive briefing workflow", () => {
     expect(savedRecapText).not.toContain("\u0000");
     expect(savedRecapText).not.toContain("\ud800");
   });
+
+  it("recovers when another request creates the same day's recap first", async () => {
+    const upsertedRows: unknown[] = [];
+    let maybeSingleCalls = 0;
+
+    mockGenerateDailyBrief.mockResolvedValue(freshPacket);
+
+    const from = jest.fn((table: string) => {
+      if (table === "daily_recaps") {
+        const query = {
+          select: jest.fn(() => query),
+          eq: jest.fn(() => query),
+          order: jest.fn(() => query),
+          limit: jest.fn(() => query),
+          maybeSingle: jest.fn(() => {
+            maybeSingleCalls += 1;
+            if (maybeSingleCalls === 1) {
+              return Promise.resolve({ data: null, error: null });
+            }
+
+            return Promise.resolve({
+              data: {
+                id: "recap-existing",
+                recap_date: "2026-05-08",
+                workflow_status: "approved",
+                approved_at: "2026-05-08T16:15:00.000Z",
+                approved_by: null,
+                briefing_packet: storedPacket,
+                created_at: "2026-05-08T16:15:00.000Z",
+                recap_text: "Existing brief",
+              },
+              error: null,
+            });
+          }),
+          upsert: jest.fn((row: unknown) => {
+            upsertedRows.push(row);
+
+            if (upsertedRows.length === 1) {
+              return {
+                select: jest.fn(() => ({
+                  single: jest.fn(() =>
+                    Promise.resolve({
+                      data: null,
+                      error: {
+                        message: "duplicate key value violates unique constraint",
+                        code: "23505",
+                        details:
+                          "Key (recap_date)=(2026-05-08) already exists.",
+                        hint: null,
+                      },
+                    }),
+                  ),
+                })),
+              };
+            }
+
+            return {
+              select: jest.fn(() => ({
+                single: jest.fn(() =>
+                  Promise.resolve({
+                    data: {
+                      id: "recap-existing",
+                      recap_date: "2026-05-08",
+                      workflow_status: "approved",
+                      approved_at: "2026-05-08T16:30:00.000Z",
+                      approved_by: null,
+                      briefing_packet: (row as { briefing_packet: unknown })
+                        .briefing_packet,
+                      created_at: "2026-05-08T16:15:00.000Z",
+                      recap_text: "Fresh brief",
+                    },
+                    error: null,
+                  }),
+                ),
+              })),
+            };
+          }),
+        };
+        return query;
+      }
+
+      if (table === "executive_briefing_follow_ups") {
+        const query = {
+          select: jest.fn(() => query),
+          in: jest.fn(() => Promise.resolve({ data: [], error: null })),
+          upsert: jest.fn(() => ({
+            select: jest.fn(() => Promise.resolve({ data: [], error: null })),
+          })),
+        };
+        return query;
+      }
+
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    mockCreateServiceClient.mockReturnValue({ from });
+
+    const result = await regenerateExecutiveBriefingDraft({ windowDays: 3 });
+
+    expect(result.draft.id).toBe("recap-existing");
+    expect(upsertedRows).toHaveLength(2);
+    expect((upsertedRows[0] as { id?: string }).id).toBeUndefined();
+    expect((upsertedRows[1] as { id?: string }).id).toBe("recap-existing");
+  });
 });

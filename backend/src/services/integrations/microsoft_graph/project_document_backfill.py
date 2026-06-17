@@ -14,6 +14,7 @@ from .project_documents import (
 
 
 GRAPH_FILE_SOURCES = {"onedrive", "sharepoint"}
+POSTGREST_PAGE_SIZE = 1000
 
 
 def _table(client: Any, name: str) -> Any:
@@ -138,17 +139,34 @@ def _candidate_payload(row: dict) -> Optional[dict]:
 
 
 def _fetch_metadata_rows(client: Any, limit: int) -> list[dict]:
-    response = (
-        _table(client, "document_metadata")
-        .select(
-            "id,title,file_name,url,source,source_system,category,type,project_id,date,tags,"
-            "file_path,source_drive_id,source_item_id,source_site_id,source_path,source_web_url,"
-            "source_etag,source_last_modified_at,source_size,source_metadata"
-        )
-        .limit(limit)
-        .execute()
+    select_clause = (
+        "id,title,file_name,url,source,source_system,category,type,project_id,date,tags,"
+        "file_path,source_drive_id,source_item_id,source_site_id,source_path,source_web_url,"
+        "source_etag,source_last_modified_at,source_size,source_metadata"
     )
-    return _rows(response)
+    rows: list[dict] = []
+    offset = 0
+    remaining = max(1, limit)
+    while remaining > 0:
+        page_size = min(POSTGREST_PAGE_SIZE, remaining)
+        query = (
+            _table(client, "document_metadata")
+            .select(select_clause)
+            .not_.is_("project_id", "null")
+            .or_("source_system.eq.onedrive,source_system.eq.sharepoint,id.like.onedrive_%,id.like.sharepoint_%")
+        )
+        try:
+            query = query.range(offset, offset + page_size - 1)
+        except AttributeError:
+            query = query.limit(limit)
+        response = query.execute()
+        page = _rows(response)
+        rows.extend(page)
+        if len(page) < page_size:
+            break
+        offset += page_size
+        remaining -= page_size
+    return rows
 
 
 def _existing_project_document_keys(client: Any, payloads: Iterable[dict]) -> set[tuple[int, str, str]]:
@@ -157,14 +175,27 @@ def _existing_project_document_keys(client: Any, payloads: Iterable[dict]) -> se
         return set()
 
     project_ids = sorted({payload["project_id"] for payload in payload_list})
-    response = (
-        _table(client, "project_documents")
-        .select("project_id,source_system,source_item_id,deleted_at")
-        .in_("project_id", project_ids)
-        .execute()
-    )
     keys: set[tuple[int, str, str]] = set()
-    for row in _rows(response):
+    rows = []
+    offset = 0
+    while True:
+        query = (
+            _table(client, "project_documents")
+            .select("project_id,source_system,source_item_id,deleted_at")
+            .in_("project_id", project_ids)
+        )
+        try:
+            query = query.range(offset, offset + POSTGREST_PAGE_SIZE - 1)
+        except AttributeError:
+            pass
+        response = query.execute()
+        page = _rows(response)
+        rows.extend(page)
+        if len(page) < POSTGREST_PAGE_SIZE:
+            break
+        offset += POSTGREST_PAGE_SIZE
+
+    for row in rows:
         if row.get("deleted_at") is not None:
             continue
         source_system = row.get("source_system")

@@ -3,7 +3,7 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { v4 as uuidv4 } from "uuid";
-import { apiErrorResponse } from "@/lib/api-error";
+import { triggerDocumentPipeline } from "@/lib/documents/pipeline-trigger";
 import { logger } from "@/lib/logger";
 
 /**
@@ -14,8 +14,9 @@ import { logger } from "@/lib/logger";
  * Flow:
  *   1. Upload file to Supabase storage bucket "documents"
  *   2. Create a document_metadata row
- *   3. DB trigger auto-creates fireflies_ingestion_jobs row and calls FastAPI pipeline
- *   4. Pipeline runs: document_parser → embedder → extractor
+ *   3. DB trigger auto-creates fireflies_ingestion_jobs row
+ *   4. API explicitly queues the FastAPI pipeline
+ *   5. Pipeline runs: document_parser → embedder → extractor
  *
  * FormData fields:
  *   - file: File (required)
@@ -111,9 +112,7 @@ export const POST = withApiGuardrails(
     }
 
     // 2. Create document_metadata row
-    // The DB trigger will auto-create a fireflies_ingestion_jobs row
-    // and call the FastAPI pipeline endpoint
-    const { data: metadata, error: insertError } = await supabase
+    const { error: insertError } = await supabase
       .from("document_metadata")
       .insert({
         id: metadataId,
@@ -141,6 +140,8 @@ export const POST = withApiGuardrails(
       );
     }
 
+    const pipeline = await triggerDocumentPipeline(metadataId);
+
     return NextResponse.json({
       success: true,
       document: {
@@ -153,8 +154,10 @@ export const POST = withApiGuardrails(
         projectId,
         tags,
         status: "uploaded",
-        pipelineStatus: "queued",
+        pipelineStatus: pipeline.queued ? "queued" : "enqueue_failed",
       },
+      pipelineQueued: pipeline.queued,
+      pipelineMessage: pipeline.message,
     });
     },
 );

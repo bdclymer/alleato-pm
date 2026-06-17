@@ -19,6 +19,7 @@ import {
   getAppDatabaseUrl,
   getRagDatabaseUrl,
 } from "./app-db-connection.mjs";
+import { classifyProjectApplicability } from "./source_lifecycle_project_applicability.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), "../..");
@@ -85,6 +86,7 @@ function contentHashFor(row) {
 }
 
 function statusFor(row, state) {
+  if (terminalEmbeddingFailureFor(row)) return "failed_permanent";
   if (!row.project_id) return "project_assignment_review";
   if (state.hasProjectIntelligenceEvidence) return "project_intelligence_updated";
   if (state.hasTask) return "actions_routed";
@@ -92,12 +94,35 @@ function statusFor(row, state) {
   return "project_assigned";
 }
 
+function terminalEmbeddingFailureFor(row) {
+  const status = String(row.status ?? "").toLowerCase();
+  if (status === "skipped_low_content") {
+    return {
+      error_code: "skipped_low_content",
+      error_message: "Source item was skipped because it did not contain enough substantive text to embed.",
+    };
+  }
+  if (status === "ocr_failed") {
+    return {
+      error_code: "ocr_failed",
+      error_message: "OCR fallback failed before embeddable text could be extracted.",
+    };
+  }
+  return null;
+}
+
 function compactMetadata(row, state) {
+  const applicability = classifyProjectApplicability({
+    ...row,
+    text_sample: state.textSample,
+  });
+
   return {
     source: row.source,
     category: row.category,
     type: row.type,
     backfilled_from_current_state: true,
+    ...applicability,
     chunks: state.chunks,
     embedded_chunks: state.embeddedChunks,
     has_project_intelligence_evidence: state.hasProjectIntelligenceEvidence,
@@ -138,7 +163,7 @@ const ragClient = await ragPool.connect();
 try {
   const sourceResult = await appClient.query(
     `
-      select id, title, url, source, category, type, project_id, source_item_id,
+      select id, title, url, source, category, type, status, project_id, source_item_id,
         fireflies_id, content_hash, source_etag, source_web_url,
         source_last_modified_at, created_at, date
       from public.document_metadata
@@ -160,7 +185,8 @@ try {
     ? (await ragClient.query(
         `
           select document_id, count(*)::int as chunks,
-            count(*) filter (where embedding is not null)::int as embedded_chunks
+            count(*) filter (where embedding is not null)::int as embedded_chunks,
+            left(string_agg(left(coalesce(text, ''), 1000), E'\n' order by chunk_index), 4000) as text_sample
           from public.document_chunks
           where document_id = any($1::text[])
           group by document_id
@@ -201,10 +227,12 @@ try {
     const state = {
       chunks: Number(chunkState.chunks ?? 0),
       embeddedChunks: Number(chunkState.embedded_chunks ?? 0),
+      textSample: String(chunkState.text_sample ?? ""),
       hasTask: Number(tasksByDocumentId.get(String(row.id)) ?? 0) > 0,
       hasProjectIntelligenceEvidence: Number(evidenceByDocumentId.get(String(row.id)) ?? 0) > 0,
     };
     const status = statusFor(row, state);
+    const terminalEmbeddingFailure = terminalEmbeddingFailureFor(row);
     return {
       source_system: sourceSystemForFamily(row.source_family),
       source_item_id: String(row.source_item_id || row.fireflies_id || row.id),
@@ -215,9 +243,11 @@ try {
       source_title: row.title,
       source_url: row.source_web_url || row.url,
       occurred_at: row.date || row.source_last_modified_at || row.created_at,
-      completed_at: ["project_intelligence_updated", "actions_routed", "indexed_for_rag"].includes(status)
+      completed_at: ["project_intelligence_updated", "actions_routed", "indexed_for_rag", "failed_permanent"].includes(status)
         ? new Date().toISOString()
         : null,
+      error_code: terminalEmbeddingFailure?.error_code ?? null,
+      error_message: terminalEmbeddingFailure?.error_message ?? null,
       metadata: compactMetadata(row, state),
     };
   });
@@ -240,8 +270,8 @@ try {
           row.source_url,
           row.occurred_at,
           row.completed_at,
-          null,
-          null,
+          row.error_code,
+          row.error_message,
           JSON.stringify(row.metadata),
         );
         return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}::bigint, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}::timestamptz, now(), now(), $${offset + 10}::timestamptz, 0, $${offset + 11}, $${offset + 12}, $${offset + 13}::jsonb)`;
@@ -265,8 +295,8 @@ try {
             occurred_at = excluded.occurred_at,
             updated_at = now(),
             completed_at = excluded.completed_at,
-            error_code = null,
-            error_message = null,
+            error_code = excluded.error_code,
+            error_message = excluded.error_message,
             metadata = excluded.metadata
         `,
         params,

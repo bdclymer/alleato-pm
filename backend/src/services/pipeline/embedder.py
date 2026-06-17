@@ -15,7 +15,13 @@ import logging
 import re
 from typing import Any, Dict, List, Optional
 
-from ..supabase_helpers import fetch_optional_row, get_rag_read_client, get_rag_write_client, get_supabase_client
+from ..supabase_helpers import (
+    fetch_optional_row,
+    get_rag_read_client,
+    get_rag_write_client,
+    get_supabase_client,
+    update_ingestion_job_state,
+)
 from ..ingestion.fireflies_pipeline import FirefliesIngestionPipeline
 from .models import DocumentChunk, MeetingSegment, TranscriptLine
 from . import llm
@@ -288,9 +294,12 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
                 },
             }
         ).execute()
-        rag_client.table("fireflies_ingestion_jobs").update(
-            {"stage": "done", "error_message": None}
-        ).eq("metadata_id", metadata_id).execute()
+        update_ingestion_job_state(
+            metadata_id,
+            stage="done",
+            error_message=None,
+            client=client,
+        )
         return {
             "metadataId": metadata_id,
             "chunkCount": 0,
@@ -406,9 +415,11 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
     logger.info("[Embedder] Created %d chunks (transcript + sections)", len(all_chunks))
 
     # 6. Mark job as chunked before expensive embedding calls
-    rag_client.table("fireflies_ingestion_jobs").update(
-        {"stage": "chunked"}
-    ).eq("metadata_id", metadata_id).execute()
+    update_ingestion_job_state(
+        metadata_id,
+        stage="chunked",
+        client=client,
+    )
 
     # 7. Batch embed all chunks
     chunk_texts = [c.content for c in all_chunks]
@@ -467,9 +478,11 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
     ).eq("id", metadata_id).execute()
 
     # 13. Advance job stage
-    rag_client.table("fireflies_ingestion_jobs").update(
-        {"stage": "embedded"}
-    ).eq("metadata_id", metadata_id).execute()
+    update_ingestion_job_state(
+        metadata_id,
+        stage="embedded",
+        client=client,
+    )
 
     return {
         "metadataId": metadata_id,

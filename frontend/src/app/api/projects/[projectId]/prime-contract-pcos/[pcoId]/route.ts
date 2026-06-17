@@ -226,13 +226,13 @@ export const PATCH = withApiGuardrails<{ projectId: string; pcoId: string }>(
       );
     }
 
-    // Only allow updates if status is draft or pending
-    if (existingPco.status !== "draft" && existingPco.status !== "pending") {
+    // Keep void PCOs immutable, but allow active records to be corrected in place
+    // from the detail page like other editable project records.
+    if (existingPco.status === "void") {
       return NextResponse.json(
         {
           error: "Cannot update PCO",
-          details:
-            "Only PCOs with status 'draft' or 'pending' can be updated",
+          details: "Void PCOs cannot be updated",
         },
         { status: 409 },
       );

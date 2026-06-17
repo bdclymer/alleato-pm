@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { withApiGuardrails, parseJsonBody } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import { createOutlookIntakeServiceClient } from "@/lib/supabase/service";
 
 const PatchSchema = z.union([
   // Project assignment
@@ -58,7 +59,8 @@ async function assertAdminAccess(where: string) {
 export const PATCH = withApiGuardrails(
   "outlook-intake/[intakeId]#PATCH",
   async ({ request, params }) => {
-    const supabase = await assertAdminAccess("outlook-intake/[intakeId]#PATCH");
+    await assertAdminAccess("outlook-intake/[intakeId]#PATCH");
+    const intakeService = createOutlookIntakeServiceClient();
     const { intakeId: rawIntakeId } = await params;
     const intakeId = parseInt(rawIntakeId, 10);
 
@@ -92,7 +94,7 @@ export const PATCH = withApiGuardrails(
       };
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await intakeService
       .from("outlook_email_intake")
       .update(update)
       .eq("id", intakeId)

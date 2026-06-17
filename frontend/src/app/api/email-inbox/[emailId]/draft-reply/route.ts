@@ -8,6 +8,10 @@ import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { getLanguageModel } from "@/lib/ai/providers";
 import {
+  createOutlookIntakeServiceClient,
+  createServiceClient,
+} from "@/lib/supabase/service";
+import {
   deriveBrandonDraftLearning,
   formatBrandonDraftLearningGuidance,
   type BrandonAssistantReviewLearningRow,
@@ -27,6 +31,8 @@ export const POST = withApiGuardrails<{ emailId: string }>(
   "email-inbox/[emailId]/draft-reply#POST",
   async ({ request, params }) => {
     const supabase = await createClient();
+    const appService = createServiceClient();
+    const intakeService = createOutlookIntakeServiceClient();
     const user = await getApiRouteUser();
 
     if (!user) {
@@ -61,15 +67,13 @@ export const POST = withApiGuardrails<{ emailId: string }>(
     let fromEmail = parsed.fromEmail;
     let bodyText = parsed.bodyText;
     let projectName = parsed.projectName;
+    let projectId: number | null = null;
 
     if (!subject) {
-      const { data: email } = await supabase
+      const { data: email } = await intakeService
         .from("outlook_email_intake")
         .select(
-          `
-          subject, from_name, from_email, body_text, body,
-          projects!outlook_email_intake_project_id_fkey (name)
-        `,
+          "subject, from_name, from_email, body_text, body, project_id",
         )
         .eq("id", emailId)
         .is("deleted_at", null)
@@ -88,8 +92,25 @@ export const POST = withApiGuardrails<{ emailId: string }>(
       fromName = email.from_name;
       fromEmail = email.from_email;
       bodyText = email.body_text ?? email.body;
-      const proj = email.projects as { name: string | null } | null;
-      projectName = proj?.name ?? null;
+      projectId = email.project_id ?? null;
+    }
+
+    if (!projectName && projectId) {
+      const { data: project, error: projectError } = await appService
+        .from("projects")
+        .select("name")
+        .eq("id", projectId)
+        .maybeSingle();
+
+      if (projectError) {
+        throw new GuardrailError({
+          code: "INTERNAL_ERROR",
+          where: "email-inbox/[emailId]/draft-reply#POST",
+          message: projectError.message,
+        });
+      }
+
+      projectName = project?.name ?? null;
     }
 
     const truncatedBody = (bodyText ?? "").slice(0, 3000);

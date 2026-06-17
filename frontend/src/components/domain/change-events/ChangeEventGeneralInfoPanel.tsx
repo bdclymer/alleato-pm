@@ -37,11 +37,13 @@ const STATUS_OPTIONS = [
 
 const ORIGIN_OPTIONS = [
   { value: "Internal", label: "Internal" },
-  { value: "RFI", label: "RFI" },
+  { value: "RFI's", label: "RFI" },
   { value: "Field", label: "Field" },
   { value: "Emails", label: "Emails" },
   { value: "Meetings", label: "Meetings" },
 ];
+
+const EMPTY_SELECT_VALUE = "__empty__";
 
 const TYPE_OPTIONS = [
   { value: "Owner Change", label: "Owner Change" },
@@ -191,6 +193,10 @@ function InlineSelect({ value, onSave, fieldKey, options, placeholder = "Not set
   const startEdit = () => setEditing(true);
 
   const displayLabel = options.find((o) => o.value === value)?.label ?? value ?? placeholder;
+  const selectValue =
+    value && options.some((option) => option.value === value)
+      ? value
+      : EMPTY_SELECT_VALUE;
 
   return (
     <EditShell
@@ -200,19 +206,19 @@ function InlineSelect({ value, onSave, fieldKey, options, placeholder = "Not set
       display={displayLabel}
       input={
         <Select
-          defaultValue={value ?? ""}
+          value={selectValue}
           open={editing}
           onOpenChange={(open) => { if (!open) setEditing(false); }}
           onValueChange={async (newVal) => {
             setEditing(false);
-            await onSave({ [fieldKey]: newVal || null });
+            await onSave({ [fieldKey]: newVal === EMPTY_SELECT_VALUE ? null : newVal });
           }}
         >
           <SelectTrigger className="h-7 text-sm">
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">{placeholder}</SelectItem>
+            <SelectItem value={EMPTY_SELECT_VALUE}>{placeholder}</SelectItem>
             {options.map((o) => (
               <SelectItem key={o.value} value={o.value}>
                 {o.label}
@@ -339,12 +345,14 @@ export function ChangeEventGeneralInfoPanel({
 
   const save = useCallback(
     async (updates: Record<string, unknown>) => {
+      const nextUpdates =
+        "origin" in updates ? { ...updates, originId: null } : updates;
       try {
         await apiFetch(
           `/api/projects/${projectId}/change-events/${changeEventId}`,
           {
             method: "PATCH",
-            body: JSON.stringify(updates),
+            body: JSON.stringify(nextUpdates),
           },
         );
         toast.success("Saved");
@@ -468,7 +476,7 @@ export function ChangeEventGeneralInfoPanel({
                 </DetailField>
                 <DetailField label="Attachments" span={2}>
                   <EntityAttachments
-                    entityType="change_order"
+                    entityType="change_event"
                     entityId={String(changeEvent.id)}
                     projectId={String(projectId)}
                   />

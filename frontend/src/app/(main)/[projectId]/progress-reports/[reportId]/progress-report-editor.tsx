@@ -1107,9 +1107,8 @@ export function ProgressReportEditor({
                             <li key={meeting.id}>
                               <Link
                                 href={`/${projectId}/meetings/${meeting.id}`}
-                                className="group flex items-start gap-1.5 text-sm text-foreground hover:text-primary"
+                                className="group block text-sm text-foreground hover:text-primary"
                               >
-                                <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover:text-primary" />
                                 <span className="min-w-0">
                                   <span className="line-clamp-2 font-medium">{meeting.title}</span>
                                   {meeting.date && (

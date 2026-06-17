@@ -3,11 +3,10 @@
 import * as React from "react";
 
 import { format } from "date-fns";
-import { Upload } from "lucide-react";
+import { Loader2, Upload, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
-import { Dropzone, DropzoneContent, DropzoneEmptyState } from "@/components/misc/dropzone";
 import { UnifiedTablePage } from "@/components/tables/unified";
 import type { TableColumn } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
@@ -19,6 +18,7 @@ import {
   ModalHeader as DialogHeader,
   ModalTitle as DialogTitle,
 } from "@/components/ui/unified-modal";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -37,7 +37,6 @@ import {
 import type { DocumentFilterState } from "@/features/documents/documents-table-definition";
 import { useServerTableDefinition } from "@/features/tables/server-table";
 import type { ServerTableDefinition } from "@/features/tables/server-table";
-import { useSupabaseUpload } from "@/hooks/use-supabase-upload";
 import { apiFetch } from "@/lib/api-client";
 import { reportNonCriticalFailure } from "@/lib/report-non-critical-failure";
 
@@ -64,6 +63,7 @@ export interface DocumentsTablePageProps {
   emptyFilteredDescription?: string;
   openPreference?: ViewPreference;
   pageArea?: string;
+  uploadProjectId?: number | null;
   tableColumns?: TableColumn<PipelineDoc>[];
   renderCard?: (item: PipelineDoc, onView: (item: PipelineDoc) => void) => React.ReactElement;
   renderList?: (item: PipelineDoc, onView: (item: PipelineDoc) => void) => React.ReactElement;
@@ -73,34 +73,100 @@ function UploadDialog({
   open,
   onOpenChange,
   onUploadComplete,
+  projectId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUploadComplete: () => void;
+  projectId?: number | null;
 }) {
-  const uploadProps = useSupabaseUpload({
-    bucketName: "documents",
-    path: "uploads",
-    maxFiles: 10,
-    maxFileSize: MAX_FILE_SIZE,
-  });
-
-  const prevIsSuccess = React.useRef(false);
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+  const [files, setFiles] = React.useState<File[]>([]);
+  const [isUploading, setIsUploading] = React.useState(false);
 
   React.useEffect(() => {
-    if (uploadProps.isSuccess && !prevIsSuccess.current) {
-      prevIsSuccess.current = true;
-      toast.success("Documents uploaded successfully.");
-      const timeout = setTimeout(() => {
-        onOpenChange(false);
-        onUploadComplete();
-      }, 1500);
-      return () => clearTimeout(timeout);
+    if (!open) {
+      setFiles([]);
+      setIsUploading(false);
     }
-    if (!uploadProps.isSuccess) {
-      prevIsSuccess.current = false;
+  }, [open]);
+
+  const handleFileSelection = React.useCallback(
+    (nextFiles: FileList | null) => {
+      const valid = Array.from(nextFiles ?? []).filter(
+        (file) => file.size <= MAX_FILE_SIZE,
+      );
+      const oversized = Array.from(nextFiles ?? []).filter(
+        (file) => file.size > MAX_FILE_SIZE,
+      );
+
+      if (oversized.length > 0) {
+        toast.error("Files larger than 50 MB were skipped.");
+      }
+
+      setFiles(valid.slice(0, 10));
+    },
+    [],
+  );
+
+  const handleUpload = React.useCallback(async () => {
+    if (files.length === 0) {
+      toast.error("Select at least one file.");
+      return;
     }
-  }, [uploadProps.isSuccess, onOpenChange, onUploadComplete]);
+
+    setIsUploading(true);
+    const failed: string[] = [];
+    const warnings: string[] = [];
+
+    for (const file of files) {
+      const formData = new FormData();
+      formData.set("file", file);
+      formData.set("title", file.name.replace(/\.[^.]+$/, ""));
+      if (projectId) {
+        formData.set("project_id", String(projectId));
+      }
+
+      try {
+        const result = await apiFetch<{
+          pipelineQueued?: boolean;
+          pipelineMessage?: string | null;
+        }>("/api/documents/upload", {
+          method: "POST",
+          body: formData,
+        });
+        if (result.pipelineQueued === false && result.pipelineMessage) {
+          warnings.push(`${file.name}: ${result.pipelineMessage}`);
+        }
+      } catch {
+        failed.push(file.name);
+      }
+    }
+
+    setIsUploading(false);
+
+    if (failed.length > 0) {
+      toast.error(
+        failed.length === files.length
+          ? "Document upload failed."
+          : `${files.length - failed.length} uploaded, ${failed.length} failed.`,
+      );
+      return;
+    }
+
+    toast.success(
+      `${files.length} document${files.length === 1 ? "" : "s"} uploaded.`,
+    );
+    if (warnings.length > 0) {
+      toast.warning(
+        warnings.length === 1
+          ? warnings[0]
+          : `${warnings.length} uploads need pipeline retry.`,
+      );
+    }
+    onOpenChange(false);
+    onUploadComplete();
+  }, [files, onOpenChange, onUploadComplete, projectId]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -108,13 +174,86 @@ function UploadDialog({
         <DialogHeader>
           <DialogTitle>Upload Documents</DialogTitle>
           <DialogDescription>
-            Drag and drop files or click to browse. All file types accepted.
+            Upload documents into the shared document library.
+            {projectId ? " New uploads will be assigned to this project." : ""}
           </DialogDescription>
         </DialogHeader>
-        <Dropzone {...uploadProps}>
-          <DropzoneEmptyState />
-          <DropzoneContent />
-        </Dropzone>
+        <div className="space-y-4">
+          <div className="rounded-lg border border-dashed border-border p-4">
+            <Input
+              ref={inputRef}
+              type="file"
+              multiple
+              accept=".pdf,.doc,.docx,.txt,.md,.markdown"
+              onChange={(event) => handleFileSelection(event.target.files)}
+              disabled={isUploading}
+            />
+            <p className="mt-2 text-xs text-muted-foreground">
+              Up to 10 files. Supported: PDF, DOCX, DOC, TXT, MD. Max 50 MB each.
+            </p>
+          </div>
+
+          {files.length > 0 ? (
+            <div className="space-y-2">
+              {files.map((file) => (
+                <div
+                  key={`${file.name}-${file.size}`}
+                  className="flex items-center justify-between rounded-md border border-border px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{file.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {Math.round(file.size / 1024)} KB
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    onClick={() =>
+                      setFiles((current) =>
+                        current.filter(
+                          (candidate) =>
+                            !(
+                              candidate.name === file.name &&
+                              candidate.size === file.size
+                            ),
+                        ),
+                      )
+                    }
+                    disabled={isUploading}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isUploading}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={() => void handleUpload()}
+            disabled={isUploading || files.length === 0}
+          >
+            {isUploading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Uploading
+              </>
+            ) : (
+              "Upload"
+            )}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
@@ -213,6 +352,7 @@ export function DocumentsTablePage({
   emptyFilteredDescription = "Try adjusting your search or filters.",
   openPreference = "external-first",
   pageArea,
+  uploadProjectId,
   tableColumns: customTableColumns,
   renderCard: customRenderCard,
   renderList: customRenderList,
@@ -429,6 +569,7 @@ export function DocumentsTablePage({
         <UploadDialog
           open={uploadDialogOpen}
           onOpenChange={setUploadDialogOpen}
+          projectId={uploadProjectId}
           onUploadComplete={() => {
             void refresh({ page: tableState.page });
           }}

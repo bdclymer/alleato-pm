@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Reclassify stored Outlook intake rows with the current intake classifier.
 
-This updates the app database outlook_email_intake rows. It does not read from
-or write to the isolated RAG database.
+This updates the AI DB-owned Outlook intake tables when the isolated RAG/AI
+database is configured.
 """
 
 from __future__ import annotations
@@ -42,7 +42,7 @@ def main() -> int:
     from src.services.integrations.microsoft_graph.intake_reclassification import (
         run_outlook_intake_reclassification,
     )
-    from src.services.supabase_helpers import get_supabase_client
+    from src.services.supabase_helpers import get_outlook_intake_write_client
 
     intake_ids = [
         int(value.strip())
@@ -50,7 +50,7 @@ def main() -> int:
         if value.strip()
     ] or None
     result = run_outlook_intake_reclassification(
-        get_supabase_client(),
+        get_outlook_intake_write_client(),
         mailbox=args.mailbox,
         intake_ids=intake_ids,
         days_back=args.days_back,

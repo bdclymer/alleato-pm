@@ -62,3 +62,177 @@ export function stripLeadingPseudoHeader(value: string): string {
 export function latestMessageOnly(rawBody: string): string {
   return stripQuotedReplyHistory(stripLeadingPseudoHeader(rawBody));
 }
+
+export function decodeHtmlEntities(value: string): string {
+  const namedEntities: Record<string, string> = {
+    amp: "&",
+    apos: "'",
+    gt: ">",
+    lt: "<",
+    nbsp: " ",
+    quot: "\"",
+  };
+
+  return value.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (match, entity: string) => {
+    const key = entity.toLowerCase();
+    if (key[0] === "#") {
+      const isHex = key.startsWith("#x");
+      const codePoint = Number.parseInt(key.slice(isHex ? 2 : 1), isHex ? 16 : 10);
+      return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : match;
+    }
+
+    return namedEntities[key] ?? match;
+  });
+}
+
+export function normalizeEmailText(value: string): string {
+  return decodeHtmlEntities(value)
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/div>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "- ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\u00a0/g, " ")
+    .replace(/\s+(From|Sent|To|Cc|Bcc|Subject):\s/gi, "\n$1: ")
+    .replace(/\s+(Caution:\s*EXTERNAL EMAIL)\s*/gi, "\n$1\n")
+    .replace(/\s+(Best|Regards|Thank you),\s+/gi, "\n\n$1,\n")
+    .replace(
+      /([?.!])\s+(Thank you|Thank You|Thanks|Best|Regards)\b/g,
+      "$1\n\n$2",
+    )
+    .replace(
+      /\b(Thank you|Thank You|Thanks|Best|Regards)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\b/g,
+      "$1\n$2",
+    )
+    .replace(
+      /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\s+(CEO at Alleato Group|Assistant Project Manager at Alleato Group)\b/g,
+      "$1\n$2",
+    )
+    .replace(
+      /(\b(?:uploaded to the SharePoint|attached|attachments?)\b.*?)\s+((?:\d{2,4}-\d{3,6}[-A-Za-z0-9(),.&/ ]{12,}))$/i,
+      "$1\n\n$2",
+    )
+    .replace(
+      /\s+((?:\d{2,4}-\d{3,6}[-A-Za-z0-9(),.&/ ]{10,}?(?:Rev\s+[A-Z0-9]+)?))(?:\s+(?=\d{2,4}-\d{3,6}\b))/g,
+      "\n$1\n",
+    )
+    .replace(/\s+(Rev\s+[A-Z0-9]+:\s+)/g, "\n$1")
+    .replace(/\s+\b([A-Z][A-Z]+\s+[A-Z][A-Z]+)\s+\|\s+/g, "\n\n$1\n")
+    .replace(/\s+\b(senior project engineer)\b\s+/gi, "\n$1\n")
+    .replace(/\s+\b(e:\s*[^@\s]+@[^@\s]+\.[^@\s]+)\b/gi, "\n$1\n")
+    .replace(/\s+\b(www\.[^\s]+)\b/gi, "\n$1\n")
+    .replace(/\s+\b(SYMBOTIC\s+\d{2,6}\s+Research Drive.*?)\b(?=\s+\*\*Symbotic Confidential\*\*|\s+$)/i, "\n$1\n")
+    .replace(/\s+\*\*Symbotic Confidential\*\*[\s\S]*$/i, "")
+    .replace(
+      /\s+(Assistant Project Manager at Alleato Group|Mobile|Email|Web|Indianapolis\s+-|Tampa\/St Pete\s+-)\s*/g,
+      "\n$1 ",
+    )
+    .replace(/\s+(Andrew|Anthony|Kevin|Keegan|Joseph)\b/g, "\n$1")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+export function latestReadableMessage(rawBody: string): string {
+  return normalizeEmailText(latestMessageOnly(rawBody));
+}
+
+export type EmailContentBlock = {
+  id: string;
+  kind: "paragraph" | "metadata" | "warning" | "quote-header";
+  lines: string[];
+};
+
+const OUTLOOK_HEADER_RE = /^(From|Sent|Date|To|Cc|Bcc|Subject):\s*(.*)$/i;
+const SIGNATURE_NOISE_RE =
+  /^(Assistant Project Manager at Alleato Group|Mobile\b|Web\b|www\.alleatogroup\.com|www\.symbotic\.com|Indianapolis\s+-|Tampa\/St Pete\s+-|\||e:\s*[^@\s]+@|senior project engineer$|SYMBOTIC\s+\d{2,6}\s+Research Drive)/i;
+
+function shouldDropSignatureLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  if (SIGNATURE_NOISE_RE.test(trimmed)) return true;
+  if (/^\d{3}[.\-\s]\d{3}[.\-\s]\d{4}(?:\s*\|\s*)?$/.test(trimmed)) return true;
+  if (/^Email\s+[^@\s]+@/i.test(trimmed)) return true;
+  if (/^acannon@alleatogroup\.com$/i.test(trimmed)) return true;
+  if (/8383 Craig Street|701 94th Avenue|alleatogroup\.com|Symbotic Confidential|Reinvent the warehouse|Research Drive Wilmington/i.test(trimmed)) return true;
+  return false;
+}
+
+export function buildEmailContentBlocks(rawBody: string): EmailContentBlock[] {
+  const normalized = latestReadableMessage(rawBody);
+
+  if (!normalized) {
+    return [
+      {
+        id: "empty",
+        kind: "paragraph",
+        lines: ["No email body is stored for this message."],
+      },
+    ];
+  }
+
+  const blocks: EmailContentBlock[] = [];
+  let paragraph: string[] = [];
+  let metadata: string[] = [];
+
+  const flushParagraph = () => {
+    if (paragraph.length === 0) return;
+    blocks.push({
+      id: `paragraph-${blocks.length}`,
+      kind: "paragraph",
+      lines: paragraph,
+    });
+    paragraph = [];
+  };
+
+  const flushMetadata = () => {
+    if (metadata.length === 0) return;
+    blocks.push({
+      id: `metadata-${blocks.length}`,
+      kind: metadata[0].toLowerCase().startsWith("from:") ? "quote-header" : "metadata",
+      lines: metadata,
+    });
+    metadata = [];
+  };
+
+  for (const rawLine of normalized.split("\n")) {
+    const line = rawLine.trim();
+
+    if (!line) {
+      flushMetadata();
+      flushParagraph();
+      continue;
+    }
+
+    if (shouldDropSignatureLine(line)) continue;
+
+    if (/^Caution:\s*EXTERNAL EMAIL$/i.test(line)) {
+      flushMetadata();
+      flushParagraph();
+      blocks.push({
+        id: `warning-${blocks.length}`,
+        kind: "warning",
+        lines: ["External email"],
+      });
+      continue;
+    }
+
+    if (OUTLOOK_HEADER_RE.test(line)) {
+      flushParagraph();
+      metadata.push(line);
+      continue;
+    }
+
+    flushMetadata();
+    paragraph.push(line);
+  }
+
+  flushMetadata();
+  flushParagraph();
+
+  return blocks;
+}

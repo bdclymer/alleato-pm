@@ -132,6 +132,15 @@ def _normalize_cost_code(value: Optional[str]) -> Optional[str]:
     return cleaned
 
 
+# Acumatica project statuses for which we must NEVER auto-create a new local
+# project. Cancelled projects are frequently duplicate twins of an active job
+# that share the same name (e.g. cancelled code 12131 vs active 25117, both
+# "Aspire Kissimmee Gardens"). Auto-creating a shell for one would collide with
+# the `uq_projects_active_name` unique index and re-open the name-based data
+# misrouting hole. Existing local rows are still updated normally.
+_NO_CREATE_PROJECT_STATUSES = {"canceled", "cancelled"}
+
+
 def _first_text(record: Dict[str, Any], keys: Sequence[str]) -> Optional[str]:
     for key in keys:
         value = record.get(key)
@@ -624,6 +633,22 @@ class AcumaticaFinancialSyncService:
                 updated += 1
                 continue
 
+            # Guardrail: never CREATE a new local project from a cancelled
+            # Acumatica project (see _NO_CREATE_PROJECT_STATUSES). This is how
+            # the duplicate "Aspire Kissimmee Gardens" #798 shell was born from
+            # cancelled code 12131. Existing rows still update in the branch
+            # above; only first-time creation is blocked here.
+            project_status = (_first_text(project, ("Status", "ProjectStatus")) or "").strip().lower()
+            if project_status in _NO_CREATE_PROJECT_STATUSES:
+                logger.info(
+                    "[AcumaticaSync] Skipping creation of %s Acumatica project_code=%s name=%r — no existing local row",
+                    project_status,
+                    project_code,
+                    project_name,
+                )
+                skipped += 1
+                continue
+
             if not default_company_id:
                 skipped += 1
                 continue
@@ -646,10 +671,21 @@ class AcumaticaFinancialSyncService:
 
                 conflict_row = self._find_existing_project_row(project_code, formatted_job_number)
                 if not conflict_row:
-                    raise RuntimeError(
-                        "[AcumaticaSync] Project insert hit duplicate-key conflict but no existing row could be resolved "
-                        f"for project_code={project_code!r} formatted_job_number={formatted_job_number!r}: {exc}"
-                    ) from exc
+                    # Most likely a collision on uq_projects_active_name: a
+                    # DIFFERENT active project already owns this name. Do NOT
+                    # silently link two distinct Acumatica codes to one row
+                    # (that is the misrouting bug). Skip loudly so one bad
+                    # record never aborts the whole projects sync.
+                    logger.error(
+                        "[AcumaticaSync] Skipping project_code=%s name=%r — insert hit duplicate-key conflict "
+                        "and no existing row could be resolved by acumatica_project_id/job_number "
+                        "(likely an active-name collision): %s",
+                        project_code,
+                        project_name,
+                        exc,
+                    )
+                    skipped += 1
+                    continue
 
                 logger.warning(
                     "[AcumaticaSync] Reused existing project row id=%s after duplicate-key conflict for project_code=%s job_number=%s",

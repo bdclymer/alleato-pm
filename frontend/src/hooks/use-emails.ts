@@ -35,6 +35,22 @@ export interface ProjectEmail {
   created_at: string | null;
   updated_at: string | null;
   deleted_at: string | null;
+  // Outlook-sync provenance — present only on emails ingested from Microsoft
+  // Graph. App-composed / Resend emails leave these null.
+  graph_message_id?: string | null;
+  mailbox_user_id?: string | null;
+  conversation_id?: string | null;
+}
+
+/**
+ * True when the email was ingested from Outlook via Microsoft Graph rather
+ * than composed in-app. Outlook-synced emails are read-only in our system
+ * (they can be deleted from our copy, but not edited).
+ */
+export function isOutlookSourced(email: ProjectEmail): boolean {
+  return Boolean(
+    email.graph_message_id || email.mailbox_user_id || email.conversation_id,
+  );
 }
 
 export type CreateEmailInput = {
@@ -54,6 +70,7 @@ export type CreateEmailInput = {
   related_id?: string | null;
   distribution_group?: string | null;
   thread_id?: string | null;
+  project_id?: number;
 };
 
 export type UpdateEmailInput = Partial<CreateEmailInput>;

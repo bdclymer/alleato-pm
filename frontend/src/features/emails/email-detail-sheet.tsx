@@ -12,6 +12,7 @@ import {
   SheetContent,
 } from "@/components/ui/sheet";
 import type { ProjectEmail } from "@/hooks/use-emails";
+import { buildEmailContentBlocks, type EmailContentBlock } from "./email-thread";
 
 export interface EmailDetailRecord {
   id: string;
@@ -48,152 +49,13 @@ interface EmailDetailPanelProps {
   actions?: React.ReactNode;
 }
 
-type EmailContentBlock = {
-  id: string;
-  kind: "paragraph" | "metadata" | "warning" | "quote-header";
-  lines: string[];
-};
-
-const OUTLOOK_HEADER_RE = /^(From|Sent|Date|To|Cc|Bcc|Subject):\s*(.*)$/i;
-const SIGNATURE_NOISE_RE =
-  /^(Assistant Project Manager at Alleato Group|Mobile\b|Web\b|www\.alleatogroup\.com|Indianapolis\s+-|Tampa\/St Pete\s+-|\|)/i;
-
-function decodeHtmlEntities(value: string): string {
-  const namedEntities: Record<string, string> = {
-    amp: "&",
-    apos: "'",
-    gt: ">",
-    lt: "<",
-    nbsp: " ",
-    quot: "\"",
-  };
-
-  return value.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (match, entity: string) => {
-    const key = entity.toLowerCase();
-    if (key[0] === "#") {
-      const isHex = key.startsWith("#x");
-      const codePoint = Number.parseInt(key.slice(isHex ? 2 : 1), isHex ? 16 : 10);
-      return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : match;
-    }
-
-    return namedEntities[key] ?? match;
-  });
-}
-
-function normalizeEmailText(value: string): string {
-  return decodeHtmlEntities(value)
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/div>/gi, "\n")
-    .replace(/<\/p>/gi, "\n\n")
-    .replace(/<\/li>/gi, "\n")
-    .replace(/<li[^>]*>/gi, "- ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\u00a0/g, " ")
-    .replace(/\s+(From|Sent|To|Cc|Bcc|Subject):\s/gi, "\n$1: ")
-    .replace(/\s+(Caution:\s*EXTERNAL EMAIL)\s*/gi, "\n$1\n")
-    .replace(/\s+(Best|Regards|Thank you),\s+/gi, "\n\n$1,\n")
-    .replace(
-      /\s+(Assistant Project Manager at Alleato Group|Mobile|Email|Web|Indianapolis\s+-|Tampa\/St Pete\s+-)\s*/g,
-      "\n$1 ",
-    )
-    .replace(/\s+(Andrew|Anthony|Kevin|Keegan|Joseph)\b/g, "\n$1")
-    .replace(/[ \t]+\n/g, "\n")
-    .replace(/\n[ \t]+/g, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
-
-function shouldDropSignatureLine(line: string): boolean {
-  const trimmed = line.trim();
-  if (!trimmed) return false;
-  if (SIGNATURE_NOISE_RE.test(trimmed)) return true;
-  if (/^\d{3}[.\-\s]\d{3}[.\-\s]\d{4}(?:\s*\|\s*)?$/.test(trimmed)) return true;
-  if (/^Email\s+[^@\s]+@/i.test(trimmed)) return true;
-  if (/^acannon@alleatogroup\.com$/i.test(trimmed)) return true;
-  if (/8383 Craig Street|701 94th Avenue|alleatogroup\.com/i.test(trimmed)) return true;
-  return false;
-}
-
 function emailContentBlocks(email: EmailDetailRecord): EmailContentBlock[] {
   const rawBody =
     email.bodyText?.trim() ||
     email.body?.trim() ||
     email.bodyHtml?.trim() ||
     "";
-  const normalized = normalizeEmailText(rawBody);
-
-  if (!normalized) {
-    return [
-      {
-        id: "empty",
-        kind: "paragraph",
-        lines: ["No email body is stored for this message."],
-      },
-    ];
-  }
-
-  const blocks: EmailContentBlock[] = [];
-  let paragraph: string[] = [];
-  let metadata: string[] = [];
-
-  const flushParagraph = () => {
-    if (paragraph.length === 0) return;
-    blocks.push({
-      id: `paragraph-${blocks.length}`,
-      kind: "paragraph",
-      lines: paragraph,
-    });
-    paragraph = [];
-  };
-
-  const flushMetadata = () => {
-    if (metadata.length === 0) return;
-    blocks.push({
-      id: `metadata-${blocks.length}`,
-      kind: metadata[0].toLowerCase().startsWith("from:") ? "quote-header" : "metadata",
-      lines: metadata,
-    });
-    metadata = [];
-  };
-
-  for (const rawLine of normalized.split("\n")) {
-    const line = rawLine.trim();
-
-    if (!line) {
-      flushMetadata();
-      flushParagraph();
-      continue;
-    }
-
-    if (shouldDropSignatureLine(line)) continue;
-
-    if (/^Caution:\s*EXTERNAL EMAIL$/i.test(line)) {
-      flushMetadata();
-      flushParagraph();
-      blocks.push({
-        id: `warning-${blocks.length}`,
-        kind: "warning",
-        lines: ["External email"],
-      });
-      continue;
-    }
-
-    if (OUTLOOK_HEADER_RE.test(line)) {
-      flushParagraph();
-      metadata.push(line);
-      continue;
-    }
-
-    flushMetadata();
-    paragraph.push(line);
-  }
-
-  flushMetadata();
-  flushParagraph();
-
-  return blocks;
+  return buildEmailContentBlocks(rawBody);
 }
 
 function formatDateTime(value: string | null | undefined): string {

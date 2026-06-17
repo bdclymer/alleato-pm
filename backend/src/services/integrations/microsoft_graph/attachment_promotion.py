@@ -12,7 +12,11 @@ from datetime import datetime, timezone
 from pathlib import PurePosixPath
 from typing import Any, Optional
 
-from ...supabase_helpers import SupabaseRagStore
+from ...supabase_helpers import (
+    SupabaseRagStore,
+    get_outlook_intake_read_client,
+    get_outlook_intake_write_client,
+)
 from .outlook import DOCUMENT_BUCKET
 from .project_documents import upsert_project_document_by_source
 
@@ -158,7 +162,7 @@ def classify_attachment_for_promotion(
 
 def _select_pending_attachments(supabase_client, limit: int) -> list[dict[str, Any]]:
     response = (
-        supabase_client.from_("outlook_email_intake_attachments")
+        get_outlook_intake_read_client().from_("outlook_email_intake_attachments")
         .select(
             """
             id,
@@ -202,7 +206,7 @@ def _fetch_attachment_payload(supabase_client, attachment_id: int, *, include_co
     if include_content:
         columns = f"content, {columns}"
     response = (
-        supabase_client.from_("outlook_email_intake_attachments")
+        get_outlook_intake_read_client().from_("outlook_email_intake_attachments")
         .select(columns)
         .eq("id", attachment_id)
         .limit(1)
@@ -231,12 +235,12 @@ def _update_attachment_status(
         payload["promoted_at"] = _now_iso()
     if extra:
         payload.update(extra)
-    supabase_client.from_("outlook_email_intake_attachments").update(payload).eq("id", attachment_id).execute()
+    get_outlook_intake_write_client().from_("outlook_email_intake_attachments").update(payload).eq("id", attachment_id).execute()
 
 
 def _increment_attempt_count(supabase_client, row: dict[str, Any]) -> None:
     current = int(row.get("promotion_attempt_count") or 0)
-    supabase_client.from_("outlook_email_intake_attachments").update(
+    get_outlook_intake_write_client().from_("outlook_email_intake_attachments").update(
         {"promotion_attempt_count": current + 1, "updated_at": _now_iso()}
     ).eq("id", row["id"]).execute()
 

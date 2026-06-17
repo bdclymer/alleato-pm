@@ -26,11 +26,13 @@ import {
   type GlobalProjectDocument,
   type ProjectDocument,
 } from "@/hooks/use-documents";
+import { documentTypeLabel } from "@/features/documents/document-types";
 import { formatDate } from "@/lib/format";
 
 type FilterState = Record<string, FilterValue>;
 
 const EMPTY_FILTERS: FilterState = {
+  document_type: undefined,
   status: undefined,
   folder: undefined,
   category: undefined,
@@ -172,6 +174,11 @@ export default function GlobalProjectDocumentsPage() {
     const searchTerm = tableState.debouncedSearch.trim().toLowerCase();
 
     return documents.filter((doc) => {
+      if (
+        activeFilters.document_type &&
+        doc.document_type !== activeFilters.document_type
+      )
+        return false;
       if (activeFilters.status && doc.status !== activeFilters.status) return false;
       if (activeFilters.folder && doc.folder !== activeFilters.folder) return false;
       if (activeFilters.category && doc.category !== activeFilters.category) return false;
@@ -182,6 +189,7 @@ export default function GlobalProjectDocumentsPage() {
         doc.title,
         doc.file_name,
         doc.folder ?? "",
+        documentTypeLabel(doc.document_type),
         doc.category ?? "",
         doc.description ?? "",
         doc.uploaded_by ?? "",
@@ -243,12 +251,13 @@ export default function GlobalProjectDocumentsPage() {
   };
 
   const handleExport = () => {
-    const headers = ["Project", "Title", "File Name", "Folder", "Status", "Category", "Created"];
+    const headers = ["Project", "Title", "File Name", "Folder", "Type", "Status", "Category", "Created"];
     const rows = sortedDocuments.map((d) => [
       [d.project_number, d.project_name ?? `Project #${d.project_id}`].filter(Boolean).join(" · "),
       d.title,
       d.file_name,
       d.folder ?? "Root",
+      documentTypeLabel(d.document_type),
       d.status,
       d.category ?? "",
       d.created_at ? format(new Date(d.created_at), "yyyy-MM-dd") : "",

@@ -2271,6 +2271,7 @@ export default function PrimeContractCODetailPage() {
                   entityType="change_order"
                   entityId={primeCoId}
                   projectId={projectId}
+                  showLabel={false}
                 />
               </section>
             </ContentSectionStack>

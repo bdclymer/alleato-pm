@@ -7,6 +7,7 @@ import { updateContractSchema } from "../validation";
 import { ZodError } from "zod";
 import { requirePermission } from "@/lib/permissions-guard";
 import { logger } from "@/lib/logger";
+import { getCurrentUser, getIsAdmin } from "@/lib/auth/current-user";
 import {
   fetchLivePrimeContractChangeTotals,
   mergePrimeContractFinancials,
@@ -70,17 +71,11 @@ export const GET = withApiGuardrails(
 
     // Privacy gate: if contract is private, only admins and users in allowed_user_ids may view it
     if (contract.is_private) {
-      const { data: { user } } = await supabase.auth.getUser();
+      const [user, isAdmin] = await Promise.all([getCurrentUser(), getIsAdmin()]);
       if (!user) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
       const allowedIds: string[] = (contract as { allowed_user_ids?: string[] }).allowed_user_ids ?? [];
-      const { data: profile } = await supabase
-        .from("user_profiles")
-        .select("is_admin")
-        .eq("id", user.id)
-        .maybeSingle();
-      const isAdmin = profile?.is_admin === true;
       const isAllowed = isAdmin || allowedIds.includes(user.id);
       if (!isAllowed) {
         return NextResponse.json({ error: "Contract not found" }, { status: 404 });

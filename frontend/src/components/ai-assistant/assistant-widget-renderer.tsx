@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ActivityIcon,
   AlertTriangleIcon,
@@ -65,6 +66,7 @@ import type {
   AssistantWidgetPayload,
   CalendarInviteWidgetPayload,
   CommitmentDraftWidgetPayload,
+  CreateContactWidgetPayload,
   CreateEventWidgetPayload,
   CreateTaskWidgetPayload,
   CreativeDraftWidgetPayload,
@@ -768,6 +770,206 @@ function CreateTaskWidget({
           Edit in chat
         </Button>
       </div>
+    </WidgetShell>
+  );
+}
+
+function AlleatoWordmark() {
+  return (
+    <span className="flex items-center" aria-label="Alleato Group">
+      <Image
+        src="/Alleato-Group-Logo_Dark.png"
+        alt="Alleato Group"
+        width={72}
+        height={18}
+        className="h-4 w-auto opacity-80 dark:hidden"
+      />
+      <Image
+        src="/Alleato-Group-Logo_Light.png"
+        alt="Alleato Group"
+        width={72}
+        height={18}
+        className="hidden h-4 w-auto opacity-80 dark:block"
+      />
+    </span>
+  );
+}
+
+function ContactField({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <label className="grid gap-1">
+      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+function CreateContactWidget({
+  widget,
+  onSubmit,
+  onEditDraft,
+}: {
+  widget: CreateContactWidgetPayload;
+  onSubmit: (message: string) => void;
+  onEditDraft: (message: string) => void;
+}) {
+  const [firstName, setFirstName] = useState(widget.defaultFirstName ?? "");
+  const [lastName, setLastName] = useState(widget.defaultLastName ?? "");
+  const [company, setCompany] = useState(widget.defaultCompanyName ?? "");
+  const [jobTitle, setJobTitle] = useState(widget.defaultJobTitle ?? "");
+  const [email, setEmail] = useState(widget.defaultEmail ?? "");
+  const [phone, setPhone] = useState(widget.defaultPhone ?? "");
+  const [department, setDepartment] = useState(widget.defaultDepartment ?? "");
+  const [notes, setNotes] = useState(widget.defaultNotes ?? "");
+
+  const created = widget.status === "created";
+
+  const submitPrompt = useMemo(
+    () =>
+      [
+        "Create this contact in the directory with createContact and confirmed=true. Use exactly these values:",
+        `First name: ${firstName || "[required]"}`,
+        `Last name: ${lastName || "[required]"}`,
+        `Company: ${company || "(none)"}`,
+        widget.companyId ? `Company ID: ${widget.companyId}` : null,
+        `Job title: ${jobTitle || "(none)"}`,
+        `Email: ${email || "(none)"}`,
+        `Phone: ${phone || "(none)"}`,
+        `Department: ${department || "(none)"}`,
+        `Notes: ${notes || "(none)"}`,
+      ]
+        .filter((line): line is string => typeof line === "string")
+        .join("\n"),
+    [company, department, email, firstName, jobTitle, lastName, notes, phone, widget.companyId],
+  );
+
+  return (
+    <WidgetShell
+      eyebrow={created ? "Contact created" : "New contact"}
+      title={widget.title}
+      icon={<UserIcon className="h-4 w-4 text-primary" />}
+      actions={<AlleatoWordmark />}
+    >
+      {created ? (
+        <InfoAlert variant="success">
+          <span>
+            {firstName} {lastName} was added to the directory.
+          </span>
+        </InfoAlert>
+      ) : null}
+
+      <div className="grid gap-3">
+        <ContactField label="Company">
+          <Input
+            value={company}
+            onChange={(event) => setCompany(event.target.value)}
+            placeholder="Search or enter company"
+            disabled={created}
+          />
+        </ContactField>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <ContactField label="First name">
+            <Input
+              value={firstName}
+              onChange={(event) => setFirstName(event.target.value)}
+              placeholder="John"
+              disabled={created}
+            />
+          </ContactField>
+          <ContactField label="Last name">
+            <Input
+              value={lastName}
+              onChange={(event) => setLastName(event.target.value)}
+              placeholder="Smith"
+              disabled={created}
+            />
+          </ContactField>
+        </div>
+
+        <ContactField label="Job title">
+          <Input
+            value={jobTitle}
+            onChange={(event) => setJobTitle(event.target.value)}
+            placeholder="Project Manager"
+            disabled={created}
+          />
+        </ContactField>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <ContactField label="Email">
+            <Input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="name@company.com"
+              disabled={created}
+            />
+          </ContactField>
+          <ContactField label="Phone">
+            <Input
+              type="tel"
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+              placeholder="(317) 555-1234"
+              disabled={created}
+            />
+          </ContactField>
+        </div>
+
+        <ContactField label="Department">
+          <Input
+            value={department}
+            onChange={(event) => setDepartment(event.target.value)}
+            placeholder="Operations"
+            disabled={created}
+          />
+        </ContactField>
+
+        <ContactField label="Notes">
+          <Textarea
+            value={notes}
+            onChange={(event) => setNotes(event.target.value)}
+            placeholder="Responsibilities, relationship context..."
+            className="min-h-20 resize-y"
+            disabled={created}
+          />
+        </ContactField>
+      </div>
+
+      {created ? (
+        widget.contactHref ? (
+          <Button size="sm" asChild>
+            <Link href={widget.contactHref}>
+              <UserIcon className="h-4 w-4" />
+              View contact
+            </Link>
+          </Button>
+        ) : null
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            disabled={!firstName.trim() || !lastName.trim()}
+            onClick={() => onSubmit(submitPrompt)}
+          >
+            <UserIcon className="h-4 w-4" />
+            Create contact
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => onEditDraft(submitPrompt)}>
+            <SquarePenIcon className="h-4 w-4" />
+            Edit in chat
+          </Button>
+        </div>
+      )}
     </WidgetShell>
   );
 }
@@ -1581,6 +1783,15 @@ function normalizeOutlookEmailDraftToolOutput(output: unknown): OutlookEmailDraf
         ? record.confirmPrompt
         : "Create this Outlook email draft with draftOutlookEmail after confirmation.",
   };
+}
+
+function normalizeCreateContactToolOutput(output: unknown): CreateContactWidgetPayload | null {
+  const record = asRecord(output);
+  const widget = asRecord(record.widget);
+  if (widget.type === "create_contact") {
+    return widget as CreateContactWidgetPayload;
+  }
+  return null;
 }
 
 function normalizeGetRecentEmailsToolOutput(output: unknown): OutlookInboxSummaryWidgetPayload | null {
@@ -2990,6 +3201,14 @@ const assistantWidgetComponentRegistry: Record<AssistantWidgetPayload["type"], A
         onEditDraft={props.onEditDraft}
       />
     ) : null,
+  create_contact: (props) =>
+    props.widget.type === "create_contact" ? (
+      <CreateContactWidget
+        widget={props.widget}
+        onSubmit={props.onSubmit}
+        onEditDraft={props.onEditDraft}
+      />
+    ) : null,
   task_summary: (props) =>
     props.widget.type === "task_summary" ? <TaskSummaryWidget widget={props.widget} /> : null,
   meeting_intelligence: (props) =>
@@ -3089,6 +3308,7 @@ const assistantToolComponentRegistry: Record<string, (output: unknown) => Assist
   draftOutlookEmail: normalizeOutlookEmailDraftToolOutput,
   getRecentEmails: normalizeGetRecentEmailsToolOutput,
   createCommitment: normalizeCommitmentDraftToolOutput,
+  createContact: normalizeCreateContactToolOutput,
 };
 
 export function hasAssistantDynamicToolComponent(part: AssistantToolPartForRegistry): boolean {

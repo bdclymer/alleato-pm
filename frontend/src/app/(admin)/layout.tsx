@@ -24,9 +24,7 @@ export default function AdminLayout({
             id="app-main-content"
             className="flex flex-1 flex-col min-w-0 min-h-0"
           >
-            <div className="flex flex-1 flex-col min-h-0">
-              {children}
-            </div>
+            <div className="flex-1">{children}</div>
             <SiteFooter />
           </div>
         </div>

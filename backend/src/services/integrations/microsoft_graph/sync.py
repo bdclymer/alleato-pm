@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 from supabase import Client
+from src.services.supabase_helpers import get_rag_read_client, get_rag_write_client
 
 from .outlook import sync_outlook_emails
 from .teams import sync_teams_channel, get_all_teams_and_channels, sync_user_chat_messages, ChatReadPermissionError
@@ -18,6 +19,17 @@ from .embed import embed_pending_graph_documents, embed_pending_attachment_docum
 from .attachment_promotion import promote_outlook_intake_attachments
 
 logger = logging.getLogger(__name__)
+OUTLOOK_WEBHOOK_PENDING_STATUS = "webhook_pending"
+
+
+def _get_graph_sync_state_read_client() -> Client:
+    """Route Graph delta/state reads to the isolated AI DB."""
+    return get_rag_read_client()
+
+
+def _get_graph_sync_state_write_client() -> Client:
+    """Route Graph delta/state writes to the isolated AI DB."""
+    return get_rag_write_client()
 
 
 def _record_sync_run_safe(
@@ -79,7 +91,8 @@ def _get_delta_token(supabase: Client, source: str, resource_id: str) -> Optiona
     """Fetch saved delta token for a source/resource pair."""
     try:
         result = (
-            supabase.from_("graph_sync_state")
+            _get_graph_sync_state_read_client()
+            .from_("graph_sync_state")
             .select("delta_token")
             .eq("source", source)
             .eq("resource_id", resource_id)
@@ -116,7 +129,8 @@ def _limit_sync_users(
     last_sync_by_resource: dict[str, str] = {}
     try:
         result = (
-            supabase.from_("graph_sync_state")
+            _get_graph_sync_state_read_client()
+            .from_("graph_sync_state")
             .select("resource_id,last_sync_at")
             .eq("source", source)
             .in_("resource_id", users)
@@ -175,16 +189,19 @@ def _save_sync_state(
 ) -> None:
     """Upsert sync state after a run."""
     try:
-        supabase.from_("graph_sync_state").upsert({
-            "source": source,
-            "resource_id": resource_id,
-            "resource_name": resource_name,
-            "delta_token": delta_token,
-            "last_sync_at": datetime.now(timezone.utc).isoformat(),
-            "sync_status": status,
-            "error_message": error,
-            "items_synced": items_synced,
-        }, on_conflict="source,resource_id").execute()
+        _get_graph_sync_state_write_client().from_("graph_sync_state").upsert(
+            {
+                "source": source,
+                "resource_id": resource_id,
+                "resource_name": resource_name,
+                "delta_token": delta_token,
+                "last_sync_at": datetime.now(timezone.utc).isoformat(),
+                "sync_status": status,
+                "error_message": error,
+                "items_synced": items_synced,
+            },
+            on_conflict="source,resource_id",
+        ).execute()
     except Exception as exc:
         logger.error(
             "[GraphSync] Could not save sync state for %s/%s: %s",
@@ -192,6 +209,100 @@ def _save_sync_state(
             resource_id,
             exc,
         )
+
+
+def _pending_outlook_webhook_rows(limit: int) -> list[dict[str, Any]]:
+    """Return bounded Outlook mailbox rows that have queued webhook work."""
+    try:
+        result = (
+            _get_graph_sync_state_read_client()
+            .from_("graph_sync_state")
+            .select("resource_id,resource_name,sync_status,updated_at,created_at")
+            .eq("source", "outlook_email")
+            .eq("sync_status", OUTLOOK_WEBHOOK_PENDING_STATUS)
+            .execute()
+        )
+    except Exception as exc:
+        logger.warning("[GraphSync] Could not load queued Outlook webhook rows: %s", exc)
+        return []
+
+    rows = [dict(row) for row in (result.data or []) if row.get("resource_id")]
+    rows.sort(key=lambda row: str(row.get("updated_at") or row.get("created_at") or ""))
+    return rows[: max(1, limit)]
+
+
+def drain_pending_outlook_mailboxes(
+    supabase: Client,
+    *,
+    limit: int = 5,
+) -> dict[str, Any]:
+    """Drain queued Outlook mailboxes recorded by Graph webhook notifications."""
+    rows = _pending_outlook_webhook_rows(limit)
+    if not rows:
+        return {
+            "status": "skipped",
+            "reason": "no_pending_mailboxes",
+            "queued": 0,
+            "processed": 0,
+            "failed": 0,
+            "items_synced": 0,
+            "mailboxes": [],
+        }
+
+    processed = 0
+    failed = 0
+    items_synced = 0
+    mailboxes: list[str] = []
+    write_client = _get_graph_sync_state_write_client()
+
+    for row in rows:
+        mailbox = str(row.get("resource_id") or "").strip()
+        if not mailbox:
+            continue
+        resource_name = str(row.get("resource_name") or f"Outlook: {mailbox}")
+        mailboxes.append(mailbox)
+        write_client.from_("graph_sync_state").update(
+            {
+                "resource_name": resource_name,
+                "sync_status": "running",
+                "error_message": "Draining queued Graph webhook mailbox delta.",
+            }
+        ).eq("source", "outlook_email").eq("resource_id", mailbox).execute()
+
+        try:
+            result = sync_outlook_mailbox_delta(
+                supabase,
+                mailbox,
+                reason="graph_webhook_drain",
+                verify_persisted_count=False,
+            )
+            processed += 1
+            items_synced += int(result.get("items_synced") or 0)
+        except Exception as exc:
+            failed += 1
+            logger.error("[GraphSync] Outlook webhook drain failed for %s: %s", mailbox, exc, exc_info=True)
+            _save_sync_state(
+                supabase,
+                "outlook_email",
+                mailbox,
+                resource_name,
+                "",
+                0,
+                "error",
+                str(exc),
+            )
+
+    status = "failed" if failed and not processed else "ok"
+    if failed and processed:
+        status = "partial"
+    return {
+        "status": status,
+        "queued": len(rows),
+        "processed": processed,
+        "failed": failed,
+        "items_synced": items_synced,
+        "mailboxes": mailboxes,
+    }
 
 
 def _get_active_project_keywords(supabase: Client) -> list[str]:
@@ -615,7 +726,7 @@ def run_graph_sync(
                     items_seen=count,
                     items_synced=count,
                 )
-                summary["onedrive"] += count
+                summary["sharepoint"] = summary.get("sharepoint", 0) + count
             except Exception as e:
                 err = f"SharePoint sync failed for {resource_name}: {e}"
                 logger.error(f"[GraphSync] {err}")

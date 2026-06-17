@@ -12,23 +12,30 @@ from __future__ import annotations
 import hashlib
 import logging
 import os
+import posixpath
 import re
 import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
+from ...ai_transport import get_openai_client, retry_ai_call
 from ...pipeline.model_usage import (
     ModelUsageContext,
     assert_background_model_budget_available,
     record_model_usage,
 )
-from ...ai_transport import get_openai_client, retry_ai_call
 from ...pipeline.source_processing import (
     SourceProcessingContext,
     record_source_processing_status,
     status_for_project_assignment,
 )
-from ...supabase_helpers import get_rag_read_client, get_rag_write_client, get_supabase_client, rag_database_writes_enabled
+from ...supabase_helpers import (
+    get_rag_read_client,
+    get_rag_write_client,
+    get_supabase_client,
+    rag_database_writes_enabled,
+    rag_supabase_configured,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +49,7 @@ MIN_EMBEDDABLE_CHARS_BY_TYPE = {
 EMBEDDING_MODEL = "text-embedding-3-large"
 EMBEDDING_DIMENSIONS = 3072
 INTENTIONAL_EMBEDDING_EXCLUSION_STATUS = "intentionally_excluded"
+GRAPH_REHYDRATED_STORAGE_PREFIX = "graph-rehydrated"
 
 
 def _is_interview_title(title: Optional[str]) -> bool:
@@ -103,6 +111,194 @@ def _run_source_intelligence_compiler(supabase_client, metadata_id: str) -> None
         )
 
 
+def _upsert_rag_content_payload(
+    rag_client,
+    doc: Dict[str, Any],
+    *,
+    content: str,
+    storage_bucket: Optional[str] = None,
+    storage_path: Optional[str] = None,
+    repair_source: Optional[str] = None,
+) -> None:
+    metadata_id = str(doc.get("id") or "")
+    if not metadata_id or not content:
+        return
+
+    processing_metadata = {"app_status": doc.get("status")}
+    if repair_source:
+        processing_metadata["rehydrated_from"] = repair_source
+
+    rag_client.from_("rag_document_metadata").upsert(
+        {
+            "id": metadata_id,
+            "app_document_id": metadata_id,
+            "project_id": doc.get("project_id"),
+            "source": doc.get("source"),
+            "source_system": doc.get("source_system"),
+            "source_item_id": doc.get("source_item_id"),
+            "title": doc.get("title"),
+            "type": doc.get("type"),
+            "category": doc.get("category"),
+            "storage_bucket": storage_bucket or doc.get("storage_bucket"),
+            "storage_path": storage_path or doc.get("file_path") or doc.get("source_path"),
+            "source_web_url": doc.get("source_web_url"),
+            "content": content,
+            "raw_text": content,
+            "content_length": len(content),
+            "parsing_status": doc.get("status"),
+            "processing_metadata": processing_metadata,
+            "last_content_loaded_at": datetime.utcnow().isoformat(),
+        }
+    ).execute()
+
+
+def _decode_storage_bytes(payload: Any) -> str:
+    if payload is None:
+        return ""
+    if isinstance(payload, bytes):
+        return payload.decode("utf-8", errors="ignore").replace("\x00", "").strip()
+    if hasattr(payload, "decode"):
+        return payload.decode("utf-8", errors="ignore").replace("\x00", "").strip()
+    return str(payload).replace("\x00", "").strip()
+
+
+def _fallback_storage_path(doc: Dict[str, Any]) -> str:
+    source_system = str(doc.get("source_system") or "graph").strip().lower() or "graph"
+    item_id = str(doc.get("source_item_id") or doc.get("id") or "unknown")
+    return posixpath.join(GRAPH_REHYDRATED_STORAGE_PREFIX, source_system, f"{item_id}.txt")
+
+
+def _rehydrate_graph_document_content(
+    supabase_client,
+    rag_client,
+    doc: Dict[str, Any],
+) -> str:
+    storage_bucket = str(doc.get("storage_bucket") or "documents")
+    file_path = str(doc.get("file_path") or "").strip()
+    if file_path:
+        try:
+            payload = supabase_client.storage.from_(storage_bucket).download(file_path)
+            content = _decode_storage_bytes(payload)
+            if content:
+                _upsert_rag_content_payload(
+                    rag_client,
+                    doc,
+                    content=content,
+                    storage_bucket=storage_bucket,
+                    storage_path=file_path,
+                    repair_source="storage_text",
+                )
+                return content
+        except Exception as exc:
+            logger.warning("[GraphEmbed] Storage rehydrate failed for %s: %s", doc.get("id"), exc)
+
+    source_system = str(doc.get("source_system") or "").lower()
+    source_drive_id = doc.get("source_drive_id")
+    source_item_id = doc.get("source_item_id")
+    if source_system not in {"onedrive", "sharepoint"} or not source_drive_id or not source_item_id:
+        return ""
+
+    try:
+        from .client import get_graph_client
+        from .onedrive import _extract_text
+
+        graph = get_graph_client()
+        if not graph.is_configured():
+            return ""
+
+        item = graph.get(f"/drives/{source_drive_id}/items/{source_item_id}")
+        download_url = item.get("@microsoft.graph.downloadUrl", "")
+        if not download_url:
+            return ""
+
+        raw_bytes = graph.download_bytes(download_url)
+        name = str(doc.get("title") or item.get("name") or source_item_id)
+        ext = os.path.splitext(name)[1].lower()
+        content = _extract_text(raw_bytes, ext).replace("\x00", "").strip()
+        if not content:
+            return ""
+
+        if not file_path:
+            file_path = _fallback_storage_path(doc)
+            try:
+                supabase_client.storage.from_(storage_bucket).upload(
+                    file_path,
+                    content.encode("utf-8"),
+                    {"content-type": "text/plain", "upsert": "true"},
+                )
+            except Exception:
+                try:
+                    supabase_client.storage.from_(storage_bucket).update(
+                        file_path,
+                        content.encode("utf-8"),
+                        {"content-type": "text/plain", "upsert": "true"},
+                    )
+                except Exception as exc:
+                    logger.warning(
+                        "[GraphEmbed] Could not persist rehydrated storage text for %s: %s",
+                        doc.get("id"),
+                        exc,
+                    )
+            try:
+                supabase_client.from_("document_metadata").update(
+                    {
+                        "storage_bucket": storage_bucket,
+                        "file_path": file_path,
+                    }
+                ).eq("id", doc.get("id")).execute()
+            except Exception as exc:
+                logger.warning(
+                    "[GraphEmbed] Could not backfill storage path for %s: %s",
+                    doc.get("id"),
+                    exc,
+                )
+
+        _upsert_rag_content_payload(
+            rag_client,
+            doc,
+            content=content,
+            storage_bucket=storage_bucket,
+            storage_path=file_path,
+            repair_source="graph_source",
+        )
+        return content
+    except Exception as exc:
+        logger.warning("[GraphEmbed] Graph rehydrate failed for %s: %s", doc.get("id"), exc)
+        return ""
+
+
+def _mark_graph_content_missing_error(supabase_client, rag_client, doc: Dict[str, Any]) -> None:
+    metadata_id = str(doc.get("id") or "")
+    if not metadata_id:
+        return
+    message = (
+        "GRAPH_CONTENT_MISSING: document_metadata exists, but no RAG content, storage text, "
+        "or Graph-downloadable payload was available to embed."
+    )
+    supabase_client.from_("document_metadata").update({"status": "error"}).eq("id", metadata_id).execute()
+    rag_client.from_("rag_document_metadata").upsert(
+        {
+            "id": metadata_id,
+            "app_document_id": metadata_id,
+            "title": doc.get("title"),
+            "source": doc.get("source"),
+            "source_system": doc.get("source_system"),
+            "source_item_id": doc.get("source_item_id"),
+            "type": doc.get("type"),
+            "category": doc.get("category"),
+            "embedding_status": "error",
+            "parsing_status": "error",
+            "processing_metadata": {
+                "embedding_error": {
+                    "code": "graph_content_missing",
+                    "message": message,
+                    "intentional": False,
+                }
+            },
+        }
+    ).execute()
+
+
 
 
 def _split_text(text: str) -> List[str]:
@@ -157,20 +353,12 @@ def _source_type_for_document(doc: Dict[str, Any]) -> str:
     if category == "email":
         return "email"
     if category == "document":
+        if source_system == "sharepoint":
+            return "sharepoint_document"
         return "onedrive_document"
     if category == "email_attachment":
         return "email_attachment"
     return "microsoft_graph"
-
-
-def _min_embeddable_chars(doc: Dict[str, Any]) -> int:
-    doc_type = str(doc.get("type") or "")
-    category = str(doc.get("category") or "")
-    return MIN_EMBEDDABLE_CHARS_BY_TYPE.get(
-        doc_type,
-        MIN_EMBEDDABLE_CHARS_BY_TYPE.get(category, 1),
-    )
-
 
 
 def _source_processing_context(doc: Dict[str, Any]) -> SourceProcessingContext:
@@ -192,6 +380,15 @@ def _source_processing_context(doc: Dict[str, Any]) -> SourceProcessingContext:
             "type": doc.get("type"),
             "embedding_path": "microsoft_graph.embed_graph_document",
         },
+    )
+
+
+def _min_embeddable_chars(doc: Dict[str, Any]) -> int:
+    doc_type = str(doc.get("type") or "")
+    category = str(doc.get("category") or "")
+    return MIN_EMBEDDABLE_CHARS_BY_TYPE.get(
+        doc_type,
+        MIN_EMBEDDABLE_CHARS_BY_TYPE.get(category, 1),
     )
 
 
@@ -273,8 +470,8 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
             supabase_client.from_("document_metadata")
             .select(
                 "id, title, category, source, date, participants, tags, project_id, type, "
-                "status, source_system, source_item_id, source_path, source_web_url, "
-                "content_hash"
+                "status, source_system, source_item_id, source_drive_id, source_site_id, "
+                "source_path, source_web_url, file_path, storage_bucket, content_hash"
             )
             .eq("id", metadata_id)
             .single()
@@ -328,10 +525,21 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         rag_doc = {}
     content = (rag_doc.get("content") or rag_doc.get("raw_text") or "").strip()
     if not content:
+        content = _rehydrate_graph_document_content(supabase_client, rag_client, doc)
+    if not content:
+        if str(doc.get("source_system") or "").lower() in {"onedrive", "sharepoint"}:
+            logger.error("[GraphEmbed] Document %s missing Graph content after rehydrate attempt", metadata_id)
+            _mark_graph_content_missing_error(supabase_client, rag_client, doc)
+            record_source_processing_status(
+                source_context,
+                status="failed_permanent",
+                error_code="graph_content_missing",
+                error_message="Graph document has no RAG content, storage text, or downloadable payload.",
+            )
+            return 0
         logger.warning("[GraphEmbed] Document %s has no content — skipping", metadata_id)
-        # Still mark as embedded so we don't retry it forever
         supabase_client.from_("document_metadata").update({"status": "embedded"}).eq("id", metadata_id).execute()
-        get_rag_write_client().from_("rag_document_metadata").update(
+        rag_client.from_("rag_document_metadata").update(
             {"embedding_status": "embedded"}
         ).eq("id", metadata_id).execute()
         _clear_ingestion_error("embedded")
@@ -550,6 +758,10 @@ def embed_pending_graph_documents(supabase_client, limit: int = 100) -> Dict[str
         category = doc.get("category", "unknown")
         try:
             n = embed_graph_document(supabase_client, doc_id)
+            if n <= 0:
+                logger.error("[GraphEmbed] %s produced zero chunks; treating as failed embedding", doc_id)
+                errors += 1
+                continue
             total_chunks += n
             by_category[category] = by_category.get(category, 0) + 1
         except Exception as e:
@@ -611,6 +823,14 @@ def _count_pending_status_rows(supabase_client) -> int:
 
 def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any]]]:
     """Fetch Graph docs that need embedding using SQL anti-joins when DB access is available."""
+    if rag_supabase_configured():
+        # In split-RAG mode the anti-join spans app DB document_metadata and RAG DB
+        # document_chunks/rag_document_metadata. The local SQL fast path only has one
+        # connection and cannot query both databases, so using it causes false
+        # relation errors or stale candidate sets. Force the Supabase fallback,
+        # which merges app-DB status scans with RAG-DB candidate scans explicitly.
+        return None
+
     database_url = os.getenv("DATABASE_URL") or os.getenv("SUPABASE_DB_URL")
     if not database_url:
         return None
@@ -632,30 +852,59 @@ def _fetch_graph_embedding_candidates(limit: int) -> Optional[List[Dict[str, Any
         # rag_document_metadata and marks empty docs as 'embedded' so they
         # aren't retried.
         query = """
-            with pending as (
-              select
-                id,
-                category,
-                status,
-                created_at,
-                coalesce(captured_at, date, created_at::timestamptz) as source_at,
-                captured_at,
-                date
-              from public.document_metadata
-              where source = 'microsoft_graph'
-                and status in ('raw_ingested', 'segmented', 'compiled', 'error')
-                and coalesce(captured_at, date, created_at::timestamptz) >= now() - interval '365 days'
-              order by captured_at desc nulls last,
-                date desc nulls last,
-                created_at desc nulls last
-              limit %s
+        with pending as (
+          select
+            id,
+            category,
+            status,
+            created_at,
+            coalesce(captured_at, date, created_at::timestamptz) as source_at,
+            captured_at,
+            date
+          from public.document_metadata
+          where source = 'microsoft_graph'
+            and status in ('raw_ingested', 'segmented', 'compiled', 'error')
+            and coalesce(captured_at, date, created_at::timestamptz) >= now() - interval '365 days'
+          order by captured_at desc nulls last,
+            date desc nulls last,
+            created_at desc nulls last
+          limit %s
+        ),
+        completed_without_embeddings as (
+          select
+            dm.id,
+            dm.category,
+            dm.status,
+            dm.created_at,
+            coalesce(dm.captured_at, dm.date, dm.created_at::timestamptz) as source_at,
+            dm.captured_at,
+            dm.date
+          from public.document_metadata dm
+          where dm.source = 'microsoft_graph'
+            and dm.status in ('embedded', 'complete')
+            and dm.category in ('email', 'teams_message', 'document')
+            and coalesce(dm.captured_at, dm.date, dm.created_at::timestamptz) >= now() - interval '365 days'
+            and not exists (
+              select 1
+              from public.document_chunks dc
+              where dc.document_id = dm.id
+                and dc.embedding is not null
             )
-            select id, category, status, created_at
-            from pending
-            order by source_at desc nulls last, created_at desc nulls last
-            limit %s
+          order by dm.captured_at desc nulls last,
+            dm.date desc nulls last,
+            dm.created_at desc nulls last
+          limit %s
+        )
+        select id, category, status, created_at
+        from (
+          select * from pending
+          union all
+          select * from completed_without_embeddings
+        ) candidates
+        order by source_at desc nulls last, created_at desc nulls last
+        limit %s
         """
-        query_params = (candidate_limit, limit)
+        query_params = (candidate_limit, candidate_limit, limit)
     else:
         query = """
         with pending as (
@@ -772,6 +1021,7 @@ def _fetch_graph_embedding_candidates_via_supabase(
     limit: int,
 ) -> List[Dict[str, Any]]:
     """Fallback candidate scan when the backend only has Supabase API access."""
+    rag_candidates: List[Dict[str, Any]] = []
     # Post-RAG-split fast path: query rag_document_metadata directly for rows
     # with embedding_status IS NULL. PM APP's status is already 'embedded'/'complete'
     # for these docs, so the per-row repair scan below would need to page through
@@ -793,7 +1043,7 @@ def _fetch_graph_embedding_candidates_via_supabase(
             rag_docs = rag_resp.data or []
             if rag_docs:
                 logger.info("[GraphEmbed] RAG direct scan found %d unembedded docs", len(rag_docs))
-                return [
+                rag_candidates = [
                     {
                         "id": d["id"],
                         "category": d["type"],
@@ -807,6 +1057,7 @@ def _fetch_graph_embedding_candidates_via_supabase(
             logger.warning("[GraphEmbed] RAG direct scan failed, continuing to repair scan: %s", exc)
 
     try:
+        cutoff_iso = (datetime.now(timezone.utc) - timedelta(days=365)).isoformat()
         # Post-RAG-split: document_metadata.content is always NULL because content
         # now lives in rag_document_metadata. Don't filter by content here — trust
         # status. embed_graph_document hydrates content from the RAG DB.
@@ -815,8 +1066,8 @@ def _fetch_graph_embedding_candidates_via_supabase(
             .select("id, category, status, created_at, date")
             .eq("source", "microsoft_graph")
             .in_("status", ["raw_ingested", "segmented", "compiled", "error"])
-            .gte("date", (datetime.now(timezone.utc) - timedelta(days=365)).date().isoformat())
-            .order("date", desc=True)
+            .gte("created_at", cutoff_iso)
+            .order("created_at", desc=True)
             .limit(limit)
             .execute()
         )
@@ -835,8 +1086,8 @@ def _fetch_graph_embedding_candidates_via_supabase(
                 .eq("source", "microsoft_graph")
                 .in_("status", ["embedded", "complete"])
                 .in_("category", ["email", "teams_message", "document"])
-                .gte("date", (datetime.now(timezone.utc) - timedelta(days=365)).date().isoformat())
-                .order("date", desc=True)
+                .gte("created_at", cutoff_iso)
+                .order("created_at", desc=True)
                 .range(scanned, scanned + page_size - 1)
                 .execute()
             )
@@ -854,6 +1105,19 @@ def _fetch_graph_embedding_candidates_via_supabase(
 
         docs = sorted(
             by_id.values(),
+            key=lambda row: str(row.get("date") or row.get("created_at") or ""),
+            reverse=True,
+        )
+        if rag_candidates:
+            existing_ids = {str(row.get("id")) for row in docs}
+            for candidate in rag_candidates:
+                candidate_id = str(candidate.get("id"))
+                if candidate_id not in existing_ids:
+                    docs.append(candidate)
+                    existing_ids.add(candidate_id)
+
+        docs = sorted(
+            docs,
             key=lambda row: str(row.get("date") or row.get("created_at") or ""),
             reverse=True,
         )[:limit]

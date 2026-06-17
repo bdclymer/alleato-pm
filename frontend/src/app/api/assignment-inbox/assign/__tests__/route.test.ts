@@ -2,7 +2,10 @@ import { NextRequest } from "next/server";
 
 import { POST } from "../route";
 import { getApiRouteUser } from "@/lib/supabase/server";
-import { createServiceClient } from "@/lib/supabase/service";
+import {
+  createOutlookIntakeServiceClient,
+  createServiceClient,
+} from "@/lib/supabase/service";
 import { recordAttributionAssignmentFeedback } from "@/lib/ai/services/feedback-event-service";
 
 jest.mock("@/lib/supabase/server", () => ({
@@ -11,6 +14,7 @@ jest.mock("@/lib/supabase/server", () => ({
 
 jest.mock("@/lib/supabase/service", () => ({
   createServiceClient: jest.fn(),
+  createOutlookIntakeServiceClient: jest.fn(),
 }));
 
 jest.mock("@/lib/ai/services/feedback-event-service", () => ({
@@ -20,6 +24,8 @@ jest.mock("@/lib/ai/services/feedback-event-service", () => ({
 
 const getUserMock = getApiRouteUser as jest.Mock;
 const createServiceClientMock = createServiceClient as jest.Mock;
+const createOutlookIntakeServiceClientMock =
+  createOutlookIntakeServiceClient as jest.Mock;
 const recordFeedbackMock = recordAttributionAssignmentFeedback as jest.Mock;
 
 function makeRequest(body: Record<string, unknown>): NextRequest {
@@ -79,6 +85,7 @@ describe("assignment-inbox assign POST route", () => {
     });
 
     createServiceClientMock.mockReturnValue({ from });
+    createOutlookIntakeServiceClientMock.mockReturnValue({ from });
 
     const response = await POST(
       makeRequest({
@@ -187,6 +194,7 @@ describe("assignment-inbox assign POST route", () => {
     });
 
     createServiceClientMock.mockReturnValue({ from });
+    createOutlookIntakeServiceClientMock.mockReturnValue({ from });
 
     const response = await POST(
       makeRequest({
@@ -255,6 +263,7 @@ describe("assignment-inbox assign POST route", () => {
     });
 
     createServiceClientMock.mockReturnValue({ from });
+    createOutlookIntakeServiceClientMock.mockReturnValue({ from });
 
     const response = await POST(
       makeRequest({ sourceTable: "document_metadata", itemId: "x", projectId: 9999 }),

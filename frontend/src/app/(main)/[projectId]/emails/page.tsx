@@ -15,5 +15,5 @@ interface PageProps {
 export default async function ProjectEmailsPage({ params }: PageProps) {
   const { projectId } = await params;
 
-  return <EmailsClient projectId={parseInt(projectId, 10)} />;
+  return <EmailsClient projectId={parseInt(projectId, 10)} source="all" />;
 }

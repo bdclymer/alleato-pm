@@ -395,12 +395,167 @@ async function loadExistingDraft(recapDate: string) {
     .maybeSingle();
 
   if (error) {
-    throw new Error(
-      `Failed to load executive briefing draft: ${error.message}`,
-    );
+    return loadExistingDraftFromAppDb(recapDate);
   }
 
   return data;
+}
+
+function formatDailyRecapError(error: {
+  message: string;
+  code?: string | null;
+  details?: string | null;
+  hint?: string | null;
+}) {
+  const details = [
+    error.code ? `code=${error.code}` : null,
+    error.details ? `details=${error.details}` : null,
+    error.hint ? `hint=${error.hint}` : null,
+  ]
+    .filter(Boolean)
+    .join("; ");
+
+  return `Failed to save executive briefing draft: ${error.message}${
+    details ? ` (${details})` : ""
+  }`;
+}
+
+async function withAppDbClient<T>(callback: (client: import("pg").PoolClient) => Promise<T>): Promise<T> {
+  const databaseUrl =
+    process.env.APP_DATABASE_URL ?? process.env.DATABASE_URL ?? process.env.SUPABASE_DB_URL;
+  if (!databaseUrl) {
+    throw new Error("App database URL is not configured for executive briefing fallback.");
+  }
+  const pg = await import("pg");
+  const url = new URL(databaseUrl);
+  url.searchParams.delete("sslmode");
+  let lastError: unknown = null;
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    const pool = new pg.Pool({
+      connectionString: url.toString(),
+      ssl: { rejectUnauthorized: false },
+      max: 1,
+      connectionTimeoutMillis: 8_000,
+      idleTimeoutMillis: 1_000,
+    });
+    try {
+      const client = await pool.connect();
+      try {
+        await client.query("set statement_timeout = '15000ms'");
+        return await callback(client);
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      lastError = error;
+      if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 750));
+    } finally {
+      await pool.end();
+    }
+  }
+  throw lastError;
+}
+
+function toDbValue(value: unknown): unknown {
+  if (value === undefined) return null;
+  if (value instanceof Date) return value.toISOString();
+  if (value && typeof value === "object") return JSON.stringify(value);
+  return value;
+}
+
+function normalizeDbRow<T extends Record<string, unknown>>(row: T): T {
+  return Object.fromEntries(
+    Object.entries(row).map(([key, value]) => [
+      key,
+      value instanceof Date ? value.toISOString() : value,
+    ]),
+  ) as T;
+}
+
+async function loadExistingDraftFromAppDb(recapDate: string): Promise<DailyRecapRow | null> {
+  return withAppDbClient(async (client) => {
+    const result = await client.query(
+      `
+        select *
+        from public.daily_recaps
+        where recap_kind = $1
+          and recap_date = $2::date
+        order by created_at desc
+        limit 1
+      `,
+      [CEO_EXECUTIVE_BRIEFING_RECAP_KIND, recapDate],
+    );
+    return result.rows[0] ? (normalizeDbRow(result.rows[0]) as DailyRecapRow) : null;
+  });
+}
+
+async function persistExecutiveBriefingDraftToAppDb(
+  row: DailyRecapInsert,
+): Promise<DailyRecapRow> {
+  return withAppDbClient(async (client) => {
+    const entries = Object.entries(row).filter(([, value]) => value !== undefined);
+    if (row.id) {
+      const updateEntries = entries.filter(([key]) => key !== "id");
+      const assignments = updateEntries.map(([key], index) => `${key} = $${index + 1}`);
+      const values = updateEntries.map(([, value]) => toDbValue(value));
+      const result = await client.query(
+        `
+          update public.daily_recaps
+          set ${assignments.join(", ")}
+          where id = $${values.length + 1}
+          returning *
+        `,
+        [...values, row.id],
+      );
+      if (result.rows[0]) return normalizeDbRow(result.rows[0]) as DailyRecapRow;
+    }
+
+    const columns = entries.map(([key]) => key);
+    const placeholders = entries.map(([, _value], index) => `$${index + 1}`);
+    const values = entries.map(([, value]) => toDbValue(value));
+    const updateColumns = columns.filter((column) => column !== "id");
+    const result = await client.query(
+      `
+        insert into public.daily_recaps (${columns.join(", ")})
+        values (${placeholders.join(", ")})
+        on conflict (recap_date) where recap_kind = 'executive_briefing'
+        do update set ${updateColumns.map((column) => `${column} = excluded.${column}`).join(", ")}
+        returning *
+      `,
+      values,
+    );
+    return normalizeDbRow(result.rows[0]) as DailyRecapRow;
+  });
+}
+
+async function persistExecutiveBriefingDraft(
+  row: DailyRecapInsert,
+  recapDate: string,
+) {
+  const supabase = createServiceClient();
+
+  const runUpsert = (payload: DailyRecapInsert) =>
+    supabase.from("daily_recaps").upsert(payload, { onConflict: "id" }).select("*").single();
+
+  let response = await runUpsert(row);
+
+  // Another request may have inserted today's recap after we checked. Reload the
+  // canonical row for the day and overwrite it instead of crashing the page.
+  if (response.error?.code === "23505" && !row.id) {
+    const duplicateDraft = await loadExistingDraft(recapDate);
+    if (duplicateDraft?.id) {
+      response = await runUpsert({
+        ...row,
+        id: duplicateDraft.id,
+      });
+    }
+  }
+
+  if (response.error) {
+    return persistExecutiveBriefingDraftToAppDb(row);
+  }
+
+  return response.data;
 }
 
 async function upsertFollowUps(
@@ -422,9 +577,7 @@ async function upsertFollowUps(
     );
 
   if (existingResponse.error) {
-    throw new Error(
-      `Failed to load existing executive follow-ups: ${existingResponse.error.message}`,
-    );
+    return upsertFollowUpsToAppDb(recapId, packet);
   }
 
   const existingByFingerprint = new Map(
@@ -469,12 +622,91 @@ async function upsertFollowUps(
     .select("*");
 
   if (error) {
-    throw new Error(`Failed to upsert executive follow-ups: ${error.message}`);
+    return upsertFollowUpsToAppDb(recapId, packet);
   }
 
   return new Map(
     (data ?? []).map((row) => [row.fingerprint, toDashboardFollowUp(row)]),
   );
+}
+
+async function upsertFollowUpsToAppDb(
+  recapId: string,
+  packet: BrandonDailyUpdatePacket,
+): Promise<Map<string, ExecutiveBriefingFollowUp>> {
+  const entries = getSectionEntries(packet);
+  if (entries.length === 0) {
+    return new Map<string, ExecutiveBriefingFollowUp>();
+  }
+
+  return withAppDbClient(async (client) => {
+    const fingerprints = entries.map(({ item, section }) => createFingerprint(item, section));
+    const existingResult = await client.query<FollowUpRow>(
+      `
+        select *
+        from public.executive_briefing_follow_ups
+        where fingerprint = any($1::text[])
+      `,
+      [fingerprints],
+    );
+    const existingByFingerprint = new Map(
+      existingResult.rows.map((row) => [row.fingerprint, normalizeDbRow(row)]),
+    );
+    const now = new Date().toISOString();
+    const savedRows: FollowUpRow[] = [];
+
+    for (const { item, section } of entries) {
+      const fingerprint = createFingerprint(item, section);
+      const existing = existingByFingerprint.get(fingerprint);
+      const row: FollowUpInsert = {
+        fingerprint,
+        section,
+        title: toSupabaseText(item.title) ?? "",
+        summary: toSupabaseText(item.summary) ?? "",
+        recommended_action: toSupabaseText(item.recommendedAction),
+        why_it_matters: toSupabaseText(item.whyItMatters),
+        owner: toSupabaseText(item.owner),
+        status: toSupabaseText(item.status),
+        tone: item.tone ?? null,
+        state: existing?.state ?? "open",
+        source_type: toSupabaseText(item.source) ?? "Document",
+        source_detail: toSupabaseText(item.sourceDetail) ?? "",
+        source_id: toSupabaseText(item.sourceId),
+        source_url: toSupabaseText(item.sourceUrl),
+        project_label: toSupabaseText(item.project) ?? "No project linked",
+        source_date: toSupabaseText(item.date) ?? "",
+        first_seen_recap_id: existing?.first_seen_recap_id ?? recapId,
+        last_seen_recap_id: recapId,
+        first_seen_at: existing?.first_seen_at ?? now,
+        last_seen_at: now,
+        resolved_at: existing?.resolved_at ?? null,
+        resolved_by: existing?.resolved_by ?? null,
+        resolution_note: existing?.resolution_note ?? null,
+        payload: toSupabaseJson(item),
+      };
+      const columns = Object.keys(row) as Array<keyof FollowUpInsert>;
+      const values = columns.map((column) => toDbValue(row[column]));
+      const placeholders = columns.map((_, index) => `$${index + 1}`);
+      const updates = columns
+        .filter((column) => column !== "fingerprint")
+        .map((column) => `${column} = excluded.${column}`);
+      const result = await client.query<FollowUpRow>(
+        `
+          insert into public.executive_briefing_follow_ups (${columns.join(", ")})
+          values (${placeholders.join(", ")})
+          on conflict (fingerprint)
+          do update set ${updates.join(", ")}
+          returning *
+        `,
+        values,
+      );
+      savedRows.push(normalizeDbRow(result.rows[0]) as FollowUpRow);
+    }
+
+    return new Map(
+      savedRows.map((row) => [row.fingerprint, toDashboardFollowUp(row)]),
+    );
+  });
 }
 
 export async function regenerateExecutiveBriefingDraft(options?: {
@@ -491,7 +723,6 @@ export async function regenerateExecutiveBriefingDraft(options?: {
   const existingDraft = await loadExistingDraft(dateRange.recapDate);
   const previousPacket = parseStoredPacket(existingDraft?.briefing_packet ?? null);
   const versionedPacket = withDailyBriefVersionMetadata(packet, previousPacket);
-  const supabase = createServiceClient();
   const recapText = toSupabaseText(buildRecapText(versionedPacket)) ?? "";
 
   const row: DailyRecapInsert = {
@@ -531,28 +762,13 @@ export async function regenerateExecutiveBriefingDraft(options?: {
     sent_teams: false,
   };
 
-  const { data, error } = await supabase
-    .from("daily_recaps")
-    .upsert(row, { onConflict: "id" })
-    .select("*")
-    .single();
+  const data = await persistExecutiveBriefingDraft(row, dateRange.recapDate);
 
-  if (error) {
-    const details = [
-      error.code ? `code=${error.code}` : null,
-      error.details ? `details=${error.details}` : null,
-      error.hint ? `hint=${error.hint}` : null,
-    ]
-      .filter(Boolean)
-      .join("; ");
-    throw new Error(
-      `Failed to save executive briefing draft: ${error.message}${
-        details ? ` (${details})` : ""
-      }`,
-    );
+  try {
+    await upsertFollowUps(data.id, versionedPacket);
+  } catch (error) {
+    console.error("[executive-briefing] follow-up persistence failed", error);
   }
-
-  await upsertFollowUps(data.id, versionedPacket);
 
   return {
     draft: {
@@ -576,10 +792,23 @@ async function loadFollowUps() {
     .order("last_seen_at", { ascending: false });
 
   if (error) {
-    throw new Error(`Failed to load executive follow-ups: ${error.message}`);
+    return loadFollowUpsFromAppDb();
   }
 
   return (data ?? []).map(toDashboardFollowUp);
+}
+
+async function loadFollowUpsFromAppDb(): Promise<ExecutiveBriefingFollowUp[]> {
+  return withAppDbClient(async (client) => {
+    const result = await client.query<FollowUpRow>(
+      `
+        select *
+        from public.executive_briefing_follow_ups
+        order by last_seen_at desc
+      `,
+    );
+    return result.rows.map((row) => toDashboardFollowUp(normalizeDbRow(row) as FollowUpRow));
+  });
 }
 
 export async function getExecutiveBriefingDashboard(options?: {

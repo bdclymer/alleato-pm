@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { getIsAdmin } from "@/lib/auth/current-user";
 
 export interface ProjectMembership {
   membershipId: string;
@@ -140,9 +141,10 @@ export async function verifyProjectAccess(
   ]);
 
   const profile = profileResult.data ?? null;
+  const isAdmin = await getIsAdmin();
 
   // Step 2: Check if user is app admin (bypass project membership checks)
-  if (profile?.is_admin === true) {
+  if (isAdmin || profile?.is_admin === true || profile?.is_developer === true) {
     return {
       membership: {
         membershipId: `super-admin:${user.id}:${projectId}`,
@@ -150,7 +152,7 @@ export async function verifyProjectAccess(
         authUserId: user.id,
         projectId,
         permissionTemplateId: null,
-        userType: profile.is_developer === true ? "developer" : "admin",
+        userType: profile?.is_developer === true ? "developer" : "admin",
       },
       serviceClient,
       userProfile: profile,

@@ -45,6 +45,13 @@ try {
           and p.packet_type = 'current'
           and pc.insight_card_id = c.id
       )
+      and not exists (
+        select 1
+        from public.intelligence_packets current_packet
+        where current_packet.target_id = c.primary_target_id
+          and current_packet.packet_type = 'current'
+          and current_packet.compiler_version = 'project-operating-summary-v1'
+      )
   `);
 
   const targetResult = await client.query("select count(*)::int as count from repair_targets");

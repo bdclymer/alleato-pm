@@ -429,9 +429,32 @@ export function RagChatPage() {
     setIsLoadingMessages(true);
     setLoadMessagesError(null);
     try {
-      const data = await apiFetch<{ messages?: ChatHistoryMessage[] }>(
-        `/api/ai-assistant/messages/${sessionId}`,
-      );
+      // Transient network failures (browser "Failed to fetch" — dev server
+      // recompiling/restarting, a wifi blip) should self-heal rather than
+      // strand the panel on a permanent error. Retry a few times with backoff;
+      // only surface the error if every attempt fails.
+      const data = await (async () => {
+        const maxAttempts = 3;
+        let lastError: unknown;
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          try {
+            return await apiFetch<{ messages?: ChatHistoryMessage[] }>(
+              `/api/ai-assistant/messages/${sessionId}`,
+            );
+          } catch (err) {
+            lastError = err;
+            // A "Failed to fetch" TypeError means no HTTP response arrived
+            // (transport-level). HTTP errors come back as ApiError with a
+            // status and are not worth retrying here.
+            const isTransient =
+              err instanceof TypeError ||
+              (err instanceof Error && /failed to fetch|load failed|network/i.test(err.message));
+            if (!isTransient || attempt === maxAttempts) throw err;
+            await new Promise((resolve) => setTimeout(resolve, 300 * attempt));
+          }
+        }
+        throw lastError;
+      })();
       const historyMessages = (data.messages || []) as ChatHistoryMessage[];
       const msgs: UIMessage[] = historyMessages.map((m) => dbMessageToUIMessage(m));
       setInitialMessages(msgs);

@@ -83,6 +83,8 @@ try {
      from public.insight_cards c
      left join public.insight_card_evidence e on e.insight_card_id = c.id
      where c.primary_target_id = $1
+       and coalesce(c.attribution_status, '') <> 'rejected'
+       and c.current_status in ('open', 'watching', 'stale', 'needs_review')
      group by c.id, c.card_type, c.title, c.confidence, c.source_count
      order by c.card_type`,
     [target.id],
@@ -130,11 +132,28 @@ try {
 
   const coverage = currentPacket?.source_coverage ?? {};
   if (targetSlug === "westfield-collective") {
-    if (coverage.documentMetadataRows < 1) {
-      fail("Westfield packet source coverage does not include document_metadata rows", coverage);
+    const categoryCoverage = Array.isArray(coverage.categoryCoverage)
+      ? coverage.categoryCoverage
+      : [];
+    const totalAvailableSources = categoryCoverage.reduce(
+      (total, row) => total + Number(row?.availableCount ?? row?.sourceCount ?? 0),
+      0,
+    );
+    const emailCoverage = categoryCoverage.find((row) => row?.category === "email");
+    const documentCoverage = categoryCoverage.find((row) => row?.category === "document");
+
+    if (
+      !(coverage.documentMetadataRows >= 1) &&
+      !(coverage.operatingSummarySourceCount >= 1) &&
+      !(totalAvailableSources >= 1)
+    ) {
+      fail("Westfield packet source coverage does not include source rows", coverage);
     }
-    if (coverage.projectEmailRows !== 0) {
-      fail("Westfield packet should explicitly record project_emails gap as 0 rows", coverage);
+    if (!emailCoverage || Number(emailCoverage.availableCount ?? 0) < 1) {
+      fail("Westfield packet source coverage does not include available email evidence", coverage);
+    }
+    if (!documentCoverage || Number(documentCoverage.availableCount ?? 0) < 1) {
+      fail("Westfield packet source coverage does not include available document evidence", coverage);
     }
     if (!Array.isArray(coverage.gaps) || coverage.gaps.length < 1) {
       fail("Westfield packet source coverage must name gaps", coverage);

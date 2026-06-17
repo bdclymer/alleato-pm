@@ -138,7 +138,8 @@ def _fetch_rag_document_text(doc_id: str) -> str:
 
 
 def _extract_text_from_pdf(content: bytes) -> str:
-    """Extract text from PDF bytes using pypdf."""
+    """Extract text from PDF bytes using pypdf with a PyMuPDF fallback."""
+    pypdf_error: Exception | None = None
     try:
         import pypdf
         reader = pypdf.PdfReader(io.BytesIO(content))
@@ -147,13 +148,35 @@ def _extract_text_from_pdf(content: bytes) -> str:
             text = page.extract_text() or ""
             if text.strip():
                 pages.append(text)
-        return "\n\n".join(pages)
+        extracted = "\n\n".join(pages)
+        if len(extracted.strip()) >= 50:
+            return extracted
     except ImportError:
         logger.warning("[OneDrive] pypdf not installed — skipping PDF extraction")
-        return ""
     except Exception as e:
-        logger.warning(f"[OneDrive] PDF extraction failed: {e}")
-        return ""
+        pypdf_error = e
+        logger.warning("[OneDrive] pypdf PDF extraction failed, trying PyMuPDF fallback: %s", e)
+
+    try:
+        import fitz
+
+        with fitz.open(stream=content, filetype="pdf") as document:
+            pages = []
+            for page in document[:50]:
+                text = page.get_text("text") or ""
+                if text.strip():
+                    pages.append(text)
+            extracted = "\n\n".join(pages)
+            if extracted.strip():
+                return extracted
+    except ImportError:
+        logger.warning("[OneDrive] PyMuPDF not installed — PDF fallback unavailable")
+    except Exception as e:
+        logger.warning("[OneDrive] PyMuPDF PDF extraction failed: %s", e)
+
+    if pypdf_error:
+        logger.warning("[OneDrive] PDF extraction failed after fallback: %s", pypdf_error)
+    return ""
 
 
 def _extract_text_from_docx(content: bytes) -> str:
@@ -445,13 +468,17 @@ def sync_sharepoint_folder(
         logger.warning("[SharePoint] Microsoft Graph not configured — skipping")
         return 0, delta_token or ""
 
-    site_ref = f"{site_hostname}:/sites/{site_name}"
+    site_lookup = graph.get(f"/sites/{site_hostname}:/sites/{site_name}")
+    site_id = str(site_lookup.get("id") or "").strip()
+    if not site_id:
+        logger.error("[SharePoint] Could not resolve site id for %s:/sites/%s", site_hostname, site_name)
+        return 0, delta_token or ""
 
     if folder_path == "/" or not folder_path:
-        delta_path = f"/sites/{site_ref}/drive/root/delta"
+        delta_path = f"/sites/{site_id}/drive/root/delta"
     else:
         clean_path = folder_path.strip("/")
-        delta_path = f"/sites/{site_ref}/drive/root:/{clean_path}:/delta"
+        delta_path = f"/sites/{site_id}/drive/root:/{clean_path}:/delta"
 
     try:
         items, new_delta_token = graph.get_delta(delta_path, delta_token)
@@ -519,7 +546,7 @@ def sync_sharepoint_folder(
         download_url = item.get("@microsoft.graph.downloadUrl", "")
         if not download_url:
             try:
-                file_data = graph.get(f"/sites/{site_ref}/drive/items/{item_id}")
+                file_data = graph.get(f"/sites/{site_id}/drive/items/{item_id}")
                 download_url = file_data.get("@microsoft.graph.downloadUrl", "")
             except Exception:
                 continue

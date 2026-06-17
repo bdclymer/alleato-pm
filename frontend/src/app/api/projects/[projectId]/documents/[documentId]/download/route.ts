@@ -2,7 +2,10 @@ import { apiErrorResponse } from "@/lib/api-error";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { createServiceClient } from "@/lib/supabase/service";
+import {
+  createOutlookIntakeServiceClient,
+  createServiceClient,
+} from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 
 interface ProjectDocumentDownloadRow {
@@ -211,8 +214,8 @@ export const GET = withApiGuardrails<{ projectId: string; documentId: string }>(
         : null;
 
     if (outlookIntakeAttachmentId) {
-      const serviceClient = createServiceClient();
-      const { data: attachment, error: attachmentError } = await serviceClient
+      const intakeService = createOutlookIntakeServiceClient();
+      const { data: attachment, error: attachmentError } = await intakeService
         .from("outlook_email_intake_attachments")
         .select("id, file_name, content, content_type, project_id")
         .eq("id", outlookIntakeAttachmentId)

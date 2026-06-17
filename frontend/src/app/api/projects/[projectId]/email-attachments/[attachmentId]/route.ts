@@ -2,6 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { reassignEmailAttachmentProject } from "@/lib/email/email-attachment-updates";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
+import { createOutlookIntakeServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -162,6 +163,7 @@ export const DELETE = withApiGuardrails<{ projectId: string; attachmentId: strin
     const supabase = await assertAdminAccess(
       "projects/[projectId]/email-attachments/[attachmentId]#DELETE",
     );
+    const intakeSupabase = createOutlookIntakeServiceClient();
 
     // Verify the attachment belongs to the project
     const { data: existing, error: lookupError } = await supabase
@@ -181,7 +183,7 @@ export const DELETE = withApiGuardrails<{ projectId: string; attachmentId: strin
     }
 
     // Remove junction table rows first to avoid FK violations
-    await supabase
+    await intakeSupabase
       .from("outlook_email_intake_attachments")
       .delete()
       .eq("email_attachment_id", id);
