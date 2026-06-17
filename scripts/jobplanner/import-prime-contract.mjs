@@ -2,7 +2,11 @@
 
 /**
  * Idempotent import of a Job Planner prime contract + its Schedule of Values (SOV)
- * into the PM app `prime_contracts` + `prime_contract_sovs` tables.
+ * into the PM app `prime_contracts` + `contract_line_items` tables.
+ *
+ * NOTE: the prime-contract detail UI (PrimeContractSovTab) reads its SOV from
+ * `contract_line_items` (cols cost_code_id/line_number/quantity/unit_cost), NOT the
+ * `prime_contract_sovs` table. Writing to the latter leaves the page's SOV empty.
  *
  * Job Planner endpoints (verified live 2026-06-17):
  *   - contract (project-scoped list) GET /projects/{jpProjectId}/primecontracts   (V2, array)
@@ -14,7 +18,7 @@
  *   - JP cost codes are 6-digit ("013144"); our `cost_codes.id` is dashed ("01-3144").
  *     We dash via XXYYYY -> XX-YYYY and only set `cost_code` when it resolves to a real
  *     `cost_codes` row (FK guard). Unresolved codes log a warning and store NULL.
- *   - `prime_contract_sovs.line_amount` is GENERATED ALWAYS AS (quantity * unit_cost),
+ *   - `contract_line_items.total_cost` is GENERATED ALWAYS AS (quantity * unit_cost),
  *     so we cannot write it. Each line is modeled as a lump sum: quantity=1,
  *     unit_cost=<dollar amount>, making the stored line amount exactly equal the JP amount.
  *   - `prime_contracts` has no source/external-key column, so idempotency keys on
@@ -177,7 +181,7 @@ async function main() {
     };
 
     // Build SOV rows (cents -> dollars, dashed cost code, preserve order).
-    // `line_amount` is GENERATED ALWAYS AS (quantity * unit_cost), so we cannot
+    // `total_cost` is GENERATED ALWAYS AS (quantity * unit_cost), so we cannot
     // write it directly. To make the stored line amount EXACTLY equal the JP amount
     // (no rounding drift), we model every line as a lump sum: quantity=1,
     // unit_cost=<dollar amount>. JP lines here are lump-sum (quantity/unitPrice = 0).
@@ -188,12 +192,13 @@ async function main() {
       const resolved = dashed && knownCostCodeIds.has(dashed) ? dashed : null;
       if (jpCode && !resolved) unresolvedCodes++;
       return {
-        cost_code: resolved,
-        description: x.description?.trim() || jpCodeById.get(x.costCodeId)?.name || null,
+        line_number: idx + 1,
+        cost_code_id: resolved,
+        description:
+          x.description?.trim() || jpCodeById.get(x.costCodeId)?.name || `Line ${idx + 1}`,
         quantity: 1,
         unit_cost: centsToDollars(x.amount),
-        uom: null,
-        sort_order: idx,
+        unit_of_measure: null,
       };
     });
 
@@ -207,7 +212,7 @@ async function main() {
         `    SOV sample: ` +
           sovRows
             .slice(0, 3)
-            .map((r) => `${r.cost_code ?? "(none)"}=$${r.unit_cost.toFixed(2)}`)
+            .map((r) => `${r.cost_code_id ?? "(none)"}=$${r.unit_cost.toFixed(2)}`)
             .join(", "),
       );
       continue;
@@ -244,13 +249,13 @@ async function main() {
 
     // Replace SOV: delete existing rows for this contract, re-insert from JP.
     const { error: delErr } = await supabase
-      .from("prime_contract_sovs")
+      .from("contract_line_items")
       .delete()
       .eq("contract_id", contractId);
     if (delErr) throw new Error(`SOV delete failed for ${label}: ${delErr.message}`);
 
     const rowsWithFk = sovRows.map((r) => ({ ...r, contract_id: contractId }));
-    const { error: insErr } = await supabase.from("prime_contract_sovs").insert(rowsWithFk);
+    const { error: insErr } = await supabase.from("contract_line_items").insert(rowsWithFk);
     if (insErr) throw new Error(`SOV insert failed for ${label}: ${insErr.message}`);
 
     const insertedSum = sovRows.reduce((a, r) => a + r.quantity * r.unit_cost, 0);
