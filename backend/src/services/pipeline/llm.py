@@ -13,6 +13,7 @@ from openai import OpenAI
 
 from ..ai_transport import retry_ai_call
 from .config import EMBEDDING_MODEL, MODEL_SIGNAL_EXTRACTION
+from .model_usage import ModelUsageContext, assert_background_model_budget_available, record_model_usage
 from .models import (
     DecisionItem,
     FlagItem,
@@ -59,7 +60,11 @@ def _client() -> OpenAI:
 # Embeddings
 # ---------------------------------------------------------------------------
 
-def batch_embed(texts: List[str], model: str = EMBEDDING_MODEL) -> List[List[float]]:
+def batch_embed(
+    texts: List[str],
+    model: str = EMBEDDING_MODEL,
+    usage_context: ModelUsageContext | None = None,
+) -> List[List[float]]:
     """Embed a batch of texts. Returns a list of embedding vectors."""
     if not texts:
         return []
@@ -71,6 +76,12 @@ def batch_embed(texts: List[str], model: str = EMBEDDING_MODEL) -> List[List[flo
         )
     truncated = [t[:8000] for t in texts]
     logger.info("[LLM] Embedding %d texts with %s (dimensions=%d)", len(texts), model, dimensions)
+    context = usage_context or ModelUsageContext(stage="indexed_for_rag", operation="batch_embed")
+    assert_background_model_budget_available(
+        stage=context.stage,
+        operation=context.operation,
+        model=model,
+    )
     response = retry_ai_call(
         lambda: _client().embeddings.create(
             model=model,
@@ -80,7 +91,14 @@ def batch_embed(texts: List[str], model: str = EMBEDDING_MODEL) -> List[List[flo
         provider_name="OpenAI",
         operation="embedding batch",
     )
-    embeddings = [item.embedding for item in response.data]
+    record_model_usage(
+        context,
+        model=model,
+        response=response,
+        status="succeeded",
+        input_items=len(texts),
+        output_items=len(embeddings := [item.embedding for item in response.data]),
+    )
     if len(embeddings) != len(texts):
         raise RuntimeError(f"expected {len(texts)} embeddings, got {len(embeddings)}")
     logger.info("[LLM] Embedded %d texts via OpenAI", len(texts))
@@ -92,6 +110,12 @@ def batch_embed(texts: List[str], model: str = EMBEDDING_MODEL) -> List[List[flo
 # ---------------------------------------------------------------------------
 
 def _call_llm(prompt: str, json_mode: bool = False, max_tokens: Optional[int] = None) -> str:
+    context = ModelUsageContext(stage="signals_extracted", operation="pipeline_chat_completion")
+    assert_background_model_budget_available(
+        stage=context.stage,
+        operation=context.operation,
+        model=CHAT_MODEL,
+    )
     kwargs: Dict[str, Any] = {
         "model": CHAT_MODEL,
         "messages": [{"role": "user", "content": prompt}],
@@ -108,6 +132,7 @@ def _call_llm(prompt: str, json_mode: bool = False, max_tokens: Optional[int] = 
         provider_name="OpenAI",
         operation="chat completion",
     )
+    record_model_usage(context, model=CHAT_MODEL, response=response, status="succeeded")
     return response.choices[0].message.content or ""
 
 
@@ -477,6 +502,11 @@ Output ONLY the JSON object."""
         [{"role": "user", "content": prompt}],
         model=COMPILER_MODEL_LIGHT,
         timeout=DEEP_EXTRACTION_TIMEOUT_SECONDS,
+        usage_context=ModelUsageContext(
+            stage="signals_extracted",
+            operation="deep_meeting_signal_extraction",
+            metadata={"title": title, "date": date},
+        ),
     )
     if data.get("_extraction_failed"):
         logger.error("[LLM] Deep extraction failed: %s", data.get("_errors"))
@@ -684,6 +714,11 @@ severity is 1 (minor) to 5 (critical: safety/inspection/major cost/schedule-kill
         [{"role": "user", "content": prompt}],
         model=COMPILER_MODEL_LIGHT,
         timeout=DEEP_EXTRACTION_TIMEOUT_SECONDS,
+        usage_context=ModelUsageContext(
+            stage="signals_extracted",
+            operation=f"deep_{comm_type}_signal_extraction",
+            metadata={"title": title, "date": date, "comm_type": comm_type},
+        ),
     )
     if data.get("_extraction_failed"):
         logger.error("[LLM] Deep communication extraction failed: %s", data.get("_errors"))

@@ -127,7 +127,7 @@ Use one durable ledger, for example `source_processing_jobs`, keyed by
 | project_alerts | Proposed homepage-visible urgent alerts sourced from extracted signals |
 | change_event_candidates | Proposed potential change-order/change-event leads before a user creates a formal change event |
 | email_reply_drafts | Proposed reviewable Brandon-email draft replies with source evidence |
-| pipeline_model_usage | Proposed per-stage model, token, cost, item count, and skip metrics |
+| pipeline_model_usage | Implemented RAG-side model, token, estimated-cost, item count, and budget-block ledger |
 
 These can be new tables or views over existing tables, but the statuses must be
 queryable without parsing logs.
@@ -143,6 +143,16 @@ queryable without parsing logs.
 | Retry caps | Retry transient provider/network failures with backoff; permanent failures must stop loudly. |
 | Daily budget guard | Stop background LLM stages when a configured daily cap is reached, but continue cheap capture and indexing. |
 | Usage ledger | Every LLM/embedding call records source item, stage, model, token usage when available, status, and error. |
+
+Budget control env:
+
+```text
+PIPELINE_DAILY_MODEL_BUDGET_USD=10
+```
+
+When unset, the usage ledger still records estimated spend, but the hard stop is
+disabled. Production background jobs should set this value before broad source
+processing is resumed.
 
 ## Model Map
 

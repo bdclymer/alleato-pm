@@ -17,6 +17,11 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
+from ...pipeline.model_usage import (
+    ModelUsageContext,
+    assert_background_model_budget_available,
+    record_model_usage,
+)
 from ...ai_transport import get_openai_client, retry_ai_call
 from ...supabase_helpers import get_rag_read_client, get_rag_write_client, get_supabase_client, rag_database_writes_enabled
 
@@ -187,6 +192,12 @@ def _batch_embed(texts: List[str]) -> List[List[float]]:
         return []
 
     truncated = [t[:8000] for t in texts]
+    usage_context = ModelUsageContext(stage="indexed_for_rag", operation="graph_embedding_batch")
+    assert_background_model_budget_available(
+        stage=usage_context.stage,
+        operation=usage_context.operation,
+        model=EMBEDDING_MODEL,
+    )
     response = retry_ai_call(
         lambda: get_openai_client().embeddings.create(
             model=EMBEDDING_MODEL,
@@ -197,6 +208,13 @@ def _batch_embed(texts: List[str]) -> List[List[float]]:
         operation="graph embedding batch",
     )
     embeddings = [item.embedding for item in response.data]
+    record_model_usage(
+        usage_context,
+        model=EMBEDDING_MODEL,
+        response=response,
+        input_items=len(texts),
+        output_items=len(embeddings),
+    )
     if len(embeddings) != len(texts):
         raise RuntimeError(f"expected {len(texts)} embeddings, got {len(embeddings)}")
     if any(len(e) != EMBEDDING_DIMENSIONS for e in embeddings):

@@ -563,6 +563,7 @@ def reconcile_project_flags(project_id: int, *, model: Optional[str] = None) -> 
     shows whether the AI's predictions came true.
     """
     from .client import COMPILER_MODEL_LIGHT, extract_with_retry
+    from ..pipeline.model_usage import ModelUsageContext
 
     client = get_supabase_client()
     target = ensure_client_project_target(client, int(project_id), compiler_version=COMMS_COMPILER_VERSION)
@@ -629,6 +630,12 @@ def reconcile_project_flags(project_id: int, *, model: Optional[str] = None) -> 
                 [{"role": "user", "content": prompt}],
                 model=model or COMPILER_MODEL_LIGHT,
                 timeout=60,
+                usage_context=ModelUsageContext(
+                    stage="signals_extracted",
+                    operation="reconcile_project_flag",
+                    project_id=int(project_id),
+                    metadata={"flag_id": flag["id"]},
+                ),
             )
             if data.get("_extraction_failed"):
                 result["errors"].append({"flag_id": flag["id"], "error": "llm_failed"})

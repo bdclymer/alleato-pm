@@ -10,6 +10,12 @@ from typing import Any, Dict, List
 from openai import OpenAI
 
 from ..pipeline.config import MODEL_PROJECT_INTELLIGENCE, MODEL_SIGNAL_EXTRACTION
+from ..pipeline.model_usage import (
+    ModelUsageContext,
+    PipelineModelBudgetExceeded,
+    assert_background_model_budget_available,
+    record_model_usage,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +70,7 @@ def extract_with_retry(
     model: str = COMPILER_MODEL_DEFAULT,
     max_retries: int = 2,
     timeout: int | None = None,
+    usage_context: ModelUsageContext | None = None,
 ) -> Dict[str, Any]:
     """
     Call LLM with JSON mode across configured providers.
@@ -76,8 +83,14 @@ def extract_with_retry(
     passes need far more than the Teams-compiler default; callers pass their own.
     """
     request_timeout = timeout if timeout is not None else COMPILER_REQUEST_TIMEOUT_SECONDS
+    context = usage_context or ModelUsageContext(stage="intelligence", operation="extract_with_retry")
     for attempt in range(max_retries + 1):
         try:
+            assert_background_model_budget_available(
+                stage=context.stage,
+                operation=context.operation,
+                model=model,
+            )
             kwargs: Dict[str, Any] = {
                 "model": model,
                 "messages": messages,
@@ -89,6 +102,7 @@ def extract_with_retry(
             if _supports_custom_temperature(model):
                 kwargs["temperature"] = COMPILER_TEMPERATURE
             response = _client().chat.completions.create(**kwargs)
+            record_model_usage(context, model=model, response=response, status="succeeded")
             raw = response.choices[0].message.content or ""
             raw = raw.strip()
             if raw.startswith("```"):
@@ -101,9 +115,26 @@ def extract_with_retry(
         except json.JSONDecodeError as exc:
             logger.warning("[TeamsCompiler] JSON parse failure (attempt=%d): %s", attempt, exc)
             if attempt == max_retries:
+                record_model_usage(
+                    context,
+                    model=model,
+                    status="failed",
+                    error_code="json_parse_failed",
+                    error_message=str(exc),
+                )
                 return _failed_extraction([f"JSON parse failed after {max_retries + 1} attempts"])
+        except PipelineModelBudgetExceeded as exc:
+            logger.error("[TeamsCompiler] Model budget blocked call: %s", exc)
+            return _failed_extraction([str(exc)])
         except Exception as exc:
             logger.error("[TeamsCompiler] OpenAI call failed: %s", exc)
+            record_model_usage(
+                context,
+                model=model,
+                status="failed",
+                error_code=exc.__class__.__name__,
+                error_message=str(exc),
+            )
             return _failed_extraction([str(exc)])
 
     return _failed_extraction(["max retries exceeded"])

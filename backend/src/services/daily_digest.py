@@ -15,6 +15,11 @@ from typing import Any, Dict, List, Optional
 from openai import OpenAI
 
 from .pipeline.config import MODEL_DAILY_BRIEF, MODEL_SIGNAL_EXTRACTION
+from .pipeline.model_usage import (
+    ModelUsageContext,
+    assert_background_model_budget_available,
+    record_model_usage,
+)
 from .supabase_helpers import get_rag_read_client, get_supabase_client
 
 logger = logging.getLogger(__name__)
@@ -184,6 +189,18 @@ def extract_meeting_signals(meeting: Dict[str, Any]) -> Dict[str, Any]:
         transcript=content,
     )
 
+    usage_context = ModelUsageContext(
+        stage="signals_extracted",
+        operation="daily_digest_meeting_signal_extraction",
+        source_system="fireflies",
+        source_item_id=str(meeting.get("id") or "") or None,
+        project_id=meeting.get("project_id"),
+    )
+    assert_background_model_budget_available(
+        stage=usage_context.stage,
+        operation=usage_context.operation,
+        model=MODEL_SIGNAL_EXTRACTION,
+    )
     response = _openai_client().chat.completions.create(
         **_chat_kwargs(model=MODEL_SIGNAL_EXTRACTION, temperature=0.3),
         messages=[
@@ -192,6 +209,7 @@ def extract_meeting_signals(meeting: Dict[str, Any]) -> Dict[str, Any]:
         ],
         response_format={"type": "json_object"},
     )
+    record_model_usage(usage_context, model=MODEL_SIGNAL_EXTRACTION, response=response)
 
     try:
         result = json.loads(response.choices[0].message.content)
@@ -220,6 +238,16 @@ def generate_recap(
         meeting_data=meeting_data,
     )
 
+    usage_context = ModelUsageContext(
+        stage="daily_brief",
+        operation="generate_daily_digest_recap",
+        metadata={"date": date_str, "meeting_count": len(meeting_signals)},
+    )
+    assert_background_model_budget_available(
+        stage=usage_context.stage,
+        operation=usage_context.operation,
+        model=MODEL_DAILY_BRIEF,
+    )
     response = _openai_client().chat.completions.create(
         **_chat_kwargs(model=MODEL_DAILY_BRIEF, temperature=0.5),
         messages=[
@@ -227,6 +255,7 @@ def generate_recap(
             {"role": "user", "content": prompt},
         ],
     )
+    record_model_usage(usage_context, model=MODEL_DAILY_BRIEF, response=response)
     return response.choices[0].message.content or ""
 
 

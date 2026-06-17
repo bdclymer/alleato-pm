@@ -107,7 +107,19 @@ class EmbeddingGenerator:
         if not texts:
             return []
         from ..ai_transport import get_openai_client, retry_ai_call
+        from ..pipeline.model_usage import (
+            ModelUsageContext,
+            assert_background_model_budget_available,
+            record_model_usage,
+        )
+
         truncated = [text[:8000] for text in texts]
+        usage_context = ModelUsageContext(stage="indexed_for_rag", operation="fireflies_embedding_batch")
+        assert_background_model_budget_available(
+            stage=usage_context.stage,
+            operation=usage_context.operation,
+            model=self.model,
+        )
         response = retry_ai_call(
             lambda: get_openai_client().embeddings.create(
                 model=self.model,
@@ -118,6 +130,13 @@ class EmbeddingGenerator:
             operation="fireflies embedding batch",
         )
         embeddings = [item.embedding for item in response.data]
+        record_model_usage(
+            usage_context,
+            model=self.model,
+            response=response,
+            input_items=len(texts),
+            output_items=len(embeddings),
+        )
         if len(embeddings) != len(texts):
             raise RuntimeError(f"expected {len(texts)} embeddings, got {len(embeddings)}")
         logger.info("[FirefliesIngestion] Embedded %d texts via OpenAI", len(texts))

@@ -12,6 +12,7 @@ Several claims in the original inventory were wrong or have been resolved by Wav
 
 | Table / claim | Prior state in this doc | Reality (verified by SQL or commit) |
 |---|---|---|
+| `pipeline_model_usage` | not previously listed | **Created in the RAG/AI database on 2026-06-17.** It is the high-volume model usage and estimated-cost ledger for source processing, embeddings, daily briefs, Brandon email review, and project intelligence budget checks. |
 | `user_profiles` | "empty — 123 code references; CRITICAL privilege bug" | **53 rows (= every auth.users row).** Backfilled in migration `20260516000000` (commit `2f32ca2c6`). Trigger keeps auth.users → user_profiles in sync going forward. Privilege bug resolved. |
 | `acumatica_sync_runs` | "empty despite a writer" | **53 rows, growing every 2h.** Cron firing on schedule. |
 | `acumatica_payment_applications` | "183 rows, NO WRITER" | **Now has a Python writer** (Wave 1C). Ongoing 2h sync. Initial 183 rows from backfill. |

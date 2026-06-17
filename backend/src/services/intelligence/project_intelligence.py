@@ -44,6 +44,7 @@ from ..supabase_helpers import (
     get_supabase_client,
 )
 from ..ops.db_pressure_guard import enforce_pm_app_final_projection_guard
+from ..pipeline.model_usage import ModelUsageContext
 from .client import COMPILER_MODEL, extract_with_retry
 from .compiler import ensure_client_project_target
 from .project_synthesizer import _classify_comm_type, _participants
@@ -354,6 +355,7 @@ Never invent a source id. Never invent financial numbers."""
 def synthesize_project_state(
     *,
     project_name: str,
+    project_id: int | None = None,
     prior_state: str,
     snapshot_text: str,
     docs: List[Dict[str, Any]],
@@ -370,7 +372,17 @@ def synthesize_project_state(
         snapshot_text=snapshot_text,
         docs=docs,
     )
-    return extract_with_retry(messages, model=model or COMPILER_MODEL, timeout=timeout)
+    return extract_with_retry(
+        messages,
+        model=model or COMPILER_MODEL,
+        timeout=timeout,
+        usage_context=ModelUsageContext(
+            stage="project_intelligence_updated",
+            operation="synthesize_project_state",
+            project_id=project_id,
+            metadata={"project_name": project_name, "doc_count": len(docs)},
+        ),
+    )
 
 
 def _clean_items(value: Any) -> List[Dict[str, Any]]:
@@ -585,6 +597,7 @@ def refresh_project_intelligence(
 
     raw = synthesize_project_state(
         project_name=project_name,
+        project_id=int(project_id),
         prior_state=_prior_state_text(prior),
         snapshot_text=snapshot_text,
         docs=docs,

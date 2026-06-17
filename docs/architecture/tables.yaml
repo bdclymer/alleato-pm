@@ -727,6 +727,27 @@ tables:
     gotchas: "CRITICAL: Empty despite writer. Likely exception path or ACUMATICA_FINANCIAL_SYNC_ENABLED env flag is off. Investigate _record_sync_run."
     relatedTables: []
 
+  - name: reconciliation_runs
+    db: MAIN
+    domain: financial
+    owner: sync
+    status: live-empty
+    purpose: "Job Planner to Acumatica reconciliation run ledger. Tracks scan status, finding counts, and dollars at risk."
+    gotchas: "RLS is enabled with service-role access only. Treat as operational triage state, not user-authored financial source data."
+    relatedTables:
+      - reconciliation_findings
+
+  - name: reconciliation_findings
+    db: MAIN
+    domain: financial
+    owner: sync
+    status: live-empty
+    purpose: "Current and historical reconciliation findings between Job Planner project records and Acumatica mirrors."
+    gotchas: "fingerprint is the primary key. review_status tracks triage; is_active distinguishes current findings from resolved/stale findings."
+    relatedTables:
+      - reconciliation_runs
+      - projects
+
   - name: acumatica_outbound_audit_logs
     db: MAIN
     domain: financial
@@ -1843,6 +1864,16 @@ tables:
     purpose: "Dormant audit log for skipped Outlook emails."
     relatedTables: []
 
+  - name: outlook_email_assistant_reviews
+    db: MAIN
+    domain: communications
+    owner: pipeline
+    status: live-empty
+    purpose: "Human review ledger for Brandon Outlook assistant decisions, draft outcomes, and feedback signals."
+    gotchas: "Admin/service-role table. It records review outcomes only; raw email source remains outlook_email_intake and project-matched email remains project_emails."
+    relatedTables:
+      - outlook_email_intake
+
   - name: email_filter_rules
     db: MAIN
     domain: communications
@@ -2747,6 +2778,42 @@ tables:
     purpose: "Dormant daily log manpower entries."
     relatedTables: []
 
+  - name: manpower_plans
+    db: MAIN
+    domain: workflow
+    owner: core
+    status: live-empty
+    purpose: "Imported manpower planning snapshot header. Marks the active manpower plan and tracks import metadata/warnings."
+    gotchas: "Only one active plan is allowed by partial unique index. Plan rows own manpower_projects and manpower_assignments via cascade delete."
+    relatedTables:
+      - manpower_projects
+      - manpower_assignments
+      - people
+
+  - name: manpower_projects
+    db: MAIN
+    domain: workflow
+    owner: core
+    status: live-empty
+    purpose: "Project rows within an imported manpower plan, optionally linked to the canonical projects table."
+    gotchas: "project_id is nullable; external_code/project_name may be the only source when the imported plan cannot be matched to a project."
+    relatedTables:
+      - manpower_plans
+      - manpower_assignments
+      - projects
+
+  - name: manpower_assignments
+    db: MAIN
+    domain: workflow
+    owner: core
+    status: live-empty
+    purpose: "Role/person assignment rows within an imported manpower plan project."
+    gotchas: "assignee_person_id is nullable; assignee_name preserves imported names before directory matching."
+    relatedTables:
+      - manpower_plans
+      - manpower_projects
+      - people
+
   - name: daily_log_notes
     db: MAIN
     domain: workflow
@@ -3438,6 +3505,16 @@ tables:
     status: live
     purpose: "Per-sync-run audit log. 3,639 rows. Canonical copy."
     relatedTables: []
+
+  - name: pipeline_model_usage
+    db: RAG
+    domain: pipeline
+    owner: pipeline
+    status: live-empty
+    purpose: "Durable model usage and estimated-cost ledger for source processing, embeddings, daily briefs, Brandon email review, and project intelligence. Used by the daily background budget guard."
+    gotchas: "High-volume telemetry belongs in RAG, not PM APP. Cost is an estimate based on configured pricing; provider billing remains authoritative."
+    relatedTables:
+      - source_sync_runs
 
   - name: packet_refresh_jobs
     db: RAG
