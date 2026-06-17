@@ -1,3 +1,8 @@
+import src.services.integrations.microsoft_graph.webhooks as webhooks_mod
+import src.services.health.source_sync_health as source_sync_health_mod
+from src.services.integrations.microsoft_graph.ingestion_control import (
+    graph_ingestion_disabled_reason,
+)
 from src.services.integrations.microsoft_graph import webhooks
 
 
@@ -11,7 +16,7 @@ class _TableQuery:
         self.db = db
         self.table_name = table_name
         self.payload = None
-        self.action = "insert"
+        self.action = "select"
         self.rows = list(db.tables.setdefault(table_name, []))
 
     def insert(self, payload):
@@ -36,6 +41,8 @@ class _TableQuery:
 
     def execute(self):
         table = self.db.tables.setdefault(self.table_name, [])
+        if self.action == "select":
+            return _Result([dict(row) for row in self.rows])
         if self.action == "update":
             updated = []
             matching_ids = {id(row) for row in self.rows}
@@ -56,6 +63,25 @@ class _FakeSupabase:
     def table(self, table_name):
         return _TableQuery(self, table_name)
 
+    def from_(self, table_name):
+        return self.table(table_name)
+
+
+def _route_graph_subscriptions_to_fake_rag(supabase):
+    original_read = webhooks_mod.get_rag_read_client
+    original_write = webhooks_mod.get_rag_write_client
+    original_health_write = source_sync_health_mod.get_rag_write_client
+    webhooks_mod.get_rag_read_client = lambda: supabase
+    webhooks_mod.get_rag_write_client = lambda: supabase
+    source_sync_health_mod.get_rag_write_client = lambda: supabase
+    return original_read, original_write, original_health_write
+
+
+def _restore_graph_subscriptions_clients(original_read, original_write, original_health_write):
+    webhooks_mod.get_rag_read_client = original_read
+    webhooks_mod.get_rag_write_client = original_write
+    source_sync_health_mod.get_rag_write_client = original_health_write
+
 
 def test_validation_token_returns_plain_text(client):
     response = client.post(
@@ -75,6 +101,73 @@ def test_lifecycle_validation_token_returns_plain_text(client):
     assert response.status_code == 200
     assert response.text == "lifecycle-token-123"
     assert response.headers["content-type"].startswith("text/plain")
+
+
+def test_webhook_notifications_do_not_write_when_webhook_drain_disabled(client, monkeypatch):
+    monkeypatch.setenv("BACKEND_API_ONLY", "true")
+    monkeypatch.delenv("GRAPH_API_INGESTION_ENABLED", raising=False)
+    monkeypatch.setenv("GRAPH_WEBHOOK_DRAIN_ENABLED", "false")
+    monkeypatch.setenv("GRAPH_WEBHOOK_CLIENT_STATE", "expected-state")
+
+    response = client.post(
+        "/api/graph/webhooks/notifications",
+        json={
+            "value": [
+                {
+                    "subscriptionId": "sub-1",
+                    "clientState": "expected-state",
+                    "changeType": "created",
+                    "resource": "users/a@example.com/messages/message-1",
+                    "resourceData": {"id": "message-1"},
+                }
+            ]
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "disabled"
+    assert response.json()["recorded"] == 0
+    assert "GRAPH_WEBHOOK_DRAIN_ENABLED=false" in response.json()["reason"]
+
+
+def test_lifecycle_webhook_does_not_write_when_graph_ingestion_disabled(client, monkeypatch):
+    monkeypatch.delenv("BACKEND_API_ONLY", raising=False)
+    monkeypatch.setenv("GRAPH_API_INGESTION_ENABLED", "false")
+    monkeypatch.setenv("GRAPH_WEBHOOK_CLIENT_STATE", "expected-state")
+
+    response = client.post(
+        "/api/graph/webhooks/lifecycle",
+        json={
+            "value": [
+                {
+                    "subscriptionId": "sub-removed",
+                    "clientState": "expected-state",
+                    "tenantId": "tenant-1",
+                    "lifecycleEvent": "subscriptionRemoved",
+                }
+            ]
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "disabled"
+    assert response.json()["recorded"] == 0
+    assert "GRAPH_API_INGESTION_ENABLED=false" in response.json()["reason"]
+
+
+def test_graph_ingestion_guard_fails_closed_when_backend_api_only(monkeypatch):
+    monkeypatch.setenv("BACKEND_API_ONLY", "true")
+
+    assert "BACKEND_API_ONLY=true" in graph_ingestion_disabled_reason()
+
+
+def test_api_only_mode_does_not_block_webhook_queue_guard(monkeypatch):
+    monkeypatch.setenv("BACKEND_API_ONLY", "true")
+    monkeypatch.delenv("GRAPH_API_INGESTION_ENABLED", raising=False)
+    monkeypatch.delenv("GRAPH_WEBHOOK_DRAIN_ENABLED", raising=False)
+    monkeypatch.delenv("GRAPH_SYNC_ENABLED", raising=False)
+
+    assert graph_ingestion_disabled_reason(mode="webhook") is None
 
 
 def test_handle_graph_notifications_rejects_bad_client_state(monkeypatch):
@@ -102,27 +195,32 @@ def test_handle_graph_notifications_rejects_bad_client_state(monkeypatch):
 def test_handle_graph_notifications_records_valid_notification(monkeypatch):
     monkeypatch.setenv("GRAPH_WEBHOOK_CLIENT_STATE", "expected-state")
     supabase = _FakeSupabase()
+    original_read, original_write, original_health_write = _route_graph_subscriptions_to_fake_rag(supabase)
 
-    result = webhooks.handle_graph_notifications(
-        supabase,
-        {
-            "value": [
-                {
-                    "subscriptionId": "sub-1",
-                    "clientState": "expected-state",
-                    "changeType": "created,updated",
-                    "tenantId": "tenant-1",
-                    "resource": "users/a@example.com/messages",
-                    "resourceData": {"id": "message-1"},
-                }
-            ]
-        },
-    )
+    try:
+        result = webhooks.handle_graph_notifications(
+            supabase,
+            {
+                "value": [
+                    {
+                        "subscriptionId": "sub-1",
+                        "clientState": "expected-state",
+                        "changeType": "created,updated",
+                        "tenantId": "tenant-1",
+                        "resource": "users/a@example.com/messages",
+                        "resourceData": {"id": "message-1"},
+                    }
+                ]
+            },
+        )
+    finally:
+        _restore_graph_subscriptions_clients(original_read, original_write, original_health_write)
 
     assert result == {
         "status": "accepted",
         "notification_count": 1,
         "recorded": 1,
+        "queued_mailboxes": 1,
         "queued_realtime": 0,
     }
     row = supabase.tables["source_sync_runs"][0]
@@ -130,60 +228,67 @@ def test_handle_graph_notifications_records_valid_notification(monkeypatch):
     assert row["stage"] == "webhook"
     assert row["status"] == "queued"
     assert row["metadata"]["subscription_id"] == "sub-1"
+    state_row = supabase.tables["graph_sync_state"][0]
+    assert state_row["resource_id"] == "a@example.com"
+    assert state_row["sync_status"] == "webhook_pending"
 
 
 def test_handle_graph_notifications_enqueues_outlook_realtime(monkeypatch):
     monkeypatch.setenv("GRAPH_WEBHOOK_CLIENT_STATE", "expected-state")
     supabase = _FakeSupabase()
     queued = []
+    original_read, original_write, original_health_write = _route_graph_subscriptions_to_fake_rag(supabase)
 
-    result = webhooks.handle_graph_notifications(
-        supabase,
-        {
-            "value": [
-                {
-                    "subscriptionId": "sub-1",
-                    "clientState": "expected-state",
-                    "changeType": "created",
-                    "resource": "users/a@example.com/messages/message-1",
-                    "resourceData": {"id": "message-1"},
-                }
-            ]
-        },
-        on_realtime_notification=lambda notification: queued.append(notification) or True,
-    )
+    try:
+        result = webhooks.handle_graph_notifications(
+            supabase,
+            {
+                "value": [
+                    {
+                        "subscriptionId": "sub-1",
+                        "clientState": "expected-state",
+                        "changeType": "created",
+                        "resource": "users/a@example.com/messages/message-1",
+                        "resourceData": {"id": "message-1"},
+                    }
+                ]
+            },
+            on_realtime_notification=lambda notification: queued.append(notification) or True,
+        )
+    finally:
+        _restore_graph_subscriptions_clients(original_read, original_write, original_health_write)
 
+    assert result["queued_mailboxes"] == 1
     assert result["queued_realtime"] == 1
     assert queued[0]["resource"] == "users/a@example.com/messages/message-1"
 
 
-def test_process_graph_notification_realtime_syncs_mailbox_delta(monkeypatch):
+def test_process_graph_notification_realtime_queues_mailbox_delta(monkeypatch):
     monkeypatch.setenv("GRAPH_WEBHOOK_CLIENT_STATE", "expected-state")
     supabase = _FakeSupabase()
-    calls = []
+    original_read, original_write, original_health_write = _route_graph_subscriptions_to_fake_rag(supabase)
 
-    monkeypatch.setattr(
-        "src.services.integrations.microsoft_graph.sync.sync_outlook_mailbox_delta",
-        lambda client, mailbox, *, reason, verify_persisted_count: calls.append(
-            (client, mailbox, reason, verify_persisted_count)
+    try:
+        result = webhooks.process_graph_notification_realtime(
+            supabase,
+            {
+                "subscriptionId": "sub-1",
+                "clientState": "expected-state",
+                "changeType": "created",
+                "resource": "users/a@example.com/messages/message-1",
+                "resourceData": {"id": "message-1"},
+            },
         )
-        or {"status": "succeeded", "items_synced": 1},
-    )
+    finally:
+        _restore_graph_subscriptions_clients(original_read, original_write, original_health_write)
 
-    result = webhooks.process_graph_notification_realtime(
-        supabase,
-        {
-            "subscriptionId": "sub-1",
-            "clientState": "expected-state",
-            "changeType": "created",
-            "resource": "users/a@example.com/messages/message-1",
-            "resourceData": {"id": "message-1"},
-        },
-    )
-
-    assert calls == [(supabase, "a@example.com", "graph_webhook", False)]
+    assert result["status"] == "queued"
+    assert result["queue_status"] == "webhook_pending"
     assert result["message_id"] == "message-1"
     assert result["subscription_id"] == "sub-1"
+    state_row = supabase.tables["graph_sync_state"][0]
+    assert state_row["resource_id"] == "a@example.com"
+    assert state_row["sync_status"] == "webhook_pending"
 
 
 def test_handle_graph_lifecycle_marks_subscription_removed(monkeypatch):
@@ -193,19 +298,23 @@ def test_handle_graph_lifecycle_marks_subscription_removed(monkeypatch):
         {"graph_subscription_id": "sub-removed", "status": "active"}
     ]
 
-    result = webhooks.handle_graph_lifecycle_notifications(
-        supabase,
-        {
-            "value": [
-                {
-                    "subscriptionId": "sub-removed",
-                    "clientState": "expected-state",
-                    "tenantId": "tenant-1",
-                    "lifecycleEvent": "subscriptionRemoved",
-                }
-            ]
-        },
-    )
+    original_read, original_write, original_health_write = _route_graph_subscriptions_to_fake_rag(supabase)
+    try:
+        result = webhooks.handle_graph_lifecycle_notifications(
+            supabase,
+            {
+                "value": [
+                    {
+                        "subscriptionId": "sub-removed",
+                        "clientState": "expected-state",
+                        "tenantId": "tenant-1",
+                        "lifecycleEvent": "subscriptionRemoved",
+                    }
+                ]
+            },
+        )
+    finally:
+        _restore_graph_subscriptions_clients(original_read, original_write, original_health_write)
 
     assert result == {"status": "accepted", "notification_count": 1, "recorded": 1}
     assert supabase.tables["graph_subscriptions"][0]["status"] == "removed"
