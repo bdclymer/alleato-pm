@@ -74,10 +74,19 @@ export async function register() {
         "https://us.cloud.langfuse.com";
 
       // Redact PII (emails / SSN / card / phone) before egress to us.cloud.
+      //
+      // exportMode "immediate" (SimpleSpanProcessor) is REQUIRED on Vercel's
+      // serverless/Fluid Compute: the default BatchSpanProcessor buffers spans
+      // and the function can freeze after the response before the batch's timer
+      // fires, dropping every span. Immediate mode POSTs each span as it ends,
+      // while the request is still alive. This is why traces appeared locally
+      // (long-lived dev process) but not in prod until now.
+      // Ref: https://langfuse.com/faq/all/existing-sentry-setup (AWS Lambda note)
       const processor = new LangfuseSpanProcessor({
         baseUrl: langfuseBaseUrl,
         publicKey: process.env.LANGFUSE_PUBLIC_KEY,
         secretKey: process.env.LANGFUSE_SECRET_KEY,
+        exportMode: "immediate",
         mask: maskLangfuse,
       });
       langfuseSpanProcessor = processor;
