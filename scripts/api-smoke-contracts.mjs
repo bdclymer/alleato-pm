@@ -448,7 +448,7 @@ async function run() {
   const warnings = [];
   let pass = 0;
   const authProbeCount = BEARER_TOKEN ? AUTH_WRITE_PROBES.length : 0;
-  const backendProbeCount = ADMIN_API_KEY ? 1 : 0;
+  const backendProbeCount = ADMIN_API_KEY ? 2 : 0;
   let total = ENDPOINTS.length + authProbeCount + backendProbeCount;
   const timestamp = new Date().toISOString();
 
@@ -656,6 +656,55 @@ async function run() {
     }
   } else {
     warnings.push("Project synthesizer backend probe skipped because ADMIN_API_KEY is not set.");
+  }
+
+  // ─── Backend admin-key acceptance probe: schedule PDF extract ───────────────
+  // Guards the exact incident that motivated this check: ADMIN_API_KEY was set
+  // to "" in every Vercel env AND missing from the Render backend, so the only
+  // symptom was a runtime-only 503 "ADMIN_API_KEY is not configured" when a user
+  // tried to import a schedule PDF.
+  //
+  // We send the configured ADMIN_API_KEY to the real extract endpoint with no
+  // file body. A correctly-configured backend rejects the *request* (missing
+  // file → 400/422) but must NOT reject the *key*: a 503 means the backend has
+  // no ADMIN_API_KEY configured, and a 401/403 means the key we hold does not
+  // match the backend's. Any of those means schedule PDF import is broken in
+  // production even though the var "looks" set.
+  if (ADMIN_API_KEY) {
+    const probePath = `/api/scheduling/schedule-pdf/extract?project_id=${PROJECT_ID}`;
+    const description = "Schedule PDF extract — backend accepts ADMIN_API_KEY (not 503/401/403)";
+    const url = `${BACKEND_URL}${probePath}`;
+    let status = 0;
+
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "x-admin-api-key": ADMIN_API_KEY },
+        signal: AbortSignal.timeout(15000),
+      });
+      status = res.status;
+      await res.text().catch(() => "");
+    } catch {
+      status = 0;
+    }
+
+    const keyRejectedStatuses = [401, 403, 503];
+    if (status === 0) {
+      console.error(`  FAIL  TIMEOUT  POST ${probePath}  (${description})`);
+      failures.push(`TIMEOUT: POST ${probePath} — ${description}`);
+    } else if (keyRejectedStatuses.includes(status)) {
+      console.error(`  FAIL  ${status}  POST ${probePath}  (${description})`);
+      failures.push(
+        `Backend rejected ADMIN_API_KEY (${status}): POST ${probePath} — ${description}. ` +
+          `503 = key missing on backend; 401/403 = frontend/backend key mismatch.`,
+      );
+    } else {
+      // 400/422 (missing file) or any non-rejection status proves the key was accepted.
+      console.log(`   OK   ${status}  POST ${probePath}  (${description})`);
+      pass++;
+    }
+  } else {
+    warnings.push("Schedule PDF extract admin-key probe skipped because ADMIN_API_KEY is not set.");
   }
 
   // Summary
