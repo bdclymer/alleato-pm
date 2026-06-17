@@ -5662,6 +5662,106 @@ export type Database = {
           },
         ]
       }
+      change_event_candidates: {
+        Row: {
+          confidence: string
+          created_at: string
+          created_change_event_id: string | null
+          description: string | null
+          id: string
+          metadata: Json
+          missing_information: Json
+          potential_cost_impact: string | null
+          potential_schedule_impact: string | null
+          project_id: number
+          reason: string | null
+          source_synthesis_ids: string[]
+          status: string
+          timeline_event_ids: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          confidence?: string
+          created_at?: string
+          created_change_event_id?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json
+          missing_information?: Json
+          potential_cost_impact?: string | null
+          potential_schedule_impact?: string | null
+          project_id: number
+          reason?: string | null
+          source_synthesis_ids?: string[]
+          status?: string
+          timeline_event_ids?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          confidence?: string
+          created_at?: string
+          created_change_event_id?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json
+          missing_information?: Json
+          potential_cost_impact?: string | null
+          potential_schedule_impact?: string | null
+          project_id?: number
+          reason?: string | null
+          source_synthesis_ids?: string[]
+          status?: string
+          timeline_event_ids?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "change_event_candidates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "change_event_candidates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_candidates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "change_event_candidates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_candidates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_candidates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       change_event_documents: {
         Row: {
           attached_at: string
@@ -9488,6 +9588,198 @@ export type Database = {
           table_comment?: string | null
           table_name?: string
           tools?: string | null
+        }
+        Relationships: []
+      }
+      db_incident_activity_samples: {
+        Row: {
+          age: string | null
+          application_name: string | null
+          backend_start: string | null
+          client_addr: unknown
+          client_port: number | null
+          current_query: string | null
+          id: number
+          pid: number | null
+          query_start: string | null
+          sampled_at: string
+          state: string | null
+          wait_event: string | null
+          wait_event_type: string | null
+          xact_age: string | null
+          xact_start: string | null
+        }
+        Insert: {
+          age?: string | null
+          application_name?: string | null
+          backend_start?: string | null
+          client_addr?: unknown
+          client_port?: number | null
+          current_query?: string | null
+          id?: number
+          pid?: number | null
+          query_start?: string | null
+          sampled_at?: string
+          state?: string | null
+          wait_event?: string | null
+          wait_event_type?: string | null
+          xact_age?: string | null
+          xact_start?: string | null
+        }
+        Update: {
+          age?: string | null
+          application_name?: string | null
+          backend_start?: string | null
+          client_addr?: unknown
+          client_port?: number | null
+          current_query?: string | null
+          id?: number
+          pid?: number | null
+          query_start?: string | null
+          sampled_at?: string
+          state?: string | null
+          wait_event?: string | null
+          wait_event_type?: string | null
+          xact_age?: string | null
+          xact_start?: string | null
+        }
+        Relationships: []
+      }
+      db_incident_outlook_write_block_log: {
+        Row: {
+          application_name: string | null
+          client_addr: unknown
+          current_query: string | null
+          file_name: string | null
+          graph_attachment_id: string | null
+          graph_message_id: string | null
+          id: number
+          intake_email_id: string | null
+          mailbox_user_id: string | null
+          operation: string
+          reason: string
+          recorded_at: string
+          row_pk: string | null
+          subject: string | null
+          table_name: string
+          table_schema: string
+        }
+        Insert: {
+          application_name?: string | null
+          client_addr?: unknown
+          current_query?: string | null
+          file_name?: string | null
+          graph_attachment_id?: string | null
+          graph_message_id?: string | null
+          id?: number
+          intake_email_id?: string | null
+          mailbox_user_id?: string | null
+          operation: string
+          reason: string
+          recorded_at?: string
+          row_pk?: string | null
+          subject?: string | null
+          table_name: string
+          table_schema: string
+        }
+        Update: {
+          application_name?: string | null
+          client_addr?: unknown
+          current_query?: string | null
+          file_name?: string | null
+          graph_attachment_id?: string | null
+          graph_message_id?: string | null
+          id?: number
+          intake_email_id?: string | null
+          mailbox_user_id?: string | null
+          operation?: string
+          reason?: string
+          recorded_at?: string
+          row_pk?: string | null
+          subject?: string | null
+          table_name?: string
+          table_schema?: string
+        }
+        Relationships: []
+      }
+      db_incident_write_log: {
+        Row: {
+          application_name: string | null
+          backend_pid: number
+          client_addr: unknown
+          client_port: number | null
+          current_query: string | null
+          document_metadata_id: string | null
+          file_name: string | null
+          graph_attachment_id: string | null
+          graph_message_id: string | null
+          id: number
+          intake_email_id: number | null
+          mailbox_user_id: string | null
+          operation: string
+          query_start: string | null
+          recorded_at: string
+          row_pk: string | null
+          state: string | null
+          subject: string | null
+          table_name: string
+          table_schema: string
+          txid: number
+          wait_event: string | null
+          wait_event_type: string | null
+          xact_start: string | null
+        }
+        Insert: {
+          application_name?: string | null
+          backend_pid?: number
+          client_addr?: unknown
+          client_port?: number | null
+          current_query?: string | null
+          document_metadata_id?: string | null
+          file_name?: string | null
+          graph_attachment_id?: string | null
+          graph_message_id?: string | null
+          id?: number
+          intake_email_id?: number | null
+          mailbox_user_id?: string | null
+          operation: string
+          query_start?: string | null
+          recorded_at?: string
+          row_pk?: string | null
+          state?: string | null
+          subject?: string | null
+          table_name: string
+          table_schema: string
+          txid?: number
+          wait_event?: string | null
+          wait_event_type?: string | null
+          xact_start?: string | null
+        }
+        Update: {
+          application_name?: string | null
+          backend_pid?: number
+          client_addr?: unknown
+          client_port?: number | null
+          current_query?: string | null
+          document_metadata_id?: string | null
+          file_name?: string | null
+          graph_attachment_id?: string | null
+          graph_message_id?: string | null
+          id?: number
+          intake_email_id?: number | null
+          mailbox_user_id?: string | null
+          operation?: string
+          query_start?: string | null
+          recorded_at?: string
+          row_pk?: string | null
+          state?: string | null
+          subject?: string | null
+          table_name?: string
+          table_schema?: string
+          txid?: number
+          wait_event?: string | null
+          wait_event_type?: string | null
+          xact_start?: string | null
         }
         Relationships: []
       }
@@ -22443,6 +22735,107 @@ export type Database = {
           },
         ]
       }
+      project_current_state: {
+        Row: {
+          active_risks: Json
+          current_summary: string | null
+          field_read: string | null
+          financial_read: string | null
+          health_status: string
+          last_delta_id: string | null
+          last_snapshot_id: string | null
+          needs_attention: Json
+          open_decisions: Json
+          project_id: number
+          schedule_read: string | null
+          source_confidence: Json
+          updated_at: string
+          what_changed_since_last_update: Json
+        }
+        Insert: {
+          active_risks?: Json
+          current_summary?: string | null
+          field_read?: string | null
+          financial_read?: string | null
+          health_status?: string
+          last_delta_id?: string | null
+          last_snapshot_id?: string | null
+          needs_attention?: Json
+          open_decisions?: Json
+          project_id: number
+          schedule_read?: string | null
+          source_confidence?: Json
+          updated_at?: string
+          what_changed_since_last_update?: Json
+        }
+        Update: {
+          active_risks?: Json
+          current_summary?: string | null
+          field_read?: string | null
+          financial_read?: string | null
+          health_status?: string
+          last_delta_id?: string | null
+          last_snapshot_id?: string | null
+          needs_attention?: Json
+          open_decisions?: Json
+          project_id?: number
+          schedule_read?: string | null
+          source_confidence?: Json
+          updated_at?: string
+          what_changed_since_last_update?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_current_state_last_snapshot_id_fkey"
+            columns: ["last_snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "project_operating_snapshots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_current_state_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_current_state_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_current_state_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_current_state_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_current_state_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_current_state_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_directory_memberships: {
         Row: {
           created_at: string | null
@@ -22573,6 +22966,7 @@ export type Database = {
           deleted_at: string | null
           description: string | null
           division: string | null
+          document_type: string | null
           file_name: string
           file_size: number | null
           file_url: string
@@ -22614,6 +23008,7 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           division?: string | null
+          document_type?: string | null
           file_name: string
           file_size?: number | null
           file_url: string
@@ -22655,6 +23050,7 @@ export type Database = {
           deleted_at?: string | null
           description?: string | null
           division?: string | null
+          document_type?: string | null
           file_name?: string
           file_size?: number | null
           file_url?: string
@@ -23008,6 +23404,168 @@ export type Database = {
           },
         ]
       }
+      project_intelligence_timeline_event_sources: {
+        Row: {
+          confidence: string
+          created_at: string
+          id: string
+          metadata: Json
+          source_document_id: string | null
+          source_excerpt: string | null
+          source_family: string | null
+          source_occurred_at: string | null
+          source_synthesis_id: string | null
+          source_title: string | null
+          source_url: string | null
+          timeline_event_id: string
+        }
+        Insert: {
+          confidence?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          source_document_id?: string | null
+          source_excerpt?: string | null
+          source_family?: string | null
+          source_occurred_at?: string | null
+          source_synthesis_id?: string | null
+          source_title?: string | null
+          source_url?: string | null
+          timeline_event_id: string
+        }
+        Update: {
+          confidence?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          source_document_id?: string | null
+          source_excerpt?: string | null
+          source_family?: string | null
+          source_occurred_at?: string | null
+          source_synthesis_id?: string | null
+          source_title?: string | null
+          source_url?: string | null
+          timeline_event_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_intelligence_timeline_event_sour_timeline_event_id_fkey"
+            columns: ["timeline_event_id"]
+            isOneToOne: false
+            referencedRelation: "project_intelligence_timeline_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_intelligence_timeline_events: {
+        Row: {
+          confidence: string
+          created_at: string
+          current_status: string
+          event_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          owner_label: string | null
+          priority: string
+          project_id: number
+          related_event_ids: string[]
+          related_record_id: string | null
+          related_record_type: string | null
+          source_document_id: string | null
+          source_synthesis_id: string | null
+          summary: string | null
+          title: string
+          updated_at: string
+          why_it_matters: string | null
+        }
+        Insert: {
+          confidence?: string
+          created_at?: string
+          current_status?: string
+          event_at: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          owner_label?: string | null
+          priority?: string
+          project_id: number
+          related_event_ids?: string[]
+          related_record_id?: string | null
+          related_record_type?: string | null
+          source_document_id?: string | null
+          source_synthesis_id?: string | null
+          summary?: string | null
+          title: string
+          updated_at?: string
+          why_it_matters?: string | null
+        }
+        Update: {
+          confidence?: string
+          created_at?: string
+          current_status?: string
+          event_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          owner_label?: string | null
+          priority?: string
+          project_id?: number
+          related_event_ids?: string[]
+          related_record_id?: string | null
+          related_record_type?: string | null
+          source_document_id?: string | null
+          source_synthesis_id?: string | null
+          summary?: string | null
+          title?: string
+          updated_at?: string
+          why_it_matters?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_intelligence_timeline_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_intelligence_timeline_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_intelligence_timeline_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_intelligence_timeline_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_intelligence_timeline_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_intelligence_timeline_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_notification_groups: {
         Row: {
           created_at: string
@@ -23068,6 +23626,100 @@ export type Database = {
           },
           {
             foreignKeyName: "project_notification_groups_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_operating_snapshots: {
+        Row: {
+          acumatica_sync_at: string | null
+          confidence: string
+          created_at: string
+          database_counts: Json
+          financial_snapshot: Json
+          freshness: Json
+          id: string
+          project_id: number
+          project_info: Json
+          schedule_snapshot: Json
+          snapshot_at: string
+          source_coverage: Json
+          source_delta_id: string | null
+          warnings: Json
+        }
+        Insert: {
+          acumatica_sync_at?: string | null
+          confidence?: string
+          created_at?: string
+          database_counts?: Json
+          financial_snapshot?: Json
+          freshness?: Json
+          id?: string
+          project_id: number
+          project_info?: Json
+          schedule_snapshot?: Json
+          snapshot_at?: string
+          source_coverage?: Json
+          source_delta_id?: string | null
+          warnings?: Json
+        }
+        Update: {
+          acumatica_sync_at?: string | null
+          confidence?: string
+          created_at?: string
+          database_counts?: Json
+          financial_snapshot?: Json
+          freshness?: Json
+          id?: string
+          project_id?: number
+          project_info?: Json
+          schedule_snapshot?: Json
+          snapshot_at?: string
+          source_coverage?: Json
+          source_delta_id?: string | null
+          warnings?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_operating_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_operating_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_operating_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_operating_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_operating_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_operating_snapshots_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
@@ -23484,6 +24136,129 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_report_suggestions: {
+        Row: {
+          applied_record_id: string | null
+          applied_record_type: string | null
+          business_date: string | null
+          confidence: string
+          created_at: string
+          id: string
+          metadata: Json
+          project_id: number
+          report_type: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_delta_id: string | null
+          source_snapshot_id: string | null
+          source_timeline_event_ids: string[]
+          status: string
+          suggestion_payload: Json
+          title: string
+          updated_at: string
+          week_start_date: string | null
+        }
+        Insert: {
+          applied_record_id?: string | null
+          applied_record_type?: string | null
+          business_date?: string | null
+          confidence?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          project_id: number
+          report_type: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_delta_id?: string | null
+          source_snapshot_id?: string | null
+          source_timeline_event_ids?: string[]
+          status?: string
+          suggestion_payload?: Json
+          title: string
+          updated_at?: string
+          week_start_date?: string | null
+        }
+        Update: {
+          applied_record_id?: string | null
+          applied_record_type?: string | null
+          business_date?: string | null
+          confidence?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          project_id?: number
+          report_type?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_delta_id?: string | null
+          source_snapshot_id?: string | null
+          source_timeline_event_ids?: string[]
+          status?: string
+          suggestion_payload?: Json
+          title?: string
+          updated_at?: string
+          week_start_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_report_suggestions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_report_suggestions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_report_suggestions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_report_suggestions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_report_suggestions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_report_suggestions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_report_suggestions_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_report_suggestions_source_snapshot_id_fkey"
+            columns: ["source_snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "project_operating_snapshots"
             referencedColumns: ["id"]
           },
         ]
@@ -24600,11 +25375,11 @@ export type Database = {
           id: string
           is_deleted: boolean | null
           is_private: boolean | null
+          jobplanner_punchlist_item_id: number | null
           location: string | null
           number: number
           priority: string | null
           project_id: number
-          jobplanner_punchlist_item_id: number | null
           punch_item_manager_id: string | null
           reference: string | null
           source_system: string | null
@@ -24634,11 +25409,11 @@ export type Database = {
           id?: string
           is_deleted?: boolean | null
           is_private?: boolean | null
+          jobplanner_punchlist_item_id?: number | null
           location?: string | null
           number: number
           priority?: string | null
           project_id: number
-          jobplanner_punchlist_item_id?: number | null
           punch_item_manager_id?: string | null
           reference?: string | null
           source_system?: string | null
@@ -24668,11 +25443,11 @@ export type Database = {
           id?: string
           is_deleted?: boolean | null
           is_private?: boolean | null
+          jobplanner_punchlist_item_id?: number | null
           location?: string | null
           number?: number
           priority?: string | null
           project_id?: number
-          jobplanner_punchlist_item_id?: number | null
           punch_item_manager_id?: string | null
           reference?: string | null
           source_system?: string | null
@@ -31712,6 +32487,15 @@ export type Database = {
           },
         ]
       }
+      acumatica_dual_format_audit: {
+        Row: {
+          colon_only: number | null
+          dup_identities: number | null
+          pipe_only: number | null
+          tbl: string | null
+        }
+        Relationships: []
+      }
       change_events_summary: {
         Row: {
           attachment_count: number | null
@@ -34108,6 +34892,7 @@ export type Database = {
           success: boolean
         }[]
       }
+      classify_document_type: { Args: { p_path: string }; Returns: string }
       clone_budget_view: {
         Args: {
           new_description?: string
