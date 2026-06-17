@@ -9,12 +9,16 @@ const RENDER_SERVICES_URL = "https://api.render.com/v1/services?limit=100";
 const RENDER_SERVICE_URL = "https://api.render.com/v1/services";
 
 const REQUIRED_WEB_FLAGS = new Map([
+  ["BACKEND_API_ONLY", "true"],
   ["DISABLE_SCHEDULER", "true"],
+  ["GRAPH_API_INGESTION_ENABLED", "false"],
   ["GRAPH_SYNC_ENABLED", "false"],
   ["GRAPH_SYNC_OUTLOOK", "false"],
   ["GRAPH_SYNC_TEAMS", "false"],
   ["GRAPH_SYNC_TEAMS_DM", "false"],
   ["GRAPH_SYNC_ONEDRIVE", "false"],
+  ["GRAPH_SUBSCRIPTIONS_ENABLED", "false"],
+  ["GRAPH_WEBHOOK_DRAIN_ENABLED", "false"],
   ["INTELLIGENCE_COMPILER_ENABLED", "false"],
   ["SOURCE_SYNC_HEALTH_RECOMPUTE_ENABLED", "false"],
   ["FIREFLIES_PIPELINE_BACKLOG_ENABLED", "false"],
@@ -100,6 +104,23 @@ const APP_DB_PRESSURE_GUARD_ENV = new Map([
 ]);
 const APP_DB_PRESSURE_GUARD_SECRET_KEYS = new Set(["DATABASE_URL"]);
 
+function loadDotEnv() {
+  const envPath = path.resolve(".env");
+  if (!fs.existsSync(envPath)) return;
+  const lines = fs.readFileSync(envPath, "utf8").split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const index = trimmed.indexOf("=");
+    if (index === -1) continue;
+    const key = trimmed.slice(0, index).trim();
+    const value = trimmed.slice(index + 1).trim().replace(/^['"]|['"]$/g, "");
+    if (key && process.env[key] === undefined) {
+      process.env[key] = value;
+    }
+  }
+}
+
 function isStructurallyDisabledCron(service) {
   const schedule = service?.serviceDetails?.schedule || service?.schedule;
   const command = service?.serviceDetails?.envSpecificDetails?.dockerCommand || "";
@@ -147,6 +168,8 @@ function verifyBlueprintCronGuardrail(blueprintPath, service) {
 }
 
 const failures = [];
+
+loadDotEnv();
 
 for (const blueprintPath of BLUEPRINTS) {
   const absolutePath = path.resolve(blueprintPath);
