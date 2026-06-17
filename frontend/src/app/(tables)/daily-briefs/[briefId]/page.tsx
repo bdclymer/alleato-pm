@@ -682,10 +682,6 @@ export default async function DailyBriefDetailPage({ params }: PageProps) {
       eyebrow="Daily Brief history"
       title={`Daily Brief - ${row.recap_date}`}
       statusBadge={<Badge variant="outline">{row.workflow_status}</Badge>}
-      breadcrumbs={[
-        { label: "Daily Briefs", href: "/daily-briefs" },
-        { label: row.recap_date },
-      ]}
       contentClassName="pb-16"
     >
       <BriefSummary row={row} packet={packet} itemCount={itemCount} />
