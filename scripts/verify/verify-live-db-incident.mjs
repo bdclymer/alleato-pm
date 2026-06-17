@@ -13,16 +13,12 @@ const DEFAULT_WINDOW_MINUTES = 30;
 
 const REQUIRED_WEB_FLAGS = new Map([
   ["APP_DB_PRESSURE_GUARD_REQUIRED", "true"],
-  ["BACKEND_API_ONLY", "true"],
   ["DISABLE_SCHEDULER", "true"],
-  ["GRAPH_API_INGESTION_ENABLED", "false"],
   ["GRAPH_SYNC_ENABLED", "false"],
   ["GRAPH_SYNC_OUTLOOK", "false"],
   ["GRAPH_SYNC_TEAMS", "false"],
   ["GRAPH_SYNC_TEAMS_DM", "false"],
   ["GRAPH_SYNC_ONEDRIVE", "false"],
-  ["GRAPH_SUBSCRIPTIONS_ENABLED", "false"],
-  ["GRAPH_WEBHOOK_DRAIN_ENABLED", "false"],
   ["INTELLIGENCE_COMPILER_ENABLED", "false"],
   ["SOURCE_SYNC_HEALTH_RECOMPUTE_ENABLED", "false"],
   ["FIREFLIES_PIPELINE_BACKLOG_ENABLED", "false"],
@@ -223,7 +219,7 @@ async function checkRenderWebEnv(token) {
 }
 
 async function checkSupabaseHealth(token) {
-  const rows = await fetchJsonWithRetry(SUPABASE_HEALTH_URL, token);
+  const rows = await fetchJson(SUPABASE_HEALTH_URL, token);
   const failures = rows
     .filter((row) => row.status !== "ACTIVE_HEALTHY" || row.healthy !== true)
     .map((row) => `${row.name}=${row.status}`);
@@ -247,7 +243,7 @@ async function checkSupavisorFailures(token, windowMinutes) {
   );
   url.searchParams.set("iso_timestamp_start", start.toISOString());
   url.searchParams.set("iso_timestamp_end", end.toISOString());
-  const body = await fetchJsonWithRetry(url, token);
+  const body = await fetchJson(url, token);
   if (body.error) {
     throw new Error(`Supabase logs query failed: ${JSON.stringify(body.error)}`);
   }

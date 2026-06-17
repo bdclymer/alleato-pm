@@ -723,17 +723,9 @@ services:
         value: "true"
       # The web service should only serve API traffic. Background sync jobs run
       # as explicit Render cron services so they can be suspended/throttled.
-      - key: BACKEND_API_ONLY
-        value: "true"
       - key: DISABLE_SCHEDULER
         value: "true"
-      - key: GRAPH_API_INGESTION_ENABLED
-        value: "false"
       - key: GRAPH_SYNC_ENABLED
-        value: "false"
-      - key: GRAPH_SUBSCRIPTIONS_ENABLED
-        value: "false"
-      - key: GRAPH_WEBHOOK_DRAIN_ENABLED
         value: "false"
       - key: GRAPH_SYNC_OUTLOOK
         value: "false"
