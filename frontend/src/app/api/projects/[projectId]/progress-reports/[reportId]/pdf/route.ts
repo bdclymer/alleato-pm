@@ -5,6 +5,10 @@ import { requireDeveloperApi } from "@/lib/auth/require-developer";
 import { renderPdfFromHtml } from "@/lib/documents/pdf";
 import { buildProgressReportHtml } from "@/lib/progress-reports/pdf";
 import {
+  BRANDED_FOOTER_MARGIN,
+  buildBrandedFooterTemplate,
+} from "@/lib/documents/branded-letterhead";
+import {
   getProgressReportDetail,
   listProjectTeamContacts,
   mergeProgressReportContacts,
@@ -59,7 +63,10 @@ export const GET = withApiGuardrails(
       },
       selectedPhotos: detail.selectedPhotos,
     });
-    const pdfBuffer = await renderPdfFromHtml(html);
+    const pdfBuffer = await renderPdfFromHtml(html, {
+      footerTemplate: buildBrandedFooterTemplate(),
+      marginBottom: BRANDED_FOOTER_MARGIN,
+    });
     const safeName = (projectResult.data.name ?? "project")
       .replace(/[^a-zA-Z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")

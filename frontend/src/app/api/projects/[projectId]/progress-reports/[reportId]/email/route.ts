@@ -9,6 +9,10 @@ import {
   buildProgressReportEmailHtml,
   buildProgressReportHtml,
 } from "@/lib/progress-reports/pdf";
+import {
+  BRANDED_FOOTER_MARGIN,
+  buildBrandedFooterTemplate,
+} from "@/lib/documents/branded-letterhead";
 import { getProgressReportDetail } from "@/lib/progress-reports/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -68,7 +72,10 @@ export const POST = withApiGuardrails(
       report: detail.report,
       selectedPhotos: detail.selectedPhotos,
     });
-    const pdfBuffer = await renderPdfFromHtml(html);
+    const pdfBuffer = await renderPdfFromHtml(html, {
+      footerTemplate: buildBrandedFooterTemplate(),
+      marginBottom: BRANDED_FOOTER_MARGIN,
+    });
     const projectName = projectResult.data.name ?? "Project";
     const safeName = projectName
       .replace(/[^a-zA-Z0-9]+/g, "-")

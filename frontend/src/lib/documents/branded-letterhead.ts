@@ -10,7 +10,17 @@ interface BrandedDocumentHtmlOptions {
     value: string | null | undefined;
   }>;
   bodyHtml: string;
+  /**
+   * When false, the contact/locations/brand-bar footer is omitted from the
+   * document body so it can instead be supplied to the PDF renderer as a
+   * Puppeteer `footerTemplate` (see `buildBrandedFooterTemplate`) and stay
+   * pinned to the bottom of every page. Defaults to true.
+   */
+  renderFooterInBody?: boolean;
 }
+
+/** Page bottom margin reserved for `buildBrandedFooterTemplate`. */
+export const BRANDED_FOOTER_MARGIN = "0.9in";
 
 const COMPANY_PHONE = "(317) 760-0088";
 const COMPANY_EMAIL = "info@alleatogroup.com";
@@ -87,12 +97,53 @@ function renderFooterItem(item: (typeof FOOTER_ITEMS)[number]) {
   return `<span><span class="footer-icon">${item.icon}</span>${esc(item.label)}</span>`;
 }
 
+/**
+ * The diagonally-split brand bar as an SVG data URI. Puppeteer `footerTemplate`
+ * ignores CSS `background-color`, so the bar (drawn with pseudo-elements in the
+ * in-body footer) must be an image to survive in a footer template.
+ */
+function footerRuleSvgDataUri(): string {
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 36" preserveAspectRatio="none">` +
+    `<rect x="0" y="0" width="1000" height="36" fill="#df8127"/>` +
+    `<rect x="0" y="0" width="550" height="36" fill="#2f3030"/>` +
+    `<polygon points="515,36 561,36 601,0 555,0" fill="#ffffff"/>` +
+    `</svg>`;
+  return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
+}
+
+/**
+ * Puppeteer `footerTemplate` mirroring the in-body branded footer. Pair with
+ * `buildBrandedDocumentHtml({ renderFooterInBody: false })` and
+ * `renderPdfFromHtml(html, { footerTemplate, marginBottom: BRANDED_FOOTER_MARGIN })`
+ * so the footer anchors to the bottom of every page instead of floating where
+ * the content happens to end.
+ */
+export function buildBrandedFooterTemplate(): string {
+  const contact = FOOTER_ITEMS.map((item) => {
+    const icon = item.icon.replace(
+      '<svg viewBox="0 0 24 24" aria-hidden="true">',
+      '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#df8127" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;">',
+    );
+    return `<span style="display:inline-flex;align-items:center;gap:5px;margin:0 10px;">${icon}<span>${esc(item.label)}</span></span>`;
+  }).join("");
+
+  return (
+    `<div style="width:100%;margin:0;font-family:Arial, Helvetica, sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;">` +
+    `<div style="width:600px;max-width:100%;margin:0 auto;padding:7px 0 0;border-top:1px solid #ece7e2;text-align:center;font-size:9px;color:#807b76;">${contact}</div>` +
+    `<div style="text-align:center;font-size:8px;color:#77716b;padding:4px 24px 7px;">${esc(COMPANY_LOCATIONS.join(" · "))}</div>` +
+    `<img src="${footerRuleSvgDataUri()}" style="display:block;width:100%;height:14px;" alt="" />` +
+    `</div>`
+  );
+}
+
 export function buildBrandedDocumentHtml({
   title,
   subtitle,
   detail,
   meta,
   bodyHtml,
+  renderFooterInBody = true,
 }: BrandedDocumentHtmlOptions) {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -328,13 +379,17 @@ export function buildBrandedDocumentHtml({
         ${bodyHtml}
       </div>
     </main>
-    <footer class="document-footer">
+    ${
+      renderFooterInBody
+        ? `<footer class="document-footer">
       <div class="document-footer-contact">
         ${FOOTER_ITEMS.map(renderFooterItem).join("")}
       </div>
       <div class="document-footer-locations">${esc(COMPANY_LOCATIONS.join(" · "))}</div>
       <div class="document-footer-rule"></div>
-    </footer>
+    </footer>`
+        : ""
+    }
   </div>
 </body>
 </html>`;

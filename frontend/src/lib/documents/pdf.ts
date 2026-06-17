@@ -269,7 +269,17 @@ export function buildChangeEventHtml(
  * In local development we point puppeteer-core at the system Chrome
  * installation so the Linux-only @sparticuz binary isn't needed.
  */
-export async function renderPdfFromHtml(html: string): Promise<Buffer> {
+export interface RenderPdfOptions {
+  /** Puppeteer footer template HTML, pinned to the bottom margin of every page. */
+  footerTemplate?: string;
+  /** Bottom page margin; widen to make room for a footerTemplate. Defaults to 0.5in. */
+  marginBottom?: string;
+}
+
+export async function renderPdfFromHtml(
+  html: string,
+  options: RenderPdfOptions = {},
+): Promise<Buffer> {
   const puppeteer = await import("puppeteer-core");
   const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
 
@@ -329,10 +339,13 @@ export async function renderPdfFromHtml(html: string): Promise<Buffer> {
     const pdf = await page.pdf({
       format: "Letter",
       printBackground: true,
+      displayHeaderFooter: Boolean(options.footerTemplate),
+      headerTemplate: "<div></div>",
+      footerTemplate: options.footerTemplate ?? "<div></div>",
       margin: {
         top: "0.5in",
         right: "0.5in",
-        bottom: "0.5in",
+        bottom: options.marginBottom ?? "0.5in",
         left: "0.5in",
       },
     });

@@ -62,17 +62,6 @@ function renderBulletSection(title: string, value: string) {
   `;
 }
 
-function renderContact(contact: ProgressReportContact) {
-  return `
-    <div class="contact">
-      <div class="contact-role">${esc(contact.role || "Contact")}</div>
-      <div class="contact-name">${esc(contact.name || "—")}</div>
-      <div class="contact-line">${esc(contact.email || "—")}</div>
-      <div class="contact-line">${esc(contact.phone || "—")}</div>
-    </div>
-  `;
-}
-
 function renderSummaryContact(contact: ProgressReportContact) {
   return `
     <div class="summary-contact">
@@ -248,36 +237,6 @@ export function buildProgressReportHtml({
       color: #3f3c38;
       font-size: 12px;
     }
-    .contacts {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 10px;
-    }
-    .contact {
-      min-width: 0;
-      padding: 10px 12px;
-      border: 1px solid #d7d2cc;
-      background: #f4f2ef;
-      overflow-wrap: anywhere;
-    }
-    .contact-role {
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      font-size: 10px;
-      font-weight: 700;
-      color: #5f5b56;
-      margin-bottom: 4px;
-    }
-    .contact-name {
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-    .contact-line {
-      font-size: 11px;
-      line-height: 1.35;
-      overflow-wrap: anywhere;
-    }
     </style>
 
     <section class="dates-grid">
@@ -316,15 +275,6 @@ export function buildProgressReportHtml({
           : `<p class="empty">No progress photos selected for this report yet.</p>`
       }
     </section>
-
-    <section class="section">
-      <h2>Project Contacts</h2>
-      ${
-        contacts.length > 0
-          ? `<div class="contacts">${contacts.map(renderContact).join("")}</div>`
-          : `<p class="empty">Add project contacts before sending this report.</p>`
-      }
-    </section>
   `;
 
   return buildBrandedDocumentHtml({
@@ -332,6 +282,7 @@ export function buildProgressReportHtml({
     subtitle: addressLine || undefined,
     detail: `Week of ${weekRange}`,
     bodyHtml,
+    renderFooterInBody: false,
   });
 }
 
