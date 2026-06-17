@@ -131,6 +131,11 @@ interface DashboardResponse {
     dollarsAtRisk: number;
     lastRunAt: string | null;
   };
+  retainage: {
+    apOwedTotal: number;
+    apOwedCount: number;
+    byProject: Array<{ projectCode: string; projectName: string; total: number }>;
+  };
   generatedAt: string;
 }
 
@@ -1013,6 +1018,46 @@ function ErrorState({
   );
 }
 
+function RetainageSection({
+  retainage,
+}: {
+  retainage: DashboardResponse["retainage"];
+}) {
+  const max = Math.max(...retainage.byProject.map((p) => p.total), 1);
+  return (
+    <div className="rounded-lg bg-card p-5">
+      <div className="flex items-start justify-between gap-4">
+        <p className="text-sm text-muted-foreground">
+          {formatCurrencyFull(retainage.apOwedTotal)} owed to subcontractors across{" "}
+          {retainage.apOwedCount} subcontracts — released as their work completes.
+        </p>
+        <TextLink href="/accounting/bills">Open</TextLink>
+      </div>
+      <div className="mt-4 space-y-2.5">
+        {retainage.byProject.map((project) => (
+          <div key={project.projectCode} className="space-y-1">
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <span className="truncate text-foreground">{project.projectName}</span>
+              <span className="shrink-0 tabular-nums text-muted-foreground">
+                {formatCurrency(project.total)}
+              </span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary/70"
+                style={{ width: `${Math.max((project.total / max) * 100, 2)}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="mt-4 text-xs text-muted-foreground">
+        AR retainage (held from us by owners) isn&apos;t in the synced data yet.
+      </p>
+    </div>
+  );
+}
+
 export default function AccountingDashboardPage() {
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1163,6 +1208,10 @@ export default function AccountingDashboardPage() {
           </div>
           <CashFlowPanel cashPosition={cashPosition} />
         </div>
+      </Section>
+
+      <Section title="Retainage owed to subcontractors">
+        <RetainageSection retainage={data.retainage} />
       </Section>
 
       <Section title="Net Margin by Project">

@@ -116,6 +116,11 @@ interface DashboardResponse {
     dollarsAtRisk: number;
     lastRunAt: string | null;
   };
+  retainage: {
+    apOwedTotal: number;
+    apOwedCount: number;
+    byProject: Array<{ projectCode: string; projectName: string; total: number }>;
+  };
   generatedAt: string;
 }
 
@@ -637,6 +642,37 @@ export const GET = withApiGuardrails(
       lastRunAt: reconRunResult.data?.finished_at ?? null,
     };
 
+    // ---------------------------------------------------------------------------
+    // Retainage owed to subcontractors (AP). AR-side retainage held from us by
+    // owners is not in the synced data, so we only report the AP side here.
+    const retainageResult = await supabase
+      .from("acumatica_subcontracts")
+      .select("project_code, retainage_total")
+      .neq("retainage_total", 0);
+    const retainageByProject = new Map<string, number>();
+    let apRetainageOwed = 0;
+    for (const row of retainageResult.data ?? []) {
+      const amount = Number(row.retainage_total ?? 0);
+      if (!amount) continue;
+      apRetainageOwed += amount;
+      const code = row.project_code ?? "—";
+      retainageByProject.set(code, (retainageByProject.get(code) ?? 0) + amount);
+    }
+    const retainage = {
+      apOwedTotal: apRetainageOwed,
+      apOwedCount: (retainageResult.data ?? []).filter(
+        (r) => Number(r.retainage_total ?? 0) !== 0,
+      ).length,
+      byProject: [...retainageByProject.entries()]
+        .map(([code, total]) => ({
+          projectCode: code,
+          projectName: projectDescMap.get(code)?.description ?? code,
+          total,
+        }))
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 6),
+    };
+
     const response: DashboardResponse = {
       arAging,
       apAging,
@@ -666,6 +702,7 @@ export const GET = withApiGuardrails(
           financeSpendRollup.totals.uncertainBillCount,
       },
       reconciliation,
+      retainage,
       generatedAt: new Date().toISOString(),
     };
 
