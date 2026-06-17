@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 
 from openai import OpenAI
 
+from .pipeline.config import MODEL_DAILY_BRIEF, MODEL_SIGNAL_EXTRACTION
 from .supabase_helpers import get_rag_read_client, get_supabase_client
 
 logger = logging.getLogger(__name__)
@@ -85,6 +86,23 @@ Be concise but specific. Use actual names and details:"""
 def _openai_client() -> OpenAI:
     import os
     return OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+
+
+def _supports_custom_temperature(model: str) -> bool:
+    normalized = (model or "").lower().split("/", 1)[-1]
+    return not (
+        normalized.startswith("gpt-5")
+        or normalized.startswith("o1")
+        or normalized.startswith("o3")
+        or normalized.startswith("o4")
+    )
+
+
+def _chat_kwargs(*, model: str, temperature: float) -> Dict[str, Any]:
+    kwargs: Dict[str, Any] = {"model": model}
+    if _supports_custom_temperature(model):
+        kwargs["temperature"] = temperature
+    return kwargs
 
 
 def get_meetings_for_date_range(
@@ -167,12 +185,11 @@ def extract_meeting_signals(meeting: Dict[str, Any]) -> Dict[str, Any]:
     )
 
     response = _openai_client().chat.completions.create(
-        model="gpt-4o-mini",
+        **_chat_kwargs(model=MODEL_SIGNAL_EXTRACTION, temperature=0.3),
         messages=[
             {"role": "system", "content": "Extract meeting signals. Return valid JSON only."},
             {"role": "user", "content": prompt},
         ],
-        temperature=0.3,
         response_format={"type": "json_object"},
     )
 
@@ -204,12 +221,11 @@ def generate_recap(
     )
 
     response = _openai_client().chat.completions.create(
-        model="gpt-4o-mini",
+        **_chat_kwargs(model=MODEL_DAILY_BRIEF, temperature=0.5),
         messages=[
             {"role": "system", "content": "Generate a concise daily briefing."},
             {"role": "user", "content": prompt},
         ],
-        temperature=0.5,
     )
     return response.choices[0].message.content or ""
 
@@ -283,7 +299,7 @@ def save_daily_recap(
         "commitments": all_commitments,
         "wins": all_wins,
         "generation_time_seconds": generation_time,
-        "model_used": "gpt-4o-mini",
+        "model_used": MODEL_DAILY_BRIEF,
     }
 
     try:

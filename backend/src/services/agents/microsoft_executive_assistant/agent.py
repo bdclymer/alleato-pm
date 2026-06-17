@@ -845,12 +845,16 @@ def run_microsoft_executive_assistant(
     request: MicrosoftExecutiveAssistantRequest,
     *,
     create_agent: Optional[Callable[..., Any]] = None,
-    model: str = "openai:gpt-5.4-mini",
+    model: str = "",
 ) -> MicrosoftExecutiveAssistantResponse:
     """Run the Microsoft Executive Assistant Deep Agent and return a typed response."""
     started = time.perf_counter()
     loaded_skills = _skills_loaded()
     try:
+        if not model:
+            from src.services.pipeline.config import MODEL_BRANDON_EMAIL
+
+            model = f"openai:{MODEL_BRANDON_EMAIL}"
         if create_agent is None:
             if not _provider_available():
                 raise RuntimeError(

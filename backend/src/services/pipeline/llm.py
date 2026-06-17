@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 from openai import OpenAI
 
 from ..ai_transport import retry_ai_call
-from .config import EMBEDDING_MODEL, EMBEDDING_DIMENSIONS
+from .config import EMBEDDING_MODEL, MODEL_SIGNAL_EXTRACTION
 from .models import (
     DecisionItem,
     FlagItem,
@@ -34,19 +34,9 @@ _MODEL_DIMENSIONS: dict[str, int] = {
     "text-embedding-ada-002": 1_536,
 }
 
-# Maps each supported embedding model to its native output dimension.
-# If batch_embed is called with a non-default model, we look up the correct
-# dimensions here rather than blindly passing EMBEDDING_DIMENSIONS (3072),
-# which would silently fail or truncate for small models (max 1536).
-_MODEL_DIMENSIONS: dict[str, int] = {
-    "text-embedding-3-large": 3_072,
-    "text-embedding-3-small": 1_536,
-    "text-embedding-ada-002": 1_536,
-}
-
 logger = logging.getLogger(__name__)
 
-CHAT_MODEL = "gpt-4o-mini"
+CHAT_MODEL = MODEL_SIGNAL_EXTRACTION
 SEGMENT_TRANSCRIPT_MAX_CHARS = int(os.getenv("SEGMENT_TRANSCRIPT_MAX_CHARS", "0"))
 
 # Safety ceiling for the deep, full-transcript pass — sized to the large-context
@@ -395,9 +385,9 @@ def extract_deep_meeting_intelligence(
     state and emit evidence-linked, confidence-calibrated risks / decisions /
     opportunities / insights / tasks, each tagged new|update|resolved.
 
-    Uses the large-context compiler model (gpt-5.5), NOT the small CHAT_MODEL.
-    The full transcript is passed uncapped except for a safety ceiling at the
-    model's real context limit (``DEEP_TRANSCRIPT_MAX_CHARS``).
+    Uses the configured signal-extraction model. The full transcript is passed
+    uncapped except for a safety ceiling at the model's real context limit
+    (``DEEP_TRANSCRIPT_MAX_CHARS``).
     """
     transcript = full_transcript or ""
     if len(transcript) > DEEP_TRANSCRIPT_MAX_CHARS:
@@ -475,17 +465,17 @@ Output ONLY the JSON object."""
 
     # Lazy import: the intelligence package eagerly loads the compiler at startup,
     # so a top-level import risks a circular load order under FastAPI/pytest.
-    from ..intelligence.client import COMPILER_MODEL, extract_with_retry
+    from ..intelligence.client import COMPILER_MODEL_LIGHT, extract_with_retry
 
     logger.info(
         "[LLM] Deep extraction via %s (transcript=%d chars, state=%d chars)",
-        COMPILER_MODEL,
+        COMPILER_MODEL_LIGHT,
         len(transcript),
         len(project_state or ""),
     )
     data = extract_with_retry(
         [{"role": "user", "content": prompt}],
-        model=COMPILER_MODEL,
+        model=COMPILER_MODEL_LIGHT,
         timeout=DEEP_EXTRACTION_TIMEOUT_SECONDS,
     )
     if data.get("_extraction_failed"):
@@ -678,14 +668,9 @@ severity is 1 (minor) to 5 (critical: safety/inspection/major cost/schedule-kill
     # Lazy import: the intelligence package eagerly loads the compiler at startup,
     # so a top-level import risks a circular load order under FastAPI/pytest.
     #
-    # COST: emails + Teams are HIGH VOLUME, so this per-doc extraction runs on the
-    # LIGHT model (gpt-4.1-mini), NOT frontier gpt-5.5 — restoring the deliberate
-    # routing from commit b71a70771 ("route Teams DM + email extraction to mini
-    # model") that the intelligence redesign accidentally reverted when it replaced
-    # the old email/teams compilers with this extractor. Frontier gpt-5.5 on every
-    # email/DM was a ~$60/day driver; mini cuts per-call cost ~10-20x. Meetings
-    # (extract_deep_meeting_intelligence) and L2 synthesis intentionally keep the
-    # full model — low-volume + high-value. Override via COMPILER_MODEL_LIGHT.
+    # COST: source-by-source extraction is high volume, so it runs on the signal
+    # model. Project-packet synthesis is the stage allowed to use the larger
+    # project-intelligence model.
     from ..intelligence.client import COMPILER_MODEL_LIGHT, extract_with_retry
 
     logger.info(

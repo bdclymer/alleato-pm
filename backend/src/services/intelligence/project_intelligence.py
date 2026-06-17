@@ -19,7 +19,7 @@ Flow (``refresh_project_intelligence``):
      the real body lives), bounded to ``MAX_SYNTH_CHARS``.
   5. Build a deterministic structured snapshot (budget / RFIs / change events) —
      GROUND TRUTH the model must not invent.
-  6. ONE gpt-5.5 synthesis pass -> a coherent executive read.
+  6. ONE project-intelligence model synthesis pass -> a coherent executive read.
   7. Anti-hallucination: drop fabricated source cites; RAISE on a silent LLM
      failure (never write an empty packet — incident_openai_quota_backend_ai_down).
   8. Write ``intelligence_packets`` with ``packet_json.summary`` keyed exactly as

@@ -151,7 +151,7 @@ queryable without parsing logs.
 | Capture, dedupe, and content hash | no model | Never call an LLM for this stage. |
 | Project assignment | rules and SQL first; `gpt-5.4-nano` only when rules are inconclusive | Send low-confidence assignments to review instead of retrying repeatedly. |
 | Text extraction and cleanup | no model | Use `gpt-5.4-nano` only for messy OCR or malformed extracted text. |
-| Embeddings | `text-embedding-3-small` | Use `text-embedding-3-large` only if the vector schema requires 3072 dimensions or retrieval quality proves the need. |
+| Embeddings | `text-embedding-3-large` | Current `document_chunks` search uses 3072-dimensional vectors, so do not switch to `text-embedding-3-small` without a vector-dimension migration. |
 | Task, risk, urgent item, and change-order signal extraction | `gpt-5.5-mini` target | Current OpenAI docs reviewed on 2026-06-16 list `gpt-5.4-mini` as the deployable mini model. Use `gpt-5.4-mini` until `gpt-5.5-mini` is available from the provider. |
 | Project intelligence update | `gpt-5.4` | Do not run if there is no new source evidence or explicit user refresh. |
 | Brandon email importance, reply draft, and Teams alert | `gpt-5.5` | Route contractual/legal uncertainty to human review before sending. |
@@ -169,7 +169,7 @@ PIPELINE_MODEL_PROJECT_INTELLIGENCE=gpt-5.4
 PIPELINE_MODEL_BRANDON_EMAIL=gpt-5.5
 PIPELINE_MODEL_DAILY_BRIEF=gpt-5.5
 PIPELINE_MODEL_ASSISTANT=gpt-5.5
-PIPELINE_EMBEDDING_MODEL=text-embedding-3-small
+PIPELINE_EMBEDDING_MODEL=text-embedding-3-large
 ```
 
 ## Consumer Workflows

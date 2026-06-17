@@ -9,16 +9,17 @@ from typing import Any, Dict, List
 
 from openai import OpenAI
 
+from ..pipeline.config import MODEL_PROJECT_INTELLIGENCE, MODEL_SIGNAL_EXTRACTION
+
 logger = logging.getLogger(__name__)
 
-COMPILER_MODEL = os.getenv("COMPILER_MODEL", "gpt-5.5")
+COMPILER_MODEL = MODEL_PROJECT_INTELLIGENCE
 COMPILER_MODEL_DEFAULT = COMPILER_MODEL
 COMPILER_MODEL_LARGE = COMPILER_MODEL
-# Cheaper tier for high-volume, lower-stakes sources (Teams DMs, emails). Meeting
-# deep-extraction keeps COMPILER_MODEL (full quality). Frontier gpt-5.5 on every
-# email/DM was the dominant cost driver (~$60/day); routing those to a mini model
-# cuts per-call cost ~10-20x. Override via env without a code change.
-COMPILER_MODEL_LIGHT = os.getenv("COMPILER_MODEL_LIGHT", "gpt-4.1-mini")
+# Cheaper tier for source signal extraction. Project-intelligence synthesis keeps
+# COMPILER_MODEL; source-by-source task/risk/urgent/change-order extraction uses
+# this smaller tier to prevent background jobs from burning frontier credits.
+COMPILER_MODEL_LIGHT = MODEL_SIGNAL_EXTRACTION
 COMPILER_REQUEST_TIMEOUT_SECONDS = int(os.getenv("TEAMS_COMPILER_REQUEST_TIMEOUT_SECONDS", "60"))
 
 # Default sampling temperature for extraction. The gpt-5 family (and o-series

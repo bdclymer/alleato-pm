@@ -10,6 +10,7 @@ from src.services.agents.microsoft_executive_assistant.contracts import (
     MicrosoftExecutiveAssistantRequest,
     MicrosoftExecutiveAssistantResponse,
 )
+from src.services.pipeline.config import MODEL_BRANDON_EMAIL
 
 
 Runner = Callable[..., MicrosoftExecutiveAssistantResponse]
@@ -37,7 +38,8 @@ def _operator_mailbox(explicit: Optional[str] = None) -> Optional[str]:
 
 
 def _model() -> str:
-    return os.getenv("DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_MODEL", "openai:gpt-5.4-mini")
+    configured = os.getenv("DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_MODEL")
+    return configured or f"openai:{MODEL_BRANDON_EMAIL}"
 
 
 def run_scheduled_microsoft_executive_assistant_check(
