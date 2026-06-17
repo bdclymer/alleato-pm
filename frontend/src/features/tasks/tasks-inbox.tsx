@@ -1206,7 +1206,7 @@ function TaskDetail({
           </Button>
         )}
 
-        <div className="mb-6 flex items-start gap-3">
+        <div className="mb-2 flex items-start gap-3">
           <div className="min-w-0 flex-1">
             {isEditingText ? (
               <div className="space-y-2">
