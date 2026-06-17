@@ -17669,6 +17669,80 @@ export type Database = {
         }
         Relationships: []
       }
+      outlook_email_assistant_reviews: {
+        Row: {
+          assistant_action: string
+          assistant_evidence: string | null
+          assistant_owner: string | null
+          assistant_priority: string
+          assistant_reason: string | null
+          assistant_risk: string | null
+          assistant_score: number | null
+          created_at: string
+          draft_body: string | null
+          graph_message_id: string
+          id: string
+          intake_email_id: number
+          mailbox_user_id: string
+          review_outcome: string
+          reviewer_email: string | null
+          reviewer_id: string | null
+          reviewer_note: string | null
+          source_metadata: Json
+          updated_at: string
+        }
+        Insert: {
+          assistant_action: string
+          assistant_evidence?: string | null
+          assistant_owner?: string | null
+          assistant_priority: string
+          assistant_reason?: string | null
+          assistant_risk?: string | null
+          assistant_score?: number | null
+          created_at?: string
+          draft_body?: string | null
+          graph_message_id: string
+          id?: string
+          intake_email_id: number
+          mailbox_user_id: string
+          review_outcome: string
+          reviewer_email?: string | null
+          reviewer_id?: string | null
+          reviewer_note?: string | null
+          source_metadata?: Json
+          updated_at?: string
+        }
+        Update: {
+          assistant_action?: string
+          assistant_evidence?: string | null
+          assistant_owner?: string | null
+          assistant_priority?: string
+          assistant_reason?: string | null
+          assistant_risk?: string | null
+          assistant_score?: number | null
+          created_at?: string
+          draft_body?: string | null
+          graph_message_id?: string
+          id?: string
+          intake_email_id?: number
+          mailbox_user_id?: string
+          review_outcome?: string
+          reviewer_email?: string | null
+          reviewer_id?: string | null
+          reviewer_note?: string | null
+          source_metadata?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outlook_email_assistant_reviews_intake_email_id_fkey"
+            columns: ["intake_email_id"]
+            isOneToOne: false
+            referencedRelation: "outlook_email_intake"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outlook_email_intake: {
         Row: {
           assignment_confidence: number | null

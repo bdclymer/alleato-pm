@@ -46,6 +46,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiFetch } from "@/lib/api-client";
 import { useProjects } from "@/hooks/use-projects";
 import type { InboxEmail } from "./email-inbox-client";
+import type { BrandonReviewOutcome } from "@/lib/email-assistant/brandon-review";
 
 function decodeHtmlEntities(text: string): string {
   return text
@@ -372,15 +373,21 @@ function AssistantDecisionLine({ email }: { email: InboxEmail }) {
 function DraftReplyPanel({
   email,
   onClose,
+  onRecordReview,
 }: {
   email: InboxEmail;
   onClose: () => void;
+  onRecordReview: (
+    outcome: BrandonReviewOutcome,
+    draftBody?: string | null,
+  ) => Promise<void>;
 }) {
   const [draft, setDraft] = React.useState("");
   const [loading, setLoading] = React.useState(true);
   const [tone, setTone] = React.useState<"professional" | "concise" | "detailed">(
     "professional",
   );
+  const initialDraftRef = React.useRef<string | null>(null);
 
   async function fetchDraft(selectedTone = tone) {
     setLoading(true);
@@ -401,6 +408,7 @@ function DraftReplyPanel({
         },
       );
       setDraft(result.draft);
+      initialDraftRef.current = result.draft;
     } catch {
       toast.error("Failed to generate draft — check AI configuration.");
       setDraft("");
@@ -418,13 +426,23 @@ function DraftReplyPanel({
     }
   });
 
-  function handleSend() {
+  async function handleSend() {
     if (email.webLink) {
       window.open(email.webLink, "_blank");
     }
-    toast.success("Reply draft copied — paste into Outlook to send.");
     navigator.clipboard.writeText(draft).catch(() => {});
-    onClose();
+    const outcome =
+      initialDraftRef.current?.trim() === draft.trim()
+        ? "draft_copied"
+        : "draft_edited";
+
+    try {
+      await onRecordReview(outcome, draft);
+      toast.success("Draft copied and review recorded.");
+      onClose();
+    } catch {
+      toast.error("Draft copied, but the review outcome was not recorded.");
+    }
   }
 
   return (
@@ -519,6 +537,12 @@ interface EmailReadingPaneProps {
   onAssignProject: (projectId: number | null) => void;
   onToggleStar: () => void;
   onTagsChange: (tags: string[]) => void;
+  reviewSaving: boolean;
+  onRecordReview: (
+    outcome: BrandonReviewOutcome,
+    draftBody?: string | null,
+    reviewerNote?: string | null,
+  ) => Promise<void>;
 }
 
 export function EmailReadingPane({
@@ -529,6 +553,8 @@ export function EmailReadingPane({
   onAssignProject,
   onToggleStar,
   onTagsChange,
+  reviewSaving,
+  onRecordReview,
 }: EmailReadingPaneProps) {
   const [summaryOpen, setSummaryOpen] = React.useState(false);
   const [summary, setSummary] = React.useState<string | null>(null);
@@ -564,6 +590,18 @@ export function EmailReadingPane({
       setSummary("Could not generate summary.");
     } finally {
       setSummaryLoading(false);
+    }
+  }
+
+  async function handleRecordReview(outcome: BrandonReviewOutcome) {
+    try {
+      await onRecordReview(outcome);
+      toast.success("Review recorded.");
+    } catch (error) {
+      toast.error("Failed to record review outcome.", {
+        description:
+          error instanceof Error ? error.message : "Unknown review ledger error.",
+      });
     }
   }
 
@@ -799,6 +837,36 @@ export function EmailReadingPane({
 
         <TagsEditor tags={email.tags} onChange={onTagsChange} />
 
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-xs h-8 text-muted-foreground hover:text-foreground"
+              disabled={reviewSaving}
+            >
+              <Check className="size-3.5" />
+              Record
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onClick={() => void handleRecordReview("delegated")}>
+              Delegated
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void handleRecordReview("watched")}>
+              Watching
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void handleRecordReview("skipped")}>
+              Skipped
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => void handleRecordReview("marked_no_action")}
+            >
+              No action
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         {email.webLink && (
           <Button
             variant="ghost"
@@ -816,7 +884,11 @@ export function EmailReadingPane({
 
       {/* Draft reply compose area */}
       {draftReplyOpen && (
-        <DraftReplyPanel email={email} onClose={onDraftReplyClose} />
+        <DraftReplyPanel
+          email={email}
+          onClose={onDraftReplyClose}
+          onRecordReview={onRecordReview}
+        />
       )}
     </div>
   );

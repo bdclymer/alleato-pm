@@ -8,6 +8,7 @@ import type {
   BrandonAssistantAction,
   BrandonAssistantPriority,
 } from "@/lib/email-assistant/brandon-triage";
+import type { BrandonReviewOutcome } from "@/lib/email-assistant/brandon-review";
 import { EmailListPanel } from "./email-list-panel";
 import { EmailReadingPane } from "./email-reading-pane";
 
@@ -280,6 +281,40 @@ export function EmailInboxClient() {
     onError: () => toast.error("Failed to update"),
   });
 
+  const reviewMutation = useMutation({
+    mutationFn: ({
+      email,
+      reviewOutcome,
+      draftBody,
+      reviewerNote,
+    }: {
+      email: InboxEmail;
+      reviewOutcome: BrandonReviewOutcome;
+      draftBody?: string | null;
+      reviewerNote?: string | null;
+    }) =>
+      apiFetch(`/api/email-inbox/${email.id}/assistant-review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assistantAction: email.assistantAction,
+          assistantPriority: email.assistantPriority,
+          assistantScore: email.assistantScore,
+          reviewOutcome,
+          draftBody,
+          reviewerNote,
+          assistantReason: email.assistantReason,
+          assistantOwner: email.assistantOwner,
+          assistantRisk: email.assistantRisk,
+          assistantEvidence: email.assistantEvidence,
+          sourceMetadata: {
+            surface: "email-inbox",
+            mailboxUserId: email.mailboxUserId,
+          },
+        }),
+      }),
+  });
+
   function handleTabChange(tab: InboxTab) {
     setActiveTab(tab);
     setSelectedId(null);
@@ -332,6 +367,16 @@ export function EmailInboxClient() {
             if (selectedEmail) {
               tagMutation.mutate({ emailId: selectedEmail.id, tags });
             }
+          }}
+          reviewSaving={reviewMutation.isPending}
+          onRecordReview={(reviewOutcome, draftBody, reviewerNote) => {
+            if (!selectedEmail) return Promise.resolve();
+            return reviewMutation.mutateAsync({
+              email: selectedEmail,
+              reviewOutcome,
+              draftBody,
+              reviewerNote,
+            });
           }}
         />
       </div>
