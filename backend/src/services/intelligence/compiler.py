@@ -1709,6 +1709,49 @@ def mark_packet_refresh_failed(
     ).eq("id", job_id).execute()
 
 
+def claim_staged_pm_projection_jobs(
+    *,
+    limit: int = 5,
+    compiler_version: str = COMPILER_VERSION,
+) -> List[Dict[str, Any]]:
+    """Claim staged RAG packet jobs for bounded PM projection draining."""
+    limit = max(0, min(int(limit or 0), 25))
+    if not limit:
+        return []
+
+    job_client = _rag_write()
+    query = (
+        job_client.table("packet_refresh_jobs")
+        .select("*")
+        .eq("status", "succeeded")
+        .eq("projection_status", "staged")
+        .eq("compiler_version", compiler_version)
+        .order("priority", desc=True)
+        .order("queued_at")
+        .limit(limit)
+    )
+    rows = getattr(query.execute(), "data", None) or []
+    claimed: List[Dict[str, Any]] = []
+    for row in rows:
+        updated = _single_row(
+            job_client.table("packet_refresh_jobs")
+            .update(
+                {
+                    "projection_status": "projecting",
+                    "projection_attempt_count": int(row.get("projection_attempt_count") or 0) + 1,
+                    "projection_error": None,
+                    "updated_at": _utc_now(),
+                }
+            )
+            .eq("id", row["id"])
+            .eq("projection_status", "staged")
+            .execute()
+        )
+        if updated:
+            claimed.append(updated)
+    return claimed
+
+
 def project_pm_intelligence_packet_job(
     supabase: Any,
     job_id: str,
@@ -1728,14 +1771,15 @@ def project_pm_intelligence_packet_job(
     if not projection:
         raise ValueError(f"packet_refresh_jobs row has no projection_payload: {job_id}")
 
-    _rag_write().table("packet_refresh_jobs").update(
-        {
-            "projection_status": "projecting",
-            "projection_attempt_count": int(job.get("projection_attempt_count") or 0) + 1,
-            "projection_error": None,
-            "updated_at": _utc_now(),
-        }
-    ).eq("id", job_id).execute()
+    if job.get("projection_status") != "projecting":
+        _rag_write().table("packet_refresh_jobs").update(
+            {
+                "projection_status": "projecting",
+                "projection_attempt_count": int(job.get("projection_attempt_count") or 0) + 1,
+                "projection_error": None,
+                "updated_at": _utc_now(),
+            }
+        ).eq("id", job_id).execute()
 
     try:
         result = apply_current_packet_projection(supabase, projection)
@@ -1764,6 +1808,47 @@ def project_pm_intelligence_packet_job(
             }
         ).eq("id", job_id).execute()
         raise
+
+
+def run_pm_intelligence_projection_batch(
+    supabase: Any,
+    *,
+    limit: int = 5,
+    max_processing_time_ms: Optional[int] = None,
+    compiler_version: str = COMPILER_VERSION,
+) -> Dict[str, Any]:
+    """Drain staged PM packet projections from RAG in a bounded batch."""
+    started = time.monotonic()
+    limit = max(0, min(int(limit or 0), 25))
+    stats: Dict[str, Any] = {
+        "projection_jobs_claimed": 0,
+        "projection_jobs_succeeded": 0,
+        "projection_jobs_failed": 0,
+        "failed_projection_job_ids": [],
+        "timed_out": False,
+        "processing_time_ms": 0,
+    }
+
+    jobs = claim_staged_pm_projection_jobs(
+        limit=limit,
+        compiler_version=compiler_version,
+    )
+    stats["projection_jobs_claimed"] = len(jobs)
+    for job in jobs:
+        if _time_limit_reached(started, max_processing_time_ms):
+            stats["timed_out"] = True
+            break
+        job_id = job.get("id")
+        try:
+            project_pm_intelligence_packet_job(supabase, job["id"])
+            stats["projection_jobs_succeeded"] += 1
+        except Exception:
+            stats["projection_jobs_failed"] += 1
+            if job_id:
+                stats["failed_projection_job_ids"].append(job_id)
+
+    stats["processing_time_ms"] = int((time.monotonic() - started) * 1000)
+    return stats
 
 
 def process_packet_refresh_job(

@@ -4,6 +4,7 @@ import pytest
 
 import src.services.intelligence.compiler as compiler_module
 from src.services.intelligence.compiler import (
+    claim_staged_pm_projection_jobs,
     classify_basic_signal,
     compile_current_packet,
     confidence_label,
@@ -14,6 +15,7 @@ from src.services.intelligence.compiler import (
     project_pm_intelligence_packet_job,
     promote_signal_candidate,
     run_intelligence_compiler_batch,
+    run_pm_intelligence_projection_batch,
 )
 from src.services.ops.db_pressure_guard import AppDbProjectionError
 
@@ -563,6 +565,52 @@ def test_project_pm_intelligence_packet_job_applies_staged_projection(monkeypatc
         supabase.tables["packet_refresh_jobs"][0]["projected_output_packet_id"]
         == result["packet_id"]
     )
+
+
+def test_claim_staged_pm_projection_jobs_marks_jobs_projecting(monkeypatch):
+    supabase = _seed_staged_projection_fixture()
+    monkeypatch.setenv("INTELLIGENCE_STAGE_PM_PROJECTION", "true")
+    process_packet_refresh_job(supabase, "packet-job-1")
+
+    claimed = claim_staged_pm_projection_jobs(limit=5)
+
+    assert [job["id"] for job in claimed] == ["packet-job-1"]
+    assert supabase.tables["packet_refresh_jobs"][0]["projection_status"] == "projecting"
+    assert supabase.tables["packet_refresh_jobs"][0]["projection_attempt_count"] == 1
+
+
+def test_run_pm_intelligence_projection_batch_drains_claimed_jobs(monkeypatch):
+    supabase = _seed_staged_projection_fixture()
+    monkeypatch.setenv("INTELLIGENCE_STAGE_PM_PROJECTION", "true")
+    process_packet_refresh_job(supabase, "packet-job-1")
+
+    result = run_pm_intelligence_projection_batch(supabase, limit=5)
+
+    assert result["projection_jobs_claimed"] == 1
+    assert result["projection_jobs_succeeded"] == 1
+    assert result["projection_jobs_failed"] == 0
+    assert len(supabase.tables["intelligence_packets"]) == 1
+    assert supabase.tables["packet_refresh_jobs"][0]["projection_status"] == "projected"
+    assert supabase.tables["packet_refresh_jobs"][0]["projection_attempt_count"] == 1
+
+
+def test_run_pm_intelligence_projection_batch_records_failures(monkeypatch):
+    supabase = _seed_staged_projection_fixture()
+    monkeypatch.setenv("INTELLIGENCE_STAGE_PM_PROJECTION", "true")
+    process_packet_refresh_job(supabase, "packet-job-1")
+    monkeypatch.delenv("ALLOW_PM_APP_FINAL_PROJECTIONS")
+
+    result = run_pm_intelligence_projection_batch(supabase, limit=5)
+
+    assert result["projection_jobs_claimed"] == 1
+    assert result["projection_jobs_succeeded"] == 0
+    assert result["projection_jobs_failed"] == 1
+    assert result["failed_projection_job_ids"] == ["packet-job-1"]
+    assert supabase.tables["packet_refresh_jobs"][0]["projection_status"] == "failed"
+    assert "PM app final projection writes are disabled" in (
+        supabase.tables["packet_refresh_jobs"][0]["projection_error"]
+    )
+    assert supabase.tables.get("intelligence_packets", []) == []
 
 
 def test_project_pm_intelligence_packet_job_records_projection_failure(monkeypatch):
