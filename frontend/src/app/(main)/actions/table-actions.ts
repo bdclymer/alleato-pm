@@ -187,6 +187,12 @@ export async function createContact(data: ContactData) {
       .single();
 
     if (error) {
+      console.error("createContact insert failed", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
       return { error: error.message };
     }
 
@@ -194,6 +200,7 @@ export async function createContact(data: ContactData) {
     revalidatePath("/directory/contacts");
     return { success: true, data: contact };
   } catch (error) {
+    console.error("createContact threw", error);
     return { error: error instanceof Error ? error.message : "Failed to create contact" };
   }
 }

@@ -411,12 +411,16 @@ export default function CompanyDetailsPage() {
       toast.success("Contact added to company");
       setAddContactOpen(false);
       setSelectedExistingContactId("");
-      await loadDetails();
     } catch (err) {
-      toast.error("Failed to add contact");
+      const message = err instanceof Error && err.message ? err.message : "Failed to add contact";
+      toast.error(message);
+      return;
     } finally {
       setIsSavingContact(false);
     }
+
+    // Refresh is best-effort: a failed reload must not look like a failed link.
+    await loadDetails();
   }
 
   async function handleCreateNewContact() {
@@ -446,12 +450,16 @@ export default function CompanyDetailsPage() {
       toast.success("Contact created and linked to company");
       setAddContactOpen(false);
       setNewContactForm({ first_name: "", last_name: "", email: "", phone_business: "", job_title: "" });
-      await loadDetails();
     } catch (err) {
-      toast.error("Failed to create contact");
+      const message = err instanceof Error && err.message ? err.message : "Failed to create contact";
+      toast.error(message);
+      return;
     } finally {
       setIsSavingContact(false);
     }
+
+    // Refresh is best-effort: a failed reload must not look like a failed create.
+    await loadDetails();
   }
 
   function openEditContact(contact: Contact) {
