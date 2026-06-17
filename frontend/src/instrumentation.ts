@@ -59,37 +59,54 @@ export async function register() {
       const { NodeTracerProvider } = await import(
         "@opentelemetry/sdk-trace-node"
       );
-      const { setLangfuseTracerProvider } = await import("@langfuse/tracing");
       const { maskLangfuse } = await import("./lib/ai/langfuse-mask");
 
+      // baseUrl MUST be passed explicitly. @langfuse/otel resolves it from
+      // LANGFUSE_BASE_URL / LANGFUSE_BASEURL only — it does NOT read LANGFUSE_HOST
+      // (which is the var actually set in our env) and otherwise defaults to the
+      // EU endpoint https://cloud.langfuse.com. Our project is on US cloud, so
+      // without this every OTel span was POSTed to the wrong region and silently
+      // dropped — the real reason chat traces vanished on 2026-06-10 when the
+      // handler moved to the experimental_telemetry/OTel path.
+      const langfuseBaseUrl =
+        process.env.LANGFUSE_BASE_URL?.trim() ||
+        process.env.LANGFUSE_HOST?.trim() ||
+        "https://us.cloud.langfuse.com";
+
       // Redact PII (emails / SSN / card / phone) before egress to us.cloud.
-      const processor = new LangfuseSpanProcessor({ mask: maskLangfuse });
+      const processor = new LangfuseSpanProcessor({
+        baseUrl: langfuseBaseUrl,
+        publicKey: process.env.LANGFUSE_PUBLIC_KEY,
+        secretKey: process.env.LANGFUSE_SECRET_KEY,
+        mask: maskLangfuse,
+      });
       langfuseSpanProcessor = processor;
 
-      // ISOLATED provider — NOT registered as the global OTel provider.
+      // Langfuse owns the GLOBAL OTel provider. `provider.register()` installs
+      // both the tracer provider AND a context manager (AsyncHooksContextManager),
+      // so startActiveObservation/getActiveTraceId track an active span and the
+      // AI SDK's `ai`-scope spans flow through LangfuseSpanProcessor.
       //
-      // Sentry's SDK (@sentry/nextjs v9) claims the global TracerProvider during
-      // Sentry.init() above. OpenTelemetry allows only one global provider, so a
-      // second `provider.register()` here silently no-ops and Langfuse's
-      // processor never receives spans — which is exactly why traces stopped on
-      // 2026-06-10 once Sentry + the OTel telemetry path were both live.
+      // This requires Sentry NOT to claim the global provider first: Sentry v9
+      // grabs the global TracerProvider during Sentry.init() unless
+      // `skipOpenTelemetrySetup: true` is set (see sentry.server.config.ts). With
+      // that flag, Sentry keeps full error monitoring (no OTel perf tracing) and
+      // Langfuse gets the global provider here — the mechanism that worked before
+      // Sentry's DSN was added, now restored.
       //
-      // Instead we hand Langfuse its own provider via setLangfuseTracerProvider.
-      // The Langfuse tracing helpers (startActiveObservation / propagateAttributes
-      // / getActiveTraceId) use it directly, and AI SDK spans reach it because
-      // `aiTelemetry()` passes `getLangfuseTracer()` as the telemetry tracer. This
-      // keeps Sentry's global provider — and its error/perf tracing — untouched,
-      // and decouples Langfuse from Sentry's tracesSampleRate (which is 0.1 in
-      // prod and would otherwise drop 90% of LLM traces).
-      // Ref: https://langfuse.com/faq/all/existing-sentry-setup (Option C)
+      // An isolated provider via setLangfuseTracerProvider() was tried and
+      // FAILED: it sets the tracer but installs no context manager, so
+      // startActiveObservation never established an active span ("No active OTEL
+      // span in context") and zero traces exported. Do not reintroduce it.
+      // Ref: https://langfuse.com/faq/all/existing-sentry-setup (Option A)
       const provider = new NodeTracerProvider({
         spanProcessors: [processor],
       });
-      setLangfuseTracerProvider(provider);
+      provider.register();
 
       console.log(
-        "[instrumentation] Langfuse tracing enabled (isolated provider) → " +
-          (process.env.LANGFUSE_BASE_URL ?? "https://us.cloud.langfuse.com"),
+        "[instrumentation] Langfuse tracing enabled (global provider) → " +
+          langfuseBaseUrl,
       );
     } else if (process.env.PHOENIX_TRACING === "true") {
       const { NodeSDK } = await import("@opentelemetry/sdk-node");

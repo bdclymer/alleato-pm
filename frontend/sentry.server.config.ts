@@ -18,6 +18,16 @@ if (SENTRY_DSN) {
     release: process.env.VERCEL_GIT_COMMIT_SHA,
     sendDefaultPii: process.env.SENTRY_SEND_DEFAULT_PII === "true",
     enableLogs: true,
+    // Do NOT let Sentry claim the global OpenTelemetry TracerProvider. Sentry v9
+    // grabs it during init(), and OTel allows only one global provider — that
+    // pre-empts Langfuse's provider.register() in src/instrumentation.ts, so AI
+    // SDK spans never reach the LangfuseSpanProcessor and chat traces silently
+    // stop (observed 2026-06-10). With this flag Langfuse owns the global
+    // provider for LLM observability; Sentry keeps full error monitoring but not
+    // its OTel-based performance tracing. To restore Sentry perf tracing later,
+    // install @sentry/opentelemetry and register both Langfuse + Sentry span
+    // processors on one shared provider (Langfuse "existing Sentry setup" Option B).
+    skipOpenTelemetrySetup: true,
     tracesSampleRate: parseSampleRate(
       process.env.SENTRY_TRACES_SAMPLE_RATE,
       process.env.NODE_ENV === "production" ? 0.1 : 1.0,

@@ -14,8 +14,6 @@
  * and there is one place to evolve the policy.
  */
 
-import { getLangfuseTracer } from "@langfuse/tracing";
-
 export function langfuseConfigured(): boolean {
   return Boolean(
     process.env.LANGFUSE_PUBLIC_KEY?.trim() &&
@@ -42,19 +40,11 @@ type AiTelemetryOptions = {
  * is shipped to the tracing backend.
  */
 export function aiTelemetry({ functionId, metadata }: AiTelemetryOptions) {
-  const isEnabled = aiTelemetryEnabled();
   return {
-    isEnabled,
+    isEnabled: aiTelemetryEnabled(),
     functionId,
     recordInputs: true,
     recordOutputs: true,
-    // Emit AI SDK spans onto Langfuse's ISOLATED tracer provider (set in
-    // src/instrumentation.ts via setLangfuseTracerProvider) rather than the
-    // global OTel provider, which Sentry owns. Without this, the model/token/
-    // tool spans would route to Sentry's processor and never reach Langfuse.
-    // Only attach when Langfuse is the active backend — Phoenix (PHOENIX_TRACING)
-    // uses the global provider, so leave its tracer unset.
-    ...(isEnabled && langfuseConfigured() ? { tracer: getLangfuseTracer() } : {}),
     ...(metadata ? { metadata } : {}),
   };
 }
