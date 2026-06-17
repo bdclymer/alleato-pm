@@ -22,7 +22,9 @@ import {
 } from "@/lib/admin-feedback/constants";
 import {
   buildFeedbackTargetSnapshot,
+  elementFromPointBelowOverlays,
   getSelectableElement,
+  isOverlayHost,
   type FeedbackTargetSnapshot,
 } from "@/lib/admin-feedback/targeting";
 import { captureTargetScreenshot } from "@/lib/admin-feedback/screenshot";
@@ -194,7 +196,11 @@ function getBestComposerTarget() {
 
   for (const selector of candidates) {
     const target = document.querySelector(selector);
-    if (target instanceof HTMLElement && target.offsetParent !== null) {
+    if (
+      target instanceof HTMLElement &&
+      target.offsetParent !== null &&
+      !isOverlayHost(target)
+    ) {
       return target;
     }
   }
@@ -478,7 +484,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
 
       frameRef.current = window.requestAnimationFrame(() => {
         const element = getSelectableElement(
-          document.elementFromPoint(event.clientX, event.clientY),
+          elementFromPointBelowOverlays(event.clientX, event.clientY),
         );
         if (!element) {
           setHoveredTarget(null);
@@ -491,7 +497,7 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
 
     const onClick = (event: MouseEvent) => {
       const element = getSelectableElement(
-        document.elementFromPoint(event.clientX, event.clientY),
+        elementFromPointBelowOverlays(event.clientX, event.clientY),
       );
       if (!element) {
         return;

@@ -47,6 +47,54 @@ const INTERACTIVE_SELECTOR = [
   "form",
 ].join(", ");
 
+// Velt (formerly Snippyly) injects full-viewport, high-z-index overlay custom
+// elements (e.g. <snippyly-live-state-sync-overlay>, <velt-comments-overlay>).
+// These sit on top of the whole page, so document.elementFromPoint returns them
+// instead of real page content, and html-to-image renders them as an empty
+// `data:,` image. Treat them — and our own feedback overlays — as non-targetable.
+const THIRD_PARTY_OVERLAY_TAG_PREFIXES = ["snippyly-", "velt-"];
+
+export function isOverlayHost(node: Element | null): boolean {
+  if (!node) {
+    return false;
+  }
+  const tag = node.tagName?.toLowerCase() ?? "";
+  if (THIRD_PARTY_OVERLAY_TAG_PREFIXES.some((prefix) => tag.startsWith(prefix))) {
+    return true;
+  }
+  return node.getAttribute?.(ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE) === "true";
+}
+
+function isWithinOverlay(node: Element | null): boolean {
+  let current: Element | null = node;
+  while (current) {
+    if (isOverlayHost(current)) {
+      return true;
+    }
+    current = current.parentElement;
+  }
+  return false;
+}
+
+/**
+ * Topmost element under a point that is NOT a third-party overlay (Velt) or our
+ * own feedback overlay. Velt's overlays cover the viewport, so a naive
+ * elementFromPoint always returns the overlay; walking the hit-test stack lets
+ * the user select the real page element beneath it.
+ */
+export function elementFromPointBelowOverlays(
+  x: number,
+  y: number,
+): HTMLElement | null {
+  const stack = document.elementsFromPoint(x, y);
+  for (const candidate of stack) {
+    if (candidate instanceof HTMLElement && !isWithinOverlay(candidate)) {
+      return candidate;
+    }
+  }
+  return null;
+}
+
 function cssEscape(value: string) {
   if (typeof window !== "undefined" && window.CSS?.escape) {
     return window.CSS.escape(value);
@@ -172,6 +220,11 @@ export function getSelectableElement(node: Element | null) {
   }
 
   if (node.closest(`[${ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE}="true"]`)) {
+    return null;
+  }
+
+  // Skip Velt/Snippyly overlay custom elements — they are not real page content.
+  if (isWithinOverlay(node)) {
     return null;
   }
 
