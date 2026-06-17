@@ -11,7 +11,6 @@ import {
   CheckSquare2,
   ClipboardList,
   Loader2,
-  MoreVertical,
   Pencil,
   Tag,
   Trash2,
@@ -39,12 +38,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -1274,6 +1267,7 @@ function TaskDetail({
                   onClick={() => setIsEditingText(true)}
                   disabled={updatingId === task.id}
                   aria-label="Edit task text"
+                  title="Edit task text"
                   className="group -ml-2 h-auto w-full min-w-0 items-start justify-start gap-3 whitespace-normal px-2 py-1.5 text-left hover:bg-muted/50"
                 >
                   <span className="min-w-0 flex-1 break-words text-[15px] font-medium leading-relaxed text-foreground">
@@ -1281,42 +1275,29 @@ function TaskDetail({
                   </span>
                   <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted-foreground">
                     <Pencil className="h-3.5 w-3.5" />
-                    Edit
                   </span>
                 </Button>
               </div>
             )}
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                className="mt-0.5 shrink-0 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                disabled={deletingId === task.id}
-                aria-label="Task actions"
-              >
-                {deletingId === task.id ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <MoreVertical className="h-4 w-4" />
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
-              <DropdownMenuItem
-                variant="destructive"
-                disabled={deletingId === task.id}
-                onSelect={() => {
-                  void handleDelete();
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete task
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="mt-0.5 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            disabled={deletingId === task.id}
+            aria-label="Delete task"
+            title="Delete task"
+            onClick={() => {
+              void handleDelete();
+            }}
+          >
+            {deletingId === task.id ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4" />
+            )}
+          </Button>
         </div>
 
         <div className="rounded-lg bg-muted/30 px-4 py-1">
