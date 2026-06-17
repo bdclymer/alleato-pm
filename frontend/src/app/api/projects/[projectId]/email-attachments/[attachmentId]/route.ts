@@ -1,4 +1,5 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
+import { reassignEmailAttachmentProject } from "@/lib/email/email-attachment-updates";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
@@ -43,8 +44,9 @@ async function assertAdminAccess(where: string) {
 }
 
 const patchSchema = z.object({
-  attachmentType: z.string().nullable().optional(),
-  attachmentCategory: z.string().nullable().optional(),
+  attachmentType: z.string().trim().max(100).nullable().optional(),
+  attachmentCategory: z.string().trim().max(100).nullable().optional(),
+  projectId: z.number().int().positive().optional(),
 });
 
 export const PATCH = withApiGuardrails<{ projectId: string; attachmentId: string }>(
@@ -87,25 +89,41 @@ export const PATCH = withApiGuardrails<{ projectId: string; attachmentId: string
       updates.attachment_category = parsed.data.attachmentCategory;
     }
 
-    if (Object.keys(updates).length === 0) {
-      return NextResponse.json({ success: true });
+    let project: {
+      id: number;
+      name: string | null;
+      projectNumber: string | null;
+    } | null = null;
+
+    if (parsed.data.projectId !== undefined) {
+      project = await reassignEmailAttachmentProject({
+        supabase,
+        attachmentId: id,
+        nextProjectId: parsed.data.projectId,
+        currentProjectId: projectIdNumber,
+        where: "projects/[projectId]/email-attachments/[attachmentId]#PATCH",
+      });
+    } else {
+      // Verify the attachment belongs to the project via its email before field-only updates.
+      const { data: existing, error: lookupError } = await supabase
+        .from("email_attachments")
+        .select("id, project_emails!inner(project_id)")
+        .eq("id", id)
+        .eq("project_emails.project_id", projectIdNumber)
+        .single();
+
+      if (lookupError || !existing) {
+        throw new GuardrailError({
+          code: "NOT_FOUND",
+          where: "projects/[projectId]/email-attachments/[attachmentId]#PATCH",
+          message: "Attachment not found for this project.",
+          status: 404,
+        });
+      }
     }
 
-    // Verify the attachment belongs to the project via its email
-    const { data: existing, error: lookupError } = await supabase
-      .from("email_attachments")
-      .select("id, project_emails!inner(project_id)")
-      .eq("id", id)
-      .eq("project_emails.project_id", projectIdNumber)
-      .single();
-
-    if (lookupError || !existing) {
-      throw new GuardrailError({
-        code: "NOT_FOUND",
-        where: "projects/[projectId]/email-attachments/[attachmentId]#PATCH",
-        message: "Attachment not found for this project.",
-        status: 404,
-      });
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ success: true, project });
     }
 
     const { error } = await supabase
@@ -121,7 +139,7 @@ export const PATCH = withApiGuardrails<{ projectId: string; attachmentId: string
       });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, project });
   },
 );
 

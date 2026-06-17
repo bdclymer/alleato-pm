@@ -4,11 +4,34 @@ import * as React from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Download, FileText, ImageIcon, Mail, Paperclip } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Download,
+  FileText,
+  ImageIcon,
+  Loader2,
+  Mail,
+  Paperclip,
+  Plus,
+} from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Modal,
   ModalContent,
@@ -35,7 +58,6 @@ import {
 } from "@/components/ui/select";
 import {
   CellDate,
-  CellLink,
   CellNumber,
   CellStackText,
   CellText,
@@ -45,6 +67,8 @@ import {
   type TableColumn,
 } from "@/components/tables/unified";
 import { apiFetch } from "@/lib/api-client";
+import { useProjects, type Project } from "@/hooks/use-projects";
+import { handleFormError } from "@/lib/handle-form-error";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -71,6 +95,7 @@ export const ATTACHMENT_TYPES = [
   "Drawings",
   "Submittal",
   "Invoice",
+  "Pay App",
   "RFI",
   "Contract",
   "Specifications",
@@ -130,6 +155,15 @@ interface EmailAttachmentsClientProps {
     testId?: string;
     countTestId?: string;
   }[];
+}
+
+interface AttachmentPatchResponse {
+  success: boolean;
+  project?: {
+    id: number;
+    name: string | null;
+    projectNumber: string | null;
+  } | null;
 }
 
 const attachmentColumns = [
@@ -364,22 +398,50 @@ function projectLabel(attachment: EmailAttachment): string {
   return projectId ? `Project ${projectId}` : "Unknown project";
 }
 
+function buildAttachmentTypeOptions(
+  attachments: EmailAttachment[],
+): string[] {
+  const defaults = [...ATTACHMENT_TYPES];
+  const known = new Set(defaults.map((value) => value.toLowerCase()));
+  const custom = attachments
+    .map((attachment) => attachment.attachmentType?.trim() ?? "")
+    .filter(Boolean)
+    .filter((value, index, values) => values.indexOf(value) === index)
+    .filter((value) => !known.has(value.toLowerCase()))
+    .sort((a, b) => a.localeCompare(b));
+
+  return [...defaults, ...custom];
+}
+
+function normalizeCustomOption(value: string): string {
+  return value.trim().replace(/\s+/g, " ");
+}
+
 function TypeSelectCell({
   attachment,
   projectId,
+  availableTypes,
   onUpdate,
 }: {
   attachment: EmailAttachment;
   projectId?: number;
+  availableTypes: string[];
   onUpdate: (
     id: number,
     field: "attachmentType" | "attachmentCategory",
     value: string | null,
   ) => void;
 }) {
+  const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
   const [saving, setSaving] = React.useState(false);
 
-  const handleChange = async (value: string) => {
+  const trimmedSearch = normalizeCustomOption(search);
+  const hasExactMatch = availableTypes.some(
+    (type) => type.toLowerCase() === trimmedSearch.toLowerCase(),
+  );
+
+  const handleChange = async (value: string | null) => {
     const next = value === "__clear__" ? null : value;
     setSaving(true);
     try {
@@ -388,39 +450,100 @@ function TypeSelectCell({
         body: JSON.stringify({ attachmentType: next }),
       });
       onUpdate(attachment.id, "attachmentType", next);
-    } catch {
-      toast.error("Failed to update type");
+      setOpen(false);
+      setSearch("");
+    } catch (error) {
+      handleFormError(error, { entity: "attachment type", action: "update" });
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <Select
-      value={attachment.attachmentType ?? ""}
-      onValueChange={handleChange}
-      disabled={saving}
+    <Popover
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (!nextOpen) setSearch("");
+      }}
     >
-      <SelectTrigger
-        // DESIGN-SYSTEM EXCEPTION: inline taxonomy editing is an interactive table cell.
-        // Move to a shared EditableSelectCell primitive before adding this pattern elsewhere.
-        className="h-7 w-36 text-xs"
-        data-row-interactive="true"
-        aria-label="Attachment type"
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          // DESIGN-SYSTEM EXCEPTION: inline taxonomy editing is an interactive table cell.
+          // Promote this into a shared editable combobox cell before reusing it elsewhere.
+          className="h-7 w-40 justify-between px-2 text-xs font-normal"
+          data-row-interactive="true"
+          disabled={saving}
+          aria-label="Attachment type"
+        >
+          <span
+            className={
+              attachment.attachmentType
+                ? "truncate text-foreground"
+                : "truncate text-muted-foreground"
+            }
+          >
+            {attachment.attachmentType ?? "Set type..."}
+          </span>
+          {saving ? (
+            <Loader2 className="size-3 shrink-0 animate-spin text-muted-foreground" />
+          ) : (
+            <ChevronDown className="size-3 shrink-0 text-muted-foreground" />
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-64 p-0"
+        align="start"
+        onOpenAutoFocus={(event) => event.preventDefault()}
       >
-        <SelectValue placeholder="Set type..." />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="__clear__" className="text-muted-foreground">
-          — clear —
-        </SelectItem>
-        {ATTACHMENT_TYPES.map((t) => (
-          <SelectItem key={t} value={t}>
-            {t}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+        <Command shouldFilter>
+          <CommandInput
+            placeholder="Search or create type..."
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList>
+            <CommandEmpty>No matching types.</CommandEmpty>
+            <CommandGroup>
+              {attachment.attachmentType ? (
+                <CommandItem
+                  value="__clear__"
+                  onSelect={() => void handleChange("__clear__")}
+                  className="text-muted-foreground"
+                >
+                  Clear type
+                </CommandItem>
+              ) : null}
+              {trimmedSearch && !hasExactMatch ? (
+                <CommandItem
+                  value={`create ${trimmedSearch}`}
+                  onSelect={() => void handleChange(trimmedSearch)}
+                >
+                  <Plus className="size-3.5" />
+                  Create "{trimmedSearch}"
+                </CommandItem>
+              ) : null}
+              {availableTypes.map((type) => (
+                <CommandItem
+                  key={type}
+                  value={type}
+                  onSelect={() => void handleChange(type)}
+                >
+                  <Check
+                    className={`size-3.5 ${attachment.attachmentType === type ? "opacity-100" : "opacity-0"}`}
+                  />
+                  <span className="truncate">{type}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -484,6 +607,106 @@ function CategorySelectCell({
   );
 }
 
+function ProjectSelectCell({
+  attachment,
+  onUpdateProject,
+}: {
+  attachment: EmailAttachment;
+  onUpdateProject: (
+    id: number,
+    project: EmailAttachment["project"],
+  ) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+  const { projects, isLoading } = useProjects({ enabled: open, limit: 250 });
+
+  const handleSelect = async (project: Project) => {
+    if (attachment.project?.id === project.id) {
+      setOpen(false);
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await apiFetch<AttachmentPatchResponse>(
+        patchUrl(undefined, attachment.id),
+        {
+          method: "PATCH",
+          body: JSON.stringify({ projectId: project.id }),
+        },
+      );
+
+      onUpdateProject(attachment.id, {
+        id: response.project?.id ?? project.id,
+        name: response.project?.name ?? project.name,
+        projectNumber:
+          response.project?.projectNumber ?? project.project_number ?? null,
+      });
+      setOpen(false);
+    } catch (error) {
+      handleFormError(error, {
+        entity: "attachment project assignment",
+        action: "update",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          // DESIGN-SYSTEM EXCEPTION: project reassignment is an interactive table cell.
+          // Promote this into a shared editable project cell before reusing it elsewhere.
+          className="h-7 w-56 justify-between px-2 text-xs font-normal"
+          data-row-interactive="true"
+          disabled={saving}
+        >
+          <span className="truncate text-left">{projectLabel(attachment)}</span>
+          {saving ? (
+            <Loader2 className="size-3 shrink-0 animate-spin text-muted-foreground" />
+          ) : (
+            <ChevronDown className="size-3 shrink-0 text-muted-foreground" />
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Search projects..." />
+          <CommandList>
+            <CommandEmpty>
+              {isLoading ? "Loading..." : "No projects found."}
+            </CommandEmpty>
+            <CommandGroup>
+              {projects.map((project) => (
+                <CommandItem
+                  key={project.id}
+                  value={`${project.project_number ?? ""} ${project.name ?? ""}`}
+                  onSelect={() => void handleSelect(project)}
+                >
+                  <Check
+                    className={`size-3.5 ${attachment.project?.id === project.id ? "opacity-100" : "opacity-0"}`}
+                  />
+                  <span className="truncate">
+                    {project.project_number
+                      ? `${project.project_number} - ${project.name ?? `Project ${project.id}`}`
+                      : (project.name ?? `Project ${project.id}`)}
+                  </span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function EmailAttachmentsClient({
   projectId,
   scope = "project",
@@ -542,6 +765,11 @@ export function EmailAttachmentsClient({
     enabled: isGlobal || Number.isInteger(projectId),
   });
 
+  const attachmentTypeOptions = React.useMemo(
+    () => buildAttachmentTypeOptions(attachments),
+    [attachments],
+  );
+
   React.useEffect(() => {
     if (tableState.visibleColumns.length === 0) {
       tableState.setVisibleColumns(
@@ -568,7 +796,27 @@ export function EmailAttachmentsClient({
           prev?.map((a) => (a.id === id ? { ...a, [field]: value } : a)) ?? [],
       );
     },
-    [queryClient, queryKey.join(",")],
+    [queryClient, queryKey],
+  );
+
+  const handleProjectUpdate = React.useCallback(
+    (id: number, project: EmailAttachment["project"]) => {
+      queryClient.setQueryData<EmailAttachment[]>(
+        queryKey,
+        (prev) =>
+          prev?.map((attachment) =>
+            attachment.id === id ? { ...attachment, project } : attachment,
+          ) ?? [],
+      );
+
+      void queryClient.invalidateQueries({
+        predicate: (query) => {
+          const root = query.queryKey[0];
+          return root === "emails" || root === "email-attachments" || root === "email-attachments-global";
+        },
+      });
+    },
+    [queryClient, queryKey],
   );
 
   const columns = React.useMemo<TableColumn<EmailAttachment>[]>(() => {
@@ -596,6 +844,7 @@ export function EmailAttachmentsClient({
           <TypeSelectCell
             attachment={item}
             projectId={isGlobal ? undefined : projectId}
+            availableTypes={attachmentTypeOptions}
             onUpdate={handleFieldUpdate}
           />
         ),
@@ -660,13 +909,11 @@ export function EmailAttachmentsClient({
               sortable: true,
               sortValue: projectLabel,
               render: (item: EmailAttachment) =>
-                item.project?.id ? (
-                  <CellLink
-                    value={projectLabel(item)}
-                    href={`/${item.project.id}/emails`}
+                (
+                  <ProjectSelectCell
+                    attachment={item}
+                    onUpdateProject={handleProjectUpdate}
                   />
-                ) : (
-                  <CellText value={projectLabel(item)} />
                 ),
             } satisfies TableColumn<EmailAttachment>,
           ]
@@ -714,7 +961,13 @@ export function EmailAttachmentsClient({
     ];
 
     return baseColumns;
-  }, [isGlobal, projectId, handleFieldUpdate]);
+  }, [
+    attachmentTypeOptions,
+    handleFieldUpdate,
+    handleProjectUpdate,
+    isGlobal,
+    projectId,
+  ]);
 
   const searchTerm = tableState.debouncedSearch.trim().toLowerCase();
   const filteredAttachments = React.useMemo(() => {

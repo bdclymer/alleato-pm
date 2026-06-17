@@ -1,4 +1,5 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
+import { reassignEmailAttachmentProject } from "@/lib/email/email-attachment-updates";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
@@ -43,8 +44,9 @@ async function assertAdminAccess(where: string) {
 }
 
 const patchSchema = z.object({
-  attachmentType: z.string().nullable().optional(),
-  attachmentCategory: z.string().nullable().optional(),
+  attachmentType: z.string().trim().max(100).nullable().optional(),
+  attachmentCategory: z.string().trim().max(100).nullable().optional(),
+  projectId: z.number().int().positive().optional(),
 });
 
 export const PATCH = withApiGuardrails<{ attachmentId: string }>(
@@ -86,8 +88,23 @@ export const PATCH = withApiGuardrails<{ attachmentId: string }>(
       updates.attachment_category = parsed.data.attachmentCategory;
     }
 
+    let project: {
+      id: number;
+      name: string | null;
+      projectNumber: string | null;
+    } | null = null;
+
+    if (parsed.data.projectId !== undefined) {
+      project = await reassignEmailAttachmentProject({
+        supabase,
+        attachmentId: id,
+        nextProjectId: parsed.data.projectId,
+        where: "email-attachments/[attachmentId]#PATCH",
+      });
+    }
+
     if (Object.keys(updates).length === 0) {
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true, project });
     }
 
     const { error } = await supabase
@@ -103,7 +120,7 @@ export const PATCH = withApiGuardrails<{ attachmentId: string }>(
       });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, project });
   },
 );
 

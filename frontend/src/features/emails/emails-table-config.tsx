@@ -1,6 +1,14 @@
 import * as React from "react";
 import type { ReactElement } from "react";
-import { Ban, MoreHorizontal, Paperclip, Pencil, Star, Trash2 } from "lucide-react";
+import {
+  Ban,
+  MoreHorizontal,
+  Paperclip,
+  Pencil,
+  Star,
+  StarOff,
+  Trash2,
+} from "lucide-react";
 
 import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
@@ -38,19 +46,69 @@ export const globalEmailColumns: ColumnConfig[] = [
   ...emailColumns,
 ];
 
-export const emailFilters: FilterConfig[] = [
-  {
-    id: "status",
-    label: "Status",
-    type: "select",
-    options: [
-      { value: "Draft", label: "Draft" },
-      { value: "Sent", label: "Sent" },
-      { value: "Received", label: "Received" },
-      { value: "Failed", label: "Failed" },
-    ],
-  },
-];
+interface EmailFilterProjectOption {
+  id: number;
+  label: string;
+}
+
+export function buildEmailFilters(options?: {
+  showProject?: boolean;
+  projects?: EmailFilterProjectOption[];
+}): FilterConfig[] {
+  return [
+    {
+      id: "status",
+      label: "Status",
+      type: "select",
+      options: [
+        { value: "Draft", label: "Draft" },
+        { value: "Sent", label: "Sent" },
+        { value: "Received", label: "Received" },
+        { value: "Failed", label: "Failed" },
+      ],
+    },
+    ...(options?.showProject && options.projects && options.projects.length > 0
+      ? [
+          {
+            id: "project_id",
+            label: "Project",
+            type: "select" as const,
+            options: options.projects.map((project) => ({
+              value: String(project.id),
+              label: project.label,
+            })),
+          },
+        ]
+      : []),
+    {
+      id: "from",
+      label: "From",
+      type: "text",
+      placeholder: "Sender name or email",
+    },
+    {
+      id: "to",
+      label: "To",
+      type: "text",
+      placeholder: "Recipient email",
+    },
+    {
+      id: "has_attachments",
+      label: "Has attachments",
+      type: "boolean",
+    },
+    {
+      id: "is_starred",
+      label: "Starred",
+      type: "boolean",
+    },
+    {
+      id: "sent_at",
+      label: "Date",
+      type: "dateRange",
+    },
+  ];
+}
 
 export const emailDefaultVisibleColumns = emailColumns
   .filter((col) => col.defaultVisible !== false)
@@ -137,7 +195,7 @@ export function buildEmailTableColumns(options?: {
     },
     {
       ...emailColumns[5],
-      width: 100,
+      width: 128,
       render: (item) =>
         item.has_attachments ? (
           <Paperclip className="h-4 w-4 text-muted-foreground" />
@@ -149,7 +207,7 @@ export function buildEmailTableColumns(options?: {
     },
     {
       ...emailColumns[6],
-      width: 80,
+      width: 96,
       render: (item) =>
         item.is_starred ? (
           <Star className="h-4 w-4 fill-current text-status-warning" />
@@ -183,9 +241,19 @@ export function renderEmailRowActions(
   onEdit: ((email: ProjectEmail) => void) | null,
   onDelete: ((email: ProjectEmail) => void) | null,
   onMarkAsJunk?: ((email: ProjectEmail) => void) | null,
+  onMarkImportant?: ((email: ProjectEmail) => void) | null,
+  onMarkNotImportant?: ((email: ProjectEmail) => void) | null,
 ): ReactElement | null {
   // If every action is disabled, render nothing.
-  if (!onEdit && !onDelete && !onMarkAsJunk) return null;
+  if (
+    !onEdit &&
+    !onDelete &&
+    !onMarkAsJunk &&
+    !onMarkImportant &&
+    !onMarkNotImportant
+  ) {
+    return null;
+  }
 
   return (
     <DropdownMenu>
@@ -205,6 +273,18 @@ export function renderEmailRowActions(
           <DropdownMenuItem onClick={() => onMarkAsJunk(item)}>
             <Ban className="mr-2 h-4 w-4" />
             Mark as junk...
+          </DropdownMenuItem>
+        ) : null}
+        {onMarkImportant ? (
+          <DropdownMenuItem onClick={() => onMarkImportant(item)}>
+            <Star className="mr-2 h-4 w-4" />
+            Mark important...
+          </DropdownMenuItem>
+        ) : null}
+        {onMarkNotImportant ? (
+          <DropdownMenuItem onClick={() => onMarkNotImportant(item)}>
+            <StarOff className="mr-2 h-4 w-4" />
+            Mark not important...
           </DropdownMenuItem>
         ) : null}
         {onDelete ? (

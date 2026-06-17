@@ -120,7 +120,7 @@ const DATE_LIKE_COLUMN_PATTERN =
   /(^|[_\s-])(date|created|updated|reviewed|submitted|received|sent|issued|due|completed|closed|opened|start|end)([_\s-]|$)/i;
 
 export const TABLE_HEADER_LABEL_CLASSNAME =
-  "min-w-0 whitespace-normal break-words leading-4";
+  "inline-block min-w-max shrink-0 whitespace-nowrap [word-break:keep-all]";
 
 function isInteractiveRowTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) {
@@ -2258,6 +2258,7 @@ export function UnifiedTablePage<T>({
                                             "h-auto gap-1.5 p-0 has-[>svg]:px-0 font-medium uppercase tracking-wide",
                                             "text-xs",
                                             "w-full",
+                                            "overflow-visible",
                                             "text-muted-foreground hover:bg-transparent hover:text-foreground focus-visible:ring-0 data-[state=open]:bg-transparent data-[state=open]:text-foreground",
                                             columnAlignment === "right"
                                               ? "justify-end"
@@ -2362,6 +2363,7 @@ export function UnifiedTablePage<T>({
                                       className={cn(
                                         "flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground",
                                         "w-full",
+                                        "overflow-visible",
                                         columnAlignment === "right"
                                           ? "justify-end"
                                           : columnAlignment === "center"
@@ -3038,7 +3040,7 @@ export function UnifiedTablePage<T>({
               {isSidePanelOpen && (
                 <aside
                   className={cn(
-                    "hidden lg:flex lg:flex-col bg-card relative min-h-[calc(100dvh-6rem)]",
+                    "hidden lg:flex lg:flex-col bg-card relative min-h-[calc(100dvh-6rem)] lg:rounded-t-md lg:border-t lg:border-border/70",
                     panelSticky
                       ? "lg:sticky lg:top-12 lg:max-h-[calc(100dvh-3rem)]"
                       : "lg:relative lg:max-h-none",
