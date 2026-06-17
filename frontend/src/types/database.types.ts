@@ -9171,6 +9171,7 @@ export type Database = {
           id: string
           log_date: string
           project_id: number | null
+          site_management_checklist: Json | null
           site_scribe_session_id: string | null
           status: string
           updated_at: string | null
@@ -9189,6 +9190,7 @@ export type Database = {
           id?: string
           log_date: string
           project_id?: number | null
+          site_management_checklist?: Json | null
           site_scribe_session_id?: string | null
           status?: string
           updated_at?: string | null
@@ -9207,6 +9209,7 @@ export type Database = {
           id?: string
           log_date?: string
           project_id?: number | null
+          site_management_checklist?: Json | null
           site_scribe_session_id?: string | null
           status?: string
           updated_at?: string | null
@@ -16209,6 +16212,245 @@ export type Database = {
           },
           {
             foreignKeyName: "issues_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manpower_assignments: {
+        Row: {
+          assignee_name: string | null
+          assignee_person_id: string | null
+          created_at: string
+          duration_days: number | null
+          duration_label: string | null
+          finish_date: string | null
+          finish_label: string | null
+          id: string
+          manpower_project_id: string
+          notes: string | null
+          plan_id: string
+          predecessors: string | null
+          role: string
+          sort_order: number
+          start_date: string | null
+          start_label: string | null
+          status: string
+          task_mode: string | null
+          updated_at: string
+        }
+        Insert: {
+          assignee_name?: string | null
+          assignee_person_id?: string | null
+          created_at?: string
+          duration_days?: number | null
+          duration_label?: string | null
+          finish_date?: string | null
+          finish_label?: string | null
+          id?: string
+          manpower_project_id: string
+          notes?: string | null
+          plan_id: string
+          predecessors?: string | null
+          role: string
+          sort_order?: number
+          start_date?: string | null
+          start_label?: string | null
+          status: string
+          task_mode?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assignee_name?: string | null
+          assignee_person_id?: string | null
+          created_at?: string
+          duration_days?: number | null
+          duration_label?: string | null
+          finish_date?: string | null
+          finish_label?: string | null
+          id?: string
+          manpower_project_id?: string
+          notes?: string | null
+          plan_id?: string
+          predecessors?: string | null
+          role?: string
+          sort_order?: number
+          start_date?: string | null
+          start_label?: string | null
+          status?: string
+          task_mode?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manpower_assignments_assignee_person_id_fkey"
+            columns: ["assignee_person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manpower_assignments_manpower_project_id_fkey"
+            columns: ["manpower_project_id"]
+            isOneToOne: false
+            referencedRelation: "manpower_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manpower_assignments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "manpower_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manpower_plans: {
+        Row: {
+          created_at: string
+          id: string
+          imported_at: string
+          imported_by_person_id: string | null
+          is_active: boolean
+          source_label: string
+          updated_at: string
+          warning_count: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          imported_at?: string
+          imported_by_person_id?: string | null
+          is_active?: boolean
+          source_label: string
+          updated_at?: string
+          warning_count?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          imported_at?: string
+          imported_by_person_id?: string | null
+          is_active?: boolean
+          source_label?: string
+          updated_at?: string
+          warning_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manpower_plans_imported_by_person_id_fkey"
+            columns: ["imported_by_person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manpower_projects: {
+        Row: {
+          created_at: string
+          duration_days: number | null
+          duration_label: string | null
+          external_code: string | null
+          finish_date: string | null
+          finish_label: string | null
+          id: string
+          notes: string | null
+          plan_id: string
+          project_id: number | null
+          project_name: string
+          sort_order: number
+          stage: string
+          start_date: string | null
+          start_label: string | null
+          task_mode: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          duration_days?: number | null
+          duration_label?: string | null
+          external_code?: string | null
+          finish_date?: string | null
+          finish_label?: string | null
+          id?: string
+          notes?: string | null
+          plan_id: string
+          project_id?: number | null
+          project_name: string
+          sort_order?: number
+          stage: string
+          start_date?: string | null
+          start_label?: string | null
+          task_mode?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          duration_days?: number | null
+          duration_label?: string | null
+          external_code?: string | null
+          finish_date?: string | null
+          finish_label?: string | null
+          id?: string
+          notes?: string | null
+          plan_id?: string
+          project_id?: number | null
+          project_name?: string
+          sort_order?: number
+          stage?: string
+          start_date?: string | null
+          start_label?: string | null
+          task_mode?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manpower_projects_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "manpower_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manpower_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "manpower_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manpower_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "manpower_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manpower_projects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manpower_projects_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
@@ -25058,6 +25300,143 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      reconciliation_findings: {
+        Row: {
+          acu_value_cents: number | null
+          acumatica_checked: boolean
+          amount_cents: number | null
+          cost_code: string | null
+          cost_code_label: string | null
+          cost_type: string | null
+          detail: string
+          external_id: string | null
+          external_model: string | null
+          fingerprint: string
+          first_seen_at: string
+          is_active: boolean
+          jp_modified_on: string | null
+          jp_project_id: number
+          jp_project_name: string
+          jp_value_cents: number | null
+          kind: string
+          last_run_id: number | null
+          last_seen_at: string
+          last_synced_on: string | null
+          record_ref: string
+          record_type: string
+          review_status: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          tier: string
+        }
+        Insert: {
+          acu_value_cents?: number | null
+          acumatica_checked?: boolean
+          amount_cents?: number | null
+          cost_code?: string | null
+          cost_code_label?: string | null
+          cost_type?: string | null
+          detail: string
+          external_id?: string | null
+          external_model?: string | null
+          fingerprint: string
+          first_seen_at?: string
+          is_active?: boolean
+          jp_modified_on?: string | null
+          jp_project_id: number
+          jp_project_name: string
+          jp_value_cents?: number | null
+          kind: string
+          last_run_id?: number | null
+          last_seen_at?: string
+          last_synced_on?: string | null
+          record_ref: string
+          record_type: string
+          review_status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          tier: string
+        }
+        Update: {
+          acu_value_cents?: number | null
+          acumatica_checked?: boolean
+          amount_cents?: number | null
+          cost_code?: string | null
+          cost_code_label?: string | null
+          cost_type?: string | null
+          detail?: string
+          external_id?: string | null
+          external_model?: string | null
+          fingerprint?: string
+          first_seen_at?: string
+          is_active?: boolean
+          jp_modified_on?: string | null
+          jp_project_id?: number
+          jp_project_name?: string
+          jp_value_cents?: number | null
+          kind?: string
+          last_run_id?: number | null
+          last_seen_at?: string
+          last_synced_on?: string | null
+          record_ref?: string
+          record_type?: string
+          review_status?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          tier?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reconciliation_findings_last_run_id_fkey"
+            columns: ["last_run_id"]
+            isOneToOne: false
+            referencedRelation: "reconciliation_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reconciliation_runs: {
+        Row: {
+          acumatica_checked: boolean
+          dollars_at_risk_cents: number
+          error: string | null
+          findings_total: number
+          finished_at: string | null
+          high_count: number
+          id: number
+          projects_scanned: number
+          source: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          acumatica_checked?: boolean
+          dollars_at_risk_cents?: number
+          error?: string | null
+          findings_total?: number
+          finished_at?: string | null
+          high_count?: number
+          id?: number
+          projects_scanned?: number
+          source?: string
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          acumatica_checked?: boolean
+          dollars_at_risk_cents?: number
+          error?: string | null
+          findings_total?: number
+          finished_at?: string | null
+          high_count?: number
+          id?: number
+          projects_scanned?: number
+          source?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
       }
       recurring_issue_evidence: {
         Row: {

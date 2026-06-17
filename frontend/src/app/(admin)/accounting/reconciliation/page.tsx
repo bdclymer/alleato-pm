@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ExternalLink, RefreshCw } from "lucide-react";
+import { Check, ExternalLink, RefreshCw, RotateCcw } from "lucide-react";
 
 import {
   UnifiedTablePage,
@@ -12,14 +12,15 @@ import {
 } from "@/components/tables/unified";
 import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { centsToUsd, type FindingTier } from "@/lib/accounting/reconciliation";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { centsToUsd, type ReconciliationFinding, type FindingTier } from "@/lib/accounting/reconciliation";
-import { useReconciliationFindings } from "@/hooks/use-reconciliation-findings";
+  useReconciliationFindings,
+  useResolveFinding,
+  useRunReconciliation,
+  type ReconciliationFindingItem,
+  type ReviewStatus,
+} from "@/hooks/use-reconciliation-findings";
 import {
   kindLabels,
   kindMeaning,
@@ -35,7 +36,13 @@ const tierVariant: Record<FindingTier, "error" | "warning" | "neutral"> = {
   INFO: "neutral",
 };
 
-const recordTypeLabels: Record<ReconciliationFinding["recordType"], string> = {
+const statusVariant: Record<ReviewStatus, "success" | "info" | "neutral"> = {
+  resolved: "success",
+  reviewed: "info",
+  open: "neutral",
+};
+
+const recordTypeLabels: Record<ReconciliationFindingItem["recordType"], string> = {
   budget_line: "Budget line",
   commitment_co: "Commitment CO",
   prime_co: "Prime CO",
@@ -60,7 +67,7 @@ function relativeDays(value: string | null): string {
   return `${Math.floor(days / 30)} mo ago`;
 }
 
-const columns: TableColumn<ReconciliationFinding>[] = [
+const columns: TableColumn<ReconciliationFindingItem>[] = [
   {
     id: "project",
     label: "Project",
@@ -91,7 +98,12 @@ const columns: TableColumn<ReconciliationFinding>[] = [
     sortable: true,
     sortValue: (f) => ({ HIGH: 0, MED: 1, INFO: 2 })[f.tier],
     csvValue: (f) => tierLabels[f.tier],
-    render: (f) => <StatusBadge status={tierLabels[f.tier]} variant={tierVariant[f.tier]} />,
+    render: (f) => (
+      <span className="inline-flex items-center gap-1">
+        <StatusBadge status={tierLabels[f.tier]} variant={tierVariant[f.tier]} />
+        {f.acumaticaChecked && <Check className="h-3.5 w-3.5 text-muted-foreground" />}
+      </span>
+    ),
   },
   {
     id: "kind",
@@ -101,6 +113,23 @@ const columns: TableColumn<ReconciliationFinding>[] = [
     sortValue: (f) => f.kind,
     csvValue: (f) => kindLabels[f.kind],
     render: (f) => <span>{kindLabels[f.kind]}</span>,
+  },
+  {
+    id: "status",
+    label: "Status",
+    defaultVisible: true,
+    sortable: true,
+    sortValue: (f) => f.reviewStatus,
+    csvValue: (f) => f.reviewStatus,
+    render: (f) =>
+      f.reviewStatus === "open" ? (
+        <span className="text-xs text-muted-foreground">Open</span>
+      ) : (
+        <StatusBadge
+          status={f.reviewStatus === "resolved" ? "Resolved" : "Reviewed"}
+          variant={statusVariant[f.reviewStatus]}
+        />
+      ),
   },
   {
     id: "modified",
@@ -156,7 +185,15 @@ function EvidenceRow({ label, value }: { label: string; value: React.ReactNode }
   );
 }
 
-function FindingDetail({ finding }: { finding: ReconciliationFinding }) {
+function FindingDetail({
+  finding,
+  onReview,
+  isUpdating,
+}: {
+  finding: ReconciliationFindingItem;
+  onReview: (status: ReviewStatus) => void;
+  isUpdating: boolean;
+}) {
   const showValues = (finding.jpValueCents ?? 0) !== 0 || (finding.acuValueCents ?? 0) !== 0;
   return (
     <div className="mt-4 space-y-6">
@@ -173,8 +210,9 @@ function FindingDetail({ finding }: { finding: ReconciliationFinding }) {
             value={
               <span className="tabular-nums">
                 Job Planner {centsToUsd(finding.jpValueCents)}
-                {finding.acuValueCents != null && (
-                  <> · Acumatica {centsToUsd(finding.acuValueCents)}</>
+                {finding.acuValueCents != null && <> · Acumatica {centsToUsd(finding.acuValueCents)}</>}
+                {finding.acumaticaChecked && (
+                  <span className="ml-2 text-xs text-muted-foreground">✓ verified against Acumatica ledger</span>
                 )}
               </span>
             }
@@ -191,6 +229,24 @@ function FindingDetail({ finding }: { finding: ReconciliationFinding }) {
       </div>
 
       <div className="flex flex-col gap-2">
+        <div className="flex gap-2">
+          {finding.reviewStatus !== "resolved" ? (
+            <Button size="sm" onClick={() => onReview("resolved")} disabled={isUpdating}>
+              <Check className="h-4 w-4 mr-2" />
+              Mark resolved
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" onClick={() => onReview("open")} disabled={isUpdating}>
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reopen
+            </Button>
+          )}
+          {finding.reviewStatus === "open" && (
+            <Button size="sm" variant="outline" onClick={() => onReview("reviewed")} disabled={isUpdating}>
+              Mark reviewed
+            </Button>
+          )}
+        </div>
         <a href={ACUMATICA_PROJECTS_URL} target="_blank" rel="noreferrer">
           <Button variant="outline" size="sm" className="w-full justify-start">
             <ExternalLink className="h-4 w-4 mr-2" />
@@ -210,8 +266,10 @@ export default function ReconciliationPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { data, isLoading, isFetching, error, refetch } = useReconciliationFindings();
-  const [selected, setSelected] = useState<ReconciliationFinding | null>(null);
+  const { data, isLoading, isFetching, error } = useReconciliationFindings();
+  const runScan = useRunReconciliation();
+  const resolveFinding = useResolveFinding();
+  const [selected, setSelected] = useState<ReconciliationFindingItem | null>(null);
 
   const tableState = useUnifiedTableState({
     entityKey: "reconciliation-findings",
@@ -251,7 +309,7 @@ export default function ReconciliationPage() {
   const summary = data?.summary;
   const generatedAt = data?.generatedAt ? fmtDate(data.generatedAt) : "—";
   const description = summary
-    ? `${summary.highCount} high-confidence findings · ${centsToUsd(summary.dollarsAtRiskCents)} at risk · ${summary.projects} projects · scanned ${generatedAt}. Click any row for the evidence.`
+    ? `${summary.highCount} high-confidence findings · ${centsToUsd(summary.dollarsAtRiskCents)} at risk · ${summary.projects} projects · verified against Acumatica · scanned ${generatedAt}. Click any row for the evidence.`
     : "Job Planner records that disagree with Acumatica — unlinked, drifted, or mismatched. Click any row for the evidence.";
 
   const handleFilterChange = (next: Record<string, FilterValue>) => {
@@ -261,6 +319,16 @@ export default function ReconciliationPage() {
     });
   };
 
+  const handleReview = (status: ReviewStatus) => {
+    if (!selected) return;
+    resolveFinding.mutate(
+      { fingerprint: selected.fingerprint, reviewStatus: status },
+      { onSuccess: () => setSelected(null) },
+    );
+  };
+
+  const scanning = runScan.isPending || isFetching;
+
   return (
     <>
       <UnifiedTablePage
@@ -268,9 +336,9 @@ export default function ReconciliationPage() {
           title: "Reconciliation",
           description,
           actions: (
-            <Button size="sm" variant="outline" onClick={() => refetch()} disabled={isFetching}>
-              <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
-              Refresh
+            <Button size="sm" variant="outline" onClick={() => runScan.mutate()} disabled={scanning}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${scanning ? "animate-spin" : ""}`} />
+              {runScan.isPending ? "Re-scanning…" : "Re-scan"}
             </Button>
           ),
         }}
@@ -301,7 +369,7 @@ export default function ReconciliationPage() {
         }}
         emptyState={{
           title: "No findings",
-          description: "Job Planner and Acumatica are in sync, or no data has loaded yet.",
+          description: "Job Planner and Acumatica are in sync, or no scan has run yet.",
           filteredDescription: "No findings match your current filters.",
           isFiltered: Boolean(tableState.debouncedSearch) || Boolean(activeFilters.tier) || Boolean(activeFilters.kind),
         }}
@@ -317,7 +385,7 @@ export default function ReconciliationPage() {
                   {kindLabels[selected.kind]}
                 </SheetTitle>
               </SheetHeader>
-              <FindingDetail finding={selected} />
+              <FindingDetail finding={selected} onReview={handleReview} isUpdating={resolveFinding.isPending} />
             </>
           )}
         </SheetContent>

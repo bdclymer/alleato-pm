@@ -36,6 +36,7 @@ export type JpProject = {
 export type JpBudgetLine = {
   id: number;
   costCodeId: number | null;
+  costTypeId: number | null;
   description: string | null;
   modifiedOn: string | null;
   directCostValues?: Record<string, { amount?: number }> | null;
@@ -70,6 +71,13 @@ export type JpCostCode = {
   code: string;
   name: string;
   division: string | null;
+};
+
+export type JpCostType = {
+  id: number;
+  /** Single-letter code: L=Labor, E=Equipment, M=Material, S=Subcontract, X=Expense. */
+  code: string;
+  name: string;
 };
 
 function apiKey(): string {
@@ -110,4 +118,8 @@ export function getPrimeContractChangeOrders(projectId: number): Promise<JpChang
 
 export function getCostCodes(projectId: number): Promise<JpCostCode[]> {
   return getJson<JpCostCode[]>(`${API_V2}/projects/${projectId}/costcodes`);
+}
+
+export function getCostTypes(projectId: number): Promise<JpCostType[]> {
+  return getJson<JpCostType[]>(`${API_V2}/projects/${projectId}/costtypes`);
 }
