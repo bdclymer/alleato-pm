@@ -97,7 +97,6 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: Bot,
     description: "AI-powered project guidance",
-    developerOnly: true,
   },
   {
     name: "Projects",
@@ -134,6 +133,13 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: CheckCircle,
     description: "Company task board",
+  },
+  {
+    name: "Manpower",
+    path: "manpower",
+    requiresProject: false,
+    icon: Users,
+    description: "Cross-project staffing plan",
   },
   {
     name: "Knowledge Base",
@@ -285,6 +291,7 @@ export const companyWideToolSections: CompanyWideToolSection[] = [
       "Assignment Inbox",
       "Meetings",
       "Tasks",
+      "Manpower",
       "Knowledge Base",
       "Documents",
       "Teams Conversations",

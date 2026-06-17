@@ -156,6 +156,27 @@ describe("navigation config", () => {
     });
   });
 
+  it("keeps the AI Strategist available to non-developer users", () => {
+    // Guardrail: the AI assistant is intentionally available to ALL authenticated
+    // users. It must not be marked developerOnly (which would hide its nav link)
+    // unless the page + /api/ai-assistant routes also enforce the role server-side.
+    const aiTool = companyWideHeaderTools.find((tool) => tool.name === "AI Strategist");
+
+    expect(aiTool).toMatchObject({ name: "AI Strategist", path: "ai-assistant" });
+    expect(aiTool?.developerOnly).toBeUndefined();
+
+    const tools = filterToolsByPermission(
+      companyWideHeaderTools,
+      null,
+      {},
+      false,
+      "employee",
+      false,
+    );
+
+    expect(tools.some((tool) => tool.name === "AI Strategist")).toBe(true);
+  });
+
   it("keeps company-wide Work tools enabled for non-developer users", () => {
     const expectedTools = [
       { name: "Meetings", path: "meetings", href: "/meetings" },
