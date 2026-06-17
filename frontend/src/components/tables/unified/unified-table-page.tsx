@@ -119,6 +119,9 @@ const INTERACTIVE_ROW_TARGET_SELECTOR = [
 const DATE_LIKE_COLUMN_PATTERN =
   /(^|[_\s-])(date|created|updated|reviewed|submitted|received|sent|issued|due|completed|closed|opened|start|end)([_\s-]|$)/i;
 
+export const TABLE_HEADER_LABEL_CLASSNAME =
+  "min-w-0 whitespace-normal break-words leading-4";
+
 function isInteractiveRowTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) {
     return false;
@@ -2267,7 +2270,11 @@ export function UnifiedTablePage<T>({
                                             event.currentTarget.click();
                                           }}
                                         >
-                                          <span className="min-w-0 truncate">
+                                          <span
+                                            className={
+                                              TABLE_HEADER_LABEL_CLASSNAME
+                                            }
+                                          >
                                             {column.label}
                                           </span>
                                           {isSortable &&
@@ -2362,7 +2369,11 @@ export function UnifiedTablePage<T>({
                                             : "justify-start",
                                       )}
                                     >
-                                      <span className="min-w-0 truncate">
+                                      <span
+                                        className={
+                                          TABLE_HEADER_LABEL_CLASSNAME
+                                        }
+                                      >
                                         {column.label}
                                       </span>
                                       {dragHandle}
