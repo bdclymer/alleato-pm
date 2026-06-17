@@ -26,7 +26,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..ai_transport import get_openai_client
-from ..ops.db_pressure_guard import enforce_no_pm_app_high_churn_writes
+from ..ops.db_pressure_guard import (
+    enforce_no_pm_app_high_churn_writes,
+    enforce_pm_app_final_projection_guard,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -627,6 +630,21 @@ def compile_domain_packet(
     findings = synthesis.get("findings") or []
     if not isinstance(findings, list):
         findings = []
+    projected_evidence_rows = sum(
+        len(finding.get("evidence_doc_ids") or [])
+        for finding in findings
+        if isinstance(finding, dict)
+    )
+    enforce_pm_app_final_projection_guard(
+        "domain_packet_compiler_projection",
+        row_counts={
+            "intelligence_packets": 1,
+            "insight_cards": len(findings),
+            "insight_card_evidence": projected_evidence_rows,
+            "intelligence_packet_cards": len(findings),
+            "intelligence_targets": 1,
+        },
+    )
 
     seen_keys: set[str] = set()
     card_results: List[Dict[str, Any]] = []

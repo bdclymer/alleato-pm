@@ -25,6 +25,10 @@ class AppDbHighChurnWriteError(RuntimeError):
     """Raised when high-churn AI writes would target the PM app database."""
 
 
+class AppDbProjectionError(RuntimeError):
+    """Raised when a PM app projection write is not explicitly bounded."""
+
+
 def _env_flag(name: str, default: str = "false") -> bool:
     return (os.getenv(name, default) or "").strip().lower() in {"1", "true", "yes", "on"}
 
@@ -38,6 +42,11 @@ def _env_int(name: str, default: int, *, minimum: int = 0) -> int:
     except ValueError:
         logger.warning("[DBPressureGuard] Invalid integer for %s=%r; using %d", name, raw, default)
         return default
+
+
+def _projection_table_env_key(table_name: str) -> str:
+    normalized = "".join(char if char.isalnum() else "_" for char in table_name.upper())
+    return f"PM_APP_PROJECTION_MAX_{normalized}_ROWS"
 
 
 def _database_url() -> str | None:
@@ -203,4 +212,56 @@ def enforce_no_pm_app_high_churn_writes(job_name: str, *, tables: list[str] | No
         "database are disabled after the Supabase health incident. Move this "
         "writer to the AI database or set ALLOW_PM_APP_HIGH_CHURN_WRITES=true "
         f"only for a controlled one-off run.{suffix}"
+    )
+
+
+def enforce_pm_app_final_projection_guard(
+    job_name: str,
+    *,
+    row_counts: dict[str, int],
+) -> None:
+    """Allow only explicitly enabled, bounded final projections into PM tables.
+
+    This guard is for the narrow final-projection path after high-churn staging
+    and synthesis have happened elsewhere. It is intentionally separate from
+    ``ALLOW_PM_APP_HIGH_CHURN_WRITES``: an operator may permit one final packet
+    projection without reopening arbitrary compiler churn against the PM app DB.
+    """
+
+    cleaned_counts = {
+        table: max(0, int(count or 0))
+        for table, count in row_counts.items()
+        if int(count or 0) > 0
+    }
+    total_rows = sum(cleaned_counts.values())
+
+    if not _env_flag("ALLOW_PM_APP_FINAL_PROJECTIONS"):
+        tables = ", ".join(f"{table}={count}" for table, count in sorted(cleaned_counts.items()))
+        suffix = f" Requested rows: {tables}." if tables else ""
+        raise AppDbProjectionError(
+            f"Blocked {job_name}: PM app final projection writes are disabled. "
+            "Set ALLOW_PM_APP_FINAL_PROJECTIONS=true only for bounded card/packet "
+            f"projection runs after high-churn work is isolated from the PM DB.{suffix}"
+        )
+
+    max_total = _env_int("PM_APP_PROJECTION_MAX_TOTAL_ROWS", 200, minimum=1)
+    if total_rows > max_total:
+        raise AppDbProjectionError(
+            f"Blocked {job_name}: projection row count {total_rows}>{max_total} "
+            "(PM_APP_PROJECTION_MAX_TOTAL_ROWS)."
+        )
+
+    for table, count in cleaned_counts.items():
+        max_for_table = _env_int(_projection_table_env_key(table), max_total, minimum=1)
+        if count > max_for_table:
+            raise AppDbProjectionError(
+                f"Blocked {job_name}: {table} row count {count}>{max_for_table} "
+                f"({_projection_table_env_key(table)})."
+            )
+
+    logger.info(
+        "[DBPressureGuard] %s final projection allowed: rows=%d tables=%s",
+        job_name,
+        total_rows,
+        cleaned_counts,
     )

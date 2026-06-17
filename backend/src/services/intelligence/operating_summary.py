@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 from ..ai_transport import get_openai_client
+from ..ops.db_pressure_guard import enforce_pm_app_final_projection_guard
 
 COMPILER_VERSION = "project-operating-summary-v1"
 PACKET_VERSION = "project_operating_summary_v1"
@@ -1488,6 +1489,16 @@ def refresh_project_operating_packet(
     if coverage_card:
         cards.append(coverage_card)
     linked_evidence_count = sum(len(card["sourceIds"]) for card in cards)
+    enforce_pm_app_final_projection_guard(
+        "project_operating_summary_projection",
+        row_counts={
+            "intelligence_packets": 1,
+            "insight_cards": len(cards),
+            "insight_card_targets": len(cards),
+            "insight_card_evidence": linked_evidence_count,
+            "intelligence_packet_cards": len(cards),
+        },
+    )
     source_quality_counts = _quality_counts(source_set["sources"])
     recommended_actions = summary.get("recommendedActions") or summary.get("recommendedFocus") or []
     risks = summary.get("risks") or []

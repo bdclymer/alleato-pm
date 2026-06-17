@@ -82,3 +82,54 @@ def test_high_churn_pm_app_write_guard_requires_explicit_override(monkeypatch):
         )
         is None
     )
+
+
+def test_pm_app_final_projection_guard_fails_closed(monkeypatch):
+    monkeypatch.delenv("ALLOW_PM_APP_FINAL_PROJECTIONS", raising=False)
+
+    with pytest.raises(db_pressure_guard.AppDbProjectionError, match="final projection writes are disabled"):
+        db_pressure_guard.enforce_pm_app_final_projection_guard(
+            "project_packet_projection",
+            row_counts={"intelligence_packets": 1},
+        )
+
+
+def test_pm_app_final_projection_guard_allows_bounded_projection(monkeypatch):
+    monkeypatch.setenv("ALLOW_PM_APP_FINAL_PROJECTIONS", "true")
+    monkeypatch.setenv("PM_APP_PROJECTION_MAX_TOTAL_ROWS", "10")
+    monkeypatch.setenv("PM_APP_PROJECTION_MAX_INSIGHT_CARDS_ROWS", "3")
+
+    assert (
+        db_pressure_guard.enforce_pm_app_final_projection_guard(
+            "project_packet_projection",
+            row_counts={
+                "intelligence_packets": 1,
+                "insight_cards": 3,
+                "insight_card_evidence": 4,
+            },
+        )
+        is None
+    )
+
+
+def test_pm_app_final_projection_guard_blocks_total_budget(monkeypatch):
+    monkeypatch.setenv("ALLOW_PM_APP_FINAL_PROJECTIONS", "true")
+    monkeypatch.setenv("PM_APP_PROJECTION_MAX_TOTAL_ROWS", "2")
+
+    with pytest.raises(db_pressure_guard.AppDbProjectionError, match="projection row count 3>2"):
+        db_pressure_guard.enforce_pm_app_final_projection_guard(
+            "project_packet_projection",
+            row_counts={"intelligence_packets": 1, "insight_cards": 2},
+        )
+
+
+def test_pm_app_final_projection_guard_blocks_table_budget(monkeypatch):
+    monkeypatch.setenv("ALLOW_PM_APP_FINAL_PROJECTIONS", "true")
+    monkeypatch.setenv("PM_APP_PROJECTION_MAX_TOTAL_ROWS", "10")
+    monkeypatch.setenv("PM_APP_PROJECTION_MAX_INSIGHT_CARD_EVIDENCE_ROWS", "2")
+
+    with pytest.raises(db_pressure_guard.AppDbProjectionError, match="insight_card_evidence row count 3>2"):
+        db_pressure_guard.enforce_pm_app_final_projection_guard(
+            "project_packet_projection",
+            row_counts={"intelligence_packets": 1, "insight_card_evidence": 3},
+        )

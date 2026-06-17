@@ -16,6 +16,7 @@ import time
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+from src.services.ops.db_pressure_guard import enforce_pm_app_final_projection_guard
 from src.services.supabase_helpers import get_rag_read_client, get_rag_write_client
 
 COMPILER_VERSION = "ai_intelligence_compiler_v0_1"
@@ -1383,6 +1384,13 @@ def compile_current_packet(
         supabase,
         [card["id"] for card in cards],
     )
+    enforce_pm_app_final_projection_guard(
+        "intelligence_compile_current_packet",
+        row_counts={
+            "intelligence_packets": 1,
+            "intelligence_packet_cards": len(cards),
+        },
+    )
     payload = _packet_payload(
         target=target,
         cards=cards,
@@ -1470,6 +1478,14 @@ def promote_signal_candidate(
         }
 
     document = _fetch_source_document(supabase, candidate["source_document_id"])
+    enforce_pm_app_final_projection_guard(
+        "intelligence_promote_signal_candidate",
+        row_counts={
+            "insight_cards": 1,
+            "insight_card_targets": 1,
+            "insight_card_evidence": 1,
+        },
+    )
     card = _upsert_insight_card_from_candidate(
         supabase,
         candidate,

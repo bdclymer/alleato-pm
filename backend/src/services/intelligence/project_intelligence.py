@@ -43,6 +43,7 @@ from ..supabase_helpers import (
     get_rag_read_client,
     get_supabase_client,
 )
+from ..ops.db_pressure_guard import enforce_pm_app_final_projection_guard
 from .client import COMPILER_MODEL, extract_with_retry
 from .compiler import ensure_client_project_target
 from .project_synthesizer import _classify_comm_type, _participants
@@ -678,6 +679,11 @@ def refresh_project_intelligence(
         "packet_json": packet_json,
         "compiler_version": SYNTHESIS_COMPILER_VERSION,
     }
+
+    enforce_pm_app_final_projection_guard(
+        "project_intelligence_packet_projection",
+        row_counts={"intelligence_packets": 1},
+    )
 
     # Rolling-state: the DB enforces ONE current packet per target
     # (partial-unique `intelligence_packets_one_current_per_target`). The project
