@@ -9,7 +9,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
 import { canCurrentUserAccessAppCapability } from "@/lib/app-capabilities";
 import type { BrandonDailyUpdatePacket } from "@/lib/executive/brandon-daily-update";
 import { CEO_EXECUTIVE_BRIEFING_RECAP_KIND } from "@/lib/executive/executive-briefing-workflow";
@@ -680,7 +679,6 @@ export default async function DailyBriefDetailPage({ params }: PageProps) {
     <PageShell
       variant="detail"
       title={`Daily Brief - ${row.recap_date}`}
-      statusBadge={<Badge variant="outline">{row.workflow_status}</Badge>}
       contentClassName="pb-16"
     >
       <BriefSummary row={row} packet={packet} itemCount={itemCount} />
