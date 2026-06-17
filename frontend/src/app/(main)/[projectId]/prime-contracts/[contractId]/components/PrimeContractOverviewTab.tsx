@@ -3,8 +3,8 @@ import {
   ChevronRight,
   FileText,
   GripVertical,
-  Lock,
   MoreVertical,
+  Percent,
   Plus,
   Rows3,
   Trash2,
@@ -695,20 +695,26 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                         if (item.markup_type) {
                           const markupTotal = (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
                           const markupBilled = markupTotal * billedToDateRatio;
+                          const markupBudgetCode = resolveContractLineBudgetCode(item, budgetCodes);
                           return (
                             <InlineTableRow
                               key={item.id}
                               className="border-b border-border/60 bg-muted/30"
                             >
                               <InlineTableCell className="w-10 px-1 py-1">
-                                <Lock className="h-3.5 w-3.5 text-muted-foreground/50" />
+                                <Percent className="h-3.5 w-3.5 text-muted-foreground/60" />
                               </InlineTableCell>
                               <InlineTableCell className="min-w-72 px-1 py-1">
-                                <span className="inline-flex items-center gap-1.5 text-xs">
-                                  <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
-                                    Markup
+                                <div className="flex items-baseline gap-2 text-xs leading-tight">
+                                  <span className="font-medium">
+                                    {markupBudgetCode.displayDescription
+                                      ? `${markupBudgetCode.displayCode} - ${markupBudgetCode.displayDescription}`
+                                      : markupBudgetCode.displayCode}
                                   </span>
-                                </span>
+                                  <span className="text-muted-foreground">
+                                    {markupBudgetCode.displayCostType || "Needs budget-code link"}
+                                  </span>
+                                </div>
                               </InlineTableCell>
                               <InlineTableCell className="min-w-64 px-1 py-1">
                                 <span className="text-xs text-foreground">{item.description}</span>
@@ -1032,21 +1038,27 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                     const { item, divCode } = row;
                     if (collapsedDivisions.has(divCode)) return null;
 
-                    // Markup rows are read-only — render a locked badge row
+                    // Markup rows are read-only — render with the budget code like a regular line
                     if (item.markup_type) {
                       const markupTotal = getLineTotal(item);
                       const markupBilled = markupTotal * billedToDateRatio;
+                      const markupBudgetCode = resolveContractLineBudgetCode(item, budgetCodes);
                       return (
                         <tr key={item.id} className="border-b border-border/60 bg-muted/30">
                           <td className="w-10 px-1 py-1">
-                            <Lock className="h-3.5 w-3.5 text-muted-foreground/50" />
+                            <Percent className="h-3.5 w-3.5 text-muted-foreground/60" />
                           </td>
-                          <td className="min-w-72 px-1 py-1">
-                            <span className="inline-flex items-center gap-1.5 text-xs">
-                              <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
-                                Markup
+                          <td className="min-w-72 px-1 py-1 align-top">
+                            <div className="flex items-baseline gap-2 text-xs leading-tight">
+                              <span className="font-medium">
+                                {markupBudgetCode.displayDescription
+                                  ? `${markupBudgetCode.displayCode} - ${markupBudgetCode.displayDescription}`
+                                  : markupBudgetCode.displayCode}
                               </span>
-                            </span>
+                              <span className="text-muted-foreground">
+                                {markupBudgetCode.displayCostType || "Needs budget-code link"}
+                              </span>
+                            </div>
                           </td>
                           <td className="min-w-64 px-1 py-1 text-xs text-foreground">{item.description}</td>
                           <td className="w-40 px-1 py-1 text-right text-xs tabular-nums">{formatCurrency(markupTotal)}</td>
