@@ -679,7 +679,6 @@ export default async function DailyBriefDetailPage({ params }: PageProps) {
   return (
     <PageShell
       variant="detail"
-      eyebrow="Daily Brief history"
       title={`Daily Brief - ${row.recap_date}`}
       statusBadge={<Badge variant="outline">{row.workflow_status}</Badge>}
       contentClassName="pb-16"
