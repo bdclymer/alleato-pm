@@ -1703,20 +1703,7 @@ function briefItemSupportIssues(item: BrandonBriefItem): string[] {
 export function shouldSuppressDailyBriefAccountingItem(
   item: BrandonBriefItem,
 ): boolean {
-  const text = [
-    item.title,
-    item.summary,
-    item.sourceDetail,
-    item.recommendedAction,
-    item.whyItMatters,
-    item.evidence,
-    ...(item.evidenceFacts ?? []),
-    ...item.bullets,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-
+  const text = dailyBriefItemSearchText(item);
   const sourceDetail = item.sourceDetail.toLowerCase();
   const retrieval = (item.retrieval ?? "").toLowerCase();
 
@@ -1742,6 +1729,64 @@ export function shouldSuppressDailyBriefAccountingItem(
   ]);
 }
 
+function dailyBriefItemSearchText(item: BrandonBriefItem): string {
+  return [
+    item.title,
+    item.summary,
+    item.sourceDetail,
+    item.recommendedAction,
+    item.whyItMatters,
+    item.evidence,
+    ...(item.evidenceFacts ?? []),
+    ...item.bullets,
+    ...item.citations.map((citation) => citation.evidence ?? ""),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+export function shouldSuppressDailyBriefSolicitationItem(
+  item: BrandonBriefItem,
+): boolean {
+  if (item.source !== "Email") return false;
+
+  const text = dailyBriefItemSearchText(item);
+  const hasExternalSolicitationMarker = hasAny(text, [
+    "you don't often get email from",
+    "learn why this is important",
+    "immediate opportunity",
+    "equity investor",
+    "portfolio we are building",
+    "marketing provide some background",
+    "provide some background on us",
+    "attached is the s/u",
+    "box link below",
+    "bury you with some information",
+  ]);
+  if (!hasExternalSolicitationMarker) return false;
+
+  const hasActiveAlleatoExecutionMarker = hasAny(text, [
+    "rfi",
+    "submittal",
+    "change order",
+    "change event",
+    "permit",
+    "schedule delay",
+    "field crew",
+    "pay application",
+    "commitment",
+    "contract amendment",
+    "client approval",
+    "owner approval",
+    "project manager",
+    "work is blocked",
+    "work blocked",
+  ]);
+
+  return !hasActiveAlleatoExecutionMarker;
+}
+
 function filterSupportedSections(
   sections: BrandonDailyUpdatePacket["sections"],
 ): SupportedSectionsResult {
@@ -1755,6 +1800,12 @@ function filterSupportedSections(
       if (shouldSuppressDailyBriefAccountingItem(item)) {
         warnings.push(
           `Suppressed ${section} item "${item.title || "(untitled)"}" because accounting aging and money-due signals are temporarily excluded from the Daily Brief.`,
+        );
+        return false;
+      }
+      if (shouldSuppressDailyBriefSolicitationItem(item)) {
+        warnings.push(
+          `Suppressed ${section} item "${item.title || "(untitled)"}" because it looks like external solicitation or cold opportunity email rather than an active Alleato project obligation.`,
         );
         return false;
       }
@@ -2226,6 +2277,7 @@ async function synthesizeSections(
     "- When several candidates are about the same project and same issue (even from a different email, meeting, or Teams thread), MERGE them into one item and list every candidate index in sourceIndexes. Each candidate index may be used in only one item.\n" +
     "- Think like an owner: connect the dots. If a budget problem is really a missing-decision problem, or a late drawing is becoming a trust problem, say so plainly in whyItMatters.\n" +
     "- HARD RULE — leave out all accounting money figures: do NOT mention accounts receivable (AR), accounts payable (AP), overdue balances, amounts owed, days past due, invoice aging, cash flow, or collections ANYWHERE — not in a title, bullet, summary, evidence fact, or the 'what this means' line. If a source's only substance is money owed or overdue, drop it entirely. (Pending change-order scope is fine; dollar balances owed are not.)\n" +
+    "- HARD RULE — drop external solicitations, cold outreach, vendor marketing, investment/equity opportunities, and generic business-development pitches unless the evidence shows an active Alleato project obligation, client commitment, signed pursuit, or Brandon has already assigned an internal owner. Do not turn a salesperson's requested follow-up into a Brandon action item.\n" +
     "- If a source is too vague to be useful, leave it out entirely.\n" +
     "\nReturn ONLY valid JSON with keys needsBrandon, waitingOnOthers, importantUpdates, each an array of item objects.";
 

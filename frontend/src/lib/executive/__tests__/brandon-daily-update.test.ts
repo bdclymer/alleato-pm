@@ -6,6 +6,7 @@ import {
   getRecencyAnchor,
   loadLiveBrandonSourceCoverage,
   shouldSuppressDailyBriefAccountingItem,
+  shouldSuppressDailyBriefSolicitationItem,
 } from "../brandon-daily-update";
 import type {
   OwnerBriefingCardItem,
@@ -223,6 +224,35 @@ describe("executive operating brief priority lanes", () => {
         summary: "Permit package is still waiting on city review comments.",
         sourceDetail: "Weekly design coordination Exol PA",
         retrieval: "semantic search",
+      }),
+    );
+
+    expect(suppressed).toBe(true);
+    expect(allowed).toBe(false);
+  });
+
+  it("suppresses cold opportunity solicitations from the Daily Brief", () => {
+    const suppressed = shouldSuppressDailyBriefSolicitationItem(
+      briefItem("Childcare portfolio follow-up", {
+        summary:
+          "Rory Underwood sent Brandon information on a childcare portfolio and said the next project is in New Palestine.",
+        recommendedAction:
+          "Brandon should tell Rory whether Alleato wants a follow-up call and who should review the materials.",
+        whyItMatters:
+          "If Brandon wants the New Palestine opportunity, he needs to decide whether to review it before the equity slot is filled.",
+        evidence:
+          "You don't often get email from rory@ru2.com. Brandon thanks for your call and interest in the Childcare portfolio we are building. I will bury you with some information to start. Attached is the S/U and box link below for our next project out of the ground in New Palestine. We have not yet committed to an equity investor on the project which we want to close around the first of August so wanted to provide that to you as an immediate opportunity. RU2 Marketing provide some background on us.",
+      }),
+    );
+
+    const allowed = shouldSuppressDailyBriefSolicitationItem(
+      briefItem("Permit response needed", {
+        summary:
+          "The project manager needs Brandon to approve the client response on a permit blocker.",
+        recommendedAction:
+          "Brandon should approve the client response before the permit deadline.",
+        evidence:
+          "The permit response is tied to an active Alleato project obligation and owner approval.",
       }),
     );
 
