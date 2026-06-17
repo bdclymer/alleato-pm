@@ -81,42 +81,19 @@ export function RfiHeaderActions({ rfi, projectId }: RfiHeaderActionsProps) {
     }
   };
 
+  // Status transition shown as an overflow-menu action rather than a standalone button.
+  const statusAction =
+    rfi.status === "draft"
+      ? { label: "Open RFI", next: "open" }
+      : rfi.status === "open"
+        ? { label: "Close RFI", next: "closed" }
+        : rfi.status === "closed" || rfi.status === "closed-draft"
+          ? { label: "Reopen RFI", next: rfi.status === "closed-draft" ? "draft" : "open" }
+          : null;
+
   return (
     <>
       <div className="flex items-center gap-2">
-        {rfi.status === "draft" && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleStatusChange("open")}
-            disabled={updateRfi.isPending}
-          >
-            Open RFI
-          </Button>
-        )}
-        {rfi.status === "open" && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleStatusChange("closed")}
-            disabled={updateRfi.isPending}
-          >
-            Close RFI
-          </Button>
-        )}
-        {(rfi.status === "closed" || rfi.status === "closed-draft") && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() =>
-              handleStatusChange(rfi.status === "closed-draft" ? "draft" : "open")
-            }
-            disabled={updateRfi.isPending}
-          >
-            Reopen
-          </Button>
-        )}
-
         <Button
           size="sm"
           variant="outline"
@@ -129,6 +106,16 @@ export function RfiHeaderActions({ rfi, projectId }: RfiHeaderActionsProps) {
         <DetailActions
           onEdit={() => router.push(`${pathname}?mode=edit`)}
           onDelete={() => setDeleteOpen(true)}
+          extraActions={
+            statusAction
+              ? [
+                  {
+                    label: statusAction.label,
+                    onClick: () => void handleStatusChange(statusAction.next),
+                  },
+                ]
+              : undefined
+          }
         />
       </div>
 

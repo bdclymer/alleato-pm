@@ -55,13 +55,8 @@ export function EntityComments({
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
             <MessageSquarePlus className="h-4 w-4 text-primary" />
           </div>
-          <div>
-            {/* eslint-disable-next-line design-system/no-raw-heading */}
-            <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-            <p className="text-xs text-muted-foreground">
-              Velt threaded discussion
-            </p>
-          </div>
+          {/* eslint-disable-next-line design-system/no-raw-heading */}
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
         </div>
       ) : null}
 

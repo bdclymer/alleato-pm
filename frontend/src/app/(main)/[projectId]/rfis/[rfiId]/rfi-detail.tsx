@@ -8,6 +8,8 @@ import { RelatedItemsPanel } from "@/components/domain/related-items/RelatedItem
 
 import {
   Checkbox,
+  DetailField,
+  EditableDetailField,
   EditModeActions,
   EntityAttachments,
   Form,
@@ -26,6 +28,7 @@ import {
   Textarea,
   EmptyState,
 } from "@/components/ds";
+import { apiFetch } from "@/lib/api-client";
 import { RfiResponses } from "@/components/rfis/rfi-responses";
 import { RHFComboboxField } from "@/components/forms/fields/RHFComboboxField";
 import { RHFMultiComboboxField } from "@/components/forms/fields/RHFMultiComboboxField";
@@ -60,20 +63,11 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Horizontal field row for the sidebar
-// ---------------------------------------------------------------------------
+const toDateInputValue = (value: string | null | undefined) =>
+  value ? value.slice(0, 10) : "";
 
-function SidebarField({ label, value }: { label: string; value?: string | null }) {
-  return (
-    <div className="flex items-start gap-3 py-2">
-      <span className="w-28 shrink-0 text-xs text-muted-foreground">{label}</span>
-      <span className="min-w-0 flex-1 break-words text-xs text-foreground">
-        {value || "—"}
-      </span>
-    </div>
-  );
-}
+const impactLabel = (value: string | null | undefined) =>
+  RFI_IMPACT_OPTIONS.find((opt) => opt.value === value)?.label ?? value ?? undefined;
 
 type ImportedRfiDocument = {
   project_document_id?: number | null;
@@ -179,6 +173,17 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
   const handleSave = async (data: RfiEditValues) => {
     await updateRfi.mutateAsync({ rfiId: rfi.id, data });
     router.push(cancelUrl);
+    router.refresh();
+  };
+
+  // Inline single-field save for the detail sidebar (matches the prime-contract
+  // click-to-edit pattern). Throws on failure so InlineEditField reverts + toasts.
+  const saveField = async (field: string, value: string | null) => {
+    if (!rfi) return;
+    await apiFetch(`/api/projects/${projectId}/rfis/${rfi.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ [field]: value }),
+    });
     router.refresh();
   };
 
@@ -531,46 +536,87 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
         </div>
       </div>
 
-      {/* Right: metadata sidebar */}
+      {/* Right: metadata sidebar — inline-editable like prime contracts */}
       <div className="rounded-md bg-muted/50 p-6 shadow-panel">
         {/* Details */}
         <SectionLabel>Details</SectionLabel>
-        <div className="mt-3 divide-y divide-border/40">
-          <SidebarField label="RFI #" value={String(rfi.number ?? "")} />
-          <SidebarField label="Stage" value={rfi.rfi_stage} />
-          <SidebarField label="Due Date" value={formatDate(rfi.due_date)} />
-          <SidebarField label="Date Initiated" value={formatDate(rfi.date_initiated)} />
-          <SidebarField label="Closed Date" value={formatDate(rfi.closed_date)} />
-          <SidebarField label="Created" value={formatDate(rfi.created_at)} />
+        <div className="mt-3 space-y-1">
+          <DetailField label="RFI #" value={String(rfi.number ?? "")} />
+          <EditableDetailField
+            label="Stage"
+            value={rfi.rfi_stage ?? ""}
+            onSave={(v) => saveField("rfi_stage", v || null)}
+          />
+          <EditableDetailField
+            label="Due Date"
+            type="date"
+            value={toDateInputValue(rfi.due_date)}
+            display={rfi.due_date ? formatDate(rfi.due_date) : undefined}
+            onSave={(v) => saveField("due_date", v || null)}
+          />
+          <DetailField label="Date Initiated" value={formatDate(rfi.date_initiated)} />
+          <DetailField label="Closed Date" value={formatDate(rfi.closed_date)} />
+          <DetailField label="Created" value={formatDate(rfi.created_at)} />
         </div>
 
         {/* People */}
         <div className="mt-6 border-t border-border/40 pt-6">
           <SectionLabel>People</SectionLabel>
-          <div className="mt-3 divide-y divide-border/40">
-            <SidebarField label="RFI Manager" value={rfi.rfi_manager} />
-            <SidebarField label="Received From" value={rfi.received_from} />
-            <SidebarField
-              label="Contractor"
-              value={rfi.responsible_contractor}
+          <div className="mt-3 space-y-1">
+            <EditableDetailField
+              label="RFI Manager"
+              value={rfi.rfi_manager ?? ""}
+              onSave={(v) => saveField("rfi_manager", v || null)}
             />
-            <SidebarField
+            <EditableDetailField
+              label="Received From"
+              value={rfi.received_from ?? ""}
+              onSave={(v) => saveField("received_from", v || null)}
+            />
+            <EditableDetailField
+              label="Contractor"
+              editLabel="Responsible Contractor"
+              value={rfi.responsible_contractor ?? ""}
+              onSave={(v) => saveField("responsible_contractor", v || null)}
+            />
+            <DetailField
               label="Assignees"
               value={rfi.assignees?.length ? rfi.assignees.join(", ") : null}
             />
-            <SidebarField label="Created By" value={rfi.created_by} />
+            <DetailField label="Created By" value={rfi.created_by} />
           </div>
         </div>
 
         {/* Location & Reference */}
         <div className="mt-6 border-t border-border/40 pt-6">
           <SectionLabel>Location &amp; Reference</SectionLabel>
-          <div className="mt-3 divide-y divide-border/40">
-            <SidebarField label="Location" value={rfi.location} />
-            <SidebarField label="Drawing #" value={rfi.drawing_number} />
-            <SidebarField label="Specification" value={rfi.specification} />
-            <SidebarField label="Cost Code" value={rfi.cost_code} />
-            <SidebarField label="Reference" value={rfi.reference} />
+          <div className="mt-3 space-y-1">
+            <EditableDetailField
+              label="Location"
+              value={rfi.location ?? ""}
+              onSave={(v) => saveField("location", v || null)}
+            />
+            <EditableDetailField
+              label="Drawing #"
+              editLabel="Drawing Number"
+              value={rfi.drawing_number ?? ""}
+              onSave={(v) => saveField("drawing_number", v || null)}
+            />
+            <EditableDetailField
+              label="Specification"
+              value={rfi.specification ?? ""}
+              onSave={(v) => saveField("specification", v || null)}
+            />
+            <EditableDetailField
+              label="Cost Code"
+              value={rfi.cost_code ?? ""}
+              onSave={(v) => saveField("cost_code", v || null)}
+            />
+            <EditableDetailField
+              label="Reference"
+              value={rfi.reference ?? ""}
+              onSave={(v) => saveField("reference", v || null)}
+            />
           </div>
         </div>
 
@@ -597,9 +643,23 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
         {/* Impact */}
         <div className="mt-6 border-t border-border/40 pt-6">
           <SectionLabel>Impact</SectionLabel>
-          <div className="mt-3 divide-y divide-border/40">
-            <SidebarField label="Schedule" value={rfi.schedule_impact} />
-            <SidebarField label="Cost" value={rfi.cost_impact} />
+          <div className="mt-3 space-y-1">
+            <EditableDetailField
+              label="Schedule"
+              type="select"
+              options={[...RFI_IMPACT_OPTIONS]}
+              value={rfi.schedule_impact ?? ""}
+              display={impactLabel(rfi.schedule_impact)}
+              onSave={(v) => saveField("schedule_impact", v || null)}
+            />
+            <EditableDetailField
+              label="Cost"
+              type="select"
+              options={[...RFI_IMPACT_OPTIONS]}
+              value={rfi.cost_impact ?? ""}
+              display={impactLabel(rfi.cost_impact)}
+              onSave={(v) => saveField("cost_impact", v || null)}
+            />
           </div>
         </div>
 
@@ -611,6 +671,7 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
               entityType="rfi"
               entityId={rfi.id}
               projectId={String(projectId)}
+              showLabel={false}
             />
           </div>
         </div>
@@ -621,6 +682,7 @@ export function RfiDetail({ rfi, projectId, isEditing = false }: RfiDetailProps)
             entityType="rfi"
             entityId={rfi.id}
             projectId={projectId}
+            flat
           />
         </div>
       </div>

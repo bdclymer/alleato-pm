@@ -67,6 +67,12 @@ interface RelatedItemsPanelProps {
   entityType: EntityType;
   entityId: string;
   projectId: number;
+  /**
+   * Render without the SectionCard wrapper — a plain section with an uppercase
+   * label, for embedding inside an existing panel (e.g. a detail sidebar) where
+   * a nested bordered card would look like a card-in-a-card.
+   */
+  flat?: boolean;
 }
 
 // ── Add Link Dialog ───────────────────────────────────────────────────────────
@@ -279,6 +285,7 @@ export function RelatedItemsPanel({
   entityType,
   entityId,
   projectId,
+  flat = false,
 }: RelatedItemsPanelProps) {
   const [dialogOpen, setDialogOpen] = React.useState(false);
 
@@ -303,26 +310,21 @@ export function RelatedItemsPanel({
 
   const hasLinkableTargets = (LINKABLE_TARGETS[entityType] ?? []).length > 0;
 
-  return (
+  // Header action shared by both the flat and card layouts.
+  const addLinkButton = hasLinkableTargets ? (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="h-7 px-2 text-xs"
+      onClick={() => setDialogOpen(true)}
+    >
+      <LinkIcon className="mr-1 h-3.5 w-3.5" />
+      Add Link
+    </Button>
+  ) : undefined;
+
+  const body = (
     <>
-      <SectionCard
-        title={`Related Items${totalCount > 0 ? ` (${totalCount})` : ""}`}
-        headerActions={
-          hasLinkableTargets ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              onClick={() => setDialogOpen(true)}
-            >
-              <LinkIcon className="mr-1 h-3.5 w-3.5" />
-              Add Link
-            </Button>
-          ) : undefined
-        }
-        defaultOpen
-        hideCollapse={false}
-      >
         {isLoading ? (
           <div className="space-y-2 animate-pulse py-2">
             <div className="h-4 bg-muted rounded w-2/3" />
@@ -427,7 +429,31 @@ export function RelatedItemsPanel({
             ))}
           </div>
         )}
-      </SectionCard>
+    </>
+  );
+
+  return (
+    <>
+      {flat ? (
+        <div>
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {`Related Items${totalCount > 0 ? ` (${totalCount})` : ""}`}
+            </p>
+            {addLinkButton}
+          </div>
+          <div className="mt-3">{body}</div>
+        </div>
+      ) : (
+        <SectionCard
+          title={`Related Items${totalCount > 0 ? ` (${totalCount})` : ""}`}
+          headerActions={addLinkButton}
+          defaultOpen
+          hideCollapse={false}
+        >
+          {body}
+        </SectionCard>
+      )}
 
       {hasLinkableTargets && (
         <AddLinkDialog

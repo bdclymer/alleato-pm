@@ -26,6 +26,7 @@ export type DocumentPickerEntityType =
   | 'purchase_order'
   | 'commitment'      // resolved to subcontract or purchase_order at API level
   | 'prime_contract'
+  | 'change_event'
   | 'change_order'
   | 'invoice'
   | 'submittal'
@@ -49,6 +50,12 @@ interface DocumentTypeOption {
   display_name: string;
   category: string;
   sort_order: number;
+}
+
+interface UploadedDocumentResult {
+  documentMetadataId: string;
+  pipelineQueued?: boolean;
+  pipelineMessage?: string | null;
 }
 
 export interface DocumentPickerProps {
@@ -205,9 +212,17 @@ export function EntityAttachments({
         if (selectedDocumentType !== NO_DOCUMENT_TYPE) {
           fd.append('documentType', selectedDocumentType);
         }
-        await apiFetch('/api/document-picker/upload', { method: 'POST', body: fd });
+        const result = await apiFetch<UploadedDocumentResult>(
+          '/api/document-picker/upload',
+          { method: 'POST', body: fd }
+        );
         void queryClient.invalidateQueries({ queryKey });
         toast.success(`${file.name} uploaded`);
+        if (result.pipelineQueued === false && result.pipelineMessage) {
+          toast.warning(`Pipeline retry needed for ${file.name}`, {
+            description: result.pipelineMessage,
+          });
+        }
       } catch (error) {
         toast.error(`Failed to upload ${file.name}`, {
           description:
@@ -244,15 +259,15 @@ export function EntityAttachments({
 
   const content = (
     <div className={cn('space-y-3', className)}>
-      {/* Compact upload trigger */}
+      {/* Dropzone upload trigger (matches change-events form) */}
       <label
         htmlFor={fileInputId.current}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
         className={cn(
-          'inline-flex cursor-pointer items-center gap-1.5 text-sm text-primary hover:underline',
-          isDragging && 'opacity-80',
+          'flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed px-4 py-3 text-center transition-colors hover:border-primary/60 hover:bg-muted/30',
+          isDragging && 'border-primary bg-primary/5',
           isUploadingAny && 'pointer-events-none opacity-50',
         )}
       >
@@ -267,13 +282,24 @@ export function EntityAttachments({
         />
         {isUploadingAny ? (
           <>
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            Uploading {uploading.join(', ')}…
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">
+              Uploading {uploading.join(', ')}…
+            </span>
           </>
         ) : (
           <>
-            <Upload className="h-3.5 w-3.5" />
-            {isDragging ? 'Drop to upload' : 'Upload file'}
+            <Upload className="h-4 w-4 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              {isDragging ? (
+                'Drop to upload'
+              ) : (
+                <>
+                  Drop files here or{' '}
+                  <span className="font-semibold text-primary">browse to upload</span>
+                </>
+              )}
+            </p>
           </>
         )}
       </label>

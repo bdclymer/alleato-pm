@@ -292,7 +292,21 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     let hasIncludedInsurance = false;
     let hasInsertedFeeBasisSubtotal = false;
 
-    for (const item of displayedSovItems) {
+    // Auto-calculated markup lines (insurance, fee, etc.) always render at the
+    // bottom of the schedule of values — after every regular line item —
+    // regardless of their stored line_number. Stable-sort keeps non-markup and
+    // markup items in their existing relative order.
+    const orderedItems = displayedSovItems
+      .map((item, index) => ({ item, index }))
+      .sort((a, b) => {
+        const aMarkup = a.item?.markup_type ? 1 : 0;
+        const bMarkup = b.item?.markup_type ? 1 : 0;
+        if (aMarkup !== bMarkup) return aMarkup - bMarkup;
+        return a.index - b.index;
+      })
+      .map((entry) => entry.item);
+
+    for (const item of orderedItems) {
       // Guard against null/undefined entries that can arrive from the estimate
       // import path (apiFetch returns null on empty-body responses).
       if (!item) continue;
