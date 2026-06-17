@@ -2,8 +2,15 @@ export const dynamic = "force-dynamic";
 
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
+import { deriveBrandonEmailAssistantDecision } from "@/lib/email-assistant/brandon-triage";
 import { createClient, getApiRouteUser } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+
+const BRANDON_MAILBOX = "bclymer@alleatogroup.com";
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
 
 export const GET = withApiGuardrails("email-inbox#GET", async ({ request }) => {
   const supabase = await createClient();
@@ -74,6 +81,8 @@ export const GET = withApiGuardrails("email-inbox#GET", async ({ request }) => {
   // Non-admins see only their own mailbox
   if (!isAdmin && user.email) {
     query = query.eq("mailbox_user_id", user.email);
+  } else if (isAdmin && tab === "brandon-queue") {
+    query = query.eq("mailbox_user_id", BRANDON_MAILBOX);
   }
 
   if (tab === "needs-assignment") {
@@ -98,5 +107,62 @@ export const GET = withApiGuardrails("email-inbox#GET", async ({ request }) => {
     });
   }
 
-  return NextResponse.json(data ?? []);
+  const enriched = (data ?? []).map((email) => {
+    const sourceMetadata = isRecord(email.source_metadata)
+      ? email.source_metadata
+      : {};
+    const assistantDecision = deriveBrandonEmailAssistantDecision({
+      subject: email.subject,
+      bodyText: email.body_text ?? email.body,
+      fromEmail: email.from_email,
+      fromName: email.from_name,
+      toList: email.to_list,
+      ccList: email.cc_list,
+      mailboxUserId: email.mailbox_user_id,
+      hasAttachments: email.has_attachments,
+      receivedAt: email.received_at,
+    });
+
+    return {
+      ...email,
+      source_metadata: {
+        ...sourceMetadata,
+        _assistant: assistantDecision,
+      },
+    };
+  });
+
+  const response =
+    tab === "brandon-queue"
+      ? enriched
+          .filter((email) => {
+            const assistant = isRecord(email.source_metadata)
+              ? email.source_metadata._assistant
+              : null;
+            return isRecord(assistant) && assistant.action !== "ignore";
+          })
+          .sort((a, b) => {
+            const assistantA = isRecord(a.source_metadata)
+              ? a.source_metadata._assistant
+              : null;
+            const assistantB = isRecord(b.source_metadata)
+              ? b.source_metadata._assistant
+              : null;
+            const scoreA =
+              isRecord(assistantA) && typeof assistantA.score === "number"
+                ? assistantA.score
+                : 0;
+            const scoreB =
+              isRecord(assistantB) && typeof assistantB.score === "number"
+                ? assistantB.score
+                : 0;
+            if (scoreA !== scoreB) return scoreB - scoreA;
+            return (
+              new Date(b.received_at ?? 0).getTime() -
+              new Date(a.received_at ?? 0).getTime()
+            );
+          })
+      : enriched;
+
+  return NextResponse.json(response);
 });

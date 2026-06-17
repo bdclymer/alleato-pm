@@ -25,9 +25,11 @@ interface EmailListPanelProps {
   search: string;
   onSearchChange: (v: string) => void;
   needsAssignmentCount: number;
+  brandonQueueCount: number;
 }
 
 const TABS: { id: InboxTab; label: string }[] = [
+  { id: "brandon-queue", label: "Brandon Queue" },
   { id: "needs-assignment", label: "Needs Assignment" },
   { id: "all", label: "All" },
   { id: "has-attachments", label: "Attachments" },
@@ -78,6 +80,20 @@ function groupEmails(emails: InboxEmail[]): GroupedEmails[] {
     emails: items,
   }));
 }
+
+const ACTION_LABEL: Record<InboxEmail["assistantAction"], string> = {
+  reply: "Reply",
+  delegate: "Delegate",
+  watch: "Watch",
+  ignore: "No action",
+};
+
+const ACTION_CLASS: Record<InboxEmail["assistantAction"], string> = {
+  reply: "bg-primary/10 text-primary",
+  delegate: "bg-warning-subtle text-warning",
+  watch: "bg-info-subtle text-info",
+  ignore: "bg-muted text-muted-foreground",
+};
 
 function EmailRow({
   email,
@@ -144,6 +160,18 @@ function EmailRow({
 
           {/* Bottom row: project chip + icons */}
           <div className="flex items-center gap-1.5 flex-wrap">
+            {email.assistantAction !== "ignore" && (
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-medium leading-none",
+                  ACTION_CLASS[email.assistantAction],
+                )}
+              >
+                {ACTION_LABEL[email.assistantAction]}
+                {email.assistantPriority === "urgent" && " now"}
+              </span>
+            )}
+
             {email.project ? (
               <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium leading-none">
                 {email.project.projectNumber
@@ -190,6 +218,7 @@ export function EmailListPanel({
   search,
   onSearchChange,
   needsAssignmentCount,
+  brandonQueueCount,
 }: EmailListPanelProps) {
   const groups = groupEmails(emails);
 
@@ -211,6 +240,14 @@ export function EmailListPanel({
             )}
           >
             {tab.label}
+            {tab.id === "brandon-queue" && brandonQueueCount > 0 && (
+              <Badge
+                variant="secondary"
+                className="h-4 px-1.5 text-[10px] bg-primary/10 text-primary border-0 font-semibold"
+              >
+                {brandonQueueCount}
+              </Badge>
+            )}
             {tab.id === "needs-assignment" && needsAssignmentCount > 0 && (
               <Badge
                 variant="secondary"
@@ -253,7 +290,21 @@ export function EmailListPanel({
           </div>
         ) : emails.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-6 py-12">
-            {activeTab === "needs-assignment" ? (
+            {activeTab === "brandon-queue" ? (
+              <>
+                <div className="size-10 rounded-full bg-success-subtle flex items-center justify-center">
+                  <Inbox className="size-5 text-success" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    Brandon queue is clear
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    No reply, delegate, or watch items detected.
+                  </p>
+                </div>
+              </>
+            ) : activeTab === "needs-assignment" ? (
               <>
                 <div className="size-10 rounded-full bg-success-subtle flex items-center justify-center">
                   <Inbox className="size-5 text-success" />

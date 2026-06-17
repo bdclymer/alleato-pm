@@ -344,6 +344,31 @@ function AttachmentChip({
   );
 }
 
+const ASSISTANT_ACTION_LABEL: Record<InboxEmail["assistantAction"], string> = {
+  reply: "Reply",
+  delegate: "Delegate",
+  watch: "Watch",
+  ignore: "No action",
+};
+
+function AssistantDecisionLine({ email }: { email: InboxEmail }) {
+  if (email.assistantAction === "ignore") return null;
+
+  return (
+    <div className="mt-3 pt-3 border-t border-border/30">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+        <span className="font-medium text-foreground">
+          {ASSISTANT_ACTION_LABEL[email.assistantAction]}
+        </span>
+        <span className="text-muted-foreground">{email.assistantReason}</span>
+      </div>
+      <p className="mt-1 text-[11px] text-muted-foreground">
+        Owner: {email.assistantOwner}. Risk: {email.assistantRisk}.
+      </p>
+    </div>
+  );
+}
+
 function DraftReplyPanel({
   email,
   onClose,
@@ -674,6 +699,8 @@ export function EmailReadingPane({
             ))}
           </div>
         )}
+
+        <AssistantDecisionLine email={email} />
       </div>
 
       {/* AI Summary banner */}
@@ -755,7 +782,7 @@ export function EmailReadingPane({
           disabled={draftReplyOpen}
         >
           <Bot className="size-3.5" />
-          Draft Reply
+          {email.assistantAction === "reply" ? "Draft Brandon Reply" : "Draft Reply"}
         </Button>
 
         <AssignProjectPopover email={email} onAssign={onAssignProject} />

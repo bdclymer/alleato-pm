@@ -4,10 +4,14 @@ import * as React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api-client";
+import type {
+  BrandonAssistantAction,
+  BrandonAssistantPriority,
+} from "@/lib/email-assistant/brandon-triage";
 import { EmailListPanel } from "./email-list-panel";
 import { EmailReadingPane } from "./email-reading-pane";
 
-export type InboxTab = "needs-assignment" | "all" | "has-attachments";
+export type InboxTab = "brandon-queue" | "needs-assignment" | "all" | "has-attachments";
 
 export interface InboxAttachment {
   id: number;
@@ -40,8 +44,23 @@ export interface InboxEmail {
   webLink: string | null;
   starred: boolean;
   tags: string[];
+  assistantAction: BrandonAssistantAction;
+  assistantPriority: BrandonAssistantPriority;
+  assistantScore: number;
+  assistantReason: string;
+  assistantOwner: string;
+  assistantRisk: string;
+  assistantEvidence: string;
   project: { id: number; name: string | null; projectNumber: string | null } | null;
   attachments: InboxAttachment[];
+}
+
+function assistantString(
+  value: Record<string, unknown>,
+  key: string,
+  fallback: string,
+): string {
+  return typeof value[key] === "string" ? value[key] : fallback;
 }
 
 function parseEmails(raw: unknown[]): InboxEmail[] {
@@ -49,6 +68,7 @@ function parseEmails(raw: unknown[]): InboxEmail[] {
     const e = r as Record<string, unknown>;
     const meta = (e.source_metadata as Record<string, unknown>) ?? {};
     const inbox = (meta._inbox as Record<string, unknown>) ?? {};
+    const assistant = (meta._assistant as Record<string, unknown>) ?? {};
     const proj = e.projects as {
       id: number;
       name: string | null;
@@ -79,6 +99,24 @@ function parseEmails(raw: unknown[]): InboxEmail[] {
       webLink: (e.web_link as string | null) ?? null,
       starred: (inbox.starred as boolean) ?? false,
       tags: (inbox.tags as string[]) ?? [],
+      assistantAction:
+        assistantString(assistant, "action", "ignore") as BrandonAssistantAction,
+      assistantPriority:
+        assistantString(assistant, "priority", "low") as BrandonAssistantPriority,
+      assistantScore:
+        typeof assistant.score === "number" ? assistant.score : 0,
+      assistantReason: assistantString(
+        assistant,
+        "reason",
+        "No assistant decision available.",
+      ),
+      assistantOwner: assistantString(assistant, "owner", "No action"),
+      assistantRisk: assistantString(assistant, "risk", "Low"),
+      assistantEvidence: assistantString(
+        assistant,
+        "evidence",
+        "Subject and sender metadata only.",
+      ),
       project: proj
         ? {
             id: proj.id,
@@ -107,7 +145,7 @@ function parseEmails(raw: unknown[]): InboxEmail[] {
 
 export function EmailInboxClient() {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = React.useState<InboxTab>("needs-assignment");
+  const [activeTab, setActiveTab] = React.useState<InboxTab>("brandon-queue");
   const [search, setSearch] = React.useState("");
   const [debouncedSearch, setDebouncedSearch] = React.useState("");
   const [selectedId, setSelectedId] = React.useState<number | null>(null);
@@ -138,6 +176,15 @@ export function EmailInboxClient() {
     queryKey: ["email-inbox-count", "needs-assignment"],
     queryFn: async () => {
       const data = await apiFetch<unknown[]>("/api/email-inbox?tab=needs-assignment");
+      return data.length;
+    },
+    refetchInterval: 60_000,
+  });
+
+  const { data: brandonQueueCount = 0 } = useQuery({
+    queryKey: ["email-inbox-count", "brandon-queue"],
+    queryFn: async () => {
+      const data = await apiFetch<unknown[]>("/api/email-inbox?tab=brandon-queue");
       return data.length;
     },
     refetchInterval: 60_000,
@@ -254,6 +301,7 @@ export function EmailInboxClient() {
           search={search}
           onSearchChange={setSearch}
           needsAssignmentCount={needsCount}
+          brandonQueueCount={brandonQueueCount}
         />
       </div>
 
