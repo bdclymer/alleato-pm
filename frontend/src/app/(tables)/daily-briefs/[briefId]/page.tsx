@@ -11,7 +11,9 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { canCurrentUserAccessAppCapability } from "@/lib/app-capabilities";
+import type { BrandonDailyUpdatePacket } from "@/lib/executive/brandon-daily-update";
 import { CEO_EXECUTIVE_BRIEFING_RECAP_KIND } from "@/lib/executive/executive-briefing-workflow";
+import { formatExecutiveBriefingTeamsMessage } from "@/lib/executive/executive-briefing-render";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Database } from "@/types/database.types";
 
@@ -606,6 +608,23 @@ function SourceCoverageSection({
   );
 }
 
+function TeamsPreviewSection({ preview }: { preview: string | null }) {
+  if (!preview) return null;
+
+  return (
+    <section className="space-y-3">
+      <SectionRuleHeading label="Teams preview" />
+      <p className="text-sm text-muted-foreground">
+        This is the exact Teams-formatted message generated from the saved
+        Daily Brief packet. Review this before approving the brief for delivery.
+      </p>
+      <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-lg border border-border/60 bg-muted/30 p-4 text-sm leading-6 text-foreground">
+        {preview}
+      </pre>
+    </section>
+  );
+}
+
 async function loadBrief(briefId: string) {
   const supabase = createServiceClient();
   const { data, error } = await supabase
@@ -643,6 +662,13 @@ export default async function DailyBriefDetailPage({ params }: PageProps) {
   if (!row) notFound();
 
   const packet = parsePacket(row.briefing_packet);
+  const teamsPreview =
+    packet && isRecord(row.briefing_packet)
+      ? formatExecutiveBriefingTeamsMessage(
+          row.briefing_packet as BrandonDailyUpdatePacket,
+          "Brandon",
+        )
+      : null;
   const itemCount = packet
     ? packet.needsBrandon.length +
       packet.waitingOnOthers.length +
@@ -675,6 +701,7 @@ export default async function DailyBriefDetailPage({ params }: PageProps) {
         </section>
       ) : (
         <>
+          <TeamsPreviewSection preview={teamsPreview} />
           <ProjectBriefAccordion groups={projectGroups} />
           <SourceCoverageSection sources={packet.sourceCoverage} />
           {packet.retrievalNotes.length > 0 && (

@@ -235,8 +235,8 @@ describe("executive briefing Teams delivery", () => {
     const contentStrings = cardPayload.card.children
       .filter((c) => c.type === "text" && c.content)
       .map((c) => c.content as string);
-    expect(contentStrings.some((s) => s.includes("Brandon's Top Priorities (1)"))).toBe(true);
-    expect(contentStrings.some((s) => s.includes("Source: Owner approval email"))).toBe(true);
+    expect(contentStrings.some((s) => s.includes("Needs your attention (1)"))).toBe(true);
+    expect(contentStrings.some((s) => s.includes("[Owner approval email]"))).toBe(true);
   });
 
   it("buildExecutiveBriefingCard: uses a morning greeting before noon Eastern", () => {
@@ -249,10 +249,10 @@ describe("executive briefing Teams delivery", () => {
     const texts = card.children
       .filter((c) => c.type === "text" && (c as { content?: string }).content)
       .map((c) => (c as { content: string }).content);
-    expect(texts.some((t) => t.includes("Brandon's Top Priorities (1)"))).toBe(true);
+    expect(texts.some((t) => t.includes("Needs your attention (1)"))).toBe(true);
     expect(texts.some((t) => t.includes("1. Test Project"))).toBe(true);
     expect(texts.some((t) => t.includes("Owner approval is ready but still needs signature."))).toBe(true);
-    expect(texts.some((t) => t.includes("Source: Owner approval email"))).toBe(true);
+    expect(texts.some((t) => t.includes("[Owner approval email]"))).toBe(true);
   });
 
   it("buildExecutiveBriefingCard: uses an evening greeting for the 6pm Eastern send", () => {

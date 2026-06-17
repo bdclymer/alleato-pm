@@ -221,8 +221,10 @@ describe("executive briefing workflow", () => {
                     data: {
                       id: "recap-1",
                       recap_date: "2026-05-08",
-                      workflow_status: "approved",
-                      approved_at: "2026-05-08T16:30:00.000Z",
+                      workflow_status: (row as { workflow_status: string })
+                        .workflow_status,
+                      approved_at: (row as { approved_at: string | null })
+                        .approved_at,
                       approved_by: null,
                       briefing_packet: (row as { briefing_packet: unknown })
                         .briefing_packet,
@@ -262,6 +264,12 @@ describe("executive briefing workflow", () => {
     } }).briefing_packet;
 
     expect(result.draft.packet.briefVersion).toBe(2);
+    expect(result.draft.workflowStatus).toBe("draft");
+    expect(result.draft.approvedAt).toBeNull();
+    expect(upsertedRows[0]).toMatchObject({
+      workflow_status: "draft",
+      approved_at: null,
+    });
     expect(savedPacket).toMatchObject({
       canonicalName: "Daily Brief",
       audiencePreset: "brandon",
@@ -348,8 +356,10 @@ describe("executive briefing workflow", () => {
                     data: {
                       id: "recap-2",
                       recap_date: "2026-05-08",
-                      workflow_status: "approved",
-                      approved_at: "2026-05-08T16:30:00.000Z",
+                      workflow_status: (row as { workflow_status: string })
+                        .workflow_status,
+                      approved_at: (row as { approved_at: string | null })
+                        .approved_at,
                       approved_by: null,
                       briefing_packet: (row as { briefing_packet: unknown })
                         .briefing_packet,
@@ -458,8 +468,10 @@ describe("executive briefing workflow", () => {
                     data: {
                       id: "recap-existing",
                       recap_date: "2026-05-08",
-                      workflow_status: "approved",
-                      approved_at: "2026-05-08T16:30:00.000Z",
+                      workflow_status: (row as { workflow_status: string })
+                        .workflow_status,
+                      approved_at: (row as { approved_at: string | null })
+                        .approved_at,
                       approved_by: null,
                       briefing_packet: (row as { briefing_packet: unknown })
                         .briefing_packet,
@@ -495,6 +507,8 @@ describe("executive briefing workflow", () => {
     const result = await regenerateExecutiveBriefingDraft({ windowDays: 3 });
 
     expect(result.draft.id).toBe("recap-existing");
+    expect(result.draft.workflowStatus).toBe("draft");
+    expect(result.draft.approvedAt).toBeNull();
     expect(upsertedRows).toHaveLength(2);
     expect((upsertedRows[0] as { id?: string }).id).toBeUndefined();
     expect((upsertedRows[1] as { id?: string }).id).toBe("recap-existing");
