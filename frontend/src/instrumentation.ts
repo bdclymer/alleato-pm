@@ -59,19 +59,36 @@ export async function register() {
       const { NodeTracerProvider } = await import(
         "@opentelemetry/sdk-trace-node"
       );
+      const { setLangfuseTracerProvider } = await import("@langfuse/tracing");
       const { maskLangfuse } = await import("./lib/ai/langfuse-mask");
 
       // Redact PII (emails / SSN / card / phone) before egress to us.cloud.
       const processor = new LangfuseSpanProcessor({ mask: maskLangfuse });
       langfuseSpanProcessor = processor;
 
+      // ISOLATED provider — NOT registered as the global OTel provider.
+      //
+      // Sentry's SDK (@sentry/nextjs v9) claims the global TracerProvider during
+      // Sentry.init() above. OpenTelemetry allows only one global provider, so a
+      // second `provider.register()` here silently no-ops and Langfuse's
+      // processor never receives spans — which is exactly why traces stopped on
+      // 2026-06-10 once Sentry + the OTel telemetry path were both live.
+      //
+      // Instead we hand Langfuse its own provider via setLangfuseTracerProvider.
+      // The Langfuse tracing helpers (startActiveObservation / propagateAttributes
+      // / getActiveTraceId) use it directly, and AI SDK spans reach it because
+      // `aiTelemetry()` passes `getLangfuseTracer()` as the telemetry tracer. This
+      // keeps Sentry's global provider — and its error/perf tracing — untouched,
+      // and decouples Langfuse from Sentry's tracesSampleRate (which is 0.1 in
+      // prod and would otherwise drop 90% of LLM traces).
+      // Ref: https://langfuse.com/faq/all/existing-sentry-setup (Option C)
       const provider = new NodeTracerProvider({
         spanProcessors: [processor],
       });
-      provider.register();
+      setLangfuseTracerProvider(provider);
 
       console.log(
-        "[instrumentation] Langfuse tracing enabled → " +
+        "[instrumentation] Langfuse tracing enabled (isolated provider) → " +
           (process.env.LANGFUSE_BASE_URL ?? "https://us.cloud.langfuse.com"),
       );
     } else if (process.env.PHOENIX_TRACING === "true") {

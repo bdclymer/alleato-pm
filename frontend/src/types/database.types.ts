@@ -24604,8 +24604,10 @@ export type Database = {
           number: number
           priority: string | null
           project_id: number
+          jobplanner_punchlist_item_id: number | null
           punch_item_manager_id: string | null
           reference: string | null
+          source_system: string | null
           status: string
           title: string
           trade: string | null
@@ -24636,8 +24638,10 @@ export type Database = {
           number: number
           priority?: string | null
           project_id: number
+          jobplanner_punchlist_item_id?: number | null
           punch_item_manager_id?: string | null
           reference?: string | null
+          source_system?: string | null
           status?: string
           title: string
           trade?: string | null
@@ -24668,8 +24672,10 @@ export type Database = {
           number?: number
           priority?: string | null
           project_id?: number
+          jobplanner_punchlist_item_id?: number | null
           punch_item_manager_id?: string | null
           reference?: string | null
+          source_system?: string | null
           status?: string
           title?: string
           trade?: string | null
