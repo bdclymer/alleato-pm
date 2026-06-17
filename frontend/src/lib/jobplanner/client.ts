@@ -61,7 +61,15 @@ export type JpChangeOrder = {
   number: number | string;
   totalAmount: number;
   description: string | null;
+  createdOn: string | null;
   externalObject: JpExternalObject;
+};
+
+export type JpCostCode = {
+  id: number;
+  code: string;
+  name: string;
+  division: string | null;
 };
 
 function apiKey(): string {
@@ -98,4 +106,8 @@ export function getCommitmentChangeOrders(projectId: number): Promise<JpChangeOr
 
 export function getPrimeContractChangeOrders(projectId: number): Promise<JpChangeOrder[]> {
   return getJson<JpChangeOrder[]>(`${API_V2}/projects/${projectId}/primecontractchangeorders`);
+}
+
+export function getCostCodes(projectId: number): Promise<JpCostCode[]> {
+  return getJson<JpCostCode[]>(`${API_V2}/projects/${projectId}/costcodes`);
 }

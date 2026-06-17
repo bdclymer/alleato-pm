@@ -18,6 +18,26 @@ export const kindLabels: Record<FindingKind, string> = {
   "billed-over-contract": "Billed over contract",
 };
 
+/** Plain-English explanation of what each finding type means and why it matters. */
+export const kindMeaning: Record<FindingKind, string> = {
+  "unlinked-budget-line":
+    "This budget line exists in Job Planner but was never pushed to Acumatica. Acumatica has no record of it, so its cost is missing from the financials.",
+  "drift-budget-line":
+    "This budget line was edited in Job Planner after the last time it synced to Acumatica. Acumatica is showing an outdated value until it re-syncs.",
+  "value-mismatch-actuals":
+    "The actual cost in Job Planner differs from the amount Acumatica last received. One of the two systems is wrong. Medium confidence — this compares against Job Planner's snapshot of Acumatica, so confirm the live Acumatica value before acting.",
+  "unlinked-cco":
+    "This commitment (subcontract) change order exists in Job Planner with no link to Acumatica, so the change in committed cost is not reflected in the books.",
+  "unlinked-pcco":
+    "This prime-contract change order exists in Job Planner with no link to Acumatica, so the change in contract revenue is not reflected in the books.",
+  "underwater-budget":
+    "Budgeted cost exceeds the revised budget — the job is projected to spend more than it is budgeted to.",
+  "thin-margin":
+    "Projected profit is under 3% of the contract value.",
+  "billed-over-contract":
+    "Billed-to-date exceeds the contract amount — the project has billed more than the contract allows.",
+};
+
 export const reconciliationFilters: FilterConfig[] = [
   {
     id: "tier",

@@ -16,10 +16,12 @@ import { NextResponse } from "next/server";
 import {
   getBudget,
   getCommitmentChangeOrders,
+  getCostCodes,
   getPrimeContractChangeOrders,
   listProjects,
   type JpBudget,
   type JpChangeOrder,
+  type JpCostCode,
 } from "@/lib/jobplanner/client";
 import {
   analyzeProject,
@@ -66,12 +68,13 @@ async function runReconciliation(): Promise<CacheEntry> {
 
   const reports = await mapWithConcurrency(projects, CONCURRENCY, async (project) => {
     try {
-      const [budget, ccos, pccos] = await Promise.all([
+      const [budget, ccos, pccos, costCodes] = await Promise.all([
         getBudget(project.projectId).catch(() => null as JpBudget | null),
         getCommitmentChangeOrders(project.projectId).catch(() => [] as JpChangeOrder[]),
         getPrimeContractChangeOrders(project.projectId).catch(() => [] as JpChangeOrder[]),
+        getCostCodes(project.projectId).catch(() => [] as JpCostCode[]),
       ]);
-      return analyzeProject(project, budget, ccos, pccos);
+      return analyzeProject(project, budget, ccos, pccos, costCodes);
     } catch (err) {
       logger.warn({
         msg: "reconciliation: project scan failed",
