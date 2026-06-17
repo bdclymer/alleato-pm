@@ -41,6 +41,7 @@ import {
 import { DateAvatar, EmptyState } from "@/components/ds";
 import { PageShell } from "@/components/layout";
 import { AttendeeAvatarStack } from "@/components/meetings/attendee-avatar-stack";
+import { MeetingTagsControl } from "@/components/meetings/meeting-tags-control";
 import { MeetingTasksManager } from "@/components/meetings/meeting-tasks-manager";
 import { useProjects } from "@/hooks/use-projects";
 import { apiFetch } from "@/lib/api-client";
@@ -614,6 +615,12 @@ export function MeetingDetailContent({
           <FolderOpen className="h-3.5 w-3.5" />
           {projectLabel ?? "Assign to project"}
         </Button>
+        <MeetingTagsControl
+          meetingId={meeting.id}
+          meetingTitle={meeting.title || "Untitled Meeting"}
+          initialCategory={meeting.category}
+          initialTags={meeting.tags}
+        />
         {meeting.fireflies_link ? (
           <a
             href={meeting.fireflies_link}

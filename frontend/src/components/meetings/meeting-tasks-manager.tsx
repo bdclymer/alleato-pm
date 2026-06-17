@@ -2,11 +2,12 @@
 
 import * as React from "react";
 import { format } from "date-fns";
-import { ArrowUpRight, CheckCircle2, Circle, Plus, Trash2 } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -148,21 +149,13 @@ function TaskRow({
 
   return (
     <li className="group flex items-start gap-3">
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        onClick={() => onToggleDone(task)}
+      <Checkbox
+        checked={done}
+        onCheckedChange={() => onToggleDone(task)}
         disabled={busy}
         aria-label={done ? "Mark task as open" : "Mark task as done"}
-        className="mt-0.5 h-4 w-4 shrink-0 rounded-full p-0 text-muted-foreground/50 hover:bg-transparent hover:text-success"
-      >
-        {done ? (
-          <CheckCircle2 className="h-4 w-4 text-success" />
-        ) : (
-          <Circle className="h-4 w-4" />
-        )}
-      </Button>
+        className="mt-0.5 shrink-0"
+      />
 
       <Button
         type="button"
