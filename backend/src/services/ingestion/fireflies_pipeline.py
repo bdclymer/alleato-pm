@@ -442,17 +442,29 @@ class FirefliesIngestionPipeline:
                     dry_run=False,
                 )
 
-            task_rows = self._build_task_rows_via_rewriter(
-                metadata_id=document_id,
-                meeting_title=parsed.title,
-                action_items=parsed.action_items,
-                project_id=effective_project_id,
-                participants=parsed.attendees,
-                speaker_email_map=parsed.speaker_email_map,
-                source_date=parsed.captured_at,
-                notes_context=parsed.raw_text,
-                action_items_structured=parsed.action_items_structured,
-            )
+            rewrite_tasks_during_ingest = os.getenv(
+                "FIREFLIES_REWRITE_TASKS_DURING_INGEST",
+                "false",
+            ).lower() in {"1", "true", "yes"}
+            task_rows = []
+            if rewrite_tasks_during_ingest:
+                task_rows = self._build_task_rows_via_rewriter(
+                    metadata_id=document_id,
+                    meeting_title=parsed.title,
+                    action_items=parsed.action_items,
+                    project_id=effective_project_id,
+                    participants=parsed.attendees,
+                    speaker_email_map=parsed.speaker_email_map,
+                    source_date=parsed.captured_at,
+                    notes_context=parsed.raw_text,
+                    action_items_structured=parsed.action_items_structured,
+                )
+            else:
+                logger.info(
+                    "[FirefliesIngestion] Skipping inline task rewrite for %s; "
+                    "downstream intelligence extraction owns task synthesis",
+                    document_id,
+                )
             # Replace the prior auto-generated batch only when we have a fresh
             # one — a transient empty rewriter response must not wipe existing
             # tasks. User-edited/completed tasks are preserved (see the store

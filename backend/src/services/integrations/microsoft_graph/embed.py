@@ -465,6 +465,7 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
             logger.warning("[GraphEmbed] Could not clear ingestion error for %s: %s", metadata_id, exc)
 
     # Fetch document
+    has_app_document = True
     try:
         resp = (
             supabase_client.from_("document_metadata")
@@ -479,8 +480,40 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         )
         doc = resp.data
     except Exception as e:
-        logger.error("[GraphEmbed] Failed to fetch document_metadata %s: %s", metadata_id, e)
-        return 0
+        logger.warning(
+            "[GraphEmbed] Failed to fetch document_metadata %s; falling back to RAG metadata: %s",
+            metadata_id,
+            e,
+        )
+        try:
+            rag_meta = (
+                get_rag_read_client()
+                .from_("rag_document_metadata")
+                .select(
+                    "id,title,category,source,project_id,type,source_system,source_item_id,"
+                    "source_web_url,storage_bucket,storage_path,content_hash"
+                )
+                .eq("id", metadata_id)
+                .single()
+                .execute()
+                .data
+                or {}
+            )
+        except Exception as rag_exc:
+            logger.error(
+                "[GraphEmbed] Failed to fetch RAG metadata %s: %s",
+                metadata_id,
+                rag_exc,
+            )
+            return 0
+
+        doc = {
+            **rag_meta,
+            "file_path": rag_meta.get("storage_path"),
+            "source_path": rag_meta.get("storage_path"),
+            "status": "repair",
+        }
+        has_app_document = False
 
     if not doc:
         logger.warning("[GraphEmbed] Document %s not found", metadata_id)
@@ -669,7 +702,8 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
         metadata={"chunk_count": len(rows), "source_type": source_type},
     )
     record_source_processing_status(source_context, status="complete")
-    _run_source_intelligence_compiler(supabase_client, metadata_id)
+    if has_app_document:
+        _run_source_intelligence_compiler(supabase_client, metadata_id)
 
     logger.info("[GraphEmbed] %s → %d chunks embedded", metadata_id, len(rows))
     return len(rows)

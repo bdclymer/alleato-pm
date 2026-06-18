@@ -12,6 +12,7 @@ Several claims in the original inventory were wrong or have been resolved by Wav
 
 | Table / claim | Prior state in this doc | Reality (verified by SQL or commit) |
 |---|---|---|
+| Source ingestion/vectorization cadence | Fireflies/Graph/Teams and compiler-drain behavior was described inconsistently across docs, including a 15-minute compiler drain and Fireflies inline GPT task rewrite during ingest. | **Corrected 2026-06-18.** Fireflies sync uses scheduler `_run_fireflies_sync(limit=25)` with `FIREFLIES_REWRITE_TASKS_DURING_INGEST=false`; transcript ingestion/chunking no longer calls the GPT-5.5 task rewriter inline. Graph embedding can embed RAG-only metadata rows when app metadata is absent. `alleato-intelligence-compiler-drain` is hourly in `render.yaml` (`0 * * * *`), and live Render did not have that cron service at verification time. |
 | `fireflies_ingestion_jobs` (MAIN) | "STALE orphan-mirror — RAG copy is canonical, do not write to MAIN" | **No longer stale (2026-06-17).** `supabase_helpers.update_ingestion_job_state()` now dual-writes every pipeline stage transition into BOTH MAIN and RAG `fireflies_ingestion_jobs`, keyed by `COALESCE(document_metadata.fireflies_id, id)` (on_conflict=fireflies_id). MAIN status flipped orphan-mirror → live. Adopted by parser/document_parser/financial_parser/embedder/extractor/orchestrator. Always update both DBs via this helper, never one side directly. |
 | `source_processing_jobs` | not previously listed | **Created in the RAG/AI database on 2026-06-17.** It is the cross-source lifecycle ledger for Fireflies, Graph, signal extraction, and project-intelligence synthesis stages. |
 | `pipeline_model_usage` | not previously listed | **Created in the RAG/AI database on 2026-06-17.** It is the high-volume model usage and estimated-cost ledger for source processing, embeddings, daily briefs, Brandon email review, and project intelligence budget checks. |
@@ -105,7 +106,7 @@ Many readers won't know this: the intelligence compiler refreshes packets in two
 
 1. **Event-driven enqueue (priority 10)** — on every `promote_signal_candidate` call inside the compiler, an immediate packet refresh job is enqueued.
 2. **Periodic enqueue (priority 20)** — Render cron `alleato-packet-refresh-periodic` runs `scripts/enqueue_periodic_packet_refresh.py` 4x/day for every active `intelligence_targets` row, so quiet projects do not sit stale.
-3. **Compiler drain** — Render cron `alleato-intelligence-compiler-drain` runs every 15 minutes and calls `scheduler._run_intelligence_compiler`, claiming `source_intelligence_jobs` and `packet_refresh_jobs` from RAG. The `alleato-backend` web service intentionally has `DISABLE_SCHEDULER=true` and `INTELLIGENCE_COMPILER_ENABLED=false`, so Render cron is the production drain loop.
+3. **Compiler drain** — Render cron `alleato-intelligence-compiler-drain` is defined hourly in root render config and calls `scheduler._run_intelligence_compiler`, claiming RAG source-intelligence jobs and packet-refresh jobs. The `alleato-backend` web service intentionally has `DISABLE_SCHEDULER=true` and `INTELLIGENCE_COMPILER_ENABLED=false`, so the Render cron is the intended production drain loop when the service exists.
 
 All three converge on the same compiler logic in `backend/src/services/intelligence/compiler.py`.
 
@@ -125,7 +126,7 @@ All three converge on the same compiler logic in `backend/src/services/intellige
 | `alleato-rag-health` | `15 12 * * *` (daily) | `system_alerts` |
 | `alleato-source-rag-health` | `5 */4 * * *` (every 4h) | `system_alerts` |
 | **`alleato-packet-refresh-periodic`** | `0 2,9,15,21 * * *` (4×/day) | Enqueues `packet_refresh_jobs` (RAG) for every active `intelligence_targets` row |
-| **`alleato-intelligence-compiler-drain`** | `*/15 * * * *` (every 15 min) | Drains `source_intelligence_jobs` + `packet_refresh_jobs` -> writes `insight_cards`, `insight_card_evidence`, `insight_card_targets`, `intelligence_packets`, `intelligence_packet_cards` |
+| **`alleato-intelligence-compiler-drain`** | `0 * * * *` (hourly) | Drains `source_intelligence_jobs` + `packet_refresh_jobs` -> writes `insight_cards`, `insight_card_evidence`, `insight_card_targets`, `intelligence_packets`, `intelligence_packet_cards` |
 | `alleato-executive-daily-brief-morning` | `0 11,12 * * 1-5` | Generates `daily_recaps` + Teams delivery |
 | `alleato-executive-daily-brief-evening` | `0 22,23 * * 1-5` | Same as above, evening cadence |
 | **APScheduler in FastAPI (fireflies)** | per `scheduler.py:540` | Polls Fireflies, enqueues `fireflies_ingestion_jobs` |
@@ -632,7 +633,7 @@ Compiler version stamp: `ai_intelligence_compiler_v0_1`.
 
 - **Event-driven** (priority 10): on every promotion.
 - **Periodic** (priority 20): Render cron `alleato-packet-refresh-periodic` at `0 2,9,15,21 * * *` (4×/day). Runs `scripts/enqueue_periodic_packet_refresh.py`.
-- **Production drain**: Render cron `alleato-intelligence-compiler-drain` at `*/15 * * * *`. Calls `scheduler._run_intelligence_compiler` and drains both queues regardless of how rows were enqueued. The FastAPI web process keeps the in-process scheduler disabled in production.
+- **Production drain**: Render cron `alleato-intelligence-compiler-drain` at `0 * * * *` when present. Calls `scheduler._run_intelligence_compiler` and drains both queues regardless of how rows were enqueued. The FastAPI web process keeps the in-process scheduler disabled in production.
 
 ### Pipeline B table inventory
 

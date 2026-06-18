@@ -244,12 +244,11 @@ services:
     dockerContext: ./backend
     schedule: "15 * * * *"
     dockerCommand: >-
-      timeout 20m python3 -c "
+      FIREFLIES_REWRITE_TASKS_DURING_INGEST=false timeout 20m python3 -c "
       import json, sys;
       sys.path.insert(0, '/app');
-      from src.services.ingestion.fireflies_pipeline import FirefliesIngestionPipeline;
-      pipeline = FirefliesIngestionPipeline();
-      result = pipeline.sync_recent_transcripts(limit=25);
+      from src.services.scheduler import _run_fireflies_sync;
+      result = _run_fireflies_sync(limit=25);
       print(json.dumps(result if isinstance(result, dict) else {'result': str(result)}, indent=2, default=str));
       "
     envVars:
@@ -572,7 +571,7 @@ services:
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    schedule: "*/15 * * * *"
+    schedule: "0 * * * *"
     dockerCommand: >-
       timeout 12m python3 -c "
       import json, sys;

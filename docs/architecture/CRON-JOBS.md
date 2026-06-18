@@ -3,7 +3,7 @@
 All jobs run on Render as Docker cron jobs using the `alleato-backend` image.
 Defined in `render.yaml` at the repo root.
 
-**Last updated: 2026-06-13**
+**Last updated: 2026-06-18**
 
 ---
 
@@ -14,9 +14,9 @@ Defined in `render.yaml` at the repo root.
 | `alleato-graph-sync` | every 30 min | 48× | text-embedding-3-large only | ≤50 embeddings | Low | ✅ Active |
 | `alleato-teams-channel-sync` | :10 every hour | 24× | none | 0 | None | ✅ Active |
 | `alleato-teams-dm-sync` | :40 every hour | 24× | none | 0 | None | ✅ Active |
-| `alleato-fireflies-sync` | :15 every hour | 24× | gpt-5.5 (per new meeting) | 1–3 per new meeting | Varies | ✅ Active |
+| `alleato-fireflies-sync` | :15 every hour | 24× | embeddings only during ingest | 0 inline GPT calls | Low | ✅ Active |
 | `alleato-microsoft-executive-assistant-check` | every 15 min | 96× | gpt-5.4-mini | ≤25 per run | Medium | ✅ Active |
-| `alleato-intelligence-compiler-drain` | every 15 min | 96× | none (packet_limit=0) | 0 packet jobs | None | ✅ Active (safe) |
+| `alleato-intelligence-compiler-drain` | hourly | 24× | bounded source compiler | capped by queue limits | Low-medium when present | ⚠️ Defined hourly; absent from live Render at last check |
 | `alleato-source-sync-health` | every 30 min | 48× | none | 0 | None | ✅ Active |
 | `alleato-source-rag-health` | every 4 hr | 6× | none | 0 | None | ✅ Active |
 | `alleato-rag-health` | daily 12:15 UTC | 1× | none | 0 | None | ✅ Active |
@@ -53,14 +53,9 @@ Defined in `render.yaml` at the repo root.
 ---
 
 ### `alleato-fireflies-sync` — :15 every hour
-**What it does:** Fetches new Fireflies meeting transcripts (up to 25 per run). For each NEW meeting, runs the full ingestion pipeline:
-- Task rewriter: **gpt-5.5**, up to 6k chars + 8k output tokens
-- Deep extraction (if `DEEP_EXTRACTION_ENABLED=true`): **gpt-5.5**, up to 600k chars of full transcript
-- Memory extraction: gpt-4.1-nano, cheap
-- Embeddings: text-embedding-3-large per chunk
-
-**AI cost:** Depends entirely on new meeting volume. One 90-min meeting with deep extraction = ~$3–8. `DEEP_EXTRACTION_ENABLED` is set in `render.yaml` — **check this flag before enabling**.
-**Note:** Only fires AI calls for meetings not yet ingested. Runs are cheap when there are no new meetings.
+**What it does:** Fetches recent Fireflies meeting transcripts (up to 25 per run), stores canonical transcript text, chunks it, embeds chunks, and records source lifecycle/sync evidence.
+**AI cost:** Embeddings only during ingest. The cron command forces `FIREFLIES_REWRITE_TASKS_DURING_INGEST=false`, so the GPT-5.5 task rewriter is not called inline while polling transcripts. Task/risk/change-order extraction belongs to the bounded downstream intelligence stage.
+**Note:** Unchanged transcript content is skipped by content hash and does not re-embed or call LLMs.
 
 ---
 
@@ -71,11 +66,11 @@ Defined in `render.yaml` at the repo root.
 
 ---
 
-### `alleato-intelligence-compiler-drain` — every 15 min
-**What it does:** Drains queued `source_intelligence_jobs` (signal extraction from emails/Teams — uses gpt-4.1-mini) and `packet_refresh_jobs` (operating summary — uses gpt-5.5).
+### `alleato-intelligence-compiler-drain` — hourly
+**What it does:** Drains queued RAG source-intelligence jobs (bounded signal extraction from source records) and packet-refresh jobs when explicitly enabled.
 **Current config:** `source_limit=15, packet_limit=0`
-**AI cost (current):** Only source signal extraction at gpt-4.1-mini. Packet refresh (gpt-5.5) is OFF (`packet_limit=0`).
-**⚠️ WARNING:** Raising `packet_limit` above 0 re-enables expensive gpt-5.5 operating summary calls. Do not change without understanding the cost impact — 10 packets × ~100k tokens × gpt-5.5 pricing × 96 runs/day = significant spend.
+**AI cost (current):** Source signal extraction only when queue rows exist. Packet refresh is OFF (`packet_limit=0`).
+**⚠️ WARNING:** Raising `packet_limit` above 0 re-enables expensive operating summary calls. Do not change without understanding the cost impact.
 
 ---
 
