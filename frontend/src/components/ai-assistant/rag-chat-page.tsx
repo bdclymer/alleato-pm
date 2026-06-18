@@ -26,6 +26,7 @@ import { MessageSquareIcon } from "lucide-react";
 import { ConversationSidebar } from "./conversation-sidebar";
 import { ChatArea, type ResponseQuality } from "./chat-area";
 import type { MemoryUsage } from "./memory-usage-disclosure";
+import { extractMemoryUsage } from "./memory-usage-metadata";
 import type { AssistantTraceDiagnostics, ToolTraceItem } from "./trace-panel";
 
 type PersistedDataPart = {
@@ -125,19 +126,6 @@ function extractSources(
     }
   });
   return sourcesByMessageId;
-}
-
-function extractMemoryUsage(
-  messages: ChatHistoryMessage[],
-): Record<string, MemoryUsage> {
-  const usageByMessageId: Record<string, MemoryUsage> = {};
-  messages.forEach((msg) => {
-    const usage = msg.metadata?.memory_usage;
-    if (usage && typeof usage.totalUsed === "number") {
-      usageByMessageId[msg.id] = usage;
-    }
-  });
-  return usageByMessageId;
 }
 
 function extractResponseQuality(

@@ -20,7 +20,7 @@ Source docs:
 - [x] Add wrong-memory feedback route.
 - [x] Create `ai_feedback_events` + `ai_learning_promotions` review candidate when a memory is marked wrong.
 - [x] Update `AI-RAG-ARCHITECTURE.md` for Memory Center review flow.
-- [ ] Add assistant-answer memory trace disclosure.
+- [x] Add assistant-answer memory trace disclosure.
 - [x] Add admin Memory tab to learning promotions.
 - [ ] Build Teach Alleato intake.
 - [ ] Build Skill Library.
@@ -45,7 +45,7 @@ Source docs:
   - [x] Subagent delegation runtime.
   - [x] Browser verification and adoption demo.
 - [x] Add implementation handoff under `docs/ops/handoffs/` if this becomes a parallel-session effort.
-- [ ] Keep `docs/architecture/AI-RAG-ARCHITECTURE.md` current for every AI/RAG behavior change.
+- [x] Keep `docs/architecture/AI-RAG-ARCHITECTURE.md` current for every AI/RAG behavior change.
 
 ## Phase 1: Memory Center
 
@@ -118,7 +118,7 @@ Goal: users can inspect, edit, delete, and challenge assistant memory.
 - [ ] Add helper to mark memory as challenged if persistent status is needed.
 - [ ] Add helper to list team-visible memories separately if product needs a stronger team scope.
 - [ ] Add helper to list project memories by project ID.
-- [ ] Add helper to return memory usage metadata for assistant-answer traces.
+- [x] Add helper to return memory usage metadata for assistant-answer traces.
 
 ### Memory Verification
 
@@ -155,7 +155,7 @@ Goal: users can see when an answer used memory and challenge bad memory from the
 - [x] Add "This is wrong" action per memory.
 - [x] Link to `/settings/memory`.
 - [x] Keep visual noise low.
-- [ ] Ensure mobile layout does not overflow.
+- [x] Ensure mobile layout does not overflow.
 
 ### Feedback Wiring
 
