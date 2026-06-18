@@ -405,11 +405,12 @@ Required behavior:
 - No decorative wrapper cards around whole sections
 - No bordered or boxed page-level wrappers around the main content area
 - Borders are not hierarchy. Start with whitespace, typography scale, muted text, icons, indentation, row dividers, and tonal elevation before adding any border.
-- Do not frame page content with `border`, `rounded-*`, or `bg-*` shells unless the element is a true localized component (table shell, input, modal, KPI tile, attachment module, etc.)
+- Do not frame page content with `border`, `rounded-*`, or `bg-*` shells unless the element is a true localized component (table shell, input, modal, attachment module, etc.)
 - No full-page borders around experimental tools, onboarding pages, avatar pages, or AI pages
 - General app pages must use the normal app shell and `PageShell`; do not place non-chat pages under the full-bleed chat route group
 - Do not duplicate the same primary CTA in both the page header and page body
 - Max 2 visual container levels: page shell + section content
+- No stat cards, stats-card rows, KPI-card rows, metric tiles, count summary cards, or top-of-page numeric summary cards. This is a hard product rule: do not use prime page real estate for aggregate counts unless the user explicitly asks for a monitoring dashboard and the cards are the primary workflow.
 - No heavy shadows (`shadow-lg`, `shadow-xl`, glow effects)
 - No mixed accent palette (pick one accent and stay consistent)
 - No emojis in production UI copy, states, labels, or empty-state visuals unless explicitly requested by the user
@@ -434,7 +435,6 @@ Required behavior:
 
 **Use cards only when semantically necessary:**
 
-- KPI/metric tiles
 - Distinct records in mobile list view
 - Isolated modules like activity feed or attachments
 

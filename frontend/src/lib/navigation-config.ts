@@ -32,6 +32,7 @@ import {
   Receipt,
   Settings,
   Shield,
+  Sparkles,
   Table,
   TrendingUp,
   Users,
@@ -92,11 +93,41 @@ export interface HeaderNavGroup {
 
 export const companyWideHeaderTools: HeaderNavigationTool[] = [
   {
-    name: "AI Strategist",
-    path: "ai-assistant",
+    name: "AI",
+    path: "ai",
     requiresProject: false,
     icon: Bot,
     description: "AI-powered project guidance",
+  },
+  {
+    name: "Skill Library",
+    path: "ai/skills",
+    requiresProject: false,
+    icon: Brain,
+    description: "Approved assistant skills",
+  },
+  {
+    name: "Teach Alleato",
+    path: "ai/teach",
+    requiresProject: false,
+    icon: BrainCircuit,
+    description: "Submit field knowledge for review",
+  },
+  {
+    name: "AI Learning Promotions",
+    path: "ai/learning-promotions",
+    requiresProject: false,
+    icon: Sparkles,
+    description: "Review candidate AI learnings",
+    developerOnly: true,
+  },
+  {
+    name: "AI Skills Admin",
+    path: "ai/admin/skills",
+    requiresProject: false,
+    icon: Shield,
+    description: "Review Skill Library records",
+    developerOnly: true,
   },
   {
     name: "Projects",
@@ -283,7 +314,17 @@ export interface CompanyWideToolSection {
 export const companyWideToolSections: CompanyWideToolSection[] = [
   {
     label: "Company",
-    toolNames: ["Projects", "Company Directory", "AI Strategist", "Settings"],
+    toolNames: ["Projects", "Company Directory", "Settings"],
+  },
+  {
+    label: "AI",
+    toolNames: [
+      "AI",
+      "Skill Library",
+      "Teach Alleato",
+      "AI Learning Promotions",
+      "AI Skills Admin",
+    ],
   },
   {
     label: "Work",
@@ -364,6 +405,8 @@ export const adminTools: NavigationTool[] = [
   { name: "Documentation", path: "/docs", icon: MessageCircle, requiresProject: false },
   { name: "Procore Docs", path: "/procore-docs", icon: BookOpen, requiresProject: false },
   { name: "Document Pipeline", path: "/admin/documents/pipeline", icon: FolderOpen, requiresProject: false, adminOnly: true },
+  { name: "AI Learning Promotions", path: "/ai/learning-promotions", icon: Sparkles, requiresProject: false, adminOnly: true },
+  { name: "AI Skills Admin", path: "/ai/admin/skills", icon: Shield, requiresProject: false, adminOnly: true },
   { name: "AI Compiler Health", path: "/intelligence-compiler", icon: BrainCircuit, requiresProject: false, adminOnly: true },
   { name: "Project Attribution", path: "/project-attribution", icon: Brain, requiresProject: false, adminOnly: true },
   { name: "Task Training", path: "/task-training", icon: Brain, requiresProject: false, adminOnly: true },

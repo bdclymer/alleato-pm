@@ -21,7 +21,7 @@ const adminSections = [
       { label: "Admin Dashboard", href: "/admin" },
       { label: "Feedback Inbox", href: "/feedback-inbox" },
       { label: "Annotation Inbox", href: "/annotation-inbox" },
-      { label: "AI Learning", href: "/ai-learning-promotions" },
+      { label: "AI Learning", href: "/ai/learning-promotions" },
       { label: "Updates", href: "/updates" },
     ],
   },

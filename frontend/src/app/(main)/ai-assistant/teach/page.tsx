@@ -1,5 +1,4 @@
-import { TeachAlleatoIntake } from "@/components/ai-assistant/teach-alleato-intake";
-import { PageShell } from "@/components/layout";
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "Teach Alleato | Alleato",
@@ -7,15 +6,5 @@ export const metadata = {
 };
 
 export default function TeachAlleatoPage() {
-  return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-background">
-      <PageShell
-        variant="content"
-        title="Teach Alleato"
-        description="Submissions become review candidates before they change assistant behavior."
-      >
-        <TeachAlleatoIntake />
-      </PageShell>
-    </div>
-  );
+  redirect("/ai/teach");
 }

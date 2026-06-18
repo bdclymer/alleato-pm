@@ -1201,7 +1201,7 @@ function IntelligenceEmptyState({ project, reason }: { project: ProjectRow; reas
       description={`${project.name ?? `Project ${project.id}`} cannot show a living project intelligence brief until the pipeline has a current packet. ${reason}`}
       action={
         <Button asChild size="sm" variant="outline">
-          <Link href="/ai-assistant">Open assistant</Link>
+          <Link href="/ai">Open assistant</Link>
         </Button>
       }
     />
@@ -1363,7 +1363,7 @@ export default async function ProjectIntelligencePage({ params }: { params: Prom
       }
       actions={
         <Button asChild size="sm" variant="default">
-          <Link href="/ai-assistant">Ask Alleato AI</Link>
+          <Link href="/ai">Ask Alleato AI</Link>
         </Button>
       }
       contentClassName="space-y-10"

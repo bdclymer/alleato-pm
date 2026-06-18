@@ -43,7 +43,7 @@ export function WelcomeScreen({
             {composer}
             <div className="mt-3 text-center">
               <Link
-                href="/ai-assistant/teach"
+                href="/ai/teach"
                 className="text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
               >
                 Teach Alleato

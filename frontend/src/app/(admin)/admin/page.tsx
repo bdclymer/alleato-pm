@@ -178,9 +178,9 @@ const sections: AdminMenuSection[] = [
         badge: "Project scoped",
       },
       {
-        label: "AI Assistant",
-        href: "/ai-assistant",
-        route: "/ai-assistant",
+        label: "AI",
+        href: "/ai",
+        route: "/ai",
         description: "AI Strategist chat and native action interface.",
         icon: Brain,
       },
@@ -235,10 +235,17 @@ const sections: AdminMenuSection[] = [
       },
       {
         label: "AI Learning Promotions",
-        href: "/ai-learning-promotions",
-        route: "/ai-learning-promotions",
+        href: "/ai/learning-promotions",
+        route: "/ai/learning-promotions",
         description: "Approve retrieval-learning candidates and monitor promotion history.",
         icon: Sparkles,
+      },
+      {
+        label: "AI Skills Admin",
+        href: "/ai/admin/skills",
+        route: "/ai/admin/skills",
+        description: "Review approved, candidate, and retired Skill Library records.",
+        icon: Shield,
       },
       {
         label: "Task Training",

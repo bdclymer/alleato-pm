@@ -511,7 +511,7 @@ export default function MemorySettingsPage() {
       description="Review what Alleato AI remembers and flag anything that should change future behavior."
       actions={
         <Button asChild variant="outline">
-          <Link href="/ai-assistant/teach">Teach Alleato</Link>
+          <Link href="/ai/teach">Teach Alleato</Link>
         </Button>
       }
     >

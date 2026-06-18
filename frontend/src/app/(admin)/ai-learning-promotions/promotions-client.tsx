@@ -89,12 +89,6 @@ type RetrievalWeightImpactPreview = {
   };
 };
 
-type AiLearningStats = {
-  promotions: Record<PromotionStatus, number>;
-  retrievalWeights: Record<"active" | "paused" | "superseded", number>;
-  recentActivityCount: number;
-};
-
 function formatDate(value: string | null) {
   if (!value) return "Unknown date";
   return new Intl.DateTimeFormat("en-US", {
@@ -284,8 +278,6 @@ export function AiLearningPromotionsClient({
     AiFeedbackEventRow[]
   >([]);
   const [activityLoading, setActivityLoading] = React.useState(false);
-  const [stats, setStats] = React.useState<AiLearningStats | null>(null);
-  const [statsLoading, setStatsLoading] = React.useState(false);
 
   const loadPromotions = React.useCallback(async () => {
     setLoading(true);
@@ -331,28 +323,6 @@ export function AiLearningPromotionsClient({
     void loadActivityEvents();
   }, [loadActivityEvents]);
 
-  const loadStats = React.useCallback(async () => {
-    setStatsLoading(true);
-    try {
-      const json = await apiFetch<AiLearningStats>(
-        "/api/admin/ai-learning-promotions/stats",
-        { cache: "no-store" },
-      );
-      setStats(json);
-    } catch (error) {
-      toast.error("Failed to load learning metrics", {
-        description:
-          error instanceof Error ? error.message : "Unexpected error",
-      });
-    } finally {
-      setStatsLoading(false);
-    }
-  }, []);
-
-  React.useEffect(() => {
-    void loadStats();
-  }, [loadStats]);
-
   const runGenerator = React.useCallback(async () => {
     setLoading(true);
     try {
@@ -369,7 +339,6 @@ export function AiLearningPromotionsClient({
         description: `${result.candidatesCreated} created from ${result.inspectedRows} retrieval feedback rows.`,
       });
       await loadPromotions();
-      await loadStats();
     } catch (error) {
       toast.error("Promotion scan failed", {
         description:
@@ -378,7 +347,7 @@ export function AiLearningPromotionsClient({
     } finally {
       setLoading(false);
     }
-  }, [loadPromotions, loadStats]);
+  }, [loadPromotions]);
 
   const reviewPromotion = React.useCallback(
     async (promotionId: string, action: PromotionAction) => {
@@ -391,7 +360,6 @@ export function AiLearningPromotionsClient({
         });
         await loadPromotions();
         await loadActivityEvents();
-        await loadStats();
         toast.success(
           action === "approve"
             ? "Promotion approved"
@@ -414,7 +382,7 @@ export function AiLearningPromotionsClient({
         setBusyId(null);
       }
     },
-    [loadActivityEvents, loadPromotions, loadStats],
+    [loadActivityEvents, loadPromotions],
   );
 
   const loadImpactPreview = React.useCallback(async (promotionId: string) => {
@@ -442,46 +410,6 @@ export function AiLearningPromotionsClient({
 
   return (
     <div className="space-y-8">
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          {
-            label: "Candidates",
-            value: stats?.promotions.candidate ?? 0,
-            detail: `${formatNumber(stats?.promotions.approved ?? 0)} approved`,
-          },
-          {
-            label: "Applied",
-            value: stats?.promotions.applied ?? 0,
-            detail: `${formatNumber(stats?.retrievalWeights.active ?? 0)} active weights`,
-          },
-          {
-            label: "Paused",
-            value: stats?.retrievalWeights.paused ?? 0,
-            detail: `${formatNumber(stats?.promotions.superseded ?? 0)} superseded`,
-          },
-          {
-            label: "Activity",
-            value: stats?.recentActivityCount ?? 0,
-            detail: statsLoading ? "Refreshing" : "audit events",
-          },
-        ].map((metric) => (
-          <div
-            key={metric.label}
-            className="rounded-md border border-border bg-muted/30 px-4 py-3"
-          >
-            <div className="text-xs font-medium uppercase text-muted-foreground">
-              {metric.label}
-            </div>
-            <div className="mt-2 text-2xl font-semibold text-foreground">
-              {formatNumber(metric.value)}
-            </div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              {metric.detail}
-            </div>
-          </div>
-        ))}
-      </section>
-
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <div>

@@ -1,5 +1,4 @@
-import { SkillLibraryList } from "@/components/ai-skills/skill-library-list";
-import { PageShell } from "@/components/layout";
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "Skill Library | Alleato",
@@ -9,15 +8,5 @@ export const metadata = {
 export const dynamic = "force-dynamic";
 
 export default function AiAssistantSkillsPage() {
-  return (
-    <div className="min-h-0 flex-1 overflow-auto">
-      <PageShell
-        variant="table"
-        title="Skill Library"
-        description="Approved assistant skills by category, scope, owner, reviewer, and usage."
-      >
-        <SkillLibraryList mode="user" endpoint="/api/ai-assistant/skills" />
-      </PageShell>
-    </div>
-  );
+  redirect("/ai/skills");
 }

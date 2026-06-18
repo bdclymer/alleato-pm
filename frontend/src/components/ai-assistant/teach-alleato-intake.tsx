@@ -175,7 +175,7 @@ export function TeachAlleatoIntake() {
         suggestedReviewer: form.suggestedReviewer.trim() || null,
         whyThisMatters: form.whyThisMatters.trim(),
         perceivedRiskLevel: form.riskLevel,
-        route: "/ai-assistant/teach",
+        route: "/ai/teach",
       };
 
       const response = await apiFetch<TeachAlleatoSubmitResponse>(

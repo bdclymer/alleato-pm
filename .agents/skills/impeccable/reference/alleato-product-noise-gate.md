@@ -181,6 +181,7 @@ Use the lowest sufficient tool. Do not jump to containers or decoration.
 - No mixed accent palettes.
 - No emojis in production UI.
 - No duplicate primary CTAs.
+- No stat cards, stats-card rows, KPI-card rows, metric tiles, count summary cards, or top-of-page numeric summary cards. This is a hard Alleato product rule: do not use prime page real estate for aggregate counts unless the user explicitly requests a monitoring dashboard and those cards are the primary workflow.
 - No descriptions or subtitles that restate the title, paraphrase it, or state the obvious. Title-only headers are the default.
 - No dashboards unless monitoring many simultaneous variables is the actual task.
 - No motion unless it clarifies state, continuity, reveal, or feedback.
@@ -192,7 +193,6 @@ Use the lowest sufficient tool. Do not jump to containers or decoration.
 
 Cards are allowed only when semantically necessary:
 
-- KPI or metric tiles where comparison is the job.
 - Distinct repeated records in mobile list views.
 - Localized modules such as attachments, comments, or activity feed.
 - Modal or popover surfaces.

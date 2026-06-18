@@ -58,7 +58,7 @@ describe("SkillLibraryList", () => {
     expect(screen.getByText("Reviews budget variance before owner updates.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Teach Alleato" })).toHaveAttribute(
       "href",
-      "/ai-assistant/teach",
+      "/ai/teach",
     );
     expect(screen.getByText("14")).toBeInTheDocument();
   });

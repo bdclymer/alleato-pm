@@ -156,13 +156,13 @@ describe("navigation config", () => {
     });
   });
 
-  it("keeps the AI Strategist available to non-developer users", () => {
+  it("keeps the AI section available to non-developer users", () => {
     // Guardrail: the AI assistant is intentionally available to ALL authenticated
     // users. It must not be marked developerOnly (which would hide its nav link)
     // unless the page + /api/ai-assistant routes also enforce the role server-side.
-    const aiTool = companyWideHeaderTools.find((tool) => tool.name === "AI Strategist");
+    const aiTool = companyWideHeaderTools.find((tool) => tool.name === "AI");
 
-    expect(aiTool).toMatchObject({ name: "AI Strategist", path: "ai-assistant" });
+    expect(aiTool).toMatchObject({ name: "AI", path: "ai" });
     expect(aiTool?.developerOnly).toBeUndefined();
 
     const tools = filterToolsByPermission(
@@ -174,7 +174,10 @@ describe("navigation config", () => {
       false,
     );
 
-    expect(tools.some((tool) => tool.name === "AI Strategist")).toBe(true);
+    expect(tools.some((tool) => tool.name === "AI")).toBe(true);
+    expect(tools.some((tool) => tool.name === "Skill Library")).toBe(true);
+    expect(tools.some((tool) => tool.name === "Teach Alleato")).toBe(true);
+    expect(tools.some((tool) => tool.name === "AI Learning Promotions")).toBe(false);
   });
 
   it("keeps company-wide Work tools enabled for non-developer users", () => {

@@ -12,6 +12,8 @@ function shouldHideForRoute(pathname: string) {
     pathname.startsWith("/auth") ||
     pathname === "/login" ||
     pathname === "/signup" ||
+    pathname === "/ai" ||
+    pathname.startsWith("/ai/") ||
     pathname.startsWith("/ai-assistant") ||
     pathname.startsWith("/ai-avatar")
   );

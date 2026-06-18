@@ -160,7 +160,7 @@ function skillCandidatePayload(params: {
     title,
     sourceEventId: eventId,
     sourceSurface: "teach_alleato",
-    sourceRoute: intake.route ?? "/ai-assistant/teach",
+    sourceRoute: intake.route ?? "/ai/teach",
     sourceUserId: userId,
     appliesTo: intake.appliesTo,
     workflowCategory: intake.workflowCategory,
@@ -204,7 +204,7 @@ function skillCandidatePayload(params: {
       sourceEventIds: [eventId],
       riskLevel: intake.perceivedRiskLevel,
       metadata: {
-        intakeRoute: intake.route ?? "/ai-assistant/teach",
+        intakeRoute: intake.route ?? "/ai/teach",
         sessionId: intake.sessionId ?? null,
         ...metadataRecord(intake.metadata),
       },
@@ -218,7 +218,7 @@ export async function submitTeachAlleatoIntake({
   userId,
   intake,
 }: SubmitTeachAlleatoIntakeParams): Promise<SubmitTeachAlleatoIntakeResult> {
-  const sourceRoute = intake.route ?? "/ai-assistant/teach";
+  const sourceRoute = intake.route ?? "/ai/teach";
   const event = await recordAiFeedbackEvent({
     userId,
     projectId: intake.appliesTo === "project" ? intake.projectId ?? null : null,

@@ -213,6 +213,7 @@ export function isTeachAlleatoPromotion(
     learning.action === "review_teach_alleato_intake" ||
     learning.sourceSurface === "teach_alleato" ||
     learning.sourceSurface === "ai_assistant_teach" ||
+    learning.sourceRoute === "/ai/teach" ||
     learning.sourceRoute === "/ai-assistant/teach" ||
     Boolean(learning.teachAlleatoSubmissionId)
   );

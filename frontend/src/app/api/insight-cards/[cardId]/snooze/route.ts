@@ -29,8 +29,8 @@ async function authorize(request: Request): Promise<{ ok: boolean; via: string }
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (user) return { ok: true, via: "session" };
-  } catch {
-    /* fall through */
+  } catch (error) {
+    console.warn("insight-card snooze session auth failed; falling back to token auth", error);
   }
   return { ok: false, via: "none" };
 }
@@ -89,7 +89,7 @@ export const GET = withApiGuardrails(
     }
 
     const url = new URL(request.url);
-    const fallback = `${url.origin}/ai-assistant?intent=owner-brief&snoozed=${cardId}`;
+    const fallback = `${url.origin}/ai?intent=owner-brief&snoozed=${cardId}`;
     const redirectUrl = safeReturn(url.searchParams.get("return"), fallback);
     return NextResponse.redirect(redirectUrl, 302);
   },

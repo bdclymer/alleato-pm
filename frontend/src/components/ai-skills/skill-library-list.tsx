@@ -185,7 +185,7 @@ export function SkillLibraryList({ mode, endpoint }: SkillLibraryListProps) {
 
         {mode === "user" ? (
           <Button asChild size="sm">
-            <Link href="/ai-assistant/teach">Teach Alleato</Link>
+            <Link href="/ai/teach">Teach Alleato</Link>
           </Button>
         ) : null}
       </div>

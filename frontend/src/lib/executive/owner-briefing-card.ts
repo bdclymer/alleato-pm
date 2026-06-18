@@ -94,7 +94,7 @@ export function buildOwnerBriefingCard(
     Actions([
       LinkButton({
         label: "Open full briefing",
-        url: `${options.appBaseUrl}/ai-assistant?intent=owner-brief`,
+        url: `${options.appBaseUrl}/ai?intent=owner-brief`,
       }),
       LinkButton({
         label: "Open Alleato",
@@ -306,7 +306,7 @@ function buildCardActionUrl(params: {
 }): string {
   const search = new URLSearchParams({
     token: params.token,
-    return: `${params.base}/ai-assistant?intent=owner-brief`,
+    return: `${params.base}/ai?intent=owner-brief`,
   });
   return `${params.base}/api/insight-cards/${params.cardId}/${params.action}?${search.toString()}`;
 }
@@ -319,7 +319,7 @@ function buildCardOpenUrl(params: {
   if (params.projectId) {
     return `${params.base}/${params.projectId}?card=${encodeURIComponent(params.cardId)}`;
   }
-  return `${params.base}/ai-assistant?card=${encodeURIComponent(params.cardId)}`;
+  return `${params.base}/ai?card=${encodeURIComponent(params.cardId)}`;
 }
 
 function buildFallbackText(data: OwnerBriefingData): string {

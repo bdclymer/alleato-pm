@@ -88,11 +88,15 @@ function ProcoreReferenceToggle() {
 
 function AiChatButton() {
   const pathname = usePathname()!;
-  const isActive = pathname === "/ai-assistant" || pathname?.startsWith("/ai-assistant/");
+  const isActive =
+    pathname === "/ai" ||
+    pathname?.startsWith("/ai/") ||
+    pathname === "/ai-assistant" ||
+    pathname?.startsWith("/ai-assistant/");
   return (
     <Link
-      href="/ai-assistant"
-      aria-label="AI Assistant"
+      href="/ai"
+      aria-label="AI"
       className={cn(
         "inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors",
         isActive

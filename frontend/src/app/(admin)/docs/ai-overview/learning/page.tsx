@@ -98,7 +98,7 @@ export default async function LearningPage() {
           <LoopCard
             number={2}
             title="Insight promotions"
-            adminHref="/admin/ai-learning-promotions"
+            adminHref="/ai/learning-promotions"
             adminLabel="View promotions queue"
             explanation="Low-confidence insights extracted from meetings and emails surface in a review queue. Admins approve or reject them. Approved patterns inform the extractor's confidence thresholds. Rejected patterns become anti-examples in the prompt."
             metrics={[

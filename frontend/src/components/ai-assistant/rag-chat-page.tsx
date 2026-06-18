@@ -497,9 +497,9 @@ export function RagChatPage() {
       setPendingFirstMessage(null);
       setPendingFirstFiles(undefined);
       if (sessionId) {
-        router.push(`/ai-assistant?session=${sessionId}`, { scroll: false });
+        router.push(`/ai?session=${sessionId}`, { scroll: false });
       } else {
-        router.push("/ai-assistant", { scroll: false });
+        router.push("/ai", { scroll: false });
       }
     },
     [router],
@@ -518,7 +518,7 @@ export function RagChatPage() {
       const result = await createConversation.mutateAsync("New conversation");
       const sessionId = result.session_id;
       setPendingSessionId(sessionId);
-      router.push(`/ai-assistant?session=${sessionId}`, { scroll: false });
+      router.push(`/ai?session=${sessionId}`, { scroll: false });
     } catch {
       setActiveSession(null);
     }
@@ -560,7 +560,7 @@ export function RagChatPage() {
         setPendingSessionId(sessionId);
         setPendingFirstMessage(message);
         setPendingFirstFiles(files);
-        router.push(`/ai-assistant?session=${sessionId}`, { scroll: false });
+        router.push(`/ai?session=${sessionId}`, { scroll: false });
       } catch {
         // Creation failed — clear the optimistic message
         setOptimisticUserMessage(null);

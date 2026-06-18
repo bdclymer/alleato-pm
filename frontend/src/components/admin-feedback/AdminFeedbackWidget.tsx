@@ -129,6 +129,7 @@ const TOOL_PATH_MAP: [string, string][] = [
   ["/submittals", "Submittals"],
   ["/directory", "Directory"],
   ["/schedule", "Schedule"],
+  ["/ai", "AI"],
   ["/ai-assistant", "AI Assistant"],
   ["/portfolio", "Portfolio"],
 ];
@@ -461,7 +462,10 @@ export function AdminFeedbackWidget({ showLauncher = true }: { showLauncher?: bo
 
   const hoveredRect = hoveredTarget ? getRectState(hoveredTarget) : null;
   const isImmersiveChatRoute =
-    pagePath.startsWith("/ai-assistant") || pagePath.startsWith("/ai-avatar");
+    pagePath === "/ai" ||
+    pagePath.startsWith("/ai/") ||
+    pagePath.startsWith("/ai-assistant") ||
+    pagePath.startsWith("/ai-avatar");
   const hasRecoverableDraft =
     draftActive ||
     selectedElement !== null ||

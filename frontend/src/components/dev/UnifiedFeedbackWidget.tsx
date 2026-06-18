@@ -26,7 +26,10 @@ export function UnifiedFeedbackWidget() {
   const pathname = usePathname()!;
   const isMobile = useIsMobile();
   const isImmersiveChatRoute =
-    pathname?.startsWith("/ai-assistant") || pathname?.startsWith("/ai-avatar");
+    pathname === "/ai" ||
+    pathname?.startsWith("/ai/") ||
+    pathname?.startsWith("/ai-assistant") ||
+    pathname?.startsWith("/ai-avatar");
 
   const webhookUrl = useMemo(() => {
     if (typeof window === "undefined") return undefined;
@@ -53,8 +56,8 @@ export function UnifiedFeedbackWidget() {
         );
         window.localStorage.setItem(BLOCK_INTERACTIONS_MIGRATION_KEY, "1");
       }
-    } catch {
-      // Non-blocking: fall back to Agentation defaults if localStorage is unavailable.
+    } catch (error) {
+      console.warn("Failed to migrate Agentation toolbar settings; using defaults.", error);
     } finally {
       setIsReady(true);
     }

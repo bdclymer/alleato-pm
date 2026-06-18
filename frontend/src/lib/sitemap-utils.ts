@@ -114,7 +114,7 @@ export const staticRoutes: SitemapRoute[] = [
   { url: "/knowledge/manage", title: "Knowledge Sources", category: "Admin", type: "admin", dynamic: false },
 
   // AI
-  { url: "/ai-assistant", title: "AI Assistant", category: "AI", type: "chat", dynamic: false },
+  { url: "/ai", title: "AI", category: "AI", type: "chat", dynamic: false },
   { url: "/rag", title: "RAG Chat", category: "AI", type: "chat", dynamic: false },
 
   // Auth

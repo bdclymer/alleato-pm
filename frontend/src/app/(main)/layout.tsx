@@ -66,7 +66,10 @@ export default function MainLayout({
   const shouldMountDeferredPanels = useDeferredMount(6_000);
   const isTeamChatPage = pathname?.startsWith("/team-chat");
   const isDrawingViewer = /\/drawings\/viewer\//.test(pathname ?? "");
-  const isAiAssistant = pathname?.startsWith("/ai-assistant");
+  const isAiAssistant =
+    pathname === "/ai" ||
+    pathname?.startsWith("/ai/") ||
+    pathname?.startsWith("/ai-assistant");
   const isProcoreReferenceOpen = useProcorePanelStore((state) => state.open);
   if (isTeamChatPage) {
     return (
