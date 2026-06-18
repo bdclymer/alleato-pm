@@ -25,6 +25,9 @@ Source docs:
 - [ ] Build Teach Alleato intake.
 - [ ] Build Skill Library.
 - [ ] Build AI Work Queue and subagent delegation runtime.
+  - [x] Add subagent/work-run architecture spec.
+  - [ ] Add read-only parent-child work-run ledger.
+  - [ ] Add `delegateProjectInvestigation` contract.
 
 ## Phase 0: Planning And Control Plane
 
@@ -423,9 +426,11 @@ Goal: background AI labor is visible, reviewable, and recoverable.
 ### Schema
 
 - [ ] Confirm there is no AI work queue table yet.
-- [ ] Design work-run schema.
-- [ ] Design work-run-step schema.
-- [ ] Design artifact/report schema or reuse existing workspace artifacts.
+- [x] Design work-run schema.
+- [x] Design work-run-step schema.
+- [x] Design artifact/report schema or reuse existing workspace artifacts.
+- [ ] Add `ai_work_runs` schema and generated types.
+- [ ] Add child report schema validation.
 - [ ] Add migration.
 - [ ] Apply migration.
 - [ ] Verify migration ledger.
@@ -479,13 +484,13 @@ Goal: parent agents can spawn focused child agents and synthesize one sourced an
 
 ### Runtime Contract
 
-- [ ] Define subagent run request.
-- [ ] Define subagent run response.
-- [ ] Define child report schema.
-- [ ] Define source evidence schema.
-- [ ] Define confidence schema.
-- [ ] Define failure schema.
-- [ ] Define parent synthesis schema.
+- [x] Define subagent run request.
+- [x] Define subagent run response.
+- [x] Define child report schema.
+- [x] Define source evidence schema.
+- [x] Define confidence schema.
+- [x] Define failure schema.
+- [x] Define parent synthesis schema.
 
 ### Parent Planner
 
@@ -497,9 +502,13 @@ Goal: parent agents can spawn focused child agents and synthesize one sourced an
 - [ ] Bound tool access.
 - [ ] Persist work-run parent.
 - [ ] Persist child steps.
+- [ ] Persist parent-child trace metadata to `chat_history`.
+- [ ] Persist work-run events, sources, and tool calls.
 
 ### Subagents
 
+- [ ] Add read-only backend child runner.
+- [ ] Add assistant `delegateProjectInvestigation` tool.
 - [ ] Drawing reviewer.
 - [ ] Historical issue matcher.
 - [ ] RFI drafter.
@@ -533,6 +542,7 @@ Goal: parent agents can spawn focused child agents and synthesize one sourced an
 - [ ] Unit-test child report validation.
 - [ ] Unit-test planner routing.
 - [ ] Eval-test multi-subagent synthesis.
+- [ ] Browser-verify a read-only delegated project investigation.
 - [ ] Browser-verify work queue run detail.
 - [ ] Verify failure state is clear.
 

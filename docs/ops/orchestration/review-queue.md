@@ -1,6 +1,6 @@
 # Review Queue
 
-Last updated: 2026-05-19
+Last updated: 2026-06-18
 
 Leader reviews all pending handoffs here.
 
@@ -52,6 +52,7 @@ Leader reviews all pending handoffs here.
 | `docs/ops/handoffs/2026-05-13-S45-deep-agents-orchestrator-prp.md` | S45 | AAI-356 | 2026-05-13 | Yes | Pending Review | Added Deep Agents architecture PRP and implemented Slice 3A backend-only runtime hook with `deepagents` dependencies, environment-gated endpoint, Pydantic packet contract, source coverage probes, lazy runtime invocation, fallback trace handling, and focused pytest evidence. Local ledger has an AAI-356 collision with S44 that should be resolved in orchestration cleanup. |
 | `docs/ops/handoffs/2026-05-19-S46-project-intelligence-compiler-synthesis.md` | S46 | AAI-386 | 2026-05-19 | Yes | Pending Review | Rewired client-project packet refreshes to the operating-summary synthesis compiler, added source-quality scoring and packet-synthesis verifier, refreshed Union Collective, and confirmed placeholder ratio dropped to zero. Broad compiler health still has existing queue/backlog failures to drain next. |
 | `docs/ops/handoffs/2026-05-19-S47-sais-sop-finance-spend.md` | S47 | AAI-392 | 2026-05-19 | Yes | Pending Review | Added SOP backlog table/API/UI, accounting finance spend classifier/rollup from Acumatica AP bills, AI tools, applied and verified both migrations, and passed routes, targeted ESLint, full frontend typecheck, and service-layer data probes. |
+| `docs/ops/handoffs/2026-06-18-S50-subagent-runtime-architecture.md` | S50 | AAI-532 | 2026-06-18 | Yes | Accepted | Architecture/spec accepted. Scoped markdownlint and Linear handoff check passed. The doc is repo-specific, reuses existing assistant, feedback, learning, queue, and Deep Agents anchors, and defines a read-only first implementation slice before AI Work Queue UI or child writes. |
 
 ## Disposition Rules
 
