@@ -1,5 +1,9 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import {
+  mergeProgressReportContacts,
+  resolveProgressReportContacts,
+} from "@/lib/progress-reports/contacts";
+import {
   buildProgressReportDraft,
   defaultWeeklyReportRange,
 } from "@/lib/progress-reports/report-builder";
@@ -232,26 +236,10 @@ function fullName(person: ProjectTeamPersonRow): string {
   return [person.first_name, person.last_name].filter(Boolean).join(" ").trim();
 }
 
-function contactKey(contact: ProgressReportContact): string {
-  return (contact.email || contact.name || contact.phone || contact.role).toLowerCase();
-}
-
-export function mergeProgressReportContacts(
-  primary: ProgressReportContact[],
-  secondary: ProgressReportContact[],
-): ProgressReportContact[] {
-  const contacts: ProgressReportContact[] = [];
-  const seen = new Set<string>();
-
-  for (const contact of [...primary, ...secondary]) {
-    const key = contactKey(contact);
-    if (!key || seen.has(key)) continue;
-    seen.add(key);
-    contacts.push(contact);
-  }
-
-  return contacts;
-}
+// Contact merge/resolve logic lives in ./contacts so it can be unit-tested
+// without pulling in the Supabase service client. Re-exported here because route
+// handlers import these from the service layer.
+export { mergeProgressReportContacts, resolveProgressReportContacts };
 
 /**
  * Builds the default contact list shown on new progress reports.

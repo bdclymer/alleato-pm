@@ -11,7 +11,7 @@ import {
 import {
   getProgressReportDetail,
   listProjectTeamContacts,
-  mergeProgressReportContacts,
+  resolveProgressReportContacts,
 } from "@/lib/progress-reports/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -59,7 +59,7 @@ export const GET = withApiGuardrails(
       project: projectResult.data,
       report: {
         ...detail.report,
-        contacts: mergeProgressReportContacts(projectTeamContacts, detail.report.contacts),
+        contacts: resolveProgressReportContacts(projectTeamContacts, detail.report.contacts),
       },
       selectedPhotos: detail.selectedPhotos,
     });

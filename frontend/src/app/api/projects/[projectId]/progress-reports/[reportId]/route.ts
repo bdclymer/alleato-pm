@@ -8,7 +8,7 @@ import {
   deleteProgressReport,
   getProgressReportDetail,
   listProjectTeamContacts,
-  mergeProgressReportContacts,
+  resolveProgressReportContacts,
   saveProgressReport,
 } from "@/lib/progress-reports/server";
 
@@ -71,7 +71,7 @@ export const GET = withApiGuardrails(
       ...detail,
       report: {
         ...detail.report,
-        contacts: mergeProgressReportContacts(projectTeamContacts, detail.report.contacts),
+        contacts: resolveProgressReportContacts(projectTeamContacts, detail.report.contacts),
       },
     });
   },
@@ -113,7 +113,7 @@ export const PUT = withApiGuardrails(
       ...detail,
       report: {
         ...detail.report,
-        contacts: mergeProgressReportContacts(projectTeamContacts, detail.report.contacts),
+        contacts: resolveProgressReportContacts(projectTeamContacts, detail.report.contacts),
       },
     });
   },
