@@ -2,29 +2,36 @@
 
 /**
  * Idempotent import of a Job Planner prime contract + its Schedule of Values (SOV)
- * into the PM app `prime_contracts` + `contract_line_items` tables.
+ * into the PM app `prime_contracts` + `contract_line_items` tables, creating the
+ * project's budget codes (`project_budget_codes`) and linking each SOV line to one.
  *
  * NOTE: the prime-contract detail UI (PrimeContractSovTab) reads its SOV from
- * `contract_line_items` (cols cost_code_id/line_number/quantity/unit_cost), NOT the
- * `prime_contract_sovs` table. Writing to the latter leaves the page's SOV empty.
+ * `contract_line_items` (cols cost_code_id/line_number/quantity/unit_cost), and its
+ * editable "Budget Code" column binds to `budget_code_id` -> `project_budget_codes.id`.
+ * A line with only cost_code_id renders in read-only mode but shows "Select budget
+ * code..." in edit mode, so we must populate budget_code_id too.
  *
  * Job Planner endpoints (verified live 2026-06-17):
  *   - contract (project-scoped list) GET /projects/{jpProjectId}/primecontracts   (V2, array)
  *   - SOV line items                 GET /primecontracts/{contractId}/lineitems    (V2, NOT project-scoped)
  *   - cost codes (code strings)      GET /projects/{jpProjectId}/costcodes         (V2)
+ *   - cost types (L/E/M/S/X)         GET /projects/{jpProjectId}/costtypes         (V2)
  *
  * Mapping decisions:
- *   - Amounts are in CENTS in Job Planner -> divided by 100 into our DECIMAL dollar columns.
+ *   - Amounts are in CENTS in Job Planner -> divided by 100 into our DECIMAL columns.
  *   - JP cost codes are 6-digit ("013144"); our `cost_codes.id` is dashed ("01-3144").
- *     We dash via XXYYYY -> XX-YYYY and only set `cost_code` when it resolves to a real
- *     `cost_codes` row (FK guard). Unresolved codes log a warning and store NULL.
+ *     We dash via XXYYYY -> XX-YYYY and require the dashed code to exist in `cost_codes`.
+ *   - JP cost types (L/E/M/S/X by `code`) map to `cost_code_types.id` by matching code.
+ *   - A budget code is per (project_id, sub_job_key, cost_code_id, cost_type_id) — the
+ *     unique key `uq_project_budget_code`. We upsert one per distinct SOV (code,type)
+ *     pair (sub_job_key = zero-UUID, the app default), then link contract_line_items.
  *   - `contract_line_items.total_cost` is GENERATED ALWAYS AS (quantity * unit_cost),
  *     so we cannot write it. Each line is modeled as a lump sum: quantity=1,
- *     unit_cost=<dollar amount>, making the stored line amount exactly equal the JP amount.
+ *     unit_cost=<dollar amount>, making the stored line amount exactly the JP amount.
  *   - `prime_contracts` has no source/external-key column, so idempotency keys on
  *     (project_id, contract_number). contract_number = JP `number` (e.g. "PC-9299-0001").
- *   - SOV has no per-line external key; on re-run we DELETE the contract's SOV rows and
- *     re-insert from JP (JP is the source of truth for this project).
+ *   - SOV has no per-line external key; on re-run we DELETE the contract's line items
+ *     and re-insert from JP (JP is the source of truth for this project).
  *
  * GUARDRAIL: the script aborts before writing if the sum of SOV line amounts does not
  * equal the JP contract amount (the "make sure the SOV syncs properly" invariant).
@@ -57,6 +64,7 @@ const DRY_RUN = process.argv.includes("--dry-run");
 const JP_PROJECT_ID = 9299; // "26-123 Playmakers"
 const APP_PROJECT_ID = 1067; // PM app projects.id (INTEGER) for Playmakers
 const APP_PROJECT_TITLE = "26-123 Playmakers";
+const ZERO_UUID = "00000000-0000-0000-0000-000000000000"; // project_budget_codes.sub_job_key default
 
 const API_V2 = "https://api-v2.jobplanner.com";
 // Cloudflare blocks default script user-agents (err 1010); send a browser UA.
@@ -122,7 +130,7 @@ async function main() {
     `Importing Job Planner prime contract: JP project ${JP_PROJECT_ID} -> app project ${APP_PROJECT_ID}${DRY_RUN ? " (DRY RUN)" : ""}`,
   );
 
-  // 1. Pull the prime contract (project-scoped list), its SOV, and cost codes.
+  // 1. Pull the prime contract(s), cost codes, and cost types from Job Planner.
   const contracts = await jpGet(`${API_V2}/projects/${JP_PROJECT_ID}/primecontracts`);
   if (!Array.isArray(contracts) || contracts.length === 0) {
     console.log("No prime contract returned from Job Planner. Nothing to import.");
@@ -132,17 +140,29 @@ async function main() {
     console.log(`NOTE: JP returned ${contracts.length} prime contracts; importing all.`);
   }
 
-  const costCodes = await jpGet(`${API_V2}/projects/${JP_PROJECT_ID}/costcodes`);
+  const [costCodes, costTypes] = await Promise.all([
+    jpGet(`${API_V2}/projects/${JP_PROJECT_ID}/costcodes`),
+    jpGet(`${API_V2}/projects/${JP_PROJECT_ID}/costtypes`),
+  ]);
   const jpCodeById = new Map(costCodes.map((c) => [c.id, c]));
+  // JP costTypeId -> single-letter code (L/E/M/S/X).
+  const jpTypeCodeById = new Map(costTypes.map((t) => [t.id, t.code]));
 
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
     auth: { persistSession: false },
   });
 
-  // Validate which dashed cost codes actually exist in cost_codes (FK guard).
-  const { data: ccRows, error: ccErr } = await supabase.from("cost_codes").select("id");
+  // cost_codes (id is the dashed code) -> title; FK guard for both budget codes and SOV.
+  const { data: ccRows, error: ccErr } = await supabase.from("cost_codes").select("id, title");
   if (ccErr) throw new Error(`Failed to read cost_codes: ${ccErr.message}`);
-  const knownCostCodeIds = new Set((ccRows ?? []).map((r) => r.id));
+  const costCodeTitleById = new Map((ccRows ?? []).map((r) => [r.id, r.title]));
+
+  // cost_code_types: single-letter code (L/E/M/S/X) -> uuid (cost_type_id).
+  const { data: ctRows, error: ctErr } = await supabase
+    .from("cost_code_types")
+    .select("id, code");
+  if (ctErr) throw new Error(`Failed to read cost_code_types: ${ctErr.message}`);
+  const costTypeIdByCode = new Map((ctRows ?? []).map((r) => [r.code, r.id]));
 
   for (const pc of contracts) {
     const lineItems = await jpGet(`${API_V2}/primecontracts/${pc.id}/lineitems`);
@@ -158,6 +178,89 @@ async function main() {
       );
     }
 
+    // Resolve each line's cost code + cost type up front.
+    let unresolvedCodes = 0;
+    let unresolvedTypes = 0;
+    const resolvedLines = lines.map((x, idx) => {
+      const jpCode = jpCodeById.get(x.costCodeId)?.code ?? null;
+      const dashed = dashCostCode(jpCode);
+      const costCodeId = dashed && costCodeTitleById.has(dashed) ? dashed : null;
+      if (jpCode && !costCodeId) unresolvedCodes++;
+
+      const typeCode = jpTypeCodeById.get(x.costTypeId) ?? null;
+      const costTypeId = typeCode ? costTypeIdByCode.get(typeCode) ?? null : null;
+      if (typeCode && !costTypeId) unresolvedTypes++;
+
+      return {
+        index: idx,
+        costCodeId,
+        costTypeId,
+        description:
+          x.description?.trim() ||
+          costCodeTitleById.get(costCodeId) ||
+          jpCodeById.get(x.costCodeId)?.name ||
+          `Line ${idx + 1}`,
+        unit_cost: centsToDollars(x.amount),
+      };
+    });
+
+    // Distinct (cost_code, cost_type) pairs -> the budget codes this SOV needs.
+    const budgetCodeSeed = new Map();
+    for (const ln of resolvedLines) {
+      if (!ln.costCodeId || !ln.costTypeId) continue;
+      const key = `${ln.costCodeId}|${ln.costTypeId}`;
+      if (!budgetCodeSeed.has(key)) {
+        budgetCodeSeed.set(key, {
+          project_id: APP_PROJECT_ID,
+          // sub_job_key is GENERATED from sub_job_id (defaults to the zero-UUID); omit it.
+          cost_code_id: ln.costCodeId,
+          cost_type_id: ln.costTypeId,
+          description: costCodeTitleById.get(ln.costCodeId) || ln.description,
+          description_mode: "concatenated",
+          is_active: true,
+        });
+      }
+    }
+
+    const label =
+      `${pc.number} "${APP_PROJECT_TITLE} Prime Contract" $${centsToDollars(pc.amount).toFixed(2)} ` +
+      `[${mapContractStatus(pc.statusId)}/${pc.externalObject?.status === 4 ? "synced" : "unsynced"}] ` +
+      `sov=${resolvedLines.length} budgetCodes=${budgetCodeSeed.size} ` +
+      `unresolvedCodes=${unresolvedCodes} unresolvedTypes=${unresolvedTypes}`;
+
+    if (DRY_RUN) {
+      console.log(`  WOULD UPSERT ${label}`);
+      console.log(
+        `    SOV sample: ` +
+          resolvedLines
+            .slice(0, 3)
+            .map((r) => `${r.costCodeId ?? "(none)"}=$${r.unit_cost.toFixed(2)}`)
+            .join(", "),
+      );
+      continue;
+    }
+
+    // 2. Upsert budget codes for the project (chart of accounts) and map back to ids.
+    const budgetCodeRows = [...budgetCodeSeed.values()];
+    if (budgetCodeRows.length > 0) {
+      const { error: bcErr } = await supabase
+        .from("project_budget_codes")
+        .upsert(budgetCodeRows, {
+          onConflict: "project_id,sub_job_key,cost_code_id,cost_type_id",
+        });
+      if (bcErr) throw new Error(`Budget code upsert failed for ${label}: ${bcErr.message}`);
+    }
+    const { data: bcAll, error: bcReadErr } = await supabase
+      .from("project_budget_codes")
+      .select("id, cost_code_id, cost_type_id")
+      .eq("project_id", APP_PROJECT_ID)
+      .eq("sub_job_key", ZERO_UUID);
+    if (bcReadErr) throw new Error(`Budget code read failed for ${label}: ${bcReadErr.message}`);
+    const budgetCodeIdByKey = new Map(
+      (bcAll ?? []).map((r) => [`${r.cost_code_id}|${r.cost_type_id}`, r.id]),
+    );
+
+    // 3. Idempotent contract upsert keyed on (project_id, contract_number).
     const contractRow = {
       project_id: APP_PROJECT_ID,
       contract_number: String(pc.number),
@@ -180,45 +283,6 @@ async function main() {
       updated_at: new Date().toISOString(),
     };
 
-    // Build SOV rows (cents -> dollars, dashed cost code, preserve order).
-    // `total_cost` is GENERATED ALWAYS AS (quantity * unit_cost), so we cannot
-    // write it directly. To make the stored line amount EXACTLY equal the JP amount
-    // (no rounding drift), we model every line as a lump sum: quantity=1,
-    // unit_cost=<dollar amount>. JP lines here are lump-sum (quantity/unitPrice = 0).
-    let unresolvedCodes = 0;
-    const sovRows = lines.map((x, idx) => {
-      const jpCode = jpCodeById.get(x.costCodeId)?.code ?? null;
-      const dashed = dashCostCode(jpCode);
-      const resolved = dashed && knownCostCodeIds.has(dashed) ? dashed : null;
-      if (jpCode && !resolved) unresolvedCodes++;
-      return {
-        line_number: idx + 1,
-        cost_code_id: resolved,
-        description:
-          x.description?.trim() || jpCodeById.get(x.costCodeId)?.name || `Line ${idx + 1}`,
-        quantity: 1,
-        unit_cost: centsToDollars(x.amount),
-        unit_of_measure: null,
-      };
-    });
-
-    const label =
-      `${pc.number} "${contractRow.title}" $${contractRow.original_contract_value.toFixed(2)} ` +
-      `[${contractRow.status}/${contractRow.erp_status}] sov=${sovRows.length} unresolvedCodes=${unresolvedCodes}`;
-
-    if (DRY_RUN) {
-      console.log(`  WOULD UPSERT ${label}`);
-      console.log(
-        `    SOV sample: ` +
-          sovRows
-            .slice(0, 3)
-            .map((r) => `${r.cost_code_id ?? "(none)"}=$${r.unit_cost.toFixed(2)}`)
-            .join(", "),
-      );
-      continue;
-    }
-
-    // Idempotent contract upsert keyed on (project_id, contract_number).
     const { data: existing, error: findErr } = await supabase
       .from("prime_contracts")
       .select("id")
@@ -247,21 +311,40 @@ async function main() {
       console.log(`  INSERTED contract ${label}`);
     }
 
-    // Replace SOV: delete existing rows for this contract, re-insert from JP.
+    // 4. Replace SOV line items, each linked to its budget code.
     const { error: delErr } = await supabase
       .from("contract_line_items")
       .delete()
       .eq("contract_id", contractId);
     if (delErr) throw new Error(`SOV delete failed for ${label}: ${delErr.message}`);
 
-    const rowsWithFk = sovRows.map((r) => ({ ...r, contract_id: contractId }));
-    const { error: insErr } = await supabase.from("contract_line_items").insert(rowsWithFk);
+    let linkedLines = 0;
+    const sovRows = resolvedLines.map((ln) => {
+      const budgetCodeId =
+        ln.costCodeId && ln.costTypeId
+          ? budgetCodeIdByKey.get(`${ln.costCodeId}|${ln.costTypeId}`) ?? null
+          : null;
+      if (budgetCodeId) linkedLines++;
+      return {
+        contract_id: contractId,
+        line_number: ln.index + 1,
+        cost_code_id: ln.costCodeId,
+        budget_code_id: budgetCodeId,
+        description: ln.description,
+        quantity: 1,
+        unit_cost: ln.unit_cost,
+        unit_of_measure: null,
+      };
+    });
+
+    const { error: insErr } = await supabase.from("contract_line_items").insert(sovRows);
     if (insErr) throw new Error(`SOV insert failed for ${label}: ${insErr.message}`);
 
     const insertedSum = sovRows.reduce((a, r) => a + r.quantity * r.unit_cost, 0);
     console.log(
       `  SOV synced: ${sovRows.length} lines, total $${insertedSum.toFixed(2)} ` +
-        `(matches contract $${contractRow.original_contract_value.toFixed(2)})`,
+        `(matches contract $${contractRow.original_contract_value.toFixed(2)}); ` +
+        `${linkedLines}/${sovRows.length} linked to budget codes.`,
     );
   }
 
