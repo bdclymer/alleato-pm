@@ -282,10 +282,10 @@ export interface TableColumn<T> extends ColumnConfig {
 type TableColumnAlignment = "left" | "center" | "right";
 
 const TEXT_LIKE_ALIGNMENT_PATTERN =
-  /(^|[_\s-])(title|name|description|reason|origin|status|scope|type|date|created|updated|received|sent|issued|due|closed|opened)([_\s-]|$)/i;
+  /(^|[_\s-])(title|name|description|reason|origin|status|scope|type|date|period|created|updated|sent|due|closed|opened)([_\s-]|$)/i;
 
 const NUMERIC_LIKE_ALIGNMENT_PATTERN =
-  /(^|[_\s-])(#|amount|total|subtotal|balance|cost|price|rate|revenue|budget|commitment|paid|payment|retainage|over_under|rom|qty|quantity|percent|percentage|count|hours|days|score|variance|forecast|estimate|estimated|actual|projected|remaining)([_\s-]|$)|[$%#]/i;
+  /(^|[_\s-])(#|amounts?|totals?|subtotals?|balances?|costs?|values?|prices?|rates?|revenues?|budgets?|commitments?|paid|payments?|retainages?|over_under|rom|qty|quantities?|percents?|percentages?|counts?|hours?|days?|scores?|variances?|forecasts?|estimates?|estimated|actuals?|projected|remaining|income|expenses?|billed|earned|gross|net|profits?|margins?|wip|billing|changes?|orders?)([_\s-]|$)|[$%#]/i;
 
 function resolveColumnAlignment<T>(
   column: TableColumn<T>,
@@ -293,7 +293,11 @@ function resolveColumnAlignment<T>(
 ): TableColumnAlignment {
   if (column.align) return column.align;
 
-  const searchable = `${column.id} ${column.label}`;
+  // Normalize camelCase to space-separated so "contractValue" → "contract Value"
+  const searchable = `${column.id} ${column.label}`.replace(
+    /([a-z])([A-Z])/g,
+    "$1 $2",
+  );
   if (TEXT_LIKE_ALIGNMENT_PATTERN.test(searchable)) return fallback;
   if (NUMERIC_LIKE_ALIGNMENT_PATTERN.test(searchable)) return "right";
 

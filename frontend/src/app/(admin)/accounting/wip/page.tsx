@@ -145,7 +145,7 @@ const COLUMNS: TableColumn<WipRow>[] = [
     sortable: true,
     sortValue: (item) => item.contractValue,
     render: (item) => (
-      <span className="block text-right tabular-nums">{formatCurrency(item.contractValue)}</span>
+      <span className="tabular-nums">{formatCurrency(item.contractValue)}</span>
     ),
     csvValue: (item) => String(item.contractValue),
   },
@@ -156,18 +156,19 @@ const COLUMNS: TableColumn<WipRow>[] = [
     sortable: true,
     sortValue: (item) => item.revisedCostBudget,
     render: (item) => (
-      <span className="block text-right tabular-nums">{formatCurrency(item.revisedCostBudget)}</span>
+      <span className="tabular-nums">{formatCurrency(item.revisedCostBudget)}</span>
     ),
     csvValue: (item) => String(item.revisedCostBudget),
   },
   {
     id: "costsToDate",
     label: "Costs To Date",
+    align: "right" as const,
     defaultVisible: true,
     sortable: true,
     sortValue: (item) => item.costsToDate,
     render: (item) => (
-      <span className="block text-right tabular-nums">{formatCurrency(item.costsToDate)}</span>
+      <span className="tabular-nums">{formatCurrency(item.costsToDate)}</span>
     ),
     csvValue: (item) => String(item.costsToDate),
   },
@@ -178,7 +179,7 @@ const COLUMNS: TableColumn<WipRow>[] = [
     sortable: true,
     sortValue: (item) => item.committedCosts,
     render: (item) => (
-      <span className="block text-right tabular-nums">{formatCurrency(item.committedCosts)}</span>
+      <span className="tabular-nums">{formatCurrency(item.committedCosts)}</span>
     ),
     csvValue: (item) => String(item.committedCosts),
   },
@@ -189,7 +190,7 @@ const COLUMNS: TableColumn<WipRow>[] = [
     sortable: true,
     sortValue: (item) => item.openCommitments,
     render: (item) => (
-      <span className="block text-right tabular-nums">{formatCurrency(item.openCommitments)}</span>
+      <span className="tabular-nums">{formatCurrency(item.openCommitments)}</span>
     ),
     csvValue: (item) => String(item.openCommitments),
   },
@@ -200,7 +201,7 @@ const COLUMNS: TableColumn<WipRow>[] = [
     sortable: true,
     sortValue: (item) => item.costToComplete,
     render: (item) => (
-      <span className="block text-right tabular-nums">{formatCurrency(item.costToComplete)}</span>
+      <span className="tabular-nums">{formatCurrency(item.costToComplete)}</span>
     ),
     csvValue: (item) => String(item.costToComplete),
   },
@@ -211,7 +212,7 @@ const COLUMNS: TableColumn<WipRow>[] = [
     sortable: true,
     sortValue: (item) => item.estimatedFinalCost,
     render: (item) => (
-      <span className="block text-right tabular-nums">{formatCurrency(item.estimatedFinalCost)}</span>
+      <span className="tabular-nums">{formatCurrency(item.estimatedFinalCost)}</span>
     ),
     csvValue: (item) => String(item.estimatedFinalCost),
   },
@@ -223,7 +224,7 @@ const COLUMNS: TableColumn<WipRow>[] = [
     sortValue: (item) => item.costVariance,
     render: (item) => (
       <span
-        className={`block text-right tabular-nums ${item.costVariance >= 0 ? "text-emerald-600" : "text-destructive"}`}
+        className={`tabular-nums ${item.costVariance >= 0 ? "text-emerald-600" : "text-destructive"}`}
       >
         {formatSignedCurrency(item.costVariance)}
       </span>
@@ -237,7 +238,7 @@ const COLUMNS: TableColumn<WipRow>[] = [
     sortable: true,
     sortValue: (item) => item.percentComplete,
     render: (item) => (
-      <span className="block text-right tabular-nums">{formatPercent(item.percentComplete)}</span>
+      <span className="tabular-nums">{formatPercent(item.percentComplete)}</span>
     ),
     csvValue: (item) => String(item.percentComplete),
   },
@@ -248,18 +249,19 @@ const COLUMNS: TableColumn<WipRow>[] = [
     sortable: true,
     sortValue: (item) => item.earnedRevenue,
     render: (item) => (
-      <span className="block text-right tabular-nums">{formatCurrency(item.earnedRevenue)}</span>
+      <span className="tabular-nums">{formatCurrency(item.earnedRevenue)}</span>
     ),
     csvValue: (item) => String(item.earnedRevenue),
   },
   {
     id: "billedToDate",
     label: "Billed To Date",
+    align: "right" as const,
     defaultVisible: true,
     sortable: true,
     sortValue: (item) => item.billedToDate,
     render: (item) => (
-      <span className="block text-right tabular-nums">{formatCurrency(item.billedToDate)}</span>
+      <span className="tabular-nums">{formatCurrency(item.billedToDate)}</span>
     ),
     csvValue: (item) => String(item.billedToDate),
   },
@@ -271,7 +273,7 @@ const COLUMNS: TableColumn<WipRow>[] = [
     sortValue: (item) => item.overUnderBilling,
     render: (item) => (
       <span
-        className={`block text-right tabular-nums ${item.overUnderBilling >= 0 ? "text-amber-600" : "text-blue-600"}`}
+        className={`tabular-nums ${item.overUnderBilling >= 0 ? "text-amber-600" : "text-blue-600"}`}
       >
         {formatSignedCurrency(item.overUnderBilling)}
       </span>
@@ -299,7 +301,7 @@ const COLUMNS: TableColumn<WipRow>[] = [
     sortValue: (item) => item.forecastGrossProfit,
     render: (item) => (
       <span
-        className={`block text-right tabular-nums ${item.forecastGrossProfit >= 0 ? "text-emerald-600" : "text-destructive"}`}
+        className={`tabular-nums ${item.forecastGrossProfit >= 0 ? "text-emerald-600" : "text-destructive"}`}
       >
         {formatSignedCurrency(item.forecastGrossProfit)}
       </span>
@@ -313,7 +315,7 @@ const COLUMNS: TableColumn<WipRow>[] = [
     sortable: true,
     sortValue: (item) => item.forecastGrossMarginPct,
     render: (item) => (
-      <span className="block text-right tabular-nums">
+      <span className="tabular-nums">
         {item.forecastGrossMarginPct.toFixed(1)}%
       </span>
     ),
@@ -337,7 +339,7 @@ const COLUMNS: TableColumn<WipRow>[] = [
     sortable: true,
     sortValue: (item) => item.budgetLineCount,
     render: (item) => (
-      <span className="block text-right tabular-nums">{item.budgetLineCount}</span>
+      <span className="tabular-nums">{item.budgetLineCount}</span>
     ),
     csvValue: (item) => String(item.budgetLineCount),
   },
