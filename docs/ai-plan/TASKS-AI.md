@@ -32,16 +32,16 @@ Source docs:
 - [x] Create `AI-OS-PHASE-1-IMPLEMENTATION-PLAN.md`.
 - [x] Create `TASKS-AI.md`.
 - [ ] Add this checklist to the relevant AI docs navigation if a docs index exists.
-- [ ] Create Linear issue for the AI OS epic when Linear issue creation is available.
-- [ ] Split Linear sub-issues by phase:
-  - [ ] Memory trace and memory review admin workflow.
-  - [ ] Teach Alleato intake.
-  - [ ] Skill Library schema and UI.
-  - [ ] Skill injection and traces.
-  - [ ] AI Work Queue.
-  - [ ] Subagent delegation runtime.
-  - [ ] Browser verification and adoption demo.
-- [ ] Add implementation handoff under `docs/ops/handoffs/` if this becomes a parallel-session effort.
+- [x] Create Linear issue for the AI OS epic when Linear issue creation is available.
+- [x] Split Linear sub-issues by phase:
+  - [x] Memory trace and memory review admin workflow.
+  - [x] Teach Alleato intake.
+  - [x] Skill Library schema and UI.
+  - [x] Skill injection and traces.
+  - [x] AI Work Queue.
+  - [x] Subagent delegation runtime.
+  - [x] Browser verification and adoption demo.
+- [x] Add implementation handoff under `docs/ops/handoffs/` if this becomes a parallel-session effort.
 - [ ] Keep `docs/architecture/AI-RAG-ARCHITECTURE.md` current for every AI/RAG behavior change.
 
 ## Phase 1: Memory Center
