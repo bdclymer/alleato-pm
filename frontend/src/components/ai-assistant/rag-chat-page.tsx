@@ -25,6 +25,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { MessageSquareIcon } from "lucide-react";
 import { ConversationSidebar } from "./conversation-sidebar";
 import { ChatArea, type ResponseQuality } from "./chat-area";
+import type { MemoryUsage } from "./memory-usage-disclosure";
 import type { AssistantTraceDiagnostics, ToolTraceItem } from "./trace-panel";
 
 type PersistedDataPart = {
@@ -40,18 +41,7 @@ interface ChatHistoryMessage {
   sources: unknown[] | null;
   metadata?: {
     tool_trace?: ToolTraceItem[];
-    memory_usage?: {
-      totalUsed: number;
-      preferencesUsed?: number;
-      relevantUsed?: number;
-      teamUsed?: number;
-      recentConversationsUsed?: number;
-      memories?: Array<{
-        id: string;
-        type: string;
-        content: string;
-      }>;
-    };
+    memory_usage?: MemoryUsage;
     response_quality?: ResponseQuality;
     provider_path?: string;
     model?: string;
@@ -61,10 +51,6 @@ interface ChatHistoryMessage {
   } | null;
   created_at: string | null;
 }
-
-type MemoryUsage = NonNullable<
-  NonNullable<ChatHistoryMessage["metadata"]>["memory_usage"]
->;
 
 type StrategistLiveStatus = {
   stage: string;

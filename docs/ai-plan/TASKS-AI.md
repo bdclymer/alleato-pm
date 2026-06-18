@@ -133,15 +133,15 @@ Goal: users can see when an answer used memory and challenge bad memory from the
 
 ### Data Contract
 
-- [ ] Inspect `memory_usage` metadata emitted by `bot-core.ts`.
-- [ ] Define stable client type for memory trace payload.
-- [ ] Include memory ID.
-- [ ] Include memory type.
-- [ ] Include short memory snippet.
-- [ ] Include ranking reason when available.
-- [ ] Include project scope when available.
-- [ ] Include visibility only when safe for current user.
-- [ ] Do not expose private memories across users.
+- [x] Inspect `memory_usage` metadata emitted by `bot-core.ts`.
+- [x] Define stable client type for memory trace payload.
+- [x] Include memory ID.
+- [x] Include memory type.
+- [x] Include short memory snippet.
+- [x] Include ranking reason when available.
+- [x] Include project scope when available.
+- [x] Include visibility only when safe for current user.
+- [x] Do not expose private memories across users.
 
 ### Chat UI
 

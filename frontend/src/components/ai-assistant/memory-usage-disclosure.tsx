@@ -14,10 +14,20 @@ export interface MemoryUsage {
   relevantUsed?: number;
   teamUsed?: number;
   recentConversationsUsed?: number;
+  retrieved?: {
+    preferences: number;
+    relevant: number;
+    team: number;
+  };
   memories?: Array<{
     id: string;
     type: string;
     content: string;
+    projectId?: number | null;
+    visibility?: string;
+    similarity?: number;
+    rankingScore?: number;
+    rankingReason?: string;
   }>;
 }
 
@@ -116,9 +126,19 @@ function MemoryUsageDisclosure({
               key={memory.id}
               className="flex items-start justify-between gap-3"
             >
-              <p className="line-clamp-2 min-w-0 flex-1 text-xs text-foreground/90">
-                {memory.content}
-              </p>
+              <div className="min-w-0 flex-1 space-y-1">
+                <p className="line-clamp-2 text-xs text-foreground/90">
+                  {memory.content}
+                </p>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+                  <span className="capitalize">{memory.type.replaceAll("_", " ")}</span>
+                  {memory.projectId ? <span>Project #{memory.projectId}</span> : null}
+                  {memory.visibility === "team" ? <span>Team memory</span> : null}
+                  {memory.rankingReason ? (
+                    <span className="line-clamp-1">{memory.rankingReason}</span>
+                  ) : null}
+                </div>
+              </div>
               <Button
                 type="button"
                 variant="ghost"

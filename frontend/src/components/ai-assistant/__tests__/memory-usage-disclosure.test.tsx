@@ -34,6 +34,9 @@ function memoryUsage(overrides: Partial<MemoryUsage> = {}): MemoryUsage {
         id: "memory-1",
         type: "preference",
         content: "Brandon prefers executive summaries with source-linked risks.",
+        projectId: 43,
+        visibility: "team",
+        rankingReason: "project=selected; similarity=0.81; importance=0.70",
       },
       {
         id: "memory-2",
@@ -66,6 +69,9 @@ describe("AssistantMemoryTrace", () => {
     expect(
       screen.getByText(/executive summaries with source-linked risks/i),
     ).toBeInTheDocument();
+    expect(screen.getByText("Project #43")).toBeInTheDocument();
+    expect(screen.getByText("Team memory")).toBeInTheDocument();
+    expect(screen.getByText(/project=selected/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /review memory/i })).toHaveAttribute(
       "href",
       "/settings/memory",
