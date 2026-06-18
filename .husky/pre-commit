@@ -70,6 +70,17 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+# ── PDF route tracing guard ──────────────────────────────────────
+# @sparticuz/chromium's binary blobs are read at runtime via a constructed
+# path, so Next.js output file tracing drops them. Any route rendering a PDF
+# must be force-included in next.config.ts's outputFileTracingIncludes or it
+# crashes ONLY in production. See scripts/audits/check-pdf-route-tracing.mjs.
+node scripts/audits/check-pdf-route-tracing.mjs
+if [ $? -ne 0 ]; then
+  echo "PDF route not force-traced in next.config.ts. Fix before committing."
+  exit 1
+fi
+
 # ── Build crash guards ───────────────────────────────────────────
 # Prevent the two patterns that have caused production build failures:
 #   1. Server pages calling createServiceClient() without force-dynamic
