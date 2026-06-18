@@ -170,8 +170,8 @@ Goal: users can see when an answer used memory and challenge bad memory from the
 - [x] Ensure answer trace cannot reveal private memory to non-owner.
 - [x] Ensure challenge action does not mutate behavior immediately.
 - [x] Ensure failed challenge shows an actionable error.
-- [ ] Add regression test for memory trace rendering.
-- [ ] Add regression test for hidden trace when no memory is used.
+- [x] Add regression test for memory trace rendering.
+- [x] Add regression test for hidden trace when no memory is used.
 
 ## Phase 3: Learning Review Queue Improvements
 
