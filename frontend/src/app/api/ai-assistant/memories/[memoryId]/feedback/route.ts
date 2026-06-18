@@ -1,0 +1,121 @@
+import { z } from "zod";
+
+import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import {
+  createLearningPromotion,
+  recordAiFeedbackEvent,
+} from "@/lib/ai/services/feedback-event-service";
+import { createServiceClient } from "@/lib/supabase/service";
+import { getApiRouteUser } from "@/lib/supabase/server";
+
+const feedbackSchema = z.object({
+  reason: z.string().trim().min(1).max(1000),
+  reasonCategory: z
+    .enum(["wrong", "outdated", "private", "too_broad", "duplicate", "other"])
+    .default("wrong"),
+});
+
+export const POST = withApiGuardrails(
+  "ai-assistant/memories/[memoryId]/feedback#POST",
+  async ({ request, params }) => {
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "ai-assistant/memories/[memoryId]/feedback#POST",
+        message: "Authentication required.",
+      });
+    }
+
+    const { memoryId } = params as { memoryId: string };
+    const body = await parseJsonBody(
+      request,
+      feedbackSchema,
+      "ai-assistant/memories/[memoryId]/feedback#POST",
+    );
+
+    const supabase = createServiceClient();
+    const { data: memory, error: memoryError } = await supabase
+      .from("ai_memories")
+      .select(
+        "id, type, content, confidence, importance, project_id, meeting_id, source, visibility, created_at, last_accessed_at, access_count",
+      )
+      .eq("id", memoryId)
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (memoryError) {
+      throw new GuardrailError({
+        code: "UPSTREAM_FAILURE",
+        where: "ai-assistant/memories/[memoryId]/feedback#POST",
+        message: "Failed to load memory before recording feedback.",
+        details: memoryError.message,
+      });
+    }
+
+    if (!memory) {
+      throw new GuardrailError({
+        code: "ROUTE_BINDING_MISSING",
+        where: "ai-assistant/memories/[memoryId]/feedback#POST",
+        message: "Memory was not found or is no longer active.",
+        status: 404,
+      });
+    }
+
+    const event = await recordAiFeedbackEvent({
+      userId: user.id,
+      projectId: memory.project_id,
+      sourceTable: "ai_memories",
+      sourceRecordId: memory.id,
+      eventType: "ai_memory_marked_wrong",
+      eventFamily: "user_preference",
+      surface: "memory_center",
+      subjectType: "ai_memory",
+      subjectId: memory.id,
+      signal: "corrected",
+      reasonCategory: body.reasonCategory,
+      freeText: body.reason,
+      beforeSnapshot: memory,
+      sourceContext: {
+        route: "/settings/memory",
+        memoryId: memory.id,
+      },
+      metadata: {
+        requestedAction: "review_memory",
+        visibility: memory.visibility ?? "private",
+      },
+    });
+
+    const promotion = await createLearningPromotion({
+      promotionType: "workflow_rule",
+      projectId: memory.project_id,
+      sourceEventIds: [event.id],
+      destinationTable: "ai_memories",
+      destinationRecordId: memory.id,
+      confidence: 0.85,
+      riskLevel: memory.visibility === "team" || memory.project_id ? "medium" : "low",
+      proposedLearning: {
+        action: "review_memory",
+        title: "Review memory marked wrong",
+        content: memory.content,
+        memoryId: memory.id,
+        memoryType: memory.type,
+        visibility: memory.visibility ?? "private",
+        projectId: memory.project_id,
+        reasonCategory: body.reasonCategory,
+        reason: body.reason,
+        recommendedResolution:
+          "Review whether this memory should be edited, expired, deactivated, or converted into a more precise skill or preference.",
+      },
+      reviewNotes: "Created from Memory Center wrong-memory feedback.",
+    });
+
+    return Response.json({
+      success: true,
+      event,
+      promotion,
+    });
+  },
+);

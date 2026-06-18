@@ -41,6 +41,9 @@ export interface AiMemory {
   source: MemorySource;
   visibility?: MemoryVisibility;
   created_at: string;
+  last_accessed_at?: string | null;
+  access_count?: number | null;
+  expires_at?: string | null;
   similarity?: number;
   ranking_score?: number;
   ranking_reason?: string;
