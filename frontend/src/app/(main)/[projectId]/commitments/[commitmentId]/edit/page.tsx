@@ -10,6 +10,7 @@ import {
   CreateSubcontractForm,
 } from "@/components/domain/contracts";
 import { apiFetch } from "@/lib/api-client";
+import { uploadEntityAttachment } from "@/lib/documents/upload-entity-attachment";
 import { PageShell } from "@/components/layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { commitmentKeys, useCommitmentDetail } from "@/hooks/use-commitments-query";
@@ -217,17 +218,14 @@ export default function EditCommitmentPage() {
     if (!files.length) return;
 
     await Promise.all(
-      files.map(async (file) => {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("entityType", "commitment");
-        formData.append("entityId", targetCommitmentId);
-        formData.append("projectId", String(projectId));
-        await apiFetch(`/api/document-picker/upload`, {
-          method: "POST",
-          body: formData,
-        });
-      }),
+      files.map((file) =>
+        uploadEntityAttachment({
+          file,
+          entityType: "commitment",
+          entityId: targetCommitmentId,
+          projectId,
+        }),
+      ),
     );
   };
 

@@ -16,6 +16,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { apiFetch } from '@/lib/api-client';
+import { getAttachmentSizeError } from '@/lib/documents/attachment-constraints';
+import { uploadEntityAttachment } from '@/lib/documents/upload-entity-attachment';
 import { cn } from '@/lib/utils';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -52,12 +54,6 @@ interface DocumentTypeOption {
   sort_order: number;
 }
 
-interface UploadedDocumentResult {
-  documentMetadataId: string;
-  pipelineQueued?: boolean;
-  pipelineMessage?: string | null;
-}
-
 export interface DocumentPickerProps {
   entityType: DocumentPickerEntityType;
   entityId: string;
@@ -92,7 +88,6 @@ const ACCEPTED_TYPES = [
   '.dwg', '.dxf', '.zip', '.txt',
 ].join(',');
 
-const MAX_SIZE_BYTES = 50 * 1024 * 1024;
 const NO_DOCUMENT_TYPE = '__none';
 
 // ─── EntityAttachments ────────────────────────────────────────────────────────
@@ -198,24 +193,21 @@ export function EntityAttachments({
 
   const uploadFile = useCallback(
     async (file: File) => {
-      if (file.size > MAX_SIZE_BYTES) {
-        toast.error(`${file.name} exceeds the 50 MB limit`);
+      const sizeError = getAttachmentSizeError(file);
+      if (sizeError) {
+        toast.error(sizeError);
         return;
       }
       setUploading((prev) => [...prev, file.name]);
       try {
-        const fd = new FormData();
-        fd.append('file', file);
-        fd.append('entityType', entityType);
-        fd.append('entityId', entityId);
-        fd.append('projectId', String(projectId));
-        if (selectedDocumentType !== NO_DOCUMENT_TYPE) {
-          fd.append('documentType', selectedDocumentType);
-        }
-        const result = await apiFetch<UploadedDocumentResult>(
-          '/api/document-picker/upload',
-          { method: 'POST', body: fd }
-        );
+        const result = await uploadEntityAttachment({
+          file,
+          entityType,
+          entityId,
+          projectId,
+          documentType:
+            selectedDocumentType !== NO_DOCUMENT_TYPE ? selectedDocumentType : undefined,
+        });
         void queryClient.invalidateQueries({ queryKey });
         toast.success(`${file.name} uploaded`);
         if (result.pipelineQueued === false && result.pipelineMessage) {

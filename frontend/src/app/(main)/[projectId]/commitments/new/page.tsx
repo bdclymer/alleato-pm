@@ -7,6 +7,7 @@ import {
   CreateSubcontractForm,
 } from "@/components/domain/contracts";
 import { apiFetchRaw } from "@/lib/api-client";
+import { uploadEntityAttachment } from "@/lib/documents/upload-entity-attachment";
 import { PageShell } from "@/components/layout";
 import type { CreatePurchaseOrderInput } from "@/lib/schemas/create-purchase-order-schema";
 import type { CreateSubcontractInput } from "@/lib/schemas/create-subcontract-schema";
@@ -129,26 +130,14 @@ export default function NewCommitmentPage() {
     if (!files.length) return;
 
     await Promise.all(
-      files.map(async (file) => {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("entityType", "commitment");
-        formData.append("entityId", commitmentId);
-        formData.append("projectId", String(projectId));
-
-        const uploadResponse = await apiFetchRaw(
-          `/api/document-picker/upload`,
-          {
-            method: "POST",
-            body: formData,
-          },
-        );
-
-        if (!uploadResponse.ok) {
-          const uploadError = await parseApiError(uploadResponse);
-          throw new Error(uploadError.error || "Failed to upload attachment");
-        }
-      }),
+      files.map((file) =>
+        uploadEntityAttachment({
+          file,
+          entityType: "commitment",
+          entityId: commitmentId,
+          projectId,
+        }),
+      ),
     );
   };
 
