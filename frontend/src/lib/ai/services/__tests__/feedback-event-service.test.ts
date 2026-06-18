@@ -3,6 +3,7 @@ import {
   applyAttributionRulePromotion,
   applyMemoryPromotion,
   applyPositiveTaskExamplePromotion,
+  applySkillLibraryPromotion,
   generateEmailVoicePromotionCandidates,
   generateRetrievalPromotionCandidates,
   generateTaskPromotionCandidates,
@@ -14,6 +15,7 @@ import {
 } from "@/lib/supabase/service";
 import { upsertAgentLearning } from "@/lib/ai/services/agent-learning-service";
 import { writeMemory } from "@/lib/ai/services/ai-memory-service";
+import { createSkill } from "@/lib/ai/services/skill-library-service";
 
 jest.mock("@/lib/supabase/service", () => ({
   createServiceClient: jest.fn(),
@@ -27,6 +29,10 @@ jest.mock("@/lib/ai/services/agent-learning-service", () => ({
 
 jest.mock("@/lib/ai/services/ai-memory-service", () => ({
   writeMemory: jest.fn(),
+}));
+
+jest.mock("@/lib/ai/services/skill-library-service", () => ({
+  createSkill: jest.fn(),
 }));
 
 type RetrievalFeedbackFixture = {
@@ -92,6 +98,7 @@ const createServiceClientMock = createServiceClient as jest.Mock;
 const createRagServiceClientMock = createRagServiceClient as jest.Mock;
 const upsertAgentLearningMock = upsertAgentLearning as jest.Mock;
 const writeMemoryMock = writeMemory as jest.Mock;
+const createSkillMock = createSkill as jest.Mock;
 
 function retrievalFeedback(
   overrides: Partial<RetrievalFeedbackFixture>,
@@ -490,6 +497,64 @@ function mockMemoryPromotionApplySupabase(params: {
     from: jest.fn((table: string) => {
       if (table !== "ai_learning_promotions") {
         throw new Error(`Unexpected memory apply table: ${table}`);
+      }
+      return {
+        select: selectPromotionQuery.select,
+        eq: selectPromotionQuery.eq,
+        single: selectPromotionQuery.single,
+        update: jest.fn().mockReturnValue(updatePromotionQuery),
+      };
+    }),
+  };
+  const eventSupabase = {
+    from: jest.fn((table: string) => {
+      if (table !== "ai_feedback_events") {
+        throw new Error(`Unexpected event table: ${table}`);
+      }
+      return {
+        insert: jest.fn().mockReturnValue(feedbackEventQuery),
+      };
+    }),
+  };
+
+  createServiceClientMock
+    .mockReturnValueOnce(applySupabase)
+    .mockReturnValueOnce(eventSupabase);
+}
+
+function mockSkillPromotionApplySupabase(params: {
+  promotion: Record<string, unknown>;
+  updatedPromotion: Record<string, unknown>;
+}) {
+  const selectPromotionQuery = {
+    select: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    single: jest.fn().mockResolvedValue({
+      data: params.promotion,
+      error: null,
+    }),
+  };
+  const updatePromotionQuery = {
+    eq: jest.fn().mockReturnThis(),
+    select: jest.fn().mockReturnThis(),
+    single: jest.fn().mockResolvedValue({
+      data: params.updatedPromotion,
+      error: null,
+    }),
+  };
+  const feedbackEventQuery = {
+    select: jest.fn().mockReturnThis(),
+    single: jest.fn().mockResolvedValue({
+      data: {
+        id: "99999999-9999-4999-8999-999999999999",
+      },
+      error: null,
+    }),
+  };
+  const applySupabase = {
+    from: jest.fn((table: string) => {
+      if (table !== "ai_learning_promotions") {
+        throw new Error(`Unexpected skill apply table: ${table}`);
       }
       return {
         select: selectPromotionQuery.select,
@@ -1006,6 +1071,111 @@ describe("feedback event service retrieval promotions", () => {
     );
     expect(result.memory.id).toBe(memoryId);
     expect(result.promotion.destination_table).toBe("ai_memories");
+  });
+
+  it("applies Skill Library promotions into active ai_skills records", async () => {
+    const promotionId = "70707070-7070-4707-8707-707070707070";
+    const skillId = "71717171-7171-4717-8717-717171717171";
+    const reviewedBy = "56565656-5656-4565-8565-565656565656";
+    const sourceEventId = "72727272-7272-4727-8727-727272727272";
+    const promotion = {
+      id: promotionId,
+      status: "approved",
+      promotion_type: "workflow_rule",
+      project_id: 1009,
+      source_event_ids: [sourceEventId],
+      destination_table: "ai_skills",
+      destination_record_id: "stored-material-review",
+      confidence: 0.76,
+      proposed_learning: {
+        title: "Review stored materials",
+        workflowCategory: "pay_app_review",
+        perceivedRiskLevel: "medium",
+        sourceUserId: reviewedBy,
+        skillCandidate: {
+          title: "Review stored materials",
+          slug: "review-stored-materials",
+          summary: "Check stored material lines before approval.",
+          body: "Compare stored material lines against approved SOV balances.",
+          instructions:
+            "Flag stored material lines that exceed approved SOV balances.",
+          category: "pay_app_review",
+          scope: { type: "project", projectId: 1009 },
+          ownerUserId: reviewedBy,
+          examples: [
+            {
+              input: "Pay app has stored materials.",
+              output: "Ask the PM for backup before approval.",
+            },
+          ],
+          sourceEventIds: [sourceEventId],
+          riskLevel: "medium",
+          metadata: { source: "unit-test" },
+        },
+      },
+    };
+    const updatedPromotion = {
+      ...promotion,
+      status: "applied",
+      destination_table: "ai_skills",
+      destination_record_id: skillId,
+    };
+    const skill = {
+      id: skillId,
+      title: "Review stored materials",
+      slug: "review-stored-materials",
+      summary: "Check stored material lines before approval.",
+      body: "Compare stored material lines against approved SOV balances.",
+      instructions:
+        "Flag stored material lines that exceed approved SOV balances.",
+      category: "pay_app_review",
+      scopeType: "project",
+      projectId: 1009,
+      ownerUserId: reviewedBy,
+      reviewerUserId: reviewedBy,
+      status: "active",
+      version: 1,
+      supersedesSkillId: null,
+      examples: [],
+      sourceEventIds: [sourceEventId],
+      riskLevel: "medium",
+      usageCount: 0,
+      lastUsedAt: null,
+      reviewedAt: null,
+      reviewNotes: null,
+      metadata: {},
+      createdAt: "2026-06-18T21:00:00.000Z",
+      updatedAt: "2026-06-18T21:00:00.000Z",
+    };
+    mockSkillPromotionApplySupabase({
+      promotion,
+      updatedPromotion,
+    });
+    createSkillMock.mockResolvedValue(skill);
+
+    const result = await applySkillLibraryPromotion({
+      promotionId,
+      reviewedBy,
+      reviewNotes: "Approved for project pay app review.",
+    });
+
+    expect(createSkillMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Review stored materials",
+        slug: "review-stored-materials",
+        status: "active",
+        category: "pay_app_review",
+        scopeType: "project",
+        projectId: 1009,
+        ownerUserId: reviewedBy,
+        reviewerUserId: reviewedBy,
+        sourceEventIds: [sourceEventId],
+        riskLevel: "medium",
+      }),
+    );
+    expect(result.skill.id).toBe(skillId);
+    expect(result.promotion.destination_table).toBe("ai_skills");
+    expect(result.promotion.destination_record_id).toBe(skillId);
   });
 
   it("applies attribution rule promotions by approving the candidate and assigning the source document", async () => {

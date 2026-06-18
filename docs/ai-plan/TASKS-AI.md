@@ -23,7 +23,7 @@ Source docs:
 - [x] Add assistant-answer memory trace disclosure.
 - [x] Add admin Memory tab to learning promotions.
 - [x] Build Teach Alleato intake.
-- [ ] Build Skill Library.
+- [x] Build Skill Library.
 - [ ] Build AI Work Queue and subagent delegation runtime.
   - [x] Add subagent/work-run architecture spec.
   - [ ] Add read-only parent-child work-run ledger.
@@ -299,63 +299,71 @@ Goal: approved field knowledge becomes reusable, versioned operating procedure.
 
 ### Schema
 
-- [ ] Confirm there is no first-class skills table yet.
-- [ ] Design skills schema.
-- [ ] Create migration for skills tables.
-- [ ] Apply migration to Supabase.
-- [ ] Verify migration ledger.
+- [x] Confirm there is no first-class skills table yet.
+- [x] Design skills schema.
+- [x] Create migration for skills tables.
+- [x] Apply migration to Supabase.
+- [x] Verify migration ledger.
 - [ ] Regenerate Supabase types.
-- [ ] Update table metadata docs.
-- [ ] Add RLS:
-  - [ ] personal skills visible to owner/admin.
-  - [ ] project skills visible to project members/admin.
-  - [ ] team/company skills visible to authenticated team/admin.
-  - [ ] write/review actions admin-gated or owner-gated.
-- [ ] Add indexes for status, scope, category, project, owner, updated date.
+- [x] Update AI/RAG architecture docs for live Skill Library state.
+- [x] Add RLS:
+  - [x] personal skills visible to owner/admin.
+  - [x] project skills visible to project members/admin.
+  - [x] team/company skills visible to authenticated team/admin.
+  - [x] write/review actions admin-gated or owner-gated.
+- [x] Add indexes for status, scope, category, project, owner, updated date.
 
 ### Skill Model
 
-- [ ] Skill title.
-- [ ] Skill slug.
-- [ ] Summary.
-- [ ] Body/instructions.
-- [ ] Category.
-- [ ] Scope.
-- [ ] Status.
-- [ ] Owner.
-- [ ] Reviewer.
-- [ ] Version.
-- [ ] Examples.
-- [ ] Source event IDs.
-- [ ] Risk level.
-- [ ] Usage count.
-- [ ] Last used.
-- [ ] Metadata.
+- [x] Skill title.
+- [x] Skill slug.
+- [x] Summary.
+- [x] Body/instructions.
+- [x] Category.
+- [x] Scope.
+- [x] Status.
+- [x] Owner.
+- [x] Reviewer.
+- [x] Version.
+- [x] Examples.
+- [x] Source event IDs.
+- [x] Risk level.
+- [x] Usage count.
+- [x] Last used.
+- [x] Metadata.
 
 ### User UI
 
-- [ ] Add `/ai-assistant/skills`.
-- [ ] List active skills user can see.
-- [ ] Filter by category.
-- [ ] Filter by scope.
-- [ ] Filter by project.
-- [ ] Show owner/reviewer.
-- [ ] Show examples.
-- [ ] Show usage count.
-- [ ] Link to Teach Alleato.
-- [ ] Allow users to submit new skill candidates.
+- [x] Add `/ai-assistant/skills`.
+- [x] List active skills user can see.
+- [x] Filter by category.
+- [x] Filter by scope.
+- [x] Filter by project.
+- [x] Show owner/reviewer.
+- [x] Show examples.
+- [x] Show usage count.
+- [x] Link to Teach Alleato.
+- [x] Allow users to submit new skill candidates through Teach Alleato.
 
 ### Admin UI
 
-- [ ] Add `/admin/ai-skills`.
-- [ ] Review candidate skills.
-- [ ] Approve candidate skills.
-- [ ] Reject candidate skills with notes.
-- [ ] Archive active skills.
+- [x] Add `/ai-skills`.
+- [x] Review candidate skills.
+- [x] Approve candidate skills.
+- [x] Reject candidate skills with notes.
+- [x] Archive active skills.
 - [ ] Create new skill version.
 - [ ] Compare versions.
 - [ ] View usage events.
 - [ ] View linked evals.
+
+### Learning Promotions Bridge
+
+- [x] Route skill-shaped Teach Alleato workflow candidates into a Skill review filter.
+- [x] Keep Skill Library apply disabled until first-class skill tables and the approval writer exist.
+- [x] Fail loudly on forced Skill Library apply attempts before the writer exists.
+- [x] Replace the staged `ai_skill_candidates` destination with the real Skill Library service once S54 lands.
+- [x] Connect approved Skill Library candidates to the S55 user/admin Skill Library pages.
 
 ### Seed Skill Candidates
 
@@ -372,12 +380,13 @@ Goal: approved field knowledge becomes reusable, versioned operating procedure.
 
 ### Verification
 
-- [ ] Unit-test skill CRUD service.
+- [x] Unit-test skill CRUD service.
 - [ ] Unit-test RLS expectations where possible.
+- [x] Unit-test Skill review candidate parsing and routing.
 - [ ] Browser-verify user skill library.
 - [ ] Browser-verify admin skill review.
-- [ ] Verify migration applied.
-- [ ] Update AI/RAG architecture docs.
+- [x] Verify migration applied.
+- [x] Update AI/RAG architecture docs.
 
 ## Phase 6: Skill Injection And Skill Traces
 

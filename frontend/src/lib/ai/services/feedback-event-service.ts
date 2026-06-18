@@ -12,6 +12,12 @@ import {
   type MemoryType,
   type MemoryVisibility,
 } from "@/lib/ai/services/ai-memory-service";
+import {
+  createSkill,
+  type AiSkill,
+  type AiSkillRiskLevel,
+  type AiSkillScopeType,
+} from "@/lib/ai/services/skill-library-service";
 import type { Database, Json } from "@/types/database.types";
 
 type Tables = Database["public"]["Tables"];
@@ -358,6 +364,17 @@ export interface ApplyMemoryPromotionResult {
     id: string;
     action: "created" | "updated";
   };
+}
+
+export interface ApplySkillLibraryPromotionParams {
+  promotionId: string;
+  reviewedBy: string;
+  reviewNotes?: string | null;
+}
+
+export interface ApplySkillLibraryPromotionResult {
+  promotion: AiLearningPromotionRow;
+  skill: AiSkill;
 }
 
 export interface ApplyAttributionRulePromotionParams {
@@ -995,6 +1012,40 @@ function optionalLearningStringArray(
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
     : [];
+}
+
+function optionalLearningRecord(
+  learning: Record<string, unknown>,
+  fieldName: string,
+): Record<string, unknown> {
+  return jsonRecord(learning[fieldName] as Json | null);
+}
+
+function optionalLearningRiskLevel(
+  learning: Record<string, unknown>,
+  fieldName: string,
+): AiSkillRiskLevel | undefined {
+  const value = optionalLearningString(learning, fieldName);
+  if (value === "low" || value === "medium" || value === "high") {
+    return value;
+  }
+  return undefined;
+}
+
+function optionalLearningScopeType(
+  learning: Record<string, unknown>,
+  fieldName: string,
+): AiSkillScopeType | undefined {
+  const value = optionalLearningString(learning, fieldName);
+  if (
+    value === "personal" ||
+    value === "project" ||
+    value === "team" ||
+    value === "company"
+  ) {
+    return value;
+  }
+  return undefined;
 }
 
 function appendAttributionApprovedTag(tags: string | null): string {
@@ -2475,6 +2526,202 @@ export async function applyMemoryPromotion(
   return {
     promotion: updatedPromotion,
     memory: memoryResult,
+  };
+}
+
+export async function applySkillLibraryPromotion(
+  params: ApplySkillLibraryPromotionParams,
+): Promise<ApplySkillLibraryPromotionResult> {
+  const supabase = createServiceClient();
+  const promotionId = optionalUuid(
+    params.promotionId,
+    "promotionId",
+    "ai_learning_promotions",
+  );
+  const reviewedBy = optionalUuid(
+    params.reviewedBy,
+    "reviewedBy",
+    "ai_learning_promotions",
+  );
+
+  if (!promotionId) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "validate",
+      "promotionId is required",
+    );
+  }
+  if (!reviewedBy) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "validate",
+      "reviewedBy is required",
+    );
+  }
+
+  const { data: promotion, error: promotionError } = await supabase
+    .from("ai_learning_promotions")
+    .select("*")
+    .eq("id", promotionId)
+    .single();
+
+  if (promotionError || !promotion) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "select",
+      promotionError?.message ?? "promotion was not found",
+    );
+  }
+
+  if (promotion.status !== "approved") {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "validate",
+      `Only approved Skill Library promotions can be applied. Received: ${promotion.status}`,
+    );
+  }
+
+  const learning = jsonRecord(promotion.proposed_learning);
+  const skillCandidate = optionalLearningRecord(learning, "skillCandidate");
+  const skillScope = optionalLearningRecord(skillCandidate, "scope");
+  const skillMetadata = optionalLearningRecord(skillCandidate, "metadata");
+  const hasSkillCandidate =
+    Object.keys(skillCandidate).length > 0 ||
+    promotion.destination_table === "ai_skill_candidates" ||
+    optionalLearningString(learning, "proposedDestination") === "skill_library";
+
+  if (!hasSkillCandidate) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "validate",
+      "promotion is not a Skill Library candidate",
+    );
+  }
+
+  const scopeType =
+    optionalLearningScopeType(skillScope, "type") ??
+    optionalLearningScopeType(learning, "appliesTo") ??
+    "team";
+  const projectId =
+    optionalLearningNumber(skillScope, "projectId") ?? promotion.project_id;
+  const sourceEventIds = Array.from(
+    new Set([
+      ...optionalLearningStringArray(skillCandidate, "sourceEventIds"),
+      ...promotion.source_event_ids,
+    ]),
+  );
+  const examples = Array.isArray(skillCandidate.examples)
+    ? (skillCandidate.examples as Array<{
+        input?: string | null;
+        output?: string | null;
+        notes?: string | null;
+      }>)
+    : [];
+
+  const skill = await createSkill({
+    title:
+      optionalLearningString(skillCandidate, "title") ??
+      requiredLearningString(learning, "title"),
+    slug: optionalLearningString(skillCandidate, "slug"),
+    summary:
+      optionalLearningString(skillCandidate, "summary") ??
+      optionalLearningString(learning, "whyThisMatters") ??
+      requiredLearningString(learning, "rationale"),
+    body:
+      optionalLearningString(skillCandidate, "body") ??
+      optionalLearningString(skillCandidate, "instructions") ??
+      requiredLearningString(learning, "title"),
+    instructions:
+      optionalLearningString(skillCandidate, "instructions") ??
+      optionalLearningString(skillCandidate, "body") ??
+      requiredLearningString(learning, "title"),
+    category:
+      optionalLearningString(skillCandidate, "category") ??
+      requiredLearningString(learning, "workflowCategory"),
+    scopeType,
+    projectId: scopeType === "project" ? projectId : null,
+    ownerUserId:
+      optionalLearningString(skillCandidate, "ownerUserId") ??
+      optionalLearningString(learning, "sourceUserId") ??
+      (scopeType === "personal" ? reviewedBy : null),
+    reviewerUserId: reviewedBy,
+    status: "active",
+    version: optionalLearningNumber(skillCandidate, "version") ?? 1,
+    examples,
+    sourceEventIds,
+    riskLevel:
+      optionalLearningRiskLevel(skillCandidate, "riskLevel") ??
+      optionalLearningRiskLevel(learning, "perceivedRiskLevel") ??
+      "low",
+    metadata: {
+      ...skillMetadata,
+      sourcePromotionId: promotion.id,
+      sourcePromotionType: promotion.promotion_type,
+      reviewNotes: params.reviewNotes ?? null,
+    },
+  });
+
+  const { data: updatedPromotion, error: updateError } = await supabase
+    .from("ai_learning_promotions")
+    .update({
+      status: "applied",
+      destination_table: "ai_skills",
+      destination_record_id: skill.id,
+    })
+    .eq("id", promotion.id)
+    .select("*")
+    .single();
+
+  if (updateError || !updatedPromotion) {
+    throw new AiFeedbackEventError(
+      "ai_learning_promotions",
+      "update",
+      updateError?.message ?? "promotion status update returned no row",
+    );
+  }
+
+  await recordAiFeedbackEvent({
+    userId: reviewedBy,
+    projectId: promotion.project_id,
+    sourceTable: "ai_learning_promotions",
+    sourceRecordId: promotion.id,
+    eventType: "skill_library_promotion_applied",
+    eventFamily: "workflow_outcome",
+    surface: "admin_ai_learning_promotions",
+    subjectType: "ai_skill",
+    subjectId: skill.id,
+    signal: "accepted",
+    reasonCategory: "skill_library_apply",
+    freeText: params.reviewNotes ?? null,
+    beforeSnapshot: {
+      status: promotion.status,
+      destinationTable: promotion.destination_table,
+      destinationRecordId: promotion.destination_record_id,
+    },
+    afterSnapshot: {
+      status: updatedPromotion.status,
+      destinationTable: updatedPromotion.destination_table,
+      destinationRecordId: updatedPromotion.destination_record_id,
+      skillId: skill.id,
+      skillTitle: skill.title,
+      skillStatus: skill.status,
+    },
+    sourceContext: {
+      promotionId: promotion.id,
+      promotionType: promotion.promotion_type,
+      proposedLearning: promotion.proposed_learning,
+    },
+    metadata: {
+      action: "apply",
+      skillId: skill.id,
+      previousStatus: promotion.status,
+      newStatus: updatedPromotion.status,
+    },
+  });
+
+  return {
+    promotion: updatedPromotion,
+    skill,
   };
 }
 

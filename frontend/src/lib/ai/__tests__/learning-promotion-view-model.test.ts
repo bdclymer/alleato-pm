@@ -1,4 +1,5 @@
 import {
+  isSkillLibraryPromotion,
   isTeachAlleatoPromotion,
   isMemoryReviewPromotion,
   promotionMatchesKind,
@@ -134,5 +135,43 @@ describe("learning promotion view model", () => {
     expect(isTeachAlleatoPromotion(candidate)).toBe(true);
     expect(promotionMatchesKind(candidate, "teach")).toBe(true);
     expect(promotionMatchesKind(candidate, "workflow")).toBe(true);
+  });
+
+  it("routes skill-shaped Teach candidates into Skill review", () => {
+    const candidate = promotion({
+      destination_table: "ai_skill_candidates",
+      destination_record_id: "teach_alleato_workflow_rule",
+      promotion_type: "workflow_rule",
+      proposed_learning: {
+        action: "review_teach_alleato_intake",
+        ruleKind: "teach_alleato_skill_candidate",
+        proposedDestination: "skill_library",
+        skillCandidate: {
+          title: "Closeout pay app review",
+          category: "pay_app_review",
+          scope: { type: "team" },
+        },
+      },
+    });
+
+    expect(isSkillLibraryPromotion(candidate)).toBe(true);
+    expect(promotionMatchesKind(candidate, "skill")).toBe(true);
+    expect(promotionMatchesKind(candidate, "teach")).toBe(true);
+    expect(promotionMatchesKind(candidate, "workflow")).toBe(false);
+  });
+
+  it("recognizes skill candidates from nested payloads even before a destination table is set", () => {
+    const candidate = promotion({
+      promotion_type: "workflow_rule",
+      proposed_learning: {
+        action: "review_teach_alleato_intake",
+        skillCandidate: {
+          title: "Daily brief ranking",
+        },
+      },
+    });
+
+    expect(isSkillLibraryPromotion(candidate)).toBe(true);
+    expect(promotionMatchesKind(candidate, "skill")).toBe(true);
   });
 });

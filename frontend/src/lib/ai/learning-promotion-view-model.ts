@@ -8,6 +8,7 @@ export type AiFeedbackEventRow =
 export type PromotionKind =
   | "all"
   | "teach"
+  | "skill"
   | "memory"
   | "retrieval"
   | "attribution"
@@ -119,45 +120,48 @@ export function readLearning(value: Json): PromotionLearning {
       "pageRoute",
     ]),
     sourceMessageId: nullableString(record, "sourceMessageId"),
-    sourceUserId: firstNullableString(record, [
-      "sourceUserId",
-      "submitterUserId",
-      "submittedBy",
-      "userId",
-    ]) ?? nullableString(skillCandidate, "ownerUserId"),
-    appliesTo:
+    sourceUserId:
       firstNullableString(record, [
-        "appliesTo",
-        "scope",
-        "whereApplies",
-      ]) ?? nullableString(skillScope, "type"),
-    workflowCategory: firstNullableString(record, [
-      "workflowCategory",
-      "category",
-      "workflow_category",
-    ]) ?? nullableString(skillCandidate, "category"),
-    exampleInput: firstNullableString(record, [
-      "exampleInput",
-      "inputExample",
-      "example_input",
-    ]) ?? nullableString(firstSkillExample, "input"),
-    exampleOutput: firstNullableString(record, [
-      "exampleOutput",
-      "outputExample",
-      "example_output",
-    ]) ?? nullableString(firstSkillExample, "output"),
-    sourceEvidenceLink: firstNullableString(record, [
-      "sourceEvidenceLink",
-      "evidenceLink",
-      "sourceLink",
-      "sourceUrl",
-      "url",
-    ]) ?? nullableString(skillEvidence, "link"),
-    suggestedReviewer: firstNullableString(record, [
-      "suggestedReviewer",
-      "reviewer",
-      "reviewerEmail",
-    ]) ?? nullableString(skillCandidate, "suggestedReviewer"),
+        "sourceUserId",
+        "submitterUserId",
+        "submittedBy",
+        "userId",
+      ]) ?? nullableString(skillCandidate, "ownerUserId"),
+    appliesTo:
+      firstNullableString(record, ["appliesTo", "scope", "whereApplies"]) ??
+      nullableString(skillScope, "type"),
+    workflowCategory:
+      firstNullableString(record, [
+        "workflowCategory",
+        "category",
+        "workflow_category",
+      ]) ?? nullableString(skillCandidate, "category"),
+    exampleInput:
+      firstNullableString(record, [
+        "exampleInput",
+        "inputExample",
+        "example_input",
+      ]) ?? nullableString(firstSkillExample, "input"),
+    exampleOutput:
+      firstNullableString(record, [
+        "exampleOutput",
+        "outputExample",
+        "example_output",
+      ]) ?? nullableString(firstSkillExample, "output"),
+    sourceEvidenceLink:
+      firstNullableString(record, [
+        "sourceEvidenceLink",
+        "evidenceLink",
+        "sourceLink",
+        "sourceUrl",
+        "url",
+      ]) ?? nullableString(skillEvidence, "link"),
+    suggestedReviewer:
+      firstNullableString(record, [
+        "suggestedReviewer",
+        "reviewer",
+        "reviewerEmail",
+      ]) ?? nullableString(skillCandidate, "suggestedReviewer"),
     whyThisMatters:
       firstNullableString(record, [
         "whyThisMatters",
@@ -214,6 +218,21 @@ export function isTeachAlleatoPromotion(
   );
 }
 
+export function isSkillLibraryPromotion(
+  promotion: AiLearningPromotionRow,
+): boolean {
+  const learning = readLearning(promotion.proposed_learning);
+  const proposedLearning = jsonObject(promotion.proposed_learning);
+  const skillCandidate = jsonObject(proposedLearning.skillCandidate);
+  return (
+    promotion.destination_table === "ai_skill_candidates" ||
+    promotion.destination_table === "ai_skills" ||
+    learning.proposedDestination === "skill_library" ||
+    proposedLearning.ruleKind === "teach_alleato_skill_candidate" ||
+    Object.keys(skillCandidate).length > 0
+  );
+}
+
 export function isMemoryReviewPromotion(
   promotion: AiLearningPromotionRow,
 ): boolean {
@@ -232,6 +251,7 @@ export function promotionMatchesKind(
 ): boolean {
   if (kind === "all") return true;
   if (kind === "teach") return isTeachAlleatoPromotion(promotion);
+  if (kind === "skill") return isSkillLibraryPromotion(promotion);
   if (kind === "memory") return isMemoryReviewPromotion(promotion);
   if (kind === "retrieval")
     return promotion.promotion_type === "retrieval_weight";
@@ -243,7 +263,8 @@ export function promotionMatchesKind(
   if (kind === "workflow") {
     return (
       promotion.promotion_type === "workflow_rule" &&
-      !isMemoryReviewPromotion(promotion)
+      !isMemoryReviewPromotion(promotion) &&
+      !isSkillLibraryPromotion(promotion)
     );
   }
   return false;

@@ -9,11 +9,13 @@ import {
   applyMemoryPromotion,
   applyPositiveTaskExamplePromotion,
   applyRetrievalWeightPromotion,
+  applySkillLibraryPromotion,
   recordAiFeedbackEvent,
   updateRetrievalWeightStatus,
 } from "@/lib/ai/services/feedback-event-service";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
+  isSkillLibraryPromotion,
   promotionMatchesKind,
   type PromotionKind,
 } from "@/lib/ai/learning-promotion-view-model";
@@ -21,14 +23,23 @@ import { requireAiLearningPromotionsAdmin } from "./_shared";
 
 const reviewSchema = z.object({
   promotionId: z.string().uuid(),
-  action: z.enum(["approve", "reject", "apply", "pause", "resume", "supersede"]),
+  action: z.enum([
+    "approve",
+    "reject",
+    "apply",
+    "pause",
+    "resume",
+    "supersede",
+  ]),
   reviewNotes: z.string().trim().max(2000).optional(),
 });
 
 export const GET = withApiGuardrails(
   "api.admin.ai-learning-promotions.GET",
   async ({ request }) => {
-    await requireAiLearningPromotionsAdmin("api.admin.ai-learning-promotions.GET");
+    await requireAiLearningPromotionsAdmin(
+      "api.admin.ai-learning-promotions.GET",
+    );
 
     const status = request.nextUrl.searchParams.get("status") ?? "candidate";
     const limit = Math.min(
@@ -39,6 +50,7 @@ export const GET = withApiGuardrails(
     const kind: PromotionKind = [
       "all",
       "teach",
+      "skill",
       "memory",
       "retrieval",
       "attribution",
@@ -70,7 +82,9 @@ export const GET = withApiGuardrails(
       .slice(0, limit);
     const promotionIds = promotions.map((promotion) => promotion.id);
     const sourceEventIds = Array.from(
-      new Set(promotions.flatMap((promotion) => promotion.source_event_ids ?? [])),
+      new Set(
+        promotions.flatMap((promotion) => promotion.source_event_ids ?? []),
+      ),
     );
     const retrievalWeightsByPromotionId = new Map<string, unknown>();
     const sourceEventsById = new Map<string, unknown>();
@@ -92,15 +106,19 @@ export const GET = withApiGuardrails(
       }
 
       for (const retrievalWeight of retrievalWeights ?? []) {
-        retrievalWeightsByPromotionId.set(retrievalWeight.promotion_id, retrievalWeight);
+        retrievalWeightsByPromotionId.set(
+          retrievalWeight.promotion_id,
+          retrievalWeight,
+        );
       }
     }
 
     if (sourceEventIds.length > 0) {
-      const { data: sourceEvents, error: sourceEventsError } = await serviceSupabase
-        .from("ai_feedback_events")
-        .select("*")
-        .in("id", sourceEventIds);
+      const { data: sourceEvents, error: sourceEventsError } =
+        await serviceSupabase
+          .from("ai_feedback_events")
+          .select("*")
+          .in("id", sourceEventIds);
 
       if (sourceEventsError) {
         throw new GuardrailError({
@@ -119,7 +137,8 @@ export const GET = withApiGuardrails(
     return NextResponse.json({
       promotions: promotions.map((promotion) => ({
         ...promotion,
-        retrievalWeight: retrievalWeightsByPromotionId.get(promotion.id) ?? null,
+        retrievalWeight:
+          retrievalWeightsByPromotionId.get(promotion.id) ?? null,
         sourceEvents: (promotion.source_event_ids ?? [])
           .map((eventId) => sourceEventsById.get(eventId))
           .filter(Boolean),
@@ -131,7 +150,9 @@ export const GET = withApiGuardrails(
 export const POST = withApiGuardrails(
   "api.admin.ai-learning-promotions.POST",
   async ({ request }) => {
-    const user = await requireAiLearningPromotionsAdmin("api.admin.ai-learning-promotions.POST");
+    const user = await requireAiLearningPromotionsAdmin(
+      "api.admin.ai-learning-promotions.POST",
+    );
     const body = await parseJsonBody(
       request,
       reviewSchema,
@@ -142,7 +163,7 @@ export const POST = withApiGuardrails(
     if (body.action === "apply") {
       const { data: promotion, error: promotionError } = await serviceSupabase
         .from("ai_learning_promotions")
-        .select("id, promotion_type")
+        .select("*")
         .eq("id", body.promotionId)
         .single();
 
@@ -235,10 +256,26 @@ export const POST = withApiGuardrails(
         });
       }
 
+      if (isSkillLibraryPromotion(promotion)) {
+        const result = await applySkillLibraryPromotion({
+          promotionId: body.promotionId,
+          reviewedBy: user.id,
+          reviewNotes: body.reviewNotes,
+        });
+
+        return NextResponse.json({
+          ok: true,
+          action: body.action,
+          promotion: result.promotion,
+          skill: result.skill,
+        });
+      }
+
       throw new GuardrailError({
         code: "INVALID_PAYLOAD",
         where: "api.admin.ai-learning-promotions.POST",
-        message: "This AI learning promotion type does not have an apply writer yet.",
+        message:
+          "This AI learning promotion type does not have an apply writer yet.",
         status: 409,
         details: { promotionType: promotion.promotion_type },
       });
@@ -357,6 +394,10 @@ export const POST = withApiGuardrails(
       },
     });
 
-    return NextResponse.json({ ok: true, action: body.action, promotion: updated });
+    return NextResponse.json({
+      ok: true,
+      action: body.action,
+      promotion: updated,
+    });
   },
 );

@@ -127,11 +127,11 @@ function plannedCandidates(intake: TeachAlleatoIntakeInput): TeachCandidatePlan[
   return [
     {
       promotionType: "workflow_rule",
-      destinationTable: "ai_skill_candidates",
+      destinationTable: "ai_skills",
       destinationRecordId: key || "teach_alleato_workflow_rule",
       confidence: intake.perceivedRiskLevel === "high" ? 0.62 : 0.76,
       reviewNotes:
-        "Created from Teach Alleato intake as a workflow rule candidate. Skill-shaped payload is staged in proposed_learning until Skill Library schema exists.",
+        "Created from Teach Alleato intake as a Skill Library candidate. Skill-shaped payload is staged in proposed_learning until approval.",
     },
   ];
 }
