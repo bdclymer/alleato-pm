@@ -13,6 +13,10 @@ import {
   updateRetrievalWeightStatus,
 } from "@/lib/ai/services/feedback-event-service";
 import { createServiceClient } from "@/lib/supabase/service";
+import {
+  promotionMatchesKind,
+  type PromotionKind,
+} from "@/lib/ai/learning-promotion-view-model";
 import { requireAiLearningPromotionsAdmin } from "./_shared";
 
 const reviewSchema = z.object({
@@ -31,6 +35,17 @@ export const GET = withApiGuardrails(
       500,
       Math.max(1, Number(request.nextUrl.searchParams.get("limit") ?? 100)),
     );
+    const requestedKind = request.nextUrl.searchParams.get("kind") ?? "all";
+    const kind: PromotionKind = [
+      "all",
+      "memory",
+      "retrieval",
+      "attribution",
+      "agent_prevention",
+      "workflow",
+    ].includes(requestedKind)
+      ? (requestedKind as PromotionKind)
+      : "all";
     const serviceSupabase = createServiceClient();
 
     const { data, error } = await serviceSupabase
@@ -38,7 +53,7 @@ export const GET = withApiGuardrails(
       .select("*")
       .eq("status", status)
       .order("created_at", { ascending: false })
-      .limit(limit);
+      .limit(kind === "all" ? limit : 500);
 
     if (error) {
       throw new GuardrailError({
@@ -49,9 +64,15 @@ export const GET = withApiGuardrails(
       });
     }
 
-    const promotions = data ?? [];
+    const promotions = (data ?? [])
+      .filter((promotion) => promotionMatchesKind(promotion, kind))
+      .slice(0, limit);
     const promotionIds = promotions.map((promotion) => promotion.id);
+    const sourceEventIds = Array.from(
+      new Set(promotions.flatMap((promotion) => promotion.source_event_ids ?? [])),
+    );
     const retrievalWeightsByPromotionId = new Map<string, unknown>();
+    const sourceEventsById = new Map<string, unknown>();
 
     if (promotionIds.length > 0) {
       const { data: retrievalWeights, error: retrievalWeightsError } =
@@ -74,10 +95,33 @@ export const GET = withApiGuardrails(
       }
     }
 
+    if (sourceEventIds.length > 0) {
+      const { data: sourceEvents, error: sourceEventsError } = await serviceSupabase
+        .from("ai_feedback_events")
+        .select("*")
+        .in("id", sourceEventIds);
+
+      if (sourceEventsError) {
+        throw new GuardrailError({
+          code: "UPSTREAM_FAILURE",
+          where: "api.admin.ai-learning-promotions.GET",
+          message: "Failed to load AI learning promotion source events.",
+          details: sourceEventsError.message,
+        });
+      }
+
+      for (const sourceEvent of sourceEvents ?? []) {
+        sourceEventsById.set(sourceEvent.id, sourceEvent);
+      }
+    }
+
     return NextResponse.json({
       promotions: promotions.map((promotion) => ({
         ...promotion,
         retrievalWeight: retrievalWeightsByPromotionId.get(promotion.id) ?? null,
+        sourceEvents: (promotion.source_event_ids ?? [])
+          .map((eventId) => sourceEventsById.get(eventId))
+          .filter(Boolean),
       })),
     });
   },

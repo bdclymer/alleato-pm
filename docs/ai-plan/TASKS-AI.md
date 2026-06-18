@@ -21,7 +21,7 @@ Source docs:
 - [x] Create `ai_feedback_events` + `ai_learning_promotions` review candidate when a memory is marked wrong.
 - [x] Update `AI-RAG-ARCHITECTURE.md` for Memory Center review flow.
 - [ ] Add assistant-answer memory trace disclosure.
-- [ ] Add admin Memory tab to learning promotions.
+- [x] Add admin Memory tab to learning promotions.
 - [ ] Build Teach Alleato intake.
 - [ ] Build Skill Library.
 - [ ] Build AI Work Queue and subagent delegation runtime.
@@ -182,14 +182,14 @@ Goal: admins can process memory and workflow learning candidates efficiently.
 
 ### Admin UI
 
-- [ ] Extend `/admin/ai-learning-promotions`.
-- [ ] Add promotion type tabs:
-  - [ ] Memory.
+- [x] Extend `/admin/ai-learning-promotions`.
+- [x] Add promotion type tabs:
+  - [x] Memory.
   - [ ] Skill.
-  - [ ] Retrieval.
-  - [ ] Attribution.
-  - [ ] Agent prevention.
-  - [ ] Workflow.
+  - [x] Retrieval.
+  - [x] Attribution.
+  - [x] Agent prevention.
+  - [x] Workflow.
 - [ ] Add status count row:
   - [ ] candidate.
   - [ ] approved.
@@ -198,17 +198,17 @@ Goal: admins can process memory and workflow learning candidates efficiently.
   - [ ] paused.
   - [ ] superseded.
 - [ ] Add source event detail panel.
-- [ ] Show original correction text.
-- [ ] Show before snapshot.
+- [x] Show original correction text.
+- [x] Show before snapshot.
 - [ ] Show proposed destination.
-- [ ] Show project scope.
-- [ ] Show risk level.
+- [x] Show project scope.
+- [x] Show risk level.
 - [ ] Require reviewer notes on rejection.
 - [ ] Add history/activity timeline for each promotion.
 
 ### Memory Candidate Handling
 
-- [ ] Detect `proposed_learning.action = review_memory`.
+- [x] Detect `proposed_learning.action = review_memory`.
 - [ ] Add quick actions:
   - [ ] edit memory.
   - [ ] deactivate memory.

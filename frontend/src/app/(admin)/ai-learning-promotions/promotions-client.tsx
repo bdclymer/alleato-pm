@@ -28,15 +28,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  firstSourceEvent,
+  jsonObject,
+  readLearning,
+  type AiFeedbackEventRow,
+  type AiLearningPromotionRow,
+  type PromotionKind,
+  type PromotionLearning,
+} from "@/lib/ai/learning-promotion-view-model";
 import { apiFetch } from "@/lib/api-client";
 import { formatNumber } from "@/lib/table-config/formatters";
 import type { Database, Json } from "@/types/database.types";
 
-type AiLearningPromotionRow = Database["public"]["Tables"]["ai_learning_promotions"]["Row"];
 type AiRetrievalWeightRow = Database["public"]["Tables"]["ai_retrieval_weights"]["Row"];
-type AiFeedbackEventRow = Database["public"]["Tables"]["ai_feedback_events"]["Row"];
 type AiLearningPromotionWithWeight = AiLearningPromotionRow & {
   retrievalWeight?: AiRetrievalWeightRow | null;
+  sourceEvents?: AiFeedbackEventRow[] | null;
 };
 type PromotionStatus = "candidate" | "approved" | "applied" | "rejected" | "superseded";
 type PromotionAction =
@@ -79,68 +87,6 @@ type AiLearningStats = {
   recentActivityCount: number;
 };
 
-type PromotionLearning = {
-  action?: string;
-  title?: string;
-  toolName?: string;
-  sourceDocumentId?: string | null;
-  sourceChunkId?: string | null;
-  querySignature?: string;
-  problemSignature?: string;
-  preventionPrompt?: string;
-  content?: string;
-  visibility?: string;
-  candidateProjectName?: string | null;
-  pagePath?: string | null;
-  taskSnapshot?: Record<string, unknown> | null;
-  rationale?: string;
-  signalCounts?: {
-    helpful?: number;
-    problem?: number;
-    total?: number;
-  };
-};
-
-function jsonObject(value: Json): Record<string, unknown> {
-  return value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {};
-}
-
-function readLearning(value: Json): PromotionLearning {
-  const record = jsonObject(value);
-  const signalCounts = jsonObject(record.signalCounts as Json);
-  return {
-    action: typeof record.action === "string" ? record.action : undefined,
-    title: typeof record.title === "string" ? record.title : undefined,
-    toolName: typeof record.toolName === "string" ? record.toolName : undefined,
-    sourceDocumentId:
-      typeof record.sourceDocumentId === "string" ? record.sourceDocumentId : null,
-    sourceChunkId:
-      typeof record.sourceChunkId === "string" ? record.sourceChunkId : null,
-    querySignature:
-      typeof record.querySignature === "string" ? record.querySignature : undefined,
-    problemSignature:
-      typeof record.problemSignature === "string" ? record.problemSignature : undefined,
-    preventionPrompt:
-      typeof record.preventionPrompt === "string" ? record.preventionPrompt : undefined,
-    content: typeof record.content === "string" ? record.content : undefined,
-    visibility: typeof record.visibility === "string" ? record.visibility : undefined,
-    candidateProjectName:
-      typeof record.candidateProjectName === "string"
-        ? record.candidateProjectName
-        : null,
-    pagePath: typeof record.pagePath === "string" ? record.pagePath : null,
-    taskSnapshot: jsonObject(record.taskSnapshot as Json),
-    rationale: typeof record.rationale === "string" ? record.rationale : undefined,
-    signalCounts: {
-      helpful: typeof signalCounts.helpful === "number" ? signalCounts.helpful : undefined,
-      problem: typeof signalCounts.problem === "number" ? signalCounts.problem : undefined,
-      total: typeof signalCounts.total === "number" ? signalCounts.total : undefined,
-    },
-  };
-}
-
 function formatDate(value: string | null) {
   if (!value) return "Unknown date";
   return new Intl.DateTimeFormat("en-US", {
@@ -181,6 +127,10 @@ function canApplyPromotion(promotion: AiLearningPromotionRow) {
   );
 }
 
+function isReviewMemoryLearning(learning: PromotionLearning) {
+  return learning.action === "review_memory";
+}
+
 function applyPromotionLabel(promotion: AiLearningPromotionRow) {
   if (promotion.promotion_type === "retrieval_weight") return "Apply retrieval weight";
   if (promotion.promotion_type === "agent_prevention_prompt") {
@@ -217,6 +167,29 @@ function promotionHelpText(promotion: AiLearningPromotionRow) {
   return "This promotion type can be reviewed now and applied after its destination writer exists.";
 }
 
+function reviewKindLabel(kind: PromotionKind) {
+  if (kind === "all") return "All";
+  if (kind === "memory") return "Memory";
+  if (kind === "retrieval") return "Retrieval";
+  if (kind === "attribution") return "Attribution";
+  if (kind === "agent_prevention") return "Agent prevention";
+  return "Workflow";
+}
+
+function memorySnapshotField(
+  sourceEvent: AiFeedbackEventRow | null,
+  field: "content" | "type" | "visibility",
+) {
+  const snapshot = jsonObject(sourceEvent?.before_snapshot);
+  const value = snapshot[field];
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
+function sourceEventRoute(sourceEvent: AiFeedbackEventRow | null) {
+  const value = jsonObject(sourceEvent?.source_context).route;
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
 function taskSnapshotLabel(learning: PromotionLearning, key: string): string | null {
   const value = learning.taskSnapshot?.[key];
   return typeof value === "string" && value.trim() ? value.trim() : null;
@@ -243,6 +216,7 @@ export function AiLearningPromotionsClient({
   const [promotions, setPromotions] =
     React.useState<AiLearningPromotionWithWeight[]>(initialPromotions);
   const [status, setStatus] = React.useState<PromotionStatus>("candidate");
+  const [reviewKind, setReviewKind] = React.useState<PromotionKind>("all");
   const [loading, setLoading] = React.useState(false);
   const [busyId, setBusyId] = React.useState<string | null>(null);
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
@@ -259,10 +233,10 @@ export function AiLearningPromotionsClient({
     setLoading(true);
     try {
       const json = await apiFetch<{ promotions?: AiLearningPromotionRow[] }>(
-        `/api/admin/ai-learning-promotions?status=${status}&limit=100`,
+        `/api/admin/ai-learning-promotions?status=${status}&kind=${reviewKind}&limit=100`,
         { cache: "no-store" },
       );
-      setPromotions(json.promotions ?? []);
+      setPromotions((json.promotions ?? []) as AiLearningPromotionWithWeight[]);
     } catch (error) {
       toast.error("Failed to load learning promotions", {
         description: error instanceof Error ? error.message : "Unexpected error",
@@ -270,7 +244,7 @@ export function AiLearningPromotionsClient({
     } finally {
       setLoading(false);
     }
-  }, [status]);
+  }, [reviewKind, status]);
 
   React.useEffect(() => {
     void loadPromotions();
@@ -449,7 +423,7 @@ export function AiLearningPromotionsClient({
           <p className="mt-1 text-sm text-muted-foreground">
             {loading
               ? "Loading candidates"
-              : `${promotions.length.toLocaleString()} ${status} promotion${promotions.length === 1 ? "" : "s"}`}
+              : `${promotions.length.toLocaleString()} ${reviewKindLabel(reviewKind).toLowerCase()} ${status} promotion${promotions.length === 1 ? "" : "s"}`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -472,6 +446,20 @@ export function AiLearningPromotionsClient({
           <TabsTrigger value="applied">Applied</TabsTrigger>
           <TabsTrigger value="rejected">Rejected</TabsTrigger>
           <TabsTrigger value="superseded">Superseded</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      <Tabs
+        value={reviewKind}
+        onValueChange={(value) => setReviewKind(value as PromotionKind)}
+      >
+        <TabsList>
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="memory">Memory</TabsTrigger>
+          <TabsTrigger value="retrieval">Retrieval</TabsTrigger>
+          <TabsTrigger value="attribution">Attribution</TabsTrigger>
+          <TabsTrigger value="agent_prevention">Agent prevention</TabsTrigger>
+          <TabsTrigger value="workflow">Workflow</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -503,6 +491,7 @@ export function AiLearningPromotionsClient({
               promotions.map((promotion) => {
                 const learning = readLearning(promotion.proposed_learning);
                 const retrievalWeight = promotion.retrievalWeight ?? null;
+                const sourceEvent = firstSourceEvent(promotion);
                 const impactPreview = previewsById[promotion.id];
                 const isExpanded = expandedId === promotion.id;
                 const disabled = busyId === promotion.id;
@@ -719,6 +708,69 @@ export function AiLearningPromotionsClient({
                                 </>
                               )}
                             </dl>
+                            {isReviewMemoryLearning(learning) && (
+                              <div className="space-y-3 border-t border-border pt-3">
+                                <div className="grid gap-3 text-sm md:grid-cols-2">
+                                  <div>
+                                    <div className="text-xs font-medium uppercase text-muted-foreground">
+                                      Correction
+                                    </div>
+                                    <div className="mt-1 whitespace-pre-wrap text-foreground">
+                                      {sourceEvent?.free_text ??
+                                        learning.reason ??
+                                        "No correction text recorded"}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-xs font-medium uppercase text-muted-foreground">
+                                      Source
+                                    </div>
+                                    <div className="mt-1 text-foreground">
+                                      {learning.sourceSurface ?? sourceEvent?.surface ?? "Unknown surface"}
+                                    </div>
+                                    <div className="mt-1 break-all text-xs text-muted-foreground">
+                                      {learning.sourceRoute ??
+                                        sourceEventRoute(sourceEvent) ??
+                                        "No route recorded"}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-xs font-medium uppercase text-muted-foreground">
+                                      Before snapshot
+                                    </div>
+                                    <div className="mt-1 whitespace-pre-wrap text-foreground">
+                                      {memorySnapshotField(sourceEvent, "content") ??
+                                        learning.content ??
+                                        "No memory snapshot recorded"}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-xs font-medium uppercase text-muted-foreground">
+                                      Memory scope
+                                    </div>
+                                    <div className="mt-1 text-foreground">
+                                      {memorySnapshotField(sourceEvent, "type") ??
+                                        learning.memoryType ??
+                                        "Unknown type"}{" "}
+                                      ·{" "}
+                                      {memorySnapshotField(sourceEvent, "visibility") ??
+                                        learning.visibility ??
+                                        "unknown visibility"}
+                                    </div>
+                                    <div className="mt-1 text-xs text-muted-foreground">
+                                      {promotion.project_id
+                                        ? `Project ${promotion.project_id}`
+                                        : "No project scope"}{" "}
+                                      · {promotion.risk_level} risk
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {learning.recommendedResolution ??
+                                    "Quick actions are unavailable until review-memory writers can edit or retire the existing memory with an audit event."}
+                                </div>
+                              </div>
+                            )}
                             <pre className="max-h-72 overflow-auto rounded-md bg-muted p-3 text-xs text-foreground">
                               {JSON.stringify(promotion.proposed_learning, null, 2)}
                             </pre>
