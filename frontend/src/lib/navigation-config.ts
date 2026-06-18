@@ -718,6 +718,14 @@ export const headerNavGroups: HeaderNavGroup[] = [
         icon: CheckCircle,
         description: "Tasks for this project",
       },
+      {
+        name: "Company Directory",
+        path: "directory/companies",
+        requiresProject: false,
+        icon: Building2,
+        description: "People, companies, contacts",
+        module: "directory",
+      },
     ],
   },
 ];
