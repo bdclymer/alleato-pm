@@ -14,6 +14,16 @@ const feedbackSchema = z.object({
   reasonCategory: z
     .enum(["wrong", "outdated", "private", "too_broad", "duplicate", "other"])
     .default("wrong"),
+  source: z
+    .object({
+      surface: z
+        .enum(["memory_center", "assistant_answer_memory_trace"])
+        .default("memory_center"),
+      route: z.string().trim().max(300).optional(),
+      messageId: z.string().trim().max(200).optional(),
+      sessionId: z.string().trim().max(200).optional(),
+    })
+    .optional(),
 });
 
 export const POST = withApiGuardrails(
@@ -64,6 +74,14 @@ export const POST = withApiGuardrails(
       });
     }
 
+    const source = body.source;
+    const surface = source?.surface ?? "memory_center";
+    const sourceRoute =
+      source?.route ??
+      (surface === "assistant_answer_memory_trace"
+        ? "/ai-assistant"
+        : "/settings/memory");
+
     const event = await recordAiFeedbackEvent({
       userId: user.id,
       projectId: memory.project_id,
@@ -71,7 +89,7 @@ export const POST = withApiGuardrails(
       sourceRecordId: memory.id,
       eventType: "ai_memory_marked_wrong",
       eventFamily: "user_preference",
-      surface: "memory_center",
+      surface,
       subjectType: "ai_memory",
       subjectId: memory.id,
       signal: "corrected",
@@ -79,9 +97,11 @@ export const POST = withApiGuardrails(
       freeText: body.reason,
       beforeSnapshot: memory,
       sourceContext: {
-        route: "/settings/memory",
+        route: sourceRoute,
         memoryId: memory.id,
+        messageId: source?.messageId ?? null,
       },
+      sessionId: source?.sessionId ?? null,
       metadata: {
         requestedAction: "review_memory",
         visibility: memory.visibility ?? "private",
@@ -106,10 +126,16 @@ export const POST = withApiGuardrails(
         projectId: memory.project_id,
         reasonCategory: body.reasonCategory,
         reason: body.reason,
+        sourceSurface: surface,
+        sourceRoute,
+        sourceMessageId: source?.messageId ?? null,
         recommendedResolution:
           "Review whether this memory should be edited, expired, deactivated, or converted into a more precise skill or preference.",
       },
-      reviewNotes: "Created from Memory Center wrong-memory feedback.",
+      reviewNotes:
+        surface === "assistant_answer_memory_trace"
+          ? "Created from assistant answer memory trace feedback."
+          : "Created from Memory Center wrong-memory feedback.",
     });
 
     return Response.json({

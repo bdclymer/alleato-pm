@@ -98,7 +98,6 @@ import {
   CheckIcon,
   XIcon,
   LinkIcon,
-  EraserIcon,
   ClipboardPasteIcon,
   MicIcon,
   MicOffIcon,
@@ -1039,75 +1038,105 @@ function StreamingIndicator({
   );
 }
 
-function MemoryUsageBadge({
+function MemoryUsageDisclosure({
   usage,
-  onForget,
+  messageId,
+  sessionId,
 }: {
   usage: MemoryUsage;
-  onForget: (memoryId: string) => Promise<void>;
+  messageId: string;
+  sessionId?: string;
 }) {
-  const [isForgetting, setIsForgetting] = useState(false);
+  const [flaggingMemoryId, setFlaggingMemoryId] = useState<string | null>(null);
+  const [flaggedMemoryIds, setFlaggedMemoryIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const memories = usage.memories ?? [];
 
-  const handleForget = async () => {
-    if (isForgetting || memories.length === 0) return;
-    setIsForgetting(true);
+  const handleMarkWrong = async (memoryId: string) => {
+    if (flaggingMemoryId || flaggedMemoryIds.has(memoryId)) return;
+    setFlaggingMemoryId(memoryId);
     try {
-      await Promise.all(memories.slice(0, 3).map((m) => onForget(m.id)));
-      toast.success("Removed selected memories");
-    } catch {
-      toast.error("Failed to forget memories");
+      await apiFetch(`/api/ai-assistant/memories/${memoryId}/feedback`, {
+        method: "POST",
+        body: JSON.stringify({
+          reason:
+            "This memory looked wrong or unhelpful in an assistant answer.",
+          reasonCategory: "wrong",
+          source: {
+            surface: "assistant_answer_memory_trace",
+            route:
+              typeof window === "undefined"
+                ? "/ai-assistant"
+                : window.location.pathname,
+            messageId,
+            sessionId,
+          },
+        }),
+      });
+      setFlaggedMemoryIds((current) => {
+        const next = new Set(current);
+        next.add(memoryId);
+        return next;
+      });
+      toast.success("Memory sent for review");
+    } catch (error) {
+      toast.error(
+        error instanceof Error && error.message
+          ? error.message
+          : "Memory feedback could not be sent. Refresh and try again.",
+      );
     } finally {
-      setIsForgetting(false);
+      setFlaggingMemoryId(null);
     }
   };
 
   return (
-    <div className="mt-2 space-y-2 rounded-md border border-border/60 bg-muted/20 px-2.5 py-2">
-      <p className="text-xs text-muted-foreground">
-        Used {usage.totalUsed} memories
-        {usage.recentConversationsUsed
-          ? ` + ${usage.recentConversationsUsed} recent conversation summaries`
-          : ""}
-      </p>
+    <details className="group mt-3 text-xs text-muted-foreground">
+      <summary className="flex cursor-pointer list-none items-center gap-2 transition-colors hover:text-foreground">
+        <DatabaseIcon className="h-3.5 w-3.5 shrink-0" />
+        <span>
+          Used {usage.totalUsed} memories
+          {usage.recentConversationsUsed
+            ? ` + ${usage.recentConversationsUsed} recent conversations`
+            : ""}
+        </span>
+      </summary>
       {memories.length > 0 && (
-        <div className="space-y-1">
+        <div className="mt-2 space-y-2 border-l border-border/60 pl-3">
           {memories.slice(0, 3).map((memory) => (
-            <p key={memory.id} className="line-clamp-1 text-xs text-foreground/90">
-              {memory.content}
-            </p>
+            <div
+              key={memory.id}
+              className="flex items-start justify-between gap-3"
+            >
+              <p className="line-clamp-2 min-w-0 flex-1 text-xs text-foreground/90">
+                {memory.content}
+              </p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 shrink-0 px-2 text-xs text-muted-foreground hover:text-destructive"
+                onClick={() => handleMarkWrong(memory.id)}
+                disabled={
+                  flaggingMemoryId !== null || flaggedMemoryIds.has(memory.id)
+                }
+              >
+                {flaggedMemoryIds.has(memory.id) ? "Queued" : "Wrong"}
+              </Button>
+            </div>
           ))}
         </div>
       )}
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-7 px-2 text-xs"
-          onClick={() => toast.success("Keeping these memories")}
-        >
-          Keep
-        </Button>
+      <div className="mt-2 flex flex-wrap items-center gap-2 pl-5">
         <Link
           href="/settings/memory"
-          className="inline-flex h-7 items-center rounded-md border border-border px-2 text-xs text-foreground hover:bg-muted"
+          className="text-xs font-medium text-foreground underline-offset-4 hover:underline"
         >
-          Edit
+          Review memory
         </Link>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-7 px-2 text-xs text-destructive hover:text-destructive"
-          onClick={handleForget}
-          disabled={isForgetting || memories.length === 0}
-        >
-          <EraserIcon className="mr-1 h-3 w-3" />
-          Forget
-        </Button>
       </div>
-    </div>
+    </details>
   );
 }
 
@@ -1568,12 +1597,6 @@ export function ChatArea({
     },
     [onSubmit],
   );
-
-  const handleForgetMemory = useCallback(async (memoryId: string) => {
-    await apiFetch(`/api/ai-assistant/memories/${memoryId}`, {
-      method: "DELETE",
-    });
-  }, []);
 
   const hasMessages = messages.length > 0;
   const showWelcome = !hasMessages && !isLoadingMessages;
@@ -2183,14 +2206,11 @@ export function ChatArea({
                             <AssistantSourceEvidenceWidget sources={persistedSources} />
                           )}
 
-                          {/* Memory usage badge intentionally hidden from the
-                              chat UI per 2026-05-02 — keep state/fetch logic so
-                              the backend memory pipeline continues working,
-                              just don't render the badge. */}
-                          {false && memoryUsage && (
-                            <MemoryUsageBadge
+                          {memoryUsage && (
+                            <MemoryUsageDisclosure
                               usage={memoryUsage}
-                              onForget={handleForgetMemory}
+                              messageId={msg.id}
+                              sessionId={sessionId}
                             />
                           )}
                         </MessageContent>

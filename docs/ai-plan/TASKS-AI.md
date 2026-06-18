@@ -145,31 +145,31 @@ Goal: users can see when an answer used memory and challenge bad memory from the
 
 ### Chat UI
 
-- [ ] Locate assistant message renderer.
-- [ ] Add quiet "Memory used" disclosure.
-- [ ] Hide disclosure when no memory was used.
-- [ ] Render concise memory snippets.
-- [ ] Add "This is wrong" action per memory.
-- [ ] Link to `/settings/memory`.
-- [ ] Keep visual noise low.
+- [x] Locate assistant message renderer.
+- [x] Add quiet "Memory used" disclosure.
+- [x] Hide disclosure when no memory was used.
+- [x] Render concise memory snippets.
+- [x] Add "This is wrong" action per memory.
+- [x] Link to `/settings/memory`.
+- [x] Keep visual noise low.
 - [ ] Ensure mobile layout does not overflow.
 
 ### Feedback Wiring
 
-- [ ] Reuse memory feedback route where possible.
-- [ ] Include source context from the assistant message:
-  - [ ] conversation/session ID.
-  - [ ] message ID.
-  - [ ] route.
+- [x] Reuse memory feedback route where possible.
+- [x] Include source context from the assistant message:
+  - [x] conversation/session ID.
+  - [x] message ID.
+  - [x] route.
   - [ ] prompt/request context if already persisted.
-- [ ] Update review candidate proposed learning to say it came from answer trace.
-- [ ] Add success/failure UI.
+- [x] Update review candidate proposed learning to say it came from answer trace.
+- [x] Add success/failure UI.
 
 ### Guardrails
 
-- [ ] Ensure answer trace cannot reveal private memory to non-owner.
-- [ ] Ensure challenge action does not mutate behavior immediately.
-- [ ] Ensure failed challenge shows an actionable error.
+- [x] Ensure answer trace cannot reveal private memory to non-owner.
+- [x] Ensure challenge action does not mutate behavior immediately.
+- [x] Ensure failed challenge shows an actionable error.
 - [ ] Add regression test for memory trace rendering.
 - [ ] Add regression test for hidden trace when no memory is used.
 
