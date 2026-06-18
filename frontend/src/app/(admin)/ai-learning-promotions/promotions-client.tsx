@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/table";
 import {
   firstSourceEvent,
+  isTeachAlleatoPromotion,
   jsonObject,
   readLearning,
   type AiFeedbackEventRow,
@@ -169,6 +170,7 @@ function promotionHelpText(promotion: AiLearningPromotionRow) {
 
 function reviewKindLabel(kind: PromotionKind) {
   if (kind === "all") return "All";
+  if (kind === "teach") return "Teach Alleato";
   if (kind === "memory") return "Memory";
   if (kind === "retrieval") return "Retrieval";
   if (kind === "attribution") return "Attribution";
@@ -190,6 +192,25 @@ function sourceEventRoute(sourceEvent: AiFeedbackEventRow | null) {
   return typeof value === "string" && value.trim() ? value : null;
 }
 
+function sourceEventEvidenceLink(sourceEvent: AiFeedbackEventRow | null) {
+  const sourceContext = jsonObject(sourceEvent?.source_context);
+  for (const key of ["evidenceLink", "sourceEvidenceLink", "sourceLink", "sourceUrl"]) {
+    const value = sourceContext[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function isHttpUrl(value: string | null | undefined): value is string {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function taskSnapshotLabel(learning: PromotionLearning, key: string): string | null {
   const value = learning.taskSnapshot?.[key];
   return typeof value === "string" && value.trim() ? value.trim() : null;
@@ -204,6 +225,17 @@ function eventStatus(value: Json, key: "status" | "promotionStatus") {
 function shortId(value: string | null) {
   if (!value) return "unknown";
   return value.slice(0, 8);
+}
+
+function proposedDestinationLabel(
+  promotion: AiLearningPromotionRow,
+  learning: PromotionLearning,
+) {
+  const destination = learning.proposedDestination ?? promotion.destination_table;
+  if (!destination) return "No destination recorded";
+  return promotion.destination_record_id
+    ? `${destination} · ${shortId(promotion.destination_record_id)}`
+    : destination;
 }
 
 interface AiLearningPromotionsClientProps {
@@ -455,6 +487,7 @@ export function AiLearningPromotionsClient({
       >
         <TabsList>
           <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="teach">Teach Alleato</TabsTrigger>
           <TabsTrigger value="memory">Memory</TabsTrigger>
           <TabsTrigger value="retrieval">Retrieval</TabsTrigger>
           <TabsTrigger value="attribution">Attribution</TabsTrigger>
@@ -492,6 +525,12 @@ export function AiLearningPromotionsClient({
                 const learning = readLearning(promotion.proposed_learning);
                 const retrievalWeight = promotion.retrievalWeight ?? null;
                 const sourceEvent = firstSourceEvent(promotion);
+                const isTeachSubmission = isTeachAlleatoPromotion(promotion);
+                const sourceRoute =
+                  learning.sourceRoute ?? sourceEventRoute(sourceEvent) ?? null;
+                const sourceUserId = learning.sourceUserId ?? sourceEvent?.user_id ?? null;
+                const evidenceLink =
+                  learning.sourceEvidenceLink ?? sourceEventEvidenceLink(sourceEvent);
                 const impactPreview = previewsById[promotion.id];
                 const isExpanded = expandedId === promotion.id;
                 const disabled = busyId === promotion.id;
@@ -517,6 +556,7 @@ export function AiLearningPromotionsClient({
                             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                               <span>{formatDate(promotion.created_at)}</span>
                           {promotion.project_id && <Badge variant="outline">Project {promotion.project_id}</Badge>}
+                          {isTeachSubmission && <Badge variant="outline">Teach Alleato</Badge>}
                           <Badge variant="secondary">{actionLabel(learning.action)}</Badge>
                           {retrievalWeight && (
                             <Badge variant="outline">{retrievalWeight.status}</Badge>
@@ -535,17 +575,25 @@ export function AiLearningPromotionsClient({
                           {promotion.promotion_type}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {learning.toolName ?? "No tool scope"}
+                          {isTeachSubmission
+                            ? learning.workflowCategory ?? "No workflow category"
+                            : learning.toolName ?? "No tool scope"}
                         </div>
                       </TableCell>
                       <TableCell className="max-w-xs align-top">
                         <div className="text-sm text-foreground">
-                          {promotion.source_event_ids.length} source signal(s)
+                          {isTeachSubmission
+                            ? sourceUserId
+                              ? `User ${shortId(sourceUserId)}`
+                              : "No source user"
+                            : `${promotion.source_event_ids.length} source signal(s)`}
                         </div>
                         <div className="mt-1 text-xs text-muted-foreground">
-                          {learning.signalCounts?.helpful ?? 0} helpful,{" "}
-                          {learning.signalCounts?.problem ?? 0} problem,{" "}
-                          {learning.signalCounts?.total ?? 0} total
+                          {isTeachSubmission
+                            ? sourceRoute ?? "No source route"
+                            : `${learning.signalCounts?.helpful ?? 0} helpful, ${
+                                learning.signalCounts?.problem ?? 0
+                              } problem, ${learning.signalCounts?.total ?? 0} total`}
                         </div>
                       </TableCell>
                       <TableCell className="align-top">
@@ -708,6 +756,98 @@ export function AiLearningPromotionsClient({
                                 </>
                               )}
                             </dl>
+                            {isTeachSubmission && (
+                              <div className="space-y-3 border-t border-border pt-3">
+                                <div className="grid gap-3 text-sm md:grid-cols-2">
+                                  <div>
+                                    <div className="text-xs font-medium uppercase text-muted-foreground">
+                                      Source user and route
+                                    </div>
+                                    <div className="mt-1 text-foreground">
+                                      {sourceUserId ? `User ${shortId(sourceUserId)}` : "No source user"}
+                                    </div>
+                                    <div className="mt-1 break-all text-xs text-muted-foreground">
+                                      {sourceRoute ?? "No source route"}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-xs font-medium uppercase text-muted-foreground">
+                                      Proposed destination
+                                    </div>
+                                    <div className="mt-1 text-foreground">
+                                      {proposedDestinationLabel(promotion, learning)}
+                                    </div>
+                                    <div className="mt-1 text-xs text-muted-foreground">
+                                      {learning.appliesTo ?? "No scope recorded"} ·{" "}
+                                      {learning.perceivedRiskLevel ?? promotion.risk_level} risk
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-xs font-medium uppercase text-muted-foreground">
+                                      Workflow category
+                                    </div>
+                                    <div className="mt-1 text-foreground">
+                                      {learning.workflowCategory ?? "No category recorded"}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-xs font-medium uppercase text-muted-foreground">
+                                      Evidence
+                                    </div>
+                                    <div className="mt-1 break-all text-foreground">
+                                      {isHttpUrl(evidenceLink) ? (
+                                        <a
+                                          href={evidenceLink}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="text-primary underline-offset-4 hover:underline"
+                                        >
+                                          {evidenceLink}
+                                        </a>
+                                      ) : (
+                                        evidenceLink ?? "No evidence link recorded"
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-xs font-medium uppercase text-muted-foreground">
+                                      Example input
+                                    </div>
+                                    <div className="mt-1 whitespace-pre-wrap text-foreground">
+                                      {learning.exampleInput ?? "No example input recorded"}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <div className="text-xs font-medium uppercase text-muted-foreground">
+                                      Example output
+                                    </div>
+                                    <div className="mt-1 whitespace-pre-wrap text-foreground">
+                                      {learning.exampleOutput ?? "No example output recorded"}
+                                    </div>
+                                  </div>
+                                  {learning.whyThisMatters && (
+                                    <div className="md:col-span-2">
+                                      <div className="text-xs font-medium uppercase text-muted-foreground">
+                                        Why this matters
+                                      </div>
+                                      <div className="mt-1 whitespace-pre-wrap text-foreground">
+                                        {learning.whyThisMatters}
+                                      </div>
+                                    </div>
+                                  )}
+                                  {learning.suggestedReviewer && (
+                                    <div>
+                                      <div className="text-xs font-medium uppercase text-muted-foreground">
+                                        Suggested reviewer
+                                      </div>
+                                      <div className="mt-1 text-foreground">
+                                        {learning.suggestedReviewer}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                             {isReviewMemoryLearning(learning) && (
                               <div className="space-y-3 border-t border-border pt-3">
                                 <div className="grid gap-3 text-sm md:grid-cols-2">

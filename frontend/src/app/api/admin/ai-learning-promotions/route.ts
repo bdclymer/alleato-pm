@@ -38,6 +38,7 @@ export const GET = withApiGuardrails(
     const requestedKind = request.nextUrl.searchParams.get("kind") ?? "all";
     const kind: PromotionKind = [
       "all",
+      "teach",
       "memory",
       "retrieval",
       "attribution",

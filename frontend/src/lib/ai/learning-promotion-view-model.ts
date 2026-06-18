@@ -7,6 +7,7 @@ export type AiFeedbackEventRow =
 
 export type PromotionKind =
   | "all"
+  | "teach"
   | "memory"
   | "retrieval"
   | "attribution"
@@ -31,6 +32,17 @@ export type PromotionLearning = {
   sourceSurface?: string | null;
   sourceRoute?: string | null;
   sourceMessageId?: string | null;
+  sourceUserId?: string | null;
+  appliesTo?: string | null;
+  workflowCategory?: string | null;
+  exampleInput?: string | null;
+  exampleOutput?: string | null;
+  sourceEvidenceLink?: string | null;
+  suggestedReviewer?: string | null;
+  whyThisMatters?: string | null;
+  proposedDestination?: string | null;
+  perceivedRiskLevel?: string | null;
+  teachAlleatoSubmissionId?: string | null;
   recommendedResolution?: string;
   candidateProjectName?: string | null;
   pagePath?: string | null;
@@ -57,12 +69,33 @@ function optionalString(
   return typeof value === "string" && value.trim() ? value : undefined;
 }
 
-function nullableString(record: Record<string, unknown>, key: string): string | null {
+function nullableString(
+  record: Record<string, unknown>,
+  key: string,
+): string | null {
   return optionalString(record, key) ?? null;
+}
+
+function firstNullableString(
+  record: Record<string, unknown>,
+  keys: string[],
+): string | null {
+  for (const key of keys) {
+    const value = nullableString(record, key);
+    if (value) return value;
+  }
+  return null;
 }
 
 export function readLearning(value: Json): PromotionLearning {
   const record = jsonObject(value);
+  const skillCandidate = jsonObject(record.skillCandidate);
+  const skillScope = jsonObject(skillCandidate.scope);
+  const skillEvidence = jsonObject(skillCandidate.evidence);
+  const skillExamples = Array.isArray(skillCandidate.examples)
+    ? skillCandidate.examples
+    : [];
+  const firstSkillExample = jsonObject(skillExamples[0]);
   const signalCounts = jsonObject(record.signalCounts);
   return {
     action: optionalString(record, "action"),
@@ -80,8 +113,73 @@ export function readLearning(value: Json): PromotionLearning {
     reasonCategory: nullableString(record, "reasonCategory"),
     reason: nullableString(record, "reason"),
     sourceSurface: nullableString(record, "sourceSurface"),
-    sourceRoute: nullableString(record, "sourceRoute"),
+    sourceRoute: firstNullableString(record, [
+      "sourceRoute",
+      "route",
+      "pageRoute",
+    ]),
     sourceMessageId: nullableString(record, "sourceMessageId"),
+    sourceUserId: firstNullableString(record, [
+      "sourceUserId",
+      "submitterUserId",
+      "submittedBy",
+      "userId",
+    ]) ?? nullableString(skillCandidate, "ownerUserId"),
+    appliesTo:
+      firstNullableString(record, [
+        "appliesTo",
+        "scope",
+        "whereApplies",
+      ]) ?? nullableString(skillScope, "type"),
+    workflowCategory: firstNullableString(record, [
+      "workflowCategory",
+      "category",
+      "workflow_category",
+    ]) ?? nullableString(skillCandidate, "category"),
+    exampleInput: firstNullableString(record, [
+      "exampleInput",
+      "inputExample",
+      "example_input",
+    ]) ?? nullableString(firstSkillExample, "input"),
+    exampleOutput: firstNullableString(record, [
+      "exampleOutput",
+      "outputExample",
+      "example_output",
+    ]) ?? nullableString(firstSkillExample, "output"),
+    sourceEvidenceLink: firstNullableString(record, [
+      "sourceEvidenceLink",
+      "evidenceLink",
+      "sourceLink",
+      "sourceUrl",
+      "url",
+    ]) ?? nullableString(skillEvidence, "link"),
+    suggestedReviewer: firstNullableString(record, [
+      "suggestedReviewer",
+      "reviewer",
+      "reviewerEmail",
+    ]) ?? nullableString(skillCandidate, "suggestedReviewer"),
+    whyThisMatters:
+      firstNullableString(record, [
+        "whyThisMatters",
+        "why",
+        "businessReason",
+      ]) ??
+      nullableString(skillCandidate, "summary") ??
+      nullableString(record, "rationale"),
+    proposedDestination: firstNullableString(record, [
+      "proposedDestination",
+      "destination",
+      "destinationLabel",
+    ]),
+    perceivedRiskLevel: firstNullableString(record, [
+      "perceivedRiskLevel",
+      "riskLevel",
+      "risk",
+    ]),
+    teachAlleatoSubmissionId: firstNullableString(record, [
+      "teachAlleatoSubmissionId",
+      "submissionId",
+    ]),
     recommendedResolution: optionalString(record, "recommendedResolution"),
     candidateProjectName: nullableString(record, "candidateProjectName"),
     pagePath: nullableString(record, "pagePath"),
@@ -89,12 +187,31 @@ export function readLearning(value: Json): PromotionLearning {
     rationale: optionalString(record, "rationale"),
     signalCounts: {
       helpful:
-        typeof signalCounts.helpful === "number" ? signalCounts.helpful : undefined,
+        typeof signalCounts.helpful === "number"
+          ? signalCounts.helpful
+          : undefined,
       problem:
-        typeof signalCounts.problem === "number" ? signalCounts.problem : undefined,
-      total: typeof signalCounts.total === "number" ? signalCounts.total : undefined,
+        typeof signalCounts.problem === "number"
+          ? signalCounts.problem
+          : undefined,
+      total:
+        typeof signalCounts.total === "number" ? signalCounts.total : undefined,
     },
   };
+}
+
+export function isTeachAlleatoPromotion(
+  promotion: AiLearningPromotionRow,
+): boolean {
+  const learning = readLearning(promotion.proposed_learning);
+  return (
+    learning.action === "teach_alleato_submission" ||
+    learning.action === "review_teach_alleato_intake" ||
+    learning.sourceSurface === "teach_alleato" ||
+    learning.sourceSurface === "ai_assistant_teach" ||
+    learning.sourceRoute === "/ai-assistant/teach" ||
+    Boolean(learning.teachAlleatoSubmissionId)
+  );
 }
 
 export function isMemoryReviewPromotion(
@@ -114,9 +231,12 @@ export function promotionMatchesKind(
   kind: PromotionKind,
 ): boolean {
   if (kind === "all") return true;
+  if (kind === "teach") return isTeachAlleatoPromotion(promotion);
   if (kind === "memory") return isMemoryReviewPromotion(promotion);
-  if (kind === "retrieval") return promotion.promotion_type === "retrieval_weight";
-  if (kind === "attribution") return promotion.promotion_type === "attribution_rule";
+  if (kind === "retrieval")
+    return promotion.promotion_type === "retrieval_weight";
+  if (kind === "attribution")
+    return promotion.promotion_type === "attribution_rule";
   if (kind === "agent_prevention") {
     return promotion.promotion_type === "agent_prevention_prompt";
   }

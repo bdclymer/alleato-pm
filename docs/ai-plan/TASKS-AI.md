@@ -22,7 +22,7 @@ Source docs:
 - [x] Update `AI-RAG-ARCHITECTURE.md` for Memory Center review flow.
 - [x] Add assistant-answer memory trace disclosure.
 - [x] Add admin Memory tab to learning promotions.
-- [ ] Build Teach Alleato intake.
+- [x] Build Teach Alleato intake.
 - [ ] Build Skill Library.
 - [ ] Build AI Work Queue and subagent delegation runtime.
   - [x] Add subagent/work-run architecture spec.
@@ -127,7 +127,7 @@ Goal: users can inspect, edit, delete, and challenge assistant memory.
 - [x] Run RAG docs gate through finish flow.
 - [ ] Run `scripts/verify/verify_ai_memory_contract.mjs`.
 - [ ] Browser-verify `/settings/memory`.
-- [ ] Browser-verify wrong-memory review flow creates a candidate in `/admin/ai-learning-promotions`.
+- [ ] Browser-verify wrong-memory review flow creates a candidate in `/ai-learning-promotions`.
 - [ ] Capture browser artifacts for Memory Center.
 
 ## Phase 2: Assistant Answer Memory Trace
@@ -182,7 +182,7 @@ Goal: admins can process memory and workflow learning candidates efficiently.
 
 ### Admin UI
 
-- [x] Extend `/admin/ai-learning-promotions`.
+- [x] Extend `/ai-learning-promotions`.
 - [x] Add promotion type tabs:
   - [x] Memory.
   - [ ] Skill.
@@ -241,56 +241,56 @@ Goal: field and office users can contribute workflows, examples, corrections, an
 
 ### User Surface
 
-- [ ] Add `/ai-assistant/teach`.
-- [ ] Add entry link from AI assistant.
-- [ ] Add entry link from Memory Center.
+- [x] Add `/ai-assistant/teach`.
+- [x] Add entry link from AI assistant.
+- [x] Add entry link from Memory Center.
 - [ ] Add entry link from Feedback Inbox if appropriate.
 - [ ] Add entry link from Project Intelligence if appropriate.
 - [ ] Add entry link from Documents/drawings after drawing workflows exist.
 
 ### Intake Form
 
-- [ ] Field: what should Alleato learn?
-- [ ] Field: where does this apply?
-  - [ ] personal.
-  - [ ] project.
-  - [ ] team.
-  - [ ] company.
-- [ ] Field: workflow category.
-- [ ] Field: example input.
-- [ ] Field: example output.
-- [ ] Field: source/evidence link.
+- [x] Field: what should Alleato learn?
+- [x] Field: where does this apply?
+  - [x] personal.
+  - [x] project.
+  - [x] team.
+  - [x] company.
+- [x] Field: workflow category.
+- [x] Field: example input.
+- [x] Field: example output.
+- [x] Field: source/evidence link.
 - [ ] Field: optional upload.
-- [ ] Field: suggested reviewer.
-- [ ] Field: why this matters.
-- [ ] Field: perceived risk level.
-- [ ] Validate required fields.
-- [ ] Preserve drafts if submission fails.
-- [ ] Show review status after submit.
+- [x] Field: suggested reviewer.
+- [x] Field: why this matters.
+- [x] Field: perceived risk level.
+- [x] Validate required fields.
+- [x] Preserve drafts if submission fails.
+- [x] Show review status after submit.
 
 ### Backend
 
-- [ ] Add Teach Alleato API route.
-- [ ] Authenticate current user.
-- [ ] Create `ai_feedback_events` row.
-- [ ] Generate one or more `ai_learning_promotions` candidates.
-- [ ] Use existing promotion types first:
-  - [ ] user preference.
-  - [ ] project lesson.
-  - [ ] workflow rule.
-  - [ ] agent prevention prompt.
-- [ ] Store skill-shaped candidates in promotion payload until Skill Library schema exists.
-- [ ] Fail loudly if event creation succeeds but candidate creation fails.
-- [ ] Add tests for successful submit.
-- [ ] Add tests for missing required fields.
-- [ ] Add tests for promotion creation failure.
+- [x] Add Teach Alleato API route.
+- [x] Authenticate current user.
+- [x] Create `ai_feedback_events` row.
+- [x] Generate one or more `ai_learning_promotions` candidates.
+- [x] Use existing promotion types first:
+  - [x] user preference.
+  - [x] project lesson.
+  - [x] workflow rule.
+  - [x] agent prevention prompt.
+- [x] Store skill-shaped candidates in promotion payload until Skill Library schema exists.
+- [x] Fail loudly if event creation succeeds but candidate creation fails.
+- [x] Add tests for successful submit.
+- [x] Add tests for missing required fields.
+- [x] Add tests for promotion creation failure.
 
 ### Review Integration
 
-- [ ] Surface Teach Alleato submissions in learning promotions.
-- [ ] Show source user and route.
-- [ ] Show proposed destination.
-- [ ] Add reviewer actions.
+- [x] Surface Teach Alleato submissions in learning promotions.
+- [x] Show source user and route.
+- [x] Show proposed destination.
+- [x] Add reviewer actions.
 - [ ] Add status back to submitter if notification system exists.
 
 ## Phase 5: Skill Library

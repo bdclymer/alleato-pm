@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import * as React from "react";
 import {
   AlertTriangle,
@@ -508,6 +509,11 @@ export default function MemorySettingsPage() {
       variant="dashboard"
       title="Memory Center"
       description="Review what Alleato AI remembers and flag anything that should change future behavior."
+      actions={
+        <Button asChild variant="outline">
+          <Link href="/ai-assistant/teach">Teach Alleato</Link>
+        </Button>
+      }
     >
       <div className="max-w-5xl space-y-8 px-8 py-8">
         <section className="grid grid-cols-1 gap-5 sm:grid-cols-5">

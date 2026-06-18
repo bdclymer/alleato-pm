@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { AnimatedOrb } from "./animated-orb";
@@ -40,6 +41,14 @@ export function WelcomeScreen({
           <div className="mx-auto mt-8 max-w-3xl">
             {error && <div className="mb-2">{error}</div>}
             {composer}
+            <div className="mt-3 text-center">
+              <Link
+                href="/ai-assistant/teach"
+                className="text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
+                Teach Alleato
+              </Link>
+            </div>
             {children}
           </div>
         )}

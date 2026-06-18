@@ -1,4 +1,5 @@
 import {
+  isTeachAlleatoPromotion,
   isMemoryReviewPromotion,
   promotionMatchesKind,
   readLearning,
@@ -79,6 +80,59 @@ describe("learning promotion view model", () => {
 
     expect(isMemoryReviewPromotion(candidate)).toBe(false);
     expect(promotionMatchesKind(candidate, "memory")).toBe(false);
+    expect(promotionMatchesKind(candidate, "workflow")).toBe(true);
+  });
+
+  it("parses Teach Alleato submission fields without schema changes", () => {
+    const learning = readLearning({
+      action: "review_teach_alleato_intake",
+      title: "Use this closeout checklist",
+      sourceSurface: "teach_alleato",
+      sourceRoute: "/ai-assistant/teach",
+      sourceUserId: "11111111-1111-4111-8111-111111111111",
+      perceivedRiskLevel: "medium",
+      proposedDestination: "skill_library",
+      skillCandidate: {
+        category: "closeout",
+        summary: "Prevents billing delays.",
+        suggestedReviewer: "operations@example.com",
+        scope: {
+          type: "team",
+          projectId: null,
+        },
+        examples: [
+          {
+            input: "Closeout docs are missing.",
+            output: "Ask the PM for O&M manuals before final billing.",
+          },
+        ],
+        evidence: {
+          link: "https://example.com/source",
+        },
+      },
+    });
+
+    expect(learning.workflowCategory).toBe("closeout");
+    expect(learning.exampleInput).toBe("Closeout docs are missing.");
+    expect(learning.exampleOutput).toBe(
+      "Ask the PM for O&M manuals before final billing.",
+    );
+    expect(learning.sourceEvidenceLink).toBe("https://example.com/source");
+    expect(learning.proposedDestination).toBe("skill_library");
+  });
+
+  it("routes Teach Alleato submissions into the Teach tab", () => {
+    const candidate = promotion({
+      promotion_type: "workflow_rule",
+      proposed_learning: {
+        action: "teach_alleato_submission",
+        sourceRoute: "/ai-assistant/teach",
+        workflowCategory: "cost control",
+      },
+    });
+
+    expect(isTeachAlleatoPromotion(candidate)).toBe(true);
+    expect(promotionMatchesKind(candidate, "teach")).toBe(true);
     expect(promotionMatchesKind(candidate, "workflow")).toBe(true);
   });
 });
