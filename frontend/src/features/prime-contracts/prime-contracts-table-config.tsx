@@ -174,24 +174,28 @@ export function buildPrimeContractTableColumns(): TableColumn<PrimeContract>[] {
     },
     {
       ...primeContractColumns[COL.approved_change_orders],
+      align: "right" as const,
       render: (item) => <span>{formatCurrency(item.approved_change_orders)}</span>,
       csvValue: (item) => String(item.approved_change_orders ?? ""),
       sortValue: (item) => item.approved_change_orders ?? 0,
     },
     {
       ...primeContractColumns[COL.revised_contract_value],
+      align: "right" as const,
       render: (item) => <span>{formatCurrency(item.revised_contract_value)}</span>,
       csvValue: (item) => String(item.revised_contract_value ?? ""),
       sortValue: (item) => item.revised_contract_value ?? 0,
     },
     {
       ...primeContractColumns[COL.pending_change_orders],
+      align: "right" as const,
       render: (item) => <span>{formatCurrency(item.pending_change_orders)}</span>,
       csvValue: (item) => String(item.pending_change_orders ?? ""),
       sortValue: (item) => item.pending_change_orders ?? 0,
     },
     {
       ...primeContractColumns[COL.draft_change_orders],
+      align: "right" as const,
       render: (item) => <span>{formatCurrency(item.draft_change_orders)}</span>,
       csvValue: (item) => String(item.draft_change_orders ?? ""),
       sortValue: (item) => item.draft_change_orders ?? 0,
@@ -204,6 +208,7 @@ export function buildPrimeContractTableColumns(): TableColumn<PrimeContract>[] {
     },
     {
       ...primeContractColumns[COL.payments_received],
+      align: "right" as const,
       render: (item) => <span>{formatCurrency(item.payments_received)}</span>,
       csvValue: (item) => String(item.payments_received ?? ""),
       sortValue: (item) => item.payments_received ?? 0,

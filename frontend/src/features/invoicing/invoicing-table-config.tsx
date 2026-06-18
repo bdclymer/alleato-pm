@@ -232,8 +232,9 @@ export function buildInvoiceTableColumns(
       id: "previous_changes",
       label: "Previous Changes",
       defaultVisible: false,
+      align: "right" as const,
       render: (invoice) => (
-        <span className="tabular-nums text-right block">
+        <span className="tabular-nums">
           {formatCurrency(invoice.previous_changes ?? 0)}
         </span>
       ),
@@ -244,8 +245,9 @@ export function buildInvoiceTableColumns(
       id: "current_changes",
       label: "Current Changes",
       defaultVisible: false,
+      align: "right" as const,
       render: (invoice) => (
-        <span className="tabular-nums text-right block">
+        <span className="tabular-nums">
           {formatCurrency(invoice.current_changes ?? 0)}
         </span>
       ),
