@@ -244,7 +244,7 @@ services:
     dockerContext: ./backend
     schedule: "15 * * * *"
     dockerCommand: >-
-      FIREFLIES_REWRITE_TASKS_DURING_INGEST=false timeout 20m python3 -c "
+      env FIREFLIES_REWRITE_TASKS_DURING_INGEST=false timeout 20m python3 -c "
       import json, sys;
       sys.path.insert(0, '/app');
       from src.services.scheduler import _run_fireflies_sync;
