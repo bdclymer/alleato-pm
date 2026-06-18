@@ -4,14 +4,10 @@ import * as React from "react";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
-  Building2,
   Check,
   ChevronsUpDown,
   ExternalLink,
-  FileText,
   MoreHorizontal,
-  Plus,
-  UserPlus,
 } from "lucide-react";
 import { appToast as toast } from "@/lib/toast/app-toast";
 import { cn } from "@/lib/utils";
@@ -637,10 +633,6 @@ export default function CompanyDetailsPage() {
       : `https://${company.website}`
     : null;
   const primaryContact = contacts.find((c) => c.id === company.primary_contact_id) ?? contacts[0] ?? null;
-  const openInvoiceCount = invoices.filter((item) => isOpenInvoice(item.status)).length;
-  const latestMeeting = meetings
-    .filter((meeting) => meeting.date)
-    .sort((a, b) => new Date(b.date || "").getTime() - new Date(a.date || "").getTime())[0];
   const meetingRows = meetingsByProject.flatMap(({ project, items }) =>
     items.slice(0, 6).map((meeting) => ({
       ...meeting,
@@ -666,17 +658,23 @@ export default function CompanyDetailsPage() {
                 <SectionRuleHeading
                   label="Contacts"
                   actions={
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => void openAddContactModal()}
-                    >
-                      Add contact
-                    </Button>
+                    contacts.length > 0 ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => void openAddContactModal()}
+                      >
+                        Add contact
+                      </Button>
+                    ) : undefined
                   }
                 />
                 {contacts.length === 0 ? (
-                  <DsEmptyState title="No contacts yet" description="Add contacts to track people associated with this company." />
+                  <DsEmptyState
+                    title="No contacts yet"
+                    description="Add contacts to track people associated with this company."
+                    action={<Button size="sm" onClick={() => void openAddContactModal()}>Add contact</Button>}
+                  />
                 ) : (
                   <ul className="divide-y divide-border">
                     {contacts.map((contact) => {
@@ -762,22 +760,40 @@ export default function CompanyDetailsPage() {
                 <SectionRuleHeading
                   label="Projects"
                   actions={
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setAddToProjectOpen(true);
-                        setProjectQuery("");
-                        setProjectComboboxOpen(false);
-                        void loadProjects();
-                      }}
-                    >
-                      Add project
-                    </Button>
+                    associatedProjects.length > 0 ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setAddToProjectOpen(true);
+                          setProjectQuery("");
+                          setProjectComboboxOpen(false);
+                          void loadProjects();
+                        }}
+                      >
+                        Add project
+                      </Button>
+                    ) : undefined
                   }
                 />
                 {associatedProjects.length === 0 ? (
-                  <DsEmptyState title="No projects yet" description="Add this company to a project to get started." />
+                  <DsEmptyState
+                    title="No projects yet"
+                    description="Add this company to a project to get started."
+                    action={
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setAddToProjectOpen(true);
+                          setProjectQuery("");
+                          setProjectComboboxOpen(false);
+                          void loadProjects();
+                        }}
+                      >
+                        Add project
+                      </Button>
+                    }
+                  />
                 ) : (
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     {associatedProjects.map((project) => (
@@ -814,13 +830,15 @@ export default function CompanyDetailsPage() {
               <section className="space-y-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <SectionRuleHeading label="Commitments" />
-                  <div className="w-full sm:w-72">
-                    <Input
-                      value={commitmentQuery}
-                      onChange={(event) => setCommitmentQuery(event.target.value)}
-                      placeholder="Search scope or trade..."
-                    />
-                  </div>
+                  {commitments.length > 0 && (
+                    <div className="w-full sm:w-72">
+                      <Input
+                        value={commitmentQuery}
+                        onChange={(event) => setCommitmentQuery(event.target.value)}
+                        placeholder="Search scope or trade..."
+                      />
+                    </div>
+                  )}
                 </div>
                 {filteredCommitments.length === 0 ? (
                   <DsEmptyState
@@ -1024,51 +1042,19 @@ export default function CompanyDetailsPage() {
                       <p className="text-right font-medium text-foreground">—</p>
                     )}
                   </div>
-                </div>
-              </section>
-
-              <section className="rounded-lg border border-border bg-background p-4">
-                <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Primary contact</p>
-                {primaryContact ? (
-                  <div className="mt-4 flex items-center gap-3">
-                    <Avatar className="h-9 w-9 shrink-0">
-                      <AvatarFallback className="bg-muted text-xs font-medium text-muted-foreground">
-                        {getInitials(primaryContact.first_name, primaryContact.last_name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="shrink-0 text-muted-foreground">Primary contact</p>
+                    {primaryContact ? (
                       <Link
                         href={`/directory/contacts/${primaryContact.id}`}
-                        className="truncate text-sm font-medium text-foreground underline-offset-4 hover:underline"
+                        className="truncate text-right text-sm font-medium text-foreground underline-offset-4 hover:underline"
                       >
                         {primaryContact.first_name} {primaryContact.last_name}
                       </Link>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {primaryContact.job_title || primaryContact.email || "Company contact"}
-                      </p>
-                    </div>
+                    ) : (
+                      <p className="text-right font-medium text-foreground">—</p>
+                    )}
                   </div>
-                ) : (
-                  <DsEmptyState title="No primary contact set" description="Add a contact to this company to set one as primary." className="py-3" />
-                )}
-              </section>
-
-              <section className="rounded-lg border border-border bg-background p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">Next signal</p>
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="mt-4 space-y-2">
-                  <p className="text-sm font-semibold text-foreground">
-                    {latestMeeting?.title || (openInvoiceCount > 0 ? `${openInvoiceCount} open invoice${openInvoiceCount === 1 ? "" : "s"}` : "Profile is quiet")}
-                  </p>
-                  <p className="text-sm leading-6 text-muted-foreground">
-                    {latestMeeting
-                      ? `${latestMeeting.project_name || "Project meeting"} on ${formatDate(latestMeeting.date)}`
-                      : openInvoiceCount > 0
-                        ? "Review the invoice list before changing project access."
-                        : "Add contacts, projects, or meetings to build out the company record."}
-                  </p>
                 </div>
               </section>
 
