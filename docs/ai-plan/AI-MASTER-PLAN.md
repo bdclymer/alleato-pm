@@ -478,6 +478,7 @@ Add an AI-powered layer to the existing dashboard.
 
 | What | Where | Use When |
 |------|-------|----------|
+| AI OS task checklist | `docs/ai-plan/TASKS-AI.md` | Tracking implementation tasks across Memory Center, Teach Alleato, Skill Library, learning review, AI Work Queue, and subagent delegation |
 | AI OS gap matrix and adoption roadmap | `docs/ai-plan/AI-OS-GAP-MATRIX.md` | Explaining which OpenClaw/Hermes-style capabilities Alleato should absorb: visible memory, skill library, learning loop, subagents, work queue, and field innovation intake |
 | AI OS phase 1 implementation plan | `docs/ai-plan/AI-OS-PHASE-1-IMPLEMENTATION-PLAN.md` | Building the first concrete slice: Memory Center, Skill Library, Teach Alleato intake, and learning review queue |
 | Original best-in-class commercial construction AI vision | `docs/ai-plan/ai-plan.md` | Re-grounding on the six-month/gold-standard operating model and first flagship agents |
