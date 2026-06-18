@@ -96,6 +96,8 @@ const config = [{
     // Gate 20: blocks toast.error(err instanceof Error ? err.message : "fallback")
     // which leaks raw browser errors ("Failed to fetch") into the UI
     'design-system/no-raw-error-message-toast': 'warn',
+    // Gate 21: blocks raw <Input placeholder="Search..."> — use <ExpandingSearch> from @/components/ds
+    'design-system/no-raw-search-input': 'warn',
   },
 }, // Admin pages: relax heading rule — these are internal tools used only by the Alleato team.
 // Layout consistency is nice-to-have here; focus enforcement on customer-facing pages.

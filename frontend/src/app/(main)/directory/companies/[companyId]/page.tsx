@@ -15,11 +15,12 @@ import { formatDate } from "@/lib/format";
 import { createClient } from "@/lib/supabase/client";
 import { useConfirm } from "@/hooks/use-confirm";
 import { createContact, updateContact } from "@/app/(main)/actions/table-actions";
-import { PageShell, SectionRuleHeading } from "@/components/layout";
+import { PageShell, SectionAction, SectionRuleHeading } from "@/components/layout";
 import {
   DataTable as DsDataTable,
   EntityAttachments,
   ErrorState,
+  ExpandingSearch,
   EmptyState as DsEmptyState,
 } from "@/components/ds";
 import { Button } from "@/components/ui/button";
@@ -659,13 +660,9 @@ export default function CompanyDetailsPage() {
                   label="Contacts"
                   actions={
                     contacts.length > 0 ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => void openAddContactModal()}
-                      >
+                      <SectionAction onClick={() => void openAddContactModal()}>
                         Add contact
-                      </Button>
+                      </SectionAction>
                     ) : undefined
                   }
                 />
@@ -761,9 +758,7 @@ export default function CompanyDetailsPage() {
                   label="Projects"
                   actions={
                     associatedProjects.length > 0 ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                      <SectionAction
                         onClick={() => {
                           setAddToProjectOpen(true);
                           setProjectQuery("");
@@ -772,7 +767,7 @@ export default function CompanyDetailsPage() {
                         }}
                       >
                         Add project
-                      </Button>
+                      </SectionAction>
                     ) : undefined
                   }
                 />
@@ -831,13 +826,11 @@ export default function CompanyDetailsPage() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <SectionRuleHeading label="Commitments" />
                   {commitments.length > 0 && (
-                    <div className="w-full sm:w-72">
-                      <Input
-                        value={commitmentQuery}
-                        onChange={(event) => setCommitmentQuery(event.target.value)}
-                        placeholder="Search scope or trade..."
-                      />
-                    </div>
+                    <ExpandingSearch
+                      value={commitmentQuery}
+                      onChange={setCommitmentQuery}
+                      placeholder="Search scope or trade..."
+                    />
                   )}
                 </div>
                 {filteredCommitments.length === 0 ? (

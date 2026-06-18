@@ -26,6 +26,7 @@ const requireInfoAlert = require('./rules/require-info-alert');
 const noRawTablePrimitives = require('./rules/no-raw-table-primitives');
 const noExternalFetchInApiRoutes = require('./rules/no-external-fetch-in-api-routes');
 const noRawErrorMessageToast = require('./rules/no-raw-error-message-toast');
+const noRawSearchInput = require('./rules/no-raw-search-input');
 
 module.exports = {
   rules: {
@@ -50,6 +51,7 @@ module.exports = {
     'no-raw-table-primitives': noRawTablePrimitives,
     'no-external-fetch-in-api-routes': noExternalFetchInApiRoutes,
     'no-raw-error-message-toast': noRawErrorMessageToast,
+    'no-raw-search-input': noRawSearchInput,
   },
   configs: {
     recommended: {

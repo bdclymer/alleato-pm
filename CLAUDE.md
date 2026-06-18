@@ -113,6 +113,7 @@ logs, docs, commits, or final responses.
 | No raw `fetch("https://...")` in API routes | ESLint `no-external-fetch-in-api-routes` → error on staged files |
 | No raw `<TableBody>`/`<TableRow>` in pages | ESLint `no-raw-table-primitives` → error on staged files |
 | No `<PageContainer>` + `<h1>` on new pages | ESLint `require-page-shell` → error on staged files |
+| No raw `<Input placeholder="Search...">` in pages | ESLint `no-raw-search-input` → use `<ExpandingSearch>` |
 | No `.from("nonexistent_table")` | pre-commit phantom-table check |
 | No `[id]` dynamic route params | pre-commit `check:routes` |
 | No `.md`/`.js`/`.ts` at project root | pre-commit root file guard |
@@ -135,6 +136,23 @@ Use specific param names: `[projectId]`, `[contractId]`, `[commitmentId]`, `[inv
 
 ### Form ↔ DB FK Validation
 Before building any form with dropdowns: check which table the dropdown fetches from vs. which table the FK column points to. If they differ, add ID resolution in both read and write paths. Known mismatch (ONE, already resolved): `change_event_line_items.budget_code_id` → `budget_lines.id` while the dropdown returns `project_budget_codes.id` — resolved via `budget_lines.project_budget_code_id`. There is NO `project_cost_codes` table (it's `project_budget_codes`), and for commitments/direct-costs/prime-SOV `budget_code_id` already targets `project_budget_codes.id` (no resolution). `vendor_id` is NOT a mismatch — there is no `vendors` table; every `vendor_id` FK points to `companies.id` and the dropdown returns `companies.id` (vendor only needs the scope fix: inject the saved company as an option on edit). All verified live 2026-06-14. Full reference: `docs/patterns/form-id-mismatch-prevention.md`.
+
+### Non-Negotiable UI Patterns (Zero Exceptions)
+
+**Search inputs** — Every search field in a page or detail view uses `<ExpandingSearch>` from `@/components/ds`. It renders as a Search icon that expands on click. Raw `<Input placeholder="Search...">` is banned by ESLint gate 21. Never use a persistent open input box for search.
+
+**Table column headers** — Column headers NEVER wrap to multiple lines. `whitespace-nowrap` is baked into `DataTable`'s `<th>` — do not override it. If a header is too long, shorten the label; never widen the column or remove the nowrap.
+
+**Section heading actions** — Any button in a `SectionRuleHeading` `actions` slot MUST use `<SectionAction>` from `@/components/layout`. Never pass `<Button variant="ghost">` or plain text — ghost buttons are visually indistinguishable from heading text. `SectionAction` enforces `variant="outline" size="sm"` automatically.
+
+```tsx
+// Correct
+import { SectionAction, SectionRuleHeading } from "@/components/layout";
+<SectionRuleHeading label="Contacts" actions={<SectionAction onClick={...}>Add contact</SectionAction>} />
+
+// Wrong — ghost button looks like plain text
+<SectionRuleHeading label="Contacts" actions={<Button variant="ghost" size="sm">Add contact</Button>} />
+```
 
 ### Cache Clearing
 Before debugging any 404 or routing issue with new files:

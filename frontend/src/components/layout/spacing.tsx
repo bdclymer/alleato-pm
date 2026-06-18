@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Eyebrow } from "@/components/ds";
+import { Button } from "@/components/ui/button";
 
 const detailGridClassMap = {
   default:
@@ -69,6 +70,32 @@ export function SectionRuleHeading({
       <Eyebrow>{label}</Eyebrow>
       {actions && <div className="ml-auto flex shrink-0 items-center gap-2">{actions}</div>}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SectionAction — the ONLY permitted action button in SectionRuleHeading.
+// Forces variant="outline" size="sm" so section CTAs always look distinct
+// from heading text. Never pass a raw <Button variant="ghost"> as an action.
+// ---------------------------------------------------------------------------
+export interface SectionActionProps {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+}
+
+export function SectionAction({ children, onClick, disabled, className }: SectionActionProps) {
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn("h-7 text-xs", className)}
+    >
+      {children}
+    </Button>
   );
 }
 

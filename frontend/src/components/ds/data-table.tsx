@@ -58,7 +58,7 @@ export function DataTable<T extends { id: string | number }>({
               <th
                 key={col.key}
                 className={cn(
-                  "py-2 px-3 text-[10px] font-semibold uppercase tracking-[0.04em] text-muted-foreground",
+                  "py-2 px-3 text-[10px] font-semibold uppercase tracking-[0.04em] text-muted-foreground whitespace-nowrap",
                   col.align === "right" ? "text-right" : "text-left",
                   col.width
                 )}

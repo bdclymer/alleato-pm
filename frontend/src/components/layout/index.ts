@@ -38,6 +38,7 @@ export {
   DetailPanel,
   DetailThreeColumnGrid,
   LabelValueRow,
+  SectionAction,
   SectionRuleHeading,
   SummaryValueRow,
 } from "./spacing";

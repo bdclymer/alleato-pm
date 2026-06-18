@@ -23,6 +23,8 @@ Read the output. If the component you are about to write is in that list — **u
 | Delete confirmation modal | `<ConfirmDeleteDialog>` from `@/components/ds/ConfirmDeleteDialog` |
 | Save/cancel action bar | `<EditModeActions>` from `@/components/ds/EditModeActions` |
 | KPI / metric number display | `<KpiBlock>` / `<KpiRow>` from `@/components/ds/kpi` |
+| Search input in a page or detail view | `<ExpandingSearch>` from `@/components/ds` — **ESLint-enforced, no exceptions** |
+| Button in a `SectionRuleHeading` actions slot | `<SectionAction>` from `@/components/layout` — enforces outline/sm styling |
 
 Usage for every component: `frontend/src/components/ds/GOLDEN-EXAMPLES.tsx`
 

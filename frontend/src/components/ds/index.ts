@@ -32,6 +32,7 @@ export { DateAvatar } from "./date-avatar";
 export { DataTable } from "./data-table";
 export type { TableColumn, DataTableProps } from "./data-table";
 export { EmptyState } from "./empty-state";
+export { ExpandingSearch } from "./expanding-search";
 export { ErrorState } from "./error-state";
 export { Eyebrow } from "./eyebrow";
 export { InlineAddButton } from "./inline-add-button";
