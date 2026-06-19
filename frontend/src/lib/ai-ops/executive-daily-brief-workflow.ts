@@ -81,12 +81,19 @@ export const EXECUTIVE_DAILY_BRIEF_WORKFLOW: WorkflowDefinition = {
   },
 };
 
-export function executiveDailyBriefSourcePolicyMetadata() {
+export function executiveDailyBriefSourcePolicyMetadata(input?: {
+  allowedSourceFamilies?: WorkflowDefinition["sourcePolicy"]["requiredSourceFamilies"];
+  allowedProjectIds?: number[] | null;
+}) {
   return {
     workflowId: EXECUTIVE_DAILY_BRIEF_WORKFLOW.workflowId,
     workflowVersion: EXECUTIVE_DAILY_BRIEF_WORKFLOW.version,
     requiredSourceFamilies:
       EXECUTIVE_DAILY_BRIEF_WORKFLOW.sourcePolicy.requiredSourceFamilies,
+    allowedSourceFamilies:
+      input?.allowedSourceFamilies ??
+      EXECUTIVE_DAILY_BRIEF_WORKFLOW.sourcePolicy.requiredSourceFamilies,
+    allowedProjectIds: input?.allowedProjectIds ?? null,
     freshnessMinutes:
       EXECUTIVE_DAILY_BRIEF_WORKFLOW.sourcePolicy.freshnessMinutes,
     minimumEvidenceRefsPerClaim:

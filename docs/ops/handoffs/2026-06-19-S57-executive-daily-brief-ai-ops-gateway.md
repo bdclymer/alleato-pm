@@ -175,6 +175,11 @@
    - Fail then fixed: local dev-server OOM proof run `a7d8e20b-1d80-48cd-a26e-e753d0f0a7c8` was marked `failed_retryable` / `failed` with `DEV_PROOF_SERVER_OOM`; dev server restarted with `NODE_OPTIONS=--max-old-space-size=8192`.
    - Pass: authenticated no-send preview returned HTTP 200 with run `b45e33fd-fade-40bc-aa2a-0fcebb1e2bc5`.
    - Pass: SQL readback for run `b45e33fd-fade-40bc-aa2a-0fcebb1e2bc5` found `tool_call/succeeded` for `generate-executive-daily-brief-packet` with `sourceRefCount=4`, `tool_call/succeeded` for `build-teams-daily-brief-payload`, dry-run delivery metadata using `build-teams-daily-brief-payload`, source refs `4`, artifacts `3`, delivery attempts `1`, and canonical recap pointer back to the run.
+   - Pass: tool policy now carries actor mode, project allowlist, and source-family allowlist through `executiveDailyBriefToolScope()` and `startDailyBriefRun()` into the ai_work_runs tool-scope and source-policy fields, permission context, and completion metadata.
+   - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/workflow-pack.test.ts src/lib/ai-ops/__tests__/contracts.test.ts src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts 'src/app/(main)/actions/__tests__/executive-briefing-actions.test.ts' --runInBand` passed 4 suites / 22 tests.
+   - Pass: focused ESLint over `executive-daily-brief-workflow.ts`, `tool-registry.ts`, `executive-daily-brief-ledger.ts`, workflow/contract tests, Teams route test, and executive email action test passed.
+   - Fail then fixed: live policy readback for run `3ae5360f-c6d8-48dc-9751-255da67b22d7` showed completed runs preserved the ai_work_runs tool-scope field and the ai_work_runs source-policy field but lost `metadata.toolPolicy`; fixed by carrying `toolPolicy` in `DailyBriefRunContext` and writing it during completion/failure updates.
+   - Pass: authenticated no-send preview returned run `c008ab40-bb19-45f8-9ce4-2d7a40b5c1e4`; SQL readback showed `permission_mode=service`, `tool_scope.actorMode=service`, `metadata.toolPolicy.actorMode=service`, and matching source-family access lists in the ai_work_runs tool-scope and source-policy fields, and `metadata.toolPolicy`.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
@@ -243,6 +248,7 @@
    - New generated Daily Brief runs now set `ai_work_runs.daily_recap_id` and the reciprocal `daily_recaps.ai_work_run_id`; live proof `64285fe0-a122-4745-b888-b7b6116ac854` shows exactly one canonical run pointer for the packet while preserving historical run links.
    - First-class AI Ops run steps, artifacts, and delivery attempts now exist in the database, are exposed by `/api/admin/ai-work-runs`, and are visible in `/ai-work-runs`.
    - The Executive Daily Brief workflow pack, source adapter contract, and tool registry/policy are centralized and used by run construction.
+   - Tool policy filtering now includes actor mode, project allowlist, source-family access, channel, and delivery/write permission; source adapter tools are hidden when their source families are outside policy.
    - Claim-level evidence guardrails now fail before ledger writes when surfaced `needsBrandon`, `waitingOnOthers`, or `importantUpdates` items lack structured citation evidence.
    - A real generated no-send preview run is proven in the ledger and visible in `/ai-work-runs` with packet artifact, Teams payload artifact, dry-run delivery attempt, source health, and evidence rows.
    - Scheduled runner proof now shows both outside-window skipped schedules and matching scheduled triggers create canonical AI Ops runs; explicit runtime env now wins over `.env.local`.

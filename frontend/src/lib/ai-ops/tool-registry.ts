@@ -80,11 +80,25 @@ export function createExecutiveDailyBriefToolPolicy(input: {
   allowDelivery: boolean;
   allowWrites: boolean;
   allowedProjectIds?: number[] | null;
+  allowedSourceFamilies?: ToolPolicy["allowedSourceFamilies"];
   allowedChannels?: Array<"teams" | "email">;
 }): ToolPolicy {
   const allowedChannels =
     input.allowedChannels ??
     EXECUTIVE_DAILY_BRIEF_WORKFLOW.deliveryPolicy.allowedChannels;
+  const requiredSourceFamilies =
+    EXECUTIVE_DAILY_BRIEF_WORKFLOW.sourcePolicy.requiredSourceFamilies;
+  const allowedSourceFamilies = input.allowedSourceFamilies
+    ? requiredSourceFamilies.filter((sourceFamily) =>
+        input.allowedSourceFamilies?.includes(sourceFamily),
+      )
+    : requiredSourceFamilies;
+
+  if (allowedSourceFamilies.length === 0) {
+    throw new Error(
+      "Executive Daily Brief tool policy must allow at least one workflow source family.",
+    );
+  }
 
   return {
     workflowId: EXECUTIVE_DAILY_BRIEF_WORKFLOW_ID,
@@ -93,8 +107,7 @@ export function createExecutiveDailyBriefToolPolicy(input: {
     ),
     actorMode: input.actorMode ?? "service",
     allowedProjectIds: input.allowedProjectIds ?? null,
-    allowedSourceFamilies:
-      EXECUTIVE_DAILY_BRIEF_WORKFLOW.sourcePolicy.requiredSourceFamilies,
+    allowedSourceFamilies,
     allowDelivery: input.allowDelivery,
     allowWrites: input.allowWrites,
     metadata: {
@@ -118,6 +131,20 @@ export function visibleToolsForPolicy(
   return registry.filter((toolDefinition) => {
     if (!allowedNames.has(toolDefinition.name)) return false;
     const metadata = toolDefinition.metadata ?? {};
+    const sourceFamilies = Array.isArray(metadata.sourceFamilies)
+      ? metadata.sourceFamilies.filter(
+          (sourceFamily): sourceFamily is ToolPolicy["allowedSourceFamilies"][number] =>
+            typeof sourceFamily === "string",
+        )
+      : [];
+    if (
+      sourceFamilies.length > 0 &&
+      !sourceFamilies.some((sourceFamily) =>
+        policy.allowedSourceFamilies.includes(sourceFamily),
+      )
+    ) {
+      return false;
+    }
     const channel =
       typeof metadata.channel === "string"
         ? metadata.channel
@@ -133,13 +160,19 @@ export function visibleToolsForPolicy(
 }
 
 export function executiveDailyBriefToolScope(input: {
+  actorMode?: ToolPolicy["actorMode"];
   allowDelivery: boolean;
   allowWrites: boolean;
+  allowedProjectIds?: number[] | null;
+  allowedSourceFamilies?: ToolPolicy["allowedSourceFamilies"];
   allowedChannels?: Array<"teams" | "email">;
 }) {
   const policy = createExecutiveDailyBriefToolPolicy({
+    actorMode: input.actorMode,
     allowDelivery: input.allowDelivery,
     allowWrites: input.allowWrites,
+    allowedProjectIds: input.allowedProjectIds,
+    allowedSourceFamilies: input.allowedSourceFamilies,
     allowedChannels: input.allowedChannels,
   });
   const visibleTools = visibleToolsForPolicy(

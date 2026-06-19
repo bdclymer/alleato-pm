@@ -4,6 +4,7 @@ import type {
   AiRun,
   EvidenceRef,
   SourceHealthSnapshot,
+  ToolPolicy,
 } from "./contracts";
 import {
   assertExecutiveBriefingDraftEvidence,
@@ -33,6 +34,7 @@ export type DailyBriefRunContext = {
   eventId: string;
   runId: string;
   startedAt: string;
+  toolPolicy: ToolPolicy;
 };
 
 type StartDailyBriefRunInput = {
@@ -43,6 +45,9 @@ type StartDailyBriefRunInput = {
   userGoal: string;
   normalizedGoal: string;
   actorDisplayName?: string | null;
+  actorMode?: ToolPolicy["actorMode"];
+  allowedProjectIds?: number[] | null;
+  allowedSourceFamilies?: ToolPolicy["allowedSourceFamilies"];
   deliveryTarget?: Record<string, unknown>;
   payload?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
@@ -314,9 +319,14 @@ export async function startDailyBriefRun(
   const startedAt = nowIso();
   const ledger = createAiOpsLedger(createServiceClient());
   const deliveryTarget = input.deliveryTarget ?? {};
+  const actorMode = input.actorMode ?? "service";
+  const allowedProjectIds = input.allowedProjectIds ?? null;
   const toolScope = executiveDailyBriefToolScope({
+    actorMode,
     allowDelivery: allowDeliveryForTarget(deliveryTarget),
     allowWrites: true,
+    allowedProjectIds,
+    allowedSourceFamilies: input.allowedSourceFamilies,
     allowedChannels:
       deliveryTarget.channel === "email"
         ? ["email"]
@@ -331,7 +341,11 @@ export async function startDailyBriefRun(
     idempotencyKey: idempotencyKey(input, startedAt),
     actorDisplayName: input.actorDisplayName ?? null,
     deliveryContext: deliveryTarget,
-    permissionContext: { permissionMode: "service" },
+    permissionContext: {
+      permissionMode: actorMode,
+      allowedProjectIds,
+      allowedSourceFamilies: toolScope.policy.allowedSourceFamilies,
+    },
     payload: input.payload ?? {},
     metadata: { ...(input.metadata ?? {}), startedAt },
   });
@@ -347,7 +361,7 @@ export async function startDailyBriefRun(
     normalizedGoal: input.normalizedGoal,
     status: "running",
     priority: "high",
-    permissionMode: "service",
+    permissionMode: actorMode,
     modelPolicy: {
       route: "executive_daily_brief",
       maxModelCalls: EXECUTIVE_DAILY_BRIEF_WORKFLOW.runtimeBudget.maxModelCalls,
@@ -358,8 +372,14 @@ export async function startDailyBriefRun(
       hiddenToolNames: toolScope.hiddenToolNames,
       allowDelivery: toolScope.policy.allowDelivery,
       allowWrites: toolScope.policy.allowWrites,
+      actorMode: toolScope.policy.actorMode,
+      allowedProjectIds: toolScope.policy.allowedProjectIds,
+      allowedSourceFamilies: toolScope.policy.allowedSourceFamilies,
     },
-    sourcePolicy: executiveDailyBriefSourcePolicyMetadata(),
+    sourcePolicy: executiveDailyBriefSourcePolicyMetadata({
+      allowedProjectIds,
+      allowedSourceFamilies: toolScope.policy.allowedSourceFamilies,
+    }),
     sourceHealth: [],
     sourceCounts: {},
     artifacts: [],
@@ -373,7 +393,12 @@ export async function startDailyBriefRun(
     },
   });
 
-  return { eventId: event.id, runId: run.id, startedAt };
+  return {
+    eventId: event.id,
+    runId: run.id,
+    startedAt,
+    toolPolicy: toolScope.policy,
+  };
 }
 
 export async function completeDailyBriefRun(
@@ -396,6 +421,7 @@ export async function completeDailyBriefRun(
     completedAt,
     metadata: {
       completedAt,
+      toolPolicy: context.toolPolicy,
       sourceHealth: input.sourceHealth ?? [],
       ...(input.metadata ?? {}),
     },
@@ -423,7 +449,7 @@ export async function failDailyBriefRun(
     failureCode,
     failureMessage: message,
     completedAt,
-    metadata: { completedAt },
+    metadata: { completedAt, toolPolicy: context.toolPolicy },
   });
 }
 

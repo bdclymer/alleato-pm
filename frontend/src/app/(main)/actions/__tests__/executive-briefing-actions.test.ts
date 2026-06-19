@@ -72,6 +72,16 @@ const runContext = {
   eventId: "event-1",
   runId: "run-1",
   startedAt: "2026-06-19T12:00:00.000Z",
+  toolPolicy: {
+    workflowId: "executive_daily_brief",
+    allowedToolNames: ["build-email-daily-brief-payload"],
+    actorMode: "service",
+    allowedProjectIds: null,
+    allowedSourceFamilies: ["project_intelligence"],
+    allowDelivery: true,
+    allowWrites: true,
+    metadata: {},
+  },
 };
 
 const draft = {

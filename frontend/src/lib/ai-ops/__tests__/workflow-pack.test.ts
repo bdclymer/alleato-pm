@@ -113,4 +113,43 @@ describe("Executive Daily Brief workflow pack", () => {
       ]),
     );
   });
+
+  it("stores actor, project, and source access filters in the workflow policy", () => {
+    const scope = executiveDailyBriefToolScope({
+      actorMode: "user_delegated",
+      allowDelivery: false,
+      allowWrites: true,
+      allowedProjectIds: [760, 1009],
+      allowedSourceFamilies: ["document", "rag", "teams"],
+      allowedChannels: ["teams"],
+    });
+
+    expect(scope.policy.actorMode).toBe("user_delegated");
+    expect(scope.policy.allowedProjectIds).toEqual([760, 1009]);
+    expect(scope.policy.allowedSourceFamilies).toEqual([
+      "teams",
+      "document",
+      "rag",
+    ]);
+    expect(scope.visibleToolNames).toContain("fetch-document-rag-sources");
+    expect(scope.visibleToolNames).toContain("fetch-teams-message-sources");
+    expect(scope.visibleToolNames).not.toContain(
+      "fetch-outlook-email-sources",
+    );
+    expect(scope.visibleToolNames).not.toContain(
+      "fetch-acumatica-financial-sources",
+    );
+  });
+
+  it("fails loudly when source policy denies every workflow source family", () => {
+    expect(() =>
+      executiveDailyBriefToolScope({
+        allowDelivery: false,
+        allowWrites: true,
+        allowedSourceFamilies: ["daily_recap"],
+      }),
+    ).toThrow(
+      "Executive Daily Brief tool policy must allow at least one workflow source family.",
+    );
+  });
 });
