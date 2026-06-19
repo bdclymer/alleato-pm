@@ -32,6 +32,12 @@ import { join } from "node:path";
 const REPO_ROOT = join(import.meta.dirname, "..", "..");
 const TYPES_PATH = join(REPO_ROOT, "frontend/src/types/database.types.ts");
 const MD_EXT = /\.mdx?$/;
+// This guard polices Alleato DB-fact docs (e.g. docs/patterns/*). It must NOT
+// scan BMAD planning/research artifacts under _bmad-output/, which legitimately
+// reference external-repo source filenames (`grammar.ts`, `payload.ts`) and
+// generic code words (`fetch`, `agent`) — none of which are Alleato table
+// assertions. Scanning them produces only false positives.
+const IGNORE_PATH_RE = /(^|\/)_bmad-output\//;
 
 const args = new Set(process.argv.slice(2));
 const baseFlagIdx = process.argv.indexOf("--base");
@@ -136,7 +142,8 @@ function getFiles() {
     .split("\n")
     .map((s) => s.trim())
     .filter(Boolean)
-    .filter((p) => MD_EXT.test(p));
+    .filter((p) => MD_EXT.test(p))
+    .filter((p) => !IGNORE_PATH_RE.test(p));
 }
 
 function getAddedLines(path) {
