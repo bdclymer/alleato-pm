@@ -51,7 +51,7 @@
 - No UI changes expected; E2E proof exercised the AI SDK tool directly against live `chat_history`.
 - Conversation recall is backed by PM APP `chat_history`/`conversations`, not `document_chunks`.
 - `db:inventory` exposed and fixed a guardrail bug: table inventory must key metadata by `name:db` so MAIN/RAG duplicate table names are valid.
-10) Recommended next action (one line): Run final handoff/Linear checks, then publish Goal 4 through `npm run codex:finish -- --message "Add session search for assistant conversations" --files ...`.
+10) Recommended next action (one line): Historical closeout recorded; continue with the next goal.
 11) Handoff file path: docs/ops/handoffs/2026-06-19-S62-session-search.md
 12) Migration ledger evidence: `npm run db:migrations:verify-applied -- supabase/migrations/20260619210000_search_chat_history.sql` passed for version `20260619210000`.
 
@@ -63,7 +63,7 @@
 
 ## Current Status
 
-S62 implemented Goal 4 and is ready for final publish after handoff/Linear checks.
+S62 implemented and published Goal 4.
 
 ## Known Pitfalls
 

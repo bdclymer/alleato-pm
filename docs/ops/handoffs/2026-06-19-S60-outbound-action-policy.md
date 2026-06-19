@@ -36,7 +36,7 @@
 - No frontend-visible UI change; this is an AI tool runtime safety policy.
 - Default-off policy wrapper preserves existing action tool behavior unless `ALLEATO_OUTBOUND_ACTION_POLICY_ENABLED` is `true` or `1`.
 - The prior local task file incorrectly claimed Linear and `origin` were unavailable; S60 corrected the evidence and created AAI-558.
-10) Recommended next action (one line): Publish exact Goal 2 files through `codex:finish`, then move AAI-558 to review/done after push verification.
+10) Recommended next action (one line): Historical closeout recorded; continue with the next goal.
 11) Handoff file path: docs/ops/handoffs/2026-06-19-S60-outbound-action-policy.md
 12) Migration ledger evidence: Not applicable; no database migration.
 
@@ -48,16 +48,11 @@
 
 ## Current Status
 
-Goal 2 code is locally implemented and focused checks pass. A controlled local single-case eval passed against `http://localhost:3002` with `ALLEATO_OUTBOUND_ACTION_POLICY_ENABLED=true`, judge disabled, and Teams/Microsoft delivery credentials blanked.
+Goal 2 is published and focused checks passed. A controlled local single-case eval passed against `http://localhost:3002` with `ALLEATO_OUTBOUND_ACTION_POLICY_ENABLED=true`, judge disabled, and Teams/Microsoft delivery credentials blanked.
 
 ## Exact Next Step
 
-Run:
-
-```bash
-npm run linear:codex:check -- docs/ops/handoffs/2026-06-19-S60-outbound-action-policy.md
-npm run codex:finish -- --message "Add outbound action policy" --files docs/ops/tasks/2026-06-19-outbound-action-policy.md docs/ops/handoffs/2026-06-19-S60-outbound-action-policy.md docs/ops/orchestration/session-board.md docs/ops/orchestration/review-queue.md docs/architecture/AI-RAG-ARCHITECTURE.md docs/ai-plan/evals/assistant-eval-suite.json frontend/src/data/assistant-eval-runs.json frontend/src/lib/ai/action-capabilities.ts frontend/src/lib/ai/email-operator-policy.ts frontend/src/lib/ai/tools/action-tools.ts frontend/src/lib/ai/tools/outbound-action-policy.ts frontend/src/lib/ai/tools/__tests__/outbound-action-policy.test.ts
-```
+No action required for this historical handoff.
 
 ## Known Pitfalls
 

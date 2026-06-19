@@ -33,7 +33,7 @@
 - No production UI changes; e2e proof uses a local no-send preview API.
 - Existing Teams delivery remains untouched and additive.
 - A production-like e2e probe returned HTTP 403, proving the no-send preview route is blocked in production mode.
-10) Recommended next action (one line): Publish exact Goal 3 files through `codex:finish`, then move AAI-559 to review/done after push verification.
+10) Recommended next action (one line): Historical closeout recorded; continue with the next goal.
 11) Handoff file path: docs/ops/handoffs/2026-06-19-S61-operator-presentation.md
 12) Migration ledger evidence: Not applicable; no database migration expected.
 
@@ -45,11 +45,11 @@
 
 ## Current Status
 
-S61 has implemented the additive operator presentation adapter, preview API, focused tests, changed-file quality gate, and HTTP e2e proof. Full quality failed on an unrelated frontend typecheck timeout.
+S61 is published. It implemented the additive operator presentation adapter, preview API, focused tests, changed-file quality gate, and HTTP e2e proof. Full quality failed on an unrelated frontend typecheck timeout.
 
 ## Exact Next Step
 
-Publish exact Goal 3 files through `codex:finish`.
+No action required for this historical handoff.
 
 ## Known Pitfalls
 

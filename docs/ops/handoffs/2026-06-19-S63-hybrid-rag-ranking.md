@@ -44,7 +44,7 @@
 - No frontend UI is expected for Goal 5; proof is the live RAG RPC/eval artifact.
 - Hybrid ranking is implemented but remains default-off behind `RAG_HYBRID_RANKING_ENABLED`; telemetry writes are separately gated by `RAG_RETRIEVAL_TELEMETRY_ENABLED`.
 - Recall telemetry is RAG-owned in daily buckets (`document_chunk_retrieval_telemetry`) to avoid hot writes on `document_chunks` and avoid PM APP write pressure.
-10) Recommended next action (one line): Run `codex:finish` for Goal 5, then start Goal 6 context compaction.
+10) Recommended next action (one line): Historical closeout recorded; continue with the next goal.
 11) Handoff file path: docs/ops/handoffs/2026-06-19-S63-hybrid-rag-ranking.md
 12) Migration ledger evidence: `psql "$RAG_DATABASE_URL" ... select version ...` returned `20260619223000|hybrid_rag_ranking`; schema readback verified telemetry columns and exactly one `search_document_chunks` signature.
 
@@ -56,7 +56,7 @@
 
 ## Current Status
 
-Goal 5 implementation is locally verified and ready for publish. The AI Database migration is applied and ledger-recorded. `search_document_chunks` keeps vector-only defaults, exposes optional hybrid score components, and writes telemetry only when explicitly enabled. The frontend semantic-search tool requests hybrid diagnostics only when `RAG_HYBRID_RANKING_ENABLED=true`.
+Goal 5 is published. The AI Database migration is applied and ledger-recorded. `search_document_chunks` keeps vector-only defaults, exposes optional hybrid score components, and writes telemetry only when explicitly enabled. The frontend semantic-search tool requests hybrid diagnostics only when `RAG_HYBRID_RANKING_ENABLED=true`.
 
 ## Known Pitfalls
 

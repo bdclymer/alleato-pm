@@ -27,7 +27,7 @@
 - No new UI is expected; proof is targeted compaction behavior and handler integration.
 - Compaction summary is inserted as a reference-only system message after preserved head context; latest tail remains verbatim.
 - Rollout is default-off via `AI_ASSISTANT_CONTEXT_COMPACTION_ENABLED`; thresholds are configurable by env.
-10) Recommended next action (one line): Run `codex:finish` for Goal 6, then start Goal 7 high-risk follow-up planning.
+10) Recommended next action (one line): Historical closeout recorded; continue with Goal 7 high-risk follow-up planning.
 11) Handoff file path: docs/ops/handoffs/2026-06-19-S64-context-compaction.md
 12) Migration ledger evidence: Not applicable unless implementation discovers a persistence/schema change.
 
@@ -39,7 +39,7 @@
 
 ## Current Status
 
-Goal 6 implementation is locally verified and ready for publish. `frontend/src/lib/ai/stream/compaction.ts` owns threshold checks, reference-only summaries, head/tail retention, previous-summary refresh, historical tool-result pruning, image/file placeholders, and hard-limit failure. `handler-v2.ts` calls the helper after `convertToModelMessages` and before `streamText`, persists compaction metadata on the assistant message, and returns a specific failure message if compaction fails above the hard token limit.
+Goal 6 is published. `frontend/src/lib/ai/stream/compaction.ts` owns threshold checks, reference-only summaries, head/tail retention, previous-summary refresh, historical tool-result pruning, image/file placeholders, and hard-limit failure. `handler-v2.ts` calls the helper after `convertToModelMessages` and before `streamText`, persists compaction metadata on the assistant message, and returns a specific failure message if compaction fails above the hard token limit.
 
 ## Known Pitfalls
 
