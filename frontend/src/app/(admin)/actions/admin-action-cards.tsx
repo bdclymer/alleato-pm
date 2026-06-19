@@ -711,6 +711,68 @@ function PreviewBriefTeamsMessageCard() {
   );
 }
 
+// ── CLI command (copy-only) ───────────────────────────────────────────────────
+// Some actions are local developer commands that regenerate repo files from the
+// filesystem + git. They cannot run on the production serverless host (read-only
+// FS, no repo), so this card surfaces the command to copy and run in a dev
+// terminal rather than a "Run" button that would fail in production.
+
+function CliCommandCard({
+  title,
+  badge,
+  description,
+  command,
+  icon: Icon,
+}: {
+  title: string;
+  badge?: string;
+  description: string;
+  command: string;
+  icon?: React.ElementType;
+}) {
+  const [copied, setCopied] = React.useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(command);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  return (
+    <ActionCard title={title} badge={badge} description={description} icon={Icon}>
+      <div className="flex items-center gap-2">
+        <code className="flex-1 overflow-auto rounded-md bg-muted/40 px-3 py-2 text-xs text-foreground">
+          {command}
+        </code>
+        <Button size="sm" variant="ghost" onClick={copy}>
+          {copied ? (
+            <CheckCircle className="h-3.5 w-3.5 text-status-success" />
+          ) : (
+            <Copy className="h-3.5 w-3.5" />
+          )}
+          {copied ? "Copied" : "Copy"}
+        </Button>
+      </div>
+    </ActionCard>
+  );
+}
+
+function RegenerateProjectMapCard() {
+  return (
+    <CliCommandCard
+      title="Regenerate Project Map"
+      badge="CLI"
+      icon={FileText}
+      description="Rebuild docs/architecture/PROJECT-MAP.md — the agent-readable inventory of every UI route, API endpoint, and AI tool. Run after adding or removing a route or tool. A pre-commit gate fails if it's stale. Runs in a dev terminal (local filesystem + git)."
+      command="npm run map:project"
+    />
+  );
+}
+
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export function AdminActionCards() {
@@ -726,6 +788,7 @@ export function AdminActionCards() {
       <ProgressReportDraftsCard />
       <RagEvalCard />
       <ProcoreCrawlCard />
+      <RegenerateProjectMapCard />
     </>
   );
 }
