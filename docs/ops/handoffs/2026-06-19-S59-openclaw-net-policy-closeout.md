@@ -35,15 +35,15 @@
 
 - Kickoff comment: `f0a028e3-bb5a-4b73-a0bc-bb2193f53bd4`
 - Milestone comments:
-- Completion/blocker comment:
+- Completion/blocker comment: `083c9e7c-7338-4800-8469-f59ecf730231`
 
 ## Current Status
 
-Linear issue AAI-557 exists and is In Progress. Local planning docs for Goal 1 are present. The C2 implementation is already published to `origin/main` in commit `35deb02dc`; this handoff records verification and docs closeout.
+Linear issue AAI-557 is In Review. Local planning docs for Goal 1 are present. The C2 implementation is already published to `origin/main` in commit `35deb02dc`; the goal/task/handoff docs were published in `61a9f657a`.
 
 ## Exact Next Step
 
-Run `npm run linear:codex:check -- docs/ops/handoffs/2026-06-19-S59-openclaw-net-policy-closeout.md`, post the completion comment to Linear, and publish with `codex:finish`.
+Move to Goal 2: `docs/ai-plan/hermes-openclaw-goals/goal-02-outbound-action-policy.md`.
 
 ## Known Pitfalls
 
@@ -57,11 +57,12 @@ Run `npm run linear:codex:check -- docs/ops/handoffs/2026-06-19-S59-openclaw-net
 cd /Users/meganharrison/Documents/alleato-pm
 git status --short
 npm run linear:codex:check -- docs/ops/handoffs/2026-06-19-S59-openclaw-net-policy-closeout.md
-npm run codex:finish -- --message "Document Hermes OpenClaw AI implementation goals" --files docs/ai-plan/hermes-openclaw-goals/README.md docs/ai-plan/hermes-openclaw-goals/goal-01-net-policy-closeout.md docs/ai-plan/hermes-openclaw-goals/goal-02-outbound-action-policy.md docs/ai-plan/hermes-openclaw-goals/goal-03-operator-presentation.md docs/ai-plan/hermes-openclaw-goals/goal-04-session-search.md docs/ai-plan/hermes-openclaw-goals/goal-05-hybrid-rag-ranking.md docs/ai-plan/hermes-openclaw-goals/goal-06-context-compaction.md docs/ai-plan/hermes-openclaw-goals/goal-07-later-high-risk-work.md docs/ops/tasks/2026-06-19-hermes-openclaw-goal-docs.md docs/ops/tasks/2026-06-19-openclaw-net-policy-closeout.md docs/ops/handoffs/2026-06-19-S59-openclaw-net-policy-closeout.md docs/ops/orchestration/session-board.md
+npm run codex:finish -- --check
 ```
 
 ## Evidence
 
 - Targeted tests: 2 suites / 44 tests passed.
 - Quality gate: delegated `npm run quality` failed unrelated at frontend typecheck timeout after 60000ms.
-- C2 publish proof: `35deb02dc feat(ai): add SSRF egress guard + URL secret redaction to fetchWithGuardrails`; current `HEAD` and `origin/main` matched at `a437f4b09` before docs closeout commit.
+- C2 publish proof: `35deb02dc feat(ai): add SSRF egress guard + URL secret redaction to fetchWithGuardrails`.
+- Docs closeout publish proof: `61a9f657a Document Hermes OpenClaw AI implementation goals`; `npm run codex:finish -- --check` showed `main` 0 behind / 0 ahead of `origin/main`.
