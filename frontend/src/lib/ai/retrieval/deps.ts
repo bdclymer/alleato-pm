@@ -23,6 +23,7 @@ import type { SourceSpecificRagKind } from "@/lib/ai/detect-rag-request";
 import { buildSourceSpecificRagAnswer } from "@/lib/ai/retrieval/source-specific-rag";
 import { loadReusableBriefingContext } from "@/lib/ai/retrieval/reusable-briefing";
 import { fetchDeepAgentAppExpert } from "@/lib/ai/deep-agent-project-status";
+import { buildSkillInjectionContext } from "@/lib/ai/services/skill-injection-service";
 
 import type { ExecutorDeps } from "./executor";
 import type { ExternalSource } from "./types";
@@ -217,12 +218,30 @@ export function buildExecutorDeps({ supabase, userId, sessionId }: BuildExecutor
     currentRoute?: string | null;
     projectId?: number | null;
   }): Promise<unknown> => {
+    let approvedSkillContext = "";
+    try {
+      const skillContext = await buildSkillInjectionContext({
+        userId,
+        messageText: input.question,
+        selectedProjectId: input.projectId ?? undefined,
+        surface: "app_expert",
+        allowedCategories: ["app_help"],
+        limit: 3,
+      });
+      approvedSkillContext = skillContext.block;
+    } catch (error) {
+      console.error("[app-expert] failed to load approved app-help skills", {
+        message: error instanceof Error ? error.message : "Unknown skill context error",
+      });
+    }
+
     return fetchDeepAgentAppExpert({
       userId,
       sessionId,
       question: input.question,
       currentRoute: input.currentRoute ?? undefined,
       projectId: input.projectId ?? undefined,
+      approvedSkillContext: approvedSkillContext || undefined,
     });
   };
 

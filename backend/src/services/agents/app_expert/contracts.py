@@ -24,6 +24,7 @@ class AppExpertRequest(BaseModel):
     question: str = Field(..., min_length=1)
     current_route: Optional[str] = Field(default=None, alias="currentRoute")
     project_id: Optional[int] = Field(default=None, ge=1, alias="projectId")
+    approved_skill_context: Optional[str] = Field(default=None, alias="approvedSkillContext")
 
     model_config = {"populate_by_name": True}
 
@@ -72,6 +73,7 @@ class AppExpertResponse(BaseModel):
     sources: List[AppExpertSource]
     tool_trace: List[AppExpertTraceItem] = Field(..., alias="toolTrace")
     skills_loaded: List[str] = Field(default_factory=list, alias="skillsLoaded")
+    approved_skill_context: Optional[str] = Field(default=None, alias="approvedSkillContext")
     orchestrator: str
 
     model_config = {"populate_by_name": True}

@@ -203,6 +203,8 @@ const appExpertPacket: DeepAppExpertResponse = {
     },
   ],
   skillsLoaded: ["app-navigation-and-sitemap"],
+  approvedSkillContext:
+    "## Approved Skill Library Context\n\n### Explain change order navigation (v1, app_help, low risk)\nInstructions: Explain the route and page controls before giving workflow guidance.",
   orchestrator: "alleato-app-expert",
 };
 
@@ -535,6 +537,8 @@ describe("Deep Agents project-status bridge", () => {
     expect(context).toContain("Backend Deep Agents App Expert Packet");
     expect(context).toContain("Mode: deep_agents");
     expect(context).toContain("Skills loaded: app-navigation-and-sitemap");
+    expect(context).toContain("Approved Skill Library context");
+    expect(context).toContain("Explain change order navigation");
     expect(context).toContain("[help_article] App navigation and feature map");
     expect(context).toContain("Prefer its sitemap, feature registry, and help-article sources");
   });
@@ -694,6 +698,8 @@ describe("Deep Agents project-status bridge", () => {
       question: "How do I create a change order in the app?",
       currentRoute: "/43/change-orders",
       projectId: 43,
+      approvedSkillContext:
+        "## Approved Skill Library Context\n\n### Explain change order navigation",
     });
 
     expect(response.mode).toBe("deep_agents");
@@ -707,6 +713,8 @@ describe("Deep Agents project-status bridge", () => {
           question: "How do I create a change order in the app?",
           currentRoute: "/43/change-orders",
           projectId: 43,
+          approvedSkillContext:
+            "## Approved Skill Library Context\n\n### Explain change order navigation",
         }),
       }),
     );

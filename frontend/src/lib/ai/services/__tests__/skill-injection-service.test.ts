@@ -147,6 +147,48 @@ describe("skill-injection-service", () => {
     expect(result.block).not.toContain("Review stored materials");
   });
 
+  it("honors category bounds when injecting skills into a specialized surface", async () => {
+    listActiveVisibleSkillsMock.mockResolvedValue([
+      skill({
+        id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        title: "Explain where app actions live",
+        slug: "explain-where-app-actions-live",
+        summary: "Help users understand where app actions and page controls live.",
+        instructions: "When users ask about this app, explain the relevant page controls.",
+        category: "app_help",
+        scopeType: "company",
+        projectId: null,
+        usageCount: 0,
+      }),
+      skill({
+        id: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+        title: "Review app pay approvals",
+        slug: "review-app-pay-approvals",
+        summary: "Review pay app approvals in the app before release.",
+        instructions: "For pay app approvals, compare stored materials and retainage.",
+        category: "pay_app_review",
+        scopeType: "company",
+        projectId: null,
+        usageCount: 10,
+      }),
+    ]);
+
+    const result = await buildSkillInjectionContext({
+      userId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      messageText: "Where do I approve pay apps in the app?",
+      surface: "app_expert",
+      allowedCategories: ["app_help"],
+    });
+
+    expect(result.usage?.skills).toHaveLength(1);
+    expect(result.usage?.skills[0]).toMatchObject({
+      title: "Explain where app actions live",
+      category: "app_help",
+    });
+    expect(result.block).toContain("Explain where app actions live");
+    expect(result.block).not.toContain("Review app pay approvals");
+  });
+
   it("does not inject irrelevant skills into unrelated prompts", async () => {
     listActiveVisibleSkillsMock.mockResolvedValue([
       skill({

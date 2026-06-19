@@ -141,6 +141,7 @@ export const deepAppExpertResponseSchema = z.object({
   sources: z.array(appExpertSourceSchema),
   toolTrace: z.array(toolTraceSchema),
   skillsLoaded: z.array(z.string()),
+  approvedSkillContext: z.string().optional().nullable(),
   orchestrator: z.string(),
 });
 
@@ -176,6 +177,7 @@ export type DeepAgentAppExpertRequest = {
   question: string;
   currentRoute?: string | null;
   projectId?: number | null;
+  approvedSkillContext?: string | null;
   timeoutMs?: number;
 };
 
@@ -425,6 +427,7 @@ export async function fetchDeepAgentAppExpert(
         question: params.question,
         currentRoute: params.currentRoute ?? undefined,
         projectId: params.projectId ?? undefined,
+        approvedSkillContext: params.approvedSkillContext ?? undefined,
       }),
       requestId: params.sessionId ?? "deep-agent-app-expert",
       where: APP_EXPERT_WHERE,
@@ -577,6 +580,9 @@ export function formatDeepAgentAppExpertContext(packet: DeepAppExpertResponse): 
     `Mode: ${packet.mode}`,
     `Orchestrator: ${packet.orchestrator}`,
     `Skills loaded: ${packet.skillsLoaded.join(", ") || "none reported"}`,
+    packet.approvedSkillContext
+      ? `Approved Skill Library context: ${packet.approvedSkillContext}`
+      : "Approved Skill Library context: none selected",
     "",
     "Backend app answer:",
     packet.answer,

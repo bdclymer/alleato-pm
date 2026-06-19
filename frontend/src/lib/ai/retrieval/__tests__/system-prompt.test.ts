@@ -30,6 +30,8 @@ describe("assembleSystemPromptFromContext", () => {
         mode: "deep_agents",
         orchestrator: "alleato-app-expert",
         skillsLoaded: ["permissions-and-visibility"],
+        approvedSkillContext:
+          "## Approved Skill Library Context\n\n### Explain app permissions (v1, app_help, low risk)\nInstructions: Use role and visibility wording from the approved app-help skill.",
         sources: [
           {
             title: "App permissions and visibility",
@@ -54,6 +56,8 @@ describe("assembleSystemPromptFromContext", () => {
     const prompt = assembleSystemPromptFromContext(plan, ctx, "BASE_PROMPT");
     expect(prompt).toContain("App Expert Packet");
     expect(prompt).toContain("Use Settings > Team");
+    expect(prompt).toContain("Approved App-Help Skills");
+    expect(prompt).toContain("Explain app permissions");
     expect(prompt).toContain("app-permissions-and-visibility.md");
     expect(prompt).toContain("Do not invent app behavior");
   });

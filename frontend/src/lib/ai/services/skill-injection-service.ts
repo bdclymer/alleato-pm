@@ -29,6 +29,7 @@ export interface BuildSkillInjectionContextParams {
   messageText: string;
   selectedProjectId?: number;
   surface?: string | null;
+  allowedCategories?: string[];
   limit?: number;
 }
 
@@ -231,8 +232,13 @@ export async function buildSkillInjectionContext(
     viewerProjectIds: params.selectedProjectId ? [params.selectedProjectId] : [],
     limit: 25,
   });
+  const allowedCategories = new Set(params.allowedCategories ?? []);
+  const categoryBoundCandidates =
+    allowedCategories.size > 0
+      ? candidates.filter((skill) => allowedCategories.has(skill.category))
+      : candidates;
 
-  const scored = candidates
+  const scored = categoryBoundCandidates
     .map((skill) => {
       const scoredSkill = scoreSkill({
         skill,

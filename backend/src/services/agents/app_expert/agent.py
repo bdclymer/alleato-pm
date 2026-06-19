@@ -103,10 +103,17 @@ def _app_expert_prompt(request: AppExpertRequest) -> str:
         if request.project_id
         else "No project ID was supplied."
     )
+    approved_skill_context = (
+        "Approved app-help Skill Library context:\n"
+        f"{request.approved_skill_context.strip()}\n\n"
+        if request.approved_skill_context and request.approved_skill_context.strip()
+        else ""
+    )
     return (
         f"App Expert question:\n{request.question}\n\n"
         f"{route_context}\n"
         f"{project_context}\n\n"
+        f"{approved_skill_context}"
         "Required workflow:\n"
         "1. Check App Expert artifact status if freshness or availability is relevant.\n"
         "2. Search curated feature/help metadata before answering general app-use questions.\n"
@@ -213,6 +220,7 @@ def run_app_expert_agent(
                 )
             ],
             skillsLoaded=loaded_skills,
+            approvedSkillContext=request.approved_skill_context,
             orchestrator=ORCHESTRATOR_NAME,
         )
     except Exception as exc:
@@ -233,5 +241,6 @@ def run_app_expert_agent(
                 )
             ],
             skillsLoaded=loaded_skills,
+            approvedSkillContext=request.approved_skill_context,
             orchestrator=ORCHESTRATOR_NAME,
         )

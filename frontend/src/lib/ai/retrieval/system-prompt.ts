@@ -454,6 +454,11 @@ function renderAppExpertPacket(raw: unknown): string {
     : compactText(record.skillsLoaded, 500);
   if (skillsLoaded) lines.push(`- skillsLoaded: ${skillsLoaded}`);
 
+  const approvedSkillContext = compactText(record.approvedSkillContext, 1800);
+  if (approvedSkillContext) {
+    lines.push("", "## Approved App-Help Skills", approvedSkillContext);
+  }
+
   const answer = compactText(record.answer, 2500);
   if (answer) {
     lines.push("", "## Backend Answer", answer);
