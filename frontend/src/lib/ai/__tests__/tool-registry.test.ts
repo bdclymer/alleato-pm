@@ -220,6 +220,47 @@ describe("global AI assistant tool registry", () => {
     );
   });
 
+  it("hides write tools when the runtime policy does not allow writes", () => {
+    const registry = [
+      registryEntry({
+        name: "readRuntimeTool",
+        workflows: [AI_ASSISTANT_CHAT_WORKFLOW_ID],
+        actorModes: ["user_delegated"],
+        factory: {
+          modulePath: "frontend/src/lib/ai/tools/test-tools.ts",
+          exportName: "createTestTools",
+        },
+      }),
+      registryEntry({
+        name: "writeRuntimeTool",
+        workflows: [AI_ASSISTANT_CHAT_WORKFLOW_ID],
+        actorModes: ["user_delegated"],
+        capabilities: ["write"],
+        requiresWritePermission: true,
+        factory: {
+          modulePath: "frontend/src/lib/ai/tools/test-tools.ts",
+          exportName: "createTestTools",
+        },
+      }),
+    ];
+
+    expect(
+      Object.keys(
+        filterRegisteredToolSet({
+          registry,
+          workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
+          factoryModulePath: "frontend/src/lib/ai/tools/test-tools.ts",
+          tools: testToolSet(["readRuntimeTool", "writeRuntimeTool"]),
+          policy: {
+            actorMode: "user_delegated",
+            allowWrites: false,
+            allowDelivery: false,
+          },
+        }),
+      ),
+    ).toEqual(["readRuntimeTool"]);
+  });
+
   it("returns AI Ops tool definitions for workflow consumers", () => {
     const definitions = toolDefinitionsForWorkflow({
       workflowId: EXECUTIVE_DAILY_BRIEF_WORKFLOW_ID,

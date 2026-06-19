@@ -56,6 +56,8 @@ import { createAssistantSelfInspectionTools } from "@/lib/ai/assistant-self-know
 import {
   AI_ASSISTANT_CHAT_WORKFLOW_ID,
   filterRegisteredToolSet,
+  toolVisibilityForFactory,
+  type AssistantToolVisibility,
 } from "@/lib/ai/tool-registry";
 import { buildSkillInjectionContext } from "@/lib/ai/services/skill-injection-service";
 import { strategistSystemPrompt } from "@/lib/ai/agents/strategist";
@@ -106,33 +108,61 @@ function omitMicrosoftOperatorTools(tools: ToolSet): ToolSet {
 function registeredProjectTools(
   userId: string,
   options: CreateProjectToolsOptions,
+  policy: RegistryToolPolicy = {},
+  onVisibility?: ToolVisibilityRecorder,
 ): ToolSet {
-  return filterRegisteredToolSet({
+  return registeredFactoryTools({
     tools: createProjectTools(userId, options),
-    workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
     factoryModulePath: "frontend/src/lib/ai/tools/project-tools.ts",
+    policy,
+    onVisibility,
   });
 }
 
 function registeredActionTools(
   userId: string,
   options: ActionToolsOptions,
+  policy: RegistryToolPolicy = {},
+  onVisibility?: ToolVisibilityRecorder,
 ): ToolSet {
-  return filterRegisteredToolSet({
+  return registeredFactoryTools({
     tools: createActionTools(userId, options),
-    workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
     factoryModulePath: "frontend/src/lib/ai/tools/action-tools.ts",
+    policy,
+    onVisibility,
   });
 }
+
+type RegistryToolPolicy = NonNullable<
+  Parameters<typeof filterRegisteredToolSet>[0]["policy"]
+>;
+
+type ToolVisibilitySnapshot = AssistantToolVisibility & {
+  factoryModulePath: string;
+};
+
+type ToolVisibilityRecorder = (snapshot: ToolVisibilitySnapshot) => void;
 
 function registeredFactoryTools(input: {
   tools: ToolSet;
   factoryModulePath: string;
+  policy?: RegistryToolPolicy;
+  onVisibility?: ToolVisibilityRecorder;
 }): ToolSet {
+  input.onVisibility?.({
+    factoryModulePath: input.factoryModulePath,
+    ...toolVisibilityForFactory({
+      workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
+      factoryModulePath: input.factoryModulePath,
+      policy: input.policy,
+    }),
+  });
+
   return filterRegisteredToolSet({
     tools: input.tools,
     workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
     factoryModulePath: input.factoryModulePath,
+    policy: input.policy,
   });
 }
 
@@ -680,10 +710,19 @@ export const agentRegistry: Record<string, AgentConfig> = {
       // getHistoricalTrends, and getCrossProjectComparison.
       // Plus web search for competitive/market intelligence.
       return {
-        ...registeredProjectTools(userId, options ?? {}),
+        ...registeredProjectTools(userId, options ?? {}, {
+          actorMode: "user_delegated",
+          allowWrites: false,
+          allowDelivery: false,
+        }),
         ...registeredFactoryTools({
           tools: createWebSearchTools(options),
           factoryModulePath: "frontend/src/lib/ai/tools/web-search.ts",
+          policy: {
+            actorMode: "user_delegated",
+            allowWrites: false,
+            allowDelivery: false,
+          },
         }),
       } as ToolSet; // ToolSet is an index signature — spread inference requires explicit cast
     },
@@ -725,16 +764,35 @@ export const agentRegistry: Record<string, AgentConfig> = {
         ...registeredFactoryTools({
           tools: createMarketingTools(userId, options),
           factoryModulePath: "frontend/src/lib/ai/tools/marketing.ts",
+          policy: {
+            actorMode: "user_delegated",
+            allowWrites: true,
+            allowDelivery: false,
+          },
         }),
-        ...registeredProjectTools(userId, options ?? {}),
+        ...registeredProjectTools(userId, options ?? {}, {
+          actorMode: "user_delegated",
+          allowWrites: false,
+          allowDelivery: false,
+        }),
         ...registeredFactoryTools({
           tools: createWebSearchTools(options),
           factoryModulePath: "frontend/src/lib/ai/tools/web-search.ts",
+          policy: {
+            actorMode: "user_delegated",
+            allowWrites: false,
+            allowDelivery: false,
+          },
         }),
         ...registeredFactoryTools({
           tools: createDocumentIntelligenceTools(userId, options),
           factoryModulePath:
             "frontend/src/lib/ai/tools/document-intelligence.ts",
+          policy: {
+            actorMode: "user_delegated",
+            allowWrites: false,
+            allowDelivery: false,
+          },
         }),
       } as ToolSet;
     },
@@ -746,14 +804,28 @@ function createDefaultSpecialistTools(
   options?: StrategistToolOptions,
 ): ToolSet {
   return {
-    ...registeredProjectTools(userId, options ?? {}),
+    ...registeredProjectTools(userId, options ?? {}, {
+      actorMode: "user_delegated",
+      allowWrites: false,
+      allowDelivery: false,
+    }),
     ...registeredFactoryTools({
       tools: createWebSearchTools(options),
       factoryModulePath: "frontend/src/lib/ai/tools/web-search.ts",
+      policy: {
+        actorMode: "user_delegated",
+        allowWrites: false,
+        allowDelivery: false,
+      },
     }),
     ...registeredFactoryTools({
       tools: createIntelligenceTools(options),
       factoryModulePath: "frontend/src/lib/ai/tools/intelligence-tools.ts",
+      policy: {
+        actorMode: "user_delegated",
+        allowWrites: false,
+        allowDelivery: false,
+      },
     }),
   } as ToolSet;
 }
@@ -773,6 +845,11 @@ export function createSpecialistAgentTools(
     ...registeredFactoryTools({
       tools: createWebSearchTools(options),
       factoryModulePath: "frontend/src/lib/ai/tools/web-search.ts",
+      policy: {
+        actorMode: "user_delegated",
+        allowWrites: false,
+        allowDelivery: false,
+      },
     }),
   } as ToolSet;
 }
@@ -1059,45 +1136,73 @@ export function createStrategistTools(
     includeActionTools?: boolean;
   } = {},
 ) {
+  const visibilitySnapshots: ToolVisibilitySnapshot[] = [];
+  const recordVisibility: ToolVisibilityRecorder = (snapshot) => {
+    visibilitySnapshots.push(snapshot);
+  };
+  const registryPolicy: RegistryToolPolicy = {
+    actorMode: "user_delegated",
+    allowWrites: Boolean(options.includeActionTools),
+    allowDelivery: false,
+  };
+
   // Include the base project tools so the Strategist can answer
   // general questions without routing to a specialist
   const baseTools = omitMicrosoftOperatorTools(
-    registeredProjectTools(userId, options),
+    registeredProjectTools(userId, options, registryPolicy, recordVisibility),
   );
   const strategistActionTools = options.includeActionTools
-    ? omitMicrosoftOperatorTools(registeredActionTools(userId, options))
+    ? omitMicrosoftOperatorTools(
+        registeredActionTools(userId, options, registryPolicy, recordVisibility),
+      )
     : {};
   const featureRequestTools = registeredFactoryTools({
     tools: createFeatureRequestTools(userId, options),
     factoryModulePath: "frontend/src/lib/ai/tools/feature-request-tools.ts",
+    policy: registryPolicy,
+    onVisibility: recordVisibility,
   });
   const progressReportTools = registeredFactoryTools({
     tools: createProgressReportTools(userId, options),
     factoryModulePath: "frontend/src/lib/ai/tools/progress-report-tools.ts",
+    policy: registryPolicy,
+    onVisibility: recordVisibility,
   });
   const workspaceTools = registeredFactoryTools({
     tools: createWorkspaceTools(userId, { onTrace: options.onTrace }),
     factoryModulePath: "frontend/src/lib/ai/tools/workspace-tools.ts",
+    policy: registryPolicy,
+    onVisibility: recordVisibility,
   });
   const webSearchTools = registeredFactoryTools({
     tools: createWebSearchTools(options),
     factoryModulePath: "frontend/src/lib/ai/tools/web-search.ts",
+    policy: registryPolicy,
+    onVisibility: recordVisibility,
   });
   const structuredOutputTools = registeredFactoryTools({
     tools: createStructuredOutputTools(options),
     factoryModulePath: "frontend/src/lib/ai/tools/structured-output.ts",
+    policy: registryPolicy,
+    onVisibility: recordVisibility,
   });
   const documentIntelligenceTools = registeredFactoryTools({
     tools: createDocumentIntelligenceTools(userId, options),
     factoryModulePath: "frontend/src/lib/ai/tools/document-intelligence.ts",
+    policy: registryPolicy,
+    onVisibility: recordVisibility,
   });
   const intelligenceTools = registeredFactoryTools({
     tools: createIntelligenceTools({ onTrace: options.onTrace }),
     factoryModulePath: "frontend/src/lib/ai/tools/intelligence-tools.ts",
+    policy: registryPolicy,
+    onVisibility: recordVisibility,
   });
   const executiveBriefTools = registeredFactoryTools({
     tools: createExecutiveBriefTools({ onTrace: options.onTrace }),
     factoryModulePath: "frontend/src/lib/ai/tools/executive-brief-tools.ts",
+    policy: registryPolicy,
+    onVisibility: recordVisibility,
   });
   const strategistBaseTools = baseTools;
 
@@ -1280,10 +1385,27 @@ export function createStrategistTools(
     onTrace: options.onTrace,
   });
 
-  return {
+  const strategistTools = {
     ...selfInspectionTools,
     ...toolsWithoutSelfInspection,
   } as ToolSet;
+
+  options.onTrace?.({
+    toolName: "assistantToolVisibility",
+    workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
+    actorMode: registryPolicy.actorMode,
+    allowWrites: registryPolicy.allowWrites,
+    allowDelivery: registryPolicy.allowDelivery,
+    visibleToolNames: Object.keys(strategistTools).sort(),
+    hiddenTools: visibilitySnapshots.flatMap((snapshot) =>
+      snapshot.hiddenTools.map((tool) => ({
+        ...tool,
+        factoryModulePath: snapshot.factoryModulePath,
+      })),
+    ),
+  });
+
+  return strategistTools;
 }
 
 // ---------------------------------------------------------------------------

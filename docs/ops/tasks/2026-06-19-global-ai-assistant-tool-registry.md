@@ -56,9 +56,9 @@ filled in. If any item cannot be completed, change `Status` to
       instead of owning standalone definitions.
 - [x] Update assistant/orchestrator tool assembly to request tools through the
       registry policy layer.
-- [ ] Update route-local tool usage or document why a route-local tool is not an
+- [x] Update route-local tool usage or document why a route-local tool is not an
       assistant tool.
-- [ ] Ensure all write/delivery tools have explicit policy gates.
+- [x] Ensure all write/delivery tools have explicit policy gates.
 - [x] Ensure source-bearing tools declare source family and evidence behavior.
 - [ ] Ensure every tool execution can be traced to run/task/session telemetry
       appropriate to its workflow.
@@ -70,20 +70,20 @@ filled in. If any item cannot be completed, change `Status` to
 - [x] Executive Daily Brief workflow uses registry-filtered tool subsets.
 - [ ] Tool policy filters by actor, workflow, project/source access, write
       permission, delivery permission, and channel.
-- [ ] Tool visibility is recorded before model calls.
-- [ ] Forbidden tools are hidden before model calls and fail loudly if invoked.
+- [x] Tool visibility is recorded before model calls.
+- [x] Forbidden tools are hidden before model calls and fail loudly if invoked.
 - [ ] Existing public behavior remains compatible for users.
 
 ## Regression Guardrails
 
 - [x] Test fails on duplicate registered tool names.
-- [ ] Test fails when an assistant tool exists outside the registry without an
+- [x] Test fails when an assistant tool exists outside the registry without an
       explicit allowlist reason.
 - [x] Test fails when a write/delivery tool lacks policy metadata.
 - [x] Test fails when a source-bearing tool lacks source-family metadata.
 - [x] Test proves Executive Daily Brief receives only its allowed subset.
 - [x] Test proves disabled delivery tools are hidden and cannot send.
-- [ ] Static guardrail added to detect new direct `tool({ ... })` definitions
+- [x] Static guardrail added to detect new direct `tool({ ... })` definitions
       outside approved constructors/registry files.
 
 ## Verification Checklist
@@ -91,12 +91,12 @@ filled in. If any item cannot be completed, change `Status` to
 - [x] Static/type/lint check run, or explicitly delegated to a cheaper
       sub-agent.
 - [x] Targeted registry contract tests run.
-- [ ] Targeted assistant/orchestrator tests run.
+- [x] Targeted assistant/orchestrator tests run.
 - [x] Targeted Executive Daily Brief workflow-pack tests run.
 - [ ] Browser or API smoke test verifies assistant still responds with expected
       tool visibility.
-- [ ] Evidence artifacts recorded below.
-- [ ] Known unrelated failures documented with exact command and owner files.
+- [x] Evidence artifacts recorded below.
+- [x] Known unrelated failures documented with exact command and owner files.
 
 ## Evidence
 
@@ -115,6 +115,9 @@ filled in. If any item cannot be completed, change `Status` to
 | Expanded registry tests | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai/__tests__/tool-registry.test.ts --runInBand` | Passed | 9 tests prove assistant chat registry coverage for aggregate project/action tools plus standalone web/search/feature/progress/workspace/document/intelligence/executive/marketing factories and fail-loud runtime filtering. |
 | Typecheck delegation | Sub-agent `019edf88-2f4e-74f0-beec-ca24692af2f3`, `cd frontend && npm run typecheck` | Failed unrelated repo debt | Bounded typecheck timed out after 60s with no current-task type error surfaced. Worker identified likely owner files as `frontend/tsconfig.json` and `frontend/scripts/run-typecheck-bounded.mjs`, unrelated to `tool-registry.ts`, `orchestrator.ts`, or registry tests. |
 | Runtime import smoke | Direct TSX-based import of `createStrategistTools()` | Invalid smoke method | Direct TSX-based import hit Next `server-only` guard through `microsoft-graph/calendar-events.ts`; this is not a valid app/server harness for the orchestrator module. |
+| Policy/visibility tests | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai/__tests__/tool-registry.test.ts src/lib/ai/__tests__/cmo-orchestrator.test.ts --runInBand` | Passed | 2 suites, 12 tests passed. Tests cover registry policy hiding for write tools and existing orchestrator registration behavior with registry helpers mocked for isolated CMO tests. |
+| Direct tool guardrail | `npm run rag:verify:assistant-tool-registry` | Passed | Guardrail now fails new direct `tool({ ... })` definitions unless the file is an approved factory/constructor or has an explicit non-assistant allowlist reason. |
+| Policy lint | `cd frontend && npx eslint src/lib/ai/tool-registry.ts src/lib/ai/__tests__/tool-registry.test.ts src/lib/ai/orchestrator.ts src/lib/ai/__tests__/cmo-orchestrator.test.ts` | Passed | Registry policy helpers, Strategist visibility trace, tests, and orchestrator changes lint cleanly. |
 
 ## Files Expected To Change
 

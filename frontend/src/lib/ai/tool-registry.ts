@@ -58,7 +58,21 @@ export type RegisteredToolSetInput = {
   workflowId: string;
   factoryModulePath: string;
   allowedToolNames?: readonly string[];
+  policy?: {
+    actorMode?: ToolPolicy["actorMode"];
+    allowWrites?: boolean;
+    allowDelivery?: boolean;
+    allowedChannels?: Array<"teams" | "email">;
+  };
   registry?: AssistantToolRegistryEntry[];
+};
+
+export type AssistantToolVisibility = {
+  visibleToolNames: string[];
+  hiddenTools: Array<{
+    name: string;
+    reason: string;
+  }>;
 };
 
 function uniqueValues<T>(values: T[]): T[] {
@@ -166,15 +180,19 @@ export function toolDefinitionsForWorkflow(input: {
 
 export function filterRegisteredToolSet(input: RegisteredToolSetInput): ToolSet {
   const registry = input.registry ?? GLOBAL_ASSISTANT_TOOL_REGISTRY;
-  const workflowEntries = assistantToolsForWorkflow({
+  const factoryEntries = assistantToolsForWorkflow({
     registry,
     workflowId: input.workflowId,
     allowedToolNames: input.allowedToolNames,
   }).filter((entry) => entry.factory?.modulePath === input.factoryModulePath);
 
-  const registeredNames = new Set(workflowEntries.map((entry) => entry.name));
+  const registeredNames = new Set(factoryEntries.map((entry) => entry.name));
   const toolNames = Object.keys(input.tools);
-  const missingTools = [...registeredNames].filter((name) => !input.tools[name]);
+  const visibility = toolVisibilityForEntries(factoryEntries, input.policy);
+  const visibleNames = new Set(visibility.visibleToolNames);
+  const missingTools = visibility.visibleToolNames.filter(
+    (name) => !input.tools[name],
+  );
   const unregisteredTools = toolNames.filter((name) => !registeredNames.has(name));
 
   if (missingTools.length > 0 || unregisteredTools.length > 0) {
@@ -194,9 +212,66 @@ export function filterRegisteredToolSet(input: RegisteredToolSetInput): ToolSet 
 
   return Object.fromEntries(
     toolNames
-      .filter((name) => registeredNames.has(name))
+      .filter((name) => visibleNames.has(name))
       .map((name) => [name, input.tools[name]]),
   ) as ToolSet;
+}
+
+export function toolVisibilityForFactory(
+  input: Omit<RegisteredToolSetInput, "tools">,
+): AssistantToolVisibility {
+  const registry = input.registry ?? GLOBAL_ASSISTANT_TOOL_REGISTRY;
+  const factoryEntries = assistantToolsForWorkflow({
+    registry,
+    workflowId: input.workflowId,
+    allowedToolNames: input.allowedToolNames,
+  }).filter((entry) => entry.factory?.modulePath === input.factoryModulePath);
+
+  return toolVisibilityForEntries(factoryEntries, input.policy);
+}
+
+export function toolVisibilityForEntries(
+  entries: AssistantToolRegistryEntry[],
+  policy: RegisteredToolSetInput["policy"] = {},
+): AssistantToolVisibility {
+  const allowedChannels = new Set(policy.allowedChannels ?? []);
+  const hiddenTools: AssistantToolVisibility["hiddenTools"] = [];
+  const visibleToolNames: string[] = [];
+
+  for (const entry of entries) {
+    const hiddenReason = hiddenReasonForEntry(entry, policy, allowedChannels);
+    if (hiddenReason) {
+      hiddenTools.push({ name: entry.name, reason: hiddenReason });
+    } else {
+      visibleToolNames.push(entry.name);
+    }
+  }
+
+  return { visibleToolNames, hiddenTools };
+}
+
+function hiddenReasonForEntry(
+  entry: AssistantToolRegistryEntry,
+  policy: RegisteredToolSetInput["policy"],
+  allowedChannels: Set<"teams" | "email">,
+): string | null {
+  if (policy?.actorMode && !entry.actorModes.includes(policy.actorMode)) {
+    return `actor_mode_denied:${policy.actorMode}`;
+  }
+  if (entry.requiresWritePermission && !policy?.allowWrites) {
+    return "write_permission_denied";
+  }
+  if (entry.requiresDeliveryPermission && !policy?.allowDelivery) {
+    return "delivery_permission_denied";
+  }
+  if (
+    entry.requiresDeliveryPermission &&
+    allowedChannels.size > 0 &&
+    (entry.allowedChannels ?? []).every((channel) => !allowedChannels.has(channel))
+  ) {
+    return "delivery_channel_denied";
+  }
+  return null;
 }
 
 export function toToolDefinition(

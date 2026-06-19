@@ -14,6 +14,101 @@ const requiredFiles = [
 
 const failures = [];
 
+const approvedDirectToolDefinitionFiles = new Map([
+  [
+    "frontend/src/lib/ai/assistant-self-knowledge.ts",
+    "Self-inspection tools are appended by the orchestrator and are not project/source/action tools.",
+  ],
+  [
+    "frontend/src/lib/ai/orchestrator.ts",
+    "Consult tools delegate to specialist agents and are assembled by the orchestrator.",
+  ],
+  [
+    "frontend/src/lib/ai/tools/action-tools.ts",
+    "Approved assistant factory; runtime exposure is filtered by the global registry.",
+  ],
+  [
+    "frontend/src/lib/ai/tools/acumatica.ts",
+    "Composed by createProjectTools and filtered by the global registry.",
+  ],
+  [
+    "frontend/src/lib/ai/tools/app-help-tools.ts",
+    "Composed by createProjectTools and filtered by the global registry.",
+  ],
+  [
+    "frontend/src/lib/ai/tools/create-document.ts",
+    "Document artifact UI helper; not currently exposed by Strategist tool assembly.",
+  ],
+  [
+    "frontend/src/lib/ai/tools/document-intelligence.ts",
+    "Approved assistant factory; runtime exposure is filtered by the global registry.",
+  ],
+  [
+    "frontend/src/lib/ai/tools/executive-brief-tools.ts",
+    "Approved assistant factory; runtime exposure is filtered by the global registry.",
+  ],
+  [
+    "frontend/src/lib/ai/tools/financial.ts",
+    "Composed by createProjectTools and filtered by the global registry.",
+  ],
+  [
+    "frontend/src/lib/ai/tools/forecast-tools.ts",
+    "Composed by createProjectTools and filtered by the global registry.",
+  ],
+  [
+    "frontend/src/lib/ai/tools/get-weather.ts",
+    "Standalone demo/weather helper; not currently exposed by Strategist tool assembly.",
+  ],
+  [
+    "frontend/src/lib/ai/tools/marketing.ts",
+    "Approved assistant factory; runtime exposure is filtered by the global registry.",
+  ],
+  [
+    "frontend/src/lib/ai/tools/operational.ts",
+    "Composed by createProjectTools and filtered by the global registry.",
+  ],
+  [
+    "frontend/src/lib/ai/tools/outlook-operations.ts",
+    "Composed by createProjectTools and then excluded from Strategist direct Microsoft operator access.",
+  ],
+  [
+    "frontend/src/lib/ai/tools/progress-report-tools.ts",
+    "Approved assistant factory; runtime exposure is filtered by the global registry.",
+  ],
+  [
+    "frontend/src/lib/ai/tools/project-tools.ts",
+    "Approved aggregate assistant factory; runtime exposure is filtered by the global registry.",
+  ],
+  [
+    "frontend/src/lib/ai/tools/request-suggestions.ts",
+    "Suggestion helper; not currently exposed by Strategist tool assembly.",
+  ],
+  [
+    "frontend/src/lib/ai/tools/schedule-tools.ts",
+    "Composed by createProjectTools and filtered by the global registry.",
+  ],
+  [
+    "frontend/src/lib/ai/tools/structured-output.ts",
+    "Approved assistant factory; runtime exposure is filtered by the global registry.",
+  ],
+  [
+    "frontend/src/lib/ai/tools/structured-queries.ts",
+    "Structured query helper; not currently exposed by Strategist tool assembly.",
+  ],
+  [
+    "frontend/src/lib/ai/tools/update-document.ts",
+    "Document artifact UI helper; not currently exposed by Strategist tool assembly.",
+  ],
+  [
+    "frontend/src/lib/ai/tools/web-search.ts",
+    "Approved assistant factory; runtime exposure is filtered by the global registry.",
+  ],
+  [
+    "frontend/src/lib/ai/tools/workspace-tools.ts",
+    "Approved assistant factory; runtime exposure is filtered by the global registry.",
+  ],
+]);
+
 for (const file of requiredFiles) {
   const absolutePath = path.join(repoRoot, file);
   if (!fs.existsSync(absolutePath)) {
@@ -102,6 +197,33 @@ if (fs.existsSync(orchestratorPath)) {
         `frontend/src/lib/ai/orchestrator.ts: ${factoryName} must not be spread directly; use filterRegisteredToolSet`,
       );
     }
+  }
+}
+
+function listSourceFiles(dir) {
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const absolutePath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (entry.name === "__tests__") return [];
+      return listSourceFiles(absolutePath);
+    }
+    if (!/\.(ts|tsx)$/.test(entry.name)) return [];
+    return [absolutePath];
+  });
+}
+
+for (const absolutePath of [
+  ...listSourceFiles(path.join(repoRoot, "frontend/src/lib/ai")),
+  ...listSourceFiles(path.join(repoRoot, "frontend/src/app")),
+]) {
+  const relativePath = path.relative(repoRoot, absolutePath);
+  const source = fs.readFileSync(absolutePath, "utf8");
+  if (!/\btool\s*\(\s*\{/.test(source)) continue;
+  if (!approvedDirectToolDefinitionFiles.has(relativePath)) {
+    failures.push(
+      `${relativePath}: direct tool({ ... }) definitions must be registered or added to the explicit non-assistant allowlist`,
+    );
   }
 }
 

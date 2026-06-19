@@ -2,6 +2,17 @@ jest.mock("server-only", () => ({}));
 jest.mock("@/lib/ai/providers", () => ({
   getLanguageModel: jest.fn(),
 }));
+jest.mock("@/lib/ai/tool-registry", () => ({
+  AI_ASSISTANT_CHAT_WORKFLOW_ID: "ai_assistant_chat",
+  filterRegisteredToolSet: jest.fn(
+    ({ tools }: { tools: Record<string, unknown> }) => tools,
+  ),
+  toolVisibilityForFactory: jest.fn(() => ({
+    visibleToolNames: [],
+    hiddenTools: [],
+  })),
+  toolDefinitionsForWorkflow: jest.fn(() => []),
+}));
 jest.mock("@/lib/ai/tools/project-tools", () => ({
   createProjectTools: jest.fn(() => ({ getProjectDetails: { description: "mock" } })),
 }));
