@@ -51,6 +51,11 @@ import { scoreResponseQuality } from "@/lib/ai/score-response-quality";
 import type { TaskSummaryWidgetPayload } from "@/lib/ai/assistant-widgets";
 import { loadAssistantSourceHealthContext } from "@/lib/ai/source-health";
 import {
+  ContextCompactionError,
+  maybeCompactModelMessages,
+  type ContextCompactionMetadata,
+} from "@/lib/ai/stream/compaction";
+import {
   buildDeepAgentExecutiveEvidenceWidget,
   buildDeepAgentMemoryCandidateWidget,
   buildDeepAgentResearchEvidenceWidget,
@@ -107,6 +112,14 @@ const AI_EVAL_DISABLE_BACKEND_DEEP_AGENTS =
   process.env.AI_EVAL_DISABLE_BACKEND_DEEP_AGENTS === "true";
 const AI_EVAL_DOCUMENT_INTELLIGENCE_RESPONSE =
   process.env.AI_EVAL_DOCUMENT_INTELLIGENCE_RESPONSE === "true";
+const AI_ASSISTANT_CONTEXT_COMPACTION_ENABLED =
+  process.env.AI_ASSISTANT_CONTEXT_COMPACTION_ENABLED === "true";
+const AI_ASSISTANT_CONTEXT_COMPACTION_THRESHOLD_TOKENS = Number(
+  process.env.AI_ASSISTANT_CONTEXT_COMPACTION_THRESHOLD_TOKENS ?? "",
+);
+const AI_ASSISTANT_CONTEXT_COMPACTION_HARD_LIMIT_TOKENS = Number(
+  process.env.AI_ASSISTANT_CONTEXT_COMPACTION_HARD_LIMIT_TOKENS ?? "",
+);
 
 const PROJECT_DEEP_AGENT_SKILL_CATEGORIES = [
   "drawing",
@@ -1713,6 +1726,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
     toolCallNames: string[];
     stepCount: number;
   } | null = null;
+  let contextCompactionMetadata: ContextCompactionMetadata | null = null;
   const bridgeToolTrace: Array<Record<string, unknown>> = [];
   const backendDeepAgentContextBlocks: string[] = [];
   const liveToolTrace: Array<Record<string, unknown>> = [];
@@ -3455,7 +3469,78 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         });
       }
 
-      const modelMessages = await convertToModelMessages(args.messages);
+      let modelMessages = await convertToModelMessages(args.messages);
+      try {
+        const compaction = await maybeCompactModelMessages(modelMessages, {
+          enabled: AI_ASSISTANT_CONTEXT_COMPACTION_ENABLED,
+          systemPrompt,
+          thresholdTokens: Number.isFinite(
+            AI_ASSISTANT_CONTEXT_COMPACTION_THRESHOLD_TOKENS,
+          )
+            ? AI_ASSISTANT_CONTEXT_COMPACTION_THRESHOLD_TOKENS
+            : undefined,
+          hardLimitTokens: Number.isFinite(
+            AI_ASSISTANT_CONTEXT_COMPACTION_HARD_LIMIT_TOKENS,
+          )
+            ? AI_ASSISTANT_CONTEXT_COMPACTION_HARD_LIMIT_TOKENS
+            : undefined,
+        });
+        modelMessages = compaction.messages;
+        contextCompactionMetadata = compaction.metadata;
+        if (process.env.NODE_ENV !== "production") {
+          console.log("[handler-v2] context compaction", {
+            status: compaction.metadata.status,
+            original_message_count: args.messages.length,
+            model_message_count: modelMessages.length,
+            token_estimate_before: compaction.metadata.tokenEstimateBefore,
+            token_estimate_after: compaction.metadata.tokenEstimateAfter,
+          });
+        }
+      } catch (error) {
+        if (error instanceof ContextCompactionError) {
+          contextCompactionMetadata = {
+            enabled: AI_ASSISTANT_CONTEXT_COMPACTION_ENABLED,
+            status: "failed_uncompacted",
+            tokenEstimateBefore: 0,
+            tokenEstimateAfter: 0,
+            thresholdTokens: Number.isFinite(
+              AI_ASSISTANT_CONTEXT_COMPACTION_THRESHOLD_TOKENS,
+            )
+              ? AI_ASSISTANT_CONTEXT_COMPACTION_THRESHOLD_TOKENS
+              : 0,
+            hardLimitTokens: Number.isFinite(
+              AI_ASSISTANT_CONTEXT_COMPACTION_HARD_LIMIT_TOKENS,
+            )
+              ? AI_ASSISTANT_CONTEXT_COMPACTION_HARD_LIMIT_TOKENS
+              : 0,
+            headMessagesKept: 0,
+            tailMessagesKept: 0,
+            middleMessagesSummarized: 0,
+            previousSummaryRefreshed: false,
+            bulkyToolResultsPruned: 0,
+            binaryReferencesReplaced: 0,
+            droppedMessages: 0,
+            failureReason: error.message,
+          };
+          writer.write({
+            type: "data-status",
+            id: "context-compaction-failed",
+            data: {
+              stage: "context_compaction",
+              message: error.message,
+              status: "error",
+              timestamp: new Date().toISOString(),
+            },
+          } as never);
+          writeTextResponse(
+            writer,
+            "context-compaction-failed",
+            "I could not safely compact this long chat, and the conversation is over the hard context limit. Start a fresh chat or ask me to continue from a shorter summary of the current thread.",
+          );
+          return;
+        }
+        throw error;
+      }
       const lastModelUserMessage = modelMessages.findLast(
         (m) => m.role === "user",
       );
@@ -3672,6 +3757,10 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         },
         step_count: finishMetadata?.stepCount ?? null,
       };
+
+      if (contextCompactionMetadata) {
+        metadata.context_compaction = contextCompactionMetadata;
+      }
 
       if (memoryUsage) {
         metadata.memory_usage = memoryUsage;
