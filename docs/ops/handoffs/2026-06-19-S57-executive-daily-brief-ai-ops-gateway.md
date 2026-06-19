@@ -37,6 +37,10 @@
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/types/database.types.ts`
    - `/Users/meganharrison/Documents/alleato-pm/docs/architecture/AI-RAG-ARCHITECTURE.md`
    - `/Users/meganharrison/Documents/alleato-pm/docs/architecture/tables.yaml`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/source-adapters.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/executive-daily-brief-workflow.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/tool-registry.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/__tests__/workflow-pack.test.ts`
 7) Commands run and outcome (pass/fail counts):
    - Pass: read pasted ChatGPT recommendation from Codex attachment.
    - Pass: read `docs/codebase-map/hermes-vs-openclaw-comparison.md`.
@@ -86,6 +90,14 @@
    - Fail unrelated: `cd frontend && npx tsc --noEmit --pretty false` in cheaper sub-agent failed with Node heap OOM before diagnostics.
    - Fail unrelated: `cd frontend && NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false` now has no current-slice diagnostics, but still fails on unrelated repo debt in `src/app/(admin)/admin/page.tsx`, `src/app/(main)/[projectId]/intelligence/page.tsx`, `src/features/ai-agents/ai-agent-dag.tsx`, `src/features/kanban/components/board-column.tsx`, `src/lib/executive/brandon-daily-update.ts`, and `src/lib/progress-reports/ai-generate.ts`.
    - Fail unrelated: `npm run db:inventory` fails on pre-existing missing metadata for many existing MAIN/RAG tables. The three new tables added in this slice are documented in `docs/architecture/tables.yaml` and were not listed as missing.
+   - Pass: created `source-adapters.ts`, `executive-daily-brief-workflow.ts`, and `tool-registry.ts` so the workflow pack, source adapter contract, and tool policy are centralized.
+   - Pass: `startDailyBriefRun()` now stores workflow pack metadata, runtime budget, source policy, visible tool names, hidden tool names, and tool policy on every run.
+   - Pass: scheduled runner imports the shared Executive Daily Brief workflow id/version instead of duplicating them.
+   - Fail then fixed: live disabled-send SQL readback showed `send-teams-daily-brief` was still visible when delivery was disabled; fixed by adding `deliveryEnabled: false` to the disabled route target and making the policy gate honor it.
+   - Pass: `cd frontend && npx eslint src/lib/ai-ops/source-adapters.ts src/lib/ai-ops/executive-daily-brief-workflow.ts src/lib/ai-ops/tool-registry.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts src/lib/ai-ops/__tests__/contracts.test.ts && npx eslint --no-ignore scripts/run-executive-daily-brief.ts`.
+   - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts --runInBand` passed 3 suites / 22 tests.
+   - Pass: `npm run rag:verify:executive-daily-brief-gateway`.
+   - Pass: disabled tool-policy readback for run `ba4aa0c7-7c6d-41a0-9dd6-20ffe2a20978` returned Teams payload builder visible, Teams send tool hidden, `allowDelivery=false`, workflow version `2026-06-19.ai-ops-gateway-v1`, and minimum evidence refs `1`.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
@@ -114,13 +126,18 @@
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-ai-runs/snapshot-playwright-auth.txt`
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-ai-runs/page-text.txt`
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-ai-runs/ai-work-runs-playwright-auth.png`
+   - `frontend/src/lib/ai-ops/source-adapters.ts`
+   - `frontend/src/lib/ai-ops/executive-daily-brief-workflow.ts`
+   - `frontend/src/lib/ai-ops/tool-registry.ts`
+   - `frontend/src/lib/ai-ops/__tests__/workflow-pack.test.ts`
 9) Top 3 findings (frontend-visible issues first):
    - No frontend-visible changes yet.
    - Inventory confirmed multiple bypasses: preview routes, send routes, admin test send, actions, AI tools, and legacy delivery paths can generate or deliver without one canonical `ai_work_runs` record.
    - Shared AI Ops contracts and a shared ledger writer now exist and are tested; scheduled runner, preview/send routes, widget fresh generation, executive page regeneration, admin test-send, and AI tool generation now use the shared writer or an existing-run helper.
    - New generated Daily Brief runs now set `ai_work_runs.daily_recap_id` when a `daily_recaps` draft id is available, and `/ai-work-runs` shows that generated artifact reference.
    - First-class AI Ops run steps, artifacts, and delivery attempts now exist in the database, are exposed by `/api/admin/ai-work-runs`, and are visible in `/ai-work-runs`.
-10) Recommended next action (one line): Build the Executive Daily Brief workflow pack plus source adapters/tool policy, then prove a real generated preview/dry-run packet with artifact, source refs, and source health.
+   - The Executive Daily Brief workflow pack, source adapter contract, and tool registry/policy are centralized and used by run construction.
+10) Recommended next action (one line): Execute a real generated no-send preview/dry-run packet through the gateway, then inspect artifact/source refs/source health in `/ai-work-runs`.
 11) Handoff file path: `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
 12) Migration ledger evidence: `npm run db:migrations:verify-applied -- supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql` passed for version `20260619183000`.
 <!-- markdownlint-enable MD029 MD034 -->
@@ -134,6 +151,7 @@
   - `d7e0ea7f-b634-4423-9e5c-ea0630f63bd7` recorded preview/send route ledger wiring and disabled-send smoke evidence.
   - `bb5df727-1331-45da-8eb4-60030c5cad8f` recorded admin test-send and AI tool ledger wrapping.
   - `14c489d3-a9d8-47bb-b98a-5191d64566d8` recorded first-class run steps/artifacts/delivery attempts, migration/type evidence, UI proof, and unrelated verification blockers.
+  - `d2280aa3-e2cc-4282-aec4-84839d6840aa` recorded workflow pack, source adapter contract, tool policy, disabled delivery tool hiding, and remaining proof gaps.
 - Completion/blocker comment: None yet.
 
 ## Current Status
@@ -143,19 +161,19 @@ source of truth. Current-path inventory, ledger audit, shared AI Ops contracts,
 the shared ledger writer, scheduled-runner migration, preview/send route ledger
 wiring, app fresh-generation bypass closure, a route/action raw-generator
 guardrail, existing `daily_recaps` artifact linkage through
-`ai_work_runs.daily_recap_id`, and first-class run steps/artifacts/delivery
-attempts are implemented with focused tests/lint, migration ledger verification,
-SQL readback, and authenticated `/ai-work-runs` browser evidence. The workflow is
-not complete until source adapter normalization, workflow pack/tool policy,
-claim-level source-ref enforcement, real generated preview/dry-run proof, email
-delivery disposition, and end-to-end accuracy checklists are complete.
+`ai_work_runs.daily_recap_id`, first-class run steps/artifacts/delivery attempts,
+and the workflow pack/source-adapter/tool-policy layer are implemented with
+focused tests/lint, migration ledger verification, SQL readback, and
+authenticated `/ai-work-runs` browser evidence. The workflow is not complete
+until live source adapter execution, claim-level source-ref enforcement, real
+generated preview/dry-run proof, email delivery disposition, and end-to-end
+accuracy checklists are complete.
 
 ## Exact Next Step
 
-Build the Executive Daily Brief workflow pack plus source adapter/tool policy
-layer, then execute a real no-send generated preview/dry-run packet so
-`/ai-work-runs` shows a generated artifact, source health, evidence refs,
-delivery attempt, and exact run state from the same canonical ledger.
+Execute a real no-send generated preview/dry-run packet so `/ai-work-runs` shows
+a generated artifact, source health, evidence refs, delivery attempt, and exact
+run state from the same canonical ledger.
 
 ## Known Pitfalls
 

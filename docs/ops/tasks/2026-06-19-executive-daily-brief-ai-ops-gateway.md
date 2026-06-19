@@ -213,7 +213,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 
 ## Source Adapter Checklist
 
-- [ ] Source adapter interface created for normalized fetch and health output.
+- [x] Source adapter interface created for normalized fetch and health output.
 - [ ] Fireflies/meeting adapter implemented or wrapped.
 - [ ] Outlook/email adapter implemented or wrapped.
 - [ ] Teams message adapter implemented or wrapped.
@@ -221,41 +221,41 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [ ] Acumatica adapter implemented or wrapped.
 - [ ] Procore/project data adapter implemented or wrapped if used by this brief.
 - [ ] Project Intelligence packet adapter implemented or wrapped.
-- [ ] Each adapter returns typed source records and typed health state.
-- [ ] Each adapter reports loaded, stale, missing, degraded, failed, and skipped.
+- [x] Each adapter returns typed source records and typed health state.
+- [x] Each adapter reports loaded, stale, missing, degraded, failed, and skipped.
 - [ ] Adapter failures fail loudly into the run ledger.
 - [ ] No route-level source query remains as a bypass for this workflow.
 
 ## Tool Registry And Policy Checklist
 
-- [ ] Central tool registry module created or selected.
-- [ ] Executive Daily Brief tools registered once.
-- [ ] Source adapter tools registered once.
-- [ ] Delivery adapter tools registered once.
-- [ ] Tool visibility filtered before model calls.
-- [ ] Policy filters by workflow id.
+- [x] Central tool registry module created or selected.
+- [x] Executive Daily Brief tools registered once.
+- [x] Source adapter tools registered once.
+- [x] Delivery adapter tools registered once.
+- [x] Tool visibility filtered before model calls.
+- [x] Policy filters by workflow id.
 - [ ] Policy filters by actor/role.
 - [ ] Policy filters by project/source access.
-- [ ] Policy filters by channel.
-- [ ] Policy filters by delivery permission.
+- [x] Policy filters by channel.
+- [x] Policy filters by delivery permission.
 - [ ] Tool calls record success/failure and source evidence in the run ledger.
-- [ ] Tests prove forbidden tools are hidden from the workflow.
-- [ ] Tests prove disabled delivery tools cannot send.
+- [x] Tests prove forbidden tools are hidden from the workflow.
+- [x] Tests prove disabled delivery tools cannot send.
 
 ## Workflow Pack Checklist
 
-- [ ] Executive Daily Brief workflow pack created with explicit version.
-- [ ] Workflow pack declares allowed tools.
-- [ ] Workflow pack declares required source families.
-- [ ] Workflow pack declares freshness thresholds.
-- [ ] Workflow pack declares minimum evidence requirements per claim.
-- [ ] Workflow pack declares prompt contract.
-- [ ] Workflow pack declares packet schema.
-- [ ] Workflow pack declares delivery rules.
-- [ ] Workflow pack declares degraded-output behavior.
-- [ ] Workflow pack declares hard-fail conditions.
-- [ ] Workflow pack declares runtime budget and timeout behavior.
-- [ ] Workflow pack is used by schedule, preview, dry-run, and send paths.
+- [x] Executive Daily Brief workflow pack created with explicit version.
+- [x] Workflow pack declares allowed tools.
+- [x] Workflow pack declares required source families.
+- [x] Workflow pack declares freshness thresholds.
+- [x] Workflow pack declares minimum evidence requirements per claim.
+- [x] Workflow pack declares prompt contract.
+- [x] Workflow pack declares packet schema.
+- [x] Workflow pack declares delivery rules.
+- [x] Workflow pack declares degraded-output behavior.
+- [x] Workflow pack declares hard-fail conditions.
+- [x] Workflow pack declares runtime budget and timeout behavior.
+- [x] Workflow pack is used by schedule, preview, dry-run, and send paths.
 - [ ] Existing prompt and generation logic migrated into the pack or explicitly
       deprecated.
 
@@ -324,9 +324,9 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 ## Regression Guardrails
 
 - [x] Unit tests cover contract validation.
-- [ ] Unit tests cover source adapter health states.
-- [ ] Unit tests cover tool policy filtering.
-- [ ] Unit tests cover workflow pack validation.
+- [x] Unit tests cover source adapter health states.
+- [x] Unit tests cover tool policy filtering.
+- [x] Unit tests cover workflow pack validation.
 - [ ] Unit tests cover packet source-ref requirements.
 - [ ] Integration tests cover preview generation writing `ai_work_runs`.
 - [ ] Integration tests cover scheduled generation writing `ai_work_runs`.
@@ -343,7 +343,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [x] Static/type/lint check run, or explicitly delegated to a cheaper
       sub-agent.
 - [x] Targeted contract tests run.
-- [ ] Targeted workflow tests run.
+- [x] Targeted workflow tests run.
 - [x] Targeted ledger tests run.
 - [ ] Targeted delivery adapter tests run.
 - [x] Supabase migration ledger verified if migrations changed.
@@ -399,9 +399,12 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 | Supabase type gate    | `bash -lc 'set -a; source .env; set +a; tmp=$(mktemp); SUPABASE_ACCESS_TOKEN="$SUPABASE_ACCESS_TOKEN" npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema public > "$tmp" && test -s "$tmp" && mv "$tmp" frontend/src/types/database.types.ts'` | Passed | Generated types now include the new AI work-run step/artifact/delivery tables. |
 | Run artifact lint     | `cd frontend && npx eslint src/lib/ai-ops/contracts.ts src/lib/ai-ops/ledger.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/app/api/executive/daily-brief/preview-teams/route.ts src/app/api/executive/daily-brief/send-teams/route.ts src/app/api/admin/owner-briefing/send-test/route.ts src/app/api/admin/ai-work-runs/route.ts 'src/app/(admin)/ai-work-runs/ai-work-runs-client.tsx'` | Passed | Ledger writers, Daily Brief routes, admin API, and admin UI lint cleanly after first-class artifacts/delivery attempts. |
 | Run artifact tests    | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand`                                  | Passed  | 2 suites, 17 tests passed. Tests cover step, artifact, delivery-attempt mapping and pre-write validation. |
+| Workflow pack lint    | `cd frontend && npx eslint src/lib/ai-ops/source-adapters.ts src/lib/ai-ops/executive-daily-brief-workflow.ts src/lib/ai-ops/tool-registry.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts src/lib/ai-ops/__tests__/contracts.test.ts && npx eslint --no-ignore scripts/run-executive-daily-brief.ts` | Passed | Source adapters, workflow pack, tool registry, run helper, workflow tests, and scheduled runner lint cleanly. |
+| Workflow pack tests   | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts --runInBand` | Passed | 3 suites, 22 tests passed. Tests prove source adapter health states, workflow pack validation, policy channel filtering, forbidden tool hiding, and disabled delivery send-tool hiding. |
 | Runner no-write smoke | `cd frontend && npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:00:00.000Z`                                                                                              | Passed  | Kill switch off; script loaded and exited with `executive_daily_brief_disabled`, no send/write.    |
 | Disabled send smoke   | `curl -sS -X POST http://localhost:3001/api/executive/daily-brief/send-teams -H 'content-type: application/json' -d '{}'`                                                                 | Passed  | Kill switch off; route returned disabled state with run id `b88b3b30-b766-4aa2-8e02-84ef175e207b`. |
 | Disabled run SQL readback | `select r.id, r.status, r.delivery_status, a.status, a.failure_code, s.step_type, s.status ... where r.id = 'b88b3b30-b766-4aa2-8e02-84ef175e207b'` | Passed | Readback returned `skipped`, `disabled`, delivery attempt `disabled`, failure code `EXECUTIVE_DAILY_BRIEF_DISABLED`, and delivery step `blocked`. |
+| Disabled tool-policy readback | `select r.id, r.status, r.delivery_status, r.tool_scope->'visibleToolNames' ? 'build-teams-daily-brief-payload', r.tool_scope->'hiddenToolNames' ? 'send-teams-daily-brief', r.tool_scope->>'allowDelivery', r.source_policy->>'workflowVersion', r.source_policy->>'minimumEvidenceRefsPerClaim' ... where r.id = 'ba4aa0c7-7c6d-41a0-9dd6-20ffe2a20978'` | Passed | Readback returned visible Teams payload builder `true`, hidden Teams send tool `true`, `allowDelivery=false`, workflow version `2026-06-19.ai-ops-gateway-v1`, and minimum evidence refs `1`. |
 | Admin UI/API readback | `agent-browser state load frontend/tests/.auth/user.json && agent-browser open http://localhost:3001/ai-work-runs ...`                                                                    | Passed  | Authenticated page stayed on `/ai-work-runs`; page text shows disabled run `b88b3b30-b766-4aa2-8e02-84ef175e207b`, Delivery Attempts, Run Steps, exact failure code/message, and retryability. Artifacts: `tests/agent-browser-runs/2026-06-19-executive-daily-brief-ai-runs/snapshot-playwright-auth.txt`, `page-text.txt`, `ai-work-runs-playwright-auth.png`. |
 | Static/type/lint      | `cd frontend && NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`                                                                                                  | Failed  | Current slice diagnostics were fixed. Remaining errors are unrelated repo debt in `src/app/(admin)/admin/page.tsx`, `src/app/(main)/[projectId]/intelligence/page.tsx`, `src/features/ai-agents/ai-agent-dag.tsx`, `src/features/kanban/components/board-column.tsx`, `src/lib/executive/brandon-daily-update.ts`, and `src/lib/progress-reports/ai-generate.ts`. A cheaper sub-agent also ran the default command and hit Node heap OOM before diagnostics. |
 | Targeted tests        | Pending                                                                                                                                                                                   | Pending | Gateway/runtime tests still required before implementation can be closed.                          |

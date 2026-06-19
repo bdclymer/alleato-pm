@@ -48,7 +48,7 @@ export const POST = withApiGuardrails(
         title: "Executive Daily Brief Teams delivery",
         userGoal: "Deliver the Executive Daily Brief to Teams.",
         normalizedGoal: "Record disabled Teams delivery state without sending.",
-        deliveryTarget: { channel: "teams" },
+        deliveryTarget: { channel: "teams", deliveryEnabled: false },
         payload: { enabled: false },
       });
       await recordDeliveryAttempt(runContext, {
@@ -63,7 +63,7 @@ export const POST = withApiGuardrails(
         status: "skipped",
         deliveryStatus: "disabled",
         resultSummary: "Executive Daily Brief Teams delivery is disabled.",
-        deliveryTarget: { channel: "teams" },
+        deliveryTarget: { channel: "teams", deliveryEnabled: false },
         sourceCounts: {},
         sourceHealth: sourceHealthForDeliveryResult({
           skipped: true,

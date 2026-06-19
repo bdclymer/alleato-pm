@@ -5,6 +5,10 @@ import * as dotenv from "dotenv";
 import { createAiOpsLedger } from "../src/lib/ai-ops/ledger";
 import { createServiceClient } from "../src/lib/supabase/service";
 import type { AiEvent, AiRun, EvidenceRef } from "../src/lib/ai-ops/contracts";
+import {
+  EXECUTIVE_DAILY_BRIEF_WORKFLOW_ID,
+  EXECUTIVE_DAILY_BRIEF_WORKFLOW_VERSION,
+} from "../src/lib/ai-ops/executive-daily-brief-workflow";
 import type { Database } from "../src/types/database.types";
 
 dotenv.config({ path: resolve(process.cwd(), "../.env") });
@@ -91,9 +95,9 @@ export type DeliveryProjection = {
   resultSummary: string;
 };
 
-const WORKFLOW_ID = "executive_daily_brief";
 const WORKFLOW_TITLE = "Executive Daily Brief";
-const WORKFLOW_VERSION = "2026-06-19.ai-ops-gateway-v1";
+const WORKFLOW_ID = EXECUTIVE_DAILY_BRIEF_WORKFLOW_ID;
+const WORKFLOW_VERSION = EXECUTIVE_DAILY_BRIEF_WORKFLOW_VERSION;
 
 function ledger() {
   return createAiOpsLedger(createServiceClient());

@@ -15,10 +15,13 @@ import type {
   OwnerBriefingDeliveryResult,
   OwnerBriefingSourceSummary,
 } from "@/lib/executive/owner-briefing-delivery";
-
-export const EXECUTIVE_DAILY_BRIEF_WORKFLOW_ID = "executive_daily_brief";
-export const EXECUTIVE_DAILY_BRIEF_WORKFLOW_VERSION =
-  "2026-06-19.ai-ops-gateway-v1";
+import {
+  EXECUTIVE_DAILY_BRIEF_WORKFLOW,
+  EXECUTIVE_DAILY_BRIEF_WORKFLOW_ID,
+  EXECUTIVE_DAILY_BRIEF_WORKFLOW_VERSION,
+  executiveDailyBriefSourcePolicyMetadata,
+} from "./executive-daily-brief-workflow";
+import { executiveDailyBriefToolScope } from "./tool-registry";
 
 export type DailyBriefRunContext = {
   eventId: string;
@@ -104,6 +107,15 @@ function idempotencyKey(input: StartDailyBriefRunInput, startedAt: string) {
     input.triggerType,
     startedAt,
   ].join(":");
+}
+
+function allowDeliveryForTarget(deliveryTarget: Record<string, unknown>) {
+  if (deliveryTarget.channel === "none") return false;
+  if (deliveryTarget.dryRun === true) return false;
+  if (deliveryTarget.deliveryEnabled === false) return false;
+  return (
+    deliveryTarget.channel === "teams" || deliveryTarget.channel === "email"
+  );
 }
 
 function sourceFamily(value: string): EvidenceRef["sourceFamily"] {
@@ -304,13 +316,24 @@ export async function startDailyBriefRun(
 ): Promise<DailyBriefRunContext> {
   const startedAt = nowIso();
   const ledger = createAiOpsLedger(createServiceClient());
+  const deliveryTarget = input.deliveryTarget ?? {};
+  const toolScope = executiveDailyBriefToolScope({
+    allowDelivery: allowDeliveryForTarget(deliveryTarget),
+    allowWrites: true,
+    allowedChannels:
+      deliveryTarget.channel === "email"
+        ? ["email"]
+        : deliveryTarget.channel === "teams"
+          ? ["teams"]
+          : ["teams", "email"],
+  });
   const event = await ledger.createEvent({
     eventSource: EXECUTIVE_DAILY_BRIEF_WORKFLOW_ID,
     eventType: input.eventType,
     status: "accepted",
     idempotencyKey: idempotencyKey(input, startedAt),
     actorDisplayName: input.actorDisplayName ?? null,
-    deliveryContext: input.deliveryTarget ?? {},
+    deliveryContext: deliveryTarget,
     permissionContext: { permissionMode: "service" },
     payload: input.payload ?? {},
     metadata: { ...(input.metadata ?? {}), startedAt },
@@ -328,20 +351,29 @@ export async function startDailyBriefRun(
     status: "running",
     priority: "high",
     permissionMode: "service",
-    modelPolicy: { route: "executive_daily_brief" },
-    runtimeBudget: {},
-    toolScope: {
-      sourceAdapters: ["daily_recaps", "project_intelligence"],
-      deliveryAdapters: ["teams"],
+    modelPolicy: {
+      route: "executive_daily_brief",
+      maxModelCalls: EXECUTIVE_DAILY_BRIEF_WORKFLOW.runtimeBudget.maxModelCalls,
     },
-    sourcePolicy: { requireSourceRefs: true },
+    runtimeBudget: EXECUTIVE_DAILY_BRIEF_WORKFLOW.runtimeBudget,
+    toolScope: {
+      visibleToolNames: toolScope.visibleToolNames,
+      hiddenToolNames: toolScope.hiddenToolNames,
+      allowDelivery: toolScope.policy.allowDelivery,
+      allowWrites: toolScope.policy.allowWrites,
+    },
+    sourcePolicy: executiveDailyBriefSourcePolicyMetadata(),
     sourceHealth: [],
     sourceCounts: {},
     artifacts: [],
-    deliveryTarget: input.deliveryTarget ?? {},
+    deliveryTarget,
     retryable: false,
     startedAt,
-    metadata: input.metadata ?? {},
+    metadata: {
+      ...(input.metadata ?? {}),
+      workflowPack: EXECUTIVE_DAILY_BRIEF_WORKFLOW,
+      toolPolicy: toolScope.policy,
+    },
   });
 
   return { eventId: event.id, runId: run.id, startedAt };
