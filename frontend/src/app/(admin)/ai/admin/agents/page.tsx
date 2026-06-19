@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { RefreshCw } from "lucide-react";
+import { GitBranch, LayoutList, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 
@@ -21,6 +21,7 @@ import {
   type AiAgent,
 } from "@/features/ai-agents/ai-agents-table-config";
 import { AiAgentDetailPanel } from "@/features/ai-agents/ai-agent-detail-panel";
+import { AiAgentDag } from "@/features/ai-agents/ai-agent-dag";
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
 
@@ -49,12 +50,15 @@ const EMPTY_FILTERS: Record<string, FilterValue> = {
   impact: undefined,
 };
 
+type ViewMode = "table" | "graph";
+
 export default function AiAgentsPage() {
   const pathname = usePathname()!;
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [selectedAgent, setSelectedAgent] = React.useState<AiAgent | null>(null);
+  const [viewMode, setViewMode] = React.useState<ViewMode>("table");
 
   const tableState = useUnifiedTableState({
     entityKey: "ai-agents-admin",
@@ -116,58 +120,98 @@ export default function AiAgentsPage() {
   const resolvedError =
     error instanceof Error ? error : error ? new Error(String(error)) : null;
 
+  const headerActions = (
+    <div className="flex items-center gap-1.5">
+      <Button
+        size="sm"
+        variant={viewMode === "table" ? "secondary" : "outline"}
+        onClick={() => setViewMode("table")}
+      >
+        <LayoutList className="h-4 w-4 mr-2" />
+        Table
+      </Button>
+      <Button
+        size="sm"
+        variant={viewMode === "graph" ? "secondary" : "outline"}
+        onClick={() => setViewMode("graph")}
+      >
+        <GitBranch className="h-4 w-4 mr-2" />
+        Graph
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={handleRefresh}
+        disabled={isFetching}
+      >
+        <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+      </Button>
+    </div>
+  );
+
   return (
     <>
-      <UnifiedTablePage
-        header={{
-          title: "AI Agent Registry",
-          description: `${agents.length} agents — pipeline, chat, and write tools`,
-          actions: (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleRefresh}
-              disabled={isFetching}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
-              Refresh
-            </Button>
-          ),
-        }}
-        toolbar={{
-          totalItems: agents.length,
-          filteredItems: filteredAgents.length,
-          searchValue: tableState.searchInput,
-          onSearchChange: tableState.setSearchInput,
-          searchPlaceholder: "Search agents...",
-          currentView: tableState.currentView,
-          onViewChange: tableState.setCurrentView,
-          filters: aiAgentFilters,
-          activeFilters,
-          onFilterChange: handleFilterChange,
-          onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
-        }}
-        data={{
-          items: filteredAgents,
-          isLoading,
-          isFetching,
-          error: resolvedError,
-        }}
-        table={{
-          columns,
-          getRowId: (a) => a.id,
-          onRowClick: (a) => setSelectedAgent(a),
-          activeRowId: selectedAgent?.id ?? null,
-          stickyHeader: true,
-        }}
-        emptyState={{
-          title: "No agents found",
-          description: "The AI agent registry is empty.",
-          filteredDescription: "No agents match your current filters.",
-          isFiltered: Boolean(tableState.debouncedSearch) || hasActiveFilters,
-        }}
-        layout={{ fullBleedTable: true }}
-      />
+      {viewMode === "graph" ? (
+        <div className="flex flex-col h-screen">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+            <div>
+              <span className="text-sm font-semibold text-foreground">AI Agent Registry</span>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {agents.length} agents — dependency graph
+              </p>
+            </div>
+            {headerActions}
+          </div>
+          <div className="flex-1 min-h-0">
+            <AiAgentDag
+              agents={filteredAgents}
+              onNodeClick={setSelectedAgent}
+              selectedAgentId={selectedAgent?.id ?? null}
+            />
+          </div>
+        </div>
+      ) : (
+        <UnifiedTablePage
+          header={{
+            title: "AI Agent Registry",
+            description: `${agents.length} agents — pipeline, chat, and write tools`,
+            actions: headerActions,
+          }}
+          toolbar={{
+            totalItems: agents.length,
+            filteredItems: filteredAgents.length,
+            searchValue: tableState.searchInput,
+            onSearchChange: tableState.setSearchInput,
+            searchPlaceholder: "Search agents...",
+            currentView: tableState.currentView,
+            onViewChange: tableState.setCurrentView,
+            filters: aiAgentFilters,
+            activeFilters,
+            onFilterChange: handleFilterChange,
+            onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
+          }}
+          data={{
+            items: filteredAgents,
+            isLoading,
+            isFetching,
+            error: resolvedError,
+          }}
+          table={{
+            columns,
+            getRowId: (a) => a.id,
+            onRowClick: (a) => setSelectedAgent(a),
+            activeRowId: selectedAgent?.id ?? null,
+            stickyHeader: true,
+          }}
+          emptyState={{
+            title: "No agents found",
+            description: "The AI agent registry is empty.",
+            filteredDescription: "No agents match your current filters.",
+            isFiltered: Boolean(tableState.debouncedSearch) || hasActiveFilters,
+          }}
+          layout={{ fullBleedTable: true }}
+        />
+      )}
 
       <AiAgentDetailPanel
         agent={selectedAgent}
