@@ -200,7 +200,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [x] Scheduled generation writes a run ledger row.
 - [x] Dry-run delivery writes a run ledger row and delivery attempt.
 - [ ] Real Teams delivery writes a run ledger row and delivery attempt.
-- [ ] Email delivery writes a run ledger row and delivery attempt, or the task is
+- [x] Email delivery writes a run ledger row and delivery attempt, or the task is
       explicitly blocked/deferred with owner and reason.
 - [x] Skipped schedules are recorded as skipped runs with reason.
 - [x] Disabled delivery is recorded as disabled, not silently successful.
@@ -280,11 +280,11 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 ## Delivery Checklist
 
 - [x] Teams delivery adapter accepts only a gateway-created delivery attempt.
-- [ ] Email delivery adapter accepts only a gateway-created delivery attempt, or
+- [x] Email delivery adapter accepts only a gateway-created delivery attempt, or
       email is explicitly deferred with owner and reason.
 - [x] Preview/dry-run produces the exact Teams payload without sending.
 - [ ] Real Teams send records provider response and recipient result.
-- [ ] Real email send records provider response and recipient result, or is
+- [x] Real email send records provider response and recipient result, or is
       deferred with owner and reason.
 - [x] Disabled delivery records disabled state and reason.
 - [x] Blocked delivery records blocked state and reason.
@@ -418,6 +418,8 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 | Source adapter browser proof | Playwright-authenticated `/ai-work-runs` capture | Passed | Page text shows run `0c3b8979-3a31-4aab-98d0-a975ab845e21`, `source health report`, source-fetch steps, and `SOURCE_ADAPTER_MISSING`. Artifacts: `tests/agent-browser-runs/2026-06-19-executive-daily-brief-source-adapters/page-text.txt`, `ai-work-runs-source-adapters.png`. |
 | Legacy Teams path lint | `cd frontend && npx eslint src/app/api/cron/executive-daily-brief/route.ts src/app/api/cron/executive-daily-brief/__tests__/route.test.ts src/lib/executive/executive-briefing-teams-delivery.ts src/lib/executive/__tests__/executive-briefing-teams-delivery.test.ts` | Passed | Cron route and deprecated legacy sender lint cleanly after routing scheduled Teams delivery through the canonical gateway. |
 | Legacy Teams path tests | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/executive/__tests__/executive-briefing-teams-delivery.test.ts src/app/api/cron/executive-daily-brief/__tests__/route.test.ts src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts --runInBand` | Passed | 3 suites, 12 tests passed. Tests prove the cron route proxies POST/GET to `/api/executive/daily-brief/send-teams`, the deprecated direct Teams sender throws, and canonical delivery route ledger tests still pass. |
+| Email delivery action lint | `cd frontend && npx eslint 'src/app/(main)/actions/executive-briefing-actions.ts' 'src/app/(main)/actions/__tests__/executive-briefing-actions.test.ts' src/lib/ai-ops/executive-daily-brief-ledger.ts` | Passed | Executive email action, action test, and email-payload artifact helper lint cleanly. |
+| Email delivery action tests | `cd frontend && npm run test:unit -- --runTestsByPath 'src/app/(main)/actions/__tests__/executive-briefing-actions.test.ts' src/lib/ai-ops/__tests__/ledger.test.ts src/lib/ai-ops/__tests__/contracts.test.ts --runInBand` | Passed | 3 suites, 19 tests passed. Tests prove successful email sends start an AI Ops email run, record packet evidence, persist an email payload artifact, record per-recipient provider message attempts, and complete the run; provider errors record failed retryable recipient attempts and a failed run. |
 | Runner no-write smoke | `cd frontend && npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:00:00.000Z`                                                                                              | Passed  | Kill switch off; script loaded and exited with `executive_daily_brief_disabled`, no send/write.    |
 | Disabled send smoke   | `curl -sS -X POST http://localhost:3001/api/executive/daily-brief/send-teams -H 'content-type: application/json' -d '{}'`                                                                 | Passed  | Kill switch off; route returned disabled state with run id `b88b3b30-b766-4aa2-8e02-84ef175e207b`. |
 | Disabled run SQL readback | `select r.id, r.status, r.delivery_status, a.status, a.failure_code, s.step_type, s.status ... where r.id = 'b88b3b30-b766-4aa2-8e02-84ef175e207b'` | Passed | Readback returned `skipped`, `disabled`, delivery attempt `disabled`, failure code `EXECUTIVE_DAILY_BRIEF_DISABLED`, and delivery step `blocked`. |

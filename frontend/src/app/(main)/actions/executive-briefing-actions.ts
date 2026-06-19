@@ -20,7 +20,17 @@ import {
   getExecutiveBriefingDashboard,
   setExecutiveFollowUpState,
 } from "@/lib/executive/executive-briefing-workflow";
-import { regenerateDailyBriefDraftWithLedger } from "@/lib/ai-ops/executive-daily-brief-ledger";
+import {
+  completeDailyBriefRun,
+  failDailyBriefRun,
+  recordDeliveryAttempt,
+  recordDraftEvidence,
+  recordEmailPayloadArtifact,
+  regenerateDailyBriefDraftWithLedger,
+  sourceHealthForDraft,
+  startDailyBriefRun,
+  type DailyBriefRunContext,
+} from "@/lib/ai-ops/executive-daily-brief-ledger";
 
 const EXECUTIVE_PATH = "/executive";
 const ADMIN_ACTIONS_PATH = "/actions";
@@ -753,34 +763,164 @@ export async function sendExecutiveBriefingEmailAction(formData: FormData) {
   const user = await getApiRouteUser();
   const senderLabel = user?.email?.trim() || "Alleato";
   const briefUrl = `${resolveAppBaseUrl()}/executive`;
+  let runContext: DailyBriefRunContext | null = null;
+  const runRecipientMetadata = recipients.map((recipient) => ({
+    address: recipient,
+  }));
+  let emailStatus: "sent" | "failed" = "sent";
+  let emailMessage = `Sent to ${recipients.join(", ")}`;
 
-  const result = await sendEmail({
-    template: "status-report",
-    to: recipients,
-    subject,
-    react: React.createElement(ExecutiveBriefingEmail, {
-      packet: dashboard.draft.packet,
-      briefUrl,
-      senderLabel,
-      introNote: introNote || null,
-    }),
-    entity: { type: "executive_briefing", id: draftId },
-    userId: user?.id ?? undefined,
-    idempotencyKey: `executive-briefing/${draftId}/${Date.now()}`,
-    metadata: {
-      source: "executive-manual-send",
-      recapDate: dashboard.draft.recapDate,
-      workflowStatus: dashboard.draft.workflowStatus,
-      recipientCount: recipients.length,
-      recipients,
-      introNote: introNote || null,
-    },
-  });
+  try {
+    runContext = await startDailyBriefRun({
+      eventType: "email_event",
+      triggerType: "manual_email_send",
+      surface: "executive-briefing-actions#send-email",
+      title: "Executive Daily Brief email delivery",
+      userGoal: "Deliver the Executive Daily Brief by email.",
+      normalizedGoal:
+        "Send the selected Executive Daily Brief email and record provider, recipient, payload, packet, and evidence ledger rows.",
+      actorDisplayName: senderLabel,
+      deliveryTarget: {
+        channel: "email",
+        recipientCount: recipients.length,
+      },
+      payload: {
+        draftId,
+        recapDate: dashboard.draft.recapDate,
+        subject,
+        recipientCount: recipients.length,
+      },
+      metadata: {
+        workflowStatus: dashboard.draft.workflowStatus,
+        recipients: runRecipientMetadata,
+      },
+    });
 
-  if (result.error) {
-    redirectWithEmailStatus("failed", result.error.message);
+    await recordDraftEvidence(runContext, dashboard.draft);
+    const payloadArtifact = await recordEmailPayloadArtifact(runContext, {
+      title: "Executive Daily Brief email payload",
+      contentType: "text/html",
+      metadata: {
+        draftId,
+        recapDate: dashboard.draft.recapDate,
+        workflowStatus: dashboard.draft.workflowStatus,
+        subject,
+        recipientCount: recipients.length,
+        recipients: runRecipientMetadata,
+        introNote: introNote || null,
+      },
+    });
+
+    const result = await sendEmail({
+      template: "status-report",
+      to: recipients,
+      subject,
+      react: React.createElement(ExecutiveBriefingEmail, {
+        packet: dashboard.draft.packet,
+        briefUrl,
+        senderLabel,
+        introNote: introNote || null,
+      }),
+      entity: { type: "executive_briefing", id: draftId },
+      userId: user?.id ?? undefined,
+      idempotencyKey: `executive-briefing/${draftId}/${runContext.runId}`,
+      metadata: {
+        source: "executive-manual-send",
+        aiWorkRunId: runContext.runId,
+        recapDate: dashboard.draft.recapDate,
+        workflowStatus: dashboard.draft.workflowStatus,
+        recipientCount: recipients.length,
+        recipients,
+        introNote: introNote || null,
+      },
+    });
+
+    if (result.error) {
+      for (const recipient of recipients) {
+        await recordDeliveryAttempt(runContext, {
+          artifactId: payloadArtifact.id,
+          channel: "email",
+          recipientAddress: recipient,
+          status: "failed",
+          failureCode: "EMAIL_PROVIDER_FAILED",
+          failureMessage: result.error.message,
+          retryable: true,
+          metadata: {
+            provider: "resend",
+            providerErrorName: result.error.name ?? null,
+          },
+        });
+      }
+      await completeDailyBriefRun(runContext, {
+        status: "failed_retryable",
+        dailyRecapId: dashboard.draft.id,
+        deliveryStatus: "failed",
+        resultSummary: `Executive Daily Brief email failed: ${result.error.message}`,
+        deliveryTarget: {
+          channel: "email",
+          recipientCount: recipients.length,
+          failedRecipientCount: recipients.length,
+        },
+        sourceCounts: {
+          recipientCount: recipients.length,
+          failedRecipientCount: recipients.length,
+        },
+        sourceHealth: sourceHealthForDraft(dashboard.draft),
+        metadata: {
+          provider: "resend",
+          providerErrorName: result.error.name ?? null,
+        },
+      });
+      emailStatus = "failed";
+      emailMessage = result.error.message;
+    } else {
+      for (const recipient of recipients) {
+        await recordDeliveryAttempt(runContext, {
+          artifactId: payloadArtifact.id,
+          channel: "email",
+          recipientAddress: recipient,
+          status: "sent",
+          providerMessageId: result.id,
+          retryable: false,
+          metadata: { provider: "resend" },
+        });
+      }
+
+      await completeDailyBriefRun(runContext, {
+        status: "succeeded",
+        dailyRecapId: dashboard.draft.id,
+        deliveryStatus: "sent",
+        resultSummary: `Sent Executive Daily Brief email to ${recipients.length} recipient(s).`,
+        deliveryTarget: {
+          channel: "email",
+          recipientCount: recipients.length,
+          sentCount: recipients.length,
+        },
+        sourceCounts: {
+          recipientCount: recipients.length,
+          sentCount: recipients.length,
+        },
+        sourceHealth: sourceHealthForDraft(dashboard.draft),
+        metadata: {
+          provider: "resend",
+          providerMessageId: result.id,
+        },
+      });
+    }
+  } catch (error) {
+    await failDailyBriefRun(
+      runContext,
+      error,
+      "EXECUTIVE_DAILY_BRIEF_EMAIL_SEND_FAILED",
+    );
+    redirectWithEmailStatus(
+      "failed",
+      error instanceof Error
+        ? error.message
+        : "Executive Daily Brief email failed.",
+    );
   }
 
   revalidatePath(EXECUTIVE_PATH);
-  redirectWithEmailStatus("sent", `Sent to ${recipients.join(", ")}`);
+  redirectWithEmailStatus(emailStatus, emailMessage);
 }

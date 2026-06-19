@@ -134,6 +134,9 @@
    - Pass: `sendApprovedExecutiveBriefingToTeams` now throws a loud deprecation error that names the canonical AI Ops gateway path; Teams card and text render helpers remain available for preview formatting.
    - Pass: `cd frontend && npx eslint src/app/api/cron/executive-daily-brief/route.ts src/app/api/cron/executive-daily-brief/__tests__/route.test.ts src/lib/executive/executive-briefing-teams-delivery.ts src/lib/executive/__tests__/executive-briefing-teams-delivery.test.ts`.
    - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/executive/__tests__/executive-briefing-teams-delivery.test.ts src/app/api/cron/executive-daily-brief/__tests__/route.test.ts src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts --runInBand` passed 3 suites / 12 tests.
+   - Pass: executive email action now starts an email AI Ops run, records draft evidence, stores an email payload artifact, sends through the existing Resend sender, records one delivery attempt per recipient with provider id or provider failure, and completes the run as succeeded or failed-retryable.
+   - Pass: `cd frontend && npx eslint 'src/app/(main)/actions/executive-briefing-actions.ts' 'src/app/(main)/actions/__tests__/executive-briefing-actions.test.ts' src/lib/ai-ops/executive-daily-brief-ledger.ts`.
+   - Pass: `cd frontend && npm run test:unit -- --runTestsByPath 'src/app/(main)/actions/__tests__/executive-briefing-actions.test.ts' src/lib/ai-ops/__tests__/ledger.test.ts src/lib/ai-ops/__tests__/contracts.test.ts --runInBand` passed 3 suites / 19 tests.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
@@ -173,6 +176,8 @@
    - `frontend/src/lib/ai-ops/__tests__/source-adapters.test.ts`
    - `frontend/src/app/api/cron/executive-daily-brief/route.ts`
    - `frontend/src/app/api/cron/executive-daily-brief/__tests__/route.test.ts`
+   - `frontend/src/app/(main)/actions/executive-briefing-actions.ts`
+   - `frontend/src/app/(main)/actions/__tests__/executive-briefing-actions.test.ts`
    - `frontend/src/lib/executive/executive-briefing-teams-delivery.ts`
    - `frontend/src/lib/executive/__tests__/executive-briefing-teams-delivery.test.ts`
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-source-adapters/page-text.txt`
@@ -192,7 +197,8 @@
    - Teams delivery route tests now prove disabled, dry-run, blocked, partial, and thrown-provider paths cannot bypass the AI Ops ledger helpers.
    - Source adapter wrappers now produce visible source-fetch run steps and a source-health report artifact; missing required adapters fail loudly as failed-retryable run steps without silently suppressing the generated packet.
    - The old cron Teams delivery path no longer sends directly; it delegates to the canonical gateway and the old direct sender fails loudly if imported.
-10) Recommended next action (one line): Close remaining email delivery disposition, real Teams delivery when safe/enabled, and non-Teams legacy retirement gaps.
+   - Manual email sends from the executive action now create canonical AI Ops runs, packet/artifact evidence, and per-recipient delivery attempts for both successful and provider-failed Resend outcomes.
+10) Recommended next action (one line): Close real Teams delivery when safe/enabled, source-ref UI drilldown, retryability/next-action UI completeness, and remaining non-Teams legacy retirement gaps.
 11) Handoff file path: `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
 12) Migration ledger evidence: `npm run db:migrations:verify-applied -- supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql` passed for version `20260619183000`.
 <!-- markdownlint-enable MD029 MD034 -->
@@ -213,6 +219,7 @@
   - `33c4dc4e-39c2-4445-af4f-b19be127b9b0` recorded Teams delivery route guardrail tests, commit `b47f730df`, and remaining gaps.
   - `005963be-595e-4036-9a81-d30ff619c76a` recorded source adapter run-step proof, live run `0c3b8979-3a31-4aab-98d0-a975ab845e21`, commit f16030b9f, and remaining gaps.
   - `d8a88aa5-7358-4603-8e3d-58e390dbcca1` recorded legacy Teams cron path retirement, focused lint/tests, and remaining gaps.
+  - `5d26abde-09b9-4e6e-a044-45ffa72c12b5` recorded email delivery action ledger wrapping, focused lint/tests, and remaining gaps.
 - Completion/blocker comment: None yet.
 
 ## Current Status
@@ -230,15 +237,18 @@ claim-level evidence-policy unit coverage, and scheduled-run skip/disabled
 delivery proof. Source adapter failures now land as visible source-fetch step
 failures with a source-health report artifact. The old cron Teams delivery path
 now delegates to the canonical send gateway, and the legacy direct sender fails
-loudly instead of claiming success outside the ledger. The workflow is not
-complete until email delivery disposition, real Teams delivery when safe/enabled,
-and remaining non-Teams legacy retirement gaps are complete.
+loudly instead of claiming success outside the ledger. Manual email sends from
+the executive action now create canonical AI Ops runs with draft evidence,
+email-payload artifacts, provider ids or provider failures, and per-recipient
+delivery attempts. The workflow is not complete until real Teams delivery when
+safe/enabled, UI drilldown/retryability gaps, and remaining non-Teams legacy
+retirement gaps are complete.
 
 ## Exact Next Step
 
-Close remaining email delivery disposition, real Teams delivery when
-safe/enabled, and non-Teams legacy retirement gaps without weakening the
-canonical ledger path.
+Close real Teams delivery when safe/enabled, source-ref UI drilldown,
+retryability/next-action UI completeness, and remaining non-Teams legacy
+retirement gaps without weakening the canonical ledger path.
 
 ## Known Pitfalls
 

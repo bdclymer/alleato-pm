@@ -75,7 +75,7 @@ type CompleteDailyBriefRunInput = {
   metadata?: Record<string, unknown>;
 };
 
-type RecordTeamsPayloadArtifactInput = {
+type RecordPayloadArtifactInput = {
   title: string;
   contentType: string;
   metadata?: Record<string, unknown>;
@@ -552,12 +552,27 @@ export async function recordDeliveryEvidence(
 
 export async function recordTeamsPayloadArtifact(
   context: DailyBriefRunContext,
-  input: RecordTeamsPayloadArtifactInput,
+  input: RecordPayloadArtifactInput,
 ): Promise<{ id: string }> {
   const ledger = createAiOpsLedger(createServiceClient());
   return ledger.createArtifact({
     runId: context.runId,
     kind: "teams_payload",
+    title: input.title,
+    contentType: input.contentType,
+    sourceRefs: [],
+    metadata: input.metadata ?? {},
+  });
+}
+
+export async function recordEmailPayloadArtifact(
+  context: DailyBriefRunContext,
+  input: RecordPayloadArtifactInput,
+): Promise<{ id: string }> {
+  const ledger = createAiOpsLedger(createServiceClient());
+  return ledger.createArtifact({
+    runId: context.runId,
+    kind: "email_payload",
     title: input.title,
     contentType: input.contentType,
     sourceRefs: [],
