@@ -222,7 +222,6 @@ export default async function ProjectHomePage({
     contractsResult,
     contractLineItemsResult,
     budgetResult,
-    changeEventsResult,
     scheduleResult,
     teamResult,
     teamDirectoryResult,
@@ -316,15 +315,6 @@ export default async function ProjectHomePage({
       .select("id, project_id, original_amount, cost_code_id, cost_code:cost_codes(division_id, division_title, title)")
       .eq("project_id", numericProjectId)
       .order("cost_code_id", { ascending: true }),
-
-    // Fetch change events
-    supabase
-      .from("change_events")
-      .select("*")
-      .eq("project_id", numericProjectId)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .limit(25),
 
     // Fetch schedule tasks
     supabase
@@ -494,7 +484,6 @@ export default async function ProjectHomePage({
     budget,
     commitmentTotal,
   });
-  const changeEvents = changeEventsResult.data || [];
   const schedule = scheduleResult.data || [];
   if (teamResult.error) {
     console.error(
@@ -521,10 +510,9 @@ export default async function ProjectHomePage({
   return (
     <PageShell
       variant="dashboard"
-      title="Home"
-      showHeader={false}
-      className="pb-0 px-4 sm:px-6 lg:px-8"
-      contentClassName="space-y-0"
+      title={project.name ?? "Untitled Project"}
+      eyebrow={project["job number"] ?? project.project_number ? `Job #${project["job number"] ?? project.project_number}` : undefined}
+      contentClassName="space-y-8"
     >
       <ProjectHomeClient
         project={project}
@@ -537,7 +525,6 @@ export default async function ProjectHomePage({
         contractLineItems={contractLineItems}
         budget={budget}
         budgetGrandTotals={budgetGrandTotals}
-        changeEvents={changeEvents}
         schedule={schedule}
         team={team}
         homeAlerts={homeAlerts}

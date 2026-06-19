@@ -22,7 +22,6 @@ import {
   FileText,
   Image,
   Presentation,
-  Search,
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -41,7 +40,6 @@ import {
 } from "@/components/ui/collapsible";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as TablePrimitives from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
 
 // Local aliases to satisfy the design-system/no-raw-table-primitives lint rule.
 // The dashboard widget tables on this page are intentionally lightweight read-only
@@ -90,7 +88,6 @@ interface ChangeOrder {
 type RFI = Database["public"]["Tables"]["rfis"]["Row"];
 type Contract = Database["public"]["Tables"]["prime_contracts"]["Row"];
 type ContractLineItem = Database["public"]["Tables"]["contract_line_items"]["Row"];
-type ChangeEvent = Database["public"]["Tables"]["change_events"]["Row"];
 type ProjectDocument = Pick<
   Database["public"]["Tables"]["project_documents"]["Row"],
   | "id"
@@ -206,7 +203,6 @@ interface ProjectCommandCenterProps {
   contractLineItems?: Array<
     Pick<ContractLineItem, "contract_id" | "total_cost" | "quantity" | "unit_cost" | "cost_code_id">
   >;
-  changeEvents?: ChangeEvent[];
   schedule?: ScheduleSummary[];
   team?: ProjectTeamMember[];
   submittals?: Submittal[];
@@ -707,12 +703,10 @@ function TabSection({
   tabs: TabConfig[];
   defaultTab?: string;
 }) {
-  const [search, setSearch] = React.useState("");
   const [activeTab, setActiveTab] = React.useState(defaultTab ?? tabs[0]?.id ?? "");
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    setSearch("");
   };
 
   const activeTabConfig = tabs.find((t) => t.id === activeTab);
@@ -730,8 +724,8 @@ function TabSection({
   }, [activeTabConfig]);
 
   return (
-    <div className="rounded-lg bg-card overflow-hidden">
-      <div className="flex items-center justify-between gap-2 px-3 py-2">
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="inline-block">
           <TabsList>
             {tabs.map((tab) => (
@@ -743,22 +737,13 @@ function TabSection({
             ))}
           </TabsList>
         </Tabs>
-        <div className="relative shrink-0">
-          <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search…"
-            className="h-7 w-40 pl-7 text-xs"
-          />
-        </div>
       </div>
       {activeTabConfig && (
-        <div className="pb-1">
+        <div>
           {activeTabConfig.isLoading ? (
-            <div className="px-4 py-5 text-sm text-muted-foreground">Loading {activeTabConfig.label.toLowerCase()}…</div>
+            <div className="py-5 text-sm text-muted-foreground">Loading {activeTabConfig.label.toLowerCase()}...</div>
           ) : activeTabConfig.error ? (
-            <div className="flex items-center justify-between gap-3 px-4 py-5 text-sm">
+            <div className="flex items-center justify-between gap-3 py-5 text-sm">
               <span className="text-destructive">{activeTabConfig.error}</span>
               {activeTabConfig.onRetry && (
                 <Button type="button" variant="outline" size="sm" onClick={activeTabConfig.onRetry}>
@@ -767,9 +752,9 @@ function TabSection({
               )}
             </div>
           ) : (
-            activeTabConfig.content(search)
+            activeTabConfig.content("")
           )}
-          <div className="px-4 py-2.5">
+          <div className="py-2.5">
             <Link
               href={activeTabConfig.viewAllHref}
               prefetch={false}
@@ -1218,7 +1203,6 @@ export function ProjectCommandCenter({
   pendingSsovReviews = [],
   team,
   budget,
-  changeEvents = [],
   schedule,
   submittals = [],
   dailyLogs = [],
@@ -1352,37 +1336,65 @@ export function ProjectCommandCenter({
       .slice(0, 10);
     if (filtered.length === 0) return <EmptyTabState label="open tasks" />;
     return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Task</TableHead>
-            <TableHead>Assignee</TableHead>
-            <TableHead>Due</TableHead>
-            <TableHead>Status</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
+      <>
+        <div className="divide-y divide-border/60 sm:hidden">
           {filtered.map((task) => {
             const overdue = task.due_date ? isPast(new Date(task.due_date)) : false;
             return (
-              <TableRow key={task.id}>
-                <TableCell className="max-w-xs">
-                  <Link href={`/${projectId}/tasks`} prefetch={false} className="truncate text-foreground hover:text-primary transition-colors">
-                    {task.description}
-                  </Link>
-                </TableCell>
-                <TableCell className="text-muted-foreground">{task.assignee_name || "—"}</TableCell>
-                <TableCell className={cn(overdue ? "text-destructive font-medium" : "text-muted-foreground")}>
-                  {task.due_date ? formatMonthDay(task.due_date) : "—"}
-                </TableCell>
-                <TableCell>
-                  <StatusBadge status={overdue ? "Overdue" : (task.priority || task.status || "Open")} />
-                </TableCell>
-              </TableRow>
+              <Link
+                key={task.id}
+                href={`/${projectId}/tasks`}
+                prefetch={false}
+                className="block py-3 transition-colors hover:text-primary"
+              >
+                <p className="line-clamp-2 text-sm font-medium leading-5 text-foreground">
+                  {task.description}
+                </p>
+                <div className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="truncate">{task.assignee_name || "Unassigned"}</span>
+                  <span aria-hidden="true">/</span>
+                  <span className={cn(overdue && "font-medium text-destructive")}>
+                    {task.due_date ? formatMonthDay(task.due_date) : "No due date"}
+                  </span>
+                </div>
+              </Link>
             );
           })}
-        </TableBody>
-      </Table>
+        </div>
+        <div className="hidden sm:block">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Task</TableHead>
+                <TableHead>Assignee</TableHead>
+                <TableHead>Due</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((task) => {
+                const overdue = task.due_date ? isPast(new Date(task.due_date)) : false;
+                return (
+                  <TableRow key={task.id}>
+                    <TableCell className="max-w-xs">
+                      <Link href={`/${projectId}/tasks`} prefetch={false} className="truncate text-foreground hover:text-primary transition-colors">
+                        {task.description}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{task.assignee_name || "—"}</TableCell>
+                    <TableCell className={cn(overdue ? "text-destructive font-medium" : "text-muted-foreground")}>
+                      {task.due_date ? formatMonthDay(task.due_date) : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge status={overdue ? "Overdue" : (task.priority || task.status || "Open")} />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      </>
     );
   };
 
@@ -1596,37 +1608,15 @@ export function ProjectCommandCenter({
     },
   ];
 
-  const jobNumber = project["job number"] ?? project.project_number;
-
   return (
     <>
-      <div className="min-h-full">
-        {/* ── Main content ─────────────────────────────── */}
-        <div className="min-w-0 py-6 space-y-7">
-
-          {/* Header */}
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              {jobNumber && (
-                <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                  Job #{jobNumber}
-                </p>
-              )}
-              <h1 className="text-2xl font-semibold leading-tight text-foreground">
-                {project.name ?? "Untitled Project"}
-              </h1>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <ReadinessIndicator
-                completedCount={setupCompleted}
-                totalCount={setupTotal}
-                onOpen={() => setIsSetupOpen(true)}
-              />
-            </div>
-          </div>
-
+      <div className="min-h-full space-y-8">
           {/* Alerts */}
           {alerts.length > 0 && <AlertsBand alerts={alerts} />}
+
+          <HomeCollapsibleSection title="Open Tasks" href={`/${projectId}/tasks`}>
+            {tasksContent("")}
+          </HomeCollapsibleSection>
 
           {/* Financials */}
           <FinancialOverview
@@ -1636,26 +1626,30 @@ export function ProjectCommandCenter({
             estimatedCostAtCompletion={ecac}
             projectedOverUnder={variance}
             budgetDivisions={budgetDivisions}
-            changeEventsCount={changeEvents?.length ?? 0}
-            openRfisCount={rfisOpen.length}
-            openTasksCount={openTasks.length}
           />
 
           {/* Project Details + Team 2-up */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="rounded-lg bg-muted/30 p-4">
+            <section className="space-y-3 border-t border-border/60 pt-4">
               <div className="mb-3 flex items-center justify-between">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                   Project Details
                 </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 px-2 text-xs"
-                  onClick={() => setIsEditProjectSidebarOpen(true)}
-                >
-                  Edit
-                </Button>
+                <div className="flex items-center gap-2">
+                  <ReadinessIndicator
+                    completedCount={setupCompleted}
+                    totalCount={setupTotal}
+                    onOpen={() => setIsSetupOpen(true)}
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs"
+                    onClick={() => setIsEditProjectSidebarOpen(true)}
+                  >
+                    Edit
+                  </Button>
+                </div>
               </div>
               {projAddress && (
                 <div className="mb-3 text-xs text-muted-foreground">
@@ -1677,9 +1671,9 @@ export function ProjectCommandCenter({
                   </div>
                 ))}
               </dl>
-            </div>
+            </section>
 
-            <div className="rounded-lg bg-muted/30 p-4">
+            <section className="space-y-3 border-t border-border/60 pt-4">
               <div className="mb-3 flex items-center justify-between">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                   Project Team
@@ -1694,7 +1688,7 @@ export function ProjectCommandCenter({
                 </Button>
               </div>
               <SidebarTeamSection projectId={projectId} team={team} />
-            </div>
+            </section>
           </div>
 
           <HomeCollapsibleSection title="Recent Meetings" href={`/${projectId}/meetings`}>
@@ -1716,7 +1710,6 @@ export function ProjectCommandCenter({
           <HomeCollapsibleSection title="Document Intelligence">
             <TabSection tabs={docIntelTabs} defaultTab="documents" />
           </HomeCollapsibleSection>
-        </div>
       </div>
 
       {isEditProjectSidebarOpen ? (

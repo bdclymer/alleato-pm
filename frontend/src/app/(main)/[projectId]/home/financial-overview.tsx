@@ -29,9 +29,6 @@ interface FinancialOverviewProps {
   estimatedCostAtCompletion: number;
   projectedOverUnder: number;
   budgetDivisions: BudgetDivisionSummary[];
-  changeEventsCount: number;
-  openRfisCount: number;
-  openTasksCount: number;
 }
 
 function fmtFull(value: number | null | undefined): string {
@@ -260,7 +257,7 @@ function BudgetVsCommittedPanel({
     <Link
       href={`/${projectId}/budget`}
       prefetch={false}
-      className="group flex flex-col justify-between gap-5 rounded-lg bg-card p-4 transition-colors hover:bg-muted/40"
+      className="group flex flex-col justify-between gap-5 rounded-md border border-border/60 p-4 transition-colors hover:bg-muted/30"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
@@ -350,57 +347,6 @@ function BudgetVsCommittedPanel({
   );
 }
 
-/* ── Panel 2: Open work queue ──────────────────────────────── */
-
-function WorkQueuePanel({
-  projectId,
-  changeEventsCount,
-  openRfisCount,
-  openTasksCount,
-}: {
-  projectId: string;
-  changeEventsCount: number;
-  openRfisCount: number;
-  openTasksCount: number;
-}) {
-  const total = changeEventsCount + openRfisCount + openTasksCount;
-  const rows = [
-    { label: "Change events", value: changeEventsCount, href: `/${projectId}/change-events` },
-    { label: "RFIs", value: openRfisCount, href: `/${projectId}/rfis` },
-    { label: "Tasks", value: openTasksCount, href: `/${projectId}/tasks` },
-  ];
-
-  return (
-    <div className="flex flex-col gap-4 rounded-lg bg-card p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <Eyebrow>Open work</Eyebrow>
-          <p className="mt-2 text-2xl font-semibold leading-none tabular-nums text-foreground">
-            {total}
-          </p>
-        </div>
-        <Link href={`/${projectId}/tasks`} prefetch={false} className="text-xs text-primary transition-colors hover:text-primary/80">
-          View tasks
-        </Link>
-      </div>
-
-      <div className="divide-y divide-border/50">
-        {rows.map((row) => (
-          <Link
-            key={row.label}
-            href={row.href}
-            prefetch={false}
-            className="flex items-center justify-between gap-3 py-2 text-sm transition-colors hover:text-primary"
-          >
-            <span className="text-muted-foreground">{row.label}</span>
-            <span className="font-medium tabular-nums text-foreground">{row.value}</span>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 /* ── Composite ─────────────────────────────────────────────── */
 
 export function FinancialOverview({
@@ -410,15 +356,11 @@ export function FinancialOverview({
   estimatedCostAtCompletion,
   projectedOverUnder,
   budgetDivisions,
-  changeEventsCount,
-  openRfisCount,
-  openTasksCount,
 }: FinancialOverviewProps) {
   // Nothing meaningful to show before a budget exists.
   if (
     revisedBudget <= 0 &&
-    committedCosts <= 0 &&
-    changeEventsCount + openRfisCount + openTasksCount === 0
+    committedCosts <= 0
   ) {
     return null;
   }
@@ -435,7 +377,7 @@ export function FinancialOverview({
           View budget
         </Link>
       </div>
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1.5fr_1fr]">
+      <div>
         <BudgetVsCommittedPanel
           projectId={projectId}
           revisedBudget={revisedBudget}
@@ -443,12 +385,6 @@ export function FinancialOverview({
           estimatedCostAtCompletion={estimatedCostAtCompletion}
           projectedOverUnder={projectedOverUnder}
           budgetDivisions={budgetDivisions}
-        />
-        <WorkQueuePanel
-          projectId={projectId}
-          changeEventsCount={changeEventsCount}
-          openRfisCount={openRfisCount}
-          openTasksCount={openTasksCount}
         />
       </div>
     </section>
