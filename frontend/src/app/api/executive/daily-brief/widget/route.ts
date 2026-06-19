@@ -8,8 +8,8 @@ import {
 import { buildBrandonDailyUpdateWidget } from "@/lib/executive/brandon-daily-update-widget";
 import {
   getExecutiveBriefingDashboard,
-  regenerateExecutiveBriefingDraft,
 } from "@/lib/executive/executive-briefing-workflow";
+import { regenerateDailyBriefDraftWithLedger } from "@/lib/ai-ops/executive-daily-brief-ledger";
 
 export const GET = withApiGuardrails(
   "/api/executive/daily-brief/widget#GET",
@@ -27,8 +27,18 @@ export const GET = withApiGuardrails(
     const fresh = searchParams.get("fresh") === "true";
     const sourceBackedOnly = searchParams.get("mode") === "source-backed";
     const packet = fresh
-      ? (await regenerateExecutiveBriefingDraft({ windowDays, sourceBackedOnly }))
-          .draft.packet
+      ? (
+          await regenerateDailyBriefDraftWithLedger({
+            windowDays,
+            sourceBackedOnly,
+            triggerType: "manual_widget_refresh",
+            surface: "/api/executive/daily-brief/widget#GET",
+            title: "Executive Daily Brief widget refresh",
+            userGoal: "Regenerate the Executive Daily Brief widget packet.",
+            normalizedGoal:
+              "Generate the Executive Daily Brief widget packet and record the canonical AI Ops run.",
+          })
+        ).draft.packet
       : (await getExecutiveBriefingDashboard({ windowDays })).draft.packet;
     const widget = buildBrandonDailyUpdateWidget(packet);
 

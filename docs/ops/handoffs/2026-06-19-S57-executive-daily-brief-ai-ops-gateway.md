@@ -4,12 +4,12 @@
 
 <!-- markdownlint-disable MD029 MD034 -->
 
-1. Session ID: S57
-2. Task ID: AAI-551
-3. Linear issue: AAI-551
-4. Linear URL: https://linear.app/megankharrison/issue/AAI-551/rebuild-executive-daily-brief-as-ai-operations-gateway-proof-workflow
-5. Current status: In Progress
-6. Files changed (absolute paths):
+1) Session ID: S57
+2) Task ID: AAI-551
+3) Linear issue: AAI-551
+4) Linear URL: https://linear.app/megankharrison/issue/AAI-551/rebuild-executive-daily-brief-as-ai-operations-gateway-proof-workflow
+5) Current status: In Progress
+6) Files changed (absolute paths):
    - `/Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `/Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
    - `/Users/meganharrison/Documents/alleato-pm/docs/ops/orchestration/session-board.md`
@@ -23,7 +23,15 @@
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/executive/daily-brief/send-teams/route.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/admin/owner-briefing/send-test/route.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai/tools/executive-brief-tools.ts`
-7. Commands run and outcome (pass/fail counts):
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/executive/daily-brief/route-helpers.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/executive/daily-brief/widget/route.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/executive/daily-brief/preview-teams/route.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/(main)/actions/executive-briefing-actions.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/executive/daily-brief/__tests__/route.test.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/executive/brandon-daily-update/__tests__/route.test.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/scripts/verify/verify_executive_daily_brief_gateway.mjs`
+   - `/Users/meganharrison/Documents/alleato-pm/package.json`
+7) Commands run and outcome (pass/fail counts):
    - Pass: read pasted ChatGPT recommendation from Codex attachment.
    - Pass: read `docs/codebase-map/hermes-vs-openclaw-comparison.md`.
    - Pass: read `docs/ops/tasks/TASK-TEMPLATE.md`.
@@ -46,7 +54,13 @@
    - Pass: wrapped `frontend/src/app/api/admin/owner-briefing/send-test/route.ts` with the shared ledger writer.
    - Pass: wrapped `frontend/src/lib/ai/tools/executive-brief-tools.ts` with the shared ledger writer.
    - Pass: `cd frontend && npx eslint src/app/api/admin/owner-briefing/send-test/route.ts src/lib/ai/tools/executive-brief-tools.ts src/lib/ai-ops/executive-daily-brief-ledger.ts`.
-8. Evidence artifacts (screenshot/video/report/log paths):
+   - Pass: routed fresh packet GETs, widget fresh generation, and the executive page regenerate server action through `regenerateDailyBriefDraftWithLedger`.
+   - Pass: moved the Teams preview route's fresh generation into `regenerateDailyBriefDraftForRun` so the route no longer imports the raw generator while preserving a single preview run.
+   - Pass: added `npm run rag:verify:executive-daily-brief-gateway`, which blocks raw `regenerateExecutiveBriefingDraft` usage under `frontend/src/app`.
+   - Pass: `npm run rag:verify:executive-daily-brief-gateway`.
+   - Pass: `cd frontend && npx eslint src/lib/ai-ops/executive-daily-brief-ledger.ts src/app/api/executive/daily-brief/preview-teams/route.ts src/app/api/executive/daily-brief/route-helpers.ts src/app/api/executive/daily-brief/widget/route.ts 'src/app/(main)/actions/executive-briefing-actions.ts' src/app/api/executive/daily-brief/__tests__/route.test.ts src/app/api/executive/brandon-daily-update/__tests__/route.test.ts`.
+   - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/app/api/executive/daily-brief/__tests__/route.test.ts src/app/api/executive/brandon-daily-update/__tests__/route.test.ts --runInBand` passed 4 suites / 16 tests.
+8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
    - `frontend/src/lib/ai-ops/ledger.ts`
@@ -58,13 +72,20 @@
    - `frontend/src/app/api/executive/daily-brief/send-teams/route.ts`
    - `frontend/src/app/api/admin/owner-briefing/send-test/route.ts`
    - `frontend/src/lib/ai/tools/executive-brief-tools.ts`
-9. Top 3 findings (frontend-visible issues first):
+   - `frontend/src/app/api/executive/daily-brief/route-helpers.ts`
+   - `frontend/src/app/api/executive/daily-brief/widget/route.ts`
+   - `frontend/src/app/api/executive/daily-brief/preview-teams/route.ts`
+   - `frontend/src/app/(main)/actions/executive-briefing-actions.ts`
+   - `frontend/src/app/api/executive/daily-brief/__tests__/route.test.ts`
+   - `frontend/src/app/api/executive/brandon-daily-update/__tests__/route.test.ts`
+   - `scripts/verify/verify_executive_daily_brief_gateway.mjs`
+9) Top 3 findings (frontend-visible issues first):
    - No frontend-visible changes yet.
    - Inventory confirmed multiple bypasses: preview routes, send routes, admin test send, actions, AI tools, and legacy delivery paths can generate or deliver without one canonical `ai_work_runs` record.
-   - Shared AI Ops contracts and a shared ledger writer now exist and are tested; scheduled runner, preview/send routes, admin test-send, and AI tool generation now use the shared writer.
-10. Recommended next action (one line): Run a final bypass sweep for legacy server actions, then verify a real generated preview in `/ai-work-runs` with authenticated browser evidence.
-11. Handoff file path: `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
-12. Migration ledger evidence: Not applicable yet; no migrations have been created or changed.
+   - Shared AI Ops contracts and a shared ledger writer now exist and are tested; scheduled runner, preview/send routes, widget fresh generation, executive page regeneration, admin test-send, and AI tool generation now use the shared writer or an existing-run helper.
+10) Recommended next action (one line): Standardize `daily_recaps` artifact linkage and delivery-attempt modeling, then verify a real generated preview in `/ai-work-runs` with authenticated browser evidence.
+11) Handoff file path: `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
+12) Migration ledger evidence: Not applicable yet; no migrations have been created or changed.
 <!-- markdownlint-enable MD029 MD034 -->
 
 ## Linear Updates
@@ -81,17 +102,18 @@
 
 In progress. Linear issue AAI-551 is created and the task markdown file is the
 source of truth. Current-path inventory, ledger audit, shared AI Ops contracts,
-the shared ledger writer, scheduled-runner migration, and preview/send route
-ledger wiring are implemented with focused tests/lint. The workflow is not
-complete until the final bypass sweep, source adapter normalization, delivery
-artifact modeling, UI inspection, and end-to-end proof checklists are complete.
+the shared ledger writer, scheduled-runner migration, preview/send route ledger
+wiring, app fresh-generation bypass closure, and a route/action raw-generator
+guardrail are implemented with focused tests/lint. The workflow is not complete
+until `daily_recaps` artifact linkage, source adapter normalization, delivery
+attempt/artifact modeling, UI inspection, and end-to-end proof checklists are
+complete.
 
 ## Exact Next Step
 
-Run a final bypass sweep for `regenerateExecutiveBriefingDraft`,
-`sendOwnerBriefingToTeams`, `daily_recaps`, and Executive Daily Brief server
-actions. Then verify an authenticated `/ai-work-runs` browser view for a real
-generated preview run.
+Standardize the `daily_recaps` to `ai_work_runs` artifact relationship and
+delivery-attempt model. Then verify an authenticated `/ai-work-runs` browser
+view for a real generated preview run.
 
 ## Known Pitfalls
 
@@ -117,6 +139,9 @@ cd frontend && npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:
 cd frontend && npx eslint src/lib/ai-ops/executive-daily-brief-ledger.ts src/app/api/executive/daily-brief/preview-teams/route.ts src/app/api/executive/daily-brief/send-teams/route.ts
 curl -sS -X POST http://localhost:3001/api/executive/daily-brief/send-teams -H 'content-type: application/json' -d '{}'
 cd frontend && npx eslint src/app/api/admin/owner-briefing/send-test/route.ts src/lib/ai/tools/executive-brief-tools.ts src/lib/ai-ops/executive-daily-brief-ledger.ts
+npm run rag:verify:executive-daily-brief-gateway
+cd frontend && npx eslint src/lib/ai-ops/executive-daily-brief-ledger.ts src/app/api/executive/daily-brief/preview-teams/route.ts src/app/api/executive/daily-brief/route-helpers.ts src/app/api/executive/daily-brief/widget/route.ts 'src/app/(main)/actions/executive-briefing-actions.ts' src/app/api/executive/daily-brief/__tests__/route.test.ts src/app/api/executive/brandon-daily-update/__tests__/route.test.ts
+cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/app/api/executive/daily-brief/__tests__/route.test.ts src/app/api/executive/brandon-daily-update/__tests__/route.test.ts --runInBand
 ```
 
 ## Evidence
@@ -133,3 +158,7 @@ cd frontend && npx eslint src/app/api/admin/owner-briefing/send-test/route.ts sr
 - Send route: `frontend/src/app/api/executive/daily-brief/send-teams/route.ts`
 - Admin test-send route: `frontend/src/app/api/admin/owner-briefing/send-test/route.ts`
 - AI tool path: `frontend/src/lib/ai/tools/executive-brief-tools.ts`
+- Packet route helper: `frontend/src/app/api/executive/daily-brief/route-helpers.ts`
+- Widget route: `frontend/src/app/api/executive/daily-brief/widget/route.ts`
+- Executive regenerate action: `frontend/src/app/(main)/actions/executive-briefing-actions.ts`
+- Gateway guardrail: `scripts/verify/verify_executive_daily_brief_gateway.mjs`

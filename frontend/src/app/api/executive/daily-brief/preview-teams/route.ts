@@ -22,13 +22,13 @@ import {
 } from "@/lib/executive/daily-brief";
 import {
   getExecutiveBriefingDashboard,
-  regenerateExecutiveBriefingDraft,
 } from "@/lib/executive/executive-briefing-workflow";
 import { formatExecutiveBriefingTeamsMessage } from "@/lib/executive/executive-briefing-teams-delivery";
 import {
   completeDailyBriefRun,
   failDailyBriefRun,
   recordDraftEvidence,
+  regenerateDailyBriefDraftForRun,
   sourceHealthForDraft,
   startDailyBriefRun,
 } from "@/lib/ai-ops/executive-daily-brief-ledger";
@@ -82,7 +82,8 @@ export const POST = withApiGuardrails(
 
     try {
       const draft = body.fresh
-        ? (await regenerateExecutiveBriefingDraft({ windowDays })).draft
+        ? (await regenerateDailyBriefDraftForRun(runContext, { windowDays }))
+            .draft
         : (await getExecutiveBriefingDashboard({ windowDays })).draft;
 
       if (!draft) {
@@ -119,7 +120,9 @@ export const POST = withApiGuardrails(
         draft.packet.sections.waitingOnOthers.length +
         draft.packet.sections.importantUpdates.length;
 
-      await recordDraftEvidence(runContext, draft);
+      if (!body.fresh) {
+        await recordDraftEvidence(runContext, draft);
+      }
       await completeDailyBriefRun(runContext, {
         status: "succeeded",
         deliveryStatus: "dry_run",

@@ -18,9 +18,9 @@ import { getApiRouteUser } from "@/lib/supabase/server";
 import {
   approveExecutiveBriefingDraft,
   getExecutiveBriefingDashboard,
-  regenerateExecutiveBriefingDraft,
   setExecutiveFollowUpState,
 } from "@/lib/executive/executive-briefing-workflow";
+import { regenerateDailyBriefDraftWithLedger } from "@/lib/ai-ops/executive-daily-brief-ledger";
 
 const EXECUTIVE_PATH = "/executive";
 const ADMIN_ACTIONS_PATH = "/actions";
@@ -168,7 +168,16 @@ export async function regenerateExecutiveBriefingAction(formData: FormData) {
     "windowDays",
     DEFAULT_EXECUTIVE_WINDOW_DAYS,
   );
-  await regenerateExecutiveBriefingDraft({ windowDays, sourceBackedOnly: false });
+  await regenerateDailyBriefDraftWithLedger({
+    windowDays,
+    sourceBackedOnly: false,
+    triggerType: "manual_server_action_refresh",
+    surface: "executive-briefing-actions#regenerate",
+    title: "Executive Daily Brief manual refresh",
+    userGoal: "Regenerate the Executive Daily Brief from the executive page.",
+    normalizedGoal:
+      "Generate the Executive Daily Brief through the AI Ops ledger from the executive page action.",
+  });
   revalidatePath(EXECUTIVE_PATH);
 }
 

@@ -6,8 +6,8 @@ import {
 } from "@/lib/executive/daily-brief";
 import {
   getExecutiveBriefingDashboard,
-  regenerateExecutiveBriefingDraft,
 } from "@/lib/executive/executive-briefing-workflow";
+import { regenerateDailyBriefDraftWithLedger } from "@/lib/ai-ops/executive-daily-brief-ledger";
 
 export async function getDailyBriefPacketResponse(
   request: Request,
@@ -27,8 +27,18 @@ export async function getDailyBriefPacketResponse(
   const sourceBackedOnly = searchParams.get("mode") === "source-backed";
 
   const draft = fresh
-    ? (await regenerateExecutiveBriefingDraft({ windowDays, sourceBackedOnly }))
-        .draft
+    ? (
+        await regenerateDailyBriefDraftWithLedger({
+          windowDays,
+          sourceBackedOnly,
+          triggerType: "manual_packet_refresh",
+          surface: guardrailKey,
+          title: "Executive Daily Brief packet refresh",
+          userGoal: "Regenerate the Executive Daily Brief API packet.",
+          normalizedGoal:
+            "Generate the Executive Daily Brief packet and record the canonical AI Ops run.",
+        })
+      ).draft
     : (await getExecutiveBriefingDashboard({ windowDays })).draft;
 
   return NextResponse.json(draft.packet);

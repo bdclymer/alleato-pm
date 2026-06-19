@@ -1,6 +1,6 @@
 const mockRequireCurrentUserAppCapability = jest.fn();
 const mockGetExecutiveBriefingDashboard = jest.fn();
-const mockRegenerateExecutiveBriefingDraft = jest.fn();
+const mockRegenerateDailyBriefDraftWithLedger = jest.fn();
 
 jest.mock("@/lib/app-capabilities", () => ({
   requireCurrentUserAppCapability: (...args: unknown[]) =>
@@ -10,8 +10,11 @@ jest.mock("@/lib/app-capabilities", () => ({
 jest.mock("@/lib/executive/executive-briefing-workflow", () => ({
   getExecutiveBriefingDashboard: (...args: unknown[]) =>
     mockGetExecutiveBriefingDashboard(...args),
-  regenerateExecutiveBriefingDraft: (...args: unknown[]) =>
-    mockRegenerateExecutiveBriefingDraft(...args),
+}));
+
+jest.mock("@/lib/ai-ops/executive-daily-brief-ledger", () => ({
+  regenerateDailyBriefDraftWithLedger: (...args: unknown[]) =>
+    mockRegenerateDailyBriefDraftWithLedger(...args),
 }));
 
 jest.mock("@/lib/executive/daily-brief", () => ({
@@ -48,8 +51,9 @@ describe("/api/executive/daily-brief", () => {
     mockGetExecutiveBriefingDashboard.mockResolvedValue({
       draft: { packet: persistedPacket },
     });
-    mockRegenerateExecutiveBriefingDraft.mockResolvedValue({
+    mockRegenerateDailyBriefDraftWithLedger.mockResolvedValue({
       draft: { packet: freshPacket },
+      runId: "run-1",
     });
   });
 
@@ -63,7 +67,7 @@ describe("/api/executive/daily-brief", () => {
     expect(mockGetExecutiveBriefingDashboard).toHaveBeenCalledWith({
       windowDays: 3,
     });
-    expect(mockRegenerateExecutiveBriefingDraft).not.toHaveBeenCalled();
+    expect(mockRegenerateDailyBriefDraftWithLedger).not.toHaveBeenCalled();
   });
 
   it("refreshes the canonical packet only when fresh=true is requested", async () => {
@@ -75,10 +79,13 @@ describe("/api/executive/daily-brief", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(freshPacket);
-    expect(mockRegenerateExecutiveBriefingDraft).toHaveBeenCalledWith({
-      windowDays: 5,
-      sourceBackedOnly: false,
-    });
+    expect(mockRegenerateDailyBriefDraftWithLedger).toHaveBeenCalledWith(
+      expect.objectContaining({
+        windowDays: 5,
+        sourceBackedOnly: false,
+        surface: "/api/executive/daily-brief#GET",
+      }),
+    );
     expect(mockGetExecutiveBriefingDashboard).not.toHaveBeenCalled();
   });
 
@@ -91,9 +98,12 @@ describe("/api/executive/daily-brief", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(freshPacket);
-    expect(mockRegenerateExecutiveBriefingDraft).toHaveBeenCalledWith({
-      windowDays: 3,
-      sourceBackedOnly: true,
-    });
+    expect(mockRegenerateDailyBriefDraftWithLedger).toHaveBeenCalledWith(
+      expect.objectContaining({
+        windowDays: 3,
+        sourceBackedOnly: true,
+        surface: "/api/executive/daily-brief#GET",
+      }),
+    );
   });
 });

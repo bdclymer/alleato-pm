@@ -196,7 +196,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
       ledger table.
 - [ ] `daily_recaps` relationship standardized so every generated Executive
       Daily Brief draft links to exactly one `ai_work_runs` record.
-- [ ] Preview generation writes a run ledger row.
+- [x] Preview generation writes a run ledger row.
 - [ ] Scheduled generation writes a run ledger row.
 - [ ] Dry-run delivery writes a run ledger row and delivery attempt.
 - [ ] Real Teams delivery writes a run ledger row and delivery attempt.
@@ -310,20 +310,20 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 
 ## Legacy Retirement Checklist
 
-- [ ] Old preview path either routes through the gateway or is removed.
+- [x] Old preview path either routes through the gateway or is removed.
 - [ ] Old scheduled runner either routes through the gateway or is removed.
 - [ ] Old Teams delivery path either routes through the gateway or is removed.
 - [ ] Old source coverage fields that bypass canonical source health are removed
       or marked deprecated.
 - [ ] Duplicate Daily Brief scripts are removed, blocked, or documented as
       wrappers.
-- [ ] Route-level model calls for this workflow are removed or blocked.
+- [x] Route-level model calls for this workflow are removed or blocked.
 - [ ] Any remaining legacy path logs a loud deprecation warning and cannot claim
       success without a canonical run id.
 
 ## Regression Guardrails
 
-- [ ] Unit tests cover contract validation.
+- [x] Unit tests cover contract validation.
 - [ ] Unit tests cover source adapter health states.
 - [ ] Unit tests cover tool policy filtering.
 - [ ] Unit tests cover workflow pack validation.
@@ -335,16 +335,16 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [ ] Integration tests cover source-health degraded/failure behavior.
 - [ ] Browser or API verification covers `/ai-work-runs` showing the generated
       run.
-- [ ] Guardrail added so no future Executive Daily Brief route can call
+- [x] Guardrail added so no future Executive Daily Brief route can call
       generation or delivery without a canonical run id.
 
 ## Verification Checklist
 
-- [ ] Static/type/lint check run, or explicitly delegated to a cheaper
+- [x] Static/type/lint check run, or explicitly delegated to a cheaper
       sub-agent.
-- [ ] Targeted contract tests run.
+- [x] Targeted contract tests run.
 - [ ] Targeted workflow tests run.
-- [ ] Targeted ledger tests run.
+- [x] Targeted ledger tests run.
 - [ ] Targeted delivery adapter tests run.
 - [ ] Supabase migration ledger verified if migrations changed.
 - [ ] Generated Supabase types verified if schema changed.
@@ -387,8 +387,11 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 | AI Ops focused lint   | `cd frontend && npx eslint src/lib/ai-ops/contracts.ts src/lib/ai-ops/ledger.ts src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts`                       | Passed  | Contract and ledger module lint cleanly.                                                           |
 | Route ledger lint     | `cd frontend && npx eslint src/lib/ai-ops/executive-daily-brief-ledger.ts src/app/api/executive/daily-brief/preview-teams/route.ts src/app/api/executive/daily-brief/send-teams/route.ts` | Passed  | Preview/send route ledger wiring lint cleanly.                                                     |
 | Bypass wrapper lint   | `cd frontend && npx eslint src/app/api/admin/owner-briefing/send-test/route.ts src/lib/ai/tools/executive-brief-tools.ts src/lib/ai-ops/executive-daily-brief-ledger.ts`                  | Passed  | Admin test-send and AI tool bypasses lint cleanly after ledger wrapping.                           |
+| App bypass lint       | `cd frontend && npx eslint src/lib/ai-ops/executive-daily-brief-ledger.ts src/app/api/executive/daily-brief/preview-teams/route.ts src/app/api/executive/daily-brief/route-helpers.ts src/app/api/executive/daily-brief/widget/route.ts 'src/app/(main)/actions/executive-briefing-actions.ts' src/app/api/executive/daily-brief/__tests__/route.test.ts src/app/api/executive/brandon-daily-update/__tests__/route.test.ts` | Passed  | Route helper, widget, server action, preview route, and route tests lint cleanly after removing raw app generator imports. |
 | Runner forced lint    | `cd frontend && npx eslint --no-ignore scripts/run-executive-daily-brief.ts`                                                                                                              | Passed  | Script is ignored by default ESLint config, so it was linted with `--no-ignore`.                   |
 | AI Ops focused tests  | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand`                                     | Passed  | 2 suites, 11 tests passed. Required fields and pre-write validation fail loudly.                   |
+| App route tests       | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/app/api/executive/daily-brief/__tests__/route.test.ts src/app/api/executive/brandon-daily-update/__tests__/route.test.ts --runInBand` | Passed  | 4 suites, 16 tests passed. Fresh packet routes now assert the ledger-backed helper is used.        |
+| Gateway guardrail     | `npm run rag:verify:executive-daily-brief-gateway`                                                                                                                                       | Passed  | Blocks raw `regenerateExecutiveBriefingDraft` usage under `frontend/src/app` so route/action generation cannot bypass the AI Ops ledger. |
 | Runner no-write smoke | `cd frontend && npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:00:00.000Z`                                                                                              | Passed  | Kill switch off; script loaded and exited with `executive_daily_brief_disabled`, no send/write.    |
 | Disabled send smoke   | `curl -sS -X POST http://localhost:3001/api/executive/daily-brief/send-teams -H 'content-type: application/json' -d '{}'`                                                                 | Passed  | Kill switch off; route returned disabled state with run id `45c9f9a2-2ac1-45fe-8893-a2cd07c28374`. |
 | Admin UI/API readback | `curl -sS 'http://localhost:3001/api/admin/ai-work-runs?workflow=executive_daily_brief&limit=5'`                                                                                          | Blocked | Curl lacks authenticated admin browser session; response was `AUTH_EXPIRED`.                       |
