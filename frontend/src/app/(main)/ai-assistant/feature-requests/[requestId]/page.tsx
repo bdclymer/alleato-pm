@@ -4,7 +4,7 @@ import { FeatureRequestDetail } from "@/components/feature-requests/FeatureReque
 import { getFeatureRequestDetail } from "@/lib/feature-requests/server";
 
 export const metadata = {
-  title: "Feature Request Packet | Alleato",
+  title: "Feature Request Workspace | Alleato",
 };
 
 export default async function FeatureRequestDetailPage({

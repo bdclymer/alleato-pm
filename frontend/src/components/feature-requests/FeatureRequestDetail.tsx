@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ExternalLinkIcon, FileTextIcon, GitBranchIcon } from "lucide-react";
+import { ExternalLinkIcon, GitBranchIcon } from "lucide-react";
 
 import {
   InspectorRail,
@@ -8,6 +8,7 @@ import {
   PropertyRow,
   ToneDot,
 } from "@/components/ds";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { scoreFeatureRequestReadiness } from "@/lib/feature-requests/readiness";
 import type { FeatureRequestDetail as FeatureRequestDetailData } from "@/lib/feature-requests/types";
@@ -27,6 +28,14 @@ function formatLabel(value: string | null | undefined): string {
 function formatDate(value: string | null | undefined): string {
   if (!value) return "Not tracked";
   return new Date(value).toLocaleString();
+}
+
+function firstSentence(value: string | null | undefined): string {
+  if (!value) return "";
+  const normalized = value.replace(/\s+/g, " ").trim();
+  const sentenceEnd = normalized.search(/[.!?]\s/);
+  if (sentenceEnd === -1) return normalized;
+  return normalized.slice(0, sentenceEnd + 1);
 }
 
 function statusTone(value: string | null | undefined): "success" | "warning" | "danger" | "info" | "neutral" {
@@ -56,38 +65,18 @@ function StatusToken({
   );
 }
 
-function DetailSection({
-  title,
+function InlineMeta({
+  label,
   children,
-  className,
 }: {
-  title: string;
+  label: string;
   children: React.ReactNode;
-  className?: string;
 }) {
   return (
-    <section className={cn("space-y-3", className)}>
-      <div role="heading" aria-level={2} className="text-sm font-medium text-foreground">
-        {title}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function BulletList({ values, empty }: { values: string[]; empty: string }) {
-  if (values.length === 0) {
-    return <p className="text-sm text-muted-foreground">{empty}</p>;
-  }
-  return (
-    <ul className="space-y-2 text-sm leading-6 text-foreground">
-      {values.map((value) => (
-        <li key={value} className="flex gap-2">
-          <span className="mt-2.5 h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
-          <span>{value}</span>
-        </li>
-      ))}
-    </ul>
+    <div className="inline-flex min-w-0 items-center gap-2 text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="min-w-0 text-foreground">{children}</span>
+    </div>
   );
 }
 
@@ -110,6 +99,42 @@ function TextBlock({
   );
 }
 
+function BulletList({ values, empty }: { values: string[]; empty: string }) {
+  if (values.length === 0) {
+    return <p className="text-sm text-muted-foreground">{empty}</p>;
+  }
+  return (
+    <ul className="space-y-2 text-sm leading-6 text-foreground">
+      {values.map((value) => (
+        <li key={value} className="flex gap-2">
+          <span className="mt-2.5 h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
+          <span>{value}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function PacketSection({
+  title,
+  children,
+  defaultOpen = false,
+}: {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  return (
+    <details className="group border-t border-border/50 py-3" open={defaultOpen}>
+      <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-foreground">
+        <span className="text-muted-foreground group-open:rotate-90">›</span>
+        {title}
+      </summary>
+      <div className="pt-3 pl-5">{children}</div>
+    </details>
+  );
+}
+
 export function FeatureRequestDetail({ detail }: { detail: FeatureRequestDetailData }) {
   const { request, latestPlan, handoffs, events, linearEvents, linearSubIssues } = detail;
   const readiness = scoreFeatureRequestReadiness({ request, latestPlan });
@@ -119,10 +144,13 @@ export function FeatureRequestDetail({ detail }: { detail: FeatureRequestDetailD
   const assumptions = asStringArray(request.assumptions);
   const affectedPages = asStringArray(request.affected_pages);
   const affectedWorkflows = asStringArray(request.affected_workflows);
+  const implementationSteps = asStringArray(latestPlan?.implementation_steps);
   const missingRequirements = readiness.missingRequirements;
-  const readinessSummary = readiness.readyForBuild
-    ? "Ready for build."
-    : `Not ready for build. Missing ${missingRequirements.join(", ")}.`;
+  const summary = "Add a short summary...";
+  const description = firstSentence(request.desired_outcome) || firstSentence(request.raw_request) || summary;
+  const nextAction = readiness.readyForBuild
+    ? "Create or update the Linear implementation issue."
+    : openQuestions[0] ?? `Resolve missing ${missingRequirements[0] ?? "planning detail"}.`;
   const combinedEvents = [
     ...linearEvents.map((event) => ({
       id: event.id,
@@ -136,108 +164,174 @@ export function FeatureRequestDetail({ detail }: { detail: FeatureRequestDetailD
     })),
     ...events,
   ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const issueRows =
+    linearSubIssues.length > 0
+      ? linearSubIssues.map((issue, index) => ({
+          id: issue.id,
+          key: issue.linear_issue_id ?? `FR-${index + 1}`,
+          title: issue.title,
+          detail: issue.source_step,
+          status: issue.status,
+          href: issue.linear_issue_url,
+        }))
+      : implementationSteps.slice(0, 5).map((step, index) => ({
+          id: `step-${index}`,
+          key: `FR-${index + 1}`,
+          title: step,
+          detail: null,
+          status: "draft",
+          href: null,
+        }));
 
   return (
-    <div className="grid min-w-0 gap-12 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_368px]">
+    <div className="grid min-w-0 gap-10 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_352px]">
       <main className="min-w-0 space-y-8">
-        <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-          <span className="font-medium text-foreground">{readinessSummary}</span>
-          {!readiness.readyForBuild && openQuestions[0] ? ` Next: ${openQuestions[0]}` : null}
-        </p>
+        <div className="space-y-5">
+          <p className="max-w-3xl text-base leading-7 text-muted-foreground">{summary}</p>
 
-        <DetailSection title="Stakeholder summary">
-          <TextBlock>{request.assistant_summary}</TextBlock>
-        </DetailSection>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <InlineMeta label="Status">
+              <StatusToken value={request.status} />
+            </InlineMeta>
+            <InlineMeta label="Readiness">
+              <StatusToken value={readiness.label} />
+            </InlineMeta>
+            <InlineMeta label="Priority">{formatLabel(request.priority)}</InlineMeta>
+            <InlineMeta label="Requester">{request.requester_name}</InlineMeta>
+            <InlineMeta label="Type">{formatLabel(request.request_type)}</InlineMeta>
+          </div>
+        </div>
 
-        <DetailSection title="Original request">
-          <TextBlock muted>{request.raw_request}</TextBlock>
-        </DetailSection>
+        <Button
+          type="button"
+          variant="outline"
+          className="flex min-h-12 w-full items-center justify-center rounded-md border border-border/60 px-4 text-sm text-muted-foreground transition-colors hover:bg-muted/40"
+        >
+          Write project update
+        </Button>
 
-        <DetailSection title="Acceptance criteria">
-          <BulletList values={acceptanceCriteria} empty="No acceptance criteria captured yet." />
-        </DetailSection>
+        <section className="space-y-3">
+          <div role="heading" aria-level={2} className="text-sm font-medium text-foreground">
+            Description
+          </div>
+          <TextBlock muted>{description}</TextBlock>
+        </section>
 
-        <DetailSection title="Verification steps">
-          <BulletList values={verificationSteps} empty="No verification steps captured yet." />
-        </DetailSection>
-
-        {openQuestions.length > 0 ? (
-          <DetailSection title="Open questions">
-            <BulletList values={openQuestions} empty="No open implementation-critical questions." />
-          </DetailSection>
-        ) : null}
-
-        {assumptions.length > 0 ? (
-          <DetailSection title="Assumptions">
-            <BulletList values={assumptions} empty="No assumptions recorded yet." />
-          </DetailSection>
-        ) : null}
-
-        {latestPlan ? (
-          <DetailSection title="Implementation plan">
-            <div className="space-y-4">
-              <TextBlock>{latestPlan.summary}</TextBlock>
-              <BulletList
-                values={asStringArray(latestPlan.implementation_steps)}
-                empty="No implementation steps captured."
-              />
+        <section className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div role="heading" aria-level={2} className="text-sm font-medium text-foreground">
+              Issues
             </div>
-          </DetailSection>
-        ) : null}
+            {request.linear_issue_url ? (
+              <Link
+                href={request.linear_issue_url}
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+              >
+                Open Linear
+                <ExternalLinkIcon className="h-3.5 w-3.5" aria-hidden="true" />
+              </Link>
+            ) : null}
+          </div>
 
-        {linearSubIssues.length > 0 ? (
-          <DetailSection title="Linear sub-issues">
-            <div className="divide-y divide-border/50">
-              {linearSubIssues.map((subIssue) => (
+          <div className="divide-y divide-border/50">
+            {issueRows.length > 0 ? (
+              issueRows.map((issue) => (
                 <div
-                  key={subIssue.id}
-                  className="grid grid-cols-1 gap-3 py-3 md:grid-cols-[minmax(0,1fr)_8rem_6rem] md:items-center md:gap-4"
+                  key={issue.id}
+                  className="grid grid-cols-1 gap-2 py-3 md:grid-cols-[6rem_minmax(0,1fr)_8rem] md:items-center md:gap-4"
                 >
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <GitBranchIcon className="h-4 w-4" aria-hidden="true" />
+                    <span>{issue.key}</span>
+                  </div>
                   <div className="min-w-0">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <GitBranchIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-                      <span className="truncate text-sm font-medium text-foreground">{subIssue.title}</span>
-                    </div>
-                    {subIssue.source_step ? (
-                      <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
-                        {subIssue.source_step}
-                      </p>
+                    <div className="truncate text-sm font-medium text-foreground">{issue.title}</div>
+                    {issue.detail ? (
+                      <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{issue.detail}</p>
                     ) : null}
                   </div>
-                  <StatusToken value={subIssue.status} />
-                  <div className="text-left md:text-right">
-                    {subIssue.linear_issue_url ? (
-                      <Link
-                        href={subIssue.linear_issue_url}
-                        className="text-sm font-medium text-primary hover:underline"
-                      >
-                        {subIssue.linear_issue_id ?? "Open"}
-                      </Link>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">Draft</span>
-                    )}
+                  <div className="md:justify-self-end">
+                    <StatusToken value={issue.status} className="text-sm" />
                   </div>
                 </div>
-              ))}
-            </div>
-          </DetailSection>
-        ) : null}
+              ))
+            ) : (
+              <div className="py-3 text-sm text-muted-foreground">
+                No implementation issues yet. {nextAction}
+              </div>
+            )}
+          </div>
+        </section>
 
-        {combinedEvents.length > 0 ? (
-          <DetailSection title="Activity">
-            <RequestTimeline events={combinedEvents} />
-          </DetailSection>
-        ) : null}
+        <section className="space-y-1">
+          <PacketSection title="Readiness" defaultOpen>
+            <div className="space-y-3">
+              <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+                <span className="font-medium text-foreground">
+                  {readiness.readyForBuild ? "Ready for build." : "Not ready for build."}
+                </span>{" "}
+                {readiness.readyForBuild ? "No required planning fields are missing." : nextAction}
+              </p>
+              {missingRequirements.length > 0 ? (
+                <BulletList values={missingRequirements} empty="No missing requirements." />
+              ) : null}
+            </div>
+          </PacketSection>
+
+          <PacketSection title="Decision Needed">
+            <TextBlock muted>{nextAction}</TextBlock>
+          </PacketSection>
+
+          <PacketSection title="Acceptance Criteria">
+            <BulletList values={acceptanceCriteria} empty="No acceptance criteria captured yet." />
+          </PacketSection>
+
+          <PacketSection title="Verification Steps">
+            <BulletList values={verificationSteps} empty="No verification steps captured yet." />
+          </PacketSection>
+
+          <PacketSection title="Open Questions">
+            <BulletList values={openQuestions} empty="No open implementation-critical questions." />
+          </PacketSection>
+
+          <PacketSection title="Implementation Plan">
+            <div className="space-y-4">
+              {latestPlan?.summary ? <TextBlock>{latestPlan.summary}</TextBlock> : null}
+              <BulletList values={implementationSteps} empty="No implementation steps captured." />
+            </div>
+          </PacketSection>
+
+          <PacketSection title="Linear Draft">
+            {request.linear_draft_body ? (
+              <TextBlock muted>{request.linear_draft_body}</TextBlock>
+            ) : (
+              <p className="text-sm text-muted-foreground">No Linear draft attached yet.</p>
+            )}
+          </PacketSection>
+
+          <PacketSection title="Original Request">
+            <TextBlock muted>{request.raw_request}</TextBlock>
+          </PacketSection>
+
+          <PacketSection title="Assumptions">
+            <BulletList values={assumptions} empty="No assumptions recorded yet." />
+          </PacketSection>
+
+          <PacketSection title="Activity">
+            {combinedEvents.length > 0 ? (
+              <RequestTimeline events={combinedEvents} />
+            ) : (
+              <p className="text-sm text-muted-foreground">No activity recorded yet.</p>
+            )}
+          </PacketSection>
+        </section>
       </main>
 
-      <InspectorRail className="space-y-6 lg:sticky lg:top-20 lg:self-start">
+      <InspectorRail className="space-y-5 lg:sticky lg:top-20 lg:self-start">
         <InspectorSection title="Properties" variant="plain">
           <PropertyList className="divide-y-0">
             <PropertyRow label="Status">
               <StatusToken value={request.status} />
-            </PropertyRow>
-            <PropertyRow label="Readiness">
-              <StatusToken value={readiness.label} />
             </PropertyRow>
             <PropertyRow label="Priority">{formatLabel(request.priority)}</PropertyRow>
             <PropertyRow label="Requester">{request.requester_name}</PropertyRow>
@@ -250,8 +344,34 @@ export function FeatureRequestDetail({ detail }: { detail: FeatureRequestDetailD
           </PropertyList>
         </InspectorSection>
 
+        <InspectorSection title="Milestones" variant="plain" defaultOpen={false}>
+          <p className="text-sm text-muted-foreground">No milestones created yet.</p>
+        </InspectorSection>
+
+        <InspectorSection title="Progress" variant="plain" defaultOpen={false}>
+          <PropertyList className="divide-y-0">
+            <PropertyRow label="Scope">{issueRows.length}</PropertyRow>
+            <PropertyRow label="Completed">
+              {issueRows.filter((issue) => ["synced", "complete"].includes(issue.status ?? "")).length}
+            </PropertyRow>
+            <PropertyRow label="Missing">
+              {missingRequirements.length > 0 ? missingRequirements.length : "None"}
+            </PropertyRow>
+          </PropertyList>
+        </InspectorSection>
+
+        <InspectorSection title="Readiness" variant="plain" defaultOpen={false}>
+          <PropertyList className="divide-y-0">
+            <PropertyRow label="Goal">{formatLabel(readiness.goalClarity)}</PropertyRow>
+            <PropertyRow label="Data">{formatLabel(readiness.dataClarity)}</PropertyRow>
+            <PropertyRow label="UX">{formatLabel(readiness.uxClarity)}</PropertyRow>
+            <PropertyRow label="Criteria">{formatLabel(readiness.acceptanceStatus)}</PropertyRow>
+            <PropertyRow label="Risk">{formatLabel(readiness.implementationRisk)}</PropertyRow>
+          </PropertyList>
+        </InspectorSection>
+
         {(affectedPages.length > 0 || affectedWorkflows.length > 0 || request.desired_outcome) ? (
-          <InspectorSection title="Scope" variant="plain" defaultOpen>
+          <InspectorSection title="Scope" variant="plain" defaultOpen={false}>
             <PropertyList className="divide-y-0">
               <PropertyRow label="Pages">
                 {affectedPages.length > 0 ? affectedPages.join(", ") : null}
@@ -264,74 +384,11 @@ export function FeatureRequestDetail({ detail }: { detail: FeatureRequestDetailD
           </InspectorSection>
         ) : null}
 
-        <InspectorSection title="Readiness" variant="plain">
-          <PropertyList className="divide-y-0">
-            <PropertyRow label="Goal">{formatLabel(readiness.goalClarity)}</PropertyRow>
-            <PropertyRow label="Data">{formatLabel(readiness.dataClarity)}</PropertyRow>
-            <PropertyRow label="UX">{formatLabel(readiness.uxClarity)}</PropertyRow>
-            <PropertyRow label="Criteria">{formatLabel(readiness.acceptanceStatus)}</PropertyRow>
-            <PropertyRow label="Risk">{formatLabel(readiness.implementationRisk)}</PropertyRow>
-            <PropertyRow label="Missing">
-              {missingRequirements.length > 0 ? missingRequirements.join(", ") : "None"}
-            </PropertyRow>
-          </PropertyList>
-        </InspectorSection>
-
-        <InspectorSection
-          title="Linear"
-          variant="plain"
-          defaultOpen={Boolean(request.linear_issue_url || request.linear_draft_body || request.linear_sync_error)}
-        >
-          <div className="space-y-3 text-sm">
-            {request.linear_issue_url ? (
-              <Link
-                href={request.linear_issue_url}
-                className="inline-flex min-w-0 items-center gap-1.5 font-medium text-primary hover:underline"
-              >
-                <ExternalLinkIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <span className="truncate">{request.linear_issue_id ?? "Open Linear issue"}</span>
-              </Link>
-            ) : request.linear_draft_body ? (
-              <details className="text-muted-foreground">
-                <summary className="cursor-pointer text-sm text-foreground">Linear draft</summary>
-                <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded-md bg-muted/40 p-3 font-sans text-xs leading-5">
-                  {request.linear_draft_body}
-                </pre>
-              </details>
-            ) : (
-              <p className="text-muted-foreground">No Linear issue or draft attached yet.</p>
-            )}
-            {request.linear_last_synced_at ? (
-              <p className="text-xs text-muted-foreground">Last synced {formatDate(request.linear_last_synced_at)}</p>
-            ) : null}
-            {request.linear_sync_error ? (
-              <p className="text-sm text-destructive">{request.linear_sync_error}</p>
-            ) : null}
-          </div>
-        </InspectorSection>
-
-        <InspectorSection
-          title="Handoff"
-          variant="plain"
-          defaultOpen={handoffs.length > 0 || Boolean(request.claude_handoff_path)}
-        >
-          {handoffs.length > 0 ? (
-            <div className="space-y-2">
-              {handoffs.map((handoff) => (
-                <div key={handoff.id} className="space-y-1 text-sm">
-                  <div className="truncate font-medium text-foreground">{handoff.handoff_title}</div>
-                  <div className="truncate text-xs text-muted-foreground">{handoff.handoff_path}</div>
-                  <StatusToken value={handoff.validation_status} className="text-xs" />
-                </div>
-              ))}
-            </div>
-          ) : request.claude_handoff_path ? (
-            <div className="flex min-w-0 items-start gap-2 text-sm text-foreground">
-              <FileTextIcon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-              <span className="min-w-0 break-words">{request.claude_handoff_path}</span>
-            </div>
+        <InspectorSection title="Activity" variant="plain" defaultOpen={false}>
+          {combinedEvents.length > 0 ? (
+            <RequestTimeline events={combinedEvents.slice(0, 3)} />
           ) : (
-            <p className="text-sm text-muted-foreground">No Claude Code handoff generated yet.</p>
+            <p className="text-sm text-muted-foreground">No activity recorded yet.</p>
           )}
         </InspectorSection>
 
@@ -341,6 +398,9 @@ export function FeatureRequestDetail({ detail }: { detail: FeatureRequestDetailD
             <PropertyRow label="Updated">{formatDate(request.updated_at)}</PropertyRow>
             <PropertyRow label="Request ID">
               <span className="break-all text-xs text-muted-foreground">{request.id}</span>
+            </PropertyRow>
+            <PropertyRow label="Handoff">
+              {handoffs[0]?.handoff_path ?? request.claude_handoff_path ?? "Not generated"}
             </PropertyRow>
           </PropertyList>
         </InspectorSection>
