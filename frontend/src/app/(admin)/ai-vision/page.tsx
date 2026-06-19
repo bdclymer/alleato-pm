@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
+  ArrowUpRight,
   Banknote,
+  Bot,
   BrainCircuit,
   Building2,
   CalendarClock,
@@ -66,6 +69,30 @@ function StatusPill({ status }: { status: Status }) {
       {STATUS_LABEL[status]}
     </span>
   );
+}
+
+// Renders a card as a clickable link when it points at a live surface,
+// otherwise a plain container. Linkable cards get a hover affordance + arrow.
+function CardShell({
+  href,
+  className,
+  children,
+}: {
+  href?: string;
+  className: string;
+  children: React.ReactNode;
+}) {
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className={`group transition-colors hover:bg-muted/60 ${className}`}
+      >
+        {children}
+      </Link>
+    );
+  }
+  return <div className={className}>{children}</div>;
 }
 
 function SectionHead({
@@ -133,32 +160,32 @@ const PHASES: { name: string; goal: string; status: Status }[] = [
   { name: "AI OS Layer · parallel track", goal: "Make memory, skills, and learning visible and team-owned — Memory Center, Skill Library, Teach Alleato, Work Queue.", status: "building" },
 ];
 
-type Agent = { name: string; job: string; status: Status; pilot?: boolean };
+type Agent = { name: string; job: string; status: Status; pilot?: boolean; href?: string };
 
 const AGENT_GROUPS: { label: string; icon: React.ComponentType<{ className?: string }>; agents: Agent[] }[] = [
   {
     label: "C-Suite (live)",
     icon: Building2,
     agents: [
-      { name: "Strategist", job: "Top-level orchestrator. Routes questions to specialists, synthesizes, adds cross-functional insight.", status: "live" },
-      { name: "CFO", job: "Budgets, margins, commitments, cost trends, cash position.", status: "live" },
-      { name: "COO", job: "Operations and execution health.", status: "live" },
-      { name: "CRO", job: "Risk — fed by project risk analysis tools.", status: "live" },
-      { name: "CHRO", job: "People and resourcing.", status: "live" },
-      { name: "VP Business Development", job: "Pipeline and BD intelligence.", status: "live" },
-      { name: "CMO", job: "Marketing intelligence and content tooling.", status: "live" },
-      { name: "Microsoft Exec Assistant", job: "Outlook inbox triage + draft/reply workflows.", status: "live" },
+      { name: "Strategist", job: "Top-level orchestrator. Routes questions to specialists, synthesizes, adds cross-functional insight.", status: "live", href: "/ai" },
+      { name: "CFO", job: "Budgets, margins, commitments, cost trends, cash position.", status: "live", href: "/ai" },
+      { name: "COO", job: "Operations and execution health.", status: "live", href: "/ai" },
+      { name: "CRO", job: "Risk — fed by project risk analysis tools.", status: "live", href: "/ai" },
+      { name: "CHRO", job: "People and resourcing.", status: "live", href: "/ai" },
+      { name: "VP Business Development", job: "Pipeline and BD intelligence.", status: "live", href: "/ai" },
+      { name: "CMO", job: "Marketing intelligence and content tooling.", status: "live", href: "/ai" },
+      { name: "Microsoft Exec Assistant", job: "Outlook inbox triage + draft/reply workflows.", status: "live", href: "/ai" },
     ],
   },
   {
     label: "Backend Deep Agents (live)",
     icon: BrainCircuit,
     agents: [
-      { name: "Project Intelligence", job: "Project-status synthesis runtime with source-coverage tools.", status: "live" },
-      { name: "Executive Briefing", job: "Portfolio-level executive briefing runtime.", status: "live" },
-      { name: "Research Agent", job: "Web research (Tavily + fetch).", status: "live" },
-      { name: "Content Builder", job: "Marketing & content generation with image tools.", status: "live" },
-      { name: "Scoped analysts", job: "Financial, schedule, risk & comms analysts consumed by the Deep Agents.", status: "live" },
+      { name: "Project Intelligence", job: "Project-status synthesis runtime with source-coverage tools.", status: "live", href: "/intelligence-compiler" },
+      { name: "Executive Briefing", job: "Portfolio-level executive briefing runtime.", status: "live", href: "/ai-work-runs" },
+      { name: "Research Agent", job: "Web research (Tavily + fetch).", status: "live", href: "/deep-research" },
+      { name: "Content Builder", job: "Marketing & content generation with image tools.", status: "live", href: "/ai" },
+      { name: "Scoped analysts", job: "Financial, schedule, risk & comms analysts consumed by the Deep Agents.", status: "live", href: "/ai" },
     ],
   },
   {
@@ -178,34 +205,34 @@ const AGENT_GROUPS: { label: string; icon: React.ComponentType<{ className?: str
   },
 ];
 
-type Tool = { name: string; purpose: string; status: Status };
+type Tool = { name: string; purpose: string; status: Status; href?: string };
 
 const TOOL_TIERS: { tier: string; subtitle: string; tools: Tool[] }[] = [
   {
     tier: "Tier 1 · Do first",
     subtitle: "Highest pain, highest impact",
     tools: [
-      { name: "Financial Guardian", purpose: "Continuous budget-vs-actual, owner-vs-sub margin-leak detection, cash-flow projection, CE→CO→Commitment sync.", status: "partial" },
-      { name: "Morning Briefing", purpose: "Daily top 3–5 cross-project priorities, per-project health, overdue items, team load.", status: "partial" },
-      { name: "Conversational Financial Advisor", purpose: "Natural-language drill-down, comparisons, root-cause, what-if.", status: "live" },
+      { name: "Financial Guardian", purpose: "Continuous budget-vs-actual, owner-vs-sub margin-leak detection, cash-flow projection, CE→CO→Commitment sync.", status: "partial", href: "/ai" },
+      { name: "Morning Briefing", purpose: "Daily top 3–5 cross-project priorities, per-project health, overdue items, team load.", status: "partial", href: "/ai-work-runs" },
+      { name: "Conversational Financial Advisor", purpose: "Natural-language drill-down, comparisons, root-cause, what-if.", status: "live", href: "/ai" },
     ],
   },
   {
     tier: "Tier 2 · Build next",
     subtitle: "High value, foundations in place",
     tools: [
-      { name: "Schedule Intelligence", purpose: "Critical-path monitoring, delay prediction, cascade analysis, 3-week look-aheads.", status: "partial" },
-      { name: "Meeting Intelligence", purpose: "Action-item extraction, cross-meeting tracking, recurring-issue flagging, agendas.", status: "partial" },
-      { name: "Document Intelligence", purpose: "Auto-classify, metadata extraction, full-text search, auto-link.", status: "partial" },
+      { name: "Schedule Intelligence", purpose: "Critical-path monitoring, delay prediction, cascade analysis, 3-week look-aheads.", status: "partial", href: "/ai" },
+      { name: "Meeting Intelligence", purpose: "Action-item extraction, cross-meeting tracking, recurring-issue flagging, agendas.", status: "partial", href: "/meetings" },
+      { name: "Document Intelligence", purpose: "Auto-classify, metadata extraction, full-text search, auto-link.", status: "partial", href: "/files" },
     ],
   },
   {
     tier: "Tier 3 · Build later",
     subtitle: "Compounding intelligence",
     tools: [
-      { name: "Vendor Scorecard", purpose: "Performance scoring on delivery, quality, price.", status: "partial" },
-      { name: "Report Generation", purpose: "Weekly status, monthly financial packages, client-ready summaries.", status: "partial" },
-      { name: "Cross-Project Learning", purpose: "Pattern recognition, “projects like this typically…”, auto-captured lessons.", status: "partial" },
+      { name: "Vendor Scorecard", purpose: "Performance scoring on delivery, quality, price.", status: "partial", href: "/ai" },
+      { name: "Report Generation", purpose: "Weekly status, monthly financial packages, client-ready summaries.", status: "partial", href: "/ai" },
+      { name: "Cross-Project Learning", purpose: "Pattern recognition, “projects like this typically…”, auto-captured lessons.", status: "partial", href: "/ai" },
       { name: "Predictive Analytics", purpose: "Completion probability, overrun/delay prediction, margin forecasting.", status: "planned" },
     ],
   },
@@ -213,12 +240,12 @@ const TOOL_TIERS: { tier: string; subtitle: string; tools: Tool[] }[] = [
     tier: "AI OS Layer · current build order",
     subtitle: "Make the AI visible and team-owned",
     tools: [
-      { name: "Memory Center", purpose: "Inspect and correct what the AI remembers.", status: "building" },
-      { name: "Learning Review Queue", purpose: "Approve, reject, and apply learning candidates.", status: "building" },
+      { name: "Memory Center", purpose: "Inspect and correct what the AI remembers.", status: "building", href: "/settings/memory" },
+      { name: "Learning Review Queue", purpose: "Approve, reject, and apply learning candidates.", status: "building", href: "/ai/learning-promotions" },
       { name: "Memory trace on answers", purpose: "“Memory used” disclosure + one-tap “this is wrong”.", status: "planned" },
       { name: "Teach Alleato intake", purpose: "Field workflow submission feeding the review queue.", status: "planned" },
       { name: "Skill Library", purpose: "Durable, versioned, reviewed workflows.", status: "planned" },
-      { name: "AI Work Queue + Subagents", purpose: "Visible scheduled / delegated runs with status, sources, confidence.", status: "planned" },
+      { name: "AI Work Queue + Subagents", purpose: "Visible scheduled / delegated runs with status, sources, confidence.", status: "planned", href: "/ai-work-runs" },
     ],
   },
 ];
@@ -276,6 +303,26 @@ const GAPS: string[] = [
   "No Skill Library, Teach Alleato intake, or AI Work Queue",
   "Agent Action Layer is specced (v0.1) but not yet built",
   "Submittal Reviewer pilot not yet wired",
+];
+
+const LIVE_SURFACES: {
+  name: string;
+  href: string;
+  desc: string;
+  icon: React.ComponentType<{ className?: string }>;
+}[] = [
+  { name: "AI assistant", href: "/ai", desc: "Ask the agents anything — this is where they run.", icon: Bot },
+  { name: "How the AI works", href: "/docs/ai-overview", desc: "Guided tour of agents, tools, models & memory.", icon: Compass },
+  { name: "AI system health", href: "/ai-system-health", desc: "Conversations, spend, model mix, learning loop.", icon: Gauge },
+  { name: "Agent inventory", href: "/ai/admin/agents", desc: "Every agent with status & deployment.", icon: Building2 },
+  { name: "Intelligence compiler", href: "/intelligence-compiler", desc: "Source ingestion & packet health.", icon: BrainCircuit },
+  { name: "Executive brief runs", href: "/ai-work-runs", desc: "Daily-brief run ledger & evidence rows.", icon: Sparkles },
+  { name: "Deep research archive", href: "/deep-research", desc: "Past Deep Agents research projects.", icon: FileSearch },
+  { name: "Memory center", href: "/settings/memory", desc: "Inspect & correct what the AI remembers.", icon: Eye },
+  { name: "Learning promotions", href: "/ai/learning-promotions", desc: "Approve candidate AI learnings.", icon: CheckCircle2 },
+  { name: "Source sync", href: "/source-sync", desc: "Ingestion freshness & recompute controls.", icon: Network },
+  { name: "Prompt diagnostics", href: "/ai-prompt-diagnostics", desc: "Inspect assembled system prompts.", icon: FileText },
+  { name: "RAG eval", href: "/rag-eval", desc: "Retrieval quality & answer grounding.", icon: FlaskConical },
 ];
 
 const SOURCE_DOCS: string[] = [
@@ -393,12 +440,18 @@ export default async function AiVisionPage() {
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {group.agents.map((agent) => (
-                    <div
+                    <CardShell
                       key={agent.name}
+                      href={agent.href}
                       className="flex flex-col rounded-xl bg-card p-4"
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <span className="text-sm font-semibold text-foreground">{agent.name}</span>
+                        <span className="flex items-center gap-1 text-sm font-semibold text-foreground">
+                          {agent.name}
+                          {agent.href ? (
+                            <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                          ) : null}
+                        </span>
                         <StatusPill status={agent.status} />
                       </div>
                       {agent.pilot ? (
@@ -407,7 +460,7 @@ export default async function AiVisionPage() {
                         </span>
                       ) : null}
                       <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{agent.job}</p>
-                    </div>
+                    </CardShell>
                   ))}
                 </div>
               </div>
@@ -434,21 +487,58 @@ export default async function AiVisionPage() {
                 {tier.tools.map((tool) => {
                   const Icon = TIER_TOOL_ICON[tool.name] ?? Wrench;
                   return (
-                    <div key={tool.name} className="flex flex-col rounded-xl bg-card p-4">
+                    <CardShell key={tool.name} href={tool.href} className="flex flex-col rounded-xl bg-card p-4">
                       <div className="flex items-start justify-between gap-2">
                         <Icon className="h-5 w-5 text-primary" />
-                        <StatusPill status={tool.status} />
+                        <div className="flex items-center gap-1.5">
+                          {tool.href ? (
+                            <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                          ) : null}
+                          <StatusPill status={tool.status} />
+                        </div>
                       </div>
                       <p className="mt-3 text-sm font-semibold text-foreground">{tool.name}</p>
                       <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
                         {tool.purpose}
                       </p>
-                    </div>
+                    </CardShell>
                   );
                 })}
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Live surfaces */}
+      <section>
+        <SectionHead
+          eyebrow="See it in action"
+          title="Jump straight into what's live"
+          blurb="Every surface below is built and working today — click through to use it or watch it run."
+        />
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {LIVE_SURFACES.map((surface) => {
+            const Icon = surface.icon;
+            return (
+              <Link
+                key={surface.href}
+                href={surface.href}
+                className="group flex items-start gap-3 rounded-xl bg-card p-4 transition-colors hover:bg-muted/60"
+              >
+                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Icon className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <span className="flex items-center gap-1 text-sm font-semibold text-foreground">
+                    {surface.name}
+                    <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                  </span>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{surface.desc}</p>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
