@@ -180,6 +180,9 @@
    - Pass: focused ESLint over `executive-daily-brief-workflow.ts`, `tool-registry.ts`, `executive-daily-brief-ledger.ts`, workflow/contract tests, Teams route test, and executive email action test passed.
    - Fail then fixed: live policy readback for run `3ae5360f-c6d8-48dc-9751-255da67b22d7` showed completed runs preserved the ai_work_runs tool-scope field and the ai_work_runs source-policy field but lost `metadata.toolPolicy`; fixed by carrying `toolPolicy` in `DailyBriefRunContext` and writing it during completion/failure updates.
    - Pass: authenticated no-send preview returned run `c008ab40-bb19-45f8-9ce4-2d7a40b5c1e4`; SQL readback showed `permission_mode=service`, `tool_scope.actorMode=service`, `metadata.toolPolicy.actorMode=service`, and matching source-family access lists in the ai_work_runs tool-scope and source-policy fields, and `metadata.toolPolicy`.
+   - Pass: operations readiness Daily Brief status now reads canonical `ai_work_runs` run/delivery/source-health state instead of `daily_recaps.sent_teams` or packet `sourceCoverage`.
+   - Pass: `cd frontend && npx eslint src/app/api/admin/operations-readiness/status/route.ts`.
+   - Pass: authenticated GET `/api/admin/operations-readiness/status` returned Daily Brief metrics with run `succeeded`, delivery `dry_run`, blocker `The latest canonical Daily Brief run has not sent a Teams delivery attempt.`, and source-health cause `Recent email evidence: status missing`.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
@@ -249,6 +252,7 @@
    - First-class AI Ops run steps, artifacts, and delivery attempts now exist in the database, are exposed by `/api/admin/ai-work-runs`, and are visible in `/ai-work-runs`.
    - The Executive Daily Brief workflow pack, source adapter contract, and tool registry/policy are centralized and used by run construction.
    - Tool policy filtering now includes actor mode, project allowlist, source-family access, channel, and delivery/write permission; source adapter tools are hidden when their source families are outside policy.
+   - Operations readiness no longer treats legacy Daily Brief sent flags or packet source-coverage fields as canonical status; it reports the AI Ops ledger run, delivery attempt, and source-health state.
    - Claim-level evidence guardrails now fail before ledger writes when surfaced `needsBrandon`, `waitingOnOthers`, or `importantUpdates` items lack structured citation evidence.
    - A real generated no-send preview run is proven in the ledger and visible in `/ai-work-runs` with packet artifact, Teams payload artifact, dry-run delivery attempt, source health, and evidence rows.
    - Scheduled runner proof now shows both outside-window skipped schedules and matching scheduled triggers create canonical AI Ops runs; explicit runtime env now wins over `.env.local`.

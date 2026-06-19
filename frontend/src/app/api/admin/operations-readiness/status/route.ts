@@ -97,7 +97,24 @@ type DailyBriefPacket = {
     waitingOnOthers?: unknown[];
     importantUpdates?: unknown[];
   };
-  sourceCoverage?: Array<{ status?: string; warning?: string }>;
+};
+
+type DailyBriefCanonicalStatus = {
+  runId: string | null;
+  status: string | null;
+  deliveryStatus: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  failureCode: string | null;
+  failureMessage: string | null;
+  sourceHealth: Array<{
+    sourceFamily?: unknown;
+    resourceName?: unknown;
+    status?: unknown;
+    warning?: unknown;
+    failureMessage?: unknown;
+  }>;
+  teamsDeliveryAttemptStatus: string | null;
 };
 
 type SourceSyncStatus = z.infer<typeof SourceSyncStatusSchema>;
@@ -451,6 +468,46 @@ function parseDailyPacket(value: unknown): DailyBriefPacket | null {
   return value as DailyBriefPacket;
 }
 
+function sourceHealthFromRunMetadata(
+  metadata: unknown,
+): DailyBriefCanonicalStatus["sourceHealth"] {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return [];
+  }
+  const sourceHealth = (metadata as { sourceHealth?: unknown }).sourceHealth;
+  return Array.isArray(sourceHealth)
+    ? sourceHealth.filter(
+        (item): item is DailyBriefCanonicalStatus["sourceHealth"][number] =>
+          Boolean(item) && typeof item === "object" && !Array.isArray(item),
+      )
+    : [];
+}
+
+function canonicalSourceWarning(
+  sourceHealth: DailyBriefCanonicalStatus["sourceHealth"],
+): string | null {
+  const unhealthy = sourceHealth.find(
+    (source) =>
+      source.status !== "loaded" &&
+      source.status !== "healthy" &&
+      source.status !== "skipped",
+  );
+  if (!unhealthy) return null;
+  const label =
+    typeof unhealthy.resourceName === "string"
+      ? unhealthy.resourceName
+      : typeof unhealthy.sourceFamily === "string"
+        ? unhealthy.sourceFamily
+        : "source";
+  const reason =
+    typeof unhealthy.failureMessage === "string"
+      ? unhealthy.failureMessage
+      : typeof unhealthy.warning === "string"
+        ? unhealthy.warning
+        : `status ${String(unhealthy.status ?? "unknown")}`;
+  return `${label}: ${reason}`;
+}
+
 async function fetchJson<TSchema extends z.ZodTypeAny>(
   requestId: string,
   where: string,
@@ -496,7 +553,7 @@ async function loadLatestDailyBrief() {
   const { data, error } = await supabase
     .from("daily_recaps")
     .select(
-      "id, recap_date, created_at, approved_at, sent_at, sent_email, sent_teams, workflow_status, briefing_packet",
+      "id, recap_date, created_at, approved_at, workflow_status, briefing_packet, ai_work_run_id",
     )
     .eq("recap_kind", "executive_briefing")
     .order("recap_date", { ascending: false })
@@ -507,6 +564,60 @@ async function loadLatestDailyBrief() {
   if (error)
     throw new Error(`Failed to load daily brief status: ${error.message}`);
   return data;
+}
+
+async function loadLatestDailyBriefCanonicalStatus(
+  dailyRecapId: string | null | undefined,
+): Promise<DailyBriefCanonicalStatus | null> {
+  const supabase = createServiceClient();
+  let query = supabase
+    .from("ai_work_runs")
+    .select(
+      "id, status, delivery_status, started_at, completed_at, failure_code, failure_message, metadata",
+    )
+    .eq("workflow_id", "executive_daily_brief")
+    .order("started_at", { ascending: false })
+    .limit(1);
+
+  if (dailyRecapId) {
+    query = query.eq("daily_recap_id", dailyRecapId);
+  }
+
+  const { data: run, error } = await query.maybeSingle();
+
+  if (error) {
+    throw new Error(
+      `Failed to load canonical daily brief run status: ${error.message}`,
+    );
+  }
+  if (!run) return null;
+
+  const { data: latestTeamsAttempt, error: deliveryError } = await supabase
+    .from("ai_work_run_delivery_attempts")
+    .select("status")
+    .eq("work_run_id", run.id)
+    .eq("channel", "teams")
+    .order("attempted_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (deliveryError) {
+    throw new Error(
+      `Failed to load canonical daily brief delivery status: ${deliveryError.message}`,
+    );
+  }
+
+  return {
+    runId: run.id,
+    status: run.status,
+    deliveryStatus: run.delivery_status,
+    startedAt: run.started_at,
+    completedAt: run.completed_at,
+    failureCode: run.failure_code,
+    failureMessage: run.failure_message,
+    sourceHealth: sourceHealthFromRunMetadata(run.metadata),
+    teamsDeliveryAttemptStatus: latestTeamsAttempt?.status ?? null,
+  };
 }
 
 export const GET = withApiGuardrails(
@@ -555,6 +666,9 @@ export const GET = withApiGuardrails(
       countTasksSince(since24h, "updated_at"),
       loadLatestDailyBrief(),
     ]);
+    const dailyBriefRun = await loadLatestDailyBriefCanonicalStatus(
+      dailyBrief?.id,
+    );
 
     const sourceResult =
       "error" in rawSourceResult
@@ -617,9 +731,16 @@ export const GET = withApiGuardrails(
       typeof dailyPacket?.generatedAt === "string"
         ? dailyPacket.generatedAt
         : (dailyBrief?.created_at ?? null);
-    const dailySourceWarning = dailyPacket?.sourceCoverage?.find(
-      (source) => source.status === "warning" && source.warning,
-    )?.warning;
+    const dailySourceWarning = canonicalSourceWarning(
+      dailyBriefRun?.sourceHealth ?? [],
+    );
+    const dailyTeamsSent =
+      dailyBriefRun?.deliveryStatus === "sent" ||
+      dailyBriefRun?.teamsDeliveryAttemptStatus === "sent";
+    const dailyTeamsDisabled =
+      dailyBriefRun?.deliveryStatus === "disabled" ||
+      dailyBriefRun?.teamsDeliveryAttemptStatus === "disabled";
+    const dailyRunFailed = dailyBriefRun?.status?.startsWith("failed") ?? false;
 
     const items: ReadinessItem[] = [
       {
@@ -782,41 +903,61 @@ export const GET = withApiGuardrails(
         question: "Has the daily brief been updated?",
         answer: !dailyBrief
           ? "No. No executive brief exists yet."
-          : dailyBrief.sent_teams
-            ? "Yes. The latest brief was generated and sent to Teams."
-            : dailyBrief.workflow_status === "approved"
+          : !dailyBriefRun
+            ? "No. The latest packet is not linked to a canonical AI work run."
+            : dailyTeamsSent
+              ? "Yes. The latest brief was generated and sent to Teams through the AI Ops ledger."
+              : dailyTeamsDisabled
+                ? "No. The latest brief run exists, but Teams delivery is disabled."
+                : dailyBrief.workflow_status === "approved"
               ? "No. The latest brief was generated and approved, but has not been sent to Teams."
               : "No. The latest brief was generated as a draft, but has not been approved or sent.",
         level: !dailyBrief
           ? "blocked"
-          : dailyBrief.sent_teams
-            ? "ready"
-            : dailyBrief.workflow_status === "approved"
-              ? "attention"
+          : !dailyBriefRun || dailyRunFailed
+            ? "blocked"
+            : dailyTeamsSent
+              ? "ready"
               : "attention",
         checkedAt: generatedAt,
         metrics: [
           { label: "Brief date", value: dailyBrief?.recap_date ?? "Missing" },
           { label: "Generated", value: formatDate(dailyGeneratedAt) },
+          { label: "Run", value: dailyBriefRun?.status ?? "Missing" },
+          {
+            label: "Delivery",
+            value:
+              dailyBriefRun?.deliveryStatus ??
+              dailyBriefRun?.teamsDeliveryAttemptStatus ??
+              "Missing",
+          },
           { label: "Approved", value: formatDate(dailyBrief?.approved_at) },
           { label: "Items", value: formatCount(dailyItemCount) },
         ],
         blocker: !dailyBrief
           ? "No executive briefing row was found."
-          : dailyBrief.sent_teams
-            ? (dailySourceWarning ?? null)
-            : "The latest executive brief has not been sent to Teams.",
+          : !dailyBriefRun
+            ? "No canonical AI Ops run is linked to the latest executive briefing packet."
+            : dailyRunFailed
+              ? (dailyBriefRun.failureMessage ??
+                dailyBriefRun.failureCode ??
+                "The latest canonical Daily Brief run failed.")
+              : dailyTeamsSent
+                ? (dailySourceWarning ?? null)
+                : "The latest canonical Daily Brief run has not sent a Teams delivery attempt.",
         cause: !dailyBrief
           ? "The daily briefing job has not persisted a recap packet."
+          : !dailyBriefRun
+            ? "Daily Brief readiness now requires the packet artifact to have a canonical AI Ops run."
           : dailySourceWarning
-            ? `The brief was created, but source coverage reported: ${dailySourceWarning}`
-            : "Daily brief status comes from the persisted executive briefing packet and delivery flags.",
+            ? `The canonical AI Ops source-health snapshot reported: ${dailySourceWarning}`
+            : "Daily brief status comes from the canonical AI Ops run, source-health snapshot, and delivery attempt ledger.",
         prevention:
-          "Show generated, approved, and sent states together so a brief cannot look complete when delivery is still pending.",
+          "Show generated packet, canonical run, source health, and delivery attempt states together so a brief cannot look complete when delivery is still pending.",
         primaryAction: { label: "Open executive brief", href: "/executive" },
         runActions:
           dailyBrief &&
-          !dailyBrief.sent_teams &&
+          !dailyTeamsSent &&
           dailyBrief.workflow_status === "approved"
             ? [
                 {
