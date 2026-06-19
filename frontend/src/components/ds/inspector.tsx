@@ -62,7 +62,7 @@ export function InspectorSection({
       className={cn(
         "group",
         isPlain
-          ? "border-b border-border/60 last:border-b-0"
+          ? "pb-2"
           : "rounded-lg border border-border/70 bg-background shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
         className,
       )}
@@ -70,7 +70,7 @@ export function InspectorSection({
       <div
         className={cn(
           "flex items-center gap-2",
-          isPlain ? "min-h-9" : "min-h-11 px-3",
+          isPlain ? "min-h-8" : "min-h-11 px-3",
         )}
       >
         <CollapsibleTrigger className="flex min-w-0 flex-1 items-center gap-1.5 text-left text-sm font-medium text-foreground outline-none transition-colors hover:text-foreground/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
@@ -81,7 +81,7 @@ export function InspectorSection({
       </div>
       <CollapsibleContent
         className={cn(
-          isPlain ? "pb-3" : "border-t border-border/60 px-3 py-2.5",
+          isPlain ? "pt-1" : "border-t border-border/60 px-3 py-2.5",
           contentClassName,
         )}
       >
