@@ -25,6 +25,8 @@ import {
   fetchWithPolicy,
   type DependencyPolicy,
 } from "@/lib/guardrails/dependency";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { checkUrlEgress, redactSensitiveUrl } from "@/lib/net-policy";
 
 export interface FetchWithGuardrailsOptions extends RequestInit {
   /** x-request-id from the parent request — propagated to upstream service */
@@ -39,6 +41,13 @@ export interface FetchWithGuardrailsOptions extends RequestInit {
   retries?: number;
   /** Backoff between retries in ms. Defaults to 400. */
   backoffMs?: number;
+  /**
+   * SSRF egress: by default, requests to a literal private/loopback/link-local/
+   * reserved/cloud-metadata IP host are blocked and throw a GuardrailError.
+   * Set true ONLY for an intentional internal call. Cloud-metadata IPs are
+   * always blocked regardless of this flag.
+   */
+  allowPrivateHosts?: boolean;
 }
 
 /** Default policy — use for most external GET/read calls */
@@ -82,9 +91,29 @@ export async function fetchWithGuardrails(
     timeoutMs,
     retries,
     backoffMs,
+    allowPrivateHosts,
     headers: rawHeaders,
     ...restInit
   } = options;
+
+  // SSRF egress gate — refuse internal/metadata IP hosts before any network I/O.
+  // Fail loudly (never silently swallow); redact the URL so a token in it never
+  // leaks into the error/log.
+  const egress = checkUrlEgress(url, { allowPrivateHosts });
+  if (!egress.allowed) {
+    throw new GuardrailError({
+      code: "UPSTREAM_FAILURE",
+      where,
+      message: `Blocked SSRF-risk request to ${egress.reason} host (${egress.host})`,
+      details: {
+        dependency,
+        blocked_host: egress.host,
+        reason: egress.reason,
+        url: redactSensitiveUrl(String(url)),
+      },
+      status: 502,
+    });
+  }
 
   // Propagate request ID to the upstream service
   const headers = new Headers(rawHeaders as HeadersInit | undefined);
