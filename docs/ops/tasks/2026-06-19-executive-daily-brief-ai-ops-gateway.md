@@ -185,8 +185,8 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
       duplicate insert helpers.
 - [x] Preview route uses the shared ledger writer.
 - [x] Send route uses the shared ledger writer.
-- [ ] Admin test-send route uses the shared ledger writer or is retired.
-- [ ] AI tool path uses the shared ledger writer or is retired.
+- [x] Admin test-send route uses the shared ledger writer or is retired.
+- [x] AI tool path uses the shared ledger writer or is retired.
 
 ## Ledger Checklist
 
@@ -386,6 +386,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------- |
 | AI Ops focused lint   | `cd frontend && npx eslint src/lib/ai-ops/contracts.ts src/lib/ai-ops/ledger.ts src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts`                       | Passed  | Contract and ledger module lint cleanly.                                                           |
 | Route ledger lint     | `cd frontend && npx eslint src/lib/ai-ops/executive-daily-brief-ledger.ts src/app/api/executive/daily-brief/preview-teams/route.ts src/app/api/executive/daily-brief/send-teams/route.ts` | Passed  | Preview/send route ledger wiring lint cleanly.                                                     |
+| Bypass wrapper lint   | `cd frontend && npx eslint src/app/api/admin/owner-briefing/send-test/route.ts src/lib/ai/tools/executive-brief-tools.ts src/lib/ai-ops/executive-daily-brief-ledger.ts`                  | Passed  | Admin test-send and AI tool bypasses lint cleanly after ledger wrapping.                           |
 | Runner forced lint    | `cd frontend && npx eslint --no-ignore scripts/run-executive-daily-brief.ts`                                                                                                              | Passed  | Script is ignored by default ESLint config, so it was linted with `--no-ignore`.                   |
 | AI Ops focused tests  | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand`                                     | Passed  | 2 suites, 11 tests passed. Required fields and pre-write validation fail loudly.                   |
 | Runner no-write smoke | `cd frontend && npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:00:00.000Z`                                                                                              | Passed  | Kill switch off; script loaded and exited with `executive_daily_brief_disabled`, no send/write.    |
