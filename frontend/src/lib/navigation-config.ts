@@ -265,6 +265,14 @@ export const developerCompanyAdminTools: HeaderNavigationTool[] = [
     developerOnly: true,
   },
   {
+    name: "AI Work Runs",
+    path: "ai-work-runs",
+    requiresProject: false,
+    icon: Clock,
+    description: "Executive Daily Brief run ledger and evidence rows",
+    developerOnly: true,
+  },
+  {
     name: "Task Training",
     path: "task-training",
     requiresProject: false,
@@ -797,6 +805,14 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: CheckCircle,
     description: "Source sync, task, packet, and daily brief readiness",
+    adminOnly: true,
+  },
+  {
+    name: "AI Work Runs",
+    path: "/ai-work-runs",
+    requiresProject: false,
+    icon: Clock,
+    description: "Executive Daily Brief run ledger and evidence rows",
     adminOnly: true,
   },
   {
