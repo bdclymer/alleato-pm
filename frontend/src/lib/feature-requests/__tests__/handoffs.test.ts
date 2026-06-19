@@ -141,6 +141,7 @@ describe("feature request Claude Code handoffs", () => {
     });
 
     expect(handoff.path).toMatch(/^docs\/ops\/handoffs\/\d{4}-\d{2}-\d{2}-S99-dedicated-issue-register\.md$/);
+    expect(handoff.storage).toBe("file");
     const markdown = await readFile(path.join(workspaceRoot, handoff.path), "utf8");
     expect(markdown).toContain("# Claude Code Handoff: Dedicated Issue Register");
   });
@@ -187,6 +188,27 @@ describe("feature request Claude Code handoffs", () => {
     await expect(readFile(path.join(workspaceRoot, handoff.path), "utf8")).resolves.toContain(
       "Undefined env guard",
     );
+  });
+
+  it("falls back to an inline artifact when no workspace root is available", async () => {
+    const runtimeRoot = await mkdtemp(path.join(os.tmpdir(), "var-task-frontend-"));
+    tempRoots.push(runtimeRoot);
+    process.chdir(runtimeRoot);
+    delete process.env.ALLEATO_WORKSPACE_ROOT;
+    delete process.env.CODEX_WORKSPACE_ROOT;
+    delete process.env.AIS_HANDOFF_ROOT;
+
+    const handoff = await writeClaudeCodeHandoffFile({
+      request: requestFixture({ title: "Serverless runtime proof" }),
+      plan: planFixture(),
+      sessionLabel: "SAIS",
+    });
+
+    expect(handoff.storage).toBe("inline");
+    expect(handoff.path).toMatch(
+      /^ais-inline:\/\/feature-requests\/c31c6ca5-138c-40ff-a5e9-7bb4364ad5fa\/handoffs\/\d{4}-\d{2}-\d{2}-SAIS-serverless-runtime-proof\.md$/,
+    );
+    expect(handoff.markdown).toContain("# Claude Code Handoff: Serverless runtime proof");
   });
 
   it("supports a custom handoff root inside the workspace", async () => {

@@ -251,6 +251,8 @@ export function createFeatureRequestTools(
           success: true,
           requestId: input.requestId,
           handoffPath: handoff.handoffPath,
+          handoffStorage: handoff.storage,
+          handoffMarkdown: handoff.storage === "inline" ? handoff.markdown : null,
           readyForBuild: handoff.request.ready_for_build,
           blockedMessage: handoff.blockedMessage,
           widget: buildFeatureRequestPacketWidget({

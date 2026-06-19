@@ -62,7 +62,7 @@ function findWorkspaceRoot(startDirectory: string): string | null {
   }
 }
 
-function resolveWorkspaceRoot(explicitRoot?: string | null): string {
+function resolveWorkspaceRoot(explicitRoot?: string | null): string | null {
   const configuredRoot =
     configuredPathValue(explicitRoot) ||
     configuredPathValue(process.env.ALLEATO_WORKSPACE_ROOT) ||
@@ -71,16 +71,6 @@ function resolveWorkspaceRoot(explicitRoot?: string | null): string {
   const root = configuredRoot
     ? path.resolve(configuredRoot)
     : findWorkspaceRoot(process.cwd());
-
-  if (!root) {
-    throw new Error(
-      [
-        "Failed to resolve workspace root for Claude Code handoff generation.",
-        `Runtime cwd: ${process.cwd()}.`,
-        "Set ALLEATO_WORKSPACE_ROOT to the alleato-pm repo root or call the writer with workspaceRoot.",
-      ].join(" "),
-    );
-  }
 
   return root;
 }
@@ -91,6 +81,9 @@ function resolveHandoffPaths(params: {
   handoffRoot?: string | null;
 }) {
   const workspaceRoot = resolveWorkspaceRoot(params.workspaceRoot);
+  if (!workspaceRoot) {
+    return null;
+  }
   const configuredHandoffRoot =
     configuredPathValue(params.handoffRoot) ||
     configuredPathValue(process.env.AIS_HANDOFF_ROOT) ||
@@ -108,6 +101,10 @@ function resolveHandoffPaths(params: {
   }
 
   return { absolutePath, relativePath };
+}
+
+function inlineHandoffPath(params: { requestId: string; fileName: string }) {
+  return `ais-inline://feature-requests/${params.requestId}/handoffs/${params.fileName}`;
 }
 
 export function buildClaudeCodeHandoffMarkdown(params: {
@@ -198,16 +195,29 @@ export async function writeClaudeCodeHandoffFile(params: {
   markdown: string;
   validationStatus: ExecutionHandoffRow["validation_status"];
   validationErrors: string[];
+  storage: "file" | "inline";
 }> {
   const built = buildClaudeCodeHandoffMarkdown(params);
   const today = new Date().toISOString().slice(0, 10);
   const session = (params.sessionLabel ?? "SAIS").replace(/[^A-Za-z0-9]/g, "") || "SAIS";
   const fileName = `${today}-${session}-${slugify(params.request.title)}.md`;
-  const { absolutePath, relativePath } = resolveHandoffPaths({
+  const resolvedPath = resolveHandoffPaths({
     fileName,
     workspaceRoot: params.workspaceRoot,
     handoffRoot: params.handoffRoot,
   });
+  if (!resolvedPath) {
+    return {
+      path: inlineHandoffPath({ requestId: params.request.id, fileName }),
+      title: `Claude Code Handoff: ${params.request.title}`,
+      markdown: built.markdown,
+      validationStatus: built.validationStatus,
+      validationErrors: built.validationErrors,
+      storage: "inline",
+    };
+  }
+
+  const { absolutePath, relativePath } = resolvedPath;
   try {
     await mkdir(path.dirname(absolutePath), { recursive: true });
     await writeFile(absolutePath, built.markdown, "utf8");
@@ -228,5 +238,6 @@ export async function writeClaudeCodeHandoffFile(params: {
     markdown: built.markdown,
     validationStatus: built.validationStatus,
     validationErrors: built.validationErrors,
+    storage: "file",
   };
 }

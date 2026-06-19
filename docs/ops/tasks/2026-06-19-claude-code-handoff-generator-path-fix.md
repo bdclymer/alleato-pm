@@ -8,10 +8,10 @@ Related Handoff: Not created yet
 
 ## Objective
 
-Fix the AIS feature-request Claude Code/Codex handoff generator so generated
-handoff files resolve to the repo handoff directory deterministically, fail
-loudly on filesystem problems, and do not record misleading handoff metadata
-when file generation fails.
+Fix the AIS feature-request Claude Code/Codex handoff generator so local runs
+write generated handoff files to the repo handoff directory deterministically,
+serverless runs without a repo checkout create an inline handoff artifact, and
+filesystem failures still fail loudly without recording misleading metadata.
 
 ## Non-Negotiable Done Rule
 
@@ -69,15 +69,17 @@ filled in. If any item cannot be completed, change `Status` to
 
 | Check                 | Command / artifact | Result | Notes |
 | --------------------- | ------------------ | ------ | ----- |
-| Static/type/lint      | `cd frontend && npx eslint src/lib/feature-requests/handoffs.ts src/lib/feature-requests/__tests__/handoffs.test.ts` | Passed | Focused lint clean for touched feature-request handoff files. |
-| Targeted tests        | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/feature-requests/__tests__/handoffs.test.ts --runInBand` | Passed | 7 tests passed for markdown, path resolution, repo-root override, literal undefined env values, and write failure behavior. |
+| Static/type/lint      | `cd frontend && npx eslint src/lib/feature-requests/handoffs.ts src/lib/feature-requests/server.ts src/lib/ai/tools/feature-request-tools.ts src/lib/feature-requests/__tests__/handoffs.test.ts` | Passed | Focused lint clean for touched feature-request handoff files. |
+| Targeted tests        | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/feature-requests/__tests__/handoffs.test.ts --runInBand` | Passed | 8 tests passed for markdown, path resolution, repo-root override, serverless inline fallback, literal undefined env values, and write failure behavior. |
 | Browser/user-flow     | Not run | Not applicable | Server-side generator bug with no UI rendering change. |
 | DB/provider read-back | Linear connector `_save_issue` | Passed | Backfilled AAI-553 after issue-create tool became available; no DB/schema/provider changes were required for this fix. |
-| End-to-end proof      | Targeted unit writes to temp handoff directory | Passed | Proves generated markdown lands under the configured handoff root, does not drift under bad env strings, and write failures throw actionable errors. |
+| End-to-end proof      | Targeted unit writes to temp handoff directory and no-root runtime cwd | Passed | Proves generated markdown lands under the configured handoff root locally, falls back to `ais-inline://...` in serverless, does not drift under bad env strings, and write failures throw actionable errors. |
 
 ## Files Changed
 
 - `frontend/src/lib/feature-requests/handoffs.ts` - deterministic repo-root/handoff directory resolution and actionable write errors.
+- `frontend/src/lib/feature-requests/server.ts` - stores inline handoff markdown in the feature-request event when no repo filesystem exists.
+- `frontend/src/lib/ai/tools/feature-request-tools.ts` - returns handoff storage mode and inline markdown to the AI tool caller.
 - `frontend/src/lib/feature-requests/__tests__/handoffs.test.ts` - regression coverage for path handling and write failures.
 - `docs/ops/tasks/2026-06-19-claude-code-handoff-generator-path-fix.md` - task checklist and evidence ledger.
 

@@ -379,7 +379,14 @@ export async function generateClaudeCodeHandoff(params: {
   requestId: string;
   generatedBy?: string | null;
   sessionLabel?: string;
-}): Promise<{ request: FeatureRequestRow; plan: ImplementationPlanRow | null; handoffPath: string; blockedMessage: string | null }> {
+}): Promise<{
+  request: FeatureRequestRow;
+  plan: ImplementationPlanRow | null;
+  handoffPath: string;
+  storage: "file" | "inline";
+  markdown: string;
+  blockedMessage: string | null;
+}> {
   const supabase = createServiceClient();
   const detail = await getFeatureRequestDetail(params.requestId);
   if (!detail) {
@@ -424,8 +431,10 @@ export async function generateClaudeCodeHandoff(params: {
     featureRequestId: params.requestId,
     eventType: "handoff_generated",
     title: "Claude Code handoff generated",
-    body: handoff.path,
+    body: handoff.storage === "inline" ? handoff.markdown : handoff.path,
     metadata: {
+      handoff_path: handoff.path,
+      handoff_storage: handoff.storage,
       validation_status: handoff.validationStatus,
       validation_errors: handoff.validationErrors,
     },
@@ -438,6 +447,8 @@ export async function generateClaudeCodeHandoff(params: {
     request: rescored,
     plan: detail.latestPlan,
     handoffPath: handoff.path,
+    storage: handoff.storage,
+    markdown: handoff.markdown,
     blockedMessage: readiness.blockedMessage,
   };
 }
