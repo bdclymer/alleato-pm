@@ -422,11 +422,11 @@ Goal: approved skills affect assistant behavior selectively and visibly.
 
 ### Evals
 
-- [ ] Add eval cases for each seeded skill.
+- [x] Add eval cases for each seeded skill.
 - [x] Verify correct skill selection.
 - [x] Verify irrelevant skills are not injected.
 - [x] Verify source evidence still outranks skill instructions.
-- [ ] Verify high-risk skill only drafts/recommends.
+- [x] Verify high-risk skill only drafts/recommends.
 
 ## Phase 7A: AI Agent Registry
 

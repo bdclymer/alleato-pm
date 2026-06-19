@@ -311,6 +311,40 @@ describe("skill-injection-service", () => {
     expect(result.usage).toBeNull();
   });
 
+  it("keeps high-risk skills bounded to drafting and review authority", async () => {
+    listActiveVisibleSkillsMock.mockResolvedValue([
+      skill({
+        id: "66666666-6666-4666-8666-666666666666",
+        title: "Draft RFI for design conflicts",
+        slug: "draft-rfi-for-design-conflicts",
+        summary: "Draft RFIs from drawing and source evidence for PM review.",
+        instructions:
+          "Draft the RFI and recommend review points, but do not create or send the RFI without explicit confirmation.",
+        category: "rfi",
+        scopeType: "company",
+        projectId: null,
+        riskLevel: "high",
+        usageCount: 0,
+      }),
+    ]);
+
+    const result = await buildSkillInjectionContext({
+      userId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      messageText: "Use our RFI skill to draft an RFI for this design conflict.",
+      selectedProjectId: 1009,
+    });
+
+    expect(result.usage?.skills[0]).toMatchObject({
+      category: "rfi",
+      riskLevel: "high",
+    });
+    expect(result.block).toContain("Draft RFI for design conflicts");
+    expect(result.block).toContain("(v2, rfi, high risk)");
+    expect(result.block).toContain(
+      "High-risk skills may guide drafting or review, but they do not authorize irreversible writes without normal confirmation.",
+    );
+  });
+
   it("records one usage event for each selected skill", async () => {
     recordSkillUsageMock.mockResolvedValue({ id: "usage-1" } as never);
 
