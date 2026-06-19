@@ -3818,7 +3818,12 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         );
       }
 
-      waitUntil(runPostResponseTasks(args.sessionId, args.user.id));
+      waitUntil(
+        runPostResponseTasks(args.sessionId, args.user.id, {
+          selectedProjectId: args.selectedProjectId ?? null,
+          responseMessageId: responseMessage.id,
+        }),
+      );
     },
   });
 

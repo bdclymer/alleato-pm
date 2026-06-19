@@ -24,6 +24,7 @@ import {
   buildMemoryContextPayload,
 } from "@/lib/ai/services/ai-memory-service";
 import { extractAndStoreMemories } from "@/lib/ai/services/memory-extraction";
+import { proposeHumanGatedLearningCandidates } from "@/lib/ai/learning-proposals/human-gated-learning";
 import {
   buildAgentLearningContextBlock,
   getRelevantAgentLearnings,
@@ -671,6 +672,10 @@ export async function streamBotResponse(options: BotCoreOptions) {
 export async function runPostResponseTasks(
   sessionId: string,
   userId: string,
+  options: {
+    selectedProjectId?: number | null;
+    responseMessageId?: string | null;
+  } = {},
 ): Promise<void> {
   try {
     await generateConversationMemory(sessionId, userId);
@@ -682,6 +687,20 @@ export async function runPostResponseTasks(
     await extractAndStoreMemories(sessionId, userId);
   } catch (e) {
     console.error("[bot-core][memory-extraction] failed:", e);
+  }
+
+  try {
+    const result = await proposeHumanGatedLearningCandidates({
+      sessionId,
+      userId,
+      selectedProjectId: options.selectedProjectId ?? null,
+      responseMessageId: options.responseMessageId ?? null,
+    });
+    if (result.status === "failed") {
+      console.error("[bot-core][human-gated-learning] failed:", result.error);
+    }
+  } catch (e) {
+    console.error("[bot-core][human-gated-learning] threw:", e);
   }
 }
 
