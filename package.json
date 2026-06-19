@@ -132,6 +132,7 @@
     "rag:verify:latest-briefing": "node scripts/verify/verify_ai_assistant_latest_briefing_shape.mjs",
     "rag:verify:executive-daily-brief": "node scripts/verify/verify_executive_daily_brief_fresh.mjs",
     "rag:verify:executive-daily-brief-gateway": "node scripts/verify/verify_executive_daily_brief_gateway.mjs",
+    "rag:verify:executive-daily-brief-ledger-integration": "cd frontend && npx tsx scripts/verify-executive-daily-brief-ledger-integration.ts",
     "rag:verify:admin-comms": "node scripts/verify/verify_ai_admin_comms_guardrails.mjs",
     "rag:verify:risk-routing": "python3 scripts/verify/verify_ai_assistant_risk_routing.py",
     "rag:verify:risk-quality": "python3 scripts/verify/verify_ai_assistant_risk_quality.py",
