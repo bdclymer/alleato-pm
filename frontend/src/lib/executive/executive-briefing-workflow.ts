@@ -10,6 +10,7 @@ import {
   type DailyBriefPacket as BrandonDailyUpdatePacket,
   type DailyBriefRefreshRecord,
 } from "@/lib/executive/daily-brief";
+import { withBriefItemSourceRefs } from "@/lib/ai-ops/executive-daily-brief-evidence";
 
 type DailyRecapRow = Database["public"]["Tables"]["daily_recaps"]["Row"];
 type DailyRecapInsert = Database["public"]["Tables"]["daily_recaps"]["Insert"];
@@ -243,6 +244,30 @@ function withDailyBriefVersionMetadata(
     audiencePreset: "brandon",
     briefVersion: nextVersion,
     refreshHistory: history.slice(-20),
+  };
+}
+
+function withPacketSourceRefs(
+  packet: BrandonDailyUpdatePacket,
+  recapDate: string,
+  briefId?: string,
+): BrandonDailyUpdatePacket {
+  let itemIndex = 0;
+  const attach = (item: BrandonBriefItem) =>
+    withBriefItemSourceRefs({
+      briefId,
+      recapDate,
+      item,
+      itemIndex: itemIndex++,
+    });
+
+  return {
+    ...packet,
+    sections: {
+      needsBrandon: packet.sections.needsBrandon.map(attach),
+      waitingOnOthers: packet.sections.waitingOnOthers.map(attach),
+      importantUpdates: packet.sections.importantUpdates.map(attach),
+    },
   };
 }
 
@@ -722,7 +747,11 @@ export async function regenerateExecutiveBriefingDraft(options?: {
   const dateRange = getDateRange(windowDays);
   const existingDraft = await loadExistingDraft(dateRange.recapDate);
   const previousPacket = parseStoredPacket(existingDraft?.briefing_packet ?? null);
-  const versionedPacket = withDailyBriefVersionMetadata(packet, previousPacket);
+  const versionedPacket = withPacketSourceRefs(
+    withDailyBriefVersionMetadata(packet, previousPacket),
+    dateRange.recapDate,
+    existingDraft?.id,
+  );
   const recapText = toSupabaseText(buildRecapText(versionedPacket)) ?? "";
 
   const row: DailyRecapInsert = {

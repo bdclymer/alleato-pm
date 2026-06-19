@@ -28,6 +28,7 @@ function draftWithItem(
       },
     ],
     project: "Portfolio",
+    projectInternalId: 760,
     ...overrides,
   };
 
@@ -106,21 +107,48 @@ describe("Executive Daily Brief evidence policy", () => {
         sourceFamily: "document",
         sourceId: "co-report-1",
         sourceTitle: "Acumatica ERP - Change Order Report",
+        internalHref: "/760/intelligence/sources/co-report-1",
         excerpt: "9 projects with on-hold COs - $400K total pending revenue.",
       },
       {
         sourceFamily: "meeting",
         sourceId: "meeting-1",
         sourceTitle: "Fireflies Transcript - Ops Check-in",
+        internalHref: "/760/meetings/meeting-1",
         excerpt: "PM owns task closeout before Friday.",
       },
       {
         sourceFamily: "teams",
         sourceId: "teams-thread-1",
         sourceTitle: "Teams Thread - Closeout",
+        internalHref: "/760/intelligence/sources/teams-thread-1",
         excerpt: "Closeout timing was escalated in Teams.",
       },
     ]);
+  });
+
+  it("prefers packet-owned sourceRefs when present", () => {
+    const draft = draftWithItem({
+      sourceRefs: [
+        {
+          sourceFamily: "email",
+          sourceId: "packet-ref-1",
+          sourceTitle: "Packet-owned source ref",
+          internalHref: "/760/intelligence/sources/packet-ref-1",
+          occurredAt: "2026-06-19T00:00:00.000Z",
+          excerpt: "Packet already carries structured evidence.",
+          confidence: "high",
+          projectId: 760,
+          projectLabel: "Portfolio",
+          metadata: { recapDate: "2026-06-19" },
+        },
+      ],
+    });
+
+    expect(evidenceRefsFromDraft(draft)).toEqual(
+      draft.packet.sections.needsBrandon[0].sourceRefs,
+    );
+    expect(() => assertExecutiveBriefingDraftEvidence(draft)).not.toThrow();
   });
 
   it("fails when a surfaced claim has no citation", () => {

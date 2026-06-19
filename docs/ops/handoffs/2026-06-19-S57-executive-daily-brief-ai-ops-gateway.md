@@ -43,6 +43,9 @@
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/__tests__/workflow-pack.test.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/executive-daily-brief-evidence.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/executive/brandon-daily-update.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/executive/executive-briefing-workflow.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/executive/__tests__/executive-briefing-workflow.test.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/scripts/__tests__/run-executive-daily-brief.test.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/__tests__/source-adapters.test.ts`
@@ -144,6 +147,11 @@
    - Pass: backend legacy daily digest scheduler is default-off behind `LEGACY_DAILY_DIGEST_ENABLED=false` unless explicitly enabled; standalone `backend/scripts/generate_daily_recap.py` exits 2 by default and points operators to the AI Ops gateway runner.
    - Pass: `python -m py_compile backend/src/services/scheduler.py backend/scripts/generate_daily_recap.py`; `cd frontend && npx eslint --no-ignore scripts/regenerate-executive-briefing.ts scripts/preview-brandon-teams-message.ts`; `npm run rag:verify:executive-daily-brief-gateway`.
    - Pass: `python backend/scripts/generate_daily_recap.py` default-block proof exited 2 with the gateway message.
+   - Pass: regenerated Daily Brief packets now persist item-level `sourceRefs` into `daily_recaps.briefing_packet`, using the same canonical evidence-ref shape as the AI Ops ledger.
+   - Pass: `sourceRefs` now include source family, source id, title, URL/internal route, excerpt, occurred-at, confidence, and project linkage when that source/project data exists.
+   - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts --runInBand` passed 1 suite / 4 tests.
+   - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/executive/__tests__/executive-briefing-workflow.test.ts --runInBand` passed 1 suite / 4 tests.
+   - Pass: `cd frontend && npx eslint --no-ignore src/lib/ai-ops/executive-daily-brief-evidence.ts src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts src/lib/executive/brandon-daily-update.ts src/lib/executive/executive-briefing-workflow.ts src/lib/executive/__tests__/executive-briefing-workflow.test.ts`.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
@@ -178,6 +186,9 @@
    - `frontend/src/lib/ai-ops/__tests__/workflow-pack.test.ts`
    - `frontend/src/lib/ai-ops/executive-daily-brief-evidence.ts`
    - `frontend/src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts`
+   - `frontend/src/lib/executive/brandon-daily-update.ts`
+   - `frontend/src/lib/executive/executive-briefing-workflow.ts`
+   - `frontend/src/lib/executive/__tests__/executive-briefing-workflow.test.ts`
    - `frontend/scripts/__tests__/run-executive-daily-brief.test.ts`
    - `frontend/src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts`
    - `frontend/src/lib/ai-ops/__tests__/source-adapters.test.ts`
@@ -214,9 +225,9 @@
    - Source adapter wrappers now produce visible source-fetch run steps and a source-health report artifact; missing required adapters fail loudly as failed-retryable run steps without silently suppressing the generated packet.
    - The old cron Teams delivery path no longer sends directly; it delegates to the canonical gateway and the old direct sender fails loudly if imported.
    - Manual email sends from the executive action now create canonical AI Ops runs, packet/artifact evidence, and per-recipient delivery attempts for both successful and provider-failed Resend outcomes.
-   - `/ai-work-runs` now shows retryability/next-action guidance and generated-packet evidence drilldown; current live packet evidence still lacks some openable source URLs, so structured source-ref completeness remains open.
+   - `/ai-work-runs` now shows retryability/next-action guidance and generated-packet evidence drilldown; newly regenerated packets now persist item-level `sourceRefs`, but live end-to-end proof must still regenerate and inspect a fresh packet after this source-ref persistence change.
    - Duplicate frontend Daily Brief scripts are ledger-backed wrappers or no-send previews, and backend legacy digest paths are default-disabled with loud operator messaging.
-10) Recommended next action (one line): Close structured source-ref completeness, real Teams delivery when safe/enabled, and remaining source coverage/readiness legacy gaps.
+10) Recommended next action (one line): Regenerate one live no-send preview after source-ref persistence, inspect packet `sourceRefs`, then close remaining source coverage/readiness legacy gaps and real Teams delivery when safe/enabled.
 11) Handoff file path: `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
 12) Migration ledger evidence: `npm run db:migrations:verify-applied -- supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql` passed for version `20260619183000`.
 <!-- markdownlint-enable MD029 MD034 -->
@@ -238,6 +249,7 @@
   - `005963be-595e-4036-9a81-d30ff619c76a` recorded source adapter run-step proof, live run `0c3b8979-3a31-4aab-98d0-a975ab845e21`, commit f16030b9f, and remaining gaps.
   - `d8a88aa5-7358-4603-8e3d-58e390dbcca1` recorded legacy Teams cron path retirement, focused lint/tests, and remaining gaps.
   - `5d26abde-09b9-4e6e-a044-45ffa72c12b5` recorded email delivery action ledger wrapping, focused lint/tests, and remaining gaps.
+  - `17e47a71-797e-43c7-a763-8e3181750dda` recorded packet-level `sourceRefs` persistence, focused lint/tests, and live regenerated-packet proof remaining.
   - `e5b1568a-90ea-4912-84bd-aed849ac6b3a` recorded admin UI source drilldown, retry guidance, browser proof, and remaining structured source-ref gaps.
   - `0647ed44-013a-47ce-b738-979c7b285444` recorded duplicate script and backend legacy digest disposition, focused checks, and remaining source coverage/readiness gaps.
 - Completion/blocker comment: None yet.

@@ -21,6 +21,7 @@ type BriefItemLike = {
   project?: string;
   projectInternalId?: number | null;
   citations: BriefCitationLike[];
+  sourceRefs?: EvidenceRef[];
 };
 
 export type ExecutiveBriefingDraftEvidenceLike = {
@@ -57,6 +58,95 @@ function sourceFamily(value: string): EvidenceRef["sourceFamily"] {
   return "project_intelligence";
 }
 
+function internalHrefForCitation(
+  citation: BriefCitationLike,
+  item: BriefItemLike,
+) {
+  const sourceId = citation.sourceId ?? item.sourceId;
+  const projectId = item.projectInternalId;
+  if (!sourceId || !projectId) return null;
+
+  const encodedSourceId = encodeURIComponent(sourceId);
+  const family = sourceFamily(citation.source);
+  if (family === "meeting" || family === "fireflies") {
+    return `/${projectId}/meetings/${encodedSourceId}`;
+  }
+
+  if (
+    family === "email" ||
+    family === "outlook" ||
+    family === "teams" ||
+    family === "document" ||
+    family === "rag"
+  ) {
+    return `/${projectId}/intelligence/sources/${encodedSourceId}`;
+  }
+
+  return null;
+}
+
+export function evidenceRefsForBriefItem({
+  briefId,
+  recapDate,
+  item,
+  itemIndex,
+}: {
+  briefId?: string;
+  recapDate: string;
+  item: BriefItemLike;
+  itemIndex: number;
+}): EvidenceRef[] {
+  return item.citations.map((citation, citationIndex) => ({
+    sourceFamily: sourceFamily(citation.source),
+    sourceId:
+      citation.sourceId ??
+      item.sourceId ??
+      citation.sourceUrl ??
+      item.sourceUrl ??
+      `${briefId ?? "pending-brief"}:${itemIndex + 1}:${citationIndex + 1}`,
+    sourceTitle: citation.sourceDetail || item.sourceDetail || item.title,
+    sourceUrl: citation.sourceUrl ?? item.sourceUrl ?? null,
+    internalHref: internalHrefForCitation(citation, item),
+    occurredAt: toIsoOrNull(citation.date),
+    excerpt:
+      citation.evidence ??
+      item.evidence ??
+      item.evidenceFacts?.[0] ??
+      item.summary,
+    confidence: "unknown",
+    projectId: item.projectInternalId ?? null,
+    projectLabel: item.project,
+    metadata: {
+      briefId: briefId ?? null,
+      recapDate,
+      itemTitle: item.title,
+      citationIndex,
+    },
+  }));
+}
+
+export function withBriefItemSourceRefs<T extends BriefItemLike>({
+  briefId,
+  recapDate,
+  item,
+  itemIndex,
+}: {
+  briefId?: string;
+  recapDate: string;
+  item: T;
+  itemIndex: number;
+}): T {
+  return {
+    ...item,
+    sourceRefs: evidenceRefsForBriefItem({
+      briefId,
+      recapDate,
+      item,
+      itemIndex,
+    }),
+  };
+}
+
 function draftSectionEntries(draft: ExecutiveBriefingDraftEvidenceLike) {
   return (
     [
@@ -73,30 +163,14 @@ export function evidenceRefsFromDraft(
   draft: ExecutiveBriefingDraftEvidenceLike,
 ): EvidenceRef[] {
   return draftSectionEntries(draft).flatMap(({ item, index }) =>
-    item.citations.map((citation, citationIndex) => ({
-      sourceFamily: sourceFamily(citation.source),
-      sourceId:
-        citation.sourceId ??
-        item.sourceId ??
-        `${draft.id}:${index + 1}:${citationIndex + 1}`,
-      sourceTitle: citation.sourceDetail || item.sourceDetail || item.title,
-      sourceUrl: citation.sourceUrl ?? item.sourceUrl ?? null,
-      occurredAt: toIsoOrNull(citation.date),
-      excerpt:
-        citation.evidence ??
-        item.evidence ??
-        item.evidenceFacts?.[0] ??
-        item.summary,
-      confidence: "unknown",
-      projectId: item.projectInternalId ?? null,
-      projectLabel: item.project,
-      metadata: {
-        briefId: draft.id,
-        recapDate: draft.recapDate,
-        itemTitle: item.title,
-        citationIndex,
-      },
-    })),
+    Array.isArray(item.sourceRefs) && item.sourceRefs.length > 0
+      ? item.sourceRefs
+      : evidenceRefsForBriefItem({
+          briefId: draft.id,
+          recapDate: draft.recapDate,
+          item,
+          itemIndex: index,
+        }),
   );
 }
 

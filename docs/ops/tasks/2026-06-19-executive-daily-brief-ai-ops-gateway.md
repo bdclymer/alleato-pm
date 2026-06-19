@@ -261,8 +261,8 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 
 ## Evidence-Linked Packet Checklist
 
-- [ ] Packet schema includes structured `sourceRefs` for every surfaced claim.
-- [ ] `sourceRefs` include source family, id, title, URL or internal route,
+- [x] Packet schema includes structured `sourceRefs` for every surfaced claim.
+- [x] `sourceRefs` include source family, id, title, URL or internal route,
       excerpt, occurred-at, confidence, and project linkage.
 - [x] Every `needsBrandon` item has at least one source ref.
 - [x] Every `waitingOnOthers` item has at least one source ref.
@@ -403,6 +403,8 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 | Workflow pack tests   | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts --runInBand` | Passed | 3 suites, 22 tests passed. Tests prove source adapter health states, workflow pack validation, policy channel filtering, forbidden tool hiding, and disabled delivery send-tool hiding. |
 | Evidence policy lint  | `cd frontend && npx eslint src/lib/ai-ops/executive-daily-brief-evidence.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts` | Passed | Evidence-policy module, run-ledger integration, and source-ref guardrail tests lint cleanly. |
 | Evidence policy tests | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand` | Passed | 3 suites, 17 tests passed. Tests prove all surfaced sections require structured citation evidence and missing/malformed evidence fails before ledger writes. |
+| Packet sourceRefs lint | `cd frontend && npx eslint --no-ignore src/lib/ai-ops/executive-daily-brief-evidence.ts src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts src/lib/executive/brandon-daily-update.ts src/lib/executive/executive-briefing-workflow.ts src/lib/executive/__tests__/executive-briefing-workflow.test.ts` | Passed | Packet source-ref type, evidence builder, workflow persistence, and focused tests lint cleanly. |
+| Packet sourceRefs tests | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts --runInBand`; `cd frontend && npm run test:unit -- --runTestsByPath src/lib/executive/__tests__/executive-briefing-workflow.test.ts --runInBand` | Passed | 2 suites, 8 tests passed. Tests prove source refs include source family, id, title, internal routes, excerpts, occurred-at, confidence/project linkage, and regenerated packets persist item-level `sourceRefs` into `daily_recaps.briefing_packet`. |
 | Gateway guardrail rerun | `npm run rag:verify:executive-daily-brief-gateway` | Passed | Raw app-route generation bypass guard still passes after evidence-policy extraction. |
 | Scheduled runner lint | `cd frontend && npx eslint --no-ignore scripts/run-executive-daily-brief.ts scripts/__tests__/run-executive-daily-brief.test.ts` | Passed | Scheduled runner and node test lint cleanly after preserving explicit runtime env over `.env.local`. |
 | Scheduled runner tests | `cd frontend && npx tsx --test scripts/__tests__/run-executive-daily-brief.test.ts` | Passed | 3 node tests passed for delivery projection, partial recipient projection, and scheduled source-ref extraction. |

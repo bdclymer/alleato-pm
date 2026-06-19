@@ -20,6 +20,7 @@ import {
   type OwnerBriefingCardItem,
   type OwnerBriefingProject,
 } from "@/lib/executive/owner-briefing-builder";
+import type { EvidenceRef } from "@/lib/ai-ops/contracts";
 
 type BriefTone = "neutral" | "good" | "watch" | "risk";
 type BriefSource = "Email" | "Teams" | "Meeting" | "Document";
@@ -105,6 +106,8 @@ export type BrandonBriefItem = {
   date: string;
   // Full citation list. Always at least one entry; multiple when an item is corroborated across sources.
   citations: BriefCitation[];
+  // Canonical AI Ops evidence refs persisted with the packet for claim-level traceability.
+  sourceRefs?: EvidenceRef[];
   project: string;
   // Internal database project ID used for routing — NOT displayed to users.
   projectInternalId?: number | null;

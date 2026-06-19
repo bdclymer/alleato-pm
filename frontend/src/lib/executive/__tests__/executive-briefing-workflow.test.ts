@@ -308,6 +308,7 @@ describe("executive briefing workflow", () => {
               },
             ],
             project: "60 Alleato Finance",
+            projectInternalId: 760,
             recommendedAction: "Confirm today.",
           },
         ],
@@ -398,6 +399,29 @@ describe("executive briefing workflow", () => {
       .briefing_packet;
     const savedRecapText = (upsertedRows[0] as { recap_text: string })
       .recap_text;
+    const savedSourceRefs = (
+      savedPacket as {
+        sections: {
+          needsBrandon: Array<{
+            sourceRefs?: Array<{
+              sourceFamily: string;
+              sourceId: string;
+              internalHref?: string | null;
+              excerpt: string;
+            }>;
+          }>;
+        };
+      }
+    ).sections.needsBrandon[0].sourceRefs;
+
+    expect(savedSourceRefs).toMatchObject([
+      {
+        sourceFamily: "email",
+        sourceId: "source-1",
+        internalHref: "/760/intelligence/sources/source-1",
+        excerpt: "Evidence",
+      },
+    ]);
     expect(JSON.stringify(savedPacket)).not.toContain("\\u0000");
     expect(JSON.stringify(savedPacket)).not.toContain("\u0000");
     expect(JSON.stringify(savedPacket)).not.toContain("\\ud800");
