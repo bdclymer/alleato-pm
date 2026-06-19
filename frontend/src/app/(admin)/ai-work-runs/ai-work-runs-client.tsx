@@ -4,6 +4,7 @@ import * as React from "react";
 import {
   ChevronDown,
   ChevronRight,
+  ExternalLink,
   RefreshCw,
 } from "lucide-react";
 
@@ -80,6 +81,51 @@ function jsonEntries(value: Record<string, unknown>): Array<[string, string]> {
     ]);
 }
 
+function sourceHref(source: AiWorkRunSourceView): string | null {
+  return source.internalHref ?? source.sourceUrl ?? null;
+}
+
+function runGuidance(run: AiWorkRunView): Array<[string, string]> {
+  const retryableAttempts = run.deliveryAttempts.filter((attempt) => attempt.retryable);
+  const failedRetryableSteps = run.steps.filter(
+    (step) => step.status === "failed_retryable",
+  );
+  const missingAdapterStep = run.steps.find(
+    (step) => step.failureCode === "SOURCE_ADAPTER_MISSING",
+  );
+
+  const retryability =
+    retryableAttempts.length > 0 || failedRetryableSteps.length > 0
+      ? "retryable"
+      : run.status === "failed_retryable"
+        ? "retryable"
+        : "not retryable";
+
+  let nextAction = "No action required.";
+  if (run.deliveryStatus === "disabled") {
+    nextAction = "Enable delivery configuration before retrying delivery.";
+  } else if (missingAdapterStep) {
+    nextAction =
+      "Implement or configure the missing source adapter, then regenerate the brief.";
+  } else if (retryableAttempts.length > 0) {
+    nextAction =
+      "Resolve the provider or recipient failure, then retry the delivery path.";
+  } else if (failedRetryableSteps.length > 0 || run.status === "failed_retryable") {
+    nextAction = "Resolve the failed retryable step, then rerun this workflow.";
+  } else if (run.status === "partial_success") {
+    nextAction = "Review failed recipients or source steps before treating the run as complete.";
+  } else if (run.status === "skipped") {
+    nextAction = "No retry needed unless the schedule or trigger conditions were wrong.";
+  } else if (run.failureCode || run.failureMessage) {
+    nextAction = "Fix the recorded failure, then rerun the workflow.";
+  }
+
+  return [
+    ["retryability", retryability],
+    ["nextAction", nextAction],
+  ];
+}
+
 function StatusPill({ status }: { status: string | null }) {
   const label = formatLabel(status);
   return (
@@ -134,33 +180,99 @@ function SourceRows({ sources }: { sources: AiWorkRunSourceView[] }) {
           <tr className="border-b">
             <th className="py-2 pr-3 font-medium">Source</th>
             <th className="py-2 pr-3 font-medium">Title</th>
+            <th className="py-2 pr-3 font-medium">Project</th>
             <th className="py-2 pr-3 font-medium">Evidence</th>
+            <th className="py-2 pr-3 font-medium">Open</th>
             <th className="py-2 pr-3 font-medium">Seen</th>
             <th className="py-2 pr-3 font-medium">Confidence</th>
           </tr>
         </thead>
         <tbody className="divide-y">
-          {sources.map((source) => (
-            <tr key={source.id}>
-              <td className="py-2 pr-3 align-top text-muted-foreground">
-                {formatLabel(source.sourceFamily)}
-              </td>
-              <td className="py-2 pr-3 align-top font-medium text-foreground">
-                {source.sourceTitle ?? source.sourceRecordId ?? "-"}
-              </td>
-              <td className="max-w-xl py-2 pr-3 align-top text-foreground">
-                {source.evidenceExcerpt ?? "-"}
-              </td>
-              <td className="py-2 pr-3 align-top text-muted-foreground">
-                {formatDateTime(source.sourceOccurredAt)}
-              </td>
-              <td className="py-2 pr-3 align-top text-muted-foreground">
-                {formatLabel(source.confidence)}
-              </td>
-            </tr>
-          ))}
+          {sources.map((source) => {
+            const href = sourceHref(source);
+            const opensExternal = href === source.sourceUrl;
+            return (
+              <tr key={source.id}>
+                <td className="py-2 pr-3 align-top text-muted-foreground">
+                  {formatLabel(source.sourceFamily)}
+                </td>
+                <td className="py-2 pr-3 align-top font-medium text-foreground">
+                  {source.sourceTitle ?? source.sourceRecordId ?? "-"}
+                </td>
+                <td className="py-2 pr-3 align-top text-muted-foreground">
+                  {source.projectLabel ?? source.projectId ?? "-"}
+                </td>
+                <td className="max-w-xl py-2 pr-3 align-top text-foreground">
+                  {source.evidenceExcerpt ?? "-"}
+                </td>
+                <td className="py-2 pr-3 align-top">
+                  {href ? (
+                    <a
+                      className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                      href={href}
+                      target={opensExternal ? "_blank" : undefined}
+                      rel={opensExternal ? "noreferrer" : undefined}
+                    >
+                      Open
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  ) : (
+                    <span className="text-muted-foreground">-</span>
+                  )}
+                </td>
+                <td className="py-2 pr-3 align-top text-muted-foreground">
+                  {formatDateTime(source.sourceOccurredAt)}
+                </td>
+                <td className="py-2 pr-3 align-top text-muted-foreground">
+                  {formatLabel(source.confidence)}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function EvidenceDrilldown({
+  artifacts,
+  sources,
+}: {
+  artifacts: AiWorkRunArtifactView[];
+  sources: AiWorkRunSourceView[];
+}) {
+  const packetArtifacts = artifacts.filter(
+    (artifact) => artifact.kind === "brief_packet",
+  );
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <div className="text-xs font-semibold text-foreground">
+          Packet Evidence Drilldown
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Source refs attached to the generated packet and delivery run.
+        </p>
+      </div>
+      {packetArtifacts.length > 0 && (
+        <div className="divide-y divide-border/60 text-xs">
+          {packetArtifacts.map((artifact) => (
+            <div
+              key={artifact.id}
+              className="grid gap-2 py-2 sm:grid-cols-[140px_1fr_120px]"
+            >
+              <div className="text-muted-foreground">{formatLabel(artifact.kind)}</div>
+              <div className="font-medium text-foreground">{artifact.title}</div>
+              <div className="text-muted-foreground">
+                {artifact.sourceRefCount} ref{artifact.sourceRefCount === 1 ? "" : "s"}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      <SourceRows sources={sources} />
     </div>
   );
 }
@@ -349,6 +461,7 @@ function RunDetail({ run }: { run: AiWorkRunView }) {
         {run.artifacts.length === 0 && (
           <DetailList title="Generated Artifact" entries={artifactEntries} />
         )}
+        <DetailList title="Run Guidance" entries={runGuidance(run)} />
         <DetailList title="Source Counts" entries={jsonEntries(run.sourceCounts)} />
         <DetailList title="Delivery Target" entries={jsonEntries(run.deliveryTarget)} />
       </div>
@@ -387,8 +500,7 @@ function RunDetail({ run }: { run: AiWorkRunView }) {
       </div>
 
       <div className="space-y-2">
-        <div className="text-xs font-semibold text-foreground">Evidence Rows</div>
-        <SourceRows sources={run.sources} />
+        <EvidenceDrilldown artifacts={run.artifacts} sources={run.sources} />
       </div>
     </div>
   );

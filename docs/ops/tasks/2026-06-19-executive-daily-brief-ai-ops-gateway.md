@@ -301,9 +301,9 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [x] UI shows source health per run.
 - [x] UI shows generated artifact per run.
 - [x] UI shows delivery attempts per run.
-- [ ] UI shows source refs/evidence drilldown per generated packet.
+- [x] UI shows source refs/evidence drilldown per generated packet.
 - [x] UI shows exact failure code/message and owning step.
-- [ ] UI shows retryability and next action.
+- [x] UI shows retryability and next action.
 - [x] UI does not imply success when a run is skipped, disabled, or partial.
 - [x] Browser verification proves a real generated brief appears without direct
       Supabase querying.
@@ -420,6 +420,8 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 | Legacy Teams path tests | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/executive/__tests__/executive-briefing-teams-delivery.test.ts src/app/api/cron/executive-daily-brief/__tests__/route.test.ts src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts --runInBand` | Passed | 3 suites, 12 tests passed. Tests prove the cron route proxies POST/GET to `/api/executive/daily-brief/send-teams`, the deprecated direct Teams sender throws, and canonical delivery route ledger tests still pass. |
 | Email delivery action lint | `cd frontend && npx eslint 'src/app/(main)/actions/executive-briefing-actions.ts' 'src/app/(main)/actions/__tests__/executive-briefing-actions.test.ts' src/lib/ai-ops/executive-daily-brief-ledger.ts` | Passed | Executive email action, action test, and email-payload artifact helper lint cleanly. |
 | Email delivery action tests | `cd frontend && npm run test:unit -- --runTestsByPath 'src/app/(main)/actions/__tests__/executive-briefing-actions.test.ts' src/lib/ai-ops/__tests__/ledger.test.ts src/lib/ai-ops/__tests__/contracts.test.ts --runInBand` | Passed | 3 suites, 19 tests passed. Tests prove successful email sends start an AI Ops email run, record packet evidence, persist an email payload artifact, record per-recipient provider message attempts, and complete the run; provider errors record failed retryable recipient attempts and a failed run. |
+| Admin UI drilldown lint | `cd frontend && npx eslint src/app/api/admin/ai-work-runs/route.ts 'src/app/(admin)/ai-work-runs/ai-work-runs-client.tsx'` | Passed | Admin API and run-inspection UI lint cleanly after exposing source URL/internal route/project linkage and adding Run Guidance plus Packet Evidence Drilldown. |
+| Admin UI drilldown browser proof | Playwright-authenticated `/ai-work-runs` capture | Passed | Page stayed on `/ai-work-runs` and rendered `Run Guidance`, `retryability`, `nextAction`, and `Packet Evidence Drilldown` for run `0c3b8979-3a31-4aab-98d0-a975ab845e21`. Artifacts: `tests/agent-browser-runs/2026-06-19-executive-daily-brief-ui-drilldown/page-text-playwright.txt`, `ai-work-runs-ui-drilldown-playwright.png`. |
 | Runner no-write smoke | `cd frontend && npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:00:00.000Z`                                                                                              | Passed  | Kill switch off; script loaded and exited with `executive_daily_brief_disabled`, no send/write.    |
 | Disabled send smoke   | `curl -sS -X POST http://localhost:3001/api/executive/daily-brief/send-teams -H 'content-type: application/json' -d '{}'`                                                                 | Passed  | Kill switch off; route returned disabled state with run id `b88b3b30-b766-4aa2-8e02-84ef175e207b`. |
 | Disabled run SQL readback | `select r.id, r.status, r.delivery_status, a.status, a.failure_code, s.step_type, s.status ... where r.id = 'b88b3b30-b766-4aa2-8e02-84ef175e207b'` | Passed | Readback returned `skipped`, `disabled`, delivery attempt `disabled`, failure code `EXECUTIVE_DAILY_BRIEF_DISABLED`, and delivery step `blocked`. |

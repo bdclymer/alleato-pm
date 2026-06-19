@@ -35,6 +35,7 @@ const SOURCE_SELECT = `
   source_family,
   source_record_id,
   source_title,
+  source_url,
   source_occurred_at,
   evidence_excerpt,
   confidence,
@@ -89,6 +90,10 @@ export type AiWorkRunSourceView = {
   sourceFamily: string;
   sourceRecordId: string | null;
   sourceTitle: string | null;
+  sourceUrl: string | null;
+  internalHref: string | null;
+  projectId: number | null;
+  projectLabel: string | null;
   sourceOccurredAt: string | null;
   evidenceExcerpt: string | null;
   confidence: string | null;
@@ -227,6 +232,7 @@ type AiWorkRunSourceRow = {
   source_family: string;
   source_record_id: string | null;
   source_title: string | null;
+  source_url: string | null;
   source_occurred_at: string | null;
   evidence_excerpt: string | null;
   confidence: string | null;
@@ -291,15 +297,23 @@ function durationMs(startedAt: string | null, completedAt: string | null): numbe
 }
 
 function mapSource(row: AiWorkRunSourceRow): AiWorkRunSourceView {
+  const metadata = asObject(row.metadata);
   return {
     id: row.id,
     sourceFamily: row.source_family,
     sourceRecordId: row.source_record_id,
     sourceTitle: row.source_title,
+    sourceUrl: row.source_url,
+    internalHref:
+      typeof metadata.internalHref === "string" ? metadata.internalHref : null,
+    projectId:
+      typeof metadata.projectId === "number" ? metadata.projectId : null,
+    projectLabel:
+      typeof metadata.projectLabel === "string" ? metadata.projectLabel : null,
     sourceOccurredAt: row.source_occurred_at,
     evidenceExcerpt: row.evidence_excerpt,
     confidence: row.confidence,
-    metadata: asObject(row.metadata),
+    metadata,
   };
 }
 

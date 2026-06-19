@@ -137,6 +137,9 @@
    - Pass: executive email action now starts an email AI Ops run, records draft evidence, stores an email payload artifact, sends through the existing Resend sender, records one delivery attempt per recipient with provider id or provider failure, and completes the run as succeeded or failed-retryable.
    - Pass: `cd frontend && npx eslint 'src/app/(main)/actions/executive-briefing-actions.ts' 'src/app/(main)/actions/__tests__/executive-briefing-actions.test.ts' src/lib/ai-ops/executive-daily-brief-ledger.ts`.
    - Pass: `cd frontend && npm run test:unit -- --runTestsByPath 'src/app/(main)/actions/__tests__/executive-briefing-actions.test.ts' src/lib/ai-ops/__tests__/ledger.test.ts src/lib/ai-ops/__tests__/contracts.test.ts --runInBand` passed 3 suites / 19 tests.
+   - Pass: `/api/admin/ai-work-runs` now exposes source URL, internal route, and project linkage for evidence rows; `/ai-work-runs` shows Run Guidance with retryability/nextAction and Packet Evidence Drilldown for generated packet refs.
+   - Pass: `cd frontend && npx eslint src/app/api/admin/ai-work-runs/route.ts 'src/app/(admin)/ai-work-runs/ai-work-runs-client.tsx'`.
+   - Pass: Playwright-authenticated `/ai-work-runs` capture rendered Run Guidance, retryability, nextAction, and Packet Evidence Drilldown for run `0c3b8979-3a31-4aab-98d0-a975ab845e21`.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
@@ -178,10 +181,14 @@
    - `frontend/src/app/api/cron/executive-daily-brief/__tests__/route.test.ts`
    - `frontend/src/app/(main)/actions/executive-briefing-actions.ts`
    - `frontend/src/app/(main)/actions/__tests__/executive-briefing-actions.test.ts`
+   - `frontend/src/app/api/admin/ai-work-runs/route.ts`
+   - `frontend/src/app/(admin)/ai-work-runs/ai-work-runs-client.tsx`
    - `frontend/src/lib/executive/executive-briefing-teams-delivery.ts`
    - `frontend/src/lib/executive/__tests__/executive-briefing-teams-delivery.test.ts`
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-source-adapters/page-text.txt`
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-source-adapters/ai-work-runs-source-adapters.png`
+   - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-ui-drilldown/page-text-playwright.txt`
+   - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-ui-drilldown/ai-work-runs-ui-drilldown-playwright.png`
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-generated-preview/page-text-playwright.txt`
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-generated-preview/ai-work-runs-generated-preview-playwright.png`
 9) Top 3 findings (frontend-visible issues first):
@@ -198,7 +205,8 @@
    - Source adapter wrappers now produce visible source-fetch run steps and a source-health report artifact; missing required adapters fail loudly as failed-retryable run steps without silently suppressing the generated packet.
    - The old cron Teams delivery path no longer sends directly; it delegates to the canonical gateway and the old direct sender fails loudly if imported.
    - Manual email sends from the executive action now create canonical AI Ops runs, packet/artifact evidence, and per-recipient delivery attempts for both successful and provider-failed Resend outcomes.
-10) Recommended next action (one line): Close real Teams delivery when safe/enabled, source-ref UI drilldown, retryability/next-action UI completeness, and remaining non-Teams legacy retirement gaps.
+   - `/ai-work-runs` now shows retryability/next-action guidance and generated-packet evidence drilldown; current live packet evidence still lacks some openable source URLs, so structured source-ref completeness remains open.
+10) Recommended next action (one line): Close structured source-ref completeness, real Teams delivery when safe/enabled, and remaining non-Teams legacy retirement gaps.
 11) Handoff file path: `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
 12) Migration ledger evidence: `npm run db:migrations:verify-applied -- supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql` passed for version `20260619183000`.
 <!-- markdownlint-enable MD029 MD034 -->
@@ -220,6 +228,7 @@
   - `005963be-595e-4036-9a81-d30ff619c76a` recorded source adapter run-step proof, live run `0c3b8979-3a31-4aab-98d0-a975ab845e21`, commit f16030b9f, and remaining gaps.
   - `d8a88aa5-7358-4603-8e3d-58e390dbcca1` recorded legacy Teams cron path retirement, focused lint/tests, and remaining gaps.
   - `5d26abde-09b9-4e6e-a044-45ffa72c12b5` recorded email delivery action ledger wrapping, focused lint/tests, and remaining gaps.
+  - `e5b1568a-90ea-4912-84bd-aed849ac6b3a` recorded admin UI source drilldown, retry guidance, browser proof, and remaining structured source-ref gaps.
 - Completion/blocker comment: None yet.
 
 ## Current Status
@@ -240,15 +249,16 @@ now delegates to the canonical send gateway, and the legacy direct sender fails
 loudly instead of claiming success outside the ledger. Manual email sends from
 the executive action now create canonical AI Ops runs with draft evidence,
 email-payload artifacts, provider ids or provider failures, and per-recipient
-delivery attempts. The workflow is not complete until real Teams delivery when
-safe/enabled, UI drilldown/retryability gaps, and remaining non-Teams legacy
-retirement gaps are complete.
+delivery attempts. `/ai-work-runs` now exposes retryability/next-action guidance
+and generated-packet evidence drilldown. The workflow is not complete until
+structured source-ref completeness, real Teams delivery when safe/enabled, and
+remaining non-Teams legacy retirement gaps are complete.
 
 ## Exact Next Step
 
-Close real Teams delivery when safe/enabled, source-ref UI drilldown,
-retryability/next-action UI completeness, and remaining non-Teams legacy
-retirement gaps without weakening the canonical ledger path.
+Close structured source-ref completeness, real Teams delivery when safe/enabled,
+and remaining non-Teams legacy retirement gaps without weakening the canonical
+ledger path.
 
 ## Known Pitfalls
 
