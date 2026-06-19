@@ -13,52 +13,52 @@
 
 ## UI Routes (312)
 
-_128/312 have a description. Pages without one are invisible to find-a-page search — add a `description` to the page's `PageShell`._
+_312/312 have a description (from the page's `PageShell` or the curated `frontend/src/lib/app-surface/page-descriptions.json` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a `PageShell` description (also renders in the UI)._
 
 | URL | What it does | File |
 |-----|--------------|------|
-| `/` | Open OneDrive folder | frontend/src/app/(main)/page.tsx |
+| `/` | List all projects across the organization with filtering, search, and client/estimating/internal scope tabs | frontend/src/app/(main)/page.tsx |
 | `/[projectId]/admin` | Manage member permissions for this project. | frontend/src/app/(main)/[projectId]/admin/page.tsx |
-| `/[projectId]/billing-periods` | — | frontend/src/app/(main)/[projectId]/billing-periods/page.tsx |
-| `/[projectId]/budget` | Budget | frontend/src/app/(main)/[projectId]/budget/page.tsx |
+| `/[projectId]/billing-periods` | Create and manage invoice billing periods with manual or automatic frequency setup | frontend/src/app/(main)/[projectId]/billing-periods/page.tsx |
+| `/[projectId]/budget` | View and manage project budget with line items, modifications, forecasting, and cost tracking | frontend/src/app/(main)/[projectId]/budget/page.tsx |
 | `/[projectId]/budget/line-item/new` | Add one or more line items to the project budget. | frontend/src/app/(main)/[projectId]/budget/line-item/new/page.tsx |
-| `/[projectId]/budget/setup` | Add Budget Line Items | frontend/src/app/(main)/[projectId]/budget/setup/page.tsx |
+| `/[projectId]/budget/setup` | Create initial budget line items by selecting cost codes and entering amounts | frontend/src/app/(main)/[projectId]/budget/setup/page.tsx |
 | `/[projectId]/change-events` | Provide a valid project identifier to access change events. | frontend/src/app/(main)/[projectId]/change-events/page.tsx |
 | `/[projectId]/change-events/[changeEventId]` | Loading... | frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/page.tsx |
 | `/[projectId]/change-events/[changeEventId]/edit` | Update change event details and line items. | frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/edit/page.tsx |
 | `/[projectId]/change-events/new` | Document a potential change to project scope, schedule, or budget. | frontend/src/app/(main)/[projectId]/change-events/new/page.tsx |
 | `/[projectId]/change-management` | Change Events identify the issue, PCOs price the impact, and Change Orders modify the contract. | frontend/src/app/(main)/[projectId]/change-management/page.tsx |
-| `/[projectId]/change-orders` | — | frontend/src/app/(main)/[projectId]/change-orders/page.tsx |
-| `/[projectId]/change-orders/[changeOrderId]/edit` | — | frontend/src/app/(main)/[projectId]/change-orders/[changeOrderId]/edit/page.tsx |
+| `/[projectId]/change-orders` | List prime contract and commitment change orders with status and financial details | frontend/src/app/(main)/[projectId]/change-orders/page.tsx |
+| `/[projectId]/change-orders/[changeOrderId]/edit` | Redirect to change order detail page with edit mode enabled | frontend/src/app/(main)/[projectId]/change-orders/[changeOrderId]/edit/page.tsx |
 | `/[projectId]/change-orders/commitment/[commitmentCoId]` | Loading change order details | frontend/src/app/(main)/[projectId]/change-orders/commitment/[commitmentCoId]/page.tsx |
 | `/[projectId]/change-orders/commitment/new` | Opening the canonical Commitment PCO workflow. | frontend/src/app/(main)/[projectId]/change-orders/commitment/new/page.tsx |
-| `/[projectId]/change-orders/new` | — | frontend/src/app/(main)/[projectId]/change-orders/new/page.tsx |
+| `/[projectId]/change-orders/new` | Redirect legacy change order create URLs to canonical prime or commitment PCO routes | frontend/src/app/(main)/[projectId]/change-orders/new/page.tsx |
 | `/[projectId]/change-orders/prime/[primeCoId]` | A log of changes to this record will appear here | frontend/src/app/(main)/[projectId]/change-orders/prime/[primeCoId]/page.tsx |
 | `/[projectId]/change-orders/prime/new` | Opening the canonical Prime Contract PCO workflow. | frontend/src/app/(main)/[projectId]/change-orders/prime/new/page.tsx |
-| `/[projectId]/client-dashboard` | — | frontend/src/app/(main)/[projectId]/client-dashboard/page.tsx |
+| `/[projectId]/client-dashboard` | Client-facing project overview with contract, milestones, RFIs, and recent documents | frontend/src/app/(main)/[projectId]/client-dashboard/page.tsx |
 | `/[projectId]/commitment-pcos` | Provide a valid project identifier to access commitment PCOs. | frontend/src/app/(main)/[projectId]/commitment-pcos/page.tsx |
 | `/[projectId]/commitment-pcos/[pcoId]` | Line items for this PCO will appear here once added. | frontend/src/app/(main)/[projectId]/commitment-pcos/[pcoId]/page.tsx |
 | `/[projectId]/commitment-pcos/new` | Commitment PCOs must start from a linked change event. | frontend/src/app/(main)/[projectId]/commitment-pcos/new/page.tsx |
-| `/[projectId]/commitments` | — | frontend/src/app/(main)/[projectId]/commitments/page.tsx |
-| `/[projectId]/commitments/[commitmentId]` | Commitment Details | frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/page.tsx |
-| `/[projectId]/commitments/[commitmentId]/edit` | — | frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/edit/page.tsx |
-| `/[projectId]/commitments/[commitmentId]/invoices/[invoiceId]` | — | frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/invoices/[invoiceId]/page.tsx |
-| `/[projectId]/commitments/[commitmentId]/pcos/new` | Create Potential Change Order | frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/pcos/new/page.tsx |
+| `/[projectId]/commitments` | List subcontracts and purchase orders with financial totals and change order details | frontend/src/app/(main)/[projectId]/commitments/page.tsx |
+| `/[projectId]/commitments/[commitmentId]` | View commitment details including SOV, change orders, invoices, and related documents | frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/page.tsx |
+| `/[projectId]/commitments/[commitmentId]/edit` | Edit subcontract or purchase order details including attachments and schedule of values | frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/edit/page.tsx |
+| `/[projectId]/commitments/[commitmentId]/invoices/[invoiceId]` | View subcontractor invoice details and payment information | frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/invoices/[invoiceId]/page.tsx |
+| `/[projectId]/commitments/[commitmentId]/pcos/new` | Create a new pending change order (PCO) for a subcontract or purchase order | frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/pcos/new/page.tsx |
 | `/[projectId]/commitments/configure` | Configure commitment defaults, workflows, billing, and permissions. | frontend/src/app/(main)/[projectId]/commitments/configure/page.tsx |
-| `/[projectId]/commitments/new` | — | frontend/src/app/(main)/[projectId]/commitments/new/page.tsx |
-| `/[projectId]/commitments/recycle-bin` | — | frontend/src/app/(main)/[projectId]/commitments/recycle-bin/page.tsx |
-| `/[projectId]/commitments/settings` | Commitment Settings | frontend/src/app/(main)/[projectId]/commitments/settings/page.tsx |
-| `/[projectId]/daily-log` | Daily Log | frontend/src/app/(main)/[projectId]/daily-log/page.tsx |
-| `/[projectId]/daily-log/[dailyLogId]/edit` | — | frontend/src/app/(main)/[projectId]/daily-log/[dailyLogId]/edit/page.tsx |
-| `/[projectId]/daily-log/new` | — | frontend/src/app/(main)/[projectId]/daily-log/new/page.tsx |
+| `/[projectId]/commitments/new` | Create new subcontract or purchase order with details and schedule of values | frontend/src/app/(main)/[projectId]/commitments/new/page.tsx |
+| `/[projectId]/commitments/recycle-bin` | Redirect to commitments list filtered to recycle bin with soft-deleted records | frontend/src/app/(main)/[projectId]/commitments/recycle-bin/page.tsx |
+| `/[projectId]/commitments/settings` | Configure commitment settings for auto-numbering, defaults, and approval thresholds | frontend/src/app/(main)/[projectId]/commitments/settings/page.tsx |
+| `/[projectId]/daily-log` | List daily logs with weather, manpower, equipment, and site management notes | frontend/src/app/(main)/[projectId]/daily-log/page.tsx |
+| `/[projectId]/daily-log/[dailyLogId]/edit` | Edit daily log entry with weather conditions, manpower, equipment, and general notes | frontend/src/app/(main)/[projectId]/daily-log/[dailyLogId]/edit/page.tsx |
+| `/[projectId]/daily-log/new` | Create new daily log entry with site observations and project activities | frontend/src/app/(main)/[projectId]/daily-log/new/page.tsx |
 | `/[projectId]/daily-log/site-scribe` | Realtime AI daily-log capture for field crews. | frontend/src/app/(main)/[projectId]/daily-log/site-scribe/page.tsx |
-| `/[projectId]/direct-costs` | — | frontend/src/app/(main)/[projectId]/direct-costs/page.tsx |
+| `/[projectId]/direct-costs` | List direct costs with vendor, amounts, and status tracked separately from commitments | frontend/src/app/(main)/[projectId]/direct-costs/page.tsx |
 | `/[projectId]/direct-costs/[costId]` | Direct cost not found | frontend/src/app/(main)/[projectId]/direct-costs/[costId]/page.tsx |
 | `/[projectId]/direct-costs/new` | Direct costs are synced from Acumatica and cannot be created in Alleato. | frontend/src/app/(main)/[projectId]/direct-costs/new/page.tsx |
-| `/[projectId]/directory` | Project Team | frontend/src/app/(main)/[projectId]/directory/page.tsx |
-| `/[projectId]/documents` | — | frontend/src/app/(main)/[projectId]/documents/page.tsx |
-| `/[projectId]/documents/[documentId]` | Document preview | frontend/src/app/(main)/[projectId]/documents/[documentId]/page.tsx |
-| `/[projectId]/drawings` | — | frontend/src/app/(main)/[projectId]/drawings/page.tsx |
+| `/[projectId]/directory` | Manage project team members and companies with roles, contact info, and access control | frontend/src/app/(main)/[projectId]/directory/page.tsx |
+| `/[projectId]/documents` | Store and organize project documents with versioning, search, and metadata tracking | frontend/src/app/(main)/[projectId]/documents/page.tsx |
+| `/[projectId]/documents/[documentId]` | View and preview an individual document with details and content display | frontend/src/app/(main)/[projectId]/documents/[documentId]/page.tsx |
+| `/[projectId]/drawings` | Upload and manage project drawings and design documents with versioning | frontend/src/app/(main)/[projectId]/drawings/page.tsx |
 | `/[projectId]/drawings/[drawingId]` | The file could not be loaded from storage. | frontend/src/app/(main)/[projectId]/drawings/[drawingId]/page.tsx |
 | `/[projectId]/drawings/areas` | Create your first drawing area to start organizing your project drawings. | frontend/src/app/(main)/[projectId]/drawings/areas/page.tsx |
 | `/[projectId]/drawings/board` | Drag-and-drop drawing packages by status | frontend/src/app/(main)/[projectId]/drawings/board/page.tsx |
@@ -67,267 +67,267 @@ _128/312 have a description. Pages without one are invisible to find-a-page sear
 | `/[projectId]/drawings/sets` | Create a set to group drawings issued together. | frontend/src/app/(main)/[projectId]/drawings/sets/page.tsx |
 | `/[projectId]/drawings/viewer-v2/[drawingId]` | Try a different search term. | frontend/src/app/(main)/[projectId]/drawings/viewer-v2/[drawingId]/page.tsx |
 | `/[projectId]/drawings/viewer/[drawingId]` | Try a different search term. | frontend/src/app/(main)/[projectId]/drawings/viewer/[drawingId]/page.tsx |
-| `/[projectId]/emails` | — | frontend/src/app/(main)/[projectId]/emails/page.tsx |
-| `/[projectId]/estimates` | — | frontend/src/app/(main)/[projectId]/estimates/page.tsx |
+| `/[projectId]/emails` | View project-related emails integrated from Outlook or other email systems | frontend/src/app/(main)/[projectId]/emails/page.tsx |
+| `/[projectId]/estimates` | List project estimates with dates and status for tracking bidding activities | frontend/src/app/(main)/[projectId]/estimates/page.tsx |
 | `/[projectId]/estimates/[estimateId]` | This estimate could not be loaded for the current project. | frontend/src/app/(main)/[projectId]/estimates/[estimateId]/page.tsx |
 | `/[projectId]/estimates/[estimateId]/edit` | Update estimate details | frontend/src/app/(main)/[projectId]/estimates/[estimateId]/edit/page.tsx |
-| `/[projectId]/estimates/new` | — | frontend/src/app/(main)/[projectId]/estimates/new/page.tsx |
-| `/[projectId]/home` | — | frontend/src/app/(main)/[projectId]/home/page.tsx |
-| `/[projectId]/hub` | Project Hub | frontend/src/app/(main)/[projectId]/hub/page.tsx |
-| `/[projectId]/intelligence` | Current project read from sources and database state | frontend/src/app/(main)/[projectId]/intelligence/page.tsx |
-| `/[projectId]/intelligence/sources/[sourceDocumentId]` | Intelligence source | frontend/src/app/(main)/[projectId]/intelligence/sources/[sourceDocumentId]/page.tsx |
-| `/[projectId]/invoices` | — | frontend/src/app/(main)/[projectId]/invoices/page.tsx |
+| `/[projectId]/estimates/new` | Redirect to estimates list page for creating new estimates | frontend/src/app/(main)/[projectId]/estimates/new/page.tsx |
+| `/[projectId]/home` | Project command center dashboard with budget, team, alerts, and key performance metrics | frontend/src/app/(main)/[projectId]/home/page.tsx |
+| `/[projectId]/hub` | Tabbed project hub for quick access to documents, emails, meetings, and modules | frontend/src/app/(main)/[projectId]/hub/page.tsx |
+| `/[projectId]/intelligence` | AI-powered project intelligence with insights, timeline, and source document references | frontend/src/app/(main)/[projectId]/intelligence/page.tsx |
+| `/[projectId]/intelligence/sources/[sourceDocumentId]` | View source document used by a project intelligence packet with full content context | frontend/src/app/(main)/[projectId]/intelligence/sources/[sourceDocumentId]/page.tsx |
+| `/[projectId]/invoices` | View owner and subcontractor invoices with billing periods organized by status | frontend/src/app/(main)/[projectId]/invoices/page.tsx |
 | `/[projectId]/invoices/new` | Create a new owner or commitment invoice. | frontend/src/app/(main)/[projectId]/invoices/new/page.tsx |
-| `/[projectId]/invoices/owner/new` | — | frontend/src/app/(main)/[projectId]/invoices/owner/new/page.tsx |
-| `/[projectId]/invoicing` | — | frontend/src/app/(main)/[projectId]/invoicing/page.tsx |
+| `/[projectId]/invoices/owner/new` | Redirect to canonical owner invoice creation page with contract context | frontend/src/app/(main)/[projectId]/invoices/owner/new/page.tsx |
+| `/[projectId]/invoicing` | Legacy redirect to canonical invoices workspace | frontend/src/app/(main)/[projectId]/invoicing/page.tsx |
 | `/[projectId]/invoicing/[invoiceId]` | No schedule of values line items have been added to this invoice. | frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx |
-| `/[projectId]/invoicing/new` | — | frontend/src/app/(main)/[projectId]/invoicing/new/page.tsx |
-| `/[projectId]/invoicing/subcontractor` | — | frontend/src/app/(main)/[projectId]/invoicing/subcontractor/page.tsx |
-| `/[projectId]/invoicing/subcontractor/[invoiceId]` | — | frontend/src/app/(main)/[projectId]/invoicing/subcontractor/[invoiceId]/page.tsx |
-| `/[projectId]/invoicing/subcontractor/new` | Create New Invoice | frontend/src/app/(main)/[projectId]/invoicing/subcontractor/new/page.tsx |
-| `/[projectId]/meetings` | — | frontend/src/app/(main)/[projectId]/meetings/page.tsx |
-| `/[projectId]/meetings/[meetingId]` | — | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/page.tsx |
+| `/[projectId]/invoicing/new` | Legacy redirect to canonical owner invoice creation with optional billing period | frontend/src/app/(main)/[projectId]/invoicing/new/page.tsx |
+| `/[projectId]/invoicing/subcontractor` | Legacy redirect to subcontractor invoices tab | frontend/src/app/(main)/[projectId]/invoicing/subcontractor/page.tsx |
+| `/[projectId]/invoicing/subcontractor/[invoiceId]` | View detailed subcontractor invoice with schedule of values and change orders | frontend/src/app/(main)/[projectId]/invoicing/subcontractor/[invoiceId]/page.tsx |
+| `/[projectId]/invoicing/subcontractor/new` | Create new subcontractor invoice with SOV and approved change orders | frontend/src/app/(main)/[projectId]/invoicing/subcontractor/new/page.tsx |
+| `/[projectId]/meetings` | List project meetings with transcripts and extracted key information | frontend/src/app/(main)/[projectId]/meetings/page.tsx |
+| `/[projectId]/meetings/[meetingId]` | View meeting transcript with segments, tasks, risks, decisions, and opportunities | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/page.tsx |
 | `/[projectId]/meetings/[meetingId]/prep` | Generate an AI-powered meeting prep that analyzes your project data, last meeting insights, and current status — or start writing from scratch. | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/prep/page.tsx |
 | `/[projectId]/meetings/schedule` | Schedule a future meeting and generate AI-powered meeting prep. | frontend/src/app/(main)/[projectId]/meetings/schedule/page.tsx |
 | `/[projectId]/my-work` | No schedule of values has been assigned to your company on this project. | frontend/src/app/(main)/[projectId]/my-work/page.tsx |
-| `/[projectId]/outlook-emails` | Outlook Emails | frontend/src/app/(main)/[projectId]/outlook-emails/page.tsx |
-| `/[projectId]/pcos` | — | frontend/src/app/(main)/[projectId]/pcos/page.tsx |
+| `/[projectId]/outlook-emails` | Display emails imported from Outlook linked to the project | frontend/src/app/(main)/[projectId]/outlook-emails/page.tsx |
+| `/[projectId]/pcos` | List potential change orders by status with version, value, and schedule impact | frontend/src/app/(main)/[projectId]/pcos/page.tsx |
 | `/[projectId]/pcos/[pcoId]` | Attachments related to this potential change order will appear here. | frontend/src/app/(main)/[projectId]/pcos/[pcoId]/page.tsx |
-| `/[projectId]/pcos/[pcoId]/edit` | Edit Potential Change Order | frontend/src/app/(main)/[projectId]/pcos/[pcoId]/edit/page.tsx |
-| `/[projectId]/pcos/new` | New Potential Change Order | frontend/src/app/(main)/[projectId]/pcos/new/page.tsx |
-| `/[projectId]/permissions` | — | frontend/src/app/(main)/[projectId]/permissions/page.tsx |
+| `/[projectId]/pcos/[pcoId]/edit` | Edit potential change order with change events, line items, and markup | frontend/src/app/(main)/[projectId]/pcos/[pcoId]/edit/page.tsx |
+| `/[projectId]/pcos/new` | Create new potential change order linked to change events with line items | frontend/src/app/(main)/[projectId]/pcos/new/page.tsx |
+| `/[projectId]/permissions` | Legacy redirect to user management page | frontend/src/app/(main)/[projectId]/permissions/page.tsx |
 | `/[projectId]/photos` | View geotagged photos on a project map. Photos with location data will appear as pins. | frontend/src/app/(main)/[projectId]/photos/page.tsx |
 | `/[projectId]/prime-contract-pcos` | Provide a valid project identifier to access PCOs. | frontend/src/app/(main)/[projectId]/prime-contract-pcos/page.tsx |
 | `/[projectId]/prime-contract-pcos/[pcoId]` | This potential change order does not have any line items yet. | frontend/src/app/(main)/[projectId]/prime-contract-pcos/[pcoId]/page.tsx |
-| `/[projectId]/prime-contract-pcos/[pcoId]/edit` | Edit Prime Contract PCO | frontend/src/app/(main)/[projectId]/prime-contract-pcos/[pcoId]/edit/page.tsx |
-| `/[projectId]/prime-contract-pcos/new` | — | frontend/src/app/(main)/[projectId]/prime-contract-pcos/new/page.tsx |
-| `/[projectId]/prime-contracts` | — | frontend/src/app/(main)/[projectId]/prime-contracts/page.tsx |
+| `/[projectId]/prime-contract-pcos/[pcoId]/edit` | Edit prime contract potential change order metadata and status | frontend/src/app/(main)/[projectId]/prime-contract-pcos/[pcoId]/edit/page.tsx |
+| `/[projectId]/prime-contract-pcos/new` | Create prime contract PCO from change events or standalone for conversion to CO | frontend/src/app/(main)/[projectId]/prime-contract-pcos/new/page.tsx |
+| `/[projectId]/prime-contracts` | List prime contracts with financial totals, expandable change orders, and PCOs | frontend/src/app/(main)/[projectId]/prime-contracts/page.tsx |
 | `/[projectId]/prime-contracts/[contractId]` | Loading contract details... | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/page.tsx |
-| `/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]` | — | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]/page.tsx |
-| `/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]/edit` | — | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]/edit/page.tsx |
-| `/[projectId]/prime-contracts/[contractId]/change-orders/pcos/new` | — | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/change-orders/pcos/new/page.tsx |
-| `/[projectId]/prime-contracts/[contractId]/edit` | — | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/edit/page.tsx |
+| `/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]` | View prime contract PCO within the contract's change orders context | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]/page.tsx |
+| `/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]/edit` | Edit prime contract PCO within change order context | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]/edit/page.tsx |
+| `/[projectId]/prime-contracts/[contractId]/change-orders/pcos/new` | Create new prime contract PCO linked to a specific prime contract | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/change-orders/pcos/new/page.tsx |
+| `/[projectId]/prime-contracts/[contractId]/edit` | Redirect to contract detail page with edit mode enabled | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/edit/page.tsx |
 | `/[projectId]/prime-contracts/[contractId]/invoices/[invoiceId]` | The requested invoice could not be found. | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/invoices/[invoiceId]/page.tsx |
-| `/[projectId]/prime-contracts/[contractId]/invoices/new` | — | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/invoices/new/page.tsx |
-| `/[projectId]/prime-contracts/change-orders` | — | frontend/src/app/(main)/[projectId]/prime-contracts/change-orders/page.tsx |
+| `/[projectId]/prime-contracts/[contractId]/invoices/new` | Redirect to invoice creation with the prime contract pre-selected as context | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/invoices/new/page.tsx |
+| `/[projectId]/prime-contracts/change-orders` | Redirect to prime change orders tab in the canonical change orders page | frontend/src/app/(main)/[projectId]/prime-contracts/change-orders/page.tsx |
 | `/[projectId]/prime-contracts/configure` | Project-level settings for how prime contracts behave | frontend/src/app/(main)/[projectId]/prime-contracts/configure/page.tsx |
-| `/[projectId]/prime-contracts/new` | Create Prime Contract | frontend/src/app/(main)/[projectId]/prime-contracts/new/page.tsx |
-| `/[projectId]/progress-reports` | — | frontend/src/app/(main)/[projectId]/progress-reports/page.tsx |
-| `/[projectId]/progress-reports/[reportId]` | Progress Report | frontend/src/app/(main)/[projectId]/progress-reports/[reportId]/page.tsx |
-| `/[projectId]/project-status-report` | Project Status Report | frontend/src/app/(main)/[projectId]/project-status-report/page.tsx |
-| `/[projectId]/punch-list` | — | frontend/src/app/(main)/[projectId]/punch-list/page.tsx |
-| `/[projectId]/punch-list/[punchItemId]` | — | frontend/src/app/(main)/[projectId]/punch-list/[punchItemId]/page.tsx |
+| `/[projectId]/prime-contracts/new` | Create new prime contract with standard fields or from a project estimate | frontend/src/app/(main)/[projectId]/prime-contracts/new/page.tsx |
+| `/[projectId]/progress-reports` | List weekly progress reports with photos, recipients, and publication status | frontend/src/app/(main)/[projectId]/progress-reports/page.tsx |
+| `/[projectId]/progress-reports/[reportId]` | Edit and publish a weekly progress report from meetings, emails, and photos | frontend/src/app/(main)/[projectId]/progress-reports/[reportId]/page.tsx |
+| `/[projectId]/project-status-report` | Monthly project budget, invoice, schedule, and open items summary for stakeholders | frontend/src/app/(main)/[projectId]/project-status-report/page.tsx |
+| `/[projectId]/punch-list` | Track deficiencies and final closeout items for project completion | frontend/src/app/(main)/[projectId]/punch-list/page.tsx |
+| `/[projectId]/punch-list/[punchItemId]` | View and manage an individual punch list item with status and notes | frontend/src/app/(main)/[projectId]/punch-list/[punchItemId]/page.tsx |
 | `/[projectId]/reporting` | Comprehensive project reporting and analytics | frontend/src/app/(main)/[projectId]/reporting/page.tsx |
-| `/[projectId]/rfis` | — | frontend/src/app/(main)/[projectId]/rfis/page.tsx |
-| `/[projectId]/rfis/[rfiId]` | — | frontend/src/app/(main)/[projectId]/rfis/[rfiId]/page.tsx |
+| `/[projectId]/rfis` | List requests for information with status tracking and response workflow | frontend/src/app/(main)/[projectId]/rfis/page.tsx |
+| `/[projectId]/rfis/[rfiId]` | View RFI details with responses, notes, and reply capability | frontend/src/app/(main)/[projectId]/rfis/[rfiId]/page.tsx |
 | `/[projectId]/rfis/new` | Create a new Request for Information | frontend/src/app/(main)/[projectId]/rfis/new/page.tsx |
 | `/[projectId]/schedule` | Create tasks, set milestones, and track dependencies with Gantt charts and multiple view modes. | frontend/src/app/(main)/[projectId]/schedule/page.tsx |
 | `/[projectId]/schedule/import` | Import schedule tasks from Microsoft Project, Excel, CSV, or a review-required PDF extraction. | frontend/src/app/(main)/[projectId]/schedule/import/page.tsx |
 | `/[projectId]/setup` | Configure your project settings and details | frontend/src/app/(main)/[projectId]/setup/page.tsx |
 | `/[projectId]/sov` | View and manage schedule of values across all contracts | frontend/src/app/(main)/[projectId]/sov/page.tsx |
-| `/[projectId]/specifications` | — | frontend/src/app/(main)/[projectId]/specifications/page.tsx |
+| `/[projectId]/specifications` | Browse, upload, and manage project specifications by section with revision tracking | frontend/src/app/(main)/[projectId]/specifications/page.tsx |
 | `/[projectId]/specifications/[sectionId]` | Upload a revision to start tracking changes to this specification section. | frontend/src/app/(main)/[projectId]/specifications/[sectionId]/page.tsx |
-| `/[projectId]/submittals` | Export PDF | frontend/src/app/(main)/[projectId]/submittals/page.tsx |
-| `/[projectId]/submittals/[submittalId]` | — | frontend/src/app/(main)/[projectId]/submittals/[submittalId]/page.tsx |
-| `/[projectId]/submittals/[submittalId]/edit` | — | frontend/src/app/(main)/[projectId]/submittals/[submittalId]/edit/page.tsx |
-| `/[projectId]/submittals/new` | — | frontend/src/app/(main)/[projectId]/submittals/new/page.tsx |
-| `/[projectId]/tasks` | Tasks | frontend/src/app/(main)/[projectId]/tasks/page.tsx |
+| `/[projectId]/submittals` | Organize construction submittals by packages, specs, and review workflows with approval tracking | frontend/src/app/(main)/[projectId]/submittals/page.tsx |
+| `/[projectId]/submittals/[submittalId]` | View submittal detail, workflow responses, and linked attachments | frontend/src/app/(main)/[projectId]/submittals/[submittalId]/page.tsx |
+| `/[projectId]/submittals/[submittalId]/edit` | Edit submittal metadata, type, package, and specification associations | frontend/src/app/(main)/[projectId]/submittals/[submittalId]/edit/page.tsx |
+| `/[projectId]/submittals/new` | Create new submittal with optional package or spec section prefill | frontend/src/app/(main)/[projectId]/submittals/new/page.tsx |
+| `/[projectId]/tasks` | Project task inbox and workflow management interface | frontend/src/app/(main)/[projectId]/tasks/page.tsx |
 | `/[projectId]/tasks/kanban` | Drag cards between statuses. Moves save immediately. | frontend/src/app/(main)/[projectId]/tasks/kanban/page.tsx |
-| `/[projectId]/timeline` | Timeline | frontend/src/app/(main)/[projectId]/timeline/page.tsx |
-| `/[projectId]/transmittals` | — | frontend/src/app/(main)/[projectId]/transmittals/page.tsx |
+| `/[projectId]/timeline` | Chronological feed of project events and activity history | frontend/src/app/(main)/[projectId]/timeline/page.tsx |
+| `/[projectId]/transmittals` | Manage transmittals and project correspondence | frontend/src/app/(main)/[projectId]/transmittals/page.tsx |
 | `/[projectId]/user-management` | Assign project roles and module-level access for every member of this project. | frontend/src/app/(main)/[projectId]/user-management/page.tsx |
-| `/access-denied` | — | frontend/src/app/(main)/access-denied/page.tsx |
-| `/accounting` | Accounting | frontend/src/app/(admin)/accounting/page.tsx |
-| `/accounting/ap-invoices` | — | frontend/src/app/(admin)/accounting/ap-invoices/page.tsx |
-| `/accounting/ap-payments` | — | frontend/src/app/(admin)/accounting/ap-payments/page.tsx |
-| `/accounting/bills` | — | frontend/src/app/(admin)/accounting/bills/page.tsx |
-| `/accounting/checks` | — | frontend/src/app/(admin)/accounting/checks/page.tsx |
+| `/access-denied` | Error page shown when a user lacks permission to access a project or resource | frontend/src/app/(main)/access-denied/page.tsx |
+| `/accounting` | Financial dashboard with AR aging, AP aging, cash position, and alerts | frontend/src/app/(admin)/accounting/page.tsx |
+| `/accounting/ap-invoices` | Table of accounts payable invoices from Acumatica with status and amount | frontend/src/app/(admin)/accounting/ap-invoices/page.tsx |
+| `/accounting/ap-payments` | Table of AP checks and payments issued with status and amount | frontend/src/app/(admin)/accounting/ap-payments/page.tsx |
+| `/accounting/bills` | Accounts payable bills synced from Acumatica with balance and hold status | frontend/src/app/(admin)/accounting/bills/page.tsx |
+| `/accounting/checks` | AP check register with payment method, vendor, and project allocation | frontend/src/app/(admin)/accounting/checks/page.tsx |
 | `/accounting/finance-spend` | Trailing 12-month accounting and finance overhead from classified Acumatica AP bills. | frontend/src/app/(admin)/accounting/finance-spend/page.tsx |
-| `/accounting/invoices` | — | frontend/src/app/(admin)/accounting/invoices/page.tsx |
-| `/accounting/payments` | — | frontend/src/app/(admin)/accounting/payments/page.tsx |
-| `/accounting/projects` | — | frontend/src/app/(admin)/accounting/projects/page.tsx |
-| `/accounting/reconciliation` | — | frontend/src/app/(admin)/accounting/reconciliation/page.tsx |
+| `/accounting/invoices` | Accounts receivable invoices with customer, due date, balance, and payments | frontend/src/app/(admin)/accounting/invoices/page.tsx |
+| `/accounting/payments` | AR payment receipts with status, customer, linked invoices, and balance | frontend/src/app/(admin)/accounting/payments/page.tsx |
+| `/accounting/projects` | Acumatica project financials table with income, expenses, and profit margin | frontend/src/app/(admin)/accounting/projects/page.tsx |
+| `/accounting/reconciliation` | Sync discrepancy findings between Job Planner and Acumatica with resolution workflow | frontend/src/app/(admin)/accounting/reconciliation/page.tsx |
 | `/accounting/sop-backlog` | Track accounting and finance SOP items that still need a linked process or file. | frontend/src/app/(admin)/accounting/sop-backlog/page.tsx |
-| `/accounting/wip` | — | frontend/src/app/(admin)/accounting/wip/page.tsx |
+| `/accounting/wip` | Work-in-progress report with contract value, cost variance, and billing position | frontend/src/app/(admin)/accounting/wip/page.tsx |
 | `/actions` | Manually run internal workflows, syncs, AI refreshes, and outbound notifications without exposing those controls on client-facing pages. | frontend/src/app/(admin)/actions/page.tsx |
 | `/acumatica-sync-logs` | Outbound app-to-Acumatica create/update/skip/error audit trail. | frontend/src/app/(admin)/acumatica-sync-logs/page.tsx |
-| `/admin` | Admin Dashboard | frontend/src/app/(admin)/admin/page.tsx |
-| `/admin-check` | — | frontend/src/app/(admin)/admin-check/page.tsx |
+| `/admin` | Directory of admin, intelligence, database, testing, and internal documentation pages | frontend/src/app/(admin)/admin/page.tsx |
+| `/admin-check` | Verify the current user's authentication status and super admin privileges | frontend/src/app/(admin)/admin-check/page.tsx |
 | `/admin/company-info` | Manage company profile and knowledge articles for the AI assistant | frontend/src/app/(admin)/admin/company-info/page.tsx |
-| `/admin/errors` | — | frontend/src/app/admin/errors/page.tsx |
-| `/ai` | AI | frontend/src/app/(main)/ai/page.tsx |
-| `/ai-agents` | — | frontend/src/app/(admin)/ai-agents/page.tsx |
-| `/ai-assistant` | AI | frontend/src/app/(main)/ai-assistant/page.tsx |
+| `/admin/errors` | Redirect to /errors; grouped application errors and issue review | frontend/src/app/admin/errors/page.tsx |
+| `/ai` | AI chat interface for conversing with Alleato AI and running workflows | frontend/src/app/(main)/ai/page.tsx |
+| `/ai-agents` | Redirect to /ai/admin/agents; AI agent registry with pipeline, chat, and write tools | frontend/src/app/(admin)/ai-agents/page.tsx |
+| `/ai-assistant` | Redirect to /ai; AI assistant and chat interface for projects | frontend/src/app/(main)/ai-assistant/page.tsx |
 | `/ai-assistant/feature-requests` | Durable AIS request packets, readiness state, and implementation handoffs. | frontend/src/app/(main)/ai-assistant/feature-requests/page.tsx |
-| `/ai-assistant/feature-requests/[requestId]` | — | frontend/src/app/(main)/ai-assistant/feature-requests/[requestId]/page.tsx |
+| `/ai-assistant/feature-requests/[requestId]` | Feature request workspace and details for AI assistant improvements | frontend/src/app/(main)/ai-assistant/feature-requests/[requestId]/page.tsx |
 | `/ai-assistant/marketing` | Review source-backed CMO content plans, draft assets, citations, and approval states. | frontend/src/app/(main)/ai-assistant/marketing/page.tsx |
-| `/ai-assistant/skills` | — | frontend/src/app/(main)/ai-assistant/skills/page.tsx |
-| `/ai-assistant/teach` | — | frontend/src/app/(main)/ai-assistant/teach/page.tsx |
+| `/ai-assistant/skills` | Redirect to /ai/skills; approved AI skills available to the assistant | frontend/src/app/(main)/ai-assistant/skills/page.tsx |
+| `/ai-assistant/teach` | Redirect to /ai/teach; submit reviewed workflow knowledge to the AI system | frontend/src/app/(main)/ai-assistant/teach/page.tsx |
 | `/ai-avatar` | A separate live Tavus avatar experience for onboarding and internal experiments. | frontend/src/app/(main)/ai-avatar/page.tsx |
-| `/ai-learning-promotions` | — | frontend/src/app/(admin)/ai-learning-promotions/page.tsx |
+| `/ai-learning-promotions` | Redirect to /ai/learning-promotions; approve retrieval-learning candidates | frontend/src/app/(admin)/ai-learning-promotions/page.tsx |
 | `/ai-prompt-diagnostics` | Inspect the assembled AI assistant system prompt for a representative request. | frontend/src/app/(admin)/ai-prompt-diagnostics/page.tsx |
-| `/ai-skills` | — | frontend/src/app/(admin)/ai-skills/page.tsx |
+| `/ai-skills` | Redirect to /ai/admin/skills; admin review surface for Skill Library records | frontend/src/app/(admin)/ai-skills/page.tsx |
 | `/ai-system-health` | Conversations, tokens, spend, satisfaction, model mix, the self-learning loop, and ingestion-pipeline status — one screen for stakeholder visibility into the AI. | frontend/src/app/(admin)/ai-system-health/page.tsx |
 | `/ai-vision` | One screen for the whole AI build — the vision, the agent team, the tools in priority order, and what's already live. | frontend/src/app/(admin)/ai-vision/page.tsx |
 | `/ai-work-runs` | Recent Executive Daily Brief runs, delivery state, source policy, and evidence rows from the AI operations ledger. | frontend/src/app/(admin)/ai-work-runs/page.tsx |
-| `/ai/admin/agents` | — | frontend/src/app/(admin)/ai/admin/agents/page.tsx |
+| `/ai/admin/agents` | AI agent registry with table and dependency graph views, status and impact filters | frontend/src/app/(admin)/ai/admin/agents/page.tsx |
 | `/ai/admin/skills` | Review Skill Library records by status, scope, owner, reviewer, and usage. | frontend/src/app/(admin)/ai/admin/skills/page.tsx |
 | `/ai/learning-promotions` | Review candidate learnings before they can become durable assistant behavior, memory, attribution, or retrieval rules. | frontend/src/app/(admin)/ai/learning-promotions/page.tsx |
 | `/ai/skills` | Approved assistant skills by category, scope, owner, reviewer, and usage. | frontend/src/app/(main)/ai/skills/page.tsx |
 | `/ai/teach` | Submissions become review candidates before they change assistant behavior. | frontend/src/app/(main)/ai/teach/page.tsx |
 | `/analytics` | User logins, activity, app error trends, AI engagement, and sync health — live platform visibility for administrators. | frontend/src/app/(admin)/analytics/page.tsx |
-| `/annotation-inbox` | — | frontend/src/app/(admin)/annotation-inbox/page.tsx |
+| `/annotation-inbox` | Manage issue annotations and feedback with priority scoring, dispatch to agents, and duplicate clustering | frontend/src/app/(admin)/annotation-inbox/page.tsx |
 | `/api-docs` | Interactive Swagger UI for the Alleato Procore frontend + backend endpoints. | frontend/src/app/(admin)/api-docs/page.tsx |
-| `/assignment-inbox` | — | frontend/src/app/(tables)/assignment-inbox/page.tsx |
-| `/auth/ai-widget-gallery` | — | frontend/src/app/auth/ai-widget-gallery/page.tsx |
-| `/auth/error` | — | frontend/src/app/auth/error/page.tsx |
-| `/auth/forgot-password` | — | frontend/src/app/auth/forgot-password/page.tsx |
-| `/auth/login` | — | frontend/src/app/auth/login/page.tsx |
-| `/auth/login-legacy` | — | frontend/src/app/auth/login-legacy/page.tsx |
-| `/auth/login-v2` | — | frontend/src/app/auth/login-v2/page.tsx |
-| `/auth/login-v3` | — | frontend/src/app/auth/login-v3/page.tsx |
-| `/auth/sign-up` | — | frontend/src/app/auth/sign-up/page.tsx |
-| `/auth/sign-up-success` | — | frontend/src/app/auth/sign-up-success/page.tsx |
-| `/auth/update-password` | — | frontend/src/app/auth/update-password/page.tsx |
-| `/billing-periods` | — | frontend/src/app/(main)/billing-periods/page.tsx |
-| `/calendar` | — | frontend/src/app/(main)/calendar/page.tsx |
-| `/change-events` | — | frontend/src/app/(tables)/change-events/page.tsx |
-| `/command-center` | Command Center | frontend/src/app/(admin)/command-center/page.tsx |
+| `/assignment-inbox` | View and manage assigned tasks and action items across projects | frontend/src/app/(tables)/assignment-inbox/page.tsx |
+| `/auth/ai-widget-gallery` | Gallery of AI-powered interactive widgets and components | frontend/src/app/auth/ai-widget-gallery/page.tsx |
+| `/auth/error` | Authentication error page displaying error codes and messages | frontend/src/app/auth/error/page.tsx |
+| `/auth/forgot-password` | Password recovery form for users who have forgotten their login credentials | frontend/src/app/auth/forgot-password/page.tsx |
+| `/auth/login` | User login form for signing in to the Alleato PM application | frontend/src/app/auth/login/page.tsx |
+| `/auth/login-legacy` | Legacy login page variant with branded header and background imagery | frontend/src/app/auth/login-legacy/page.tsx |
+| `/auth/login-v2` | Login page design version 2 with modern UI | frontend/src/app/auth/login-v2/page.tsx |
+| `/auth/login-v3` | Login page design version 3 with enhanced user experience | frontend/src/app/auth/login-v3/page.tsx |
+| `/auth/sign-up` | New user registration form for creating an account | frontend/src/app/auth/sign-up/page.tsx |
+| `/auth/sign-up-success` | Confirmation page displayed after successful account creation | frontend/src/app/auth/sign-up-success/page.tsx |
+| `/auth/update-password` | Form for users to set or reset their password | frontend/src/app/auth/update-password/page.tsx |
+| `/billing-periods` | Redirect to project-scoped billing periods under the invoices tab | frontend/src/app/(main)/billing-periods/page.tsx |
+| `/calendar` | Project calendar view for scheduling and tracking events | frontend/src/app/(main)/calendar/page.tsx |
+| `/change-events` | Global table of change events and modifications across all projects | frontend/src/app/(tables)/change-events/page.tsx |
+| `/command-center` | Kanban-style task board for tracking initiatives across idea, planned, in progress, and done statuses | frontend/src/app/(admin)/command-center/page.tsx |
 | `/comments` | Use the annotation button on any page to leave a comment. | frontend/src/app/(main)/comments/page.tsx |
 | `/crawled-pages` | Explore crawled Procore support documentation organized by tools and resource types | frontend/src/app/(admin)/(procore)/crawled-pages/page.tsx |
 | `/create-project` | Set up core project details, location, and delivery defaults. | frontend/src/app/(main)/create-project/page.tsx |
-| `/daily-briefs` | — | frontend/src/app/(tables)/daily-briefs/page.tsx |
+| `/daily-briefs` | Historical record of executive Daily Brief packets and delivery status | frontend/src/app/(tables)/daily-briefs/page.tsx |
 | `/daily-briefs/[briefId]` | Daily Brief history is limited to users with executive briefing access. | frontend/src/app/(tables)/daily-briefs/[briefId]/page.tsx |
-| `/daily-logs` | — | frontend/src/app/(tables)/daily-logs/page.tsx |
-| `/daily-logs/[dailyLogId]` | Daily Log Detail | frontend/src/app/(tables)/daily-logs/[dailyLogId]/page.tsx |
-| `/daily-reports` | — | frontend/src/app/(tables)/daily-reports/page.tsx |
+| `/daily-logs` | Table of daily construction logs with weather, manpower, and work completed entries | frontend/src/app/(tables)/daily-logs/page.tsx |
+| `/daily-logs/[dailyLogId]` | Detailed view of a specific daily log entry | frontend/src/app/(tables)/daily-logs/[dailyLogId]/page.tsx |
+| `/daily-reports` | AI-generated daily recap summaries of meetings and project decisions | frontend/src/app/(tables)/daily-reports/page.tsx |
 | `/database` | Catalog of tables in the public schema | frontend/src/app/(admin)/database/page.tsx |
-| `/database-inventory` | — | frontend/src/app/(admin)/database-inventory/page.tsx |
+| `/database-inventory` | Schema inventory of database tables with row counts, size, and gotchas | frontend/src/app/(admin)/database-inventory/page.tsx |
 | `/deep-research` | Browse prior Deep Agents LLM wiki research projects, saved source files, durable answers, and change logs. | frontend/src/app/(admin)/deep-research/page.tsx |
 | `/design` | Living inventory of every token and component. Import from @/components/ds. | frontend/src/app/(admin)/design/page.tsx |
-| `/design-ideas` | — | frontend/src/app/(admin)/design-ideas/page.tsx |
+| `/design-ideas` | Design system showcase and reference page for UI components and patterns | frontend/src/app/(admin)/design-ideas/page.tsx |
 | `/design-system` | Single source of truth for UI standards, tokens, and components. | frontend/src/app/(admin)/design-system/page.tsx |
-| `/design-system-update` | Expand to full page | frontend/src/app/(admin)/design-system-update/page.tsx |
+| `/design-system-update` | Premium light mode UI examples and design hierarchy documentation | frontend/src/app/(admin)/design-system-update/page.tsx |
 | `/design-violations` | Flagged design system violations — right-click any element in dev mode to flag | frontend/src/app/(admin)/design-violations/page.tsx |
 | `/dev/table-generator` | Generate UnifiedTablePage + feature config from your Supabase schema | frontend/src/app/(admin)/dev/table-generator/page.tsx |
-| `/directory` | — | frontend/src/app/(main)/directory/page.tsx |
-| `/directory/clients` | — | frontend/src/app/(main)/directory/clients/page.tsx |
-| `/directory/companies` | — | frontend/src/app/(main)/directory/companies/page.tsx |
+| `/directory` | Redirect to companies directory listing | frontend/src/app/(main)/directory/page.tsx |
+| `/directory/clients` | Table of client companies with contact info and project relationships | frontend/src/app/(main)/directory/clients/page.tsx |
+| `/directory/companies` | Directory of all companies with type, status, contacts, and ERP sync integration | frontend/src/app/(main)/directory/companies/page.tsx |
 | `/directory/companies/[companyId]` | Loading company information... | frontend/src/app/(main)/directory/companies/[companyId]/page.tsx |
-| `/directory/contacts` | — | frontend/src/app/(main)/directory/contacts/page.tsx |
+| `/directory/contacts` | Searchable list of individual contacts with email, type, and company assignment | frontend/src/app/(main)/directory/contacts/page.tsx |
 | `/directory/contacts/[contactId]` | This contact has not been assigned to any projects yet. | frontend/src/app/(main)/directory/contacts/[contactId]/page.tsx |
-| `/directory/employees` | — | frontend/src/app/(main)/directory/employees/page.tsx |
-| `/directory/groups` | — | frontend/src/app/(main)/directory/groups/page.tsx |
-| `/directory/prospects` | — | frontend/src/app/(main)/directory/prospects/page.tsx |
-| `/directory/vendors` | — | frontend/src/app/(main)/directory/vendors/page.tsx |
+| `/directory/employees` | Directory of Alleato Group employees with job titles, departments, and contact info | frontend/src/app/(main)/directory/employees/page.tsx |
+| `/directory/groups` | Distribution groups for mass communication and team organization | frontend/src/app/(main)/directory/groups/page.tsx |
+| `/directory/prospects` | Sales pipeline tracking prospects, leads, and business development opportunities | frontend/src/app/(main)/directory/prospects/page.tsx |
+| `/directory/vendors` | Vendor directory with payment terms, Acumatica sync, and 1099 classification | frontend/src/app/(main)/directory/vendors/page.tsx |
 | `/directory/vendors/[vendorId]` | Loading vendor information... | frontend/src/app/(main)/directory/vendors/[vendorId]/page.tsx |
 | `/docs/[[...slug]]` | Try a broader search phrase. | frontend/src/app/(admin)/docs/[[...slug]]/page.tsx |
 | `/docs/ai-overview` | Pulled live from the codebase, not hand-edited. | frontend/src/app/(admin)/docs/ai-overview/page.tsx |
 | `/docs/ai-overview/data-sources` | Every source funnels through the same three stages. The pipeline runs end-to-end every 30 minutes on Render. | frontend/src/app/(admin)/docs/ai-overview/data-sources/page.tsx |
 | `/docs/ai-overview/learning` | Each loop is operational today. They run continuously in the background: no manual trigger required. | frontend/src/app/(admin)/docs/ai-overview/learning/page.tsx |
-| `/docs/ai-overview/memory` | What the AI remembers | frontend/src/app/(admin)/docs/ai-overview/memory/page.tsx |
+| `/docs/ai-overview/memory` | Documentation explaining how AI memory is organized across conversation history, typed memories, and the vector knowledge base | frontend/src/app/(admin)/docs/ai-overview/memory/page.tsx |
 | `/docs/ai-overview/models-and-cost` | Each role in the system has a default model assigned in `frontend/src/lib/ai/providers.ts`. The model registry below shows what's wired today. | frontend/src/app/(admin)/docs/ai-overview/models-and-cost/page.tsx |
 | `/docs/ai-overview/team` | These agents have system prompts deployed and are wired into the orchestrator. Every live conversation goes through at least one of them. | frontend/src/app/(admin)/docs/ai-overview/team/page.tsx |
 | `/docs/ai-overview/tools` | Each domain corresponds to a tool file in `frontend/src/lib/ai/tools/`. The model picks tools based on what your question needs. | frontend/src/app/(admin)/docs/ai-overview/tools/page.tsx |
-| `/document-metadata` | — | frontend/src/app/(admin)/document-metadata/page.tsx |
+| `/document-metadata` | Admin dashboard listing all document and meeting metadata with search, filtering, and bulk management | frontend/src/app/(admin)/document-metadata/page.tsx |
 | `/documents` | RAG document library and ingestion status | frontend/src/app/(tables)/documents/page.tsx |
-| `/drawings` | Drawings | frontend/src/app/(tables)/drawings/page.tsx |
-| `/email-inbox` | Email Inbox | frontend/src/app/(tables)/email-inbox/page.tsx |
-| `/emails` | Emails | frontend/src/app/(tables)/emails/page.tsx |
-| `/errors` | — | frontend/src/app/(admin)/errors/page.tsx |
-| `/estimates` | — | frontend/src/app/(tables)/estimates/page.tsx |
-| `/estimates/[type]` | — | frontend/src/app/(main)/estimates/[type]/page.tsx |
+| `/drawings` | Searchable table of construction drawings and blueprints with upload, download, and publish capabilities | frontend/src/app/(tables)/drawings/page.tsx |
+| `/email-inbox` | Synchronized email inbox showing unread messages from Outlook | frontend/src/app/(tables)/email-inbox/page.tsx |
+| `/emails` | Global view of all synced emails with search and filtering | frontend/src/app/(tables)/emails/page.tsx |
+| `/errors` | Admin dashboard tracking grouped application errors with severity, status, and Linear issue links | frontend/src/app/(admin)/errors/page.tsx |
+| `/estimates` | Global table of all project estimates across types | frontend/src/app/(tables)/estimates/page.tsx |
+| `/estimates/[type]` | Filtered view of estimates grouped by type (labor, material, subcontractor, etc.) | frontend/src/app/(main)/estimates/[type]/page.tsx |
 | `/eval-runs` | Runs are written to docs/ai-plan/evals/runs/ (gitignored, local-only). Run the suite from the CLI, then refresh: node scripts/verify/verify_ai_assistant_eval_suite.mjs --bundle tool-coverage-read-regression | frontend/src/app/(admin)/eval-runs/page.tsx |
 | `/executive` | No meeting records matched today's Eastern-time date. | frontend/src/app/(main)/executive/page.tsx |
 | `/executive/capabilities` | Authentication required. | frontend/src/app/(main)/executive/capabilities/page.tsx |
 | `/executive/intelligence-brief` | This executive briefing is limited to users with executive briefing access. | frontend/src/app/(main)/executive/intelligence-brief/page.tsx |
 | `/feedback-inbox` | Review feedback, assign tools, and sync issues to GitHub. | frontend/src/app/(admin)/feedback-inbox/page.tsx |
-| `/files` | — | frontend/src/app/(tables)/files/page.tsx |
+| `/files` | Global file browser and manager | frontend/src/app/(tables)/files/page.tsx |
 | `/financial-insights` | Run a portfolio scan to detect budget discrepancies and financial red flags across your projects. | frontend/src/app/(main)/financial-insights/page.tsx |
 | `/fm-global` | Browse FM Global tables and figures, filter by system type, and jump to the matching form. | frontend/src/app/(main)/fm-global/page.tsx |
 | `/fm-global/fm_global_tables` | Reference tables for FM Global sprinkler protection data | frontend/src/app/(main)/fm-global/fm_global_tables/page.tsx |
 | `/fm-global/form` | Share your storage and racking details below and we'll estimate the FM Global 8-34 sprinkler configuration for your ASRS — including applicable tables, figures, and protection scheme. | frontend/src/app/(public)/fm-global/form/page.tsx |
-| `/fm-global/form/submitted/[submissionId]` | Submission received | frontend/src/app/(public)/fm-global/form/submitted/[submissionId]/page.tsx |
-| `/fm-global/submissions` | — | frontend/src/app/(main)/fm-global/submissions/page.tsx |
-| `/fm-global/submissions/[submissionId]` | Submission | frontend/src/app/(main)/fm-global/submissions/[submissionId]/page.tsx |
-| `/insights` | — | frontend/src/app/(tables)/insights/page.tsx |
+| `/fm-global/form/submitted/[submissionId]` | Public confirmation page displaying submitted FM Global sprinkler design request details | frontend/src/app/(public)/fm-global/form/submitted/[submissionId]/page.tsx |
+| `/fm-global/submissions` | Admin list of FM Global ASRS sprinkler design form submissions with contact and system specs | frontend/src/app/(main)/fm-global/submissions/page.tsx |
+| `/fm-global/submissions/[submissionId]` | Admin detail view of an FM Global form submission with matched tables and lead scoring | frontend/src/app/(main)/fm-global/submissions/[submissionId]/page.tsx |
+| `/insights` | Table of AI-generated insights from meetings and documents with type, severity, and status filters | frontend/src/app/(tables)/insights/page.tsx |
 | `/intelligence-compiler` | Operational health for source intelligence jobs, packet refreshes, promoted evidence, and project packets. | frontend/src/app/(admin)/intelligence-compiler/page.tsx |
-| `/intelligence-packets` | — | frontend/src/app/(admin)/intelligence-packets/page.tsx |
-| `/invoice/add` | — | frontend/src/app/(dashboard)/invoice/add/page.tsx |
-| `/invoice/edit` | — | frontend/src/app/(dashboard)/invoice/edit/page.tsx |
-| `/invoice/list` | — | frontend/src/app/(dashboard)/invoice/list/page.tsx |
-| `/invoice/preview` | — | frontend/src/app/(dashboard)/invoice/preview/page.tsx |
-| `/knowledge` | — | frontend/src/app/(main)/knowledge/page.tsx |
-| `/knowledge/manage` | — | frontend/src/app/(main)/knowledge/manage/page.tsx |
+| `/intelligence-packets` | Admin dashboard of AI-generated intelligence briefing packets with freshness and review queue tracking | frontend/src/app/(admin)/intelligence-packets/page.tsx |
+| `/invoice/add` | Create a new invoice | frontend/src/app/(dashboard)/invoice/add/page.tsx |
+| `/invoice/edit` | Edit an existing invoice | frontend/src/app/(dashboard)/invoice/edit/page.tsx |
+| `/invoice/list` | List all invoices | frontend/src/app/(dashboard)/invoice/list/page.tsx |
+| `/invoice/preview` | Preview an invoice before finalizing | frontend/src/app/(dashboard)/invoice/preview/page.tsx |
+| `/knowledge` | Search and browse the knowledge base of project documents and information | frontend/src/app/(main)/knowledge/page.tsx |
+| `/knowledge/manage` | Admin table to manage knowledge base entries, documents, and content | frontend/src/app/(main)/knowledge/manage/page.tsx |
 | `/manpower` | Cross-project staffing plan persisted from Microsoft Project CSV imports. | frontend/src/app/(main)/manpower/page.tsx |
-| `/meeting-segments` | — | frontend/src/app/(tables)/meeting-segments/page.tsx |
-| `/meetings` | — | frontend/src/app/(tables)/meetings/page.tsx |
-| `/meetings/[meetingId]` | — | frontend/src/app/(tables)/meetings/[meetingId]/page.tsx |
+| `/meeting-segments` | Table of chunked meeting content segments with decisions, tasks, and risks extracted by AI | frontend/src/app/(tables)/meeting-segments/page.tsx |
+| `/meetings` | Table of all meetings with summaries, participants, and action items | frontend/src/app/(tables)/meetings/page.tsx |
+| `/meetings/[meetingId]` | Meeting detail page with transcript, segments, extracted items, and related meetings | frontend/src/app/(tables)/meetings/[meetingId]/page.tsx |
 | `/motion` | Animated text with various presets | frontend/src/app/(admin)/motion/page.tsx |
-| `/motion/project-created-preview` | Project Created Modal — Preview | frontend/src/app/(admin)/motion/project-created-preview/page.tsx |
+| `/motion/project-created-preview` | Design preview/sandbox for the project creation success modal | frontend/src/app/(admin)/motion/project-created-preview/page.tsx |
 | `/notifications` | You'll be notified about comments, mentions, and project activity. | frontend/src/app/(main)/notifications/page.tsx |
 | `/operations-readiness` | Four operating answers: source data, generated tasks, project intelligence packets, and the daily brief. | frontend/src/app/(admin)/operations-readiness/page.tsx |
 | `/outlook-draft-feedback` | Review Brandon draft feedback captured from assistant Outlook draft widgets. | frontend/src/app/(admin)/outlook-draft-feedback/page.tsx |
-| `/outlook-emails` | Outlook Emails | frontend/src/app/(tables)/outlook-emails/page.tsx |
-| `/outlook-intake` | Outlook Intake | frontend/src/app/(tables)/outlook-intake/page.tsx |
-| `/permissions` | — | frontend/src/app/(admin)/permissions/page.tsx |
-| `/permissions/users/[personId]` | — | frontend/src/app/(admin)/permissions/users/[personId]/page.tsx |
+| `/outlook-emails` | Global view of emails synced from Outlook | frontend/src/app/(tables)/outlook-emails/page.tsx |
+| `/outlook-intake` | Outlook email intake queue for processing new incoming messages | frontend/src/app/(tables)/outlook-intake/page.tsx |
+| `/permissions` | Redirect to /user-management for managing user roles and permissions | frontend/src/app/(admin)/permissions/page.tsx |
+| `/permissions/users/[personId]` | Redirect to /user-management for individual user permission management | frontend/src/app/(admin)/permissions/users/[personId]/page.tsx |
 | `/pipeline` | Monitor and manage document processing pipeline | frontend/src/app/(main)/pipeline/page.tsx |
-| `/prime-contracts` | — | frontend/src/app/(tables)/prime-contracts/page.tsx |
+| `/prime-contracts` | Global table of prime contracts with financial summaries, change orders, and payment status | frontend/src/app/(tables)/prime-contracts/page.tsx |
 | `/procore-docs` | Guides and reference for using Procore to manage projects, track costs, and collaborate with your construction teams. | frontend/src/app/(admin)/procore-docs/page.tsx |
-| `/procore-docs/[...slug]` | — | frontend/src/app/(admin)/procore-docs/[...slug]/page.tsx |
-| `/procore-tools` | — | frontend/src/app/(admin)/(procore)/procore-tools/page.tsx |
-| `/procore-tools/[slug]` | — | frontend/src/app/(admin)/(procore)/procore-tools/[slug]/page.tsx |
-| `/procore-tracker` | — | frontend/src/app/(admin)/(procore)/procore-tracker/page.tsx |
-| `/procore-tracker/[featureId]` | — | frontend/src/app/(admin)/(procore)/procore-tracker/[featureId]/page.tsx |
-| `/product-board` | Product Board | frontend/src/app/(admin)/product-board/page.tsx |
+| `/procore-docs/[...slug]` | Article page displaying cached Procore help documentation with breadcrumb navigation | frontend/src/app/(admin)/procore-docs/[...slug]/page.tsx |
+| `/procore-tools` | Admin table of Procore tools with categories, status, and tutorial/test result tracking | frontend/src/app/(admin)/(procore)/procore-tools/page.tsx |
+| `/procore-tools/[slug]` | View detailed Procore tool information including status, implementation, test scenarios, and resources | frontend/src/app/(admin)/(procore)/procore-tools/[slug]/page.tsx |
+| `/procore-tracker` | Track Procore features by implementation status, priority, complexity, and estimated hours | frontend/src/app/(admin)/(procore)/procore-tracker/page.tsx |
+| `/procore-tracker/[featureId]` | View detailed Procore feature mapped to implementation routes, status, and test coverage | frontend/src/app/(admin)/(procore)/procore-tracker/[featureId]/page.tsx |
+| `/product-board` | Dashboard for product planning and feature tracking across the development roadmap | frontend/src/app/(admin)/product-board/page.tsx |
 | `/progress-reports` | This will permanently delete the report and its photo selections. This action cannot be undone. | frontend/src/app/(tables)/progress-reports/page.tsx |
 | `/project-attribution` | Review communication records that have candidate project matches but were not safe enough to assign automatically. | frontend/src/app/(admin)/project-attribution/page.tsx |
-| `/project-documents` | — | frontend/src/app/(tables)/project-documents/page.tsx |
-| `/projects` | Projects | frontend/src/app/(tables)/projects/page.tsx |
-| `/projects-table-demo` | — | frontend/src/app/(admin)/projects-table-demo/page.tsx |
-| `/prp-status` | PRP Pipeline Status | frontend/src/app/(admin)/prp-status/page.tsx |
+| `/project-documents` | Browse and search all project documents across projects by type, status, folder, and category | frontend/src/app/(tables)/project-documents/page.tsx |
+| `/projects` | Portfolio view of all projects with filtering by phase, category, and client, plus export | frontend/src/app/(tables)/projects/page.tsx |
+| `/projects-table-demo` | Demo page for the projects table component showcasing table functionality and configurations | frontend/src/app/(admin)/projects-table-demo/page.tsx |
+| `/prp-status` | Track Product Readiness Pipeline (PRP) status for tools across specification, audit, and validation stages | frontend/src/app/(admin)/prp-status/page.tsx |
 | `/rag` | Items successfully synced and items that failed, per source, per day. Sourced live from source_sync_runs. | frontend/src/app/(admin)/rag/page.tsx |
 | `/rag-eval` | Retrieval quality metrics, answer quality scores, and eval runners | frontend/src/app/(admin)/rag-eval/page.tsx |
 | `/redoc` | Explore auth flows, schema details, and every frontend/backend endpoint in one place. | frontend/src/app/(admin)/redoc/page.tsx |
-| `/settings` | — | frontend/src/app/(main)/settings/page.tsx |
-| `/settings/account` | Account | frontend/src/app/(main)/settings/account/page.tsx |
+| `/settings` | Redirect to user profile settings for account and preference management | frontend/src/app/(main)/settings/page.tsx |
+| `/settings/account` | Manage company account profile, logo, address, billing plan, seats, and renewal information | frontend/src/app/(main)/settings/account/page.tsx |
 | `/settings/audit` | Audit events will appear here as actions are taken in the system. | frontend/src/app/(main)/settings/audit/page.tsx |
 | `/settings/memory` | Review what Alleato AI remembers and flag anything that should change future behavior. | frontend/src/app/(main)/settings/memory/page.tsx |
-| `/settings/preferences` | — | frontend/src/app/(main)/settings/preferences/page.tsx |
-| `/settings/profile` | Profile | frontend/src/app/(main)/settings/profile/page.tsx |
+| `/settings/preferences` | Redirect to user profile settings for account and preference management | frontend/src/app/(main)/settings/preferences/page.tsx |
+| `/settings/profile` | View and edit user profile, avatar, account details, role, and integration connections | frontend/src/app/(main)/settings/profile/page.tsx |
 | `/settings/security` | Require a second verification step when members sign in. Applies to all workspace members. | frontend/src/app/(main)/settings/security/page.tsx |
-| `/site-map` | Page Access | frontend/src/app/(admin)/site-map/page.tsx |
+| `/site-map` | Admin inventory of all application pages with access levels and permission module mapping | frontend/src/app/(admin)/site-map/page.tsx |
 | `/source-sync` | Operational health for Microsoft Graph, Fireflies, vectorization, task extraction, compiler work, and intelligence packet readiness. | frontend/src/app/(admin)/source-sync/page.tsx |
 | `/spreadsheet-demo` | Liveblocks-backed shared grid for estimating, cost planning, and formula-driven team coordination. | frontend/src/app/(admin)/spreadsheet-demo/page.tsx |
-| `/stats` | Today's Stats | frontend/src/app/(main)/stats/page.tsx |
-| `/support-articles` | — | frontend/src/app/(admin)/(procore)/support-articles/page.tsx |
+| `/stats` | Daily activity summary including meetings, tasks, emails, documents, and project activity breakdown | frontend/src/app/(main)/stats/page.tsx |
+| `/support-articles` | Browse Procore support articles with chunking stats and embedding coverage for the knowledge base | frontend/src/app/(admin)/(procore)/support-articles/page.tsx |
 | `/support-articles/[articleId]` | This article has not been crawled yet. | frontend/src/app/(admin)/(procore)/support-articles/[articleId]/page.tsx |
-| `/table-pages` | — | frontend/src/app/(admin)/table-pages/page.tsx |
-| `/table-pages/[table]` | — | frontend/src/app/(admin)/table-pages/[table]/page.tsx |
-| `/table-pages/[table]/[recordId]` | — | frontend/src/app/(admin)/table-pages/[table]/[recordId]/page.tsx |
-| `/table-pages/[table]/new` | — | frontend/src/app/(admin)/table-pages/[table]/new/page.tsx |
+| `/table-pages` | Admin table explorer dashboard listing all registered database tables for browsing and management | frontend/src/app/(admin)/table-pages/page.tsx |
+| `/table-pages/[table]` | View, search, sort, and filter records from any database table with multiple view options | frontend/src/app/(admin)/table-pages/[table]/page.tsx |
+| `/table-pages/[table]/[recordId]` | View and edit a single database record with inline form and field visibility controls | frontend/src/app/(admin)/table-pages/[table]/[recordId]/page.tsx |
+| `/table-pages/[table]/new` | Create a new record in a database table with auto-generated form fields and validation | frontend/src/app/(admin)/table-pages/[table]/new/page.tsx |
 | `/table-v2` | Manage companies, clients, contacts, users, and employees across your organization | frontend/src/app/(admin)/table-v2/page.tsx |
 | `/tables-directory` | Browse and access all data tables in the system. | frontend/src/app/(admin)/tables-directory/page.tsx |
-| `/task-training` | Task Training | frontend/src/app/(admin)/task-training/page.tsx |
-| `/tasks` | Tasks | frontend/src/app/(tables)/tasks/page.tsx |
-| `/team-chat` | — | frontend/src/app/(main)/team-chat/page.tsx |
+| `/task-training` | Admin page to review and manage good vs bad task generation feedback for AI model training | frontend/src/app/(admin)/task-training/page.tsx |
+| `/tasks` | Task inbox for viewing and managing all generated and assigned tasks with filtering | frontend/src/app/(tables)/tasks/page.tsx |
+| `/team-chat` | Team communication and chat interface for project collaboration and messaging | frontend/src/app/(main)/team-chat/page.tsx |
 | `/teams-conversations` | Review compiled Microsoft Teams conversation threads, attribution, and project-linked source detail. | frontend/src/app/(tables)/teams-conversations/page.tsx |
 | `/teams-conversations/[sourceDocumentId]` | Compiled Microsoft Teams conversation thread detail for review, attribution, and downstream intelligence workflows. | frontend/src/app/(tables)/teams-conversations/[sourceDocumentId]/page.tsx |
 | `/template/form-standard` | Fill out the form below to create a new item | frontend/src/app/(admin)/template/form-standard/page.tsx |
 | `/template/form-template` | Example template showing every standard form field pattern | frontend/src/app/(admin)/template/form-template/page.tsx |
 | `/test-cases` | Supabase test_cases records | frontend/src/app/(admin)/test-cases/page.tsx |
-| `/test-matrix` | Test Runner — Photos | frontend/src/app/(admin)/test-matrix/page.tsx |
+| `/test-matrix` | Manual test runner with pass/fail marking, notes, screenshots, and keyboard shortcuts | frontend/src/app/(admin)/test-matrix/page.tsx |
 | `/testing` | Smoke and feature test suites for every tool. | frontend/src/app/(admin)/testing/page.tsx |
 | `/testing/[tool]` | Browse test cases or start a new run for this tool. | frontend/src/app/(admin)/testing/[tool]/page.tsx |
-| `/testing/[tool]/cases/[caseId]` | Context | frontend/src/app/(admin)/testing/[tool]/cases/[caseId]/page.tsx |
-| `/testing/parity` | Procore Parity Report | frontend/src/app/(admin)/testing/parity/page.tsx |
+| `/testing/[tool]/cases/[caseId]` | Read-only view of a test case with context, setup, steps, and expected result details | frontend/src/app/(admin)/testing/[tool]/cases/[caseId]/page.tsx |
+| `/testing/parity` | Procore feature parity report showing working, broken, and missing features by tool priority | frontend/src/app/(admin)/testing/parity/page.tsx |
 | `/testing/runs` | All in-progress and completed test runs across every tool. | frontend/src/app/(admin)/testing/runs/page.tsx |
-| `/testing/runs/[runId]` | Test recording | frontend/src/app/(admin)/testing/runs/[runId]/page.tsx |
-| `/testing/runs/[runId]/case/[caseNumber]` | Redirecting… | frontend/src/app/(admin)/testing/runs/[runId]/case/[caseNumber]/page.tsx |
-| `/tools` | Tools | frontend/src/app/(admin)/tools/page.tsx |
+| `/testing/runs/[runId]` | Test run dashboard with split-pane case list, result details, videos, and GitHub issue filing | frontend/src/app/(admin)/testing/runs/[runId]/page.tsx |
+| `/testing/runs/[runId]/case/[caseNumber]` | Redirect to parent test run page for consistent case navigation | frontend/src/app/(admin)/testing/runs/[runId]/case/[caseNumber]/page.tsx |
+| `/tools` | Catalog of all Procore tools grouped by category with status badges and external links | frontend/src/app/(admin)/tools/page.tsx |
 | `/updates` | A running log of features added, improved, and fixed across all areas of the platform. | frontend/src/app/(admin)/updates/page.tsx |
-| `/user-management` | Invite blocked | frontend/src/app/(admin)/user-management/page.tsx |
+| `/user-management` | Manage app users, project access, and permission templates with granular capability controls | frontend/src/app/(admin)/user-management/page.tsx |
 | `/user-management/users/[personId]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[personId]/page.tsx |
 
 ## API Endpoints (667)

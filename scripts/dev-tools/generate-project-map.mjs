@@ -38,6 +38,19 @@ const OUTPUT = join(ROOT, "docs", "architecture", "PROJECT-MAP.md");
 // trip the RAG-docs pre-commit gate. Consumed by the in-app findAppPage tool.
 const INDEX_DIR = join(ROOT, "frontend", "src", "lib", "app-surface");
 const INDEX_JSON = join(INDEX_DIR, "app-surface.generated.json");
+// Curated index-only descriptions for pages without a (visible) PageShell
+// description. A page's own PageShell description always wins over this.
+const SIDECAR = join(INDEX_DIR, "page-descriptions.json");
+
+function loadSidecar() {
+  if (!existsSync(SIDECAR)) return {};
+  try {
+    return JSON.parse(readFileSync(SIDECAR, "utf8")).descriptions ?? {};
+  } catch {
+    return {};
+  }
+}
+const SIDECAR_DESCRIPTIONS = loadSidecar();
 
 const CHECK_ONLY = process.argv.includes("--check-only");
 
@@ -152,10 +165,14 @@ function getPagesData() {
   return files
     .map((f) => {
       const src = readFileSync(f, "utf8");
+      const url = fileToUrl(f, "page");
+      // PageShell description (visible) wins; fall back to curated sidecar (index-only).
+      const description =
+        extractAttr(src, "description") || SIDECAR_DESCRIPTIONS[url] || null;
       return {
-        url: fileToUrl(f, "page"),
+        url,
         title: extractAttr(src, "title"),
-        description: extractAttr(src, "description"),
+        description,
         file: relative(ROOT, f),
       };
     })
@@ -165,7 +182,7 @@ function getPagesData() {
 function buildPages(rows) {
   const described = rows.filter((r) => r.description).length;
   let md = `## UI Routes (${rows.length})\n\n`;
-  md += `_${described}/${rows.length} have a description. Pages without one are invisible to find-a-page search — add a \`description\` to the page's \`PageShell\`._\n\n`;
+  md += `_${described}/${rows.length} have a description (from the page's \`PageShell\` or the curated \`frontend/src/lib/app-surface/page-descriptions.json\` sidecar). Pages without one are invisible to find-a-page search — add an entry to the sidecar (index-only) or a \`PageShell\` description (also renders in the UI)._\n\n`;
   md += "| URL | What it does | File |\n|-----|--------------|------|\n";
   for (const r of rows) {
     const what = (r.description || r.title || "—").replace(/\|/g, "\\|");

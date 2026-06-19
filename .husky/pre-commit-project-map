@@ -15,7 +15,7 @@ if [ -z "$STAGED" ]; then
 fi
 
 # Only these paths change the map's contents.
-SURFACE=$(echo "$STAGED" | grep -E '^frontend/src/app/.*/(page\.tsx|route\.ts)$|^frontend/src/lib/ai/tools/.*\.ts$' || true)
+SURFACE=$(echo "$STAGED" | grep -E '^frontend/src/app/.*/(page\.tsx|route\.ts)$|^frontend/src/lib/ai/tools/.*\.ts$|^frontend/src/lib/app-surface/page-descriptions\.json$' || true)
 
 if [ -z "$SURFACE" ]; then
   exit 0

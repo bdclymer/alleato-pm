@@ -4,7 +4,7 @@
     {
       "url": "/",
       "title": "Open OneDrive folder",
-      "description": null
+      "description": "List all projects across the organization with filtering, search, and client/estimating/internal scope tabs"
     },
     {
       "url": "/[projectId]/admin",
@@ -14,12 +14,12 @@
     {
       "url": "/[projectId]/billing-periods",
       "title": null,
-      "description": null
+      "description": "Create and manage invoice billing periods with manual or automatic frequency setup"
     },
     {
       "url": "/[projectId]/budget",
       "title": "Budget",
-      "description": null
+      "description": "View and manage project budget with line items, modifications, forecasting, and cost tracking"
     },
     {
       "url": "/[projectId]/budget/line-item/new",
@@ -29,7 +29,7 @@
     {
       "url": "/[projectId]/budget/setup",
       "title": "Add Budget Line Items",
-      "description": null
+      "description": "Create initial budget line items by selecting cost codes and entering amounts"
     },
     {
       "url": "/[projectId]/change-events",
@@ -59,12 +59,12 @@
     {
       "url": "/[projectId]/change-orders",
       "title": null,
-      "description": null
+      "description": "List prime contract and commitment change orders with status and financial details"
     },
     {
       "url": "/[projectId]/change-orders/[changeOrderId]/edit",
       "title": null,
-      "description": null
+      "description": "Redirect to change order detail page with edit mode enabled"
     },
     {
       "url": "/[projectId]/change-orders/commitment/[commitmentCoId]",
@@ -79,7 +79,7 @@
     {
       "url": "/[projectId]/change-orders/new",
       "title": null,
-      "description": null
+      "description": "Redirect legacy change order create URLs to canonical prime or commitment PCO routes"
     },
     {
       "url": "/[projectId]/change-orders/prime/[primeCoId]",
@@ -94,7 +94,7 @@
     {
       "url": "/[projectId]/client-dashboard",
       "title": null,
-      "description": null
+      "description": "Client-facing project overview with contract, milestones, RFIs, and recent documents"
     },
     {
       "url": "/[projectId]/commitment-pcos",
@@ -114,27 +114,27 @@
     {
       "url": "/[projectId]/commitments",
       "title": null,
-      "description": null
+      "description": "List subcontracts and purchase orders with financial totals and change order details"
     },
     {
       "url": "/[projectId]/commitments/[commitmentId]",
       "title": "Commitment Details",
-      "description": null
+      "description": "View commitment details including SOV, change orders, invoices, and related documents"
     },
     {
       "url": "/[projectId]/commitments/[commitmentId]/edit",
       "title": null,
-      "description": null
+      "description": "Edit subcontract or purchase order details including attachments and schedule of values"
     },
     {
       "url": "/[projectId]/commitments/[commitmentId]/invoices/[invoiceId]",
       "title": null,
-      "description": null
+      "description": "View subcontractor invoice details and payment information"
     },
     {
       "url": "/[projectId]/commitments/[commitmentId]/pcos/new",
       "title": "Create Potential Change Order",
-      "description": null
+      "description": "Create a new pending change order (PCO) for a subcontract or purchase order"
     },
     {
       "url": "/[projectId]/commitments/configure",
@@ -144,32 +144,32 @@
     {
       "url": "/[projectId]/commitments/new",
       "title": null,
-      "description": null
+      "description": "Create new subcontract or purchase order with details and schedule of values"
     },
     {
       "url": "/[projectId]/commitments/recycle-bin",
       "title": null,
-      "description": null
+      "description": "Redirect to commitments list filtered to recycle bin with soft-deleted records"
     },
     {
       "url": "/[projectId]/commitments/settings",
       "title": "Commitment Settings",
-      "description": null
+      "description": "Configure commitment settings for auto-numbering, defaults, and approval thresholds"
     },
     {
       "url": "/[projectId]/daily-log",
       "title": "Daily Log",
-      "description": null
+      "description": "List daily logs with weather, manpower, equipment, and site management notes"
     },
     {
       "url": "/[projectId]/daily-log/[dailyLogId]/edit",
       "title": null,
-      "description": null
+      "description": "Edit daily log entry with weather conditions, manpower, equipment, and general notes"
     },
     {
       "url": "/[projectId]/daily-log/new",
       "title": null,
-      "description": null
+      "description": "Create new daily log entry with site observations and project activities"
     },
     {
       "url": "/[projectId]/daily-log/site-scribe",
@@ -179,7 +179,7 @@
     {
       "url": "/[projectId]/direct-costs",
       "title": null,
-      "description": null
+      "description": "List direct costs with vendor, amounts, and status tracked separately from commitments"
     },
     {
       "url": "/[projectId]/direct-costs/[costId]",
@@ -194,22 +194,22 @@
     {
       "url": "/[projectId]/directory",
       "title": "Project Team",
-      "description": null
+      "description": "Manage project team members and companies with roles, contact info, and access control"
     },
     {
       "url": "/[projectId]/documents",
       "title": null,
-      "description": null
+      "description": "Store and organize project documents with versioning, search, and metadata tracking"
     },
     {
       "url": "/[projectId]/documents/[documentId]",
       "title": "Document preview",
-      "description": null
+      "description": "View and preview an individual document with details and content display"
     },
     {
       "url": "/[projectId]/drawings",
       "title": null,
-      "description": null
+      "description": "Upload and manage project drawings and design documents with versioning"
     },
     {
       "url": "/[projectId]/drawings/[drawingId]",
@@ -254,12 +254,12 @@
     {
       "url": "/[projectId]/emails",
       "title": null,
-      "description": null
+      "description": "View project-related emails integrated from Outlook or other email systems"
     },
     {
       "url": "/[projectId]/estimates",
       "title": null,
-      "description": null
+      "description": "List project estimates with dates and status for tracking bidding activities"
     },
     {
       "url": "/[projectId]/estimates/[estimateId]",
@@ -274,32 +274,32 @@
     {
       "url": "/[projectId]/estimates/new",
       "title": null,
-      "description": null
+      "description": "Redirect to estimates list page for creating new estimates"
     },
     {
       "url": "/[projectId]/home",
       "title": null,
-      "description": null
+      "description": "Project command center dashboard with budget, team, alerts, and key performance metrics"
     },
     {
       "url": "/[projectId]/hub",
       "title": "Project Hub",
-      "description": null
+      "description": "Tabbed project hub for quick access to documents, emails, meetings, and modules"
     },
     {
       "url": "/[projectId]/intelligence",
       "title": "Current project read from sources and database state",
-      "description": null
+      "description": "AI-powered project intelligence with insights, timeline, and source document references"
     },
     {
       "url": "/[projectId]/intelligence/sources/[sourceDocumentId]",
       "title": "Intelligence source",
-      "description": null
+      "description": "View source document used by a project intelligence packet with full content context"
     },
     {
       "url": "/[projectId]/invoices",
       "title": null,
-      "description": null
+      "description": "View owner and subcontractor invoices with billing periods organized by status"
     },
     {
       "url": "/[projectId]/invoices/new",
@@ -309,12 +309,12 @@
     {
       "url": "/[projectId]/invoices/owner/new",
       "title": null,
-      "description": null
+      "description": "Redirect to canonical owner invoice creation page with contract context"
     },
     {
       "url": "/[projectId]/invoicing",
       "title": null,
-      "description": null
+      "description": "Legacy redirect to canonical invoices workspace"
     },
     {
       "url": "/[projectId]/invoicing/[invoiceId]",
@@ -324,32 +324,32 @@
     {
       "url": "/[projectId]/invoicing/new",
       "title": null,
-      "description": null
+      "description": "Legacy redirect to canonical owner invoice creation with optional billing period"
     },
     {
       "url": "/[projectId]/invoicing/subcontractor",
       "title": null,
-      "description": null
+      "description": "Legacy redirect to subcontractor invoices tab"
     },
     {
       "url": "/[projectId]/invoicing/subcontractor/[invoiceId]",
       "title": null,
-      "description": null
+      "description": "View detailed subcontractor invoice with schedule of values and change orders"
     },
     {
       "url": "/[projectId]/invoicing/subcontractor/new",
       "title": "Create New Invoice",
-      "description": null
+      "description": "Create new subcontractor invoice with SOV and approved change orders"
     },
     {
       "url": "/[projectId]/meetings",
       "title": null,
-      "description": null
+      "description": "List project meetings with transcripts and extracted key information"
     },
     {
       "url": "/[projectId]/meetings/[meetingId]",
       "title": null,
-      "description": null
+      "description": "View meeting transcript with segments, tasks, risks, decisions, and opportunities"
     },
     {
       "url": "/[projectId]/meetings/[meetingId]/prep",
@@ -369,12 +369,12 @@
     {
       "url": "/[projectId]/outlook-emails",
       "title": "Outlook Emails",
-      "description": null
+      "description": "Display emails imported from Outlook linked to the project"
     },
     {
       "url": "/[projectId]/pcos",
       "title": null,
-      "description": null
+      "description": "List potential change orders by status with version, value, and schedule impact"
     },
     {
       "url": "/[projectId]/pcos/[pcoId]",
@@ -384,17 +384,17 @@
     {
       "url": "/[projectId]/pcos/[pcoId]/edit",
       "title": "Edit Potential Change Order",
-      "description": null
+      "description": "Edit potential change order with change events, line items, and markup"
     },
     {
       "url": "/[projectId]/pcos/new",
       "title": "New Potential Change Order",
-      "description": null
+      "description": "Create new potential change order linked to change events with line items"
     },
     {
       "url": "/[projectId]/permissions",
       "title": null,
-      "description": null
+      "description": "Legacy redirect to user management page"
     },
     {
       "url": "/[projectId]/photos",
@@ -414,17 +414,17 @@
     {
       "url": "/[projectId]/prime-contract-pcos/[pcoId]/edit",
       "title": "Edit Prime Contract PCO",
-      "description": null
+      "description": "Edit prime contract potential change order metadata and status"
     },
     {
       "url": "/[projectId]/prime-contract-pcos/new",
       "title": null,
-      "description": null
+      "description": "Create prime contract PCO from change events or standalone for conversion to CO"
     },
     {
       "url": "/[projectId]/prime-contracts",
       "title": null,
-      "description": null
+      "description": "List prime contracts with financial totals, expandable change orders, and PCOs"
     },
     {
       "url": "/[projectId]/prime-contracts/[contractId]",
@@ -434,22 +434,22 @@
     {
       "url": "/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]",
       "title": null,
-      "description": null
+      "description": "View prime contract PCO within the contract's change orders context"
     },
     {
       "url": "/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]/edit",
       "title": null,
-      "description": null
+      "description": "Edit prime contract PCO within change order context"
     },
     {
       "url": "/[projectId]/prime-contracts/[contractId]/change-orders/pcos/new",
       "title": null,
-      "description": null
+      "description": "Create new prime contract PCO linked to a specific prime contract"
     },
     {
       "url": "/[projectId]/prime-contracts/[contractId]/edit",
       "title": null,
-      "description": null
+      "description": "Redirect to contract detail page with edit mode enabled"
     },
     {
       "url": "/[projectId]/prime-contracts/[contractId]/invoices/[invoiceId]",
@@ -459,12 +459,12 @@
     {
       "url": "/[projectId]/prime-contracts/[contractId]/invoices/new",
       "title": null,
-      "description": null
+      "description": "Redirect to invoice creation with the prime contract pre-selected as context"
     },
     {
       "url": "/[projectId]/prime-contracts/change-orders",
       "title": null,
-      "description": null
+      "description": "Redirect to prime change orders tab in the canonical change orders page"
     },
     {
       "url": "/[projectId]/prime-contracts/configure",
@@ -474,32 +474,32 @@
     {
       "url": "/[projectId]/prime-contracts/new",
       "title": "Create Prime Contract",
-      "description": null
+      "description": "Create new prime contract with standard fields or from a project estimate"
     },
     {
       "url": "/[projectId]/progress-reports",
       "title": null,
-      "description": null
+      "description": "List weekly progress reports with photos, recipients, and publication status"
     },
     {
       "url": "/[projectId]/progress-reports/[reportId]",
       "title": "Progress Report",
-      "description": null
+      "description": "Edit and publish a weekly progress report from meetings, emails, and photos"
     },
     {
       "url": "/[projectId]/project-status-report",
       "title": "Project Status Report",
-      "description": null
+      "description": "Monthly project budget, invoice, schedule, and open items summary for stakeholders"
     },
     {
       "url": "/[projectId]/punch-list",
       "title": null,
-      "description": null
+      "description": "Track deficiencies and final closeout items for project completion"
     },
     {
       "url": "/[projectId]/punch-list/[punchItemId]",
       "title": null,
-      "description": null
+      "description": "View and manage an individual punch list item with status and notes"
     },
     {
       "url": "/[projectId]/reporting",
@@ -509,12 +509,12 @@
     {
       "url": "/[projectId]/rfis",
       "title": null,
-      "description": null
+      "description": "List requests for information with status tracking and response workflow"
     },
     {
       "url": "/[projectId]/rfis/[rfiId]",
       "title": null,
-      "description": null
+      "description": "View RFI details with responses, notes, and reply capability"
     },
     {
       "url": "/[projectId]/rfis/new",
@@ -544,7 +544,7 @@
     {
       "url": "/[projectId]/specifications",
       "title": null,
-      "description": null
+      "description": "Browse, upload, and manage project specifications by section with revision tracking"
     },
     {
       "url": "/[projectId]/specifications/[sectionId]",
@@ -554,27 +554,27 @@
     {
       "url": "/[projectId]/submittals",
       "title": "Export PDF",
-      "description": null
+      "description": "Organize construction submittals by packages, specs, and review workflows with approval tracking"
     },
     {
       "url": "/[projectId]/submittals/[submittalId]",
       "title": null,
-      "description": null
+      "description": "View submittal detail, workflow responses, and linked attachments"
     },
     {
       "url": "/[projectId]/submittals/[submittalId]/edit",
       "title": null,
-      "description": null
+      "description": "Edit submittal metadata, type, package, and specification associations"
     },
     {
       "url": "/[projectId]/submittals/new",
       "title": null,
-      "description": null
+      "description": "Create new submittal with optional package or spec section prefill"
     },
     {
       "url": "/[projectId]/tasks",
       "title": "Tasks",
-      "description": null
+      "description": "Project task inbox and workflow management interface"
     },
     {
       "url": "/[projectId]/tasks/kanban",
@@ -584,12 +584,12 @@
     {
       "url": "/[projectId]/timeline",
       "title": "Timeline",
-      "description": null
+      "description": "Chronological feed of project events and activity history"
     },
     {
       "url": "/[projectId]/transmittals",
       "title": null,
-      "description": null
+      "description": "Manage transmittals and project correspondence"
     },
     {
       "url": "/[projectId]/user-management",
@@ -599,32 +599,32 @@
     {
       "url": "/access-denied",
       "title": null,
-      "description": null
+      "description": "Error page shown when a user lacks permission to access a project or resource"
     },
     {
       "url": "/accounting",
       "title": "Accounting",
-      "description": null
+      "description": "Financial dashboard with AR aging, AP aging, cash position, and alerts"
     },
     {
       "url": "/accounting/ap-invoices",
       "title": null,
-      "description": null
+      "description": "Table of accounts payable invoices from Acumatica with status and amount"
     },
     {
       "url": "/accounting/ap-payments",
       "title": null,
-      "description": null
+      "description": "Table of AP checks and payments issued with status and amount"
     },
     {
       "url": "/accounting/bills",
       "title": null,
-      "description": null
+      "description": "Accounts payable bills synced from Acumatica with balance and hold status"
     },
     {
       "url": "/accounting/checks",
       "title": null,
-      "description": null
+      "description": "AP check register with payment method, vendor, and project allocation"
     },
     {
       "url": "/accounting/finance-spend",
@@ -634,22 +634,22 @@
     {
       "url": "/accounting/invoices",
       "title": null,
-      "description": null
+      "description": "Accounts receivable invoices with customer, due date, balance, and payments"
     },
     {
       "url": "/accounting/payments",
       "title": null,
-      "description": null
+      "description": "AR payment receipts with status, customer, linked invoices, and balance"
     },
     {
       "url": "/accounting/projects",
       "title": null,
-      "description": null
+      "description": "Acumatica project financials table with income, expenses, and profit margin"
     },
     {
       "url": "/accounting/reconciliation",
       "title": null,
-      "description": null
+      "description": "Sync discrepancy findings between Job Planner and Acumatica with resolution workflow"
     },
     {
       "url": "/accounting/sop-backlog",
@@ -659,7 +659,7 @@
     {
       "url": "/accounting/wip",
       "title": null,
-      "description": null
+      "description": "Work-in-progress report with contract value, cost variance, and billing position"
     },
     {
       "url": "/actions",
@@ -674,12 +674,12 @@
     {
       "url": "/admin",
       "title": "Admin Dashboard",
-      "description": null
+      "description": "Directory of admin, intelligence, database, testing, and internal documentation pages"
     },
     {
       "url": "/admin-check",
       "title": null,
-      "description": null
+      "description": "Verify the current user's authentication status and super admin privileges"
     },
     {
       "url": "/admin/company-info",
@@ -689,22 +689,22 @@
     {
       "url": "/admin/errors",
       "title": null,
-      "description": null
+      "description": "Redirect to /errors; grouped application errors and issue review"
     },
     {
       "url": "/ai",
       "title": "AI",
-      "description": null
+      "description": "AI chat interface for conversing with Alleato AI and running workflows"
     },
     {
       "url": "/ai-agents",
       "title": null,
-      "description": null
+      "description": "Redirect to /ai/admin/agents; AI agent registry with pipeline, chat, and write tools"
     },
     {
       "url": "/ai-assistant",
       "title": "AI",
-      "description": null
+      "description": "Redirect to /ai; AI assistant and chat interface for projects"
     },
     {
       "url": "/ai-assistant/feature-requests",
@@ -714,7 +714,7 @@
     {
       "url": "/ai-assistant/feature-requests/[requestId]",
       "title": null,
-      "description": null
+      "description": "Feature request workspace and details for AI assistant improvements"
     },
     {
       "url": "/ai-assistant/marketing",
@@ -724,12 +724,12 @@
     {
       "url": "/ai-assistant/skills",
       "title": null,
-      "description": null
+      "description": "Redirect to /ai/skills; approved AI skills available to the assistant"
     },
     {
       "url": "/ai-assistant/teach",
       "title": null,
-      "description": null
+      "description": "Redirect to /ai/teach; submit reviewed workflow knowledge to the AI system"
     },
     {
       "url": "/ai-avatar",
@@ -739,7 +739,7 @@
     {
       "url": "/ai-learning-promotions",
       "title": null,
-      "description": null
+      "description": "Redirect to /ai/learning-promotions; approve retrieval-learning candidates"
     },
     {
       "url": "/ai-prompt-diagnostics",
@@ -749,7 +749,7 @@
     {
       "url": "/ai-skills",
       "title": null,
-      "description": null
+      "description": "Redirect to /ai/admin/skills; admin review surface for Skill Library records"
     },
     {
       "url": "/ai-system-health",
@@ -769,7 +769,7 @@
     {
       "url": "/ai/admin/agents",
       "title": null,
-      "description": null
+      "description": "AI agent registry with table and dependency graph views, status and impact filters"
     },
     {
       "url": "/ai/admin/skills",
@@ -799,7 +799,7 @@
     {
       "url": "/annotation-inbox",
       "title": null,
-      "description": null
+      "description": "Manage issue annotations and feedback with priority scoring, dispatch to agents, and duplicate clustering"
     },
     {
       "url": "/api-docs",
@@ -809,77 +809,77 @@
     {
       "url": "/assignment-inbox",
       "title": null,
-      "description": null
+      "description": "View and manage assigned tasks and action items across projects"
     },
     {
       "url": "/auth/ai-widget-gallery",
       "title": null,
-      "description": null
+      "description": "Gallery of AI-powered interactive widgets and components"
     },
     {
       "url": "/auth/error",
       "title": null,
-      "description": null
+      "description": "Authentication error page displaying error codes and messages"
     },
     {
       "url": "/auth/forgot-password",
       "title": null,
-      "description": null
+      "description": "Password recovery form for users who have forgotten their login credentials"
     },
     {
       "url": "/auth/login",
       "title": null,
-      "description": null
+      "description": "User login form for signing in to the Alleato PM application"
     },
     {
       "url": "/auth/login-legacy",
       "title": null,
-      "description": null
+      "description": "Legacy login page variant with branded header and background imagery"
     },
     {
       "url": "/auth/login-v2",
       "title": null,
-      "description": null
+      "description": "Login page design version 2 with modern UI"
     },
     {
       "url": "/auth/login-v3",
       "title": null,
-      "description": null
+      "description": "Login page design version 3 with enhanced user experience"
     },
     {
       "url": "/auth/sign-up",
       "title": null,
-      "description": null
+      "description": "New user registration form for creating an account"
     },
     {
       "url": "/auth/sign-up-success",
       "title": null,
-      "description": null
+      "description": "Confirmation page displayed after successful account creation"
     },
     {
       "url": "/auth/update-password",
       "title": null,
-      "description": null
+      "description": "Form for users to set or reset their password"
     },
     {
       "url": "/billing-periods",
       "title": null,
-      "description": null
+      "description": "Redirect to project-scoped billing periods under the invoices tab"
     },
     {
       "url": "/calendar",
       "title": null,
-      "description": null
+      "description": "Project calendar view for scheduling and tracking events"
     },
     {
       "url": "/change-events",
       "title": null,
-      "description": null
+      "description": "Global table of change events and modifications across all projects"
     },
     {
       "url": "/command-center",
       "title": "Command Center",
-      "description": null
+      "description": "Kanban-style task board for tracking initiatives across idea, planned, in progress, and done statuses"
     },
     {
       "url": "/comments",
@@ -899,7 +899,7 @@
     {
       "url": "/daily-briefs",
       "title": null,
-      "description": null
+      "description": "Historical record of executive Daily Brief packets and delivery status"
     },
     {
       "url": "/daily-briefs/[briefId]",
@@ -909,17 +909,17 @@
     {
       "url": "/daily-logs",
       "title": null,
-      "description": null
+      "description": "Table of daily construction logs with weather, manpower, and work completed entries"
     },
     {
       "url": "/daily-logs/[dailyLogId]",
       "title": "Daily Log Detail",
-      "description": null
+      "description": "Detailed view of a specific daily log entry"
     },
     {
       "url": "/daily-reports",
       "title": null,
-      "description": null
+      "description": "AI-generated daily recap summaries of meetings and project decisions"
     },
     {
       "url": "/database",
@@ -929,7 +929,7 @@
     {
       "url": "/database-inventory",
       "title": null,
-      "description": null
+      "description": "Schema inventory of database tables with row counts, size, and gotchas"
     },
     {
       "url": "/deep-research",
@@ -944,7 +944,7 @@
     {
       "url": "/design-ideas",
       "title": null,
-      "description": null
+      "description": "Design system showcase and reference page for UI components and patterns"
     },
     {
       "url": "/design-system",
@@ -954,7 +954,7 @@
     {
       "url": "/design-system-update",
       "title": "Expand to full page",
-      "description": null
+      "description": "Premium light mode UI examples and design hierarchy documentation"
     },
     {
       "url": "/design-violations",
@@ -969,17 +969,17 @@
     {
       "url": "/directory",
       "title": null,
-      "description": null
+      "description": "Redirect to companies directory listing"
     },
     {
       "url": "/directory/clients",
       "title": null,
-      "description": null
+      "description": "Table of client companies with contact info and project relationships"
     },
     {
       "url": "/directory/companies",
       "title": null,
-      "description": null
+      "description": "Directory of all companies with type, status, contacts, and ERP sync integration"
     },
     {
       "url": "/directory/companies/[companyId]",
@@ -989,7 +989,7 @@
     {
       "url": "/directory/contacts",
       "title": null,
-      "description": null
+      "description": "Searchable list of individual contacts with email, type, and company assignment"
     },
     {
       "url": "/directory/contacts/[contactId]",
@@ -999,22 +999,22 @@
     {
       "url": "/directory/employees",
       "title": null,
-      "description": null
+      "description": "Directory of Alleato Group employees with job titles, departments, and contact info"
     },
     {
       "url": "/directory/groups",
       "title": null,
-      "description": null
+      "description": "Distribution groups for mass communication and team organization"
     },
     {
       "url": "/directory/prospects",
       "title": null,
-      "description": null
+      "description": "Sales pipeline tracking prospects, leads, and business development opportunities"
     },
     {
       "url": "/directory/vendors",
       "title": null,
-      "description": null
+      "description": "Vendor directory with payment terms, Acumatica sync, and 1099 classification"
     },
     {
       "url": "/directory/vendors/[vendorId]",
@@ -1044,7 +1044,7 @@
     {
       "url": "/docs/ai-overview/memory",
       "title": "What the AI remembers",
-      "description": null
+      "description": "Documentation explaining how AI memory is organized across conversation history, typed memories, and the vector knowledge base"
     },
     {
       "url": "/docs/ai-overview/models-and-cost",
@@ -1064,7 +1064,7 @@
     {
       "url": "/document-metadata",
       "title": null,
-      "description": null
+      "description": "Admin dashboard listing all document and meeting metadata with search, filtering, and bulk management"
     },
     {
       "url": "/documents",
@@ -1074,32 +1074,32 @@
     {
       "url": "/drawings",
       "title": "Drawings",
-      "description": null
+      "description": "Searchable table of construction drawings and blueprints with upload, download, and publish capabilities"
     },
     {
       "url": "/email-inbox",
       "title": "Email Inbox",
-      "description": null
+      "description": "Synchronized email inbox showing unread messages from Outlook"
     },
     {
       "url": "/emails",
       "title": "Emails",
-      "description": null
+      "description": "Global view of all synced emails with search and filtering"
     },
     {
       "url": "/errors",
       "title": null,
-      "description": null
+      "description": "Admin dashboard tracking grouped application errors with severity, status, and Linear issue links"
     },
     {
       "url": "/estimates",
       "title": null,
-      "description": null
+      "description": "Global table of all project estimates across types"
     },
     {
       "url": "/estimates/[type]",
       "title": null,
-      "description": null
+      "description": "Filtered view of estimates grouped by type (labor, material, subcontractor, etc.)"
     },
     {
       "url": "/eval-runs",
@@ -1129,7 +1129,7 @@
     {
       "url": "/files",
       "title": null,
-      "description": null
+      "description": "Global file browser and manager"
     },
     {
       "url": "/financial-insights",
@@ -1154,22 +1154,22 @@
     {
       "url": "/fm-global/form/submitted/[submissionId]",
       "title": "Submission received",
-      "description": null
+      "description": "Public confirmation page displaying submitted FM Global sprinkler design request details"
     },
     {
       "url": "/fm-global/submissions",
       "title": null,
-      "description": null
+      "description": "Admin list of FM Global ASRS sprinkler design form submissions with contact and system specs"
     },
     {
       "url": "/fm-global/submissions/[submissionId]",
       "title": "Submission",
-      "description": null
+      "description": "Admin detail view of an FM Global form submission with matched tables and lead scoring"
     },
     {
       "url": "/insights",
       "title": null,
-      "description": null
+      "description": "Table of AI-generated insights from meetings and documents with type, severity, and status filters"
     },
     {
       "url": "/intelligence-compiler",
@@ -1179,37 +1179,37 @@
     {
       "url": "/intelligence-packets",
       "title": null,
-      "description": null
+      "description": "Admin dashboard of AI-generated intelligence briefing packets with freshness and review queue tracking"
     },
     {
       "url": "/invoice/add",
       "title": null,
-      "description": null
+      "description": "Create a new invoice"
     },
     {
       "url": "/invoice/edit",
       "title": null,
-      "description": null
+      "description": "Edit an existing invoice"
     },
     {
       "url": "/invoice/list",
       "title": null,
-      "description": null
+      "description": "List all invoices"
     },
     {
       "url": "/invoice/preview",
       "title": null,
-      "description": null
+      "description": "Preview an invoice before finalizing"
     },
     {
       "url": "/knowledge",
       "title": null,
-      "description": null
+      "description": "Search and browse the knowledge base of project documents and information"
     },
     {
       "url": "/knowledge/manage",
       "title": null,
-      "description": null
+      "description": "Admin table to manage knowledge base entries, documents, and content"
     },
     {
       "url": "/manpower",
@@ -1219,17 +1219,17 @@
     {
       "url": "/meeting-segments",
       "title": null,
-      "description": null
+      "description": "Table of chunked meeting content segments with decisions, tasks, and risks extracted by AI"
     },
     {
       "url": "/meetings",
       "title": null,
-      "description": null
+      "description": "Table of all meetings with summaries, participants, and action items"
     },
     {
       "url": "/meetings/[meetingId]",
       "title": null,
-      "description": null
+      "description": "Meeting detail page with transcript, segments, extracted items, and related meetings"
     },
     {
       "url": "/motion",
@@ -1239,7 +1239,7 @@
     {
       "url": "/motion/project-created-preview",
       "title": "Project Created Modal — Preview",
-      "description": null
+      "description": "Design preview/sandbox for the project creation success modal"
     },
     {
       "url": "/notifications",
@@ -1259,22 +1259,22 @@
     {
       "url": "/outlook-emails",
       "title": "Outlook Emails",
-      "description": null
+      "description": "Global view of emails synced from Outlook"
     },
     {
       "url": "/outlook-intake",
       "title": "Outlook Intake",
-      "description": null
+      "description": "Outlook email intake queue for processing new incoming messages"
     },
     {
       "url": "/permissions",
       "title": null,
-      "description": null
+      "description": "Redirect to /user-management for managing user roles and permissions"
     },
     {
       "url": "/permissions/users/[personId]",
       "title": null,
-      "description": null
+      "description": "Redirect to /user-management for individual user permission management"
     },
     {
       "url": "/pipeline",
@@ -1284,7 +1284,7 @@
     {
       "url": "/prime-contracts",
       "title": null,
-      "description": null
+      "description": "Global table of prime contracts with financial summaries, change orders, and payment status"
     },
     {
       "url": "/procore-docs",
@@ -1294,32 +1294,32 @@
     {
       "url": "/procore-docs/[...slug]",
       "title": null,
-      "description": null
+      "description": "Article page displaying cached Procore help documentation with breadcrumb navigation"
     },
     {
       "url": "/procore-tools",
       "title": null,
-      "description": null
+      "description": "Admin table of Procore tools with categories, status, and tutorial/test result tracking"
     },
     {
       "url": "/procore-tools/[slug]",
       "title": null,
-      "description": null
+      "description": "View detailed Procore tool information including status, implementation, test scenarios, and resources"
     },
     {
       "url": "/procore-tracker",
       "title": null,
-      "description": null
+      "description": "Track Procore features by implementation status, priority, complexity, and estimated hours"
     },
     {
       "url": "/procore-tracker/[featureId]",
       "title": null,
-      "description": null
+      "description": "View detailed Procore feature mapped to implementation routes, status, and test coverage"
     },
     {
       "url": "/product-board",
       "title": "Product Board",
-      "description": null
+      "description": "Dashboard for product planning and feature tracking across the development roadmap"
     },
     {
       "url": "/progress-reports",
@@ -1334,22 +1334,22 @@
     {
       "url": "/project-documents",
       "title": null,
-      "description": null
+      "description": "Browse and search all project documents across projects by type, status, folder, and category"
     },
     {
       "url": "/projects",
       "title": "Projects",
-      "description": null
+      "description": "Portfolio view of all projects with filtering by phase, category, and client, plus export"
     },
     {
       "url": "/projects-table-demo",
       "title": null,
-      "description": null
+      "description": "Demo page for the projects table component showcasing table functionality and configurations"
     },
     {
       "url": "/prp-status",
       "title": "PRP Pipeline Status",
-      "description": null
+      "description": "Track Product Readiness Pipeline (PRP) status for tools across specification, audit, and validation stages"
     },
     {
       "url": "/rag",
@@ -1369,12 +1369,12 @@
     {
       "url": "/settings",
       "title": null,
-      "description": null
+      "description": "Redirect to user profile settings for account and preference management"
     },
     {
       "url": "/settings/account",
       "title": "Account",
-      "description": null
+      "description": "Manage company account profile, logo, address, billing plan, seats, and renewal information"
     },
     {
       "url": "/settings/audit",
@@ -1389,12 +1389,12 @@
     {
       "url": "/settings/preferences",
       "title": null,
-      "description": null
+      "description": "Redirect to user profile settings for account and preference management"
     },
     {
       "url": "/settings/profile",
       "title": "Profile",
-      "description": null
+      "description": "View and edit user profile, avatar, account details, role, and integration connections"
     },
     {
       "url": "/settings/security",
@@ -1404,7 +1404,7 @@
     {
       "url": "/site-map",
       "title": "Page Access",
-      "description": null
+      "description": "Admin inventory of all application pages with access levels and permission module mapping"
     },
     {
       "url": "/source-sync",
@@ -1419,12 +1419,12 @@
     {
       "url": "/stats",
       "title": "Today's Stats",
-      "description": null
+      "description": "Daily activity summary including meetings, tasks, emails, documents, and project activity breakdown"
     },
     {
       "url": "/support-articles",
       "title": null,
-      "description": null
+      "description": "Browse Procore support articles with chunking stats and embedding coverage for the knowledge base"
     },
     {
       "url": "/support-articles/[articleId]",
@@ -1434,22 +1434,22 @@
     {
       "url": "/table-pages",
       "title": null,
-      "description": null
+      "description": "Admin table explorer dashboard listing all registered database tables for browsing and management"
     },
     {
       "url": "/table-pages/[table]",
       "title": null,
-      "description": null
+      "description": "View, search, sort, and filter records from any database table with multiple view options"
     },
     {
       "url": "/table-pages/[table]/[recordId]",
       "title": null,
-      "description": null
+      "description": "View and edit a single database record with inline form and field visibility controls"
     },
     {
       "url": "/table-pages/[table]/new",
       "title": null,
-      "description": null
+      "description": "Create a new record in a database table with auto-generated form fields and validation"
     },
     {
       "url": "/table-v2",
@@ -1464,17 +1464,17 @@
     {
       "url": "/task-training",
       "title": "Task Training",
-      "description": null
+      "description": "Admin page to review and manage good vs bad task generation feedback for AI model training"
     },
     {
       "url": "/tasks",
       "title": "Tasks",
-      "description": null
+      "description": "Task inbox for viewing and managing all generated and assigned tasks with filtering"
     },
     {
       "url": "/team-chat",
       "title": null,
-      "description": null
+      "description": "Team communication and chat interface for project collaboration and messaging"
     },
     {
       "url": "/teams-conversations",
@@ -1504,7 +1504,7 @@
     {
       "url": "/test-matrix",
       "title": "Test Runner — Photos",
-      "description": null
+      "description": "Manual test runner with pass/fail marking, notes, screenshots, and keyboard shortcuts"
     },
     {
       "url": "/testing",
@@ -1519,12 +1519,12 @@
     {
       "url": "/testing/[tool]/cases/[caseId]",
       "title": "Context",
-      "description": null
+      "description": "Read-only view of a test case with context, setup, steps, and expected result details"
     },
     {
       "url": "/testing/parity",
       "title": "Procore Parity Report",
-      "description": null
+      "description": "Procore feature parity report showing working, broken, and missing features by tool priority"
     },
     {
       "url": "/testing/runs",
@@ -1534,17 +1534,17 @@
     {
       "url": "/testing/runs/[runId]",
       "title": "Test recording",
-      "description": null
+      "description": "Test run dashboard with split-pane case list, result details, videos, and GitHub issue filing"
     },
     {
       "url": "/testing/runs/[runId]/case/[caseNumber]",
       "title": "Redirecting…",
-      "description": null
+      "description": "Redirect to parent test run page for consistent case navigation"
     },
     {
       "url": "/tools",
       "title": "Tools",
-      "description": null
+      "description": "Catalog of all Procore tools grouped by category with status badges and external links"
     },
     {
       "url": "/updates",
@@ -1554,7 +1554,7 @@
     {
       "url": "/user-management",
       "title": "Invite blocked",
-      "description": null
+      "description": "Manage app users, project access, and permission templates with granular capability controls"
     },
     {
       "url": "/user-management/users/[personId]",

@@ -29,6 +29,16 @@ interface IndexedEntry {
   titleText: string;
   bodyText: string;
   refText: string;
+  /** Full leaf segment, hyphens intact, word-stemmed (e.g. "prime-contract"). */
+  leaf: string;
+  /** Stemmed leaf words (e.g. {"prime","contract"}) — the strongest locator signal. */
+  leafWords: Set<string>;
+  /** All stemmed non-param segment words — a weaker "appears in the path" signal. */
+  segmentWords: Set<string>;
+  /** True when the route's terminal segment is the noun itself (list page), not a [param] (detail page). */
+  terminalIsStatic: boolean;
+  /** Path depth — used as a tiebreak so canonical (shallower) routes rank first. */
+  depth: number;
 }
 
 const STOP_WORDS = new Set([
@@ -44,9 +54,36 @@ function tokenize(text: string): string[] {
     .filter((t) => t.length > 1 && !STOP_WORDS.has(t));
 }
 
+// Naive singular stem so "meeting"~"meetings", "commitment"~"commitments".
+function stem(word: string): string {
+  return word.length > 3 && word.endsWith("s") ? word.slice(0, -1) : word;
+}
+
+// Generic CRUD/action verbs that appear as route segments (e.g. /…/new, /testing/runs)
+// but are never a page's subject noun. They must NOT grant a route-tier match —
+// otherwise "run workflows" hijacks to /testing/runs. They still count for text.
+const ROUTE_GENERIC = new Set([
+  "run", "new", "edit", "add", "create", "view", "list", "detail", "index", "setup",
+]);
+
 function buildIndex(): IndexedEntry[] {
   const entries: IndexedEntry[] = [];
   for (const p of surface.pages) {
+    const rawSegments = p.url.split("/").filter(Boolean);
+    const staticSegments = rawSegments.filter((s) => !s.startsWith("["));
+    const leafRaw =
+      [...staticSegments].pop()?.replace(/[().]/g, "").toLowerCase() ?? "";
+    const leaf = leafRaw.split("-").filter(Boolean).map(stem).join("-");
+    const segmentWords = new Set(
+      staticSegments.flatMap((s) =>
+        s
+          .replace(/[().]/g, "")
+          .toLowerCase()
+          .split("-")
+          .filter(Boolean)
+          .map(stem),
+      ),
+    );
     entries.push({
       kind: "page",
       ref: p.url,
@@ -55,6 +92,13 @@ function buildIndex(): IndexedEntry[] {
       titleText: (p.title ?? "").toLowerCase(),
       bodyText: (p.description ?? "").toLowerCase(),
       refText: p.url.toLowerCase().replace(/[/[\]-]+/g, " "),
+      leaf,
+      leafWords: new Set(leaf.split("-").filter(Boolean)),
+      segmentWords,
+      terminalIsStatic:
+        rawSegments.length === 0 ||
+        !rawSegments[rawSegments.length - 1].startsWith("["),
+      depth: rawSegments.length,
     });
   }
   for (const t of surface.tools) {
@@ -69,6 +113,11 @@ function buildIndex(): IndexedEntry[] {
         .toLowerCase(),
       bodyText: (t.description ?? "").toLowerCase(),
       refText: t.name.toLowerCase(),
+      leaf: "",
+      leafWords: new Set(),
+      segmentWords: new Set(),
+      terminalIsStatic: false,
+      depth: 0,
     });
   }
   return entries;
@@ -76,27 +125,51 @@ function buildIndex(): IndexedEntry[] {
 
 const INDEX = buildIndex();
 
+// Two-tier score: a coarse "route tier" dominates, then a finer text/canonical
+// score breaks ties. This guarantees the page whose ROUTE is the noun outranks a
+// peripheral page that merely mentions the noun in its description, while still
+// letting description-only matches surface when no route matches.
 function scoreEntry(entry: IndexedEntry, tokens: string[], rawQuery: string): number {
-  let score = 0;
+  const tokenStems = tokens.map(stem);
+  const queryAsLeaf = tokenStems.join("-");
 
-  // Whole-phrase substring hit is a strong signal.
+  // Route tier (the locator signal):
+  //   4 = the WHOLE query is this page's noun (exact leaf, e.g. "punch list" → punch-list)
+  //   3 = a single query word equals this page's whole noun (e.g. "wip" → /accounting/wip)
+  //   2 = a query word is part of this page's (multi-word) noun
+  //   1 = a query word appears elsewhere in the path
+  //   0 = no path match
+  // Generic verbs match text but never grant a route tier.
+  const routeTokens = tokenStems.filter((t) => !ROUTE_GENERIC.has(t));
+  let tier = 0;
+  if (entry.leaf && queryAsLeaf === entry.leaf) tier = 4;
+  else if (entry.leaf && routeTokens.some((t) => t === entry.leaf)) tier = 3;
+  else if (routeTokens.some((t) => entry.leafWords.has(t))) tier = 2;
+  else if (routeTokens.some((t) => entry.segmentWords.has(t))) tier = 1;
+
+  // Text/refinement score (small — only orders pages within the same tier).
+  let text = 0;
   if (rawQuery.length > 2) {
-    if (entry.titleText.includes(rawQuery)) score += 12;
-    if (entry.bodyText.includes(rawQuery)) score += 8;
+    if (entry.titleText.includes(rawQuery)) text += 6;
+    if (entry.bodyText.includes(rawQuery)) text += 2;
   }
-
   for (const token of tokens) {
     const wordRe = new RegExp(`\\b${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`);
-    if (wordRe.test(entry.titleText)) score += 6;
-    else if (entry.titleText.includes(token)) score += 3;
-
-    if (wordRe.test(entry.bodyText)) score += 4;
-    else if (entry.bodyText.includes(token)) score += 2;
-
-    if (entry.refText.includes(token)) score += 1;
+    if (wordRe.test(entry.titleText)) text += 4;
+    else if (entry.titleText.includes(token)) text += 2;
+    if (wordRe.test(entry.bodyText)) text += 2;
+    else if (entry.bodyText.includes(token)) text += 1;
+    if (entry.refText.includes(token)) text += 1;
   }
 
-  return score;
+  // A list page (terminal segment IS the noun) is more canonical than a
+  // detail/[param] page sharing the same leaf — large enough that a detail
+  // page's richer description can't outrank its own list page within a tier.
+  const canonical = tier >= 2 && entry.terminalIsStatic ? 25 : 0;
+
+  if (tier === 0 && text === 0) return 0;
+  // Tier dominates; canonical + text refine within a tier.
+  return tier * 100 + canonical + text;
 }
 
 export interface SearchOptions {
@@ -122,10 +195,16 @@ export function searchAppSurface(
       title: e.title,
       description: e.description,
       score: scoreEntry(e, tokens, rawQuery),
+      depth: e.depth,
     }))
     .filter((r) => r.score > 0)
-    .sort((a, b) => b.score - a.score || a.ref.localeCompare(b.ref))
-    .slice(0, limit);
+    // Score desc; then canonical (shallower) routes; then alpha for stability.
+    .sort(
+      (a, b) =>
+        b.score - a.score || a.depth - b.depth || a.ref.localeCompare(b.ref),
+    )
+    .slice(0, limit)
+    .map(({ depth: _depth, ...r }) => r);
 }
 
 /** Total counts — useful for the tool to report coverage honestly. */
