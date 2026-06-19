@@ -58,8 +58,8 @@
 ## Linear Updates
 
 - Kickoff comment: `846fa31d-d71c-4ce6-a84e-abf09306e9f3`
-- Milestone comments: pending
-- Completion/blocker comment: pending
+- Milestone comments: `c473152b-77c6-4e41-a9d7-f1270d3a9b01`
+- Completion/blocker comment: `ea28a925-e5da-4e83-a51f-2102cba321c0`
 
 ## Current Status
 

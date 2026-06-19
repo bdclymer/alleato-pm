@@ -44,7 +44,7 @@
 
 - Kickoff comment: `c4875dbc-eef3-4308-b14f-37c645ff6742`
 - Milestone comments: `f7d35dbd-23b3-4730-96df-bf7aa2fd44f4`
-- Completion/blocker comment: pending
+- Completion/blocker comment: `04ca24ed-62a5-4209-97e6-9ba88fe04bdd`
 
 ## Current Status
 
