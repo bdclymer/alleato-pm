@@ -67,6 +67,7 @@ Leader reviews all pending handoffs here.
 | `docs/ops/handoffs/2026-06-19-S63-hybrid-rag-ranking.md` | S63 | AAI-561 | 2026-06-19 | Yes | Pending Review | Goal 5 implementation locally verified: AI Database migration/ledger readback, hybrid-vs-vector eval, telemetry readback, DB inventory, focused tests, changed-file quality, and Linear milestone comment recorded. Awaiting publish verification. |
 | `docs/ops/handoffs/2026-06-19-S64-context-compaction.md` | S64 | AAI-562 | 2026-06-19 | Yes | Pending Review | Goal 6 implementation locally verified: AI SDK docs/source checked, shared compaction module integrated into handler-v2, focused compaction tests passed, changed-file quality passed. Awaiting publish verification. |
 | `docs/ops/handoffs/2026-06-19-S65-human-gated-learning-loop.md` | S65 | AAI-564 | 2026-06-19 | Yes | Pending Review | Goal 7 G3 published at `864d36f9f5b247a23571d82fe50f73d5f3922947`: Hermes/Alleato references reviewed, default-off proposal-only service integrated into post-response tasks, focused tests passed, changed-file quality passed, and `codex:finish` verified `HEAD == origin/main`. |
+| `docs/ops/handoffs/2026-06-19-S66-nl-schedule-parser-automation-blueprints.md` | S66 | AAI-565 | 2026-06-19 | Yes | Pending Review | Goal 7 G6 implementation locally verified: Hermes cron references and Alleato automation anchors reviewed, default-off parser/planner stores reviewable `ai_work_runs` drafts without Render cron mutation, focused tests passed, changed-file quality passed. Awaiting publish verification. |
 
 ## Disposition Rules
 
