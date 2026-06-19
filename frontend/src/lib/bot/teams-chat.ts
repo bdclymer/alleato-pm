@@ -109,18 +109,18 @@ export async function sendProactiveMessage(
   supabaseUserId: string,
   text: string,
   preferDm = true,
-): Promise<void> {
+): Promise<unknown> {
   const thread = await resolveTeamsThread(supabaseUserId, preferDm);
-  await thread.post(text);
+  return thread.post(text);
 }
 
 export async function sendProactiveCard(
   supabaseUserId: string,
   card: PostableCard,
   preferDm = true,
-): Promise<void> {
+): Promise<unknown> {
   const thread = await resolveTeamsThread(supabaseUserId, preferDm);
-  await thread.post(card);
+  return thread.post(card);
 }
 
 // ---------------------------------------------------------------------------
@@ -183,7 +183,7 @@ async function logCheckpoint(
 ): Promise<void> {
   try {
     const supabase = createServiceClient();
-    await (supabase.from("bot_debug_log") as any).insert({
+    await supabase.from("bot_debug_log").insert({
       platform: "teams",
       checkpoint,
       platform_user_id: ctx.teamsUserId ?? null,

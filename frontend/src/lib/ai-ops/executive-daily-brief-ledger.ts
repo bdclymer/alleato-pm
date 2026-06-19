@@ -541,6 +541,7 @@ export async function recordDeliveryEvidence(
             : recipient.sent
               ? "sent"
               : "failed",
+        providerMessageId: recipient.providerMessageId ?? null,
         failureCode:
           !recipient.sent && recipient.reason !== "dry_run"
             ? "TEAMS_RECIPIENT_SEND_FAILED"
@@ -554,6 +555,7 @@ export async function recordDeliveryEvidence(
         metadata: {
           displayName: recipient.displayName,
           reason: recipient.reason ?? null,
+          providerResponse: recipient.providerResponse ?? null,
         },
       });
     }

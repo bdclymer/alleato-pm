@@ -8,7 +8,7 @@
 2) Task ID: AAI-551
 3) Linear issue: AAI-551
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-551/rebuild-executive-daily-brief-as-ai-operations-gateway-proof-workflow
-5) Current status: In Progress
+5) Current status: Complete with Blocked/Deferred live external-send verification
 6) Files changed (absolute paths):
    - `/Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `/Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
@@ -22,6 +22,8 @@
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/executive/daily-brief/preview-teams/route.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/executive/daily-brief/send-teams/route.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/admin/owner-briefing/send-test/route.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/bot/teams-chat.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/executive/owner-briefing-delivery.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai/tools/executive-brief-tools.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/executive/daily-brief/route-helpers.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/executive/daily-brief/widget/route.ts`
@@ -189,6 +191,13 @@
    - Pass: raw frontend `regenerateExecutiveBriefingDraft()` now has an explicit deprecation boundary: routes/actions/scripts/tools must use the AI Ops gateway helper so every packet has a canonical run, source health, artifacts, and delivery attempts.
    - Pass: backend legacy `run_daily_digest()` is default-blocked with `status=disabled`, `reason=legacy_daily_digest_disabled`, and canonical runner `frontend/scripts/run-executive-daily-brief.ts`; `/api/digests/daily/generate` now returns a loud `LEGACY_DAILY_DIGEST_DISABLED` conflict unless `LEGACY_DAILY_DIGEST_ENABLED=true`.
    - Pass: `cd frontend && npx eslint src/lib/executive/executive-briefing-workflow.ts`; `python3 -m py_compile backend/src/services/daily_digest.py backend/src/api/main.py`; direct `PYTHONPATH=backend python3` proof of `run_daily_digest('2026-06-19', 1)` returned the disabled result; `npm run rag:verify:executive-daily-brief-gateway` passed.
+   - Pass: deprecated `/api/admin/owner-briefing/send-test` is now a blocked compatibility route. It no longer queries `daily_recaps` or calls Teams directly; it records a blocked AI Ops run/delivery attempt and returns HTTP 410 with the canonical `/api/executive/daily-brief/send-teams` route.
+   - Pass: `scripts/verify/verify_executive_daily_brief_gateway.mjs` now fails if the deprecated admin test-send route reintroduces direct `daily_recaps` queries or direct `sendProactiveMessage`/`sendProactiveCard` calls.
+   - Pass: real Teams delivery implementation now preserves the Teams provider post result when exposed by the SDK; `owner-briefing-delivery.ts` normalizes `providerMessageId`/`providerResponse`, and `recordDeliveryEvidence()` persists them on `ai_work_run_delivery_attempts`.
+   - Pass: `cd frontend && npx eslint src/app/api/admin/owner-briefing/send-test/route.ts src/lib/bot/teams-chat.ts src/lib/executive/owner-briefing-delivery.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/ledger.test.ts` passed cleanly.
+   - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/ledger.test.ts src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts --runInBand` passed 2 suites / 14 tests. Coverage proves provider message id/provider response persistence, disabled delivery, dry-run, blocked provider result, partial recipient failure, and thrown-provider failure behavior.
+   - Pass: authenticated `agent-browser` proof of `/ai-work-runs` rendered live ledger rows for skipped/disabled runs, succeeded/dry-run previews, failed-permanent, failed-retryable, and running preview rows, plus Run Guidance, Delivery Attempts, Run Steps, exact failure code/message, and Packet Evidence Drilldown. Artifacts: `tests/agent-browser-runs/2026-06-19-executive-daily-brief-ai-work-runs/snapshot-loaded.txt`, `main-text.txt`, `ai-work-runs-loaded.png`.
+   - Deferred: live external Teams send remains blocked until `EXECUTIVE_DAILY_BRIEF_ENABLED=true` is explicitly safe with an approved recipient/window; live email send remains deferred until an approved recipient/window is explicitly safe. Both deferred items have owner/cause/prevention/next action recorded in the task file.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
@@ -200,6 +209,8 @@
    - `frontend/src/app/api/executive/daily-brief/preview-teams/route.ts`
    - `frontend/src/app/api/executive/daily-brief/send-teams/route.ts`
    - `frontend/src/app/api/admin/owner-briefing/send-test/route.ts`
+   - `frontend/src/lib/bot/teams-chat.ts`
+   - `frontend/src/lib/executive/owner-briefing-delivery.ts`
    - `frontend/src/lib/ai/tools/executive-brief-tools.ts`
    - `frontend/src/app/api/executive/daily-brief/route-helpers.ts`
    - `frontend/src/app/api/executive/daily-brief/widget/route.ts`
@@ -217,6 +228,9 @@
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-ai-runs/snapshot-playwright-auth.txt`
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-ai-runs/page-text.txt`
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-ai-runs/ai-work-runs-playwright-auth.png`
+   - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-ai-work-runs/snapshot-loaded.txt`
+   - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-ai-work-runs/main-text.txt`
+   - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-ai-work-runs/ai-work-runs-loaded.png`
    - `frontend/src/lib/ai-ops/source-adapters.ts`
    - `frontend/src/lib/ai-ops/executive-daily-brief-workflow.ts`
    - `frontend/src/lib/ai-ops/tool-registry.ts`

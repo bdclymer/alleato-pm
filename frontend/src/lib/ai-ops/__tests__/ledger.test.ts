@@ -149,9 +149,13 @@ function deliveryAttempt(
     recipientId: "user-1",
     recipientAddress: "brandon@example.com",
     status: "dry_run",
+    providerMessageId: "teams-message-1",
     retryable: false,
     attemptedAt: "2026-06-19T12:01:00.000Z",
-    metadata: { reason: "dry_run" },
+    metadata: {
+      reason: "dry_run",
+      providerResponse: { id: "teams-message-1" },
+    },
     ...overrides,
   };
 }
@@ -312,7 +316,11 @@ describe("ai-ops ledger", () => {
         recipient_id: "user-1",
         recipient_address: "brandon@example.com",
         status: "dry_run",
+        provider_message_id: "teams-message-1",
         retryable: false,
+        metadata: expect.objectContaining({
+          providerResponse: { id: "teams-message-1" },
+        }),
       },
     });
   });

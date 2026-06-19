@@ -33,6 +33,8 @@ export type OwnerBriefingDeliveryResult =
         displayName: string;
         sent: boolean;
         reason?: string;
+        providerMessageId?: string | null;
+        providerResponse?: Record<string, unknown> | null;
       }>;
       decisionsNeeded: number;
       actionsRequired: number;
@@ -152,6 +154,8 @@ export async function sendOwnerBriefingToTeams(input: {
         displayName: string;
         sent: boolean;
         reason?: string;
+        providerMessageId?: string | null;
+        providerResponse?: Record<string, unknown> | null;
       }> => {
         const personalized: OwnerBriefingData = {
           ...briefing,
@@ -175,12 +179,21 @@ export async function sendOwnerBriefingToTeams(input: {
 
         try {
           const { sendProactiveCard } = await import("@/lib/bot/teams-chat");
-          await sendProactiveCard(recipient.supabaseUserId, card);
+          const providerResponse = await sendProactiveCard(
+            recipient.supabaseUserId,
+            card,
+          );
+          const normalizedProviderResponse =
+            normalizeProviderResponse(providerResponse);
           return {
             userId: recipient.supabaseUserId,
             email: recipient.email,
             displayName: recipient.displayName,
             sent: true,
+            providerMessageId: extractProviderMessageId(
+              normalizedProviderResponse,
+            ),
+            providerResponse: normalizedProviderResponse,
           };
         } catch (err) {
           const reason = err instanceof Error ? err.message : String(err);
@@ -248,6 +261,32 @@ export async function sendOwnerBriefingToTeams(input: {
 function rewriteGreeting(greeting: string, firstName: string): string {
   // The builder always renders "Good morning, <name>." — swap the name.
   return greeting.replace(/, [^.]+\./, `, ${firstName}.`);
+}
+
+function normalizeProviderResponse(
+  value: unknown,
+): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  return value as Record<string, unknown>;
+}
+
+function extractProviderMessageId(
+  value: Record<string, unknown> | null,
+): string | null {
+  if (!value) return null;
+  const candidates = [
+    value.id,
+    value.messageId,
+    value.message_id,
+    value.activityId,
+    value.activity_id,
+  ];
+  const match = candidates.find(
+    (candidate) => typeof candidate === "string" && candidate.trim().length > 0,
+  );
+  return typeof match === "string" ? match : null;
 }
 
 function buildOwnerBriefingSourceSummary(

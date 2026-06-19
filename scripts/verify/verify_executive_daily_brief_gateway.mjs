@@ -15,6 +15,32 @@ const forbidden = [
       "App routes/actions/scripts must regenerate the Executive Daily Brief through regenerateDailyBriefDraftWithLedger so every generated draft has an ai_work_runs record.",
   },
 ];
+const fileScopedForbidden = [
+  {
+    file: path.join(
+      "frontend",
+      "src",
+      "app",
+      "api",
+      "admin",
+      "owner-briefing",
+      "send-test",
+      "route.ts",
+    ),
+    rules: [
+      {
+        pattern: /\.from\(["']daily_recaps["']\)/,
+        message:
+          "Deprecated admin owner briefing test-send must not query daily_recaps; use the canonical Daily Brief gateway.",
+      },
+      {
+        pattern: /\bsendProactive(Message|Card)\b/,
+        message:
+          "Deprecated admin owner briefing test-send must not call the Teams provider directly; use the canonical Daily Brief gateway.",
+      },
+    ],
+  },
+];
 
 function listFiles(dir) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -41,6 +67,17 @@ for (const root of scanRoots) {
           file: path.relative(repoRoot, file),
           message: rule.message,
         });
+      }
+    }
+    for (const scoped of fileScopedForbidden) {
+      if (path.relative(repoRoot, file) !== scoped.file) continue;
+      for (const rule of scoped.rules) {
+        if (rule.pattern.test(source)) {
+          failures.push({
+            file: path.relative(repoRoot, file),
+            message: rule.message,
+          });
+        }
       }
     }
   }
