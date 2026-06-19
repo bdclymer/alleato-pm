@@ -551,6 +551,7 @@ const projectToolNames = [
   "searchStructuredFinancialRows",
   "getScheduleAnalysis",
   "searchAppHelp",
+  "findAppPage",
   "getForecastComparison",
   "getOutlookOperationsStatus",
   "getOutlookCalendarEvents",

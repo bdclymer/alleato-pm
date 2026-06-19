@@ -4,326 +4,331 @@
 > A pre-commit gate fails if this file is stale relative to the code.
 >
 > This is the surface inventory every AI session should read first: what pages
-> exist, what API endpoints exist, and what the AI assistant can do. For *how*
-> the system fits together (data flow, architecture), see
+> exist, what API endpoints exist, and what the AI assistant can do. Search it
+> by *purpose* (e.g. grep "run workflows"), not by URL. For *how* the system
+> fits together (data flow, architecture), see
 > `docs/architecture/AI-RAG-ARCHITECTURE.md`. For the database, see
-> `docs/architecture/TABLE-LIST.md`.
+> `docs/architecture/TABLE-LIST.md`. The in-app assistant searches the same
+> data via the `findAppPage` tool (`frontend/src/lib/app-surface/`).
 
-## UI Routes (311)
+## UI Routes (312)
 
-| URL | File |
-|-----|------|
-| `/` | frontend/src/app/(main)/page.tsx |
-| `/[projectId]/admin` | frontend/src/app/(main)/[projectId]/admin/page.tsx |
-| `/[projectId]/billing-periods` | frontend/src/app/(main)/[projectId]/billing-periods/page.tsx |
-| `/[projectId]/budget` | frontend/src/app/(main)/[projectId]/budget/page.tsx |
-| `/[projectId]/budget/line-item/new` | frontend/src/app/(main)/[projectId]/budget/line-item/new/page.tsx |
-| `/[projectId]/budget/setup` | frontend/src/app/(main)/[projectId]/budget/setup/page.tsx |
-| `/[projectId]/change-events` | frontend/src/app/(main)/[projectId]/change-events/page.tsx |
-| `/[projectId]/change-events/[changeEventId]` | frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/page.tsx |
-| `/[projectId]/change-events/[changeEventId]/edit` | frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/edit/page.tsx |
-| `/[projectId]/change-events/new` | frontend/src/app/(main)/[projectId]/change-events/new/page.tsx |
-| `/[projectId]/change-management` | frontend/src/app/(main)/[projectId]/change-management/page.tsx |
-| `/[projectId]/change-orders` | frontend/src/app/(main)/[projectId]/change-orders/page.tsx |
-| `/[projectId]/change-orders/[changeOrderId]/edit` | frontend/src/app/(main)/[projectId]/change-orders/[changeOrderId]/edit/page.tsx |
-| `/[projectId]/change-orders/commitment/[commitmentCoId]` | frontend/src/app/(main)/[projectId]/change-orders/commitment/[commitmentCoId]/page.tsx |
-| `/[projectId]/change-orders/commitment/new` | frontend/src/app/(main)/[projectId]/change-orders/commitment/new/page.tsx |
-| `/[projectId]/change-orders/new` | frontend/src/app/(main)/[projectId]/change-orders/new/page.tsx |
-| `/[projectId]/change-orders/prime/[primeCoId]` | frontend/src/app/(main)/[projectId]/change-orders/prime/[primeCoId]/page.tsx |
-| `/[projectId]/change-orders/prime/new` | frontend/src/app/(main)/[projectId]/change-orders/prime/new/page.tsx |
-| `/[projectId]/client-dashboard` | frontend/src/app/(main)/[projectId]/client-dashboard/page.tsx |
-| `/[projectId]/commitment-pcos` | frontend/src/app/(main)/[projectId]/commitment-pcos/page.tsx |
-| `/[projectId]/commitment-pcos/[pcoId]` | frontend/src/app/(main)/[projectId]/commitment-pcos/[pcoId]/page.tsx |
-| `/[projectId]/commitment-pcos/new` | frontend/src/app/(main)/[projectId]/commitment-pcos/new/page.tsx |
-| `/[projectId]/commitments` | frontend/src/app/(main)/[projectId]/commitments/page.tsx |
-| `/[projectId]/commitments/[commitmentId]` | frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/page.tsx |
-| `/[projectId]/commitments/[commitmentId]/edit` | frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/edit/page.tsx |
-| `/[projectId]/commitments/[commitmentId]/invoices/[invoiceId]` | frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/invoices/[invoiceId]/page.tsx |
-| `/[projectId]/commitments/[commitmentId]/pcos/new` | frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/pcos/new/page.tsx |
-| `/[projectId]/commitments/configure` | frontend/src/app/(main)/[projectId]/commitments/configure/page.tsx |
-| `/[projectId]/commitments/new` | frontend/src/app/(main)/[projectId]/commitments/new/page.tsx |
-| `/[projectId]/commitments/recycle-bin` | frontend/src/app/(main)/[projectId]/commitments/recycle-bin/page.tsx |
-| `/[projectId]/commitments/settings` | frontend/src/app/(main)/[projectId]/commitments/settings/page.tsx |
-| `/[projectId]/daily-log` | frontend/src/app/(main)/[projectId]/daily-log/page.tsx |
-| `/[projectId]/daily-log/[dailyLogId]/edit` | frontend/src/app/(main)/[projectId]/daily-log/[dailyLogId]/edit/page.tsx |
-| `/[projectId]/daily-log/new` | frontend/src/app/(main)/[projectId]/daily-log/new/page.tsx |
-| `/[projectId]/daily-log/site-scribe` | frontend/src/app/(main)/[projectId]/daily-log/site-scribe/page.tsx |
-| `/[projectId]/direct-costs` | frontend/src/app/(main)/[projectId]/direct-costs/page.tsx |
-| `/[projectId]/direct-costs/[costId]` | frontend/src/app/(main)/[projectId]/direct-costs/[costId]/page.tsx |
-| `/[projectId]/direct-costs/new` | frontend/src/app/(main)/[projectId]/direct-costs/new/page.tsx |
-| `/[projectId]/directory` | frontend/src/app/(main)/[projectId]/directory/page.tsx |
-| `/[projectId]/documents` | frontend/src/app/(main)/[projectId]/documents/page.tsx |
-| `/[projectId]/documents/[documentId]` | frontend/src/app/(main)/[projectId]/documents/[documentId]/page.tsx |
-| `/[projectId]/drawings` | frontend/src/app/(main)/[projectId]/drawings/page.tsx |
-| `/[projectId]/drawings/[drawingId]` | frontend/src/app/(main)/[projectId]/drawings/[drawingId]/page.tsx |
-| `/[projectId]/drawings/areas` | frontend/src/app/(main)/[projectId]/drawings/areas/page.tsx |
-| `/[projectId]/drawings/board` | frontend/src/app/(main)/[projectId]/drawings/board/page.tsx |
-| `/[projectId]/drawings/recycle-bin` | frontend/src/app/(main)/[projectId]/drawings/recycle-bin/page.tsx |
-| `/[projectId]/drawings/revisions-report` | frontend/src/app/(main)/[projectId]/drawings/revisions-report/page.tsx |
-| `/[projectId]/drawings/sets` | frontend/src/app/(main)/[projectId]/drawings/sets/page.tsx |
-| `/[projectId]/drawings/viewer-v2/[drawingId]` | frontend/src/app/(main)/[projectId]/drawings/viewer-v2/[drawingId]/page.tsx |
-| `/[projectId]/drawings/viewer/[drawingId]` | frontend/src/app/(main)/[projectId]/drawings/viewer/[drawingId]/page.tsx |
-| `/[projectId]/emails` | frontend/src/app/(main)/[projectId]/emails/page.tsx |
-| `/[projectId]/estimates` | frontend/src/app/(main)/[projectId]/estimates/page.tsx |
-| `/[projectId]/estimates/[estimateId]` | frontend/src/app/(main)/[projectId]/estimates/[estimateId]/page.tsx |
-| `/[projectId]/estimates/[estimateId]/edit` | frontend/src/app/(main)/[projectId]/estimates/[estimateId]/edit/page.tsx |
-| `/[projectId]/estimates/new` | frontend/src/app/(main)/[projectId]/estimates/new/page.tsx |
-| `/[projectId]/home` | frontend/src/app/(main)/[projectId]/home/page.tsx |
-| `/[projectId]/hub` | frontend/src/app/(main)/[projectId]/hub/page.tsx |
-| `/[projectId]/intelligence` | frontend/src/app/(main)/[projectId]/intelligence/page.tsx |
-| `/[projectId]/intelligence/sources/[sourceDocumentId]` | frontend/src/app/(main)/[projectId]/intelligence/sources/[sourceDocumentId]/page.tsx |
-| `/[projectId]/invoices` | frontend/src/app/(main)/[projectId]/invoices/page.tsx |
-| `/[projectId]/invoices/new` | frontend/src/app/(main)/[projectId]/invoices/new/page.tsx |
-| `/[projectId]/invoices/owner/new` | frontend/src/app/(main)/[projectId]/invoices/owner/new/page.tsx |
-| `/[projectId]/invoicing` | frontend/src/app/(main)/[projectId]/invoicing/page.tsx |
-| `/[projectId]/invoicing/[invoiceId]` | frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx |
-| `/[projectId]/invoicing/new` | frontend/src/app/(main)/[projectId]/invoicing/new/page.tsx |
-| `/[projectId]/invoicing/subcontractor` | frontend/src/app/(main)/[projectId]/invoicing/subcontractor/page.tsx |
-| `/[projectId]/invoicing/subcontractor/[invoiceId]` | frontend/src/app/(main)/[projectId]/invoicing/subcontractor/[invoiceId]/page.tsx |
-| `/[projectId]/invoicing/subcontractor/new` | frontend/src/app/(main)/[projectId]/invoicing/subcontractor/new/page.tsx |
-| `/[projectId]/meetings` | frontend/src/app/(main)/[projectId]/meetings/page.tsx |
-| `/[projectId]/meetings/[meetingId]` | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/page.tsx |
-| `/[projectId]/meetings/[meetingId]/prep` | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/prep/page.tsx |
-| `/[projectId]/meetings/schedule` | frontend/src/app/(main)/[projectId]/meetings/schedule/page.tsx |
-| `/[projectId]/my-work` | frontend/src/app/(main)/[projectId]/my-work/page.tsx |
-| `/[projectId]/outlook-emails` | frontend/src/app/(main)/[projectId]/outlook-emails/page.tsx |
-| `/[projectId]/pcos` | frontend/src/app/(main)/[projectId]/pcos/page.tsx |
-| `/[projectId]/pcos/[pcoId]` | frontend/src/app/(main)/[projectId]/pcos/[pcoId]/page.tsx |
-| `/[projectId]/pcos/[pcoId]/edit` | frontend/src/app/(main)/[projectId]/pcos/[pcoId]/edit/page.tsx |
-| `/[projectId]/pcos/new` | frontend/src/app/(main)/[projectId]/pcos/new/page.tsx |
-| `/[projectId]/permissions` | frontend/src/app/(main)/[projectId]/permissions/page.tsx |
-| `/[projectId]/photos` | frontend/src/app/(main)/[projectId]/photos/page.tsx |
-| `/[projectId]/prime-contract-pcos` | frontend/src/app/(main)/[projectId]/prime-contract-pcos/page.tsx |
-| `/[projectId]/prime-contract-pcos/[pcoId]` | frontend/src/app/(main)/[projectId]/prime-contract-pcos/[pcoId]/page.tsx |
-| `/[projectId]/prime-contract-pcos/[pcoId]/edit` | frontend/src/app/(main)/[projectId]/prime-contract-pcos/[pcoId]/edit/page.tsx |
-| `/[projectId]/prime-contract-pcos/new` | frontend/src/app/(main)/[projectId]/prime-contract-pcos/new/page.tsx |
-| `/[projectId]/prime-contracts` | frontend/src/app/(main)/[projectId]/prime-contracts/page.tsx |
-| `/[projectId]/prime-contracts/[contractId]` | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/page.tsx |
-| `/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]` | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]/page.tsx |
-| `/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]/edit` | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]/edit/page.tsx |
-| `/[projectId]/prime-contracts/[contractId]/change-orders/pcos/new` | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/change-orders/pcos/new/page.tsx |
-| `/[projectId]/prime-contracts/[contractId]/edit` | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/edit/page.tsx |
-| `/[projectId]/prime-contracts/[contractId]/invoices/[invoiceId]` | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/invoices/[invoiceId]/page.tsx |
-| `/[projectId]/prime-contracts/[contractId]/invoices/new` | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/invoices/new/page.tsx |
-| `/[projectId]/prime-contracts/change-orders` | frontend/src/app/(main)/[projectId]/prime-contracts/change-orders/page.tsx |
-| `/[projectId]/prime-contracts/configure` | frontend/src/app/(main)/[projectId]/prime-contracts/configure/page.tsx |
-| `/[projectId]/prime-contracts/new` | frontend/src/app/(main)/[projectId]/prime-contracts/new/page.tsx |
-| `/[projectId]/progress-reports` | frontend/src/app/(main)/[projectId]/progress-reports/page.tsx |
-| `/[projectId]/progress-reports/[reportId]` | frontend/src/app/(main)/[projectId]/progress-reports/[reportId]/page.tsx |
-| `/[projectId]/project-status-report` | frontend/src/app/(main)/[projectId]/project-status-report/page.tsx |
-| `/[projectId]/punch-list` | frontend/src/app/(main)/[projectId]/punch-list/page.tsx |
-| `/[projectId]/punch-list/[punchItemId]` | frontend/src/app/(main)/[projectId]/punch-list/[punchItemId]/page.tsx |
-| `/[projectId]/reporting` | frontend/src/app/(main)/[projectId]/reporting/page.tsx |
-| `/[projectId]/rfis` | frontend/src/app/(main)/[projectId]/rfis/page.tsx |
-| `/[projectId]/rfis/[rfiId]` | frontend/src/app/(main)/[projectId]/rfis/[rfiId]/page.tsx |
-| `/[projectId]/rfis/new` | frontend/src/app/(main)/[projectId]/rfis/new/page.tsx |
-| `/[projectId]/schedule` | frontend/src/app/(main)/[projectId]/schedule/page.tsx |
-| `/[projectId]/schedule/import` | frontend/src/app/(main)/[projectId]/schedule/import/page.tsx |
-| `/[projectId]/setup` | frontend/src/app/(main)/[projectId]/setup/page.tsx |
-| `/[projectId]/sov` | frontend/src/app/(main)/[projectId]/sov/page.tsx |
-| `/[projectId]/specifications` | frontend/src/app/(main)/[projectId]/specifications/page.tsx |
-| `/[projectId]/specifications/[sectionId]` | frontend/src/app/(main)/[projectId]/specifications/[sectionId]/page.tsx |
-| `/[projectId]/submittals` | frontend/src/app/(main)/[projectId]/submittals/page.tsx |
-| `/[projectId]/submittals/[submittalId]` | frontend/src/app/(main)/[projectId]/submittals/[submittalId]/page.tsx |
-| `/[projectId]/submittals/[submittalId]/edit` | frontend/src/app/(main)/[projectId]/submittals/[submittalId]/edit/page.tsx |
-| `/[projectId]/submittals/new` | frontend/src/app/(main)/[projectId]/submittals/new/page.tsx |
-| `/[projectId]/tasks` | frontend/src/app/(main)/[projectId]/tasks/page.tsx |
-| `/[projectId]/tasks/kanban` | frontend/src/app/(main)/[projectId]/tasks/kanban/page.tsx |
-| `/[projectId]/timeline` | frontend/src/app/(main)/[projectId]/timeline/page.tsx |
-| `/[projectId]/transmittals` | frontend/src/app/(main)/[projectId]/transmittals/page.tsx |
-| `/[projectId]/user-management` | frontend/src/app/(main)/[projectId]/user-management/page.tsx |
-| `/access-denied` | frontend/src/app/(main)/access-denied/page.tsx |
-| `/accounting` | frontend/src/app/(admin)/accounting/page.tsx |
-| `/accounting/ap-invoices` | frontend/src/app/(admin)/accounting/ap-invoices/page.tsx |
-| `/accounting/ap-payments` | frontend/src/app/(admin)/accounting/ap-payments/page.tsx |
-| `/accounting/bills` | frontend/src/app/(admin)/accounting/bills/page.tsx |
-| `/accounting/checks` | frontend/src/app/(admin)/accounting/checks/page.tsx |
-| `/accounting/finance-spend` | frontend/src/app/(admin)/accounting/finance-spend/page.tsx |
-| `/accounting/invoices` | frontend/src/app/(admin)/accounting/invoices/page.tsx |
-| `/accounting/payments` | frontend/src/app/(admin)/accounting/payments/page.tsx |
-| `/accounting/projects` | frontend/src/app/(admin)/accounting/projects/page.tsx |
-| `/accounting/reconciliation` | frontend/src/app/(admin)/accounting/reconciliation/page.tsx |
-| `/accounting/sop-backlog` | frontend/src/app/(admin)/accounting/sop-backlog/page.tsx |
-| `/accounting/wip` | frontend/src/app/(admin)/accounting/wip/page.tsx |
-| `/actions` | frontend/src/app/(admin)/actions/page.tsx |
-| `/acumatica-sync-logs` | frontend/src/app/(admin)/acumatica-sync-logs/page.tsx |
-| `/admin` | frontend/src/app/(admin)/admin/page.tsx |
-| `/admin-check` | frontend/src/app/(admin)/admin-check/page.tsx |
-| `/admin/company-info` | frontend/src/app/(admin)/admin/company-info/page.tsx |
-| `/admin/errors` | frontend/src/app/admin/errors/page.tsx |
-| `/ai` | frontend/src/app/(main)/ai/page.tsx |
-| `/ai-agents` | frontend/src/app/(admin)/ai-agents/page.tsx |
-| `/ai-assistant` | frontend/src/app/(main)/ai-assistant/page.tsx |
-| `/ai-assistant/feature-requests` | frontend/src/app/(main)/ai-assistant/feature-requests/page.tsx |
-| `/ai-assistant/feature-requests/[requestId]` | frontend/src/app/(main)/ai-assistant/feature-requests/[requestId]/page.tsx |
-| `/ai-assistant/marketing` | frontend/src/app/(main)/ai-assistant/marketing/page.tsx |
-| `/ai-assistant/skills` | frontend/src/app/(main)/ai-assistant/skills/page.tsx |
-| `/ai-assistant/teach` | frontend/src/app/(main)/ai-assistant/teach/page.tsx |
-| `/ai-avatar` | frontend/src/app/(main)/ai-avatar/page.tsx |
-| `/ai-learning-promotions` | frontend/src/app/(admin)/ai-learning-promotions/page.tsx |
-| `/ai-prompt-diagnostics` | frontend/src/app/(admin)/ai-prompt-diagnostics/page.tsx |
-| `/ai-skills` | frontend/src/app/(admin)/ai-skills/page.tsx |
-| `/ai-system-health` | frontend/src/app/(admin)/ai-system-health/page.tsx |
-| `/ai-work-runs` | frontend/src/app/(admin)/ai-work-runs/page.tsx |
-| `/ai/admin/agents` | frontend/src/app/(admin)/ai/admin/agents/page.tsx |
-| `/ai/admin/skills` | frontend/src/app/(admin)/ai/admin/skills/page.tsx |
-| `/ai/learning-promotions` | frontend/src/app/(admin)/ai/learning-promotions/page.tsx |
-| `/ai/skills` | frontend/src/app/(main)/ai/skills/page.tsx |
-| `/ai/teach` | frontend/src/app/(main)/ai/teach/page.tsx |
-| `/analytics` | frontend/src/app/(admin)/analytics/page.tsx |
-| `/annotation-inbox` | frontend/src/app/(admin)/annotation-inbox/page.tsx |
-| `/api-docs` | frontend/src/app/(admin)/api-docs/page.tsx |
-| `/assignment-inbox` | frontend/src/app/(tables)/assignment-inbox/page.tsx |
-| `/auth/ai-widget-gallery` | frontend/src/app/auth/ai-widget-gallery/page.tsx |
-| `/auth/error` | frontend/src/app/auth/error/page.tsx |
-| `/auth/forgot-password` | frontend/src/app/auth/forgot-password/page.tsx |
-| `/auth/login` | frontend/src/app/auth/login/page.tsx |
-| `/auth/login-legacy` | frontend/src/app/auth/login-legacy/page.tsx |
-| `/auth/login-v2` | frontend/src/app/auth/login-v2/page.tsx |
-| `/auth/login-v3` | frontend/src/app/auth/login-v3/page.tsx |
-| `/auth/sign-up` | frontend/src/app/auth/sign-up/page.tsx |
-| `/auth/sign-up-success` | frontend/src/app/auth/sign-up-success/page.tsx |
-| `/auth/update-password` | frontend/src/app/auth/update-password/page.tsx |
-| `/billing-periods` | frontend/src/app/(main)/billing-periods/page.tsx |
-| `/calendar` | frontend/src/app/(main)/calendar/page.tsx |
-| `/change-events` | frontend/src/app/(tables)/change-events/page.tsx |
-| `/command-center` | frontend/src/app/(admin)/command-center/page.tsx |
-| `/comments` | frontend/src/app/(main)/comments/page.tsx |
-| `/crawled-pages` | frontend/src/app/(admin)/(procore)/crawled-pages/page.tsx |
-| `/create-project` | frontend/src/app/(main)/create-project/page.tsx |
-| `/daily-briefs` | frontend/src/app/(tables)/daily-briefs/page.tsx |
-| `/daily-briefs/[briefId]` | frontend/src/app/(tables)/daily-briefs/[briefId]/page.tsx |
-| `/daily-logs` | frontend/src/app/(tables)/daily-logs/page.tsx |
-| `/daily-logs/[dailyLogId]` | frontend/src/app/(tables)/daily-logs/[dailyLogId]/page.tsx |
-| `/daily-reports` | frontend/src/app/(tables)/daily-reports/page.tsx |
-| `/database` | frontend/src/app/(admin)/database/page.tsx |
-| `/database-inventory` | frontend/src/app/(admin)/database-inventory/page.tsx |
-| `/deep-research` | frontend/src/app/(admin)/deep-research/page.tsx |
-| `/design` | frontend/src/app/(admin)/design/page.tsx |
-| `/design-ideas` | frontend/src/app/(admin)/design-ideas/page.tsx |
-| `/design-system` | frontend/src/app/(admin)/design-system/page.tsx |
-| `/design-system-update` | frontend/src/app/(admin)/design-system-update/page.tsx |
-| `/design-violations` | frontend/src/app/(admin)/design-violations/page.tsx |
-| `/dev/table-generator` | frontend/src/app/(admin)/dev/table-generator/page.tsx |
-| `/directory` | frontend/src/app/(main)/directory/page.tsx |
-| `/directory/clients` | frontend/src/app/(main)/directory/clients/page.tsx |
-| `/directory/companies` | frontend/src/app/(main)/directory/companies/page.tsx |
-| `/directory/companies/[companyId]` | frontend/src/app/(main)/directory/companies/[companyId]/page.tsx |
-| `/directory/contacts` | frontend/src/app/(main)/directory/contacts/page.tsx |
-| `/directory/contacts/[contactId]` | frontend/src/app/(main)/directory/contacts/[contactId]/page.tsx |
-| `/directory/employees` | frontend/src/app/(main)/directory/employees/page.tsx |
-| `/directory/groups` | frontend/src/app/(main)/directory/groups/page.tsx |
-| `/directory/prospects` | frontend/src/app/(main)/directory/prospects/page.tsx |
-| `/directory/vendors` | frontend/src/app/(main)/directory/vendors/page.tsx |
-| `/directory/vendors/[vendorId]` | frontend/src/app/(main)/directory/vendors/[vendorId]/page.tsx |
-| `/docs/[[...slug]]` | frontend/src/app/(admin)/docs/[[...slug]]/page.tsx |
-| `/docs/ai-overview` | frontend/src/app/(admin)/docs/ai-overview/page.tsx |
-| `/docs/ai-overview/data-sources` | frontend/src/app/(admin)/docs/ai-overview/data-sources/page.tsx |
-| `/docs/ai-overview/learning` | frontend/src/app/(admin)/docs/ai-overview/learning/page.tsx |
-| `/docs/ai-overview/memory` | frontend/src/app/(admin)/docs/ai-overview/memory/page.tsx |
-| `/docs/ai-overview/models-and-cost` | frontend/src/app/(admin)/docs/ai-overview/models-and-cost/page.tsx |
-| `/docs/ai-overview/team` | frontend/src/app/(admin)/docs/ai-overview/team/page.tsx |
-| `/docs/ai-overview/tools` | frontend/src/app/(admin)/docs/ai-overview/tools/page.tsx |
-| `/document-metadata` | frontend/src/app/(admin)/document-metadata/page.tsx |
-| `/documents` | frontend/src/app/(tables)/documents/page.tsx |
-| `/drawings` | frontend/src/app/(tables)/drawings/page.tsx |
-| `/email-inbox` | frontend/src/app/(tables)/email-inbox/page.tsx |
-| `/emails` | frontend/src/app/(tables)/emails/page.tsx |
-| `/errors` | frontend/src/app/(admin)/errors/page.tsx |
-| `/estimates` | frontend/src/app/(tables)/estimates/page.tsx |
-| `/estimates/[type]` | frontend/src/app/(main)/estimates/[type]/page.tsx |
-| `/eval-runs` | frontend/src/app/(admin)/eval-runs/page.tsx |
-| `/executive` | frontend/src/app/(main)/executive/page.tsx |
-| `/executive/capabilities` | frontend/src/app/(main)/executive/capabilities/page.tsx |
-| `/executive/intelligence-brief` | frontend/src/app/(main)/executive/intelligence-brief/page.tsx |
-| `/feedback-inbox` | frontend/src/app/(admin)/feedback-inbox/page.tsx |
-| `/files` | frontend/src/app/(tables)/files/page.tsx |
-| `/financial-insights` | frontend/src/app/(main)/financial-insights/page.tsx |
-| `/fm-global` | frontend/src/app/(main)/fm-global/page.tsx |
-| `/fm-global/fm_global_tables` | frontend/src/app/(main)/fm-global/fm_global_tables/page.tsx |
-| `/fm-global/form` | frontend/src/app/(public)/fm-global/form/page.tsx |
-| `/fm-global/form/submitted/[submissionId]` | frontend/src/app/(public)/fm-global/form/submitted/[submissionId]/page.tsx |
-| `/fm-global/submissions` | frontend/src/app/(main)/fm-global/submissions/page.tsx |
-| `/fm-global/submissions/[submissionId]` | frontend/src/app/(main)/fm-global/submissions/[submissionId]/page.tsx |
-| `/insights` | frontend/src/app/(tables)/insights/page.tsx |
-| `/intelligence-compiler` | frontend/src/app/(admin)/intelligence-compiler/page.tsx |
-| `/intelligence-packets` | frontend/src/app/(admin)/intelligence-packets/page.tsx |
-| `/invoice/add` | frontend/src/app/(dashboard)/invoice/add/page.tsx |
-| `/invoice/edit` | frontend/src/app/(dashboard)/invoice/edit/page.tsx |
-| `/invoice/list` | frontend/src/app/(dashboard)/invoice/list/page.tsx |
-| `/invoice/preview` | frontend/src/app/(dashboard)/invoice/preview/page.tsx |
-| `/knowledge` | frontend/src/app/(main)/knowledge/page.tsx |
-| `/knowledge/manage` | frontend/src/app/(main)/knowledge/manage/page.tsx |
-| `/manpower` | frontend/src/app/(main)/manpower/page.tsx |
-| `/meeting-segments` | frontend/src/app/(tables)/meeting-segments/page.tsx |
-| `/meetings` | frontend/src/app/(tables)/meetings/page.tsx |
-| `/meetings/[meetingId]` | frontend/src/app/(tables)/meetings/[meetingId]/page.tsx |
-| `/motion` | frontend/src/app/(admin)/motion/page.tsx |
-| `/motion/project-created-preview` | frontend/src/app/(admin)/motion/project-created-preview/page.tsx |
-| `/notifications` | frontend/src/app/(main)/notifications/page.tsx |
-| `/operations-readiness` | frontend/src/app/(admin)/operations-readiness/page.tsx |
-| `/outlook-draft-feedback` | frontend/src/app/(admin)/outlook-draft-feedback/page.tsx |
-| `/outlook-emails` | frontend/src/app/(tables)/outlook-emails/page.tsx |
-| `/outlook-intake` | frontend/src/app/(tables)/outlook-intake/page.tsx |
-| `/permissions` | frontend/src/app/(admin)/permissions/page.tsx |
-| `/permissions/users/[personId]` | frontend/src/app/(admin)/permissions/users/[personId]/page.tsx |
-| `/pipeline` | frontend/src/app/(main)/pipeline/page.tsx |
-| `/prime-contracts` | frontend/src/app/(tables)/prime-contracts/page.tsx |
-| `/procore-docs` | frontend/src/app/(admin)/procore-docs/page.tsx |
-| `/procore-docs/[...slug]` | frontend/src/app/(admin)/procore-docs/[...slug]/page.tsx |
-| `/procore-tools` | frontend/src/app/(admin)/(procore)/procore-tools/page.tsx |
-| `/procore-tools/[slug]` | frontend/src/app/(admin)/(procore)/procore-tools/[slug]/page.tsx |
-| `/procore-tracker` | frontend/src/app/(admin)/(procore)/procore-tracker/page.tsx |
-| `/procore-tracker/[featureId]` | frontend/src/app/(admin)/(procore)/procore-tracker/[featureId]/page.tsx |
-| `/product-board` | frontend/src/app/(admin)/product-board/page.tsx |
-| `/progress-reports` | frontend/src/app/(tables)/progress-reports/page.tsx |
-| `/project-attribution` | frontend/src/app/(admin)/project-attribution/page.tsx |
-| `/project-documents` | frontend/src/app/(tables)/project-documents/page.tsx |
-| `/projects` | frontend/src/app/(tables)/projects/page.tsx |
-| `/projects-table-demo` | frontend/src/app/(admin)/projects-table-demo/page.tsx |
-| `/prp-status` | frontend/src/app/(admin)/prp-status/page.tsx |
-| `/rag` | frontend/src/app/(admin)/rag/page.tsx |
-| `/rag-eval` | frontend/src/app/(admin)/rag-eval/page.tsx |
-| `/redoc` | frontend/src/app/(admin)/redoc/page.tsx |
-| `/settings` | frontend/src/app/(main)/settings/page.tsx |
-| `/settings/account` | frontend/src/app/(main)/settings/account/page.tsx |
-| `/settings/audit` | frontend/src/app/(main)/settings/audit/page.tsx |
-| `/settings/memory` | frontend/src/app/(main)/settings/memory/page.tsx |
-| `/settings/preferences` | frontend/src/app/(main)/settings/preferences/page.tsx |
-| `/settings/profile` | frontend/src/app/(main)/settings/profile/page.tsx |
-| `/settings/security` | frontend/src/app/(main)/settings/security/page.tsx |
-| `/site-map` | frontend/src/app/(admin)/site-map/page.tsx |
-| `/source-sync` | frontend/src/app/(admin)/source-sync/page.tsx |
-| `/spreadsheet-demo` | frontend/src/app/(admin)/spreadsheet-demo/page.tsx |
-| `/stats` | frontend/src/app/(main)/stats/page.tsx |
-| `/support-articles` | frontend/src/app/(admin)/(procore)/support-articles/page.tsx |
-| `/support-articles/[articleId]` | frontend/src/app/(admin)/(procore)/support-articles/[articleId]/page.tsx |
-| `/table-pages` | frontend/src/app/(admin)/table-pages/page.tsx |
-| `/table-pages/[table]` | frontend/src/app/(admin)/table-pages/[table]/page.tsx |
-| `/table-pages/[table]/[recordId]` | frontend/src/app/(admin)/table-pages/[table]/[recordId]/page.tsx |
-| `/table-pages/[table]/new` | frontend/src/app/(admin)/table-pages/[table]/new/page.tsx |
-| `/table-v2` | frontend/src/app/(admin)/table-v2/page.tsx |
-| `/tables-directory` | frontend/src/app/(admin)/tables-directory/page.tsx |
-| `/task-training` | frontend/src/app/(admin)/task-training/page.tsx |
-| `/tasks` | frontend/src/app/(tables)/tasks/page.tsx |
-| `/team-chat` | frontend/src/app/(main)/team-chat/page.tsx |
-| `/teams-conversations` | frontend/src/app/(tables)/teams-conversations/page.tsx |
-| `/teams-conversations/[sourceDocumentId]` | frontend/src/app/(tables)/teams-conversations/[sourceDocumentId]/page.tsx |
-| `/template/form-standard` | frontend/src/app/(admin)/template/form-standard/page.tsx |
-| `/template/form-template` | frontend/src/app/(admin)/template/form-template/page.tsx |
-| `/test-cases` | frontend/src/app/(admin)/test-cases/page.tsx |
-| `/test-matrix` | frontend/src/app/(admin)/test-matrix/page.tsx |
-| `/testing` | frontend/src/app/(admin)/testing/page.tsx |
-| `/testing/[tool]` | frontend/src/app/(admin)/testing/[tool]/page.tsx |
-| `/testing/[tool]/cases/[caseId]` | frontend/src/app/(admin)/testing/[tool]/cases/[caseId]/page.tsx |
-| `/testing/parity` | frontend/src/app/(admin)/testing/parity/page.tsx |
-| `/testing/runs` | frontend/src/app/(admin)/testing/runs/page.tsx |
-| `/testing/runs/[runId]` | frontend/src/app/(admin)/testing/runs/[runId]/page.tsx |
-| `/testing/runs/[runId]/case/[caseNumber]` | frontend/src/app/(admin)/testing/runs/[runId]/case/[caseNumber]/page.tsx |
-| `/tools` | frontend/src/app/(admin)/tools/page.tsx |
-| `/updates` | frontend/src/app/(admin)/updates/page.tsx |
-| `/user-management` | frontend/src/app/(admin)/user-management/page.tsx |
-| `/user-management/users/[personId]` | frontend/src/app/(admin)/user-management/users/[personId]/page.tsx |
+_128/312 have a description. Pages without one are invisible to find-a-page search — add a `description` to the page's `PageShell`._
+
+| URL | What it does | File |
+|-----|--------------|------|
+| `/` | Open OneDrive folder | frontend/src/app/(main)/page.tsx |
+| `/[projectId]/admin` | Manage member permissions for this project. | frontend/src/app/(main)/[projectId]/admin/page.tsx |
+| `/[projectId]/billing-periods` | — | frontend/src/app/(main)/[projectId]/billing-periods/page.tsx |
+| `/[projectId]/budget` | Budget | frontend/src/app/(main)/[projectId]/budget/page.tsx |
+| `/[projectId]/budget/line-item/new` | Add one or more line items to the project budget. | frontend/src/app/(main)/[projectId]/budget/line-item/new/page.tsx |
+| `/[projectId]/budget/setup` | Add Budget Line Items | frontend/src/app/(main)/[projectId]/budget/setup/page.tsx |
+| `/[projectId]/change-events` | Provide a valid project identifier to access change events. | frontend/src/app/(main)/[projectId]/change-events/page.tsx |
+| `/[projectId]/change-events/[changeEventId]` | Loading... | frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/page.tsx |
+| `/[projectId]/change-events/[changeEventId]/edit` | Update change event details and line items. | frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/edit/page.tsx |
+| `/[projectId]/change-events/new` | Document a potential change to project scope, schedule, or budget. | frontend/src/app/(main)/[projectId]/change-events/new/page.tsx |
+| `/[projectId]/change-management` | Change Events identify the issue, PCOs price the impact, and Change Orders modify the contract. | frontend/src/app/(main)/[projectId]/change-management/page.tsx |
+| `/[projectId]/change-orders` | — | frontend/src/app/(main)/[projectId]/change-orders/page.tsx |
+| `/[projectId]/change-orders/[changeOrderId]/edit` | — | frontend/src/app/(main)/[projectId]/change-orders/[changeOrderId]/edit/page.tsx |
+| `/[projectId]/change-orders/commitment/[commitmentCoId]` | Loading change order details | frontend/src/app/(main)/[projectId]/change-orders/commitment/[commitmentCoId]/page.tsx |
+| `/[projectId]/change-orders/commitment/new` | Opening the canonical Commitment PCO workflow. | frontend/src/app/(main)/[projectId]/change-orders/commitment/new/page.tsx |
+| `/[projectId]/change-orders/new` | — | frontend/src/app/(main)/[projectId]/change-orders/new/page.tsx |
+| `/[projectId]/change-orders/prime/[primeCoId]` | A log of changes to this record will appear here | frontend/src/app/(main)/[projectId]/change-orders/prime/[primeCoId]/page.tsx |
+| `/[projectId]/change-orders/prime/new` | Opening the canonical Prime Contract PCO workflow. | frontend/src/app/(main)/[projectId]/change-orders/prime/new/page.tsx |
+| `/[projectId]/client-dashboard` | — | frontend/src/app/(main)/[projectId]/client-dashboard/page.tsx |
+| `/[projectId]/commitment-pcos` | Provide a valid project identifier to access commitment PCOs. | frontend/src/app/(main)/[projectId]/commitment-pcos/page.tsx |
+| `/[projectId]/commitment-pcos/[pcoId]` | Line items for this PCO will appear here once added. | frontend/src/app/(main)/[projectId]/commitment-pcos/[pcoId]/page.tsx |
+| `/[projectId]/commitment-pcos/new` | Commitment PCOs must start from a linked change event. | frontend/src/app/(main)/[projectId]/commitment-pcos/new/page.tsx |
+| `/[projectId]/commitments` | — | frontend/src/app/(main)/[projectId]/commitments/page.tsx |
+| `/[projectId]/commitments/[commitmentId]` | Commitment Details | frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/page.tsx |
+| `/[projectId]/commitments/[commitmentId]/edit` | — | frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/edit/page.tsx |
+| `/[projectId]/commitments/[commitmentId]/invoices/[invoiceId]` | — | frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/invoices/[invoiceId]/page.tsx |
+| `/[projectId]/commitments/[commitmentId]/pcos/new` | Create Potential Change Order | frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/pcos/new/page.tsx |
+| `/[projectId]/commitments/configure` | Configure commitment defaults, workflows, billing, and permissions. | frontend/src/app/(main)/[projectId]/commitments/configure/page.tsx |
+| `/[projectId]/commitments/new` | — | frontend/src/app/(main)/[projectId]/commitments/new/page.tsx |
+| `/[projectId]/commitments/recycle-bin` | — | frontend/src/app/(main)/[projectId]/commitments/recycle-bin/page.tsx |
+| `/[projectId]/commitments/settings` | Commitment Settings | frontend/src/app/(main)/[projectId]/commitments/settings/page.tsx |
+| `/[projectId]/daily-log` | Daily Log | frontend/src/app/(main)/[projectId]/daily-log/page.tsx |
+| `/[projectId]/daily-log/[dailyLogId]/edit` | — | frontend/src/app/(main)/[projectId]/daily-log/[dailyLogId]/edit/page.tsx |
+| `/[projectId]/daily-log/new` | — | frontend/src/app/(main)/[projectId]/daily-log/new/page.tsx |
+| `/[projectId]/daily-log/site-scribe` | Realtime AI daily-log capture for field crews. | frontend/src/app/(main)/[projectId]/daily-log/site-scribe/page.tsx |
+| `/[projectId]/direct-costs` | — | frontend/src/app/(main)/[projectId]/direct-costs/page.tsx |
+| `/[projectId]/direct-costs/[costId]` | Direct cost not found | frontend/src/app/(main)/[projectId]/direct-costs/[costId]/page.tsx |
+| `/[projectId]/direct-costs/new` | Direct costs are synced from Acumatica and cannot be created in Alleato. | frontend/src/app/(main)/[projectId]/direct-costs/new/page.tsx |
+| `/[projectId]/directory` | Project Team | frontend/src/app/(main)/[projectId]/directory/page.tsx |
+| `/[projectId]/documents` | — | frontend/src/app/(main)/[projectId]/documents/page.tsx |
+| `/[projectId]/documents/[documentId]` | Document preview | frontend/src/app/(main)/[projectId]/documents/[documentId]/page.tsx |
+| `/[projectId]/drawings` | — | frontend/src/app/(main)/[projectId]/drawings/page.tsx |
+| `/[projectId]/drawings/[drawingId]` | The file could not be loaded from storage. | frontend/src/app/(main)/[projectId]/drawings/[drawingId]/page.tsx |
+| `/[projectId]/drawings/areas` | Create your first drawing area to start organizing your project drawings. | frontend/src/app/(main)/[projectId]/drawings/areas/page.tsx |
+| `/[projectId]/drawings/board` | Drag-and-drop drawing packages by status | frontend/src/app/(main)/[projectId]/drawings/board/page.tsx |
+| `/[projectId]/drawings/recycle-bin` | View, manage, and upload all of your drawings from the Drawings log. | frontend/src/app/(main)/[projectId]/drawings/recycle-bin/page.tsx |
+| `/[projectId]/drawings/revisions-report` | Complete drawing log including all revisions, unpublished, and obsolete drawings. | frontend/src/app/(main)/[projectId]/drawings/revisions-report/page.tsx |
+| `/[projectId]/drawings/sets` | Create a set to group drawings issued together. | frontend/src/app/(main)/[projectId]/drawings/sets/page.tsx |
+| `/[projectId]/drawings/viewer-v2/[drawingId]` | Try a different search term. | frontend/src/app/(main)/[projectId]/drawings/viewer-v2/[drawingId]/page.tsx |
+| `/[projectId]/drawings/viewer/[drawingId]` | Try a different search term. | frontend/src/app/(main)/[projectId]/drawings/viewer/[drawingId]/page.tsx |
+| `/[projectId]/emails` | — | frontend/src/app/(main)/[projectId]/emails/page.tsx |
+| `/[projectId]/estimates` | — | frontend/src/app/(main)/[projectId]/estimates/page.tsx |
+| `/[projectId]/estimates/[estimateId]` | This estimate could not be loaded for the current project. | frontend/src/app/(main)/[projectId]/estimates/[estimateId]/page.tsx |
+| `/[projectId]/estimates/[estimateId]/edit` | Update estimate details | frontend/src/app/(main)/[projectId]/estimates/[estimateId]/edit/page.tsx |
+| `/[projectId]/estimates/new` | — | frontend/src/app/(main)/[projectId]/estimates/new/page.tsx |
+| `/[projectId]/home` | — | frontend/src/app/(main)/[projectId]/home/page.tsx |
+| `/[projectId]/hub` | Project Hub | frontend/src/app/(main)/[projectId]/hub/page.tsx |
+| `/[projectId]/intelligence` | Current project read from sources and database state | frontend/src/app/(main)/[projectId]/intelligence/page.tsx |
+| `/[projectId]/intelligence/sources/[sourceDocumentId]` | Intelligence source | frontend/src/app/(main)/[projectId]/intelligence/sources/[sourceDocumentId]/page.tsx |
+| `/[projectId]/invoices` | — | frontend/src/app/(main)/[projectId]/invoices/page.tsx |
+| `/[projectId]/invoices/new` | Create a new owner or commitment invoice. | frontend/src/app/(main)/[projectId]/invoices/new/page.tsx |
+| `/[projectId]/invoices/owner/new` | — | frontend/src/app/(main)/[projectId]/invoices/owner/new/page.tsx |
+| `/[projectId]/invoicing` | — | frontend/src/app/(main)/[projectId]/invoicing/page.tsx |
+| `/[projectId]/invoicing/[invoiceId]` | No schedule of values line items have been added to this invoice. | frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx |
+| `/[projectId]/invoicing/new` | — | frontend/src/app/(main)/[projectId]/invoicing/new/page.tsx |
+| `/[projectId]/invoicing/subcontractor` | — | frontend/src/app/(main)/[projectId]/invoicing/subcontractor/page.tsx |
+| `/[projectId]/invoicing/subcontractor/[invoiceId]` | — | frontend/src/app/(main)/[projectId]/invoicing/subcontractor/[invoiceId]/page.tsx |
+| `/[projectId]/invoicing/subcontractor/new` | Create New Invoice | frontend/src/app/(main)/[projectId]/invoicing/subcontractor/new/page.tsx |
+| `/[projectId]/meetings` | — | frontend/src/app/(main)/[projectId]/meetings/page.tsx |
+| `/[projectId]/meetings/[meetingId]` | — | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/page.tsx |
+| `/[projectId]/meetings/[meetingId]/prep` | Generate an AI-powered meeting prep that analyzes your project data, last meeting insights, and current status — or start writing from scratch. | frontend/src/app/(main)/[projectId]/meetings/[meetingId]/prep/page.tsx |
+| `/[projectId]/meetings/schedule` | Schedule a future meeting and generate AI-powered meeting prep. | frontend/src/app/(main)/[projectId]/meetings/schedule/page.tsx |
+| `/[projectId]/my-work` | No schedule of values has been assigned to your company on this project. | frontend/src/app/(main)/[projectId]/my-work/page.tsx |
+| `/[projectId]/outlook-emails` | Outlook Emails | frontend/src/app/(main)/[projectId]/outlook-emails/page.tsx |
+| `/[projectId]/pcos` | — | frontend/src/app/(main)/[projectId]/pcos/page.tsx |
+| `/[projectId]/pcos/[pcoId]` | Attachments related to this potential change order will appear here. | frontend/src/app/(main)/[projectId]/pcos/[pcoId]/page.tsx |
+| `/[projectId]/pcos/[pcoId]/edit` | Edit Potential Change Order | frontend/src/app/(main)/[projectId]/pcos/[pcoId]/edit/page.tsx |
+| `/[projectId]/pcos/new` | New Potential Change Order | frontend/src/app/(main)/[projectId]/pcos/new/page.tsx |
+| `/[projectId]/permissions` | — | frontend/src/app/(main)/[projectId]/permissions/page.tsx |
+| `/[projectId]/photos` | View geotagged photos on a project map. Photos with location data will appear as pins. | frontend/src/app/(main)/[projectId]/photos/page.tsx |
+| `/[projectId]/prime-contract-pcos` | Provide a valid project identifier to access PCOs. | frontend/src/app/(main)/[projectId]/prime-contract-pcos/page.tsx |
+| `/[projectId]/prime-contract-pcos/[pcoId]` | This potential change order does not have any line items yet. | frontend/src/app/(main)/[projectId]/prime-contract-pcos/[pcoId]/page.tsx |
+| `/[projectId]/prime-contract-pcos/[pcoId]/edit` | Edit Prime Contract PCO | frontend/src/app/(main)/[projectId]/prime-contract-pcos/[pcoId]/edit/page.tsx |
+| `/[projectId]/prime-contract-pcos/new` | — | frontend/src/app/(main)/[projectId]/prime-contract-pcos/new/page.tsx |
+| `/[projectId]/prime-contracts` | — | frontend/src/app/(main)/[projectId]/prime-contracts/page.tsx |
+| `/[projectId]/prime-contracts/[contractId]` | Loading contract details... | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/page.tsx |
+| `/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]` | — | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]/page.tsx |
+| `/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]/edit` | — | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/change-orders/pcos/[pcoId]/edit/page.tsx |
+| `/[projectId]/prime-contracts/[contractId]/change-orders/pcos/new` | — | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/change-orders/pcos/new/page.tsx |
+| `/[projectId]/prime-contracts/[contractId]/edit` | — | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/edit/page.tsx |
+| `/[projectId]/prime-contracts/[contractId]/invoices/[invoiceId]` | The requested invoice could not be found. | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/invoices/[invoiceId]/page.tsx |
+| `/[projectId]/prime-contracts/[contractId]/invoices/new` | — | frontend/src/app/(main)/[projectId]/prime-contracts/[contractId]/invoices/new/page.tsx |
+| `/[projectId]/prime-contracts/change-orders` | — | frontend/src/app/(main)/[projectId]/prime-contracts/change-orders/page.tsx |
+| `/[projectId]/prime-contracts/configure` | Project-level settings for how prime contracts behave | frontend/src/app/(main)/[projectId]/prime-contracts/configure/page.tsx |
+| `/[projectId]/prime-contracts/new` | Create Prime Contract | frontend/src/app/(main)/[projectId]/prime-contracts/new/page.tsx |
+| `/[projectId]/progress-reports` | — | frontend/src/app/(main)/[projectId]/progress-reports/page.tsx |
+| `/[projectId]/progress-reports/[reportId]` | Progress Report | frontend/src/app/(main)/[projectId]/progress-reports/[reportId]/page.tsx |
+| `/[projectId]/project-status-report` | Project Status Report | frontend/src/app/(main)/[projectId]/project-status-report/page.tsx |
+| `/[projectId]/punch-list` | — | frontend/src/app/(main)/[projectId]/punch-list/page.tsx |
+| `/[projectId]/punch-list/[punchItemId]` | — | frontend/src/app/(main)/[projectId]/punch-list/[punchItemId]/page.tsx |
+| `/[projectId]/reporting` | Comprehensive project reporting and analytics | frontend/src/app/(main)/[projectId]/reporting/page.tsx |
+| `/[projectId]/rfis` | — | frontend/src/app/(main)/[projectId]/rfis/page.tsx |
+| `/[projectId]/rfis/[rfiId]` | — | frontend/src/app/(main)/[projectId]/rfis/[rfiId]/page.tsx |
+| `/[projectId]/rfis/new` | Create a new Request for Information | frontend/src/app/(main)/[projectId]/rfis/new/page.tsx |
+| `/[projectId]/schedule` | Create tasks, set milestones, and track dependencies with Gantt charts and multiple view modes. | frontend/src/app/(main)/[projectId]/schedule/page.tsx |
+| `/[projectId]/schedule/import` | Import schedule tasks from Microsoft Project, Excel, CSV, or a review-required PDF extraction. | frontend/src/app/(main)/[projectId]/schedule/import/page.tsx |
+| `/[projectId]/setup` | Configure your project settings and details | frontend/src/app/(main)/[projectId]/setup/page.tsx |
+| `/[projectId]/sov` | View and manage schedule of values across all contracts | frontend/src/app/(main)/[projectId]/sov/page.tsx |
+| `/[projectId]/specifications` | — | frontend/src/app/(main)/[projectId]/specifications/page.tsx |
+| `/[projectId]/specifications/[sectionId]` | Upload a revision to start tracking changes to this specification section. | frontend/src/app/(main)/[projectId]/specifications/[sectionId]/page.tsx |
+| `/[projectId]/submittals` | Export PDF | frontend/src/app/(main)/[projectId]/submittals/page.tsx |
+| `/[projectId]/submittals/[submittalId]` | — | frontend/src/app/(main)/[projectId]/submittals/[submittalId]/page.tsx |
+| `/[projectId]/submittals/[submittalId]/edit` | — | frontend/src/app/(main)/[projectId]/submittals/[submittalId]/edit/page.tsx |
+| `/[projectId]/submittals/new` | — | frontend/src/app/(main)/[projectId]/submittals/new/page.tsx |
+| `/[projectId]/tasks` | Tasks | frontend/src/app/(main)/[projectId]/tasks/page.tsx |
+| `/[projectId]/tasks/kanban` | Drag cards between statuses. Moves save immediately. | frontend/src/app/(main)/[projectId]/tasks/kanban/page.tsx |
+| `/[projectId]/timeline` | Timeline | frontend/src/app/(main)/[projectId]/timeline/page.tsx |
+| `/[projectId]/transmittals` | — | frontend/src/app/(main)/[projectId]/transmittals/page.tsx |
+| `/[projectId]/user-management` | Assign project roles and module-level access for every member of this project. | frontend/src/app/(main)/[projectId]/user-management/page.tsx |
+| `/access-denied` | — | frontend/src/app/(main)/access-denied/page.tsx |
+| `/accounting` | Accounting | frontend/src/app/(admin)/accounting/page.tsx |
+| `/accounting/ap-invoices` | — | frontend/src/app/(admin)/accounting/ap-invoices/page.tsx |
+| `/accounting/ap-payments` | — | frontend/src/app/(admin)/accounting/ap-payments/page.tsx |
+| `/accounting/bills` | — | frontend/src/app/(admin)/accounting/bills/page.tsx |
+| `/accounting/checks` | — | frontend/src/app/(admin)/accounting/checks/page.tsx |
+| `/accounting/finance-spend` | Trailing 12-month accounting and finance overhead from classified Acumatica AP bills. | frontend/src/app/(admin)/accounting/finance-spend/page.tsx |
+| `/accounting/invoices` | — | frontend/src/app/(admin)/accounting/invoices/page.tsx |
+| `/accounting/payments` | — | frontend/src/app/(admin)/accounting/payments/page.tsx |
+| `/accounting/projects` | — | frontend/src/app/(admin)/accounting/projects/page.tsx |
+| `/accounting/reconciliation` | — | frontend/src/app/(admin)/accounting/reconciliation/page.tsx |
+| `/accounting/sop-backlog` | Track accounting and finance SOP items that still need a linked process or file. | frontend/src/app/(admin)/accounting/sop-backlog/page.tsx |
+| `/accounting/wip` | — | frontend/src/app/(admin)/accounting/wip/page.tsx |
+| `/actions` | Manually run internal workflows, syncs, AI refreshes, and outbound notifications without exposing those controls on client-facing pages. | frontend/src/app/(admin)/actions/page.tsx |
+| `/acumatica-sync-logs` | Outbound app-to-Acumatica create/update/skip/error audit trail. | frontend/src/app/(admin)/acumatica-sync-logs/page.tsx |
+| `/admin` | Admin Dashboard | frontend/src/app/(admin)/admin/page.tsx |
+| `/admin-check` | — | frontend/src/app/(admin)/admin-check/page.tsx |
+| `/admin/company-info` | Manage company profile and knowledge articles for the AI assistant | frontend/src/app/(admin)/admin/company-info/page.tsx |
+| `/admin/errors` | — | frontend/src/app/admin/errors/page.tsx |
+| `/ai` | AI | frontend/src/app/(main)/ai/page.tsx |
+| `/ai-agents` | — | frontend/src/app/(admin)/ai-agents/page.tsx |
+| `/ai-assistant` | AI | frontend/src/app/(main)/ai-assistant/page.tsx |
+| `/ai-assistant/feature-requests` | Durable AIS request packets, readiness state, and implementation handoffs. | frontend/src/app/(main)/ai-assistant/feature-requests/page.tsx |
+| `/ai-assistant/feature-requests/[requestId]` | — | frontend/src/app/(main)/ai-assistant/feature-requests/[requestId]/page.tsx |
+| `/ai-assistant/marketing` | Review source-backed CMO content plans, draft assets, citations, and approval states. | frontend/src/app/(main)/ai-assistant/marketing/page.tsx |
+| `/ai-assistant/skills` | — | frontend/src/app/(main)/ai-assistant/skills/page.tsx |
+| `/ai-assistant/teach` | — | frontend/src/app/(main)/ai-assistant/teach/page.tsx |
+| `/ai-avatar` | A separate live Tavus avatar experience for onboarding and internal experiments. | frontend/src/app/(main)/ai-avatar/page.tsx |
+| `/ai-learning-promotions` | — | frontend/src/app/(admin)/ai-learning-promotions/page.tsx |
+| `/ai-prompt-diagnostics` | Inspect the assembled AI assistant system prompt for a representative request. | frontend/src/app/(admin)/ai-prompt-diagnostics/page.tsx |
+| `/ai-skills` | — | frontend/src/app/(admin)/ai-skills/page.tsx |
+| `/ai-system-health` | Conversations, tokens, spend, satisfaction, model mix, the self-learning loop, and ingestion-pipeline status — one screen for stakeholder visibility into the AI. | frontend/src/app/(admin)/ai-system-health/page.tsx |
+| `/ai-vision` | One screen for the whole AI build — the vision, the agent team, the tools in priority order, and what's already live. | frontend/src/app/(admin)/ai-vision/page.tsx |
+| `/ai-work-runs` | Recent Executive Daily Brief runs, delivery state, source policy, and evidence rows from the AI operations ledger. | frontend/src/app/(admin)/ai-work-runs/page.tsx |
+| `/ai/admin/agents` | — | frontend/src/app/(admin)/ai/admin/agents/page.tsx |
+| `/ai/admin/skills` | Review Skill Library records by status, scope, owner, reviewer, and usage. | frontend/src/app/(admin)/ai/admin/skills/page.tsx |
+| `/ai/learning-promotions` | Review candidate learnings before they can become durable assistant behavior, memory, attribution, or retrieval rules. | frontend/src/app/(admin)/ai/learning-promotions/page.tsx |
+| `/ai/skills` | Approved assistant skills by category, scope, owner, reviewer, and usage. | frontend/src/app/(main)/ai/skills/page.tsx |
+| `/ai/teach` | Submissions become review candidates before they change assistant behavior. | frontend/src/app/(main)/ai/teach/page.tsx |
+| `/analytics` | User logins, activity, app error trends, AI engagement, and sync health — live platform visibility for administrators. | frontend/src/app/(admin)/analytics/page.tsx |
+| `/annotation-inbox` | — | frontend/src/app/(admin)/annotation-inbox/page.tsx |
+| `/api-docs` | Interactive Swagger UI for the Alleato Procore frontend + backend endpoints. | frontend/src/app/(admin)/api-docs/page.tsx |
+| `/assignment-inbox` | — | frontend/src/app/(tables)/assignment-inbox/page.tsx |
+| `/auth/ai-widget-gallery` | — | frontend/src/app/auth/ai-widget-gallery/page.tsx |
+| `/auth/error` | — | frontend/src/app/auth/error/page.tsx |
+| `/auth/forgot-password` | — | frontend/src/app/auth/forgot-password/page.tsx |
+| `/auth/login` | — | frontend/src/app/auth/login/page.tsx |
+| `/auth/login-legacy` | — | frontend/src/app/auth/login-legacy/page.tsx |
+| `/auth/login-v2` | — | frontend/src/app/auth/login-v2/page.tsx |
+| `/auth/login-v3` | — | frontend/src/app/auth/login-v3/page.tsx |
+| `/auth/sign-up` | — | frontend/src/app/auth/sign-up/page.tsx |
+| `/auth/sign-up-success` | — | frontend/src/app/auth/sign-up-success/page.tsx |
+| `/auth/update-password` | — | frontend/src/app/auth/update-password/page.tsx |
+| `/billing-periods` | — | frontend/src/app/(main)/billing-periods/page.tsx |
+| `/calendar` | — | frontend/src/app/(main)/calendar/page.tsx |
+| `/change-events` | — | frontend/src/app/(tables)/change-events/page.tsx |
+| `/command-center` | Command Center | frontend/src/app/(admin)/command-center/page.tsx |
+| `/comments` | Use the annotation button on any page to leave a comment. | frontend/src/app/(main)/comments/page.tsx |
+| `/crawled-pages` | Explore crawled Procore support documentation organized by tools and resource types | frontend/src/app/(admin)/(procore)/crawled-pages/page.tsx |
+| `/create-project` | Set up core project details, location, and delivery defaults. | frontend/src/app/(main)/create-project/page.tsx |
+| `/daily-briefs` | — | frontend/src/app/(tables)/daily-briefs/page.tsx |
+| `/daily-briefs/[briefId]` | Daily Brief history is limited to users with executive briefing access. | frontend/src/app/(tables)/daily-briefs/[briefId]/page.tsx |
+| `/daily-logs` | — | frontend/src/app/(tables)/daily-logs/page.tsx |
+| `/daily-logs/[dailyLogId]` | Daily Log Detail | frontend/src/app/(tables)/daily-logs/[dailyLogId]/page.tsx |
+| `/daily-reports` | — | frontend/src/app/(tables)/daily-reports/page.tsx |
+| `/database` | Catalog of tables in the public schema | frontend/src/app/(admin)/database/page.tsx |
+| `/database-inventory` | — | frontend/src/app/(admin)/database-inventory/page.tsx |
+| `/deep-research` | Browse prior Deep Agents LLM wiki research projects, saved source files, durable answers, and change logs. | frontend/src/app/(admin)/deep-research/page.tsx |
+| `/design` | Living inventory of every token and component. Import from @/components/ds. | frontend/src/app/(admin)/design/page.tsx |
+| `/design-ideas` | — | frontend/src/app/(admin)/design-ideas/page.tsx |
+| `/design-system` | Single source of truth for UI standards, tokens, and components. | frontend/src/app/(admin)/design-system/page.tsx |
+| `/design-system-update` | Expand to full page | frontend/src/app/(admin)/design-system-update/page.tsx |
+| `/design-violations` | Flagged design system violations — right-click any element in dev mode to flag | frontend/src/app/(admin)/design-violations/page.tsx |
+| `/dev/table-generator` | Generate UnifiedTablePage + feature config from your Supabase schema | frontend/src/app/(admin)/dev/table-generator/page.tsx |
+| `/directory` | — | frontend/src/app/(main)/directory/page.tsx |
+| `/directory/clients` | — | frontend/src/app/(main)/directory/clients/page.tsx |
+| `/directory/companies` | — | frontend/src/app/(main)/directory/companies/page.tsx |
+| `/directory/companies/[companyId]` | Loading company information... | frontend/src/app/(main)/directory/companies/[companyId]/page.tsx |
+| `/directory/contacts` | — | frontend/src/app/(main)/directory/contacts/page.tsx |
+| `/directory/contacts/[contactId]` | This contact has not been assigned to any projects yet. | frontend/src/app/(main)/directory/contacts/[contactId]/page.tsx |
+| `/directory/employees` | — | frontend/src/app/(main)/directory/employees/page.tsx |
+| `/directory/groups` | — | frontend/src/app/(main)/directory/groups/page.tsx |
+| `/directory/prospects` | — | frontend/src/app/(main)/directory/prospects/page.tsx |
+| `/directory/vendors` | — | frontend/src/app/(main)/directory/vendors/page.tsx |
+| `/directory/vendors/[vendorId]` | Loading vendor information... | frontend/src/app/(main)/directory/vendors/[vendorId]/page.tsx |
+| `/docs/[[...slug]]` | Try a broader search phrase. | frontend/src/app/(admin)/docs/[[...slug]]/page.tsx |
+| `/docs/ai-overview` | Pulled live from the codebase, not hand-edited. | frontend/src/app/(admin)/docs/ai-overview/page.tsx |
+| `/docs/ai-overview/data-sources` | Every source funnels through the same three stages. The pipeline runs end-to-end every 30 minutes on Render. | frontend/src/app/(admin)/docs/ai-overview/data-sources/page.tsx |
+| `/docs/ai-overview/learning` | Each loop is operational today. They run continuously in the background: no manual trigger required. | frontend/src/app/(admin)/docs/ai-overview/learning/page.tsx |
+| `/docs/ai-overview/memory` | What the AI remembers | frontend/src/app/(admin)/docs/ai-overview/memory/page.tsx |
+| `/docs/ai-overview/models-and-cost` | Each role in the system has a default model assigned in `frontend/src/lib/ai/providers.ts`. The model registry below shows what's wired today. | frontend/src/app/(admin)/docs/ai-overview/models-and-cost/page.tsx |
+| `/docs/ai-overview/team` | These agents have system prompts deployed and are wired into the orchestrator. Every live conversation goes through at least one of them. | frontend/src/app/(admin)/docs/ai-overview/team/page.tsx |
+| `/docs/ai-overview/tools` | Each domain corresponds to a tool file in `frontend/src/lib/ai/tools/`. The model picks tools based on what your question needs. | frontend/src/app/(admin)/docs/ai-overview/tools/page.tsx |
+| `/document-metadata` | — | frontend/src/app/(admin)/document-metadata/page.tsx |
+| `/documents` | RAG document library and ingestion status | frontend/src/app/(tables)/documents/page.tsx |
+| `/drawings` | Drawings | frontend/src/app/(tables)/drawings/page.tsx |
+| `/email-inbox` | Email Inbox | frontend/src/app/(tables)/email-inbox/page.tsx |
+| `/emails` | Emails | frontend/src/app/(tables)/emails/page.tsx |
+| `/errors` | — | frontend/src/app/(admin)/errors/page.tsx |
+| `/estimates` | — | frontend/src/app/(tables)/estimates/page.tsx |
+| `/estimates/[type]` | — | frontend/src/app/(main)/estimates/[type]/page.tsx |
+| `/eval-runs` | Runs are written to docs/ai-plan/evals/runs/ (gitignored, local-only). Run the suite from the CLI, then refresh: node scripts/verify/verify_ai_assistant_eval_suite.mjs --bundle tool-coverage-read-regression | frontend/src/app/(admin)/eval-runs/page.tsx |
+| `/executive` | No meeting records matched today's Eastern-time date. | frontend/src/app/(main)/executive/page.tsx |
+| `/executive/capabilities` | Authentication required. | frontend/src/app/(main)/executive/capabilities/page.tsx |
+| `/executive/intelligence-brief` | This executive briefing is limited to users with executive briefing access. | frontend/src/app/(main)/executive/intelligence-brief/page.tsx |
+| `/feedback-inbox` | Review feedback, assign tools, and sync issues to GitHub. | frontend/src/app/(admin)/feedback-inbox/page.tsx |
+| `/files` | — | frontend/src/app/(tables)/files/page.tsx |
+| `/financial-insights` | Run a portfolio scan to detect budget discrepancies and financial red flags across your projects. | frontend/src/app/(main)/financial-insights/page.tsx |
+| `/fm-global` | Browse FM Global tables and figures, filter by system type, and jump to the matching form. | frontend/src/app/(main)/fm-global/page.tsx |
+| `/fm-global/fm_global_tables` | Reference tables for FM Global sprinkler protection data | frontend/src/app/(main)/fm-global/fm_global_tables/page.tsx |
+| `/fm-global/form` | Share your storage and racking details below and we'll estimate the FM Global 8-34 sprinkler configuration for your ASRS — including applicable tables, figures, and protection scheme. | frontend/src/app/(public)/fm-global/form/page.tsx |
+| `/fm-global/form/submitted/[submissionId]` | Submission received | frontend/src/app/(public)/fm-global/form/submitted/[submissionId]/page.tsx |
+| `/fm-global/submissions` | — | frontend/src/app/(main)/fm-global/submissions/page.tsx |
+| `/fm-global/submissions/[submissionId]` | Submission | frontend/src/app/(main)/fm-global/submissions/[submissionId]/page.tsx |
+| `/insights` | — | frontend/src/app/(tables)/insights/page.tsx |
+| `/intelligence-compiler` | Operational health for source intelligence jobs, packet refreshes, promoted evidence, and project packets. | frontend/src/app/(admin)/intelligence-compiler/page.tsx |
+| `/intelligence-packets` | — | frontend/src/app/(admin)/intelligence-packets/page.tsx |
+| `/invoice/add` | — | frontend/src/app/(dashboard)/invoice/add/page.tsx |
+| `/invoice/edit` | — | frontend/src/app/(dashboard)/invoice/edit/page.tsx |
+| `/invoice/list` | — | frontend/src/app/(dashboard)/invoice/list/page.tsx |
+| `/invoice/preview` | — | frontend/src/app/(dashboard)/invoice/preview/page.tsx |
+| `/knowledge` | — | frontend/src/app/(main)/knowledge/page.tsx |
+| `/knowledge/manage` | — | frontend/src/app/(main)/knowledge/manage/page.tsx |
+| `/manpower` | Cross-project staffing plan persisted from Microsoft Project CSV imports. | frontend/src/app/(main)/manpower/page.tsx |
+| `/meeting-segments` | — | frontend/src/app/(tables)/meeting-segments/page.tsx |
+| `/meetings` | — | frontend/src/app/(tables)/meetings/page.tsx |
+| `/meetings/[meetingId]` | — | frontend/src/app/(tables)/meetings/[meetingId]/page.tsx |
+| `/motion` | Animated text with various presets | frontend/src/app/(admin)/motion/page.tsx |
+| `/motion/project-created-preview` | Project Created Modal — Preview | frontend/src/app/(admin)/motion/project-created-preview/page.tsx |
+| `/notifications` | You'll be notified about comments, mentions, and project activity. | frontend/src/app/(main)/notifications/page.tsx |
+| `/operations-readiness` | Four operating answers: source data, generated tasks, project intelligence packets, and the daily brief. | frontend/src/app/(admin)/operations-readiness/page.tsx |
+| `/outlook-draft-feedback` | Review Brandon draft feedback captured from assistant Outlook draft widgets. | frontend/src/app/(admin)/outlook-draft-feedback/page.tsx |
+| `/outlook-emails` | Outlook Emails | frontend/src/app/(tables)/outlook-emails/page.tsx |
+| `/outlook-intake` | Outlook Intake | frontend/src/app/(tables)/outlook-intake/page.tsx |
+| `/permissions` | — | frontend/src/app/(admin)/permissions/page.tsx |
+| `/permissions/users/[personId]` | — | frontend/src/app/(admin)/permissions/users/[personId]/page.tsx |
+| `/pipeline` | Monitor and manage document processing pipeline | frontend/src/app/(main)/pipeline/page.tsx |
+| `/prime-contracts` | — | frontend/src/app/(tables)/prime-contracts/page.tsx |
+| `/procore-docs` | Guides and reference for using Procore to manage projects, track costs, and collaborate with your construction teams. | frontend/src/app/(admin)/procore-docs/page.tsx |
+| `/procore-docs/[...slug]` | — | frontend/src/app/(admin)/procore-docs/[...slug]/page.tsx |
+| `/procore-tools` | — | frontend/src/app/(admin)/(procore)/procore-tools/page.tsx |
+| `/procore-tools/[slug]` | — | frontend/src/app/(admin)/(procore)/procore-tools/[slug]/page.tsx |
+| `/procore-tracker` | — | frontend/src/app/(admin)/(procore)/procore-tracker/page.tsx |
+| `/procore-tracker/[featureId]` | — | frontend/src/app/(admin)/(procore)/procore-tracker/[featureId]/page.tsx |
+| `/product-board` | Product Board | frontend/src/app/(admin)/product-board/page.tsx |
+| `/progress-reports` | This will permanently delete the report and its photo selections. This action cannot be undone. | frontend/src/app/(tables)/progress-reports/page.tsx |
+| `/project-attribution` | Review communication records that have candidate project matches but were not safe enough to assign automatically. | frontend/src/app/(admin)/project-attribution/page.tsx |
+| `/project-documents` | — | frontend/src/app/(tables)/project-documents/page.tsx |
+| `/projects` | Projects | frontend/src/app/(tables)/projects/page.tsx |
+| `/projects-table-demo` | — | frontend/src/app/(admin)/projects-table-demo/page.tsx |
+| `/prp-status` | PRP Pipeline Status | frontend/src/app/(admin)/prp-status/page.tsx |
+| `/rag` | Items successfully synced and items that failed, per source, per day. Sourced live from source_sync_runs. | frontend/src/app/(admin)/rag/page.tsx |
+| `/rag-eval` | Retrieval quality metrics, answer quality scores, and eval runners | frontend/src/app/(admin)/rag-eval/page.tsx |
+| `/redoc` | Explore auth flows, schema details, and every frontend/backend endpoint in one place. | frontend/src/app/(admin)/redoc/page.tsx |
+| `/settings` | — | frontend/src/app/(main)/settings/page.tsx |
+| `/settings/account` | Account | frontend/src/app/(main)/settings/account/page.tsx |
+| `/settings/audit` | Audit events will appear here as actions are taken in the system. | frontend/src/app/(main)/settings/audit/page.tsx |
+| `/settings/memory` | Review what Alleato AI remembers and flag anything that should change future behavior. | frontend/src/app/(main)/settings/memory/page.tsx |
+| `/settings/preferences` | — | frontend/src/app/(main)/settings/preferences/page.tsx |
+| `/settings/profile` | Profile | frontend/src/app/(main)/settings/profile/page.tsx |
+| `/settings/security` | Require a second verification step when members sign in. Applies to all workspace members. | frontend/src/app/(main)/settings/security/page.tsx |
+| `/site-map` | Page Access | frontend/src/app/(admin)/site-map/page.tsx |
+| `/source-sync` | Operational health for Microsoft Graph, Fireflies, vectorization, task extraction, compiler work, and intelligence packet readiness. | frontend/src/app/(admin)/source-sync/page.tsx |
+| `/spreadsheet-demo` | Liveblocks-backed shared grid for estimating, cost planning, and formula-driven team coordination. | frontend/src/app/(admin)/spreadsheet-demo/page.tsx |
+| `/stats` | Today's Stats | frontend/src/app/(main)/stats/page.tsx |
+| `/support-articles` | — | frontend/src/app/(admin)/(procore)/support-articles/page.tsx |
+| `/support-articles/[articleId]` | This article has not been crawled yet. | frontend/src/app/(admin)/(procore)/support-articles/[articleId]/page.tsx |
+| `/table-pages` | — | frontend/src/app/(admin)/table-pages/page.tsx |
+| `/table-pages/[table]` | — | frontend/src/app/(admin)/table-pages/[table]/page.tsx |
+| `/table-pages/[table]/[recordId]` | — | frontend/src/app/(admin)/table-pages/[table]/[recordId]/page.tsx |
+| `/table-pages/[table]/new` | — | frontend/src/app/(admin)/table-pages/[table]/new/page.tsx |
+| `/table-v2` | Manage companies, clients, contacts, users, and employees across your organization | frontend/src/app/(admin)/table-v2/page.tsx |
+| `/tables-directory` | Browse and access all data tables in the system. | frontend/src/app/(admin)/tables-directory/page.tsx |
+| `/task-training` | Task Training | frontend/src/app/(admin)/task-training/page.tsx |
+| `/tasks` | Tasks | frontend/src/app/(tables)/tasks/page.tsx |
+| `/team-chat` | — | frontend/src/app/(main)/team-chat/page.tsx |
+| `/teams-conversations` | Review compiled Microsoft Teams conversation threads, attribution, and project-linked source detail. | frontend/src/app/(tables)/teams-conversations/page.tsx |
+| `/teams-conversations/[sourceDocumentId]` | Compiled Microsoft Teams conversation thread detail for review, attribution, and downstream intelligence workflows. | frontend/src/app/(tables)/teams-conversations/[sourceDocumentId]/page.tsx |
+| `/template/form-standard` | Fill out the form below to create a new item | frontend/src/app/(admin)/template/form-standard/page.tsx |
+| `/template/form-template` | Example template showing every standard form field pattern | frontend/src/app/(admin)/template/form-template/page.tsx |
+| `/test-cases` | Supabase test_cases records | frontend/src/app/(admin)/test-cases/page.tsx |
+| `/test-matrix` | Test Runner — Photos | frontend/src/app/(admin)/test-matrix/page.tsx |
+| `/testing` | Smoke and feature test suites for every tool. | frontend/src/app/(admin)/testing/page.tsx |
+| `/testing/[tool]` | Browse test cases or start a new run for this tool. | frontend/src/app/(admin)/testing/[tool]/page.tsx |
+| `/testing/[tool]/cases/[caseId]` | Context | frontend/src/app/(admin)/testing/[tool]/cases/[caseId]/page.tsx |
+| `/testing/parity` | Procore Parity Report | frontend/src/app/(admin)/testing/parity/page.tsx |
+| `/testing/runs` | All in-progress and completed test runs across every tool. | frontend/src/app/(admin)/testing/runs/page.tsx |
+| `/testing/runs/[runId]` | Test recording | frontend/src/app/(admin)/testing/runs/[runId]/page.tsx |
+| `/testing/runs/[runId]/case/[caseNumber]` | Redirecting… | frontend/src/app/(admin)/testing/runs/[runId]/case/[caseNumber]/page.tsx |
+| `/tools` | Tools | frontend/src/app/(admin)/tools/page.tsx |
+| `/updates` | A running log of features added, improved, and fixed across all areas of the platform. | frontend/src/app/(admin)/updates/page.tsx |
+| `/user-management` | Invite blocked | frontend/src/app/(admin)/user-management/page.tsx |
+| `/user-management/users/[personId]` | User Management rejected this request. Admin permission is required before this profile can load. | frontend/src/app/(admin)/user-management/users/[personId]/page.tsx |
 
 ## API Endpoints (667)
 
@@ -997,7 +1002,7 @@
 | `/api/velt/token` | POST | frontend/src/app/api/velt/token/route.ts |
 | `/api/webhooks/resend` | POST | frontend/src/app/api/webhooks/resend/route.ts |
 
-## AI Tools (105)
+## AI Tools (106)
 
 These are the tools the AI assistant can call. Each lives in `frontend/src/lib/ai/tools/`.
 
@@ -1044,10 +1049,11 @@ These are the tools the AI assistant can call. Each lives in `frontend/src/lib/a
 | `getRecentInvoices` | Get recent AR invoices (customer billings) from Acumatica ERP. Shows customer invoices with amounts, balances, and status. This is LIVE accounting data. Use when asked about: invoices, customer billings, AR transactions, pay applications, or what we've billed recently. |
 | `getVendorSpendReport` | Get vendor spend analysis from Acumatica ERP. Shows how much has been invoiced by vendors, how much is still outstanding, and how much has been paid. Can filter to a specific vendor or show top vendors by total spend. This is LIVE accounting data. Use when asked about: vendor spend, vendor payments, top vendors, how much we've paid a vendor, or vendor cost analysis. |
 
-### `app-help-tools.ts` (1)
+### `app-help-tools.ts` (2)
 
 | Tool | Description |
 |------|-------------|
+| `findAppPage` | Find which page, screen, or AI tool in this application does something, by purpose. Use for 'where do I…', 'what page shows…', 'does the app have a…', 'which screen lets me…'. Searches the generated inventory of EVERY route and tool (not just curated help articles), matching on what each page does — so it finds pages even when the user doesn't know the name. Returns route URLs you can link the user to. Prefer searchAppHelp for step-by-step instructions; use this to locate a page or capability. |
 | `searchAppHelp` | Search the controlled Alleato OS help center for instructions on how to use this application. Use this first for questions like 'how do I', 'where do I', 'show me how to', app setup, user management, profile settings, permissions, and feature walkthroughs. Only published AI-visible help articles are returned. |
 
 ### `document-intelligence.ts` (5)
@@ -1190,4 +1196,5 @@ These are the tools the AI assistant can call. Each lives in `frontend/src/lib/a
 | `researchCompany` | Research a specific company — competitor, client, subcontractor, or prospect. Returns current info: what they do, recent news, project portfolio, market positioning, and any notable developments. Use for: 'Tell me about [competitor]', 'What is [client] known for?', 'What recent projects has [GC] won?', 'How big is [company]?' |
 | `searchConstructionMarket` | Search for construction industry market intelligence: labor costs, material prices (steel, concrete, lumber), regional market conditions, permit activity, construction technology trends, union rates, ENR data, or regulatory changes. Pre-scoped to construction so results are more relevant than a general search. Use for: 'What are current steel prices?', 'How is the Indianapolis construction market doing?', 'What AI tools are GCs using?', 'What's the labor market like?' |
 | `searchWeb` | Search the web for real-time information. Use this for competitive analysis, industry trends, market intelligence, company research, construction cost data, technology news, regulatory updates, or ANY question requiring current external knowledge that isn't in our internal systems. Examples: 'What are competitors doing?', 'What's the current state of the construction market?', 'What is [company] known for?', 'What are the latest trends in construction technology?' |
+
 

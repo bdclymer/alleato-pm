@@ -19,7 +19,14 @@
  *   npm run map:project -- --check-only  — fail if the committed map is stale (CI/pre-commit gate)
  */
 
-import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from "node:fs";
+import {
+  readFileSync,
+  writeFileSync,
+  readdirSync,
+  statSync,
+  existsSync,
+  mkdirSync,
+} from "node:fs";
 import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -27,10 +34,27 @@ const ROOT = join(fileURLToPath(import.meta.url), "..", "..", "..");
 const APP_DIR = join(ROOT, "frontend", "src", "app");
 const TOOLS_DIR = join(ROOT, "frontend", "src", "lib", "ai", "tools");
 const OUTPUT = join(ROOT, "docs", "architecture", "PROJECT-MAP.md");
+// Machine-readable index — lives OUTSIDE lib/ai/ so regenerating it does not
+// trip the RAG-docs pre-commit gate. Consumed by the in-app findAppPage tool.
+const INDEX_DIR = join(ROOT, "frontend", "src", "lib", "app-surface");
+const INDEX_JSON = join(INDEX_DIR, "app-surface.generated.json");
 
 const CHECK_ONLY = process.argv.includes("--check-only");
 
 const HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
+
+// Extract a JSX/string attribute value: title="..." or title={`...`}.
+// Returns null for dynamic values (template literals with ${...} interpolation),
+// which can't be statically captured.
+function extractAttr(src, attr) {
+  // attr="double quoted"
+  let m = src.match(new RegExp(`\\b${attr}=\\s*"((?:\\\\.|[^"\\\\])*)"`));
+  if (m) return m[1].replace(/\\"/g, '"').replace(/\s+/g, " ").trim();
+  // attr={`backtick`} — only when there is no interpolation
+  m = src.match(new RegExp(`\\b${attr}=\\s*\\{\\s*\`([^\`$]*)\`\\s*\\}`));
+  if (m) return m[1].replace(/\s+/g, " ").trim();
+  return null;
+}
 
 // ── filesystem walk ──────────────────────────────────────────────
 function walk(dir, predicate, acc = []) {
@@ -118,16 +142,35 @@ function extractDescription(chunk) {
 }
 
 // ── build sections ───────────────────────────────────────────────
-function buildPages() {
+// Returns structured page rows: { url, title, description, file }.
+// title/description are read from the page's own JSX (PageShell title=/
+// description=), which is where the human-readable "what is this page" lives.
+function getPagesData() {
   const files = walk(APP_DIR, (f) => f.endsWith(`${sep}page.tsx`)).filter(
     (f) => !f.includes(`${sep}api${sep}`),
   );
-  const rows = files
-    .map((f) => ({ url: fileToUrl(f, "page"), file: relative(ROOT, f) }))
+  return files
+    .map((f) => {
+      const src = readFileSync(f, "utf8");
+      return {
+        url: fileToUrl(f, "page"),
+        title: extractAttr(src, "title"),
+        description: extractAttr(src, "description"),
+        file: relative(ROOT, f),
+      };
+    })
     .sort((a, b) => a.url.localeCompare(b.url));
+}
+
+function buildPages(rows) {
+  const described = rows.filter((r) => r.description).length;
   let md = `## UI Routes (${rows.length})\n\n`;
-  md += "| URL | File |\n|-----|------|\n";
-  for (const r of rows) md += `| \`${r.url}\` | ${r.file} |\n`;
+  md += `_${described}/${rows.length} have a description. Pages without one are invisible to find-a-page search — add a \`description\` to the page's \`PageShell\`._\n\n`;
+  md += "| URL | What it does | File |\n|-----|--------------|------|\n";
+  for (const r of rows) {
+    const what = (r.description || r.title || "—").replace(/\|/g, "\\|");
+    md += `| \`${r.url}\` | ${what} | ${r.file} |\n`;
+  }
   return md;
 }
 
@@ -148,72 +191,110 @@ function buildApi() {
   return md;
 }
 
-function buildTools() {
+// Returns structured tool rows: { name, description, file }.
+function getToolsData() {
   const files = readdirSync(TOOLS_DIR)
     .filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts"))
     .sort();
-  let total = 0;
-  let md = "";
-  const sections = [];
+  const all = [];
   for (const f of files) {
-    const tools = extractTools(join(TOOLS_DIR, f));
-    if (tools.length === 0) continue;
-    total += tools.length;
-    let section = `### \`${f}\` (${tools.length})\n\n`;
-    section += "| Tool | Description |\n|------|-------------|\n";
-    for (const t of tools.sort((a, b) => a.name.localeCompare(b.name))) {
-      const desc = t.description ? t.description.replace(/\|/g, "\\|") : "—";
-      section += `| \`${t.name}\` | ${desc} |\n`;
+    for (const t of extractTools(join(TOOLS_DIR, f))) {
+      all.push({ name: t.name, description: t.description || "", file: f });
     }
-    sections.push(section);
   }
-  md = `## AI Tools (${total})\n\n`;
+  return all;
+}
+
+function buildTools(tools) {
+  const byFile = new Map();
+  for (const t of tools) {
+    if (!byFile.has(t.file)) byFile.set(t.file, []);
+    byFile.get(t.file).push(t);
+  }
+  let md = `## AI Tools (${tools.length})\n\n`;
   md += "These are the tools the AI assistant can call. Each lives in `frontend/src/lib/ai/tools/`.\n\n";
-  md += sections.join("\n");
+  for (const f of [...byFile.keys()].sort()) {
+    const rows = byFile.get(f).sort((a, b) => a.name.localeCompare(b.name));
+    md += `### \`${f}\` (${rows.length})\n\n`;
+    md += "| Tool | Description |\n|------|-------------|\n";
+    for (const t of rows) {
+      md += `| \`${t.name}\` | ${(t.description || "—").replace(/\|/g, "\\|")} |\n`;
+    }
+    md += "\n";
+  }
   return md;
 }
 
 // ── assemble ─────────────────────────────────────────────────────
-function generate() {
+function buildMarkdown(pages, tools) {
   const header = `# Project Map
 
 > **AUTO-GENERATED — do not edit by hand.** Regenerate with \`npm run map:project\`.
 > A pre-commit gate fails if this file is stale relative to the code.
 >
 > This is the surface inventory every AI session should read first: what pages
-> exist, what API endpoints exist, and what the AI assistant can do. For *how*
-> the system fits together (data flow, architecture), see
+> exist, what API endpoints exist, and what the AI assistant can do. Search it
+> by *purpose* (e.g. grep "run workflows"), not by URL. For *how* the system
+> fits together (data flow, architecture), see
 > \`docs/architecture/AI-RAG-ARCHITECTURE.md\`. For the database, see
-> \`docs/architecture/TABLE-LIST.md\`.
+> \`docs/architecture/TABLE-LIST.md\`. The in-app assistant searches the same
+> data via the \`findAppPage\` tool (\`frontend/src/lib/app-surface/\`).
 
 `;
   return (
     header +
-    buildPages() +
+    buildPages(pages) +
     "\n" +
     buildApi() +
     "\n" +
-    buildTools() +
+    buildTools(tools) +
     "\n"
   );
 }
 
-const content = generate();
+// Deterministic JSON index (no timestamp — must be byte-stable for the gate).
+function buildIndexJson(pages, tools) {
+  const index = {
+    note: "AUTO-GENERATED by npm run map:project. Do not edit. Searched by the findAppPage tool.",
+    pages: pages.map((p) => ({
+      url: p.url,
+      title: p.title || null,
+      description: p.description || null,
+    })),
+    tools: tools.map((t) => ({
+      name: t.name,
+      description: t.description || null,
+    })),
+  };
+  return JSON.stringify(index, null, 2) + "\n";
+}
+
+const pages = getPagesData();
+const tools = getToolsData();
+const content = buildMarkdown(pages, tools);
+const indexJson = buildIndexJson(pages, tools);
 
 if (CHECK_ONLY) {
-  const existing = existsSync(OUTPUT) ? readFileSync(OUTPUT, "utf8") : "";
-  if (existing !== content) {
+  const mdCurrent =
+    existsSync(OUTPUT) && readFileSync(OUTPUT, "utf8") === content;
+  const jsonCurrent =
+    existsSync(INDEX_JSON) && readFileSync(INDEX_JSON, "utf8") === indexJson;
+  if (!mdCurrent || !jsonCurrent) {
     console.error(
-      "❌ PROJECT MAP GATE — docs/architecture/PROJECT-MAP.md is stale.\n" +
+      "❌ PROJECT MAP GATE — the project map is stale.\n" +
         "   The code (routes / API / AI tools) changed but the map was not regenerated.\n" +
         "   Run: npm run map:project\n" +
-        "   Then stage: git add docs/architecture/PROJECT-MAP.md",
+        "   Then stage: git add docs/architecture/PROJECT-MAP.md frontend/src/lib/app-surface/app-surface.generated.json",
     );
     process.exit(1);
   }
-  console.log("✅ PROJECT-MAP.md is current.");
+  console.log("✅ Project map is current.");
   process.exit(0);
 }
 
+if (!existsSync(INDEX_DIR)) mkdirSync(INDEX_DIR, { recursive: true });
 writeFileSync(OUTPUT, content, "utf8");
-console.log(`✅ Wrote ${relative(ROOT, OUTPUT)}`);
+writeFileSync(INDEX_JSON, indexJson, "utf8");
+console.log(
+  `✅ Wrote ${relative(ROOT, OUTPUT)} + ${relative(ROOT, INDEX_JSON)}`,
+);

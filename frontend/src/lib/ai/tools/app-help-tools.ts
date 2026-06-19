@@ -2,6 +2,10 @@ import { tool } from "ai";
 import { z } from "zod";
 import { getHelpActionsForIds } from "@/lib/help-actions";
 import { searchHelpArticles } from "@/lib/help-articles";
+import {
+  searchAppSurface,
+  appSurfaceStats,
+} from "@/lib/app-surface/search";
 import { type ToolTracePayload, withTrace as _withTrace } from "./tool-utils";
 
 type CreateAppHelpToolsOptions = {
@@ -90,6 +94,71 @@ export function createAppHelpTools(options: CreateAppHelpToolsOptions = {}) {
               matches.length > 0
                 ? `Found ${matches.length} app help article(s).`
                 : "No AI-visible help article matched that question yet.",
+          };
+        },
+      ),
+    }),
+
+    findAppPage: tool({
+      description:
+        "Find which page, screen, or AI tool in this application does something, " +
+        "by purpose. Use for 'where do I…', 'what page shows…', 'does the app " +
+        "have a…', 'which screen lets me…'. Searches the generated inventory of " +
+        "EVERY route and tool (not just curated help articles), matching on what " +
+        "each page does — so it finds pages even when the user doesn't know the " +
+        "name. Returns route URLs you can link the user to. Prefer searchAppHelp " +
+        "for step-by-step instructions; use this to locate a page or capability.",
+      inputSchema: z.object({
+        query: z
+          .string()
+          .describe(
+            "What the user is trying to do or find, in plain words (e.g. 'run internal workflows', 'see project budget', 'change order page').",
+          ),
+        kind: z
+          .enum(["page", "tool", "any"])
+          .optional()
+          .default("any")
+          .describe("Restrict to UI pages, AI tools, or both (default)."),
+        limit: z
+          .number()
+          .int()
+          .min(1)
+          .max(15)
+          .optional()
+          .default(8)
+          .describe("Maximum number of matches to return."),
+      }),
+      execute: withTrace(
+        "findAppPage",
+        options,
+        async ({ query, kind, limit }) => {
+          const kinds =
+            kind === "any" || !kind
+              ? (["page", "tool"] as const)
+              : ([kind] as const);
+          const results = searchAppSurface(query, {
+            limit,
+            kinds: [...kinds],
+          });
+          const stats = appSurfaceStats();
+
+          return {
+            query,
+            resultCount: results.length,
+            results: results.map((r) => ({
+              knowledgeType: "app_surface",
+              kind: r.kind,
+              title: r.title,
+              description: r.description,
+              href: r.kind === "page" ? r.ref : null,
+              toolName: r.kind === "tool" ? r.ref : null,
+              score: r.score,
+            })),
+            coverage: `Index covers ${stats.pages} pages (${stats.describedPages} with a description) and ${stats.tools} AI tools.`,
+            message:
+              results.length > 0
+                ? `Found ${results.length} matching ${kind === "tool" ? "tool" : kind === "page" ? "page" : "surface"}(s).`
+                : "No page or tool matched. The target page may exist but lack a description in the index — say so rather than asserting it doesn't exist.",
           };
         },
       ),
