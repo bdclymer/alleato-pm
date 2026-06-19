@@ -64,9 +64,14 @@ def run_scheduled_microsoft_executive_assistant_check(
         userId=_operator_user_id(),
         sessionId="microsoft-executive-assistant:scheduled-check",
         prompt=(
-            "Run the 15-minute Microsoft executive assistant check. Review recent unread or important Outlook "
-            "inbox activity, identify urgent client/prospect/legal/security items, prepare reply or Teams escalation "
-            "drafts for Brandon's review, and avoid duplicate recommendations for the same issue when evidence is visible."
+            "Run the 15-minute Microsoft executive assistant check:\n"
+            "1. Call read_live_outlook_inbox to fetch recent unread messages.\n"
+            "2. For EACH email, classify it with one of: urgent, reply_needed, delegate, fyi, watch, delete.\n"
+            "3. Call write_email_triage for each classified email (pass graph_message_id, triage_action, "
+            "and a one-sentence triage_reason). This persists your decision and tags the email in Outlook.\n"
+            "4. For urgent or reply_needed items, prepare a concise Teams escalation draft if AUTO_TEAMS_ALERT is active.\n"
+            "5. Avoid duplicate recommendations for emails already triaged (teams_alert_sent_at is set).\n"
+            "Do not skip write_email_triage — it is required for every classified email."
         ),
         mailboxUserId=mailbox,
         trigger="scheduled_check",
