@@ -414,11 +414,11 @@ Goal: approved skills affect assistant behavior selectively and visibly.
 ### Traceability
 
 - [x] Persist selected skill IDs in chat metadata.
-- [ ] Render "Skill used" trace in assistant answer.
-- [ ] Show skill title and version.
-- [ ] Link to skill page.
-- [ ] Add "skill was wrong" feedback action.
-- [ ] Create learning candidate when skill is challenged.
+- [x] Render "Skill used" trace in assistant answer.
+- [x] Show skill title and version.
+- [x] Link to skill page.
+- [x] Add "skill was wrong" feedback action.
+- [x] Create learning candidate when skill is challenged.
 
 ### Evals
 

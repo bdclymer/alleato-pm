@@ -147,6 +147,10 @@ import {
   AssistantMemoryTrace,
   type MemoryUsage,
 } from "./memory-usage-disclosure";
+import {
+  AssistantSkillTrace,
+  type SkillUsage,
+} from "./skill-usage-disclosure";
 
 // ─── Part extraction helpers ───────────────────────────────────────
 
@@ -1097,6 +1101,7 @@ interface ChatAreaProps {
   toolTracesByMessageId?: Record<string, ToolTraceItem[]>;
   sourcesByMessageId?: Record<string, unknown[]>;
   memoryUsageByMessageId?: Record<string, MemoryUsage>;
+  skillUsageByMessageId?: Record<string, SkillUsage>;
   responseQualityByMessageId?: Record<string, ResponseQuality>;
   traceDiagnosticsByMessageId?: Record<string, AssistantTraceDiagnostics>;
   liveStatus?: StrategistLiveStatus | null;
@@ -1122,6 +1127,7 @@ export function ChatArea({
   toolTracesByMessageId = {},
   sourcesByMessageId = {},
   memoryUsageByMessageId = {},
+  skillUsageByMessageId = {},
   responseQualityByMessageId = {},
   traceDiagnosticsByMessageId = {},
   liveStatus,
@@ -1799,6 +1805,7 @@ export function ChatArea({
                 const persistedTraces = toolTracesByMessageId[msg.id] ?? [];
                 const persistedSources = sourcesByMessageId[msg.id] ?? [];
                 const memoryUsage = memoryUsageByMessageId[msg.id];
+                const skillUsage = skillUsageByMessageId[msg.id];
                 const responseQuality = deriveDisplayResponseQuality({
                   stored: responseQualityByMessageId[msg.id],
                   traces: persistedTraces,
@@ -2097,6 +2104,11 @@ export function ChatArea({
 
                           <AssistantMemoryTrace
                               usage={memoryUsage}
+                              messageId={msg.id}
+                              sessionId={sessionId}
+                          />
+                          <AssistantSkillTrace
+                              usage={skillUsage}
                               messageId={msg.id}
                               sessionId={sessionId}
                           />

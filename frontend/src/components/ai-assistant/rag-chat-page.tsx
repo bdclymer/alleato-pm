@@ -27,6 +27,8 @@ import { ConversationSidebar } from "./conversation-sidebar";
 import { ChatArea, type ResponseQuality } from "./chat-area";
 import type { MemoryUsage } from "./memory-usage-disclosure";
 import { extractMemoryUsage } from "./memory-usage-metadata";
+import type { SkillUsage } from "./skill-usage-disclosure";
+import { extractSkillUsage } from "./skill-usage-metadata";
 import type { AssistantTraceDiagnostics, ToolTraceItem } from "./trace-panel";
 
 type PersistedDataPart = {
@@ -43,6 +45,7 @@ interface ChatHistoryMessage {
   metadata?: {
     tool_trace?: ToolTraceItem[];
     memory_usage?: MemoryUsage;
+    skill_usage?: SkillUsage;
     response_quality?: ResponseQuality;
     provider_path?: string;
     model?: string;
@@ -174,6 +177,7 @@ function ChatWithSession({
   toolTracesByMessageId,
   sourcesByMessageId,
   memoryUsageByMessageId,
+  skillUsageByMessageId,
   responseQualityByMessageId,
   traceDiagnosticsByMessageId,
   isLoadingMessages,
@@ -196,6 +200,7 @@ function ChatWithSession({
     string,
     MemoryUsage
   >;
+  skillUsageByMessageId: Record<string, SkillUsage>;
   responseQualityByMessageId: Record<string, ResponseQuality>;
   traceDiagnosticsByMessageId: Record<string, AssistantTraceDiagnostics>;
   isLoadingMessages: boolean;
@@ -325,6 +330,7 @@ function ChatWithSession({
       toolTracesByMessageId={toolTracesByMessageId}
       sourcesByMessageId={sourcesByMessageId}
       memoryUsageByMessageId={memoryUsageByMessageId}
+      skillUsageByMessageId={skillUsageByMessageId}
       responseQualityByMessageId={responseQualityByMessageId}
       traceDiagnosticsByMessageId={traceDiagnosticsByMessageId}
       liveStatus={liveStatus}
@@ -369,6 +375,9 @@ export function RagChatPage() {
   >({});
   const [memoryUsageByMessageId, setMemoryUsageByMessageId] = useState<
     Record<string, MemoryUsage>
+  >({});
+  const [skillUsageByMessageId, setSkillUsageByMessageId] = useState<
+    Record<string, SkillUsage>
   >({});
   const [responseQualityByMessageId, setResponseQualityByMessageId] = useState<
     Record<string, ResponseQuality>
@@ -435,6 +444,7 @@ export function RagChatPage() {
       setToolTracesByMessageId(extractToolTraces(historyMessages));
       setSourcesByMessageId(extractSources(historyMessages));
       setMemoryUsageByMessageId(extractMemoryUsage(historyMessages));
+      setSkillUsageByMessageId(extractSkillUsage(historyMessages));
       setResponseQualityByMessageId(extractResponseQuality(historyMessages));
       setTraceDiagnosticsByMessageId(extractTraceDiagnostics(historyMessages));
     } catch (error) {
@@ -442,6 +452,7 @@ export function RagChatPage() {
       setToolTracesByMessageId({});
       setSourcesByMessageId({});
       setMemoryUsageByMessageId({});
+      setSkillUsageByMessageId({});
       setResponseQualityByMessageId({});
       setTraceDiagnosticsByMessageId({});
       setLoadMessagesError(
@@ -462,6 +473,7 @@ export function RagChatPage() {
       setToolTracesByMessageId({});
       setSourcesByMessageId({});
       setMemoryUsageByMessageId({});
+      setSkillUsageByMessageId({});
       setResponseQualityByMessageId({});
       setTraceDiagnosticsByMessageId({});
       setLoadMessagesError(null);
@@ -608,6 +620,7 @@ export function RagChatPage() {
             toolTracesByMessageId={toolTracesByMessageId}
             sourcesByMessageId={sourcesByMessageId}
             memoryUsageByMessageId={memoryUsageByMessageId}
+            skillUsageByMessageId={skillUsageByMessageId}
             responseQualityByMessageId={responseQualityByMessageId}
             traceDiagnosticsByMessageId={traceDiagnosticsByMessageId}
             isLoadingMessages={isLoadingMessages}
@@ -637,6 +650,7 @@ export function RagChatPage() {
             }
             toolTracesByMessageId={{}}
             responseQualityByMessageId={{}}
+            skillUsageByMessageId={{}}
             traceDiagnosticsByMessageId={{}}
             liveStatus={null}
             chatError={loadMessagesError}
