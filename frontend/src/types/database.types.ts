@@ -2875,6 +2875,118 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_operation_events: {
+        Row: {
+          actor_display_name: string | null
+          actor_user_id: string | null
+          created_at: string
+          delivery_context: Json
+          event_source: string
+          event_type: string
+          failure_code: string | null
+          failure_message: string | null
+          id: string
+          idempotency_key: string
+          metadata: Json
+          payload: Json
+          permission_context: Json
+          project_id: number | null
+          received_at: string
+          source_record_id: string | null
+          source_thread_id: string | null
+          source_url: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          actor_display_name?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          delivery_context?: Json
+          event_source: string
+          event_type: string
+          failure_code?: string | null
+          failure_message?: string | null
+          id?: string
+          idempotency_key: string
+          metadata?: Json
+          payload?: Json
+          permission_context?: Json
+          project_id?: number | null
+          received_at?: string
+          source_record_id?: string | null
+          source_thread_id?: string | null
+          source_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          actor_display_name?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          delivery_context?: Json
+          event_source?: string
+          event_type?: string
+          failure_code?: string | null
+          failure_message?: string | null
+          id?: string
+          idempotency_key?: string
+          metadata?: Json
+          payload?: Json
+          permission_context?: Json
+          project_id?: number | null
+          received_at?: string
+          source_record_id?: string | null
+          source_thread_id?: string | null
+          source_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_operation_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "ai_operation_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_operation_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "ai_operation_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_operation_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_operation_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_retrieval_feedback: {
         Row: {
           cited: boolean
@@ -3658,6 +3770,180 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      ai_work_run_sources: {
+        Row: {
+          confidence: string | null
+          created_at: string
+          evidence_excerpt: string | null
+          id: string
+          metadata: Json
+          source_family: string
+          source_occurred_at: string | null
+          source_record_id: string | null
+          source_title: string | null
+          source_url: string | null
+          work_run_id: string
+        }
+        Insert: {
+          confidence?: string | null
+          created_at?: string
+          evidence_excerpt?: string | null
+          id?: string
+          metadata?: Json
+          source_family: string
+          source_occurred_at?: string | null
+          source_record_id?: string | null
+          source_title?: string | null
+          source_url?: string | null
+          work_run_id: string
+        }
+        Update: {
+          confidence?: string | null
+          created_at?: string
+          evidence_excerpt?: string | null
+          id?: string
+          metadata?: Json
+          source_family?: string
+          source_occurred_at?: string | null
+          source_record_id?: string | null
+          source_title?: string | null
+          source_url?: string | null
+          work_run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_work_run_sources_work_run_id_fkey"
+            columns: ["work_run_id"]
+            isOneToOne: false
+            referencedRelation: "ai_work_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_work_runs: {
+        Row: {
+          cancelled_at: string | null
+          completed_at: string | null
+          confidence: string | null
+          created_at: string
+          daily_recap_id: string | null
+          delivery_status: string | null
+          delivery_target: Json
+          event_id: string | null
+          expires_at: string | null
+          failure_code: string | null
+          failure_message: string | null
+          id: string
+          metadata: Json
+          model_policy: Json
+          normalized_goal: string
+          permission_mode: string
+          priority: string
+          result_summary: string | null
+          runtime_budget: Json
+          source_counts: Json
+          source_policy: Json
+          source_sync_run_id: string | null
+          started_at: string | null
+          status: string
+          surface: string
+          title: string
+          tool_scope: Json
+          trigger_type: string
+          updated_at: string
+          user_goal: string
+          workflow_id: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          completed_at?: string | null
+          confidence?: string | null
+          created_at?: string
+          daily_recap_id?: string | null
+          delivery_status?: string | null
+          delivery_target?: Json
+          event_id?: string | null
+          expires_at?: string | null
+          failure_code?: string | null
+          failure_message?: string | null
+          id?: string
+          metadata?: Json
+          model_policy?: Json
+          normalized_goal?: string
+          permission_mode?: string
+          priority?: string
+          result_summary?: string | null
+          runtime_budget?: Json
+          source_counts?: Json
+          source_policy?: Json
+          source_sync_run_id?: string | null
+          started_at?: string | null
+          status?: string
+          surface: string
+          title: string
+          tool_scope?: Json
+          trigger_type: string
+          updated_at?: string
+          user_goal?: string
+          workflow_id: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          completed_at?: string | null
+          confidence?: string | null
+          created_at?: string
+          daily_recap_id?: string | null
+          delivery_status?: string | null
+          delivery_target?: Json
+          event_id?: string | null
+          expires_at?: string | null
+          failure_code?: string | null
+          failure_message?: string | null
+          id?: string
+          metadata?: Json
+          model_policy?: Json
+          normalized_goal?: string
+          permission_mode?: string
+          priority?: string
+          result_summary?: string | null
+          runtime_budget?: Json
+          source_counts?: Json
+          source_policy?: Json
+          source_sync_run_id?: string | null
+          started_at?: string | null
+          status?: string
+          surface?: string
+          title?: string
+          tool_scope?: Json
+          trigger_type?: string
+          updated_at?: string
+          user_goal?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_work_runs_daily_recap_id_fkey"
+            columns: ["daily_recap_id"]
+            isOneToOne: false
+            referencedRelation: "daily_recaps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_work_runs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "ai_operation_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_work_runs_source_sync_run_id_fkey"
+            columns: ["source_sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "source_sync_runs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       app_crawl_sessions: {
         Row: {

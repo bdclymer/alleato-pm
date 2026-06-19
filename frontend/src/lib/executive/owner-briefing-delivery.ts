@@ -37,12 +37,42 @@ export type OwnerBriefingDeliveryResult =
       decisionsNeeded: number;
       actionsRequired: number;
       projectsShown: number;
+      sourceSummary: OwnerBriefingSourceSummary;
     }
   | {
       ok: false;
       status: "blocked" | "failed";
       reason: string;
     };
+
+export type OwnerBriefingSourceSummary = {
+  generatedAt: string;
+  activeProjectCount: number;
+  stalePacketCount: number;
+  topProjects: Array<{
+    targetId: string;
+    projectId: number | null;
+    projectName: string;
+    packetId: string | null;
+    packetGeneratedAt: string | null;
+    packetIsStale: boolean;
+    decisionsNeeded: Array<OwnerBriefingSourceItem>;
+    actionsRequired: Array<OwnerBriefingSourceItem>;
+  }>;
+};
+
+export type OwnerBriefingSourceItem = {
+  cardId: string;
+  cardType: string;
+  title: string;
+  summary: string | null;
+  whyItMatters: string | null;
+  nextAction: string | null;
+  confidence: string;
+  sourceCount: number;
+  firstSeenAt: string | null;
+  lastSeenAt: string | null;
+};
 
 const DELIVERY_SOURCE = "owner_briefing";
 
@@ -179,6 +209,7 @@ export async function sendOwnerBriefingToTeams(input: {
       decisionsNeeded: briefing.portfolio.totalDecisionsNeeded,
       actionsRequired: briefing.portfolio.totalActionsRequired,
       projectsShown: briefing.topProjects.length,
+      sourceSummary: buildOwnerBriefingSourceSummary(briefing),
     };
 
     await auditClient
@@ -217,4 +248,42 @@ export async function sendOwnerBriefingToTeams(input: {
 function rewriteGreeting(greeting: string, firstName: string): string {
   // The builder always renders "Good morning, <name>." — swap the name.
   return greeting.replace(/, [^.]+\./, `, ${firstName}.`);
+}
+
+function buildOwnerBriefingSourceSummary(
+  briefing: OwnerBriefingData,
+): OwnerBriefingSourceSummary {
+  return {
+    generatedAt: briefing.generatedAt,
+    activeProjectCount: briefing.portfolio.activeProjectCount,
+    stalePacketCount: briefing.portfolio.stalePacketCount,
+    topProjects: briefing.topProjects.map((project) => ({
+      targetId: project.targetId,
+      projectId: project.projectId,
+      projectName: project.projectName,
+      packetId: project.packetId,
+      packetGeneratedAt: project.packetGeneratedAt,
+      packetIsStale: project.packetIsStale,
+      decisionsNeeded: project.decisionsNeeded.map(toSourceItem),
+      actionsRequired: project.actionsRequired.map(toSourceItem),
+    })),
+  };
+}
+
+type OwnerBriefingProjectItem =
+  OwnerBriefingData["topProjects"][number]["decisionsNeeded"][number];
+
+function toSourceItem(item: OwnerBriefingProjectItem): OwnerBriefingSourceItem {
+  return {
+    cardId: item.cardId,
+    cardType: item.cardType,
+    title: item.title,
+    summary: item.summary,
+    whyItMatters: item.whyItMatters,
+    nextAction: item.nextAction,
+    confidence: item.confidence,
+    sourceCount: item.sourceCount,
+    firstSeenAt: item.firstSeenAt,
+    lastSeenAt: item.lastSeenAt,
+  };
 }
