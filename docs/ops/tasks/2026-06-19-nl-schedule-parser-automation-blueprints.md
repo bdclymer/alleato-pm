@@ -1,6 +1,6 @@
 # Task: Goal 7 G6 - NL Schedule Parser And Automation Blueprints
 
-Status: Verified locally; ready for publish
+Status: Published
 Owner: Codex
 Created: 2026-06-19
 Linear Issue: AAI-565 - https://linear.app/megankharrison/issue/AAI-565/goal-7-g6-nl-schedule-parser-and-automation-blueprints
@@ -102,6 +102,7 @@ a reason code. No cron, reminder, or automation blueprint is silently created.
 | Browser/user-flow     | Not applicable | PASS | No new UI; planner stores reviewable drafts in AI Ops ledger for future review surface. |
 | DB/provider read-back | Not applicable | PASS | No migration or provider config change; reused existing `ai_work_runs` table. |
 | End-to-end proof      | Focused planner test creates an `ai_work_runs` draft payload for an allowlisted Render-cron-backed blueprint | PASS | Tests prove default-off, parser success/ambiguity, unsupported blueprint block, and persistence failure reporting. |
+| Publish               | `npm run codex:finish -- --message "Add automation blueprint schedule planner" --files ...` | PASS | Published to `origin/main` at `3e135cf41b57852b93dafd2b3b710d7478f8996d`; verified `HEAD == origin/main`. |
 
 ## Files Changed
 

@@ -6,7 +6,7 @@
 2) Task ID: AAI-565
 3) Linear issue: AAI-565
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-565/goal-7-g6-nl-schedule-parser-and-automation-blueprints
-5) Current status: Implementation verified locally; ready for `codex:finish`
+5) Current status: Published to `origin/main` at `3e135cf41b57852b93dafd2b3b710d7478f8996d`; closeout evidence recorded.
 6) Files changed (absolute paths):
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-19-nl-schedule-parser-automation-blueprints.md`
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-19-S66-nl-schedule-parser-automation-blueprints.md`
@@ -24,6 +24,7 @@
 - PASS: `npm run linear:codex:check -- docs/ops/handoffs/2026-06-19-S66-nl-schedule-parser-automation-blueprints.md`.
 - PASS: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai/automation-blueprints/__tests__/planner.test.ts --runInBand`.
 - PASS: `cd frontend && npm run quality:changed`.
+- PASS: `npm run codex:finish -- --message "Add automation blueprint schedule planner" --files ...` published the implementation to `origin/main` at `3e135cf41b57852b93dafd2b3b710d7478f8996d`.
 8) Evidence artifacts (screenshot/video/report/log paths):
 - Task evidence: `docs/ops/tasks/2026-06-19-nl-schedule-parser-automation-blueprints.md`.
 - Test proof: focused Jest automation blueprint planner suite, 1 suite / 6 tests.
@@ -31,7 +32,7 @@
 - No new UI was added; planner stores reviewable draft rows in the existing AI Ops ledger.
 - Goal 7 allows adapting parser/blueprint ideas but explicitly forbids adopting Hermes's in-process scheduler.
 - Existing Render cron/Supabase automation storage should remain the runtime/control-plane owner.
-10) Recommended next action (one line): Publish Goal 7 G6, then start Goal 7 C10 as the next separate high-risk slice.
+10) Recommended next action (one line): Start Goal 7 C10 as the next separate high-risk slice.
 11) Handoff file path: docs/ops/handoffs/2026-06-19-S66-nl-schedule-parser-automation-blueprints.md
 12) Migration ledger evidence: Not applicable unless implementation discovers a schema gap.
 
@@ -43,12 +44,13 @@
 
 ## Current Status
 
-Goal 7 G6 is locally implemented and verified as a default-off natural-language
-schedule parser and automation blueprint planner. `schedule-parser.ts` parses
-daily, weekdays, weekly, and bounded hourly requests or returns explicit
-ambiguity. `catalog.ts` allowlists existing Render cron-backed blueprints.
-`planner.ts` stores reviewable draft records in `ai_work_runs` with
-`status=needs_admin_review` and metadata blocking direct Render cron mutation.
+Goal 7 G6 is implemented, verified, and published as a default-off
+natural-language schedule parser and automation blueprint planner.
+`schedule-parser.ts` parses daily, weekdays, weekly, and bounded hourly requests
+or returns explicit ambiguity. `catalog.ts` allowlists existing Render
+cron-backed blueprints. `planner.ts` stores reviewable draft records in
+`ai_work_runs` with `status=needs_admin_review` and metadata blocking direct
+Render cron mutation.
 
 ## Known Pitfalls
 
@@ -78,3 +80,4 @@ cd frontend && npm run quality:changed
 - Source clone usage documented as ADAPT/REFERENCE in `docs/architecture/AI-RAG-ARCHITECTURE.md`; no Hermes scheduler/runtime copied.
 - Focused tests passed for schedule parsing, ambiguity handling, default-off behavior, unsupported blueprint blocking, reviewable draft payload creation, and persistence failure reporting.
 - Changed-file quality passed.
+- `codex:finish` published the implementation to `origin/main` at `3e135cf41b57852b93dafd2b3b710d7478f8996d` and verified `HEAD == origin/main`.
