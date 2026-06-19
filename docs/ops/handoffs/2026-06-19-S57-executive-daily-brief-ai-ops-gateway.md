@@ -171,7 +171,7 @@
   - `14c489d3-a9d8-47bb-b98a-5191d64566d8` recorded first-class run steps/artifacts/delivery attempts, migration/type evidence, UI proof, and unrelated verification blockers.
   - `d2280aa3-e2cc-4282-aec4-84839d6840aa` recorded workflow pack, source adapter contract, tool policy, disabled delivery tool hiding, and remaining proof gaps.
   - `e4027597-e511-46d9-9b18-c49661505d11` recorded generated no-send preview proof, artifact/delivery/source-health readback, browser proof, and remaining gaps.
-  - Pending: claim-level evidence-policy guardrail comment after commit/push.
+  - `ade23489-9add-47a6-834f-af71ee6adac4` recorded claim-level evidence-policy guardrail, focused tests, gateway guardrail rerun, commit `519d8b802`, and remaining gaps.
 - Completion/blocker comment: None yet.
 
 ## Current Status
