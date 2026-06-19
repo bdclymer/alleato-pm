@@ -285,6 +285,37 @@ services:
       - key: OPENAI_API_KEY
         sync: false
 
+  # Daily email triage digest — 7:00 AM ET (12:00 UTC). Queries yesterday's
+  # outlook_email_intake grouped by triage_action and sends a summary Teams DM
+  # so Brandon starts the day with a clear picture of inbox activity.
+  - type: cron
+    name: alleato-email-digest
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "0 12 * * *"
+    dockerCommand: >-
+      timeout 5m python3 src/scripts/run_email_digest.py
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
+      - key: MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX
+        sync: false
+      - key: MICROSOFT_EXECUTIVE_ASSISTANT_TEAMS_USER_ID
+        sync: false
+      - key: NOTIFICATION_SERVICE_KEY
+        sync: false
+      - key: NEXT_PUBLIC_APP_URL
+        value: "https://projects.alleatogroup.com"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+
   # Ensures Microsoft Graph webhook subscriptions exist and are not near expiry.
   # Mail subscriptions last 48 hours — this runs every 6 hours so they are
   # renewed with 42 hours of headroom before the 6-hour renew_within_hours cutoff.

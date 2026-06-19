@@ -396,6 +396,157 @@ def draft_teams_message_for_review(recipient: str, message: str, urgency: str = 
     return _json(payload)
 
 
+def _supabase_client():
+    """Lazy Supabase client for triage write-back. Returns None if unconfigured."""
+    try:
+        from src.services.supabase_helpers import get_pm_write_client
+
+        return get_pm_write_client()
+    except Exception:
+        try:
+            import os
+
+            from supabase import create_client
+
+            url = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+            key = os.getenv("SUPABASE_SERVICE_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+            if url and key:
+                return create_client(url, key)
+        except Exception:
+            pass
+    return None
+
+
+TRIAGE_CATEGORY_MAP: dict[str, str] = {
+    "urgent": "Urgent",
+    "reply_needed": "Reply Needed",
+    "delegate": "To Delegate",
+    "fyi": "FYI",
+    "watch": "Watching",
+    "delete": "Archive",
+}
+
+
+@tool
+def write_email_triage(
+    graph_message_id: str,
+    triage_action: str,
+    triage_reason: str,
+    mailbox_user_id: Optional[str] = None,
+    write_outlook_category: bool = True,
+) -> str:
+    """Record the triage classification for a synced Outlook email.
+
+    Writes triage_action, triage_reason, and triage_at to the outlook_email_intake
+    row matching graph_message_id. Optionally patches the Outlook category on the
+    live message so Brandon sees a coloured tag in his inbox.
+
+    triage_action must be one of: urgent, reply_needed, delegate, fyi, watch, delete.
+    """
+    valid_actions = set(TRIAGE_CATEGORY_MAP)
+    action = triage_action.lower().strip()
+    if action not in valid_actions:
+        return _json(
+            {
+                "ok": False,
+                "error": f"Invalid triage_action '{triage_action}'. Must be one of: {', '.join(sorted(valid_actions))}",
+            }
+        )
+
+    db_result: dict[str, Any] = {"written": False}
+    try:
+        client = _supabase_client()
+        if client:
+            client.table("outlook_email_intake").update(
+                {
+                    "triage_action": action,
+                    "triage_reason": _clean_text(triage_reason),
+                    "triage_at": datetime.now(timezone.utc).isoformat(),
+                }
+            ).eq("graph_message_id", graph_message_id).execute()
+            db_result = {"written": True}
+        else:
+            db_result = {"written": False, "reason": "supabase_not_configured"}
+    except Exception as exc:
+        logger.warning("[ExecAssistant] Triage write failed: %s", exc)
+        db_result = {"written": False, "error": str(exc)}
+
+    # Write Outlook category so Brandon sees a coloured label in his inbox
+    category_result: dict[str, Any] = {"patched": False, "reason": "skipped"}
+    if write_outlook_category:
+        mailbox = mailbox_user_id or os.getenv("MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX")
+        category_name = TRIAGE_CATEGORY_MAP.get(action)
+        if mailbox and category_name and graph_message_id:
+            category_result = _patch_message_category(mailbox, graph_message_id, category_name)
+
+    return _json(
+        {
+            "ok": True,
+            "graphMessageId": graph_message_id,
+            "triageAction": action,
+            "dbResult": db_result,
+            "categoryResult": category_result,
+        }
+    )
+
+
+def _patch_message_category(mailbox: str, message_id: str, category_name: str) -> dict[str, Any]:
+    """Patch a single Outlook category onto a message via Graph API. Best-effort, never raises."""
+    try:
+        from src.services.integrations.microsoft_graph.client import get_graph_client
+
+        graph = get_graph_client()
+        if not graph.is_configured():
+            return {"patched": False, "reason": "graph_not_configured"}
+
+        safe_mailbox = mailbox.strip().lower()
+        graph.patch(
+            f"/users/{quote(safe_mailbox)}/messages/{message_id}",
+            {"categories": [category_name]},
+        )
+        return {"patched": True, "category": category_name}
+    except Exception as exc:
+        logger.warning("[ExecAssistant] Category patch failed: %s", exc)
+        return {"patched": False, "error": str(exc)}
+
+
+@tool
+def patch_outlook_email_categories(
+    graph_message_id: str,
+    categories: list[str],
+    mailbox_user_id: Optional[str] = None,
+) -> str:
+    """Set the Outlook categories (coloured tags) on a message via Microsoft Graph.
+
+    Replaces any existing categories on the message. Pass an empty list to clear them.
+    This writes directly to the live Outlook mailbox — Brandon will see the tag instantly.
+    """
+    mailbox = (
+        mailbox_user_id
+        or os.getenv("MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX")
+        or (os.getenv("MICROSOFT_SYNC_USERS", "").split(",")[0].strip() or None)
+    )
+    if not mailbox:
+        return _json({"ok": False, "error": "OUTLOOK_CATEGORY_BLOCKED: No mailbox configured."})
+
+    result = _patch_message_category(mailbox, graph_message_id, categories[0] if categories else "")
+    if not categories:
+        # Clear categories
+        try:
+            from src.services.integrations.microsoft_graph.client import get_graph_client
+
+            graph = get_graph_client()
+            if graph.is_configured():
+                graph.patch(
+                    f"/users/{quote(mailbox.strip().lower())}/messages/{graph_message_id}",
+                    {"categories": []},
+                )
+                result = {"patched": True, "categories": []}
+        except Exception as exc:
+            result = {"patched": False, "error": str(exc)}
+    return _json({"ok": result.get("patched", False), **result})
+
+
 def microsoft_executive_assistant_tools() -> list[Any]:
     """Return the Microsoft specialist's runtime tools."""
     return [
@@ -406,4 +557,6 @@ def microsoft_executive_assistant_tools() -> list[Any]:
         list_outlook_calendar_events,
         draft_outlook_email_for_review,
         draft_teams_message_for_review,
+        write_email_triage,
+        patch_outlook_email_categories,
     ]
