@@ -56,6 +56,8 @@ const mode = args.has("--staged") ? "staged" : "changed";
 //   - RAG tables live in the AI Database project (see CLAUDE.md "Two Supabase Projects")
 //   - system / cross-schema tables
 const KNOWN_EXTERNAL_TABLES = new Set([
+  "document_chunk_retrieval_stats",
+  "document_chunk_retrieval_telemetry",
   "document_chunks",
   "graph_subscriptions",
   "graph_sync_state",
@@ -66,6 +68,7 @@ const KNOWN_EXTERNAL_TABLES = new Set([
   "outlook_email_intake",
   "source_syntheses",
   "project_daily_deltas",
+  "supabase_migrations",
 ]);
 const EXTERNAL_PREFIXES = ["information_schema", "pg_", "auth_", "storage_"];
 
@@ -88,6 +91,22 @@ const NON_TABLE_WORDS = new Set([
   "projection_error",
   "projection_attempt_count",
   "projected_at",
+  "hybrid_score",
+  "last_recalled_at",
+  "match_count",
+  "match_threshold",
+  "query_embedding",
+  "query_text",
+  "ranking_mode",
+  "ranking_mode_used",
+  "recall_score",
+  "recency_score",
+  "score_components",
+  "search_document_chunks",
+  "telemetry_enabled",
+  "text_score",
+  "trace_id",
+  "vector_score",
   "captured",
   "project_assigned",
   "project_assignment_review",

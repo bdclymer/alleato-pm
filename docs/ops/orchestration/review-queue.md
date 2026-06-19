@@ -63,7 +63,8 @@ Leader reviews all pending handoffs here.
 | `docs/ops/handoffs/2026-06-18-S56-skill-library-review-docs.md` | S56 | AAI-543 | 2026-06-18 | Yes | Accepted | Skill review/apply bridge accepted. `kind=skill`, parser routing, `applySkillLibraryPromotion`, `ai_skills` destination, Phase 5 docs, architecture note, focused Jest, and Skill Review browser evidence passed. |
 | `docs/ops/handoffs/2026-06-19-S60-outbound-action-policy.md` | S60 | AAI-558 | 2026-06-19 | Yes | Pending Review | Goal 2 implementation, focused Jest/lint/type guard, handoff validation, and controlled local single-case eval passed. Awaiting main publish verification. |
 | `docs/ops/handoffs/2026-06-19-S61-operator-presentation.md` | S61 | AAI-559 | 2026-06-19 | Yes | Pending Review | Goal 3 implementation, focused tests, snapshot guardrail, changed-file quality, route check, and HTTP e2e preview proof passed. Full quality has unrelated frontend typecheck timeout debt. Awaiting main publish verification. |
-| `docs/ops/handoffs/2026-06-19-S62-session-search.md` | S62 | AAI-560 | 2026-06-19 | Partial | Pending Review | Goal 4 ownership claimed. Awaiting DB gate, implementation, migration ledger, tests, e2e proof, and publish verification. |
+| `docs/ops/handoffs/2026-06-19-S62-session-search.md` | S62 | AAI-560 | 2026-06-19 | Yes | Pending Review | Goal 4 published at `d7d7dccc84d08818e2bc476006a5827616469504`; migration ledger, tests, registry verification, DB inventory, and live tool proof recorded in handoff/task evidence. |
+| `docs/ops/handoffs/2026-06-19-S63-hybrid-rag-ranking.md` | S63 | AAI-561 | 2026-06-19 | Yes | Pending Review | Goal 5 implementation locally verified: AI Database migration/ledger readback, hybrid-vs-vector eval, telemetry readback, DB inventory, focused tests, changed-file quality, and Linear milestone comment recorded. Awaiting publish verification. |
 
 ## Disposition Rules
 

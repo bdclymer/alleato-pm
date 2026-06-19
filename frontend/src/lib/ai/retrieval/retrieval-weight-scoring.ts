@@ -10,6 +10,39 @@ export type RetrievalWeightScoringRow = {
   confidence: number;
 };
 
+export type HybridRetrievalScoreInput = {
+  vectorScore: number | null | undefined;
+  textScore?: number | null;
+  recallCount?: number | null;
+  lastRecalledAt?: string | null;
+  sourceTimestamp?: string | null;
+  nowMs?: number;
+};
+
+export type HybridRetrievalScoreResult = {
+  rankingMode: "hybrid" | "degraded_hybrid";
+  hybridScore: number;
+  components: {
+    vectorScore: number;
+    textScore: number | null;
+    recallScore: number;
+    recencyScore: number;
+    recallCount: number;
+    lastRecalledAt: string | null;
+  };
+  missingComponents: string[];
+};
+
+export const HYBRID_RETRIEVAL_WEIGHTS = {
+  vector: 0.65,
+  text: 0.2,
+  recall: 0.1,
+  recency: 0.05,
+} as const;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const RECENCY_HALF_LIFE_DAYS = 180;
+
 export function normalizeRetrievalWeightQuerySignature(value: string): string {
   return value
     .toLowerCase()
@@ -20,6 +53,64 @@ export function normalizeRetrievalWeightQuerySignature(value: string): string {
     .filter((word) => word.length > 2)
     .slice(0, 10)
     .join(" ");
+}
+
+export function retrievalRecencyScore(
+  sourceTimestamp: string | null | undefined,
+  nowMs = Date.now(),
+): number {
+  if (!sourceTimestamp) return 0.5;
+  const sourceMs = new Date(sourceTimestamp).getTime();
+  if (!Number.isFinite(sourceMs)) return 0.5;
+
+  const ageDays = Math.max(0, (nowMs - sourceMs) / DAY_MS);
+  return Math.max(0.1, Math.exp(-ageDays / RECENCY_HALF_LIFE_DAYS));
+}
+
+export function retrievalRecallScore(recallCount: number | null | undefined): number {
+  const boundedCount = Math.max(0, Number(recallCount) || 0);
+  return Math.min(1, Math.log1p(boundedCount) / Math.log(11));
+}
+
+export function computeHybridRetrievalScore(
+  input: HybridRetrievalScoreInput,
+): HybridRetrievalScoreResult {
+  const vectorScore = Number(input.vectorScore);
+  const textScore =
+    input.textScore === null || input.textScore === undefined
+      ? null
+      : Number(input.textScore);
+  const recallCount = Math.max(0, Number(input.recallCount) || 0);
+  const missingComponents: string[] = [];
+
+  if (!Number.isFinite(vectorScore)) missingComponents.push("vectorScore");
+  if (textScore === null || !Number.isFinite(textScore)) {
+    missingComponents.push("textScore");
+  }
+
+  const safeVectorScore = Number.isFinite(vectorScore) ? vectorScore : 0;
+  const safeTextScore = textScore !== null && Number.isFinite(textScore) ? textScore : 0;
+  const recallScore = retrievalRecallScore(recallCount);
+  const recencyScore = retrievalRecencyScore(input.sourceTimestamp, input.nowMs);
+  const rankingMode = missingComponents.length === 0 ? "hybrid" : "degraded_hybrid";
+
+  return {
+    rankingMode,
+    hybridScore:
+      safeVectorScore * HYBRID_RETRIEVAL_WEIGHTS.vector +
+      safeTextScore * HYBRID_RETRIEVAL_WEIGHTS.text +
+      recallScore * HYBRID_RETRIEVAL_WEIGHTS.recall +
+      recencyScore * HYBRID_RETRIEVAL_WEIGHTS.recency,
+    components: {
+      vectorScore: safeVectorScore,
+      textScore: textScore !== null && Number.isFinite(textScore) ? textScore : null,
+      recallScore,
+      recencyScore,
+      recallCount,
+      lastRecalledAt: input.lastRecalledAt ?? null,
+    },
+    missingComponents,
+  };
 }
 
 export function retrievalWeightMultiplierForItem(

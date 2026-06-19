@@ -2,6 +2,8 @@
 
 **Authoritative reference for all AI work. Read this before touching any file under `frontend/src/lib/ai/` or `backend/src/services/pipeline/`.**
 
+Last verified: 2026-06-19 (**Hybrid RAG ranking telemetry**: RAG migration `scripts/database/rag/migrations/20260619223000_hybrid_rag_ranking.sql` is applied to AI Database project `fqcvmfqldlewvbsuxdvz` and recorded in `supabase_migrations.schema_migrations` as `20260619223000|hybrid_rag_ranking`. It adds RAG-owned `document_chunk_retrieval_telemetry` daily recall buckets plus `document_chunk_retrieval_stats`, and replaces `public.search_document_chunks` with one extended optional signature that preserves vector-only defaults while allowing `ranking_mode='hybrid'`, `query_text`, telemetry writes, and returned score components: `vector_score`, `text_score`, `recall_score`, `recency_score`, `hybrid_score`, `ranking_mode_used`, and `score_components`. Frontend semantic search requests hybrid diagnostics only when `RAG_HYBRID_RANKING_ENABLED=true`; recall writes are separately gated by `RAG_RETRIEVAL_TELEMETRY_ENABLED=true`. Live verifier `npm run rag:verify:hybrid-ranking` samples an embedded chunk, compares vector vs hybrid coverage, validates components, and verifies telemetry readback. Hybrid remains default-off until eval evidence justifies default-on.)
+
 Last verified: 2026-06-19 (**Session Search over prior assistant conversations**: migration `20260619210000_search_chat_history.sql` is applied and ledger-verified, adding `chat_history` FTS/trigram indexes plus the scoped `public.search_chat_history` RPC. `frontend/src/lib/ai/tools/search-past-conversations.ts` exposes the governed `searchPastConversations` AI SDK tool through `createProjectTools()` and `frontend/src/lib/ai/tool-registry.ts`. This reads PM APP `chat_history`/`conversations` only, dedupes by session lineage, returns anchored neighboring message windows plus start/end bookends, and returns typed loud-empty results. It does not read or write `document_chunks`, and daily brief/document RAG retrieval remains separate.)
 
 Last verified: 2026-06-19 (**Operator presentation adapter**: `frontend/src/lib/ai/operator/presentation.ts` adds an additive, no-send operator message envelope for AI approval/action prompts with Zod validation, deterministic Teams Adaptive Card rendering, channel capability metadata, and inspectable unsupported-affordance drops. `frontend/src/app/api/ai-operator/presentation-preview/route.ts` exposes a non-production preview route for e2e validation only and does not send Teams messages or mutate provider state. Existing Teams card builders and delivery paths remain unchanged until later parity migration. Focused Jest/snapshot tests, changed-file quality, route checks, and local HTTP e2e preview passed. No table/schema, embedding model, RAG chunk sync, search RPC, or retrieval policy changed.)
@@ -409,11 +411,15 @@ All tools are server-side only (Next.js API routes). They receive `userId` for R
 | Index | pgvector cosine similarity — IVFFlat (general) + partial HNSW (per source_type) |
 | Content types | Meeting transcripts, emails, Teams messages, OneDrive docs, company documents |
 
+### Retrieval Telemetry Table: `document_chunk_retrieval_telemetry` (in AI Database project)
+
+`document_chunk_retrieval_telemetry` stores daily recall buckets keyed by chunk, date, and retrieval mode. This is intentionally normalized instead of updating `document_chunks` counters directly, so high-frequency retrieval telemetry does not create write contention on vector rows or pressure the PM APP database. The aggregate view `document_chunk_retrieval_stats` feeds recall count and last-recalled-at diagnostics into hybrid ranking.
+
 ### Search RPCs
 
 | RPC | Usage |
 |-----|-------|
-| `search_document_chunks` | Primary semantic search over all content in `document_chunks`. Accepts `query_embedding` (halfvec 3072), optional `category` filter, `match_count`. |
+| `search_document_chunks` | Primary semantic search over all content in `document_chunks`. Accepts `query_embedding` (halfvec 3072), optional source/project filters, `match_count`, and `match_threshold`. Defaults to vector-only ranking. Optional `ranking_mode='hybrid'` plus `query_text` returns vector/text/recall/recency/hybrid score components; optional `telemetry_enabled=true` writes RAG-owned daily recall buckets and fails the RPC if telemetry cannot be written. |
 | `search_document_chunks_by_category` | Filtered variant — same as above with mandatory category. |
 | `search_all_knowledge` | Searches structured intelligence tables: decisions, risks, opportunities, ai_insights. |
 | `search_knowledge_base` | Searches `company_knowledge` table only. |

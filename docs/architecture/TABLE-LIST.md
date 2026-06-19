@@ -2,7 +2,7 @@
 
 > **AUTO-GENERATED — DO NOT EDIT BY HAND.**
 > Regenerate with `npm run db:inventory`. Source: `docs/architecture/tables.yaml` + live Supabase stats.
-> Last generated: 2026-06-19T17:52:58.293Z
+> Last generated: 2026-06-19T18:16:54.194Z
 
 This file lists every table in both Supabase projects with its current status, row count, code-reference count, one-line purpose, and any gotchas/notes. It is the fastest way to answer "does table X exist, what does it do, is it live, does anything use it?"
 
@@ -107,7 +107,7 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 | `meeting_preps` | communications | dormant | 0 | 9 | Dormant meeting preparation records. |  |
 | `meeting_segments` | communications | live | 24.4k | 17 | Meeting transcript chunks and summary embeddings. 19,527 rows. Written by parser.py, embedder.py. Read by meeting pages and project intelligence. |  |
 | `outlook_email_assistant_reviews` | communications | live-empty | 0 | 3 | Human review ledger for Brandon Outlook assistant decisions, draft outcomes, and feedback signals. | Admin/service-role table. It records review outcomes only; raw email source remains outlook_email_intake and project-matched email remains project_emails. |
-| `outlook_email_intake` | communications | live | 2.1k | 17 | Raw Outlook email sync. 812 rows. Every email from the Graph sync lands here first. Source for document_metadata (AI-relevant) and project_emails (project-matc… |  |
+| `outlook_email_intake` | communications | live | 2.1k | 19 | Raw Outlook email sync. Every email from the Graph sync lands here first. Source for document_metadata (AI-relevant) and project_emails (project-matched). tria… |  |
 | `outlook_email_intake_attachments` | communications | live | 1.6k | 8 | Attachments from synced Outlook emails. 627 rows, 355 MB. Written by outlook.py and attachment_promotion.py. |  |
 | `outlook_email_skip_audit` | communications | dormant | 126 | 1 | Dormant audit log for skipped Outlook emails. |  |
 | `team_chat_channels` | communications | live | 4 | 5 | Teams chat channel registry. 2 rows. |  |
@@ -455,15 +455,16 @@ For richer information (full writer/reader file lists, columns, line numbers), o
 
 ## RAG — AI Database (`fqcvmfqldlewvbsuxdvz`)
 
-22 tables · 18 live · 4 live-empty
+23 tables · 19 live · 4 live-empty
 
 | Table | Domain | Status | Rows | Code refs | Purpose | Notes |
 |---|---|---|---:|---:|---|---|
 | `fireflies_ingestion_jobs` | communications | live | 27.2k | 23 | Pipeline ingest-job stage queue (RAG side). ~27k rows. As of 2026-06-17 written in lockstep with MAIN.fireflies_ingestion_jobs via supabase_helpers.update_inge… | Both copies are now kept in sync — MAIN is no longer stale. Always update both DBs through update_ingestion_job_state(), never one side directly. |
-| `outlook_email_intake` | communications | live | 2.1k | 17 | RAG database Outlook email intake rows for Microsoft Graph ingestion and vectorization workflows. |  |
+| `outlook_email_intake` | communications | live | 2.1k | 19 | RAG database Outlook email intake rows for Microsoft Graph ingestion and vectorization workflows. |  |
 | `outlook_email_intake_attachments` | communications | live | 125 | 8 | RAG database attachment metadata for Outlook email intake rows. |  |
 | `outlook_email_skip_audit` | communications | live | 123 | 1 | Audit rows for Outlook email messages skipped by ingestion or filtering rules. |  |
 | `document_attribution_candidates` | documents | live | 14.2k | 10 | Low-confidence project attribution review queue. 13,193 rows. Canonical copy. Written when project confidence < 0.70. |  |
+| `document_chunk_retrieval_telemetry` | documents | live | 8 | 0 | Daily bucket recall telemetry for document_chunks retrieval. Stores recall_count and last_recalled_at by chunk/date/retrieval mode so hybrid RAG ranking can us… | RAG-owned only. Do not mirror to PM APP. Writes are only enabled when RAG_RETRIEVAL_TELEMETRY_ENABLED=true and should fail loudly if unavailable. |
 | `document_chunks` | documents | live | 145.2k | 41 | THE unified vector store. 109,171 rows. halfvec 3072 embeddings. Written by pipeline/embedder.py. Read by rpc('search_document_chunks'). Canonical source for a… | MAIN.document_chunks (103K rows) is a stale orphan. Always use the RAG copy for reads and writes. |
 | `rag_document_metadata` | documents | live | 38.7k | 15 | Embedding-side document catalog. 36,657 rows. app_document_id FK back to MAIN.document_metadata. Only backend pipeline reads this directly. |  |
 | `packet_refresh_jobs` | intelligence | live | 1.9k | 19 | Packet refresh job queue and PM packet projection staging handoff. Canonical copy. MAIN copy is stale orphan. Projection payload/status columns were added 2026… |  |

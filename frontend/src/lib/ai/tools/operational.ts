@@ -41,6 +41,7 @@ import type { Json } from "@/types/database.types";
 import { fetchWithPolicy } from "@/lib/guardrails/dependency";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import {
+  computeHybridRetrievalScore,
   normalizeRetrievalWeightQuerySignature,
   retrievalWeightMultiplierForItem,
   type RetrievalWeightScoringRow,
@@ -48,6 +49,11 @@ import {
 import { triageEmailForOperator } from "@/lib/ai/email-operator-policy";
 
 type AnyRow = Record<string, unknown>;
+
+const HYBRID_RAG_RANKING_ENABLED =
+  process.env.RAG_HYBRID_RANKING_ENABLED === "true";
+const RAG_RETRIEVAL_TELEMETRY_ENABLED =
+  process.env.RAG_RETRIEVAL_TELEMETRY_ENABLED === "true";
 
 type CreateOperationalToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
@@ -1546,6 +1552,8 @@ export function createOperationalTools(
               targetThreshold,
               briefing ? 0.15 : 0.25,
             );
+            const querySignature =
+              normalizeRetrievalWeightQuerySignature(query);
 
             // Blended retrieval — all halfvec(3072):
             // search_document_chunks   → unified: meetings, emails, Teams, OneDrive, transcripts
@@ -1557,6 +1565,12 @@ export function createOperationalTools(
                 filter_project_id: resolvedProjectId ?? undefined,
                 match_count: chunkCount,
                 match_threshold: chunkThreshold,
+                ranking_mode: HYBRID_RAG_RANKING_ENABLED
+                  ? "hybrid"
+                  : "vector",
+                query_text: HYBRID_RAG_RANKING_ENABLED ? query : undefined,
+                telemetry_enabled: RAG_RETRIEVAL_TELEMETRY_ENABLED,
+                query_signature: querySignature || undefined,
               }),
               supabase.rpc("search_all_knowledge", {
                 query_embedding: embeddingArg3072,
@@ -1669,6 +1683,29 @@ export function createOperationalTools(
             for (const row of chunkRows) {
               const similarity =
                 Math.round(asNumber(row.similarity) * 1000) / 1000;
+              const hybridScore = computeHybridRetrievalScore({
+                vectorScore: row.vector_score ?? row.similarity,
+                textScore: row.text_score as number | null | undefined,
+                recallCount:
+                  row.score_components &&
+                  typeof row.score_components === "object" &&
+                  "recallCount" in row.score_components
+                    ? Number((row.score_components as AnyRow).recallCount)
+                    : null,
+                lastRecalledAt:
+                  row.score_components &&
+                  typeof row.score_components === "object" &&
+                  typeof (row.score_components as AnyRow).lastRecalledAt ===
+                    "string"
+                    ? ((row.score_components as AnyRow).lastRecalledAt as string)
+                    : null,
+                sourceTimestamp:
+                  typeof row.doc_date === "string"
+                    ? row.doc_date
+                    : typeof row.doc_created_at === "string"
+                      ? row.doc_created_at
+                      : null,
+              });
               const srcType = String(row.source_type ?? "document");
               merged.push({
                 key: `doc_chunk:${String(row.chunk_id ?? row.document_id ?? "")}`,
@@ -1690,6 +1727,25 @@ export function createOperationalTools(
                   source: row.doc_source,
                   source_type: srcType,
                   date: row.doc_date,
+                  retrievalRanking: {
+                    requestedMode: HYBRID_RAG_RANKING_ENABLED
+                      ? "hybrid"
+                      : "vector",
+                    modeUsed:
+                      typeof row.ranking_mode_used === "string"
+                        ? row.ranking_mode_used
+                        : hybridScore.rankingMode,
+                    hybridScore:
+                      typeof row.hybrid_score === "number"
+                        ? row.hybrid_score
+                        : hybridScore.hybridScore,
+                    scoreComponents:
+                      row.score_components &&
+                      typeof row.score_components === "object"
+                        ? row.score_components
+                        : hybridScore.components,
+                    missingComponents: hybridScore.missingComponents,
+                  },
                   ...(row.doc_metadata && typeof row.doc_metadata === "object"
                     ? (row.doc_metadata as Record<string, unknown>)
                     : {}),
@@ -1931,6 +1987,15 @@ export function createOperationalTools(
                 knowledgeMatches: knowledgeRows.length,
                 externalChunkMatches: chunkRows.length,
                 activeRetrievalWeights: activeRetrievalWeights.length,
+                documentChunkRankingMode: HYBRID_RAG_RANKING_ENABLED
+                  ? "hybrid"
+                  : "vector",
+                documentChunkTelemetryEnabled: RAG_RETRIEVAL_TELEMETRY_ENABLED,
+                degradedHybridMatches: HYBRID_RAG_RANKING_ENABLED
+                  ? chunkRows.filter(
+                      (row) => row.ranking_mode_used === "degraded_hybrid",
+                    ).length
+                  : 0,
                 usedProjectFilter: Boolean(resolvedProjectId),
                 filteredAdminOnlySources: allowAdminCommsSources
                   ? []

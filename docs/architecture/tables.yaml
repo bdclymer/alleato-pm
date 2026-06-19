@@ -1822,12 +1822,12 @@ tables:
     domain: communications
     owner: pipeline
     status: live
-    purpose: "Raw Outlook email sync. 812 rows. Every email from the Graph sync lands here first. Source for document_metadata (AI-relevant) and project_emails (project-matched)."
+    purpose: "Raw Outlook email sync. Every email from the Graph sync lands here first. Source for document_metadata (AI-relevant) and project_emails (project-matched). triage_action/triage_reason/triage_at written by the microsoft_executive_assistant agent after each 15-min check. teams_alert_sent_at is the dedup gate for Teams DM alerts."
     relatedTables:
       - outlook_email_intake_attachments
       - document_metadata
       - project_emails
-    notesForAi: "Use getRecentEmails tool (queries by date) for 'what emails today?' questions. Use searchEmails (vector via document_chunks) for topic questions."
+    notesForAi: "Use getRecentEmails tool (queries by date) for 'what emails today?' questions. Use searchEmails (vector via document_chunks) for topic questions. triage_action values: urgent | reply_needed | delegate | fyi | watch | delete."
 
   - name: outlook_email_intake_attachments
     db: MAIN
@@ -3455,7 +3455,19 @@ tables:
     gotchas: "MAIN.document_chunks (103K rows) is a stale orphan. Always use the RAG copy for reads and writes."
     relatedTables:
       - rag_document_metadata
-    notesForAi: "Use search_document_chunks RPC for semantic search. Never query directly — use the RPC which handles cosine similarity ranking."
+      - document_chunk_retrieval_telemetry
+    notesForAi: "Use search_document_chunks RPC for semantic search. Default ranking is vector-only. Hybrid ranking diagnostics are flag-gated with RAG_HYBRID_RANKING_ENABLED and return vector/text/recall/recency components; retrieval telemetry is separately gated and writes to document_chunk_retrieval_telemetry."
+
+  - name: document_chunk_retrieval_telemetry
+    db: RAG
+    domain: documents
+    owner: pipeline
+    status: live
+    purpose: "Daily bucket recall telemetry for document_chunks retrieval. Stores recall_count and last_recalled_at by chunk/date/retrieval mode so hybrid RAG ranking can use recall frequency without hot updates to vector rows."
+    gotchas: "RAG-owned only. Do not mirror to PM APP. Writes are only enabled when RAG_RETRIEVAL_TELEMETRY_ENABLED=true and should fail loudly if unavailable."
+    relatedTables:
+      - document_chunks
+    notesForAi: "Use document_chunk_retrieval_stats or search_document_chunks score_components for recall diagnostics. Do not query this table from user-facing app flows unless you are building retrieval observability."
 
   - name: rag_document_metadata
     db: RAG
