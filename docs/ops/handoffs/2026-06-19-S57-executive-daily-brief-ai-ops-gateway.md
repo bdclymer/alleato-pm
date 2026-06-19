@@ -202,6 +202,7 @@
   - `ade23489-9add-47a6-834f-af71ee6adac4` recorded claim-level evidence-policy guardrail, focused tests, gateway guardrail rerun, commit `519d8b802`, and remaining gaps.
   - `d01eb6c1-a4ab-4217-a543-97f4d2a7d855` recorded scheduled-run proof, env precedence fix, skipped/matching scheduled run IDs, commit `017956053`, and remaining gaps.
   - `33c4dc4e-39c2-4445-af4f-b19be127b9b0` recorded Teams delivery route guardrail tests, commit `b47f730df`, and remaining gaps.
+  - `005963be-595e-4036-9a81-d30ff619c76a` recorded source adapter run-step proof, live run `0c3b8979-3a31-4aab-98d0-a975ab845e21`, commit f16030b9f, and remaining gaps.
 - Completion/blocker comment: None yet.
 
 ## Current Status
