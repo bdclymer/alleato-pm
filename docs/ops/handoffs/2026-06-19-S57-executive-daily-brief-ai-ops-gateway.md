@@ -44,6 +44,7 @@
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/executive-daily-brief-evidence.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/scripts/__tests__/run-executive-daily-brief.test.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts`
 7) Commands run and outcome (pass/fail counts):
    - Pass: read pasted ChatGPT recommendation from Codex attachment.
    - Pass: read `docs/codebase-map/hermes-vs-openclaw-comparison.md`.
@@ -118,6 +119,9 @@
    - Pass: skipped schedule proof created run `00f52478-deba-40e6-bac6-e487ceb75778` with status skipped, delivery status skipped, reason `Outside target local schedule.`, event status ignored, and source-health status skipped.
    - Fail documented: matching scheduled trigger without `CRON_SECRET` created failed run `d56b69e2-13a1-4efa-9eff-98b15e65167d` with `EXECUTIVE_DAILY_BRIEF_FAILED` / `CRON_SECRET is required.`.
    - Pass: matching scheduled trigger with dummy non-secret cron value reached the disabled delivery route and created scheduler run `4b4bcd6a-a401-4db0-8970-3c96a9c6a2f8` plus downstream disabled delivery run `10e04a08-c1dd-4ac3-8847-75950f94bcc4`; no Teams send occurred because the route kill switch was disabled.
+   - Pass: added targeted Teams delivery route tests for disabled delivery, dry-run payload/evidence completion, blocked provider result, partial recipient failure, and thrown provider failure.
+   - Pass: `cd frontend && npx eslint src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts src/app/api/executive/daily-brief/send-teams/route.ts`.
+   - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts src/app/api/executive/daily-brief/__tests__/route.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand` passed 3 suites / 17 tests.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
@@ -153,6 +157,7 @@
    - `frontend/src/lib/ai-ops/executive-daily-brief-evidence.ts`
    - `frontend/src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts`
    - `frontend/scripts/__tests__/run-executive-daily-brief.test.ts`
+   - `frontend/src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts`
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-generated-preview/page-text-playwright.txt`
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-generated-preview/ai-work-runs-generated-preview-playwright.png`
 9) Top 3 findings (frontend-visible issues first):
@@ -165,6 +170,7 @@
    - Claim-level evidence guardrails now fail before ledger writes when surfaced `needsBrandon`, `waitingOnOthers`, or `importantUpdates` items lack structured citation evidence.
    - A real generated no-send preview run is proven in the ledger and visible in `/ai-work-runs` with packet artifact, Teams payload artifact, dry-run delivery attempt, source health, and evidence rows.
    - Scheduled runner proof now shows both outside-window skipped schedules and matching scheduled triggers create canonical AI Ops runs; explicit runtime env now wins over `.env.local`.
+   - Teams delivery route tests now prove disabled, dry-run, blocked, partial, and thrown-provider paths cannot bypass the AI Ops ledger helpers.
 10) Recommended next action (one line): Close remaining source adapter execution/failure behavior, email delivery disposition, scheduled-run proof, and legacy retirement gaps.
 11) Handoff file path: `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
 12) Migration ledger evidence: `npm run db:migrations:verify-applied -- supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql` passed for version `20260619183000`.
@@ -243,6 +249,8 @@ cd frontend && npx eslint src/lib/ai-ops/executive-daily-brief-evidence.ts src/l
 cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand
 cd frontend && npx eslint --no-ignore scripts/run-executive-daily-brief.ts scripts/__tests__/run-executive-daily-brief.test.ts
 cd frontend && npx tsx --test scripts/__tests__/run-executive-daily-brief.test.ts
+cd frontend && npx eslint src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts src/app/api/executive/daily-brief/send-teams/route.ts
+cd frontend && npm run test:unit -- --runTestsByPath src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts src/app/api/executive/daily-brief/__tests__/route.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand
 ```
 
 ## Evidence
@@ -268,3 +276,4 @@ cd frontend && npx tsx --test scripts/__tests__/run-executive-daily-brief.test.t
 - Evidence policy: `frontend/src/lib/ai-ops/executive-daily-brief-evidence.ts`
 - Evidence policy tests: `frontend/src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts`
 - Scheduled runner tests: `frontend/scripts/__tests__/run-executive-daily-brief.test.ts`
+- Teams delivery route tests: `frontend/src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts`

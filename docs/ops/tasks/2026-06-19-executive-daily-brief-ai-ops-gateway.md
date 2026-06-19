@@ -279,7 +279,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 
 ## Delivery Checklist
 
-- [ ] Teams delivery adapter accepts only a gateway-created delivery attempt.
+- [x] Teams delivery adapter accepts only a gateway-created delivery attempt.
 - [ ] Email delivery adapter accepts only a gateway-created delivery attempt, or
       email is explicitly deferred with owner and reason.
 - [x] Preview/dry-run produces the exact Teams payload without sending.
@@ -287,11 +287,11 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [ ] Real email send records provider response and recipient result, or is
       deferred with owner and reason.
 - [x] Disabled delivery records disabled state and reason.
-- [ ] Blocked delivery records blocked state and reason.
-- [ ] Partial recipient failure records partial success.
+- [x] Blocked delivery records blocked state and reason.
+- [x] Partial recipient failure records partial success.
 - [x] Delivered artifact links to run, packet, recipient/channel, and source
       health.
-- [ ] Delivery route cannot bypass the ledger.
+- [x] Delivery route cannot bypass the ledger.
 
 ## Operations Control UI Checklist
 
@@ -345,7 +345,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [x] Targeted contract tests run.
 - [x] Targeted workflow tests run.
 - [x] Targeted ledger tests run.
-- [ ] Targeted delivery adapter tests run.
+- [x] Targeted delivery adapter tests run.
 - [x] Supabase migration ledger verified if migrations changed.
 - [x] Generated Supabase types verified if schema changed.
 - [x] Local or staging preview run executed through the gateway.
@@ -409,6 +409,8 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 | Skipped schedule proof | `cd frontend && EXECUTIVE_DAILY_BRIEF_ENABLED=true EXECUTIVE_DAILY_BRIEF_TARGET_TIMEZONE=America/Indiana/Indianapolis EXECUTIVE_DAILY_BRIEF_TARGET_LOCAL_TIME=03:17 EXECUTIVE_DAILY_BRIEF_TARGET_WEEKDAYS=1,2,3,4,5 EXECUTIVE_DAILY_BRIEF_TRIGGER=codex_skipped_schedule_proof npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:00:00.000Z` | Passed | Created skipped scheduled-check run `00f52478-deba-40e6-bac6-e487ceb75778` with reason `Outside target local schedule.` and source-health status skipped. |
 | Scheduled trigger proof | `cd frontend && EXECUTIVE_DAILY_BRIEF_ENABLED=true EXECUTIVE_DAILY_BRIEF_FRONTEND_BASE_URL=http://localhost:3001 EXECUTIVE_DAILY_BRIEF_TARGET_TIMEZONE=America/Indiana/Indianapolis EXECUTIVE_DAILY_BRIEF_TARGET_LOCAL_TIME=08:00 EXECUTIVE_DAILY_BRIEF_TARGET_WEEKDAYS=1,2,3,4,5 EXECUTIVE_DAILY_BRIEF_TRIGGER=codex_scheduled_disabled_delivery_proof CRON_SECRET=dummy-nonsecret npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:00:00.000Z` | Passed | Created scheduled run `4b4bcd6a-a401-4db0-8970-3c96a9c6a2f8`; downstream disabled delivery run `10e04a08-c1dd-4ac3-8847-75950f94bcc4`; no Teams send occurred because the route kill switch remained disabled. |
 | Scheduled run SQL readback | SQL readback for triggers `codex_scheduled_disabled_delivery_proof` and `codex_skipped_schedule_proof` | Passed | Latest rows show scheduled run `4b4bcd6a-a401-4db0-8970-3c96a9c6a2f8` as `skipped/disabled`, skipped schedule `00f52478-deba-40e6-bac6-e487ceb75778` as `skipped/skipped`, and the earlier missing-secret failure `d56b69e2-13a1-4efa-9eff-98b15e65167d` as `failed_permanent` with `CRON_SECRET is required.` |
+| Teams delivery route lint | `cd frontend && npx eslint src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts src/app/api/executive/daily-brief/send-teams/route.ts` | Passed | Send route and targeted delivery tests lint cleanly. |
+| Teams delivery route tests | `cd frontend && npm run test:unit -- --runTestsByPath src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts src/app/api/executive/daily-brief/__tests__/route.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand` | Passed | 3 suites, 17 tests passed. Tests prove disabled delivery records before provider send, dry-run records payload/evidence/completion, blocked provider results record blocked outcomes, partial recipient failures record partial success, and thrown provider errors fail the run. |
 | Runner no-write smoke | `cd frontend && npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:00:00.000Z`                                                                                              | Passed  | Kill switch off; script loaded and exited with `executive_daily_brief_disabled`, no send/write.    |
 | Disabled send smoke   | `curl -sS -X POST http://localhost:3001/api/executive/daily-brief/send-teams -H 'content-type: application/json' -d '{}'`                                                                 | Passed  | Kill switch off; route returned disabled state with run id `b88b3b30-b766-4aa2-8e02-84ef175e207b`. |
 | Disabled run SQL readback | `select r.id, r.status, r.delivery_status, a.status, a.failure_code, s.step_type, s.status ... where r.id = 'b88b3b30-b766-4aa2-8e02-84ef175e207b'` | Passed | Readback returned `skipped`, `disabled`, delivery attempt `disabled`, failure code `EXECUTIVE_DAILY_BRIEF_DISABLED`, and delivery step `blocked`. |
