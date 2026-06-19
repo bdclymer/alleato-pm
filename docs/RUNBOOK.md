@@ -80,6 +80,15 @@ npm run db:types
 | `npm run devtools:sync-schema-fk` | Regenerate page-schema FK map for dev tools |
 | `npm run check:routes` | Verify no Next.js dynamic route conflicts |
 
+### Generated docs & inventories
+
+Auto-generated reference docs. Regenerate after relevant changes; pre-commit gates fail if stale.
+
+| Command | What it does |
+|---------|-------------|
+| `npm run map:project` | Regenerate `docs/architecture/PROJECT-MAP.md` — every UI route, API endpoint, and AI tool. Run after adding/removing a route or AI tool. (`-- --check-only` to verify it's current.) |
+| `npm run db:inventory` | Regenerate `docs/architecture/TABLE-LIST.md` + admin DB-inventory from `tables.yaml` + live stats. (`-- --check-only` for the CI drift gate.) |
+
 ---
 
 ## 4. Seeding
