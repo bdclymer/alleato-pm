@@ -198,7 +198,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
       Daily Brief draft links to exactly one `ai_work_runs` record.
 - [x] Preview generation writes a run ledger row.
 - [ ] Scheduled generation writes a run ledger row.
-- [ ] Dry-run delivery writes a run ledger row and delivery attempt.
+- [x] Dry-run delivery writes a run ledger row and delivery attempt.
 - [ ] Real Teams delivery writes a run ledger row and delivery attempt.
 - [ ] Email delivery writes a run ledger row and delivery attempt, or the task is
       explicitly blocked/deferred with owner and reason.
@@ -206,8 +206,8 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [x] Disabled delivery is recorded as disabled, not silently successful.
 - [x] Failure state records exact failure code, failure message, owning step, and
       retryability.
-- [ ] Source health snapshot is stored with each run.
-- [ ] Generated artifact id and delivered artifact id are stored with each run.
+- [x] Source health snapshot is stored with each run.
+- [x] Generated artifact id and delivered artifact id are stored with each run.
 - [x] Migration applied and remote ledger verified if schema changes are needed.
 - [x] Generated Supabase types updated after schema changes, if applicable.
 
@@ -282,14 +282,14 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [ ] Teams delivery adapter accepts only a gateway-created delivery attempt.
 - [ ] Email delivery adapter accepts only a gateway-created delivery attempt, or
       email is explicitly deferred with owner and reason.
-- [ ] Preview/dry-run produces the exact Teams payload without sending.
+- [x] Preview/dry-run produces the exact Teams payload without sending.
 - [ ] Real Teams send records provider response and recipient result.
 - [ ] Real email send records provider response and recipient result, or is
       deferred with owner and reason.
 - [x] Disabled delivery records disabled state and reason.
 - [ ] Blocked delivery records blocked state and reason.
 - [ ] Partial recipient failure records partial success.
-- [ ] Delivered artifact links to run, packet, recipient/channel, and source
+- [x] Delivered artifact links to run, packet, recipient/channel, and source
       health.
 - [ ] Delivery route cannot bypass the ledger.
 
@@ -333,7 +333,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [ ] Integration tests cover dry-run delivery writing delivery attempts.
 - [ ] Integration tests cover disabled delivery writing disabled state.
 - [ ] Integration tests cover source-health degraded/failure behavior.
-- [ ] Browser or API verification covers `/ai-work-runs` showing the generated
+- [x] Browser or API verification covers `/ai-work-runs` showing the generated
       run.
 - [x] Guardrail added so no future Executive Daily Brief route can call
       generation or delivery without a canonical run id.
@@ -348,15 +348,15 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [ ] Targeted delivery adapter tests run.
 - [x] Supabase migration ledger verified if migrations changed.
 - [x] Generated Supabase types verified if schema changed.
-- [ ] Local or staging preview run executed through the gateway.
+- [x] Local or staging preview run executed through the gateway.
 - [ ] Local or staging scheduled run executed through the gateway.
-- [ ] No-send Teams preview/dry-run verified.
+- [x] No-send Teams preview/dry-run verified.
 - [ ] Real Teams delivery verified only if explicitly safe and enabled.
 - [ ] Email delivery verified or explicitly blocked/deferred.
-- [ ] `/ai-work-runs` browser verification shows the run and artifact.
-- [ ] Generated packet manually inspected for claim-level source refs.
-- [ ] Source health manually inspected for loaded/stale/missing/degraded states.
-- [ ] End-to-end proof captured with exact run id, artifact id, packet id,
+- [x] `/ai-work-runs` browser verification shows the run and artifact.
+- [x] Generated packet manually inspected for claim-level source refs.
+- [x] Source health manually inspected for loaded/stale/missing/degraded states.
+- [x] End-to-end proof captured with exact run id, artifact id, packet id,
       source count, delivery status, and screenshot/report path.
 - [ ] Long-running full checks delegated to cheaper sub-agent if needed.
 - [ ] Known unrelated failures documented with exact command, error, owner files,
@@ -405,6 +405,12 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 | Disabled send smoke   | `curl -sS -X POST http://localhost:3001/api/executive/daily-brief/send-teams -H 'content-type: application/json' -d '{}'`                                                                 | Passed  | Kill switch off; route returned disabled state with run id `b88b3b30-b766-4aa2-8e02-84ef175e207b`. |
 | Disabled run SQL readback | `select r.id, r.status, r.delivery_status, a.status, a.failure_code, s.step_type, s.status ... where r.id = 'b88b3b30-b766-4aa2-8e02-84ef175e207b'` | Passed | Readback returned `skipped`, `disabled`, delivery attempt `disabled`, failure code `EXECUTIVE_DAILY_BRIEF_DISABLED`, and delivery step `blocked`. |
 | Disabled tool-policy readback | `select r.id, r.status, r.delivery_status, r.tool_scope->'visibleToolNames' ? 'build-teams-daily-brief-payload', r.tool_scope->'hiddenToolNames' ? 'send-teams-daily-brief', r.tool_scope->>'allowDelivery', r.source_policy->>'workflowVersion', r.source_policy->>'minimumEvidenceRefsPerClaim' ... where r.id = 'ba4aa0c7-7c6d-41a0-9dd6-20ffe2a20978'` | Passed | Readback returned visible Teams payload builder `true`, hidden Teams send tool `true`, `allowDelivery=false`, workflow version `2026-06-19.ai-ops-gateway-v1`, and minimum evidence refs `1`. |
+| Generated preview API | Authenticated browser-context POST to `/api/executive/daily-brief/preview-teams` with `{ fresh: true, windowDays: 3, firstName: "Brandon" }` | Passed | Returned HTTP 200 with run id `676ca1fa-f79d-4b74-9bee-fe7dd6375b0e`, item count `4`, recap date `2026-06-19`, and `generatedFresh=true`. |
+| Generated preview ledger readback | SQL aggregate for run `676ca1fa-f79d-4b74-9bee-fe7dd6375b0e` | Passed | Run succeeded, delivery dry-run, packet id `1399b250-4151-429c-a3ce-156e0a161ba9`, source health count `4`, source refs `4`, artifacts `2`, delivery attempts `1`, and Teams send tool hidden. |
+| Generated preview artifact linkage | SQL join from `ai_work_run_delivery_attempts` to `ai_work_run_artifacts` for run `676ca1fa-f79d-4b74-9bee-fe7dd6375b0e` | Passed | Delivery attempt `da3274c5-ef33-4a26-83c7-2044fdebc56a` links to `teams_payload` artifact `Executive Daily Brief Teams preview payload`. |
+| Generated packet source inspection | SQL extraction from `daily_recaps.briefing_packet` for packet `1399b250-4151-429c-a3ce-156e0a161ba9` | Passed | 4 surfaced items inspected; each item had 1 citation. Sample cited evidence covered operating-record and Acumatica CO claims. |
+| Generated source health inspection | SQL `jsonb_array_elements(ai_work_runs.metadata->'sourceHealth')` for run `676ca1fa-f79d-4b74-9bee-fe7dd6375b0e` | Passed | Email source health was missing; Teams, meeting, and document source health were loaded with counts 3, 15, and 63. |
+| Generated preview browser proof | Playwright-authenticated browser capture of `/ai-work-runs` | Passed | Page stayed on `/ai-work-runs` and text shows run `676ca1fa-f79d-4b74-9bee-fe7dd6375b0e`, `succeeded`, `dry run`, `brief packet`, `teams payload`, Delivery Attempts, and Evidence Rows. Artifacts: `tests/agent-browser-runs/2026-06-19-executive-daily-brief-generated-preview/page-text-playwright.txt`, `ai-work-runs-generated-preview-playwright.png`. |
 | Admin UI/API readback | `agent-browser state load frontend/tests/.auth/user.json && agent-browser open http://localhost:3001/ai-work-runs ...`                                                                    | Passed  | Authenticated page stayed on `/ai-work-runs`; page text shows disabled run `b88b3b30-b766-4aa2-8e02-84ef175e207b`, Delivery Attempts, Run Steps, exact failure code/message, and retryability. Artifacts: `tests/agent-browser-runs/2026-06-19-executive-daily-brief-ai-runs/snapshot-playwright-auth.txt`, `page-text.txt`, `ai-work-runs-playwright-auth.png`. |
 | Static/type/lint      | `cd frontend && NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`                                                                                                  | Failed  | Current slice diagnostics were fixed. Remaining errors are unrelated repo debt in `src/app/(admin)/admin/page.tsx`, `src/app/(main)/[projectId]/intelligence/page.tsx`, `src/features/ai-agents/ai-agent-dag.tsx`, `src/features/kanban/components/board-column.tsx`, `src/lib/executive/brandon-daily-update.ts`, and `src/lib/progress-reports/ai-generate.ts`. A cheaper sub-agent also ran the default command and hit Node heap OOM before diagnostics. |
 | Targeted tests        | Pending                                                                                                                                                                                   | Pending | Gateway/runtime tests still required before implementation can be closed.                          |

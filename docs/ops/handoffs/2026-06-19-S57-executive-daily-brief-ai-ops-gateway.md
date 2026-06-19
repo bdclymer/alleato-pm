@@ -98,6 +98,12 @@
    - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts --runInBand` passed 3 suites / 22 tests.
    - Pass: `npm run rag:verify:executive-daily-brief-gateway`.
    - Pass: disabled tool-policy readback for run `ba4aa0c7-7c6d-41a0-9dd6-20ffe2a20978` returned Teams payload builder visible, Teams send tool hidden, `allowDelivery=false`, workflow version `2026-06-19.ai-ops-gateway-v1`, and minimum evidence refs `1`.
+   - Pass: authenticated browser-context POST to `/api/executive/daily-brief/preview-teams` with `fresh=true` returned run id `676ca1fa-f79d-4b74-9bee-fe7dd6375b0e`, item count `4`, recap date `2026-06-19`, and `generatedFresh=true`.
+   - Pass: SQL readback for generated run `676ca1fa-f79d-4b74-9bee-fe7dd6375b0e` returned status succeeded, delivery dry-run, packet id `1399b250-4151-429c-a3ce-156e0a161ba9`, source health count `4`, source refs `4`, artifacts `2`, delivery attempts `1`, and Teams send tool hidden.
+   - Pass: delivery attempt `da3274c5-ef33-4a26-83c7-2044fdebc56a` links to a `teams_payload` artifact for the generated preview run.
+   - Pass: packet source inspection found 4 surfaced items and 1 citation per item in `daily_recaps.briefing_packet`.
+   - Pass: source health inspection found email missing, Teams loaded count 3, meeting loaded count 15, and document loaded count 63.
+   - Pass: Playwright-authenticated browser proof of `/ai-work-runs` shows run `676ca1fa-f79d-4b74-9bee-fe7dd6375b0e`, `succeeded`, `dry run`, `brief packet`, `teams payload`, Delivery Attempts, and Evidence Rows.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
@@ -130,6 +136,8 @@
    - `frontend/src/lib/ai-ops/executive-daily-brief-workflow.ts`
    - `frontend/src/lib/ai-ops/tool-registry.ts`
    - `frontend/src/lib/ai-ops/__tests__/workflow-pack.test.ts`
+   - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-generated-preview/page-text-playwright.txt`
+   - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-generated-preview/ai-work-runs-generated-preview-playwright.png`
 9) Top 3 findings (frontend-visible issues first):
    - No frontend-visible changes yet.
    - Inventory confirmed multiple bypasses: preview routes, send routes, admin test send, actions, AI tools, and legacy delivery paths can generate or deliver without one canonical `ai_work_runs` record.
@@ -137,7 +145,8 @@
    - New generated Daily Brief runs now set `ai_work_runs.daily_recap_id` when a `daily_recaps` draft id is available, and `/ai-work-runs` shows that generated artifact reference.
    - First-class AI Ops run steps, artifacts, and delivery attempts now exist in the database, are exposed by `/api/admin/ai-work-runs`, and are visible in `/ai-work-runs`.
    - The Executive Daily Brief workflow pack, source adapter contract, and tool registry/policy are centralized and used by run construction.
-10) Recommended next action (one line): Execute a real generated no-send preview/dry-run packet through the gateway, then inspect artifact/source refs/source health in `/ai-work-runs`.
+   - A real generated no-send preview run is proven in the ledger and visible in `/ai-work-runs` with packet artifact, Teams payload artifact, dry-run delivery attempt, source health, and evidence rows.
+10) Recommended next action (one line): Close remaining source adapter execution/failure behavior, email delivery disposition, and claim-level source-ref guardrail gaps.
 11) Handoff file path: `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
 12) Migration ledger evidence: `npm run db:migrations:verify-applied -- supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql` passed for version `20260619183000`.
 <!-- markdownlint-enable MD029 MD034 -->
@@ -152,6 +161,7 @@
   - `bb5df727-1331-45da-8eb4-60030c5cad8f` recorded admin test-send and AI tool ledger wrapping.
   - `14c489d3-a9d8-47bb-b98a-5191d64566d8` recorded first-class run steps/artifacts/delivery attempts, migration/type evidence, UI proof, and unrelated verification blockers.
   - `d2280aa3-e2cc-4282-aec4-84839d6840aa` recorded workflow pack, source adapter contract, tool policy, disabled delivery tool hiding, and remaining proof gaps.
+  - `e4027597-e511-46d9-9b18-c49661505d11` recorded generated no-send preview proof, artifact/delivery/source-health readback, browser proof, and remaining gaps.
 - Completion/blocker comment: None yet.
 
 ## Current Status
@@ -162,18 +172,18 @@ the shared ledger writer, scheduled-runner migration, preview/send route ledger
 wiring, app fresh-generation bypass closure, a route/action raw-generator
 guardrail, existing `daily_recaps` artifact linkage through
 `ai_work_runs.daily_recap_id`, first-class run steps/artifacts/delivery attempts,
-and the workflow pack/source-adapter/tool-policy layer are implemented with
-focused tests/lint, migration ledger verification, SQL readback, and
-authenticated `/ai-work-runs` browser evidence. The workflow is not complete
-until live source adapter execution, claim-level source-ref enforcement, real
-generated preview/dry-run proof, email delivery disposition, and end-to-end
-accuracy checklists are complete.
+the workflow pack/source-adapter/tool-policy layer, and a real generated no-send
+preview proof are implemented with focused tests/lint, migration ledger
+verification, SQL readback, and authenticated `/ai-work-runs` browser evidence.
+The workflow is not complete until live adapter failure behavior, email delivery
+disposition, stricter claim-level source-ref guardrails, and remaining legacy
+retirement gaps are complete.
 
 ## Exact Next Step
 
-Execute a real no-send generated preview/dry-run packet so `/ai-work-runs` shows
-a generated artifact, source health, evidence refs, delivery attempt, and exact
-run state from the same canonical ledger.
+Close remaining source adapter execution/failure behavior, email delivery
+disposition, and claim-level source-ref guardrail gaps without weakening the
+canonical ledger path.
 
 ## Known Pitfalls
 
