@@ -229,10 +229,14 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 
 ## Tool Registry And Policy Checklist
 
-- [x] Central tool registry module created or selected.
-- [x] Executive Daily Brief tools registered once.
-- [x] Source adapter tools registered once.
-- [x] Delivery adapter tools registered once.
+- [x] Executive Daily Brief workflow-local tool registry module created or
+      selected.
+- [x] Executive Daily Brief tools registered once in the workflow-local
+      registry.
+- [x] Source adapter tools registered once for the Executive Daily Brief
+      workflow.
+- [x] Delivery adapter tools registered once for the Executive Daily Brief
+      workflow.
 - [x] Tool visibility filtered before model calls.
 - [x] Policy filters by workflow id.
 - [x] Policy filters by actor/role.
@@ -524,6 +528,11 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
   result, but live external send verification is deferred until explicitly safe.
 - Real email delivery implementation is covered by action/unit tests, but live
   external send verification is deferred until explicitly safe.
+- Global AI assistant tools are not yet centralized in one registry. This task
+  centralized only the Executive Daily Brief workflow registry at
+  `frontend/src/lib/ai-ops/tool-registry.ts`; the broader assistant tools under
+  `frontend/src/lib/ai/tools/**` remain a separate architecture gap tracked in
+  `docs/ops/tasks/2026-06-19-global-ai-assistant-tool-registry.md`.
 - Existing source/RAG health is split across multiple systems and must be
   normalized, not hidden behind UI-only status.
 - The live partial-success UI state was not present in current ledger data during
