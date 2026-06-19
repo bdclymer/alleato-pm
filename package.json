@@ -35,6 +35,8 @@
     "guardrails:db-type-overrides": "node scripts/audits/check-no-manual-db-type-overrides.mjs",
     "guardrails:detail-pages": "node scripts/audits/check-detail-page-primitives.mjs",
     "audit:silent-fallbacks": "node scripts/audits/audit-silent-fallback-debt.mjs",
+    "audit:dead-code:frontend": "pnpm --dir frontend exec knip --config knip.json --no-exit-code",
+    "audit:dead-code:frontend:report": "node scripts/audits/run-knip-dead-code-report.mjs",
     "audit:toasts": "node scripts/audit-toast-surface.mjs",
     "guardrails:toasts:changed": "node scripts/audit-toast-surface.mjs --changed --fail-on-debt",
     "db:audit": "cd frontend && npm run audit:db && npm run audit:db:mappers && npm run audit:db:fk-types && npm run audit:db:ambiguous-embeds",
