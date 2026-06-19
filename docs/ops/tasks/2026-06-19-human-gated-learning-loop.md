@@ -1,6 +1,6 @@
 # Task: Goal 7 G3 - Human-Gated Learning Loop
 
-Status: Verified locally; ready for publish
+Status: Published to origin/main
 Owner: Codex
 Created: 2026-06-19
 Linear Issue: AAI-564 - https://linear.app/megankharrison/issue/AAI-564/goal-7-g3-human-gated-learning-proposal-loop
@@ -102,6 +102,7 @@ successful unless a promotion candidate was actually created.
 | Browser/user-flow     | Not applicable | PASS | No new user-facing UI; uses existing `/ai/learning-promotions` review queue. |
 | DB/provider read-back | Not applicable | PASS | No migration or provider config change; reused existing `ai_feedback_events` and `ai_learning_promotions` tables. |
 | End-to-end proof      | Focused service test creates memory and skill review candidates through injected event/promotion writers | PASS | Tests prove default-off, proposal-only destinations, duplicate skip, and persistence failure result. |
+| Publish verification  | `npm run codex:finish -- --message "Add human-gated learning proposals" --files ...` | PASS | Published commit `864d36f9f5b247a23571d82fe50f73d5f3922947`; verified `HEAD == origin/main`. |
 
 ## Files Changed
 

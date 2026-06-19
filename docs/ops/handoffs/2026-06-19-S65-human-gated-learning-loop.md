@@ -6,7 +6,7 @@
 2) Task ID: AAI-564
 3) Linear issue: AAI-564
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-564/goal-7-g3-human-gated-learning-proposal-loop
-5) Current status: Implementation verified locally; ready for `codex:finish`
+5) Current status: Published to `origin/main` at `864d36f9f5b247a23571d82fe50f73d5f3922947`
 6) Files changed (absolute paths):
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-19-human-gated-learning-loop.md`
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-19-S65-human-gated-learning-loop.md`
@@ -24,6 +24,7 @@
 - PASS: `npm run linear:codex:check -- docs/ops/handoffs/2026-06-19-S65-human-gated-learning-loop.md`.
 - PASS: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai/learning-proposals/__tests__/human-gated-learning.test.ts --runInBand`.
 - PASS: `cd frontend && npm run quality:changed`.
+- PASS: `npm run codex:finish -- --message "Add human-gated learning proposals" --files ...` published commit `864d36f9f5b247a23571d82fe50f73d5f3922947` and verified `HEAD == origin/main`.
 8) Evidence artifacts (screenshot/video/report/log paths):
 - Task evidence: `docs/ops/tasks/2026-06-19-human-gated-learning-loop.md`.
 - Test proof: focused Jest learning proposal suite, 1 suite / 4 tests.
@@ -31,7 +32,7 @@
 - No user-facing UI is expected for this slice; it should reuse the existing human review queue.
 - Goal 7 explicitly forbids copying Hermes daemon/threading; Alleato needs a Next/Render-native proposal job.
 - No direct write to approved memory or skill stores is allowed in this slice.
-10) Recommended next action (one line): Publish Goal 7 G3, then start Goal 7 G6 as the next separate high-risk slice.
+10) Recommended next action (one line): Start Goal 7 G6 as the next separate high-risk slice.
 11) Handoff file path: docs/ops/handoffs/2026-06-19-S65-human-gated-learning-loop.md
 12) Migration ledger evidence: Not applicable unless implementation discovers a schema gap.
 
@@ -43,7 +44,7 @@
 
 ## Current Status
 
-Goal 7 G3 is locally implemented and verified as a proposal-only learning loop.
+Goal 7 G3 is published and verified as a proposal-only learning loop.
 `frontend/src/lib/ai/learning-proposals/human-gated-learning.ts` owns the
 default-off feature flag, recent chat-history inspection, AI SDK structured
 candidate extraction, duplicate suppression, feedback-event source record,
@@ -80,3 +81,4 @@ cd frontend && npm run quality:changed
 - Source clone usage documented as REFERENCE/ADAPT in `docs/architecture/AI-RAG-ARCHITECTURE.md`; no Hermes daemon/threading model copied.
 - Focused tests passed for default-off, proposal-only memory/skill destinations, duplicate skip, and persistence failure reporting.
 - Changed-file quality passed.
+- `codex:finish` published commit `864d36f9f5b247a23571d82fe50f73d5f3922947` and verified `HEAD == origin/main`.
