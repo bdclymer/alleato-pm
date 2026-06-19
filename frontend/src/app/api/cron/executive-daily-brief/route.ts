@@ -4,7 +4,6 @@ export const maxDuration = 120;
 import { NextResponse } from "next/server";
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { sendApprovedExecutiveBriefingToTeams } from "@/lib/executive/executive-briefing-teams-delivery";
 
 function parseBearerToken(header: string | null): string | null {
   if (!header?.startsWith("Bearer ")) return null;
@@ -27,9 +26,22 @@ export const POST = withApiGuardrails(
       });
     }
 
-    const result = await sendApprovedExecutiveBriefingToTeams();
+    const gatewayUrl = new URL(
+      "/api/executive/daily-brief/send-teams",
+      request.url,
+    );
+    const response = await fetch(gatewayUrl, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${expectedSecret}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({}),
+    });
+    const result = await response.json();
+
     return NextResponse.json(result, {
-      status: result.status === "blocked" ? 400 : 200,
+      status: response.status,
     });
   },
 );

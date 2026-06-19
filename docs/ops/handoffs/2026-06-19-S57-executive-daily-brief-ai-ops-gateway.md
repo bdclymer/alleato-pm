@@ -130,6 +130,10 @@
    - Fail then completed server-side: authenticated preview POST timed out client-side at 30 seconds, but the server completed run `0c3b8979-3a31-4aab-98d0-a975ab845e21` as succeeded / dry-run.
    - Pass: SQL readback for run `0c3b8979-3a31-4aab-98d0-a975ab845e21` shows source-fetch steps for all seven adapters, including failed-retryable `SOURCE_ADAPTER_MISSING` rows for Outlook/email, Acumatica, and Project Intelligence packet coverage, plus artifacts source-health report, brief packet, and Teams payload.
    - Pass: Playwright-authenticated `/ai-work-runs` proof shows run `0c3b8979-3a31-4aab-98d0-a975ab845e21`, source-health report, source-fetch steps, and `SOURCE_ADAPTER_MISSING`.
+   - Pass: cron `/api/cron/executive-daily-brief` now proxies POST/GET to canonical `/api/executive/daily-brief/send-teams` instead of importing the legacy direct Teams sender.
+   - Pass: `sendApprovedExecutiveBriefingToTeams` now throws a loud deprecation error that names the canonical AI Ops gateway path; Teams card and text render helpers remain available for preview formatting.
+   - Pass: `cd frontend && npx eslint src/app/api/cron/executive-daily-brief/route.ts src/app/api/cron/executive-daily-brief/__tests__/route.test.ts src/lib/executive/executive-briefing-teams-delivery.ts src/lib/executive/__tests__/executive-briefing-teams-delivery.test.ts`.
+   - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/executive/__tests__/executive-briefing-teams-delivery.test.ts src/app/api/cron/executive-daily-brief/__tests__/route.test.ts src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts --runInBand` passed 3 suites / 12 tests.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
@@ -167,6 +171,10 @@
    - `frontend/scripts/__tests__/run-executive-daily-brief.test.ts`
    - `frontend/src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts`
    - `frontend/src/lib/ai-ops/__tests__/source-adapters.test.ts`
+   - `frontend/src/app/api/cron/executive-daily-brief/route.ts`
+   - `frontend/src/app/api/cron/executive-daily-brief/__tests__/route.test.ts`
+   - `frontend/src/lib/executive/executive-briefing-teams-delivery.ts`
+   - `frontend/src/lib/executive/__tests__/executive-briefing-teams-delivery.test.ts`
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-source-adapters/page-text.txt`
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-source-adapters/ai-work-runs-source-adapters.png`
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-generated-preview/page-text-playwright.txt`
@@ -183,7 +191,8 @@
    - Scheduled runner proof now shows both outside-window skipped schedules and matching scheduled triggers create canonical AI Ops runs; explicit runtime env now wins over `.env.local`.
    - Teams delivery route tests now prove disabled, dry-run, blocked, partial, and thrown-provider paths cannot bypass the AI Ops ledger helpers.
    - Source adapter wrappers now produce visible source-fetch run steps and a source-health report artifact; missing required adapters fail loudly as failed-retryable run steps without silently suppressing the generated packet.
-10) Recommended next action (one line): Close remaining source adapter execution/failure behavior, email delivery disposition, scheduled-run proof, and legacy retirement gaps.
+   - The old cron Teams delivery path no longer sends directly; it delegates to the canonical gateway and the old direct sender fails loudly if imported.
+10) Recommended next action (one line): Close remaining email delivery disposition, real Teams delivery when safe/enabled, and non-Teams legacy retirement gaps.
 11) Handoff file path: `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
 12) Migration ledger evidence: `npm run db:migrations:verify-applied -- supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql` passed for version `20260619183000`.
 <!-- markdownlint-enable MD029 MD034 -->
@@ -203,6 +212,7 @@
   - `d01eb6c1-a4ab-4217-a543-97f4d2a7d855` recorded scheduled-run proof, env precedence fix, skipped/matching scheduled run IDs, commit `017956053`, and remaining gaps.
   - `33c4dc4e-39c2-4445-af4f-b19be127b9b0` recorded Teams delivery route guardrail tests, commit `b47f730df`, and remaining gaps.
   - `005963be-595e-4036-9a81-d30ff619c76a` recorded source adapter run-step proof, live run `0c3b8979-3a31-4aab-98d0-a975ab845e21`, commit f16030b9f, and remaining gaps.
+  - `d8a88aa5-7358-4603-8e3d-58e390dbcca1` recorded legacy Teams cron path retirement, focused lint/tests, and remaining gaps.
 - Completion/blocker comment: None yet.
 
 ## Current Status
@@ -218,15 +228,17 @@ preview proof are implemented with focused tests/lint, migration ledger
 verification, SQL readback, authenticated `/ai-work-runs` browser evidence,
 claim-level evidence-policy unit coverage, and scheduled-run skip/disabled
 delivery proof. Source adapter failures now land as visible source-fetch step
-failures with a source-health report artifact. The workflow is not complete
-until email delivery disposition, real Teams delivery when safe/enabled, and
-remaining legacy retirement gaps are complete.
+failures with a source-health report artifact. The old cron Teams delivery path
+now delegates to the canonical send gateway, and the legacy direct sender fails
+loudly instead of claiming success outside the ledger. The workflow is not
+complete until email delivery disposition, real Teams delivery when safe/enabled,
+and remaining non-Teams legacy retirement gaps are complete.
 
 ## Exact Next Step
 
 Close remaining email delivery disposition, real Teams delivery when
-safe/enabled, and legacy retirement gaps without weakening the canonical ledger
-path.
+safe/enabled, and non-Teams legacy retirement gaps without weakening the
+canonical ledger path.
 
 ## Known Pitfalls
 

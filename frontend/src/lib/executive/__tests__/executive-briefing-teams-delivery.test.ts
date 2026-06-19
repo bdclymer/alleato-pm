@@ -1,4 +1,3 @@
-const mockCreateServiceClient = jest.fn();
 const mockSendProactiveCard = jest.fn();
 
 jest.mock("chat", () => ({
@@ -20,10 +19,6 @@ jest.mock("chat", () => ({
     label: opts.label,
     url: opts.url,
   }),
-}));
-
-jest.mock("@/lib/supabase/service", () => ({
-  createServiceClient: () => mockCreateServiceClient(),
 }));
 
 jest.mock("@/lib/bot/teams-chat", () => ({
@@ -169,74 +164,46 @@ const packet: BrandonDailyUpdatePacket = {
   retrievalNotes: [],
 };
 
-function createQuery(result: { data: unknown; error: unknown }) {
-  const query = {
-    select: jest.fn(() => query),
-    not: jest.fn(() => query),
-    order: jest.fn(() => query),
-    limit: jest.fn(() => query),
-    maybeSingle: jest.fn(() => Promise.resolve(result)),
-    eq: jest.fn(() => query),
-    update: jest.fn(() => query),
-    then: jest.fn((resolve: (value: typeof result) => void) => resolve(result)),
-  };
-  return query;
-}
-
 describe("executive briefing Teams delivery", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockCreateServiceClient.mockReturnValue({
-      from: jest.fn((table: string) => {
-        if (table === "bot_user_mappings") {
-          return createQuery({
-            data: { display_name: "Brandon Harrison" },
-            error: null,
-          });
-        }
-        if (table === "daily_recaps") {
-          return createQuery({
-            data: {
-              id: "draft-1",
-              workflow_status: "approved",
-              briefing_packet: packet,
-            },
-            error: null,
-          });
-        }
-        return createQuery({ data: null, error: null });
+  });
+
+  it("blocks the deprecated direct Teams sender", async () => {
+    await expect(
+      sendApprovedExecutiveBriefingToTeams({
+        userId: "user-1",
       }),
-    });
+    ).rejects.toThrow(
+      "Deprecated Executive Daily Brief Teams sender is blocked.",
+    );
+    expect(mockSendProactiveCard).not.toHaveBeenCalled();
   });
 
-  it("sends the latest approved stored brief to Teams as an adaptive card", async () => {
-    const result = await sendApprovedExecutiveBriefingToTeams({
-      userId: "user-1",
+  it("buildExecutiveBriefingCard: sends a card with the correct title and decisions content", () => {
+    const cardPayload = buildExecutiveBriefingCard(packet, "Brandon", {
+      now: new Date("2026-05-08T13:00:00.000Z"),
     });
+    expect(cardPayload.fallbackText).toContain("Daily Brief");
+    expect(cardPayload.fallbackText).toContain("1 item");
+    const card = cardPayload.card;
 
-    expect(result).toMatchObject({
-      ok: true,
-      status: "sent",
-      draftId: "draft-1",
-      itemCount: 1,
-    });
-    expect(mockSendProactiveCard).toHaveBeenCalledTimes(1);
-  });
-
-  it("sends a card with the correct title and decisions content", async () => {
-    const result = await sendApprovedExecutiveBriefingToTeams({
-      userId: "user-1",
-    });
-
-    expect(result).toMatchObject({ ok: true });
-    const [userId, cardPayload] = mockSendProactiveCard.mock.calls[0] as [string, { card: { title: string; children: Array<{ type: string; content?: string }> } }];
-    expect(userId).toBe("user-1");
-    expect(cardPayload.card.title).toMatch(/Daily Brief —/);
-    const contentStrings = cardPayload.card.children
+    expect(card.title).toMatch(/Daily Brief —/);
+    const contentStrings = card.children
       .filter((c) => c.type === "text" && c.content)
       .map((c) => c.content as string);
     expect(contentStrings.some((s) => s.includes("Needs your attention (1)"))).toBe(true);
     expect(contentStrings.some((s) => s.includes("[Owner approval email]"))).toBe(true);
+  });
+
+  it("formats a Teams message preview from the stored packet", () => {
+    const message = formatExecutiveBriefingTeamsMessage(packet, "Brandon", {
+      now: new Date("2026-05-08T13:00:00.000Z"),
+    });
+
+    expect(message).toContain("Daily Brief");
+    expect(message).toContain("Needs your attention");
+    expect(message).toContain("Owner approval email");
   });
 
   it("buildExecutiveBriefingCard: uses a morning greeting before noon Eastern", () => {
