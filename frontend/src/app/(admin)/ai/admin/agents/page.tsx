@@ -4,6 +4,7 @@ import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { GitBranch, LayoutList, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -50,7 +51,6 @@ function useAiAgents(filters: Record<string, FilterValue>) {
   }, [filters.status, filters.domain, filters.impact]);
 
   React.useEffect(() => {
-    console.log("[ai-agents] useEffect fired, calling fetchAgents");
     void fetchAgents();
   }, [fetchAgents]);
 
@@ -67,7 +67,8 @@ const EMPTY_FILTERS: Record<string, FilterValue> = {
 
 type ViewMode = "table" | "graph";
 
-export default function AiAgentsPage() {
+// Inner component: uses useSearchParams() so must be inside its own Suspense
+function AiAgentsPageInner() {
   const pathname = usePathname()!;
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -247,5 +248,14 @@ export default function AiAgentsPage() {
         onAgentUpdated={handleAgentUpdated}
       />
     </>
+  );
+}
+
+// Outer wrapper provides its own Suspense so useSearchParams() resolves correctly
+export default function AiAgentsPage() {
+  return (
+    <React.Suspense fallback={null}>
+      <AiAgentsPageInner />
+    </React.Suspense>
   );
 }
