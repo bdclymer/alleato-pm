@@ -6,7 +6,7 @@
 2) Task ID: AAI-566
 3) Linear issue: AAI-566
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-566/goal-7-c10-code-mode-rpc-security-review-and-sandbox-decision
-5) Current status: Implementation verified locally; ready for `codex:finish`.
+5) Current status: Published to `origin/main` at `e9d736b2df`; closeout evidence recorded.
 6) Files changed (absolute paths):
 - `/Users/meganharrison/Documents/alleato-pm/docs/ai-plan/security/code-mode-rpc-security-decision.md`
 - `/Users/meganharrison/Documents/alleato-pm/scripts/verify/verify_code_mode_rpc_guardrail.mjs`
@@ -22,6 +22,7 @@
 - PASS: `node --check scripts/verify/verify_code_mode_rpc_guardrail.mjs`.
 - PASS: `node scripts/verify/verify_code_mode_rpc_guardrail.mjs`.
 - PASS: `npm run linear:codex:check -- docs/ops/handoffs/2026-06-19-S67-code-mode-rpc-security-decision.md`.
+- PASS: `npm run codex:finish -- --message "Add code-mode RPC security decision" --files ...` published to `origin/main` at `e9d736b2df`.
 8) Evidence artifacts (screenshot/video/report/log paths):
 - Task evidence: `docs/ops/tasks/2026-06-19-code-mode-rpc-security-decision.md`.
 - Decision artifact: `docs/ai-plan/security/code-mode-rpc-security-decision.md`.
@@ -29,7 +30,7 @@
 - No UI changes; this slice blocks premature arbitrary-code-execution runtime work.
 - Hermes allows filesystem mutation and terminal-like tool stubs inside its sandbox; Alleato should not copy that surface.
 - Alleato already has useful prerequisites, but still lacks an approved isolated runtime and automated escape tests.
-10) Recommended next action (one line): Publish the security decision/guardrail slice, then start Goal 7 G5 unified delivery router.
+10) Recommended next action (one line): Start Goal 7 G5 unified delivery router.
 11) Handoff file path: docs/ops/handoffs/2026-06-19-S67-code-mode-rpc-security-decision.md
 12) Migration ledger evidence: Not applicable; no migration.
 
@@ -37,7 +38,7 @@
 
 - Kickoff comment: 4c555aaa-cac1-4cf8-9e7d-3e8a30449d04
 - Milestone comments: fdd01eaf-2fcc-4175-b448-29ae6273ed1a
-- Completion/blocker comment: pending.
+- Completion/blocker comment: c43a04c6-f8c9-4ebc-824a-81f608d8e9da
 
 ## Current Status
 
@@ -48,7 +49,7 @@ observability, and escape tests before any Code-Mode RPC runtime can be built.
 
 ## Exact Next Step
 
-Run `codex:finish` for the S67-owned files.
+Start Goal 7 G5 in a separate task/issue/handoff slice.
 
 ## Known Pitfalls
 
@@ -65,7 +66,6 @@ Run `codex:finish` for the S67-owned files.
 cd /Users/meganharrison/Documents/alleato-pm
 node scripts/verify/verify_code_mode_rpc_guardrail.mjs
 npm run linear:codex:check -- docs/ops/handoffs/2026-06-19-S67-code-mode-rpc-security-decision.md
-npm run codex:finish -- --message "Add code-mode RPC security decision" --files docs/ai-plan/security/code-mode-rpc-security-decision.md scripts/verify/verify_code_mode_rpc_guardrail.mjs docs/ops/tasks/2026-06-19-code-mode-rpc-security-decision.md docs/ops/handoffs/2026-06-19-S67-code-mode-rpc-security-decision.md docs/ops/orchestration/session-board.md docs/ops/orchestration/review-queue.md docs/architecture/AI-RAG-ARCHITECTURE.md
 ```
 
 ## Evidence
@@ -76,3 +76,4 @@ npm run codex:finish -- --message "Add code-mode RPC security decision" --files 
 - Guardrail verifier drafted at `scripts/verify/verify_code_mode_rpc_guardrail.mjs`.
 - Guardrail verifier passed after fixing the initial `.mjs`/CommonJS syntax error.
 - Linear handoff check passed.
+- `codex:finish` published to `origin/main` at `e9d736b2df` and verified `HEAD == origin/main`.

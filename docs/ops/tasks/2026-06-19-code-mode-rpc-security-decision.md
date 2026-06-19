@@ -1,6 +1,6 @@
 # Task: Goal 7 C10 - Code-Mode RPC Security Decision
 
-Status: Verified locally; ready for publish
+Status: Published
 Owner: Codex
 Created: 2026-06-19
 Linear Issue: AAI-566 - https://linear.app/megankharrison/issue/AAI-566/goal-7-c10-code-mode-rpc-security-review-and-sandbox-decision
@@ -101,6 +101,7 @@ before any runtime implementation can be treated as safe.
 | Browser/user-flow     | Not applicable | PASS | No frontend UI added; this is a security decision/guardrail slice. |
 | DB/provider read-back | Not applicable | PASS | No schema, migration, provider, or environment change. |
 | End-to-end proof      | `docs/ai-plan/security/code-mode-rpc-security-decision.md`; `node scripts/verify/verify_code_mode_rpc_guardrail.mjs`; `npm run linear:codex:check -- docs/ops/handoffs/2026-06-19-S67-code-mode-rpc-security-decision.md` | PASS | Required decision exists, runtime remains blocked, and handoff contract passes. |
+| Publish               | `npm run codex:finish -- --message "Add code-mode RPC security decision" --files ...` | PASS | Published to `origin/main` at `e9d736b2df`; route/nonprod gates passed and `HEAD == origin/main` verified. |
 
 ## Files Changed
 
