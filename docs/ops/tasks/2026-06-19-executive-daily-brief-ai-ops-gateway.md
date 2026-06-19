@@ -183,8 +183,8 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [x] Tests prove invalid run contracts fail before a database write begins.
 - [x] Existing scheduled runner uses the shared ledger writer instead of local
       duplicate insert helpers.
-- [ ] Preview route uses the shared ledger writer.
-- [ ] Send route uses the shared ledger writer.
+- [x] Preview route uses the shared ledger writer.
+- [x] Send route uses the shared ledger writer.
 - [ ] Admin test-send route uses the shared ledger writer or is retired.
 - [ ] AI tool path uses the shared ledger writer or is retired.
 
@@ -203,7 +203,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [ ] Email delivery writes a run ledger row and delivery attempt, or the task is
       explicitly blocked/deferred with owner and reason.
 - [ ] Skipped schedules are recorded as skipped runs with reason.
-- [ ] Disabled delivery is recorded as disabled, not silently successful.
+- [x] Disabled delivery is recorded as disabled, not silently successful.
 - [ ] Failure state records exact failure code, failure message, owning step, and
       retryability.
 - [ ] Source health snapshot is stored with each run.
@@ -286,7 +286,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [ ] Real Teams send records provider response and recipient result.
 - [ ] Real email send records provider response and recipient result, or is
       deferred with owner and reason.
-- [ ] Disabled delivery records disabled state and reason.
+- [x] Disabled delivery records disabled state and reason.
 - [ ] Blocked delivery records blocked state and reason.
 - [ ] Partial recipient failure records partial success.
 - [ ] Delivered artifact links to run, packet, recipient/channel, and source
@@ -382,18 +382,21 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 
 ## Evidence
 
-| Check                 | Command / artifact                                                                                                                                                  | Result  | Notes                                                                                           |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------- |
-| AI Ops focused lint   | `cd frontend && npx eslint src/lib/ai-ops/contracts.ts src/lib/ai-ops/ledger.ts src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts` | Passed  | Contract and ledger module lint cleanly.                                                        |
-| Runner forced lint    | `cd frontend && npx eslint --no-ignore scripts/run-executive-daily-brief.ts`                                                                                        | Passed  | Script is ignored by default ESLint config, so it was linted with `--no-ignore`.                |
-| AI Ops focused tests  | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand`               | Passed  | 2 suites, 11 tests passed. Required fields and pre-write validation fail loudly.                |
-| Runner no-write smoke | `cd frontend && npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:00:00.000Z`                                                                        | Passed  | Kill switch off; script loaded and exited with `executive_daily_brief_disabled`, no send/write. |
-| Static/type/lint      | Pending                                                                                                                                                             | Pending | Broader implementation lint/typecheck required before workflow can be closed.                   |
-| Targeted tests        | Pending                                                                                                                                                             | Pending | Gateway/runtime tests still required before implementation can be closed.                       |
-| Browser/user-flow     | Pending                                                                                                                                                             | Pending | `/ai-work-runs` proof required.                                                                 |
-| DB/provider read-back | Pending                                                                                                                                                             | Pending | Required for ledger/config/migrations.                                                          |
-| End-to-end proof      | Pending                                                                                                                                                             | Pending | Must include run id, packet id, and artifact.                                                   |
-| Planning gate         | Linear AAI-551 plus this task file and S57 handoff                                                                                                                  | Passed  | Linear issue created before coding; architecture recommendation accepted with corrected order.  |
+| Check                 | Command / artifact                                                                                                                                                                        | Result  | Notes                                                                                              |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------- |
+| AI Ops focused lint   | `cd frontend && npx eslint src/lib/ai-ops/contracts.ts src/lib/ai-ops/ledger.ts src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts`                       | Passed  | Contract and ledger module lint cleanly.                                                           |
+| Route ledger lint     | `cd frontend && npx eslint src/lib/ai-ops/executive-daily-brief-ledger.ts src/app/api/executive/daily-brief/preview-teams/route.ts src/app/api/executive/daily-brief/send-teams/route.ts` | Passed  | Preview/send route ledger wiring lint cleanly.                                                     |
+| Runner forced lint    | `cd frontend && npx eslint --no-ignore scripts/run-executive-daily-brief.ts`                                                                                                              | Passed  | Script is ignored by default ESLint config, so it was linted with `--no-ignore`.                   |
+| AI Ops focused tests  | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand`                                     | Passed  | 2 suites, 11 tests passed. Required fields and pre-write validation fail loudly.                   |
+| Runner no-write smoke | `cd frontend && npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:00:00.000Z`                                                                                              | Passed  | Kill switch off; script loaded and exited with `executive_daily_brief_disabled`, no send/write.    |
+| Disabled send smoke   | `curl -sS -X POST http://localhost:3001/api/executive/daily-brief/send-teams -H 'content-type: application/json' -d '{}'`                                                                 | Passed  | Kill switch off; route returned disabled state with run id `45c9f9a2-2ac1-45fe-8893-a2cd07c28374`. |
+| Admin UI/API readback | `curl -sS 'http://localhost:3001/api/admin/ai-work-runs?workflow=executive_daily_brief&limit=5'`                                                                                          | Blocked | Curl lacks authenticated admin browser session; response was `AUTH_EXPIRED`.                       |
+| Static/type/lint      | Pending                                                                                                                                                                                   | Pending | Broader implementation lint/typecheck required before workflow can be closed.                      |
+| Targeted tests        | Pending                                                                                                                                                                                   | Pending | Gateway/runtime tests still required before implementation can be closed.                          |
+| Browser/user-flow     | Pending                                                                                                                                                                                   | Pending | `/ai-work-runs` proof required.                                                                    |
+| DB/provider read-back | Pending                                                                                                                                                                                   | Pending | Required for ledger/config/migrations.                                                             |
+| End-to-end proof      | Pending                                                                                                                                                                                   | Pending | Must include run id, packet id, and artifact.                                                      |
+| Planning gate         | Linear AAI-551 plus this task file and S57 handoff                                                                                                                                        | Passed  | Linear issue created before coding; architecture recommendation accepted with corrected order.     |
 
 ## Files Expected To Change
 

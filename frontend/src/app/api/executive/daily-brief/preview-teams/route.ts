@@ -25,6 +25,13 @@ import {
   regenerateExecutiveBriefingDraft,
 } from "@/lib/executive/executive-briefing-workflow";
 import { formatExecutiveBriefingTeamsMessage } from "@/lib/executive/executive-briefing-teams-delivery";
+import {
+  completeDailyBriefRun,
+  failDailyBriefRun,
+  recordDraftEvidence,
+  sourceHealthForDraft,
+  startDailyBriefRun,
+} from "@/lib/ai-ops/executive-daily-brief-ledger";
 
 export const POST = withApiGuardrails(
   "executive/daily-brief/preview-teams#POST",
@@ -56,40 +63,97 @@ export const POST = withApiGuardrails(
     );
     const firstName = body.firstName?.trim() || "Brandon";
 
-    const draft = body.fresh
-      ? (await regenerateExecutiveBriefingDraft({ windowDays })).draft
-      : (await getExecutiveBriefingDashboard({ windowDays })).draft;
-
-    if (!draft) {
-      return NextResponse.json(
-        {
-          success: false,
-          error_message:
-            "No brief available for this window. Try fresh=true to regenerate.",
-        },
-        { status: 404 },
-      );
-    }
-
-    const card = formatExecutiveBriefingTeamsMessage(
-      draft.packet,
-      firstName,
-      { now: new Date() },
-    );
-
-    const totalItems =
-      draft.packet.sections.needsBrandon.length +
-      draft.packet.sections.waitingOnOthers.length +
-      draft.packet.sections.importantUpdates.length;
-
-    return NextResponse.json({
-      success: true,
-      card,
-      recipientName: firstName,
-      itemCount: totalItems,
-      windowDays,
-      recapDate: draft.recapDate,
-      generatedFresh: Boolean(body.fresh),
+    const runContext = await startDailyBriefRun({
+      eventType: "preview_request",
+      triggerType: body.fresh ? "manual_preview_fresh" : "manual_preview",
+      surface: "executive_daily_brief_preview_teams",
+      title: "Executive Daily Brief Teams preview",
+      userGoal:
+        "Preview the Executive Daily Brief Teams message without sending.",
+      normalizedGoal:
+        "Build a no-send Teams preview and record evidence-linked run state.",
+      deliveryTarget: {
+        channel: "teams",
+        recipientName: firstName,
+        dryRun: true,
+      },
+      payload: { windowDays, fresh: Boolean(body.fresh), firstName },
     });
+
+    try {
+      const draft = body.fresh
+        ? (await regenerateExecutiveBriefingDraft({ windowDays })).draft
+        : (await getExecutiveBriefingDashboard({ windowDays })).draft;
+
+      if (!draft) {
+        await completeDailyBriefRun(runContext, {
+          status: "skipped",
+          deliveryStatus: "skipped",
+          resultSummary: "No brief available for this window.",
+          deliveryTarget: {
+            channel: "teams",
+            recipientName: firstName,
+            dryRun: true,
+          },
+          sourceCounts: { itemCount: 0, windowDays },
+        });
+
+        return NextResponse.json(
+          {
+            success: false,
+            error_message:
+              "No brief available for this window. Try fresh=true to regenerate.",
+          },
+          { status: 404 },
+        );
+      }
+
+      const card = formatExecutiveBriefingTeamsMessage(
+        draft.packet,
+        firstName,
+        { now: new Date() },
+      );
+
+      const totalItems =
+        draft.packet.sections.needsBrandon.length +
+        draft.packet.sections.waitingOnOthers.length +
+        draft.packet.sections.importantUpdates.length;
+
+      await recordDraftEvidence(runContext, draft);
+      await completeDailyBriefRun(runContext, {
+        status: "succeeded",
+        deliveryStatus: "dry_run",
+        resultSummary: `Built Teams preview with ${totalItems} brief items.`,
+        deliveryTarget: {
+          channel: "teams",
+          recipientName: firstName,
+          dryRun: true,
+        },
+        sourceCounts: { itemCount: totalItems, windowDays },
+        sourceHealth: sourceHealthForDraft(draft),
+        metadata: {
+          recapDate: draft.recapDate,
+          generatedFresh: Boolean(body.fresh),
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        runId: runContext.runId,
+        card,
+        recipientName: firstName,
+        itemCount: totalItems,
+        windowDays,
+        recapDate: draft.recapDate,
+        generatedFresh: Boolean(body.fresh),
+      });
+    } catch (error) {
+      await failDailyBriefRun(
+        runContext,
+        error,
+        "EXECUTIVE_DAILY_BRIEF_PREVIEW_FAILED",
+      );
+      throw error;
+    }
   },
 );

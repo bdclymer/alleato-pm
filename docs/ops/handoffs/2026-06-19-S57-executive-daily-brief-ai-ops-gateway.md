@@ -15,9 +15,12 @@
    - `/Users/meganharrison/Documents/alleato-pm/docs/ops/orchestration/session-board.md`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/contracts.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/ledger.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/executive-daily-brief-ledger.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/__tests__/contracts.test.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/__tests__/ledger.test.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/scripts/run-executive-daily-brief.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/executive/daily-brief/preview-teams/route.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/executive/daily-brief/send-teams/route.ts`
 7. Commands run and outcome (pass/fail counts):
    - Pass: read pasted ChatGPT recommendation from Codex attachment.
    - Pass: read `docs/codebase-map/hermes-vs-openclaw-comparison.md`.
@@ -33,18 +36,26 @@
    - Pass: `cd frontend && npx eslint src/lib/ai-ops/contracts.ts src/lib/ai-ops/ledger.ts src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts`.
    - Pass: `cd frontend && npx eslint --no-ignore scripts/run-executive-daily-brief.ts`.
    - Pass: `cd frontend && npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:00:00.000Z` exited through the disabled kill switch without writing or sending.
+   - Pass: created `frontend/src/lib/ai-ops/executive-daily-brief-ledger.ts` so preview/send routes share event/run/evidence projection.
+   - Pass: routed `preview-teams` and `send-teams` through the shared ledger writer.
+   - Pass: `cd frontend && npx eslint src/lib/ai-ops/executive-daily-brief-ledger.ts src/app/api/executive/daily-brief/preview-teams/route.ts src/app/api/executive/daily-brief/send-teams/route.ts`.
+   - Pass: disabled send smoke returned run id `45c9f9a2-2ac1-45fe-8893-a2cd07c28374`.
+   - Blocked: unauthenticated curl to `/api/admin/ai-work-runs?workflow=executive_daily_brief&limit=5` returned `AUTH_EXPIRED`; browser/admin UI verification still pending.
 8. Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
    - `frontend/src/lib/ai-ops/ledger.ts`
+   - `frontend/src/lib/ai-ops/executive-daily-brief-ledger.ts`
    - `frontend/src/lib/ai-ops/__tests__/contracts.test.ts`
    - `frontend/src/lib/ai-ops/__tests__/ledger.test.ts`
    - `frontend/scripts/run-executive-daily-brief.ts`
+   - `frontend/src/app/api/executive/daily-brief/preview-teams/route.ts`
+   - `frontend/src/app/api/executive/daily-brief/send-teams/route.ts`
 9. Top 3 findings (frontend-visible issues first):
    - No frontend-visible changes yet.
    - Inventory confirmed multiple bypasses: preview routes, send routes, admin test send, actions, AI tools, and legacy delivery paths can generate or deliver without one canonical `ai_work_runs` record.
-   - Shared AI Ops contracts and a shared ledger writer now exist and are tested; the scheduled runner uses the shared writer, but preview/send/admin/tool paths still bypass it.
-10. Recommended next action (one line): Route preview/send/admin test paths through the same shared ledger writer.
+   - Shared AI Ops contracts and a shared ledger writer now exist and are tested; scheduled runner plus preview/send routes use the shared writer, but admin test-send and AI tool paths still bypass it.
+10. Recommended next action (one line): Wrap or retire admin test-send, then route the AI tool path through the same shared ledger writer.
 11. Handoff file path: `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
 12. Migration ledger evidence: Not applicable yet; no migrations have been created or changed.
 <!-- markdownlint-enable MD029 MD034 -->
@@ -55,24 +66,23 @@
 - Milestone comments:
   - `87ae233d-c1db-4302-b1ad-9d2f5269dbdc` recorded inventory, ledger audit, contracts, and ledger writer before scheduled-runner migration.
   - `8ad449c3-f770-4f2a-bbd5-d81e33def16a` recorded scheduled-runner migration through the shared ledger writer.
+  - `d7e0ea7f-b634-4423-9e5c-ea0630f63bd7` recorded preview/send route ledger wiring and disabled-send smoke evidence.
 - Completion/blocker comment: None yet.
 
 ## Current Status
 
 In progress. Linear issue AAI-551 is created and the task markdown file is the
 source of truth. Current-path inventory, ledger audit, shared AI Ops contracts,
-the shared ledger writer, and scheduled-runner migration are implemented with
-focused tests/lint. The workflow is not complete until preview/send/admin/tool
-entry points use the writer and the adapters, delivery, UI inspection, and
-end-to-end proof checklists are complete.
+the shared ledger writer, scheduled-runner migration, and preview/send route
+ledger wiring are implemented with focused tests/lint. The workflow is not
+complete until admin/tool entry points use the writer and the adapters, delivery,
+UI inspection, and end-to-end proof checklists are complete.
 
 ## Exact Next Step
 
-Route `frontend/src/app/api/executive/daily-brief/preview-teams/route.ts` and
-`frontend/src/app/api/executive/daily-brief/send-teams/route.ts` through the
-same ledger writer, then decide whether
-`frontend/src/app/api/admin/owner-briefing/send-test/route.ts` is retired or
-wrapped.
+Decide whether `frontend/src/app/api/admin/owner-briefing/send-test/route.ts`
+is retired or wrapped, then route `frontend/src/lib/ai/tools/executive-brief-tools.ts`
+through the same ledger-backed workflow boundary.
 
 ## Known Pitfalls
 
@@ -95,6 +105,8 @@ cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/co
 cd frontend && npx eslint src/lib/ai-ops/contracts.ts src/lib/ai-ops/ledger.ts src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts
 cd frontend && npx eslint --no-ignore scripts/run-executive-daily-brief.ts
 cd frontend && npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:00:00.000Z
+cd frontend && npx eslint src/lib/ai-ops/executive-daily-brief-ledger.ts src/app/api/executive/daily-brief/preview-teams/route.ts src/app/api/executive/daily-brief/send-teams/route.ts
+curl -sS -X POST http://localhost:3001/api/executive/daily-brief/send-teams -H 'content-type: application/json' -d '{}'
 ```
 
 ## Evidence
@@ -103,6 +115,9 @@ cd frontend && npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:
 - Task file: `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
 - Contract module: `frontend/src/lib/ai-ops/contracts.ts`
 - Ledger writer: `frontend/src/lib/ai-ops/ledger.ts`
+- Daily Brief ledger helper: `frontend/src/lib/ai-ops/executive-daily-brief-ledger.ts`
 - Contract tests: `frontend/src/lib/ai-ops/__tests__/contracts.test.ts`
 - Ledger tests: `frontend/src/lib/ai-ops/__tests__/ledger.test.ts`
 - Scheduled runner: `frontend/scripts/run-executive-daily-brief.ts`
+- Preview route: `frontend/src/app/api/executive/daily-brief/preview-teams/route.ts`
+- Send route: `frontend/src/app/api/executive/daily-brief/send-teams/route.ts`
