@@ -57,6 +57,8 @@ const mode = args.has("--staged") ? "staged" : "changed";
 //   - system / cross-schema tables
 const KNOWN_EXTERNAL_TABLES = new Set([
   "document_chunks",
+  "graph_subscriptions",
+  "graph_sync_state",
   "packet_refresh_jobs",
   "rag_document_metadata",
   "rag_pipeline_state",
@@ -202,6 +204,15 @@ function isExternal(name) {
   return EXTERNAL_PREFIXES.some((p) => name.startsWith(p));
 }
 
+// File extensions — dotted tokens whose last segment is one of these are
+// filenames (e.g. `outlook.py`, `render.yaml`), not table.column references.
+const FILE_EXTENSIONS = new Set([
+  "py", "js", "ts", "tsx", "jsx", "mjs", "cjs",
+  "yaml", "yml", "json", "toml", "md", "mdx",
+  "sh", "bash", "zsh", "fish",
+  "html", "css", "scss", "sql", "txt", "env",
+]);
+
 // Decide whether `raw` (the content inside backticks) is a table-existence
 // claim, and if so return the candidate table name; otherwise null.
 const CLEAN_DOTTED_RE = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]+)+$/;
@@ -213,6 +224,11 @@ function tableCandidate(raw, lineHasContext) {
   // not a method chain like `supabase.from("rfis").update(...)`, where the
   // prefix is a client variable, not a table. The .from() scan handles those.
   if (dotted && !CLEAN_DOTTED_RE.test(token)) return null;
+  // Reject filenames: `outlook.py`, `render.yaml`, `tools.py`, etc.
+  if (dotted) {
+    const lastSegment = token.split(".").pop();
+    if (FILE_EXTENSIONS.has(lastSegment)) return null;
+  }
   // Take the part before the first dot as the table (e.g. `companies.id`).
   const tablePart = dotted ? token.split(".")[0] : token;
   if (!IDENT_RE.test(tablePart)) return null; // not a bare snake_case identifier
