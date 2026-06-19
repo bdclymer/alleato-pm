@@ -169,6 +169,12 @@
    - Pass: `cd frontend && npx eslint src/lib/ai-ops/daily-brief-canonical-link.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/executive-daily-brief-ledger.test.ts src/lib/ai-ops/__tests__/ledger.test.ts`.
    - Pass: authenticated no-send preview returned HTTP 200 with run `64285fe0-a122-4745-b888-b7b6116ac854`.
    - Pass: SQL readback proved `daily_recaps.ai_work_run_id = 64285fe0-a122-4745-b888-b7b6116ac854`, `recap_points_to_run=true`, `canonical_run_count=1`, historical run count `5`, source refs `4`, artifacts `3`, and delivery attempts `1`.
+   - Pass: generation now writes a `tool_call` run step for `generate-executive-daily-brief-packet`; payload artifact helpers write `tool_call` steps for Teams/email payload builds; dry-run delivery metadata uses build-tool names instead of send-tool names.
+   - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/executive-daily-brief-ledger.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts --runInBand` passed 3 suites / 16 tests.
+   - Pass: `cd frontend && npx eslint src/lib/ai-ops/daily-brief-canonical-link.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/executive-daily-brief-ledger.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts`.
+   - Fail then fixed: local dev-server OOM proof run `a7d8e20b-1d80-48cd-a26e-e753d0f0a7c8` was marked `failed_retryable` / `failed` with `DEV_PROOF_SERVER_OOM`; dev server restarted with `NODE_OPTIONS=--max-old-space-size=8192`.
+   - Pass: authenticated no-send preview returned HTTP 200 with run `b45e33fd-fade-40bc-aa2a-0fcebb1e2bc5`.
+   - Pass: SQL readback for run `b45e33fd-fade-40bc-aa2a-0fcebb1e2bc5` found `tool_call/succeeded` for `generate-executive-daily-brief-packet` with `sourceRefCount=4`, `tool_call/succeeded` for `build-teams-daily-brief-payload`, dry-run delivery metadata using `build-teams-daily-brief-payload`, source refs `4`, artifacts `3`, delivery attempts `1`, and canonical recap pointer back to the run.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
@@ -242,11 +248,12 @@
    - Scheduled runner proof now shows both outside-window skipped schedules and matching scheduled triggers create canonical AI Ops runs; explicit runtime env now wins over `.env.local`.
    - Teams delivery route tests now prove disabled, dry-run, blocked, partial, and thrown-provider paths cannot bypass the AI Ops ledger helpers.
    - Source adapter wrappers now produce visible source-fetch run steps and a source-health report artifact; missing required adapters fail loudly as failed-retryable run steps without silently suppressing the generated packet.
+   - Tool calls now leave explicit run-step evidence: generation, Teams/email payload builds, and dry-run delivery metadata are inspectable in `ai_work_run_steps`.
    - The old cron Teams delivery path no longer sends directly; it delegates to the canonical gateway and the old direct sender fails loudly if imported.
    - Manual email sends from the executive action now create canonical AI Ops runs, packet/artifact evidence, and per-recipient delivery attempts for both successful and provider-failed Resend outcomes.
    - `/ai-work-runs` now shows retryability/next-action guidance and generated-packet evidence drilldown; live no-send preview run `10c6f901-0d3f-43b7-a602-16e6eb7fd7ab` proves packet-level `sourceRefs` are present and linkable for all four surfaced claims.
    - Duplicate frontend Daily Brief scripts are ledger-backed wrappers or no-send previews, and backend legacy digest paths are default-disabled with loud operator messaging.
-10) Recommended next action (one line): Close remaining source coverage/readiness legacy gaps, actor/source-access policy filters, tool-call run-step recording, and real Teams delivery when safe/enabled.
+10) Recommended next action (one line): Close remaining source coverage/readiness legacy gaps, actor/source-access policy filters, route-level source-query bypass audit, and real Teams delivery when safe/enabled.
 11) Handoff file path: `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
 12) Migration ledger evidence: `npm run db:migrations:verify-applied -- supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql` passed for version `20260619183000`.
 <!-- markdownlint-enable MD029 MD034 -->
@@ -271,6 +278,7 @@
   - `17e47a71-797e-43c7-a763-8e3181750dda` recorded packet-level `sourceRefs` persistence, focused lint/tests, and live regenerated-packet proof remaining.
   - `7445ddd5-e71d-4b5c-9193-05993d462635` recorded live packet sourceRefs proof, Acumatica fallback, focused lint/tests, and remaining gaps.
   - `8207b9a9-e26d-44c4-b853-11acedf9f350` recorded canonical `daily_recaps.ai_work_run_id` relationship, migration/type evidence, live proof, and remaining gaps.
+  - `cde4d7ff-ee49-48d7-9cb3-a2d273d83f19` recorded tool-call run-step recording, live proof, OOM remediation, focused lint/tests, and remaining gaps.
   - `e5b1568a-90ea-4912-84bd-aed849ac6b3a` recorded admin UI source drilldown, retry guidance, browser proof, and remaining structured source-ref gaps.
   - `0647ed44-013a-47ce-b738-979c7b285444` recorded duplicate script and backend legacy digest disposition, focused checks, and remaining source coverage/readiness gaps.
 - Completion/blocker comment: None yet.

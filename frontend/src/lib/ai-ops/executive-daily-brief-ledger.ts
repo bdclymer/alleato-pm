@@ -99,6 +99,34 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+async function recordToolCallStep(
+  context: DailyBriefRunContext,
+  input: {
+    toolName: string;
+    status: "succeeded" | "failed_retryable" | "failed_permanent";
+    startedAt: string;
+    completedAt?: string;
+    failureCode?: string | null;
+    failureMessage?: string | null;
+    metadata?: Record<string, unknown>;
+  },
+) {
+  const ledger = createAiOpsLedger(createServiceClient());
+  await ledger.createRunStep({
+    runId: context.runId,
+    stepType: "tool_call",
+    status: input.status,
+    startedAt: input.startedAt,
+    completedAt: input.completedAt ?? nowIso(),
+    failureCode: input.failureCode ?? null,
+    failureMessage: input.failureMessage ?? null,
+    metadata: {
+      toolName: input.toolName,
+      ...(input.metadata ?? {}),
+    },
+  });
+}
+
 function toIsoOrNull(value: string | null | undefined) {
   if (!value) return null;
   const date = new Date(value);
@@ -555,8 +583,9 @@ export async function recordTeamsPayloadArtifact(
   context: DailyBriefRunContext,
   input: RecordPayloadArtifactInput,
 ): Promise<{ id: string }> {
+  const startedAt = nowIso();
   const ledger = createAiOpsLedger(createServiceClient());
-  return ledger.createArtifact({
+  const artifact = await ledger.createArtifact({
     runId: context.runId,
     kind: "teams_payload",
     title: input.title,
@@ -564,14 +593,26 @@ export async function recordTeamsPayloadArtifact(
     sourceRefs: [],
     metadata: input.metadata ?? {},
   });
+  await recordToolCallStep(context, {
+    toolName: "build-teams-daily-brief-payload",
+    status: "succeeded",
+    startedAt,
+    metadata: {
+      artifactId: artifact.id,
+      artifactKind: "teams_payload",
+      ...(input.metadata ?? {}),
+    },
+  });
+  return artifact;
 }
 
 export async function recordEmailPayloadArtifact(
   context: DailyBriefRunContext,
   input: RecordPayloadArtifactInput,
 ): Promise<{ id: string }> {
+  const startedAt = nowIso();
   const ledger = createAiOpsLedger(createServiceClient());
-  return ledger.createArtifact({
+  const artifact = await ledger.createArtifact({
     runId: context.runId,
     kind: "email_payload",
     title: input.title,
@@ -579,6 +620,17 @@ export async function recordEmailPayloadArtifact(
     sourceRefs: [],
     metadata: input.metadata ?? {},
   });
+  await recordToolCallStep(context, {
+    toolName: "build-email-daily-brief-payload",
+    status: "succeeded",
+    startedAt,
+    metadata: {
+      artifactId: artifact.id,
+      artifactKind: "email_payload",
+      ...(input.metadata ?? {}),
+    },
+  });
+  return artifact;
 }
 
 export async function recordDeliveryAttempt(
@@ -618,6 +670,14 @@ export async function recordDeliveryAttempt(
     failureCode: input.failureCode ?? null,
     failureMessage: input.failureMessage ?? null,
     metadata: {
+      toolName:
+        input.status === "dry_run"
+          ? input.channel === "email"
+            ? "build-email-daily-brief-payload"
+            : "build-teams-daily-brief-payload"
+          : input.channel === "email"
+          ? "send-email-daily-brief"
+          : "send-teams-daily-brief",
       channel: input.channel,
       status: input.status,
       artifactId: input.artifactId ?? null,
@@ -636,16 +696,39 @@ export async function regenerateDailyBriefDraftForRun(
   context: DailyBriefRunContext,
   input: RegenerateDailyBriefDraftForRunInput,
 ) {
-  const { draft } = await regenerateExecutiveBriefingDraft({
-    windowDays: input.windowDays,
-    sourceBackedOnly: input.sourceBackedOnly,
-  });
-  await recordDraftEvidence(context, draft);
-  await linkDailyRecapToCanonicalRun({
-    dailyRecapId: draft.id,
-    runId: context.runId,
-  });
-  return { draft };
+  const startedAt = nowIso();
+  try {
+    const { draft } = await regenerateExecutiveBriefingDraft({
+      windowDays: input.windowDays,
+      sourceBackedOnly: input.sourceBackedOnly,
+    });
+    await recordDraftEvidence(context, draft);
+    await linkDailyRecapToCanonicalRun({
+      dailyRecapId: draft.id,
+      runId: context.runId,
+    });
+    await recordToolCallStep(context, {
+      toolName: "generate-executive-daily-brief-packet",
+      status: "succeeded",
+      startedAt,
+      metadata: {
+        dailyRecapId: draft.id,
+        recapDate: draft.recapDate,
+        sourceRefCount: evidenceRefsFromDraft(draft).length,
+      },
+    });
+    return { draft };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await recordToolCallStep(context, {
+      toolName: "generate-executive-daily-brief-packet",
+      status: "failed_retryable",
+      startedAt,
+      failureCode: "EXECUTIVE_DAILY_BRIEF_TOOL_CALL_FAILED",
+      failureMessage: message,
+    });
+    throw error;
+  }
 }
 
 export async function regenerateDailyBriefDraftWithLedger(
