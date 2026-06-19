@@ -1065,6 +1065,15 @@ def _deep_agent_prompt(
         )
         for item in evidence[:8]
     ]
+    approved_skill_lines = (
+        [
+            "",
+            "Approved project Skill Library context:",
+            request.approved_skill_context.strip(),
+        ]
+        if request.approved_skill_context and request.approved_skill_context.strip()
+        else []
+    )
     return "\n".join(
         [
             f"Question: {request.question}",
@@ -1075,6 +1084,7 @@ def _deep_agent_prompt(
             "",
             "Evidence snippets:",
             *(evidence_lines or ["- No source evidence rows were available."]),
+            *approved_skill_lines,
             "",
             "Write a concise project-status/risk synthesis for an internal construction operator.",
             "Do not claim checked sources are available when source coverage says missing or failed.",
@@ -1153,6 +1163,15 @@ def _deep_agent_executive_prompt(
     ]
     today = datetime.utcnow().strftime("%Y-%m-%d")
     question_directives = _executive_question_directives(request.question)
+    approved_skill_lines = (
+        [
+            "",
+            "Approved executive Skill Library context:",
+            request.approved_skill_context.strip(),
+        ]
+        if request.approved_skill_context and request.approved_skill_context.strip()
+        else []
+    )
     return "\n".join(
         [
             f"Question: {request.question}",
@@ -1164,6 +1183,7 @@ def _deep_agent_executive_prompt(
             "",
             "Evidence snippets:",
             *(evidence_lines or ["- No source evidence rows were available."]),
+            *approved_skill_lines,
             "",
             "Write a concise business-wide executive synthesis for a construction operator.",
             (
@@ -1556,6 +1576,7 @@ def build_project_status_contract_spike(
         recommendedActions=_recommended_actions(sources),
         toolTrace=trace,
         memoryCandidates=memory_candidates,
+        approvedSkillContext=request.approved_skill_context,
         orchestrator="deep-agents-project-intelligence",
         mode=mode,
     )
@@ -1621,6 +1642,7 @@ def build_executive_briefing_contract_spike(
         recommendedActions=_recommended_executive_actions(sources),
         toolTrace=trace,
         memoryCandidates=memory_candidates,
+        approvedSkillContext=request.approved_skill_context,
         orchestrator="deep-agents-executive-intelligence",
         mode=mode,
     )

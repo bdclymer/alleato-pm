@@ -39,7 +39,10 @@ import {
   type MemoryUsageSummary,
   type BotSkillUsageSummary,
 } from "@/lib/ai/bot-core";
-import { recordSelectedSkillUsage } from "@/lib/ai/services/skill-injection-service";
+import {
+  buildSkillInjectionContext,
+  recordSelectedSkillUsage,
+} from "@/lib/ai/services/skill-injection-service";
 import { isPersonalTaskRegisterRequest } from "@/lib/ai/personal-daily-brief";
 import { createStrategistTools } from "@/lib/ai/orchestrator";
 import { fetchWithGuardrails } from "@/lib/fetch-with-guardrails";
@@ -104,6 +107,26 @@ const AI_EVAL_DISABLE_BACKEND_DEEP_AGENTS =
   process.env.AI_EVAL_DISABLE_BACKEND_DEEP_AGENTS === "true";
 const AI_EVAL_DOCUMENT_INTELLIGENCE_RESPONSE =
   process.env.AI_EVAL_DOCUMENT_INTELLIGENCE_RESPONSE === "true";
+
+const PROJECT_DEEP_AGENT_SKILL_CATEGORIES = [
+  "drawing",
+  "estimate",
+  "pay_app_review",
+  "rfi",
+  "schedule",
+  "submittal",
+  "task",
+  "workflow",
+];
+
+const EXECUTIVE_DEEP_AGENT_SKILL_CATEGORIES = [
+  "email",
+  "estimate",
+  "schedule",
+  "task",
+  "teams",
+  "workflow",
+];
 
 function microsoftAssistantBackendUrl(): string {
   const value = (
@@ -179,6 +202,33 @@ function detectAttachments(
     hasAttachments: fileParts.length > 0 || hasInlinedReadable,
     unreadable,
   };
+}
+
+async function buildBackendDeepAgentSkillContext(params: {
+  userId: string;
+  messageText: string;
+  selectedProjectId?: number;
+  surface: "backend_deep_agent_project" | "backend_deep_agent_executive";
+  allowedCategories: string[];
+}): Promise<string> {
+  try {
+    const skillContext = await buildSkillInjectionContext({
+      userId: params.userId,
+      messageText: params.messageText,
+      selectedProjectId: params.selectedProjectId,
+      surface: params.surface,
+      allowedCategories: params.allowedCategories,
+      limit: 3,
+    });
+    return skillContext.block;
+  } catch (error) {
+    console.error("[backend-deep-agents] failed to load approved skills", {
+      surface: params.surface,
+      message:
+        error instanceof Error ? error.message : "Unknown skill context error",
+    });
+    return "";
+  }
 }
 
 function toJsonValue(value: unknown): Json | undefined {
@@ -2671,6 +2721,14 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
 
         try {
           const projectIdForBridge = args.selectedProjectId;
+          const approvedSkillContext =
+            await buildBackendDeepAgentSkillContext({
+              userId: args.user.id,
+              messageText: lastUserContent,
+              selectedProjectId: projectIdForBridge,
+              surface: "backend_deep_agent_project",
+              allowedCategories: PROJECT_DEEP_AGENT_SKILL_CATEGORIES,
+            });
           const projectBridgeStarted = Date.now();
           const packet = await withKeepAlive(
             writer,
@@ -2685,6 +2743,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                 projectId: projectIdForBridge,
                 sessionId: args.sessionId,
                 question: lastUserContent,
+                approvedSkillContext: approvedSkillContext || undefined,
               }),
           );
           const projectBridgeDurationMs = Date.now() - projectBridgeStarted;
@@ -2894,6 +2953,13 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         } as never);
 
         try {
+          const approvedSkillContext =
+            await buildBackendDeepAgentSkillContext({
+              userId: args.user.id,
+              messageText: lastUserContent,
+              surface: "backend_deep_agent_executive",
+              allowedCategories: EXECUTIVE_DEEP_AGENT_SKILL_CATEGORIES,
+            });
           const executiveBridgeStarted = Date.now();
           const packet = await withKeepAlive(
             writer,
@@ -2907,6 +2973,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
                 userId: args.user.id,
                 sessionId: args.sessionId,
                 question: lastUserContent,
+                approvedSkillContext: approvedSkillContext || undefined,
               }),
           );
           const executiveBridgeDurationMs =

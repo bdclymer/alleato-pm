@@ -89,6 +89,8 @@ const packet: DeepProjectIntelligenceResponse = {
       requiresApproval: true,
     },
   ],
+  approvedSkillContext:
+    "## Approved Skill Library Context\n\n### Chase project schedule risks (v1, schedule, medium risk)\nInstructions: Rank schedule risks by impact and source confidence.",
   orchestrator: "deep_project_intelligence_v1",
   mode: "deep_agents",
 };
@@ -152,6 +154,8 @@ const executivePacket: DeepExecutiveIntelligenceResponse = {
       requiresApproval: true,
     },
   ],
+  approvedSkillContext:
+    "## Approved Skill Library Context\n\n### Executive task triage (v1, task, low risk)\nInstructions: Rank tasks by business impact and owner urgency.",
   orchestrator: "deep-agents-executive-intelligence",
   mode: "deep_agents",
 };
@@ -348,6 +352,8 @@ describe("Deep Agents project-status bridge", () => {
 
     expect(context).toContain("Backend Deep Agents Project Status Packet");
     expect(context).toContain("Mode: deep_agents");
+    expect(context).toContain("Approved Skill Library context");
+    expect(context).toContain("Chase project schedule risks");
     expect(context).toContain("- schedule: missing, records=0.");
     expect(context).toContain(
       "Do not claim missing or failed source categories were available.",
@@ -398,6 +404,8 @@ describe("Deep Agents project-status bridge", () => {
 
     expect(context).toContain("Backend Deep Agents Executive Briefing Packet");
     expect(context).toContain("Mode: deep_agents");
+    expect(context).toContain("Approved Skill Library context");
+    expect(context).toContain("Executive task triage");
     expect(context).toContain("- emails: missing, records=0.");
     expect(context).toContain(
       "Do not claim email, calendar, task, or project writes were completed",
@@ -587,6 +595,8 @@ describe("Deep Agents project-status bridge", () => {
       projectId: 43,
       sessionId: "session-1",
       question: "What is the current project status?",
+      approvedSkillContext:
+        "## Approved Skill Library Context\n\n### Chase project schedule risks",
     });
 
     expect(response.mode).toBe("deep_agents");
@@ -599,6 +609,8 @@ describe("Deep Agents project-status bridge", () => {
           projectId: 43,
           sessionId: "session-1",
           question: "What is the current project status?",
+          approvedSkillContext:
+            "## Approved Skill Library Context\n\n### Chase project schedule risks",
           mode: "project_status_risk",
         }),
       }),
@@ -623,6 +635,8 @@ describe("Deep Agents project-status bridge", () => {
       userId: "user-1",
       sessionId: "session-1",
       question: "What business risks need attention?",
+      approvedSkillContext:
+        "## Approved Skill Library Context\n\n### Executive task triage",
     });
 
     expect(response.mode).toBe("deep_agents");
@@ -634,6 +648,8 @@ describe("Deep Agents project-status bridge", () => {
           userId: "user-1",
           sessionId: "session-1",
           question: "What business risks need attention?",
+          approvedSkillContext:
+            "## Approved Skill Library Context\n\n### Executive task triage",
           mode: "business_briefing",
         }),
       }),

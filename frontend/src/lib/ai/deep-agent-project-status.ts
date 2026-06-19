@@ -90,6 +90,7 @@ export const deepProjectIntelligenceResponseSchema = z.object({
       requiresApproval: z.boolean(),
     }),
   ),
+  approvedSkillContext: z.string().optional().nullable(),
   orchestrator: z.string(),
   mode: z.enum(["contract_spike", "deep_agents"]),
 });
@@ -116,6 +117,7 @@ export const deepExecutiveIntelligenceResponseSchema = z.object({
       requiresApproval: z.boolean(),
     }),
   ),
+  approvedSkillContext: z.string().optional().nullable(),
   orchestrator: z.string(),
   mode: z.enum(["contract_spike", "deep_agents"]),
 });
@@ -152,6 +154,7 @@ export type DeepAgentProjectStatusRequest = {
   projectId: number;
   sessionId?: string | null;
   question: string;
+  approvedSkillContext?: string | null;
   timeoutMs?: number;
 };
 
@@ -159,6 +162,7 @@ export type DeepAgentExecutiveBriefingRequest = {
   userId: string;
   sessionId?: string | null;
   question: string;
+  approvedSkillContext?: string | null;
   timeoutMs?: number;
 };
 
@@ -324,6 +328,7 @@ export async function fetchDeepAgentProjectStatus(
         projectId: params.projectId,
         sessionId: params.sessionId ?? undefined,
         question: params.question,
+        approvedSkillContext: params.approvedSkillContext ?? undefined,
         mode: "project_status_risk",
       }),
       requestId:
@@ -358,6 +363,7 @@ export async function fetchDeepAgentExecutiveBriefing(
         userId: params.userId,
         sessionId: params.sessionId ?? undefined,
         question: params.question,
+        approvedSkillContext: params.approvedSkillContext ?? undefined,
         mode: "business_briefing",
       }),
       requestId: params.sessionId ?? "deep-agent-executive-briefing",
@@ -465,6 +471,9 @@ export function formatDeepAgentProjectStatusContext(
     `Mode: ${packet.mode}`,
     `Project: ${packet.project.name} (${packet.project.id})`,
     `Confidence: ${packet.confidence}`,
+    packet.approvedSkillContext
+      ? `Approved Skill Library context: ${packet.approvedSkillContext}`
+      : "Approved Skill Library context: none selected",
     "",
     "Backend synthesis:",
     packet.answer,
@@ -509,6 +518,9 @@ export function formatDeepAgentExecutiveBriefingContext(
     `Mode: ${packet.mode}`,
     `Organization: ${packet.organization.name}`,
     `Confidence: ${packet.confidence}`,
+    packet.approvedSkillContext
+      ? `Approved Skill Library context: ${packet.approvedSkillContext}`
+      : "Approved Skill Library context: none selected",
     "",
     "Backend synthesis:",
     packet.answer,

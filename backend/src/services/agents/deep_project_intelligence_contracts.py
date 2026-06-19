@@ -20,6 +20,7 @@ class DeepProjectIntelligenceRequest(BaseModel):
     project_id: int = Field(..., ge=1, alias="projectId")
     session_id: Optional[str] = Field(default=None, alias="sessionId")
     question: str = Field(..., min_length=1)
+    approved_skill_context: Optional[str] = Field(default=None, alias="approvedSkillContext")
     mode: ProjectStatusIntent = "project_status_risk"
 
     model_config = {"populate_by_name": True}
@@ -37,6 +38,7 @@ class DeepExecutiveIntelligenceRequest(BaseModel):
     user_id: str = Field(..., min_length=1, alias="userId")
     session_id: Optional[str] = Field(default=None, alias="sessionId")
     question: str = Field(..., min_length=1)
+    approved_skill_context: Optional[str] = Field(default=None, alias="approvedSkillContext")
     mode: ExecutiveBriefingIntent = "business_briefing"
 
     model_config = {"populate_by_name": True}
@@ -117,6 +119,7 @@ class DeepProjectIntelligenceResponse(BaseModel):
     recommended_actions: List[RecommendedAction] = Field(..., alias="recommendedActions")
     tool_trace: List[ToolTraceItem] = Field(..., alias="toolTrace")
     memory_candidates: List[MemoryCandidate] = Field(..., alias="memoryCandidates")
+    approved_skill_context: Optional[str] = Field(default=None, alias="approvedSkillContext")
     orchestrator: str
     mode: Literal["contract_spike", "deep_agents"]
 
@@ -133,6 +136,7 @@ class DeepExecutiveIntelligenceResponse(BaseModel):
     recommended_actions: List[RecommendedAction] = Field(..., alias="recommendedActions")
     tool_trace: List[ToolTraceItem] = Field(..., alias="toolTrace")
     memory_candidates: List[MemoryCandidate] = Field(..., alias="memoryCandidates")
+    approved_skill_context: Optional[str] = Field(default=None, alias="approvedSkillContext")
     orchestrator: str
     mode: Literal["contract_spike", "deep_agents"]
 

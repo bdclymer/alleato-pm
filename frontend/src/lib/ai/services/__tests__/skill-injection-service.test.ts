@@ -242,6 +242,58 @@ describe("skill-injection-service", () => {
     expect(result.block).not.toContain("Explain app inbox navigation");
   });
 
+  it("limits backend project Deep Agents skill injection to project operating categories", async () => {
+    listActiveVisibleSkillsMock.mockResolvedValue([
+      skill({
+        id: "44444444-4444-4444-8444-444444444444",
+        title: "Chase project schedule risks",
+        slug: "chase-project-schedule-risks",
+        summary: "Rank project schedule risks by impact and source confidence.",
+        instructions: "For schedule risk reviews, separate verified blockers from watch items.",
+        category: "schedule",
+        scopeType: "project",
+        projectId: 1009,
+        usageCount: 0,
+      }),
+      skill({
+        id: "55555555-5555-4555-8555-555555555555",
+        title: "Explain app schedule page",
+        slug: "explain-app-schedule-page",
+        summary: "Explain where schedule features live in the app.",
+        instructions: "Explain route navigation before workflow guidance.",
+        category: "app_help",
+        scopeType: "company",
+        projectId: null,
+        usageCount: 10,
+      }),
+    ]);
+
+    const result = await buildSkillInjectionContext({
+      userId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      messageText: "What schedule risks should we chase on this project?",
+      selectedProjectId: 1009,
+      surface: "backend_deep_agent_project",
+      allowedCategories: [
+        "drawing",
+        "estimate",
+        "pay_app_review",
+        "rfi",
+        "schedule",
+        "submittal",
+        "task",
+        "workflow",
+      ],
+    });
+
+    expect(result.usage?.skills).toHaveLength(1);
+    expect(result.usage?.skills[0]).toMatchObject({
+      title: "Chase project schedule risks",
+      category: "schedule",
+    });
+    expect(result.block).toContain("Chase project schedule risks");
+    expect(result.block).not.toContain("Explain app schedule page");
+  });
+
   it("does not inject irrelevant skills into unrelated prompts", async () => {
     listActiveVisibleSkillsMock.mockResolvedValue([
       skill({

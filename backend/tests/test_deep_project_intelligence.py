@@ -6,6 +6,7 @@ from src.services.agents.deep_project_intelligence import (
     REQUIRED_EXECUTIVE_SOURCE_TYPES,
     REQUIRED_SOURCE_TYPES,
     _deep_agent_executive_prompt,
+    _deep_agent_prompt,
     build_executive_briefing_contract_spike,
     build_project_status_contract_spike,
     deep_agents_runtime_inventory,
@@ -18,6 +19,7 @@ from src.services.agents.deep_project_intelligence_contracts import (
     DeepOrganization,
     DeepExecutiveIntelligenceRequest,
     EvidenceItem,
+    DeepProject,
     DeepProjectIntelligenceRequest,
     SourceCoverage,
 )
@@ -263,6 +265,28 @@ def test_deep_agents_runtime_can_synthesize_behind_contract():
     assert response.answer == "Runtime synthesis from Deep Agents."
     assert response.tool_trace[-1].tool == "deepagents_runtime"
     assert response.tool_trace[-1].status == "success"
+    assert response.approved_skill_context is None
+
+
+def test_project_deep_agent_prompt_includes_approved_skill_context():
+    prompt = _deep_agent_prompt(
+        DeepProjectIntelligenceRequest(
+            userId="user-1",
+            projectId=43,
+            sessionId="session-1",
+            question="What is the current risk/status on this project?",
+            approvedSkillContext=(
+                "## Approved Skill Library Context\n\n"
+                "### Chase project schedule risks (v1, schedule, medium risk)"
+            ),
+        ),
+        DeepProject(id=43, name="Westfield Collective"),
+        [],
+        [],
+    )
+
+    assert "Approved project Skill Library context" in prompt
+    assert "Chase project schedule risks" in prompt
 
 
 def test_deep_agents_runtime_attaches_harness_options_and_subagent_skills(monkeypatch):
@@ -790,6 +814,27 @@ def test_executive_deep_agents_runtime_can_synthesize_business_packet():
     assert response.answer == "Executive synthesis from Deep Agents."
     assert response.tool_trace[-1].tool == "deepagents_runtime"
     assert response.tool_trace[-1].status == "success"
+    assert response.approved_skill_context is None
+
+
+def test_executive_deep_agent_prompt_includes_approved_skill_context():
+    prompt = _deep_agent_executive_prompt(
+        DeepExecutiveIntelligenceRequest(
+            userId="user-1",
+            sessionId="session-1",
+            question="What business risks need attention?",
+            approvedSkillContext=(
+                "## Approved Skill Library Context\n\n"
+                "### Executive task triage (v1, task, low risk)"
+            ),
+        ),
+        DeepOrganization(name="Alleato"),
+        [],
+        [],
+    )
+
+    assert "Approved executive Skill Library context" in prompt
+    assert "Executive task triage" in prompt
 
 
 def test_executive_prompt_adds_waiting_on_management_structure():
@@ -969,6 +1014,10 @@ def test_deep_agent_endpoint_returns_contract_packet(client, mock_supabase_store
                 "projectId": 43,
                 "sessionId": "session-1",
                 "question": "What is the current risk/status on this project?",
+                "approvedSkillContext": (
+                    "## Approved Skill Library Context\n\n"
+                    "### Chase project schedule risks"
+                ),
             },
         )
     finally:
@@ -983,6 +1032,7 @@ def test_deep_agent_endpoint_returns_contract_packet(client, mock_supabase_store
     assert data["sourcesChecked"][0]["status"] == "missing"
     assert data["toolTrace"][0]["tool"] == "project_lookup"
     assert data["recommendedActions"][0]["ownerRole"] == "AI/backend"
+    assert "Chase project schedule risks" in data["approvedSkillContext"]
 
 
 def test_deep_agent_executive_endpoint_returns_contract_packet(client, mock_supabase_store, monkeypatch):
@@ -999,6 +1049,10 @@ def test_deep_agent_executive_endpoint_returns_contract_packet(client, mock_supa
                 "userId": "user-1",
                 "sessionId": "session-1",
                 "question": "What business risks need attention?",
+                "approvedSkillContext": (
+                    "## Approved Skill Library Context\n\n"
+                    "### Executive task triage"
+                ),
             },
         )
     finally:
@@ -1014,6 +1068,7 @@ def test_deep_agent_executive_endpoint_returns_contract_packet(client, mock_supa
     assert data["sourcesChecked"][0]["status"] == "missing"
     assert data["toolTrace"][0]["tool"] == "source_client"
     assert data["recommendedActions"][0]["ownerRole"] == "Operations"
+    assert "Executive task triage" in data["approvedSkillContext"]
 
 
 def test_deep_agent_tool_inventory_endpoint_reports_active_tools(client, monkeypatch):
