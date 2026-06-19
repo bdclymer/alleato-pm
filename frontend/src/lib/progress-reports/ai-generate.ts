@@ -128,7 +128,7 @@ async function loadProjectReportSuggestions(
   weekStart: string,
   weekEnd: string,
 ): Promise<ProjectReportSuggestionInput[]> {
-  const untyped = db as UntypedSupabaseReader;
+  const untyped = db as unknown as UntypedSupabaseReader;
   const { data, error } = await untyped
     .from("project_report_suggestions")
     .select("title, report_type, business_date, week_start_date, suggestion_payload, confidence")

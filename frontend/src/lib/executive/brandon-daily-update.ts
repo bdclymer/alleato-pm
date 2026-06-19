@@ -1092,7 +1092,7 @@ function changeCandidateItem(
 async function loadOperatingRecordBriefItems(
   cutoffIso: string,
 ): Promise<OperatingRecordBriefResult> {
-  const supabase = createServiceClient() as UntypedSupabaseReader;
+  const supabase = createServiceClient() as unknown as UntypedSupabaseReader;
   const sections: BrandonDailyUpdatePacket["sections"] = {
     needsBrandon: [],
     waitingOnOthers: [],

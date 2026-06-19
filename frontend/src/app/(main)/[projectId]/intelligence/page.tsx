@@ -437,7 +437,7 @@ async function loadOperatingRecordState(
   supabase: ReturnType<typeof createServiceClient>,
   projectId: number,
 ): Promise<OperatingRecordState> {
-  const db = supabase as UntypedSupabaseReader;
+  const db = supabase as unknown as UntypedSupabaseReader;
 
   const currentStateResult = await db
     .from("project_current_state")

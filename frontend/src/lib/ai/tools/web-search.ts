@@ -9,7 +9,7 @@
  * clean, pre-processed results rather than raw HTML, ideal for LLM consumption.
  */
 
-import { tool } from "ai";
+import { tool, type ToolSet } from "ai";
 import { z } from "zod";
 import { tavily } from "@tavily/core";
 
@@ -54,7 +54,9 @@ function withTrace<TInput extends Record<string, unknown>, TResult>(
   };
 }
 
-export function createWebSearchTools(options: CreateWebSearchToolsOptions = {}) {
+export function createWebSearchTools(
+  options: CreateWebSearchToolsOptions = {},
+): ToolSet {
   const apiKey = process.env.TAVILY_API_KEY;
   if (!apiKey) {
     // Return empty tools if no key configured — agents degrade gracefully

@@ -68,7 +68,7 @@ function computeLayout(agents: AiAgent[]): { nodes: Node[]; edges: Edge[] } {
         id: agent.slug,
         type: "agentNode",
         position: { x: startX + i * (NODE_W + H_GAP), y: row * (NODE_H + V_GAP) },
-        data: agent,
+        data: agent as unknown as Record<string, unknown>,
       });
     });
   });
@@ -160,7 +160,7 @@ export function AiAgentDag({ agents, onNodeClick, selectedAgentId }: AiAgentDagP
       baseNodes.map((n) => ({
         ...n,
         selected: n.id === selectedAgentId,
-        data: { ...(n.data as AiAgent), onClick: onNodeClick },
+        data: { ...(n.data as unknown as AiAgent), onClick: onNodeClick },
       })),
     [baseNodes, selectedAgentId, onNodeClick],
   );

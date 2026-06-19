@@ -1,6 +1,7 @@
 "use client";
 
-import { Icons } from "@/components/icons";
+import { GripVertical } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { KanbanColumn, KanbanColumnHandle } from "@/components/ui/kanban";
@@ -39,7 +40,7 @@ export function TaskColumn({ value, tasks, ...props }: TaskColumnProps) {
         </div>
         <KanbanColumnHandle asChild>
           <Button variant="ghost" size="icon">
-            <Icons.gripVertical className="h-4 w-4" />
+            <GripVertical className="h-4 w-4" />
           </Button>
         </KanbanColumnHandle>
       </div>

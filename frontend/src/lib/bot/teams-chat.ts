@@ -190,7 +190,7 @@ async function logCheckpoint(
       supabase_user_id: ctx.supabaseUserId ?? null,
       thread_id: ctx.threadId ?? null,
       message_preview: ctx.messagePreview ?? null,
-      extra: ctx.extra ?? {},
+      extra: (ctx.extra ?? {}) as Json,
     });
   } catch (error) {
     console.error("[teams-bot] debug log insert failed", {

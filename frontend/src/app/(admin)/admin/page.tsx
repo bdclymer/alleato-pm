@@ -26,6 +26,7 @@ import {
   Palette,
   PanelTop,
   Route,
+  Shield,
   Sparkles,
   Table2,
   Terminal,
