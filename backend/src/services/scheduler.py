@@ -330,19 +330,34 @@ def init_scheduler() -> None:
         )
 
     if graph_sync_enabled:
-        graph_interval_minutes = max(5, int(os.getenv("GRAPH_SYNC_INTERVAL_MINUTES", "60")))
-        scheduler.add_job(
-            run_graph_sync_job,
-            IntervalTrigger(minutes=graph_interval_minutes),
-            id="graph_sync",
-            name="Microsoft Graph Sync (Outlook / Teams / OneDrive)",
-            replace_existing=True,
-            max_instances=1,
-        )
-        logger.info(
-            "[Scheduler] Microsoft Graph sync every %d min",
-            graph_interval_minutes,
-        )
+        # The heavy full mailbox sweep (run_graph_sync: Outlook/Teams/OneDrive for
+        # ALL mailboxes) is the main DB-pressure source. It is decoupled from the
+        # lightweight webhook drain so we can run real-time webhook freshness
+        # WITHOUT the periodic heavy sweep. Set GRAPH_FULL_SYNC_JOB_ENABLED=false to
+        # keep webhook ingestion + drain + embedding on while the heavy sweep stays
+        # off. Defaults to enabled for backward compatibility.
+        full_sync_job_enabled = os.getenv(
+            "GRAPH_FULL_SYNC_JOB_ENABLED", "true"
+        ).strip().lower() not in ("0", "false", "no", "off")
+        if full_sync_job_enabled:
+            graph_interval_minutes = max(5, int(os.getenv("GRAPH_SYNC_INTERVAL_MINUTES", "60")))
+            scheduler.add_job(
+                run_graph_sync_job,
+                IntervalTrigger(minutes=graph_interval_minutes),
+                id="graph_sync",
+                name="Microsoft Graph Sync (Outlook / Teams / OneDrive)",
+                replace_existing=True,
+                max_instances=1,
+            )
+            logger.info(
+                "[Scheduler] Microsoft Graph sync every %d min",
+                graph_interval_minutes,
+            )
+        else:
+            logger.info(
+                "[Scheduler] Heavy Microsoft Graph full sweep DISABLED "
+                "(GRAPH_FULL_SYNC_JOB_ENABLED=false) — webhook drain + embedding remain active."
+            )
 
         if os.getenv("GRAPH_EMBEDDING_ENABLED", "true").lower() not in ("0", "false", "no"):
             graph_embedding_interval_minutes = max(
