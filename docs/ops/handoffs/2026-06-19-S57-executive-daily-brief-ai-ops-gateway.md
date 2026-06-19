@@ -41,6 +41,8 @@
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/executive-daily-brief-workflow.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/tool-registry.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/__tests__/workflow-pack.test.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/executive-daily-brief-evidence.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts`
 7) Commands run and outcome (pass/fail counts):
    - Pass: read pasted ChatGPT recommendation from Codex attachment.
    - Pass: read `docs/codebase-map/hermes-vs-openclaw-comparison.md`.
@@ -104,6 +106,10 @@
    - Pass: packet source inspection found 4 surfaced items and 1 citation per item in `daily_recaps.briefing_packet`.
    - Pass: source health inspection found email missing, Teams loaded count 3, meeting loaded count 15, and document loaded count 63.
    - Pass: Playwright-authenticated browser proof of `/ai-work-runs` shows run `676ca1fa-f79d-4b74-9bee-fe7dd6375b0e`, `succeeded`, `dry run`, `brief packet`, `teams payload`, Delivery Attempts, and Evidence Rows.
+   - Pass: extracted claim-level Daily Brief evidence policy into `executive-daily-brief-evidence.ts` so unit tests validate source-ref requirements without importing the model/provider stack.
+   - Pass: `cd frontend && npx eslint src/lib/ai-ops/executive-daily-brief-evidence.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts`.
+   - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand` passed 3 suites / 17 tests.
+   - Pass: `npm run rag:verify:executive-daily-brief-gateway`.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
@@ -136,6 +142,8 @@
    - `frontend/src/lib/ai-ops/executive-daily-brief-workflow.ts`
    - `frontend/src/lib/ai-ops/tool-registry.ts`
    - `frontend/src/lib/ai-ops/__tests__/workflow-pack.test.ts`
+   - `frontend/src/lib/ai-ops/executive-daily-brief-evidence.ts`
+   - `frontend/src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts`
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-generated-preview/page-text-playwright.txt`
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-generated-preview/ai-work-runs-generated-preview-playwright.png`
 9) Top 3 findings (frontend-visible issues first):
@@ -145,8 +153,9 @@
    - New generated Daily Brief runs now set `ai_work_runs.daily_recap_id` when a `daily_recaps` draft id is available, and `/ai-work-runs` shows that generated artifact reference.
    - First-class AI Ops run steps, artifacts, and delivery attempts now exist in the database, are exposed by `/api/admin/ai-work-runs`, and are visible in `/ai-work-runs`.
    - The Executive Daily Brief workflow pack, source adapter contract, and tool registry/policy are centralized and used by run construction.
+   - Claim-level evidence guardrails now fail before ledger writes when surfaced `needsBrandon`, `waitingOnOthers`, or `importantUpdates` items lack structured citation evidence.
    - A real generated no-send preview run is proven in the ledger and visible in `/ai-work-runs` with packet artifact, Teams payload artifact, dry-run delivery attempt, source health, and evidence rows.
-10) Recommended next action (one line): Close remaining source adapter execution/failure behavior, email delivery disposition, and claim-level source-ref guardrail gaps.
+10) Recommended next action (one line): Close remaining source adapter execution/failure behavior, email delivery disposition, scheduled-run proof, and legacy retirement gaps.
 11) Handoff file path: `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
 12) Migration ledger evidence: `npm run db:migrations:verify-applied -- supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql` passed for version `20260619183000`.
 <!-- markdownlint-enable MD029 MD034 -->
@@ -162,6 +171,7 @@
   - `14c489d3-a9d8-47bb-b98a-5191d64566d8` recorded first-class run steps/artifacts/delivery attempts, migration/type evidence, UI proof, and unrelated verification blockers.
   - `d2280aa3-e2cc-4282-aec4-84839d6840aa` recorded workflow pack, source adapter contract, tool policy, disabled delivery tool hiding, and remaining proof gaps.
   - `e4027597-e511-46d9-9b18-c49661505d11` recorded generated no-send preview proof, artifact/delivery/source-health readback, browser proof, and remaining gaps.
+  - Pending: claim-level evidence-policy guardrail comment after commit/push.
 - Completion/blocker comment: None yet.
 
 ## Current Status
@@ -174,16 +184,16 @@ guardrail, existing `daily_recaps` artifact linkage through
 `ai_work_runs.daily_recap_id`, first-class run steps/artifacts/delivery attempts,
 the workflow pack/source-adapter/tool-policy layer, and a real generated no-send
 preview proof are implemented with focused tests/lint, migration ledger
-verification, SQL readback, and authenticated `/ai-work-runs` browser evidence.
-The workflow is not complete until live adapter failure behavior, email delivery
-disposition, stricter claim-level source-ref guardrails, and remaining legacy
-retirement gaps are complete.
+verification, SQL readback, authenticated `/ai-work-runs` browser evidence, and
+claim-level evidence-policy unit coverage. The workflow is not complete until
+live adapter failure behavior, email delivery disposition, scheduled-run proof,
+and remaining legacy retirement gaps are complete.
 
 ## Exact Next Step
 
 Close remaining source adapter execution/failure behavior, email delivery
-disposition, and claim-level source-ref guardrail gaps without weakening the
-canonical ledger path.
+disposition, scheduled-run proof, and legacy retirement gaps without weakening
+the canonical ledger path.
 
 ## Known Pitfalls
 
@@ -217,6 +227,8 @@ cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/co
 npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema public
 cd frontend && npx eslint src/lib/ai-ops/contracts.ts src/lib/ai-ops/ledger.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/lib/ai/tools/executive-brief-tools.ts src/app/api/executive/daily-brief/preview-teams/route.ts src/app/api/admin/owner-briefing/send-test/route.ts src/app/api/admin/ai-work-runs/route.ts 'src/app/(admin)/ai-work-runs/ai-work-runs-client.tsx'
 cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand
+cd frontend && npx eslint src/lib/ai-ops/executive-daily-brief-evidence.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts
+cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand
 ```
 
 ## Evidence
@@ -239,3 +251,5 @@ cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/co
 - Gateway guardrail: `scripts/verify/verify_executive_daily_brief_gateway.mjs`
 - Admin run API: `frontend/src/app/api/admin/ai-work-runs/route.ts`
 - Admin run UI: `frontend/src/app/(admin)/ai-work-runs/ai-work-runs-client.tsx`
+- Evidence policy: `frontend/src/lib/ai-ops/executive-daily-brief-evidence.ts`
+- Evidence policy tests: `frontend/src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts`

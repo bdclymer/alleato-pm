@@ -5,6 +5,10 @@ import type {
   EvidenceRef,
   SourceHealthSnapshot,
 } from "./contracts";
+import {
+  assertExecutiveBriefingDraftEvidence,
+  evidenceRefsFromDraft,
+} from "./executive-daily-brief-evidence";
 import { createAiOpsLedger } from "./ledger";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
@@ -163,43 +167,6 @@ function sourceHealthFromDraft(
     warning: source.warning ?? null,
     metadata: { label: source.label },
   }));
-}
-
-export function evidenceRefsFromDraft(
-  draft: ExecutiveBriefingDraft,
-): EvidenceRef[] {
-  const items = [
-    ...draft.packet.sections.needsBrandon,
-    ...draft.packet.sections.waitingOnOthers,
-    ...draft.packet.sections.importantUpdates,
-  ];
-
-  return items.flatMap((item, index) =>
-    item.citations.map((citation, citationIndex) => ({
-      sourceFamily: sourceFamily(citation.source),
-      sourceId:
-        citation.sourceId ??
-        item.sourceId ??
-        `${draft.id}:${index + 1}:${citationIndex + 1}`,
-      sourceTitle: citation.sourceDetail || item.sourceDetail || item.title,
-      sourceUrl: citation.sourceUrl ?? item.sourceUrl ?? null,
-      occurredAt: toIsoOrNull(citation.date),
-      excerpt:
-        citation.evidence ??
-        item.evidence ??
-        item.evidenceFacts?.[0] ??
-        item.summary,
-      confidence: "unknown",
-      projectId: item.projectInternalId ?? null,
-      projectLabel: item.project,
-      metadata: {
-        briefId: draft.id,
-        recapDate: draft.recapDate,
-        itemTitle: item.title,
-        citationIndex,
-      },
-    })),
-  );
 }
 
 function evidenceRefsFromSourceSummary(
@@ -435,7 +402,7 @@ export async function recordDraftEvidence(
   draft: ExecutiveBriefingDraft,
 ) {
   const ledger = createAiOpsLedger(createServiceClient());
-  const sourceRefs = evidenceRefsFromDraft(draft);
+  const sourceRefs = assertExecutiveBriefingDraftEvidence(draft);
   await ledger.insertEvidenceRefs(context.runId, sourceRefs);
   const artifact = await ledger.createArtifact({
     runId: context.runId,

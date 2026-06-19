@@ -264,18 +264,18 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [ ] Packet schema includes structured `sourceRefs` for every surfaced claim.
 - [ ] `sourceRefs` include source family, id, title, URL or internal route,
       excerpt, occurred-at, confidence, and project linkage.
-- [ ] Every `needsBrandon` item has at least one source ref.
-- [ ] Every `waitingOnOthers` item has at least one source ref.
-- [ ] Every `importantUpdates` item has at least one source ref.
+- [x] Every `needsBrandon` item has at least one source ref.
+- [x] Every `waitingOnOthers` item has at least one source ref.
+- [x] Every `importantUpdates` item has at least one source ref.
 - [ ] Financial claims include Acumatica/source ref or are excluded.
 - [ ] Meeting claims include transcript/summary/source ref or are excluded.
 - [ ] Email claims include email/source ref or are excluded.
 - [ ] Teams claims include message/thread/source ref or are excluded.
 - [ ] Document/RAG claims include document/chunk/source ref or are excluded.
 - [ ] Placeholder-only source panels count as incomplete.
-- [ ] Generated packet stores source coverage and source health.
+- [x] Generated packet stores source coverage and source health.
 - [x] Generated packet can be inspected from the run ledger.
-- [ ] Tests fail if a claim lacks source refs.
+- [x] Tests fail if a claim lacks source refs.
 
 ## Delivery Checklist
 
@@ -295,7 +295,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 
 ## Operations Control UI Checklist
 
-- [ ] `/ai-work-runs` reads the canonical run ledger.
+- [x] `/ai-work-runs` reads the canonical run ledger.
 - [ ] UI shows scheduled, preview, dry-run, skipped, failed, disabled, partial,
       and succeeded runs.
 - [ ] UI shows source health per run.
@@ -305,7 +305,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [x] UI shows exact failure code/message and owning step.
 - [ ] UI shows retryability and next action.
 - [x] UI does not imply success when a run is skipped, disabled, or partial.
-- [ ] Browser verification proves a real generated brief appears without direct
+- [x] Browser verification proves a real generated brief appears without direct
       Supabase querying.
 
 ## Legacy Retirement Checklist
@@ -327,7 +327,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [x] Unit tests cover source adapter health states.
 - [x] Unit tests cover tool policy filtering.
 - [x] Unit tests cover workflow pack validation.
-- [ ] Unit tests cover packet source-ref requirements.
+- [x] Unit tests cover packet source-ref requirements.
 - [ ] Integration tests cover preview generation writing `ai_work_runs`.
 - [ ] Integration tests cover scheduled generation writing `ai_work_runs`.
 - [ ] Integration tests cover dry-run delivery writing delivery attempts.
@@ -358,8 +358,8 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [x] Source health manually inspected for loaded/stale/missing/degraded states.
 - [x] End-to-end proof captured with exact run id, artifact id, packet id,
       source count, delivery status, and screenshot/report path.
-- [ ] Long-running full checks delegated to cheaper sub-agent if needed.
-- [ ] Known unrelated failures documented with exact command, error, owner files,
+- [x] Long-running full checks delegated to cheaper sub-agent if needed.
+- [x] Known unrelated failures documented with exact command, error, owner files,
       and relation to this task.
 
 ## Acceptance Criteria
@@ -401,6 +401,9 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 | Run artifact tests    | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand`                                  | Passed  | 2 suites, 17 tests passed. Tests cover step, artifact, delivery-attempt mapping and pre-write validation. |
 | Workflow pack lint    | `cd frontend && npx eslint src/lib/ai-ops/source-adapters.ts src/lib/ai-ops/executive-daily-brief-workflow.ts src/lib/ai-ops/tool-registry.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts src/lib/ai-ops/__tests__/contracts.test.ts && npx eslint --no-ignore scripts/run-executive-daily-brief.ts` | Passed | Source adapters, workflow pack, tool registry, run helper, workflow tests, and scheduled runner lint cleanly. |
 | Workflow pack tests   | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts --runInBand` | Passed | 3 suites, 22 tests passed. Tests prove source adapter health states, workflow pack validation, policy channel filtering, forbidden tool hiding, and disabled delivery send-tool hiding. |
+| Evidence policy lint  | `cd frontend && npx eslint src/lib/ai-ops/executive-daily-brief-evidence.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts` | Passed | Evidence-policy module, run-ledger integration, and source-ref guardrail tests lint cleanly. |
+| Evidence policy tests | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand` | Passed | 3 suites, 17 tests passed. Tests prove all surfaced sections require structured citation evidence and missing/malformed evidence fails before ledger writes. |
+| Gateway guardrail rerun | `npm run rag:verify:executive-daily-brief-gateway` | Passed | Raw app-route generation bypass guard still passes after evidence-policy extraction. |
 | Runner no-write smoke | `cd frontend && npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:00:00.000Z`                                                                                              | Passed  | Kill switch off; script loaded and exited with `executive_daily_brief_disabled`, no send/write.    |
 | Disabled send smoke   | `curl -sS -X POST http://localhost:3001/api/executive/daily-brief/send-teams -H 'content-type: application/json' -d '{}'`                                                                 | Passed  | Kill switch off; route returned disabled state with run id `b88b3b30-b766-4aa2-8e02-84ef175e207b`. |
 | Disabled run SQL readback | `select r.id, r.status, r.delivery_status, a.status, a.failure_code, s.step_type, s.status ... where r.id = 'b88b3b30-b766-4aa2-8e02-84ef175e207b'` | Passed | Readback returned `skipped`, `disabled`, delivery attempt `disabled`, failure code `EXECUTIVE_DAILY_BRIEF_DISABLED`, and delivery step `blocked`. |
