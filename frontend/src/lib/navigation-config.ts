@@ -10,6 +10,7 @@ import {
   Briefcase,
   Bug,
   Building2,
+  Compass,
   FlaskConical,
   Calendar,
   Camera,
@@ -40,6 +41,12 @@ import {
 } from "lucide-react";
 import { hasModulePermission } from "@/hooks/use-project-permissions";
 
+/**
+ * The single owner of the workspace. Tools flagged `ownerOnly` are visible only
+ * to this user — used to hide internal vision/roadmap surfaces from the team.
+ */
+export const OWNER_EMAIL = "megan@megankharrison.com";
+
 export type PermissionModule =
   | "directory"
   | "budget"
@@ -68,6 +75,8 @@ export interface NavigationTool {
   developerOnly?: boolean;
   /** If true, only visible to users with user_type === "subcontractor". */
   subcontractorOnly?: boolean;
+  /** If true, only visible to the workspace owner (OWNER_EMAIL). */
+  ownerOnly?: boolean;
 }
 
 // Extended type for header navigation with icons and descriptions
@@ -128,6 +137,14 @@ export const companyWideHeaderTools: HeaderNavigationTool[] = [
     icon: Shield,
     description: "Review Skill Library records",
     developerOnly: true,
+  },
+  {
+    name: "AI Vision",
+    path: "ai-vision",
+    requiresProject: false,
+    icon: Compass,
+    description: "The AI build vision, agent team, and tool roadmap",
+    ownerOnly: true,
   },
   {
     name: "Projects",
@@ -328,6 +345,7 @@ export const companyWideToolSections: CompanyWideToolSection[] = [
     label: "AI",
     toolNames: [
       "AI",
+      "AI Vision",
       "Skill Library",
       "Teach Alleato",
       "AI Learning Promotions",
@@ -468,8 +486,12 @@ export function filterToolsByPermission<T extends NavigationTool>(
   isAppAdmin: boolean,
   userType: string | null,
   isDeveloper = userType === "developer",
+  userEmail: string | null = null,
 ): T[] {
   return tools.filter((tool) => {
+    // Owner-only tools are hidden everywhere unless the caller supplies the
+    // owner's email. Callers that don't pass userEmail never surface them.
+    if (tool.ownerOnly && userEmail !== OWNER_EMAIL) return false;
     if (tool.onlyWithoutProject && projectId) return false;
     // Hide project-scoped tools when no project selected
     if (tool.requiresProject && !projectId) return false;

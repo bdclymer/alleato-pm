@@ -327,6 +327,7 @@ export function SiteHeader() {
             isAppAdmin={isAppAdmin}
             userType={userType}
             isDeveloper={isDeveloper}
+            userEmail={user?.email ?? null}
           />
           <AiChatButton />
           <Link
@@ -627,6 +628,7 @@ function ToolsDropdown({
   isAppAdmin,
   userType,
   isDeveloper,
+  userEmail,
 }: {
   projectId: number | null;
   currentProject: {
@@ -644,6 +646,7 @@ function ToolsDropdown({
   isAppAdmin: boolean;
   userType: string | null;
   isDeveloper: boolean;
+  userEmail: string | null;
 }) {
   const [open, setOpen] = React.useState(false);
   const [showCompanyTools, setShowCompanyTools] = React.useState(false);
@@ -666,6 +669,7 @@ function ToolsDropdown({
     isAppAdmin,
     userType,
     isDeveloper,
+    userEmail,
   );
   const visibleDeveloperAdminTools = filterToolsByPermission(
     isDeveloper ? developerCompanyAdminTools : [],
@@ -872,6 +876,9 @@ function CompanyToolsPanel({
                 (candidate) => candidate.name === toolName,
               );
               if (!tool) return null;
+              // Owner-only tools are hidden outright (not greyed) when the
+              // current user isn't the owner — they never reach visibleTools.
+              if (tool.ownerOnly && !allVisibleTools.includes(tool)) return null;
               return (
                 <ToolItem
                   key={`${tool.path}:${tool.name}`}

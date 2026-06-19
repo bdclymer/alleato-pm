@@ -44,6 +44,7 @@ import {
   developerCompanyAdminTools,
   buildToolUrl,
   extractProjectId,
+  OWNER_EMAIL,
   type NavigationTool,
   type SidebarNavGroup,
 } from "@/lib/navigation-config"
@@ -365,6 +366,8 @@ function ExpandedCompanyWideTools({
         const sectionTools = section.toolNames
           .map((toolName) => tools.find((tool) => tool.name === toolName))
           .filter((tool): tool is NavigationTool => Boolean(tool))
+          // Owner-only tools are hidden outright (not greyed) for non-owners.
+          .filter((tool) => !tool.ownerOnly || visibleToolSet.has(tool))
 
         if (sectionTools.length === 0) return null
 
@@ -557,6 +560,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const filterTools = React.useCallback(
     (tools: NavigationTool[]): NavigationTool[] => {
       return tools.filter((tool) => {
+        if (tool.ownerOnly && user?.email !== OWNER_EMAIL) return false
         if (tool.onlyWithoutProject && projectId) return false;
         if (tool.requiresProject && !projectId) return false
         if (tool.developerOnly && !isDeveloper) return false
@@ -570,7 +574,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         return true
       })
     },
-    [projectId, permissions, isAppAdmin, userType, isSubcontractor, isDeveloper]
+    [projectId, permissions, isAppAdmin, userType, isSubcontractor, isDeveloper, user?.email]
   )
 
   // Check if a group has any active child
