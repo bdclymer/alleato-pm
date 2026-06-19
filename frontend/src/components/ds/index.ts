@@ -53,6 +53,18 @@ export {
   kanbanPriorityDotClasses,
 } from "./kanban";
 export type { KanbanTone } from "./kanban";
+export {
+  InspectorRail,
+  InspectorSection,
+  PropertyList,
+  PropertyRow,
+} from "./inspector";
+export type {
+  InspectorRailProps,
+  InspectorSectionProps,
+  PropertyListProps,
+  PropertyRowProps,
+} from "./inspector";
 export { PageBadge } from "./page-badge";
 export { IconBadge } from "./icon-badge";
 export type { IconBadgeProps, IconBadgeSize } from "./icon-badge";

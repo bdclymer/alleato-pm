@@ -52,7 +52,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { StatusBadge } from "@/components/ds";
+import {
+  InspectorRail,
+  InspectorSection,
+  PropertyList,
+  PropertyRow,
+  StatusBadge,
+} from "@/components/ds";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 import {
@@ -507,23 +513,6 @@ function TaskColumn({
   );
 }
 
-function DetailRow({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="grid gap-1 border-b border-border/60 py-3 last:border-b-0 sm:grid-cols-[9rem_1fr] sm:gap-4">
-      <dt className="text-xs font-medium uppercase text-muted-foreground">
-        {label}
-      </dt>
-      <dd className="min-w-0 text-sm text-foreground">{children}</dd>
-    </div>
-  );
-}
-
 function TaskDetailDialog({
   projectId,
   task,
@@ -644,7 +633,7 @@ function TaskDetailDialog({
           </ModalHeader>
 
           <div className="max-h-[calc(100svh-12rem)] overflow-y-auto px-6 py-5">
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
               <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
@@ -680,200 +669,183 @@ function TaskDetailDialog({
                     className="min-h-32 resize-y"
                   />
                 </div>
-
-                <dl className="rounded-md bg-muted/30 px-4">
-                  <DetailRow label="Status">
-                    <Select
-                      value={draft.status}
-                      onValueChange={(value) =>
-                        setDraft((current) => ({ ...current, status: value }))
-                      }
-                      disabled={saving || deleting}
-                    >
-                      <SelectTrigger className="h-8 max-w-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TASK_STATUS_VALUES.map((value) => (
-                          <SelectItem key={value} value={value}>
-                            {value.replace(/_/g, " ")}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </DetailRow>
-
-                  <DetailRow label="Priority">
-                    <Select
-                      value={draft.priority}
-                      onValueChange={(value) =>
-                        setDraft((current) => ({ ...current, priority: value }))
-                      }
-                      disabled={saving || deleting}
-                    >
-                      <SelectTrigger className="h-8 max-w-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={NO_PRIORITY}>Not set</SelectItem>
-                        {TASK_PRIORITY_VALUES.map((value) => (
-                          <SelectItem key={value} value={value}>
-                            {value}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </DetailRow>
-
-                  <DetailRow label="Assignee">
-                    <Select
-                      value={draft.assigneePersonId}
-                      onValueChange={(value) =>
-                        setDraft((current) => ({
-                          ...current,
-                          assigneePersonId: value,
-                        }))
-                      }
-                      disabled={saving || deleting}
-                    >
-                      <SelectTrigger className="h-8 max-w-xs">
-                        <SelectValue placeholder="Unassigned" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
-                        {employees.map((employee) => (
-                          <SelectItem key={employee.id} value={employee.id}>
-                            {employeeLabel(employee)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </DetailRow>
-
-                  <DetailRow label="Project">
-                    <Select
-                      value={draft.projectId}
-                      onValueChange={(value) =>
-                        setDraft((current) => ({
-                          ...current,
-                          projectId: value,
-                        }))
-                      }
-                      disabled={saving || deleting}
-                    >
-                      <SelectTrigger className="h-8 max-w-xs">
-                        <SelectValue placeholder="No project" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={NO_PROJECT}>No project</SelectItem>
-                        {projects.map((project) => (
-                          <SelectItem
-                            key={project.id}
-                            value={String(project.id)}
-                          >
-                            {projectLabel(project)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </DetailRow>
-
-                  <DetailRow label="Category">
-                    <Select
-                      value={draft.category}
-                      onValueChange={(value) =>
-                        setDraft((current) => ({ ...current, category: value }))
-                      }
-                      disabled={saving || deleting}
-                    >
-                      <SelectTrigger className="h-8 max-w-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={NO_CATEGORY}>Not set</SelectItem>
-                        {TASK_CATEGORIES.map((value) => (
-                          <SelectItem key={value} value={value}>
-                            {value}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </DetailRow>
-
-                  <DetailRow label="Due date">
-                    <Input
-                      type="date"
-                      value={draft.dueDate}
-                      onChange={(event) =>
-                        setDraft((current) => ({
-                          ...current,
-                          dueDate: event.target.value,
-                        }))
-                      }
-                      disabled={saving || deleting}
-                      className="h-8 max-w-xs"
-                    />
-                  </DetailRow>
-
-                  <DetailRow label="Created">
-                    {formatLongDate(task.created_at)}
-                  </DetailRow>
-                  <DetailRow label="Updated">
-                    {formatLongDate(task.updated_at)}
-                  </DetailRow>
-                  <DetailRow label="Source date">
-                    {formatLongDate(task.source_date)}
-                  </DetailRow>
-                  <DetailRow label="Generated">
-                    {task.extraction_model ||
-                      task.extraction_source ||
-                      task.extraction_prompt_version ||
-                      "Not tracked"}
-                  </DetailRow>
-                  <DetailRow label="Source">
-                    <div className="flex min-w-0 flex-wrap items-center gap-2">
-                      <span className="text-muted-foreground">
-                        {sourceLabel}
-                      </span>
-                      {sourceHref ? (
-                        <Button asChild variant="link" className="h-auto p-0">
-                          <a
-                            href={sourceHref}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <ArrowUpRight className="h-3.5 w-3.5" />
-                            {sourceTitle}
-                          </a>
-                        </Button>
-                      ) : (
-                        <span className="truncate">{sourceTitle}</span>
-                      )}
-                    </div>
-                  </DetailRow>
-                  <DetailRow label="IDs">
-                    <div className="space-y-1 text-xs text-muted-foreground">
-                      <p>Task: {task.id}</p>
-                      {task.metadata_id ? (
-                        <p>Source: {task.metadata_id}</p>
-                      ) : null}
-                      {task.source_chunk_id ? (
-                        <p>Chunk: {task.source_chunk_id}</p>
-                      ) : null}
-                      {task.segment_id ? (
-                        <p>Segment: {task.segment_id}</p>
-                      ) : null}
-                    </div>
-                  </DetailRow>
-                </dl>
               </div>
 
-              <aside className="space-y-4">
+              <InspectorRail>
+                <InspectorSection title="Properties">
+                  <PropertyList>
+                    <PropertyRow label="Status">
+                      <Select
+                        value={draft.status}
+                        onValueChange={(value) =>
+                          setDraft((current) => ({
+                            ...current,
+                            status: value,
+                          }))
+                        }
+                        disabled={saving || deleting}
+                      >
+                        <SelectTrigger className="h-8 w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TASK_STATUS_VALUES.map((value) => (
+                            <SelectItem key={value} value={value}>
+                              {value.replace(/_/g, " ")}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </PropertyRow>
+
+                    <PropertyRow label="Priority">
+                      <Select
+                        value={draft.priority}
+                        onValueChange={(value) =>
+                          setDraft((current) => ({
+                            ...current,
+                            priority: value,
+                          }))
+                        }
+                        disabled={saving || deleting}
+                      >
+                        <SelectTrigger className="h-8 w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={NO_PRIORITY}>Not set</SelectItem>
+                          {TASK_PRIORITY_VALUES.map((value) => (
+                            <SelectItem key={value} value={value}>
+                              {value}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </PropertyRow>
+
+                    <PropertyRow label="Assignee">
+                      <Select
+                        value={draft.assigneePersonId}
+                        onValueChange={(value) =>
+                          setDraft((current) => ({
+                            ...current,
+                            assigneePersonId: value,
+                          }))
+                        }
+                        disabled={saving || deleting}
+                      >
+                        <SelectTrigger className="h-8 w-full">
+                          <SelectValue placeholder="Unassigned" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
+                          {employees.map((employee) => (
+                            <SelectItem key={employee.id} value={employee.id}>
+                              {employeeLabel(employee)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </PropertyRow>
+
+                    <PropertyRow label="Project">
+                      <Select
+                        value={draft.projectId}
+                        onValueChange={(value) =>
+                          setDraft((current) => ({
+                            ...current,
+                            projectId: value,
+                          }))
+                        }
+                        disabled={saving || deleting}
+                      >
+                        <SelectTrigger className="h-8 w-full">
+                          <SelectValue placeholder="No project" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={NO_PROJECT}>No project</SelectItem>
+                          {projects.map((project) => (
+                            <SelectItem
+                              key={project.id}
+                              value={String(project.id)}
+                            >
+                              {projectLabel(project)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </PropertyRow>
+
+                    <PropertyRow label="Category">
+                      <Select
+                        value={draft.category}
+                        onValueChange={(value) =>
+                          setDraft((current) => ({
+                            ...current,
+                            category: value,
+                          }))
+                        }
+                        disabled={saving || deleting}
+                      >
+                        <SelectTrigger className="h-8 w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={NO_CATEGORY}>Not set</SelectItem>
+                          {TASK_CATEGORIES.map((value) => (
+                            <SelectItem key={value} value={value}>
+                              {value}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </PropertyRow>
+
+                    <PropertyRow label="Due date">
+                      <Input
+                        type="date"
+                        value={draft.dueDate}
+                        onChange={(event) =>
+                          setDraft((current) => ({
+                            ...current,
+                            dueDate: event.target.value,
+                          }))
+                        }
+                        disabled={saving || deleting}
+                        className="h-8 w-full"
+                      />
+                    </PropertyRow>
+
+                    <PropertyRow label="Source">
+                      <div className="flex min-w-0 flex-col gap-1">
+                        <span className="text-xs text-muted-foreground">
+                          {sourceLabel}
+                        </span>
+                        {sourceHref ? (
+                          <Button
+                            asChild
+                            variant="link"
+                            className="h-auto justify-start p-0 text-left"
+                          >
+                            <a
+                              href={sourceHref}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <ArrowUpRight />
+                              <span className="truncate">{sourceTitle}</span>
+                            </a>
+                          </Button>
+                        ) : (
+                          <span className="truncate">{sourceTitle}</span>
+                        )}
+                      </div>
+                    </PropertyRow>
+                  </PropertyList>
+                </InspectorSection>
+
                 {task.id && isAiGeneratedTask(task) ? (
-                  <section className="space-y-2">
-                    <p className="text-sm font-medium text-foreground">
-                      AI feedback
-                    </p>
+                  <InspectorSection title="AI feedback">
                     <TaskFeedbackButtons
                       projectId={getTaskProjectId(task)}
                       taskId={task.id}
@@ -882,11 +854,10 @@ function TaskDetailDialog({
                         void onDelete(task);
                       }}
                     />
-                  </section>
+                  </InspectorSection>
                 ) : null}
 
-                <section className="space-y-2">
-                  <p className="text-sm font-medium text-foreground">Context</p>
+                <InspectorSection title="Context">
                   {loading ? (
                     <div className="flex min-h-32 items-center text-sm text-muted-foreground">
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -901,8 +872,54 @@ function TaskDetailDialog({
                       No source context is available for this task.
                     </p>
                   )}
-                </section>
-              </aside>
+                </InspectorSection>
+
+                <InspectorSection title="Trace" defaultOpen={false}>
+                  <PropertyList>
+                    <PropertyRow label="Created">
+                      {formatLongDate(task.created_at)}
+                    </PropertyRow>
+                    <PropertyRow label="Updated">
+                      {formatLongDate(task.updated_at)}
+                    </PropertyRow>
+                    <PropertyRow label="Source date">
+                      {formatLongDate(task.source_date)}
+                    </PropertyRow>
+                    <PropertyRow label="Generated">
+                      {task.extraction_model ||
+                        task.extraction_source ||
+                        task.extraction_prompt_version ||
+                        "Not tracked"}
+                    </PropertyRow>
+                    <PropertyRow label="Task ID">
+                      <span className="break-all text-xs text-muted-foreground">
+                        {task.id}
+                      </span>
+                    </PropertyRow>
+                    {task.metadata_id ? (
+                      <PropertyRow label="Source ID">
+                        <span className="break-all text-xs text-muted-foreground">
+                          {task.metadata_id}
+                        </span>
+                      </PropertyRow>
+                    ) : null}
+                    {task.source_chunk_id ? (
+                      <PropertyRow label="Chunk ID">
+                        <span className="break-all text-xs text-muted-foreground">
+                          {task.source_chunk_id}
+                        </span>
+                      </PropertyRow>
+                    ) : null}
+                    {task.segment_id ? (
+                      <PropertyRow label="Segment ID">
+                        <span className="break-all text-xs text-muted-foreground">
+                          {task.segment_id}
+                        </span>
+                      </PropertyRow>
+                    ) : null}
+                  </PropertyList>
+                </InspectorSection>
+              </InspectorRail>
             </div>
           </div>
 
