@@ -5,6 +5,7 @@ export { FormGrid } from "./FormGrid";
 export { FormGridRow } from "./FormGridRow";
 export { FormTotalRow } from "./FormTotalRow";
 export { FormActions } from "./FormActions";
+export { FormSheet } from "./FormSheet";
 export { FormField, FormLayoutProvider } from "./FormField";
 export { TextField } from "./TextField";
 export { TextareaField } from "./TextareaField";
@@ -28,6 +29,7 @@ export { RHFDateField } from "./fields/RHFDateField";
 export { RHFMoneyField } from "./fields/RHFMoneyField";
 export { RHFComboboxField } from "./fields/RHFComboboxField";
 export { RHFFieldArrayTable } from "./fields/RHFFieldArrayTable";
+export { RHFFieldArrayRows } from "./fields/RHFFieldArrayRows";
 
 // New utilities
 export { buildOptions } from "./utils/buildOptions";

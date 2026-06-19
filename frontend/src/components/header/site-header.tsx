@@ -42,10 +42,9 @@ import { ProjectSelector } from "./project-selector";
 import { NotificationBell } from "./notification-bell";
 import { CommentsSidebarButton } from "./comments-sidebar-button";
 import { useProcorePanelStore } from "@/lib/stores/procore-panel-store";
-import {
-  feedbackTargetProps,
-} from "@/lib/admin-feedback/constants";
+import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
 import { HeaderUserMenu } from "./header-user-menu";
+import { HeaderSearch } from "./header-search";
 import { createClient } from "@/lib/supabase/client";
 import {
   getCurrentBrowserUser,
@@ -196,7 +195,8 @@ export function SiteHeader() {
       return;
     }
 
-    const cachedTitle = userManagementBreadcrumbTitleCache.get(userManagementUserId);
+    const cachedTitle =
+      userManagementBreadcrumbTitleCache.get(userManagementUserId);
     if (cachedTitle) {
       setUserManagementBreadcrumbTitle(cachedTitle);
       return;
@@ -205,9 +205,9 @@ export function SiteHeader() {
     let isActive = true;
     const loadUserTitle = async () => {
       try {
-        const response = await apiFetch<{ data: PermissionUserBreadcrumbRecord[] }>(
-          "/api/permissions/users",
-        );
+        const response = await apiFetch<{
+          data: PermissionUserBreadcrumbRecord[];
+        }>("/api/permissions/users");
         const userRecord = response.data.find(
           (item) =>
             item.personId === userManagementUserId ||
@@ -306,6 +306,16 @@ export function SiteHeader() {
 
         {/* ── Right: Tools dropdown + Project selector (desktop only) ── */}
         <div className="hidden md:flex items-center gap-2 flex-shrink-0">
+          <HeaderSearch
+            projectId={nav.projectId}
+            projects={nav.projects}
+            loadingProjects={nav.loadingProjects}
+            onFetchProjects={nav.fetchProjects}
+            permissions={permissions}
+            isAppAdmin={isAppAdmin}
+            userType={userType}
+            isDeveloper={isDeveloper}
+          />
           <ProjectSelector
             projectId={nav.projectId}
             currentProject={nav.currentProject}
@@ -341,7 +351,9 @@ export function SiteHeader() {
           <React.Suspense fallback={null}>
             <NotificationBell />
           </React.Suspense>
-          {user?.email === "megan@megankharrison.com" && <ProcoreReferenceToggle />}
+          {user?.email === "megan@megankharrison.com" && (
+            <ProcoreReferenceToggle />
+          )}
           <HeaderUserMenu
             user={user}
             projectId={nav.projectId}
@@ -544,7 +556,11 @@ function MobileNavOverlay({
           <div className="flex w-full flex-col items-center gap-5">
             {companyToolList.map((tool) => {
               const isDisabled = !companyTools.includes(tool);
-              const href = buildToolUrl(tool.path, projectId, tool.requiresProject);
+              const href = buildToolUrl(
+                tool.path,
+                projectId,
+                tool.requiresProject,
+              );
               const isActive = tool.name === activeToolName;
               return (
                 <Link
@@ -792,7 +808,10 @@ function ToolsDropdown({
             </>
           ) : (
             <div className="overflow-x-auto">
-              <div className="flex divide-x divide-border/40" style={{ minWidth: 760 }}>
+              <div
+                className="flex divide-x divide-border/40"
+                style={{ minWidth: 760 }}
+              >
                 {groups.map((group) => (
                   <ToolsGroup
                     key={group.id}
@@ -860,7 +879,9 @@ function CompanyToolsPanel({
               {section.label}
             </p>
             {section.toolNames.map((toolName) => {
-              const tool = allTools.find((candidate) => candidate.name === toolName);
+              const tool = allTools.find(
+                (candidate) => candidate.name === toolName,
+              );
               if (!tool) return null;
               return (
                 <ToolItem
@@ -940,17 +961,18 @@ function ToolsGroup({
       {group.tools
         .filter((tool) => !tool.developerOnly || visibleTools.includes(tool))
         .map((tool) => (
-        <ToolItem
-          key={`${tool.path}:${tool.name}`}
-          tool={tool}
-          projectId={projectId}
-          isActive={tool.name === activeToolName}
-          isDisabled={
-            (tool.requiresProject && !projectId) || !visibleTools.includes(tool)
-          }
-          onClose={onClose}
-        />
-      ))}
+          <ToolItem
+            key={`${tool.path}:${tool.name}`}
+            tool={tool}
+            projectId={projectId}
+            isActive={tool.name === activeToolName}
+            isDisabled={
+              (tool.requiresProject && !projectId) ||
+              !visibleTools.includes(tool)
+            }
+            onClose={onClose}
+          />
+        ))}
     </div>
   );
 }
@@ -991,7 +1013,7 @@ function ToolItem({
       )}
     >
       {Icon && (
-      <span
+        <span
           className={cn(
             "flex h-6 w-6 shrink-0 items-center justify-center",
             isActive
