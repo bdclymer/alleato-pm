@@ -46,6 +46,13 @@ type DeliveryAttemptReadback = {
   provider_message_id: string | null;
 };
 
+type PacketEvidenceSummary = {
+  itemCount: number;
+  sourceRefCount: number;
+  familyCounts: Record<string, number>;
+  excludedFamilies: string[];
+};
+
 const baseUrl = (
   process.env.EXECUTIVE_DAILY_BRIEF_INTEGRATION_BASE_URL ??
   process.env.PLAYWRIGHT_BASE_URL ??
@@ -205,6 +212,69 @@ async function countSteps(runId: string, stepType: string) {
   return count ?? 0;
 }
 
+function sectionItems(packet: JsonRecord): JsonRecord[] {
+  const sections = asRecord(packet.sections);
+  return [
+    ...(Array.isArray(sections.needsBrandon) ? sections.needsBrandon : []),
+    ...(Array.isArray(sections.waitingOnOthers)
+      ? sections.waitingOnOthers
+      : []),
+    ...(Array.isArray(sections.importantUpdates)
+      ? sections.importantUpdates
+      : []),
+  ].map(asRecord);
+}
+
+async function inspectPacketEvidence(
+  dailyRecapId: string,
+): Promise<PacketEvidenceSummary> {
+  const { data, error } = await createServiceClient()
+    .from("daily_recaps")
+    .select("briefing_packet")
+    .eq("id", dailyRecapId)
+    .single();
+
+  if (error) {
+    throw new Error(
+      `Failed to load daily_recaps packet ${dailyRecapId}: ${error.message}`,
+    );
+  }
+
+  const packet = asRecord(data.briefing_packet);
+  const items = sectionItems(packet);
+  const familyCounts: Record<string, number> = {};
+  let sourceRefCount = 0;
+
+  for (const item of items) {
+    const sourceRefs = Array.isArray(item.sourceRefs) ? item.sourceRefs : [];
+    assert(sourceRefs.length > 0, "A surfaced packet item has no sourceRefs.");
+    for (const rawRef of sourceRefs) {
+      const ref = asRecord(rawRef);
+      const family = String(ref.sourceFamily ?? "");
+      assert(family, "A sourceRef is missing sourceFamily.");
+      assert(ref.sourceId, `A ${family} sourceRef is missing sourceId.`);
+      assert(ref.sourceTitle, `A ${family} sourceRef is missing sourceTitle.`);
+      assert(ref.excerpt, `A ${family} sourceRef is missing excerpt.`);
+      assert(
+        ref.sourceUrl || ref.internalHref,
+        `A ${family} sourceRef is missing a sourceUrl or internalHref.`,
+      );
+      familyCounts[family] = (familyCounts[family] ?? 0) + 1;
+      sourceRefCount += 1;
+    }
+  }
+
+  const optionalFamilies = ["meeting", "fireflies", "email", "outlook", "teams"];
+  return {
+    itemCount: items.length,
+    sourceRefCount,
+    familyCounts,
+    excludedFamilies: optionalFamilies.filter(
+      (family) => !Object.prototype.hasOwnProperty.call(familyCounts, family),
+    ),
+  };
+}
+
 async function verifyPreviewAndDryRun() {
   const api = await request.newContext({
     baseURL: baseUrl,
@@ -234,6 +304,7 @@ async function verifyPreviewAndDryRun() {
     `Preview run ${runId} delivery_status was ${run.delivery_status}.`,
   );
   assert(run.daily_recap_id, `Preview run ${runId} did not link daily_recap_id.`);
+  const packetEvidence = await inspectPacketEvidence(run.daily_recap_id);
   assert(
     artifacts.some((artifact) => artifact.kind === "brief_packet"),
     `Preview run ${runId} did not write a brief_packet artifact.`,
@@ -251,7 +322,13 @@ async function verifyPreviewAndDryRun() {
   assert(sourceRows > 0, `Preview run ${runId} did not write evidence rows.`);
   assert(toolCallSteps > 0, `Preview run ${runId} did not write tool_call steps.`);
 
-  return { runId, sourceRows, artifactCount: artifacts.length, attemptCount: attempts.length };
+  return {
+    runId,
+    sourceRows,
+    artifactCount: artifacts.length,
+    attemptCount: attempts.length,
+    packetEvidence,
+  };
 }
 
 async function verifyDisabledDelivery() {
