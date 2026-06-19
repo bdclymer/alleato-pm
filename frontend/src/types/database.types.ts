@@ -2193,6 +2193,185 @@ export type Database = {
           },
         ]
       }
+      ai_agent_runs: {
+        Row: {
+          agent_id: string
+          completed_at: string | null
+          confidence_score: number | null
+          created_at: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          output_count: number | null
+          project_id: number | null
+          started_at: string | null
+          status: string | null
+          tokens_used: number | null
+        }
+        Insert: {
+          agent_id: string
+          completed_at?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          output_count?: number | null
+          project_id?: number | null
+          started_at?: string | null
+          status?: string | null
+          tokens_used?: number | null
+        }
+        Update: {
+          agent_id?: string
+          completed_at?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          output_count?: number | null
+          project_id?: number | null
+          started_at?: string | null
+          status?: string | null
+          tokens_used?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_runs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_runs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "ai_agent_runs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_runs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "ai_agent_runs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_runs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_runs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agents: {
+        Row: {
+          approval_required: boolean | null
+          blockers: string | null
+          confidence_threshold: number | null
+          created_at: string
+          data_freshness_requirement: string | null
+          data_sources: Json | null
+          dependencies: string[] | null
+          domain: string | null
+          estimated_effort: string | null
+          estimated_impact: string | null
+          failure_behavior: string | null
+          id: string
+          layer: string | null
+          name: string
+          notes: string | null
+          output_destination: string | null
+          output_type: string | null
+          priority_score: number | null
+          purpose: string | null
+          slug: string
+          status: string
+          success_metric: string | null
+          trigger_detail: string | null
+          trigger_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          approval_required?: boolean | null
+          blockers?: string | null
+          confidence_threshold?: number | null
+          created_at?: string
+          data_freshness_requirement?: string | null
+          data_sources?: Json | null
+          dependencies?: string[] | null
+          domain?: string | null
+          estimated_effort?: string | null
+          estimated_impact?: string | null
+          failure_behavior?: string | null
+          id?: string
+          layer?: string | null
+          name: string
+          notes?: string | null
+          output_destination?: string | null
+          output_type?: string | null
+          priority_score?: number | null
+          purpose?: string | null
+          slug: string
+          status?: string
+          success_metric?: string | null
+          trigger_detail?: string | null
+          trigger_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approval_required?: boolean | null
+          blockers?: string | null
+          confidence_threshold?: number | null
+          created_at?: string
+          data_freshness_requirement?: string | null
+          data_sources?: Json | null
+          dependencies?: string[] | null
+          domain?: string | null
+          estimated_effort?: string | null
+          estimated_impact?: string | null
+          failure_behavior?: string | null
+          id?: string
+          layer?: string | null
+          name?: string
+          notes?: string | null
+          output_destination?: string | null
+          output_type?: string | null
+          priority_score?: number | null
+          purpose?: string | null
+          slug?: string
+          status?: string
+          success_metric?: string | null
+          trigger_detail?: string | null
+          trigger_type?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ai_analysis_jobs: {
         Row: {
           completed_at: string | null
@@ -2487,223 +2666,6 @@ export type Database = {
             columns: ["target_id"]
             isOneToOne: false
             referencedRelation: "intelligence_targets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ai_skill_usage_events: {
-        Row: {
-          created_at: string
-          id: string
-          metadata: Json
-          outcome: string
-          project_id: number | null
-          session_id: string | null
-          skill_id: string
-          surface: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          metadata?: Json
-          outcome?: string
-          project_id?: number | null
-          session_id?: string | null
-          skill_id: string
-          surface: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          metadata?: Json
-          outcome?: string
-          project_id?: number | null
-          session_id?: string | null
-          skill_id?: string
-          surface?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ai_skill_usage_events_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_activity_view"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "ai_skill_usage_events_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_health_dashboard"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ai_skill_usage_events_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_issue_summary"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "ai_skill_usage_events_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ai_skill_usage_events_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects_with_counts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ai_skill_usage_events_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "submittal_project_dashboard"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ai_skill_usage_events_skill_id_fkey"
-            columns: ["skill_id"]
-            isOneToOne: false
-            referencedRelation: "ai_skills"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ai_skills: {
-        Row: {
-          body: string
-          category: string
-          created_at: string
-          examples: Json
-          id: string
-          instructions: string
-          last_used_at: string | null
-          metadata: Json
-          owner_user_id: string | null
-          project_id: number | null
-          review_notes: string | null
-          reviewed_at: string | null
-          reviewer_user_id: string | null
-          risk_level: string
-          scope_type: string
-          slug: string
-          source_event_ids: string[]
-          status: string
-          summary: string
-          supersedes_skill_id: string | null
-          title: string
-          updated_at: string
-          usage_count: number
-          version: number
-        }
-        Insert: {
-          body: string
-          category: string
-          created_at?: string
-          examples?: Json
-          id?: string
-          instructions: string
-          last_used_at?: string | null
-          metadata?: Json
-          owner_user_id?: string | null
-          project_id?: number | null
-          review_notes?: string | null
-          reviewed_at?: string | null
-          reviewer_user_id?: string | null
-          risk_level?: string
-          scope_type: string
-          slug: string
-          source_event_ids?: string[]
-          status?: string
-          summary: string
-          supersedes_skill_id?: string | null
-          title: string
-          updated_at?: string
-          usage_count?: number
-          version?: number
-        }
-        Update: {
-          body?: string
-          category?: string
-          created_at?: string
-          examples?: Json
-          id?: string
-          instructions?: string
-          last_used_at?: string | null
-          metadata?: Json
-          owner_user_id?: string | null
-          project_id?: number | null
-          review_notes?: string | null
-          reviewed_at?: string | null
-          reviewer_user_id?: string | null
-          risk_level?: string
-          scope_type?: string
-          slug?: string
-          source_event_ids?: string[]
-          status?: string
-          summary?: string
-          supersedes_skill_id?: string | null
-          title?: string
-          updated_at?: string
-          usage_count?: number
-          version?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ai_skills_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_activity_view"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "ai_skills_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_health_dashboard"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ai_skills_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_issue_summary"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "ai_skills_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ai_skills_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects_with_counts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ai_skills_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "submittal_project_dashboard"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ai_skills_supersedes_skill_id_fkey"
-            columns: ["supersedes_skill_id"]
-            isOneToOne: false
-            referencedRelation: "ai_skills"
             referencedColumns: ["id"]
           },
         ]
@@ -3335,6 +3297,223 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_skill_usage_events: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json
+          outcome: string
+          project_id: number | null
+          session_id: string | null
+          skill_id: string
+          surface: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json
+          outcome?: string
+          project_id?: number | null
+          session_id?: string | null
+          skill_id: string
+          surface: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json
+          outcome?: string
+          project_id?: number | null
+          session_id?: string | null
+          skill_id?: string
+          surface?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_skill_usage_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "ai_skill_usage_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_skill_usage_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "ai_skill_usage_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_skill_usage_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_skill_usage_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_skill_usage_events_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "ai_skills"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_skills: {
+        Row: {
+          body: string
+          category: string
+          created_at: string
+          examples: Json
+          id: string
+          instructions: string
+          last_used_at: string | null
+          metadata: Json
+          owner_user_id: string | null
+          project_id: number | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewer_user_id: string | null
+          risk_level: string
+          scope_type: string
+          slug: string
+          source_event_ids: string[]
+          status: string
+          summary: string
+          supersedes_skill_id: string | null
+          title: string
+          updated_at: string
+          usage_count: number
+          version: number
+        }
+        Insert: {
+          body: string
+          category: string
+          created_at?: string
+          examples?: Json
+          id?: string
+          instructions: string
+          last_used_at?: string | null
+          metadata?: Json
+          owner_user_id?: string | null
+          project_id?: number | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewer_user_id?: string | null
+          risk_level?: string
+          scope_type: string
+          slug: string
+          source_event_ids?: string[]
+          status?: string
+          summary: string
+          supersedes_skill_id?: string | null
+          title: string
+          updated_at?: string
+          usage_count?: number
+          version?: number
+        }
+        Update: {
+          body?: string
+          category?: string
+          created_at?: string
+          examples?: Json
+          id?: string
+          instructions?: string
+          last_used_at?: string | null
+          metadata?: Json
+          owner_user_id?: string | null
+          project_id?: number | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewer_user_id?: string | null
+          risk_level?: string
+          scope_type?: string
+          slug?: string
+          source_event_ids?: string[]
+          status?: string
+          summary?: string
+          supersedes_skill_id?: string | null
+          title?: string
+          updated_at?: string
+          usage_count?: number
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_skills_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "ai_skills_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_skills_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "ai_skills_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_skills_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_skills_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_skills_supersedes_skill_id_fkey"
+            columns: ["supersedes_skill_id"]
+            isOneToOne: false
+            referencedRelation: "ai_skills"
             referencedColumns: ["id"]
           },
         ]

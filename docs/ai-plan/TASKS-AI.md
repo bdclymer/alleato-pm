@@ -428,6 +428,31 @@ Goal: approved skills affect assistant behavior selectively and visibly.
 - [x] Verify source evidence still outranks skill instructions.
 - [ ] Verify high-risk skill only drafts/recommends.
 
+## Phase 7A: AI Agent Registry
+
+Goal: the team can see what agents exist, what they do, what they depend on, and what is still undefined before more autonomous work is trusted.
+
+### Schema
+
+- [x] Add `ai_agents` registry schema.
+- [x] Add `ai_agent_runs` runtime history schema.
+- [x] Seed current pipeline, chat, write, and planned agent inventory.
+- [x] Add RLS read policies and service-role write boundary.
+- [x] Apply migration.
+- [x] Verify migration ledger.
+- [x] Regenerate Supabase types.
+
+### Admin Surface
+
+- [x] Add `/ai/admin/agents`.
+- [x] Keep `/ai-agents` redirect for saved links.
+- [x] List agent name, status, domain, trigger, impact, priority, approval model, and gap count.
+- [x] Add filters for status, domain, and impact.
+- [x] Add detail panel for purpose, data sources, dependencies, gaps, runtime stats, blockers, and notes.
+- [x] Remove top summary/stat strip; keep prime page space focused on the table workflow.
+- [ ] Add edit actions for status, notes, confidence threshold, failure behavior, and approval requirement.
+- [ ] Add run-detail drilldown from runtime stats.
+
 ## Phase 7: AI Work Queue
 
 Goal: background AI labor is visible, reviewable, and recoverable.
