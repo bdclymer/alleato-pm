@@ -39,8 +39,14 @@
  * Secrets: reads JOBPLANNER_API_KEY + SUPABASE_SERVICE_ROLE_KEY from env. Never printed.
  *
  * Usage:
- *   node scripts/jobplanner/import-prime-contract.mjs            # apply
- *   node scripts/jobplanner/import-prime-contract.mjs --dry-run  # preview, no writes
+ *   node scripts/jobplanner/import-prime-contract.mjs --jp=8344 --app=876 --title="Exol Morrisville"
+ *   node scripts/jobplanner/import-prime-contract.mjs --jp=8344 --app=876 --dry-run  # preview, no writes
+ *
+ * Flags (defaults preserve the original Playmakers import):
+ *   --jp=<id>      Job Planner projectId      (default 9299)
+ *   --app=<id>     PM app projects.id INTEGER (default 1067)
+ *   --title=<str>  Project title for the contract label (default "26-123 Playmakers")
+ *   --dry-run      Preview only, no DB writes
  */
 
 import path from "node:path";
@@ -60,10 +66,20 @@ dotenv.config({ path: path.join(repoRoot, "frontend/.env.local"), quiet: true })
 
 const DRY_RUN = process.argv.includes("--dry-run");
 
-// --- Job Planner -> PM app mapping for this import ---
-const JP_PROJECT_ID = 9299; // "26-123 Playmakers"
-const APP_PROJECT_ID = 1067; // PM app projects.id (INTEGER) for Playmakers
-const APP_PROJECT_TITLE = "26-123 Playmakers";
+const argValue = (name, fallback) => {
+  const hit = process.argv.find((a) => a.startsWith(`--${name}=`));
+  return hit ? hit.slice(name.length + 3) : fallback;
+};
+
+// --- Job Planner -> PM app mapping for this import (override via CLI flags) ---
+const JP_PROJECT_ID = Number(argValue("jp", 9299)); // Job Planner projectId
+const APP_PROJECT_ID = Number(argValue("app", 1067)); // PM app projects.id (INTEGER)
+const APP_PROJECT_TITLE = argValue("title", "26-123 Playmakers");
+
+if (!Number.isInteger(JP_PROJECT_ID) || !Number.isInteger(APP_PROJECT_ID)) {
+  console.error("Invalid --jp / --app: both must be integers.");
+  process.exit(1);
+}
 const ZERO_UUID = "00000000-0000-0000-0000-000000000000"; // project_budget_codes.sub_job_key default
 
 const API_V2 = "https://api-v2.jobplanner.com";

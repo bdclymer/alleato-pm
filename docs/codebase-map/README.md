@@ -47,6 +47,8 @@ A bird's-eye view of every major surface in this app: what it controls, where it
 | Surface | Status | Detail | What it controls |
 |---------|--------|--------|------------------|
 | [Sync Pipeline](./sync-pipeline.md) | 🟡 messy but working | ✅ | Outlook/Teams/OneDrive → embed → compile insights |
+| [AI Agent Runtime Maps](./hermes-vs-openclaw-comparison.md) | 🟡 planning reference | ✅ | Hermes/OpenClaw review docs for AI operations gateway, runtime, tools, skills, and extension patterns |
+| [AI Operations Gateway](../ai-plan/alleato-ai-operations-gateway-architecture.md) | 🟡 planned | ✅ | Event/run ledger, AI workflow control plane, toolsets, source adapters, Daily Brief proof slice |
 | RAG / Embeddings | ⬜ | ⬜ | document_chunks, search RPCs, reranking. See [AI-RAG-ARCHITECTURE.md](../architecture/AI-RAG-ARCHITECTURE.md) |
 | Auth / RLS | ⬜ | ⬜ | Supabase auth, middleware, RLS policies |
 | Admin / Dev Tools | ⬜ | ⬜ | `/database-inventory`, `/site-map`, `/design-system`, `/feedback-inbox` |
