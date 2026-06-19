@@ -65,17 +65,22 @@ function StatusToken({
   );
 }
 
-function InlineMeta({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function HeaderChip({ children }: { children: React.ReactNode }) {
   return (
-    <div className="inline-flex min-w-0 items-center gap-2 text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="min-w-0 text-foreground">{children}</span>
+    <span className="inline-flex min-h-7 max-w-full items-center gap-2 rounded-full border border-border/60 px-2.5 text-sm text-foreground">
+      {children}
+    </span>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      role="heading"
+      aria-level={2}
+      className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+    >
+      {children}
     </div>
   );
 }
@@ -126,12 +131,39 @@ function PacketSection({
 }) {
   return (
     <details className="group border-t border-border/50 py-3" open={defaultOpen}>
-      <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-foreground">
+      <summary className="flex cursor-pointer list-none items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         <span className="text-muted-foreground group-open:rotate-90">›</span>
         {title}
       </summary>
       <div className="pt-3 pl-5">{children}</div>
     </details>
+  );
+}
+
+function ReadinessCallout({
+  readyForBuild,
+  nextAction,
+  missingRequirements,
+}: {
+  readyForBuild: boolean;
+  nextAction: string;
+  missingRequirements: string[];
+}) {
+  return (
+    <section className="rounded-md border border-border bg-muted/40 px-4 py-4">
+      <div className="space-y-3">
+        <SectionLabel>Readiness</SectionLabel>
+        <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+          <span className="font-medium text-foreground">
+            {readyForBuild ? "Ready for build." : "Not ready for build."}
+          </span>{" "}
+          {readyForBuild ? "No required planning fields are missing." : nextAction}
+        </p>
+        {missingRequirements.length > 0 ? (
+          <BulletList values={missingRequirements} empty="No missing requirements." />
+        ) : null}
+      </div>
+    </section>
   );
 }
 
@@ -189,16 +221,16 @@ export function FeatureRequestDetail({ detail }: { detail: FeatureRequestDetailD
         <div className="space-y-5">
           <p className="max-w-3xl text-base leading-7 text-muted-foreground">{summary}</p>
 
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            <InlineMeta label="Status">
+          <div className="flex flex-wrap items-center gap-2">
+            <HeaderChip>
               <StatusToken value={request.status} />
-            </InlineMeta>
-            <InlineMeta label="Readiness">
+            </HeaderChip>
+            <HeaderChip>
               <StatusToken value={readiness.label} />
-            </InlineMeta>
-            <InlineMeta label="Priority">{formatLabel(request.priority)}</InlineMeta>
-            <InlineMeta label="Requester">{request.requester_name}</InlineMeta>
-            <InlineMeta label="Type">{formatLabel(request.request_type)}</InlineMeta>
+            </HeaderChip>
+            <HeaderChip>{formatLabel(request.priority)} priority</HeaderChip>
+            <HeaderChip>{request.requester_name}</HeaderChip>
+            <HeaderChip>{formatLabel(request.request_type)}</HeaderChip>
           </div>
         </div>
 
@@ -210,18 +242,20 @@ export function FeatureRequestDetail({ detail }: { detail: FeatureRequestDetailD
           Write project update
         </Button>
 
+        <ReadinessCallout
+          readyForBuild={readiness.readyForBuild}
+          nextAction={nextAction}
+          missingRequirements={missingRequirements}
+        />
+
         <section className="space-y-3">
-          <div role="heading" aria-level={2} className="text-sm font-medium text-foreground">
-            Description
-          </div>
+          <SectionLabel>Description</SectionLabel>
           <TextBlock muted>{description}</TextBlock>
         </section>
 
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <div role="heading" aria-level={2} className="text-sm font-medium text-foreground">
-              Issues
-            </div>
+            <SectionLabel>Issues</SectionLabel>
             {request.linear_issue_url ? (
               <Link
                 href={request.linear_issue_url}
@@ -263,35 +297,45 @@ export function FeatureRequestDetail({ detail }: { detail: FeatureRequestDetailD
           </div>
         </section>
 
-        <section className="space-y-1">
-          <PacketSection title="Readiness" defaultOpen>
-            <div className="space-y-3">
-              <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-                <span className="font-medium text-foreground">
-                  {readiness.readyForBuild ? "Ready for build." : "Not ready for build."}
-                </span>{" "}
-                {readiness.readyForBuild ? "No required planning fields are missing." : nextAction}
-              </p>
-              {missingRequirements.length > 0 ? (
-                <BulletList values={missingRequirements} empty="No missing requirements." />
-              ) : null}
-            </div>
-          </PacketSection>
+        <section className="space-y-3">
+          <SectionLabel>Stakeholder Summary</SectionLabel>
+          <TextBlock>{request.assistant_summary}</TextBlock>
+        </section>
 
+        <section className="grid gap-8 md:grid-cols-2">
+          <div className="space-y-3">
+            <SectionLabel>Acceptance Criteria</SectionLabel>
+            <BulletList values={acceptanceCriteria} empty="No acceptance criteria captured yet." />
+          </div>
+          <div className="space-y-3">
+            <SectionLabel>Verification Steps</SectionLabel>
+            <BulletList values={verificationSteps} empty="No verification steps captured yet." />
+          </div>
+        </section>
+
+        {(openQuestions.length > 0 || assumptions.length > 0) ? (
+          <section className="grid gap-8 md:grid-cols-2">
+            <div className="space-y-3">
+              <SectionLabel>Open Questions</SectionLabel>
+            <BulletList values={openQuestions} empty="No open implementation-critical questions." />
+            </div>
+            <div className="space-y-3">
+              <SectionLabel>Assumptions</SectionLabel>
+              <BulletList values={assumptions} empty="No assumptions recorded yet." />
+            </div>
+          </section>
+        ) : null}
+
+        <section className="space-y-3">
+          <SectionLabel>Original Request</SectionLabel>
+          <blockquote className="max-w-3xl border-l border-border pl-4 text-sm leading-7 text-muted-foreground">
+            {request.raw_request}
+          </blockquote>
+        </section>
+
+        <section className="space-y-1">
           <PacketSection title="Decision Needed">
             <TextBlock muted>{nextAction}</TextBlock>
-          </PacketSection>
-
-          <PacketSection title="Acceptance Criteria">
-            <BulletList values={acceptanceCriteria} empty="No acceptance criteria captured yet." />
-          </PacketSection>
-
-          <PacketSection title="Verification Steps">
-            <BulletList values={verificationSteps} empty="No verification steps captured yet." />
-          </PacketSection>
-
-          <PacketSection title="Open Questions">
-            <BulletList values={openQuestions} empty="No open implementation-critical questions." />
           </PacketSection>
 
           <PacketSection title="Implementation Plan">
@@ -307,14 +351,6 @@ export function FeatureRequestDetail({ detail }: { detail: FeatureRequestDetailD
             ) : (
               <p className="text-sm text-muted-foreground">No Linear draft attached yet.</p>
             )}
-          </PacketSection>
-
-          <PacketSection title="Original Request">
-            <TextBlock muted>{request.raw_request}</TextBlock>
-          </PacketSection>
-
-          <PacketSection title="Assumptions">
-            <BulletList values={assumptions} empty="No assumptions recorded yet." />
           </PacketSection>
 
           <PacketSection title="Activity">
