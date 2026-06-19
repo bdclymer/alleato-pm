@@ -2017,6 +2017,19 @@ async def trigger_daily_digest(
     _: None = Depends(require_admin_api_key),
 ) -> Dict[str, Any]:
     """Manually trigger daily digest generation."""
+    if os.getenv("LEGACY_DAILY_DIGEST_ENABLED", "false").lower() != "true":
+        logger.warning(
+            "[DailyDigest] Legacy daily digest API blocked. Executive Daily Brief must run through the AI Ops gateway ledger."
+        )
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "LEGACY_DAILY_DIGEST_DISABLED",
+                "message": "Legacy daily digest is disabled. Executive Daily Brief generation must run through the AI Ops gateway ledger.",
+                "canonical_runner": "frontend/scripts/run-executive-daily-brief.ts",
+            },
+        )
+
     from src.services.daily_digest import run_daily_digest
     background_tasks.add_task(run_daily_digest, date, days)
     return {"status": "queued", "date": date, "days": days}

@@ -734,6 +734,14 @@ async function upsertFollowUpsToAppDb(
   });
 }
 
+/**
+ * @deprecated Raw Executive Daily Brief regeneration is a legacy internal
+ * primitive. Route, action, script, and tool callers must use the AI Ops
+ * gateway helpers in `frontend/src/lib/ai-ops/executive-daily-brief-ledger.ts`
+ * so every generated packet has a canonical run, source health, artifacts, and
+ * delivery attempts. This function remains callable only from the gateway
+ * wrapper while the packet persistence internals are migrated.
+ */
 export async function regenerateExecutiveBriefingDraft(options?: {
   windowDays?: number;
   sourceBackedOnly?: boolean;

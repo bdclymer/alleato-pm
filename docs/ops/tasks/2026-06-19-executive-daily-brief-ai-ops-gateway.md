@@ -256,7 +256,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [x] Workflow pack declares hard-fail conditions.
 - [x] Workflow pack declares runtime budget and timeout behavior.
 - [x] Workflow pack is used by schedule, preview, dry-run, and send paths.
-- [ ] Existing prompt and generation logic migrated into the pack or explicitly
+- [x] Existing prompt and generation logic migrated into the pack or explicitly
       deprecated.
 
 ## Evidence-Linked Packet Checklist
@@ -318,7 +318,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [x] Duplicate Daily Brief scripts are removed, blocked, or documented as
       wrappers.
 - [x] Route-level model calls for this workflow are removed or blocked.
-- [ ] Any remaining legacy path logs a loud deprecation warning and cannot claim
+- [x] Any remaining legacy path logs a loud deprecation warning and cannot claim
       success without a canonical run id.
 
 ## Regression Guardrails
@@ -376,7 +376,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
       explicit skipped/blocked state.
 - [x] The Operations Control UI can inspect the run without querying Supabase
       directly.
-- [ ] Old bypass paths cannot silently generate or deliver outside the ledger.
+- [x] Old bypass paths cannot silently generate or deliver outside the ledger.
 - [x] End testing proves the actual generated brief is accurate enough to trace
       each claim back to evidence.
 
@@ -420,6 +420,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 | Tool policy live readback | Authenticated no-send POST to `/api/executive/daily-brief/preview-teams`; SQL readback for run `c008ab40-bb19-45f8-9ce4-2d7a40b5c1e4` | Passed | Completed run succeeded/dry-run and preserved policy through completion: `permission_mode=service`, `tool_scope.actorMode=service`, `metadata.toolPolicy.actorMode=service`, `tool_scope.allowedSourceFamilies`, `source_policy.allowedSourceFamilies`, and `metadata.toolPolicy.allowedSourceFamilies` all match the workflow source access list; tool-call rows include generation and Teams payload build. |
 | Operations readiness canonical status | `cd frontend && npx eslint src/app/api/admin/operations-readiness/status/route.ts`; authenticated GET `/api/admin/operations-readiness/status` | Passed | Daily Brief readiness no longer uses `daily_recaps.sent_teams` or packet `sourceCoverage` as status truth. The endpoint returned canonical run metrics for 2026-06-19: run `succeeded`, delivery `dry_run`, blocker `The latest canonical Daily Brief run has not sent a Teams delivery attempt.`, and source-health cause `Recent email evidence: status missing`. |
 | Ledger integration verifier | `cd frontend && npx eslint --no-ignore scripts/verify-executive-daily-brief-ledger-integration.ts`; `EXECUTIVE_DAILY_BRIEF_INTEGRATION_BASE_URL=http://localhost:3001 npm run rag:verify:executive-daily-brief-ledger-integration` | Passed | Repeatable live verifier passed. Preview run `b68ecbb0-ea91-45e9-921d-5870054126bd` wrote `ai_work_runs`, 4 evidence rows, 3 artifacts, and 1 Teams dry-run delivery attempt; disabled delivery run `b2944f93-818c-474d-bbbd-89be27f5a90f` wrote a disabled delivery attempt; scheduled proof run `90a08788-398c-41d3-af30-e03863f964f5` wrote a scheduled AI Ops run with status `skipped` and delivery `disabled`. |
+| Legacy generation deprecation and backend block | `cd frontend && npx eslint src/lib/executive/executive-briefing-workflow.ts`; `python3 -m py_compile backend/src/services/daily_digest.py backend/src/api/main.py`; `PYTHONPATH=backend python3 - <<'PY' ... run_daily_digest('2026-06-19', 1) ... PY`; `npm run rag:verify:executive-daily-brief-gateway` | Passed | Raw frontend `regenerateExecutiveBriefingDraft()` is explicitly deprecated for route/action/script/tool callers and points to the AI Ops gateway helper. Backend legacy `run_daily_digest()` is default-blocked with `status=disabled`, `reason=legacy_daily_digest_disabled`, and `canonical_runner=frontend/scripts/run-executive-daily-brief.ts`; the admin API trigger now returns a loud `LEGACY_DAILY_DIGEST_DISABLED` conflict unless explicitly re-enabled. Static guardrail still blocks raw app/script generation calls. |
 | Dev OOM proof-run remediation | SQL update for run `a7d8e20b-1d80-48cd-a26e-e753d0f0a7c8`; restarted dev server with `NODE_OPTIONS=--max-old-space-size=8192` | Passed | A local dev-server OOM proof attempt was not left silently running; it was marked `failed_retryable` / `failed` with failure code `DEV_PROOF_SERVER_OOM`, then the successful follow-up proof used run `b45e33fd-fade-40bc-aa2a-0fcebb1e2bc5`. |
 | Gateway guardrail rerun | `npm run rag:verify:executive-daily-brief-gateway` | Passed | Raw app-route generation bypass guard still passes after evidence-policy extraction. |
 | Scheduled runner lint | `cd frontend && npx eslint --no-ignore scripts/run-executive-daily-brief.ts scripts/__tests__/run-executive-daily-brief.test.ts` | Passed | Scheduled runner and node test lint cleanly after preserving explicit runtime env over `.env.local`. |

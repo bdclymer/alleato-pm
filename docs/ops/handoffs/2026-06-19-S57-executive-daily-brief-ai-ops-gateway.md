@@ -186,6 +186,9 @@
    - Pass: added repeatable live verifier `frontend/scripts/verify-executive-daily-brief-ledger-integration.ts` and package script `rag:verify:executive-daily-brief-ledger-integration`.
    - Pass: `cd frontend && npx eslint --no-ignore scripts/verify-executive-daily-brief-ledger-integration.ts`.
    - Pass: `EXECUTIVE_DAILY_BRIEF_INTEGRATION_BASE_URL=http://localhost:3001 npm run rag:verify:executive-daily-brief-ledger-integration` returned `PASS`; preview run `b68ecbb0-ea91-45e9-921d-5870054126bd` wrote `ai_work_runs`, 4 evidence rows, 3 artifacts, and 1 Teams dry-run delivery attempt; disabled delivery run `b2944f93-818c-474d-bbbd-89be27f5a90f` wrote a disabled attempt; scheduled proof run `90a08788-398c-41d3-af30-e03863f964f5` wrote a scheduled AI Ops run with status `skipped` and delivery `disabled`.
+   - Pass: raw frontend `regenerateExecutiveBriefingDraft()` now has an explicit deprecation boundary: routes/actions/scripts/tools must use the AI Ops gateway helper so every packet has a canonical run, source health, artifacts, and delivery attempts.
+   - Pass: backend legacy `run_daily_digest()` is default-blocked with `status=disabled`, `reason=legacy_daily_digest_disabled`, and canonical runner `frontend/scripts/run-executive-daily-brief.ts`; `/api/digests/daily/generate` now returns a loud `LEGACY_DAILY_DIGEST_DISABLED` conflict unless `LEGACY_DAILY_DIGEST_ENABLED=true`.
+   - Pass: `cd frontend && npx eslint src/lib/executive/executive-briefing-workflow.ts`; `python3 -m py_compile backend/src/services/daily_digest.py backend/src/api/main.py`; direct `PYTHONPATH=backend python3` proof of `run_daily_digest('2026-06-19', 1)` returned the disabled result; `npm run rag:verify:executive-daily-brief-gateway` passed.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
@@ -257,6 +260,7 @@
    - Tool policy filtering now includes actor mode, project allowlist, source-family access, channel, and delivery/write permission; source adapter tools are hidden when their source families are outside policy.
    - Operations readiness no longer treats legacy Daily Brief sent flags or packet source-coverage fields as canonical status; it reports the AI Ops ledger run, delivery attempt, and source-health state.
    - A repeatable live verifier now covers preview, dry-run, disabled, and scheduled ledger writes through the actual local routes/runner and Supabase readback.
+   - Remaining legacy generation paths either route through the gateway, throw/deprecate loudly, or are default-blocked without claiming queued/sent success.
    - Claim-level evidence guardrails now fail before ledger writes when surfaced `needsBrandon`, `waitingOnOthers`, or `importantUpdates` items lack structured citation evidence.
    - A real generated no-send preview run is proven in the ledger and visible in `/ai-work-runs` with packet artifact, Teams payload artifact, dry-run delivery attempt, source health, and evidence rows.
    - Scheduled runner proof now shows both outside-window skipped schedules and matching scheduled triggers create canonical AI Ops runs; explicit runtime env now wins over `.env.local`.

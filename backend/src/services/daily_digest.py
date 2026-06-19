@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import time
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
@@ -23,6 +24,11 @@ from .pipeline.model_usage import (
 from .supabase_helpers import get_rag_read_client, get_supabase_client
 
 logger = logging.getLogger(__name__)
+
+LEGACY_DISABLED_MESSAGE = (
+    "Legacy daily digest is disabled. Executive Daily Brief generation must run "
+    "through frontend/scripts/run-executive-daily-brief.ts and the AI Ops gateway ledger."
+)
 
 EXTRACTION_PROMPT = """You are an AI Chief of Staff analyzing a construction \
 project meeting transcript.
@@ -348,6 +354,15 @@ def run_daily_digest(
 
     Returns dict with recap_id, meeting_count, and recap_text.
     """
+    if os.getenv("LEGACY_DAILY_DIGEST_ENABLED", "false").lower() != "true":
+        logger.warning("[DailyDigest] %s", LEGACY_DISABLED_MESSAGE)
+        return {
+            "status": "disabled",
+            "reason": "legacy_daily_digest_disabled",
+            "message": LEGACY_DISABLED_MESSAGE,
+            "canonical_runner": "frontend/scripts/run-executive-daily-brief.ts",
+        }
+
     start_time = time.time()
 
     if date_str:
