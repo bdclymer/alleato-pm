@@ -44,7 +44,6 @@ import { CommentsSidebarButton } from "./comments-sidebar-button";
 import { useProcorePanelStore } from "@/lib/stores/procore-panel-store";
 import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
 import { HeaderUserMenu } from "./header-user-menu";
-import { HeaderSearch } from "./header-search";
 import { createClient } from "@/lib/supabase/client";
 import {
   getCurrentBrowserUser,
@@ -306,16 +305,6 @@ export function SiteHeader() {
 
         {/* ── Right: Tools dropdown + Project selector (desktop only) ── */}
         <div className="hidden md:flex items-center gap-2 flex-shrink-0">
-          <HeaderSearch
-            projectId={nav.projectId}
-            projects={nav.projects}
-            loadingProjects={nav.loadingProjects}
-            onFetchProjects={nav.fetchProjects}
-            permissions={permissions}
-            isAppAdmin={isAppAdmin}
-            userType={userType}
-            isDeveloper={isDeveloper}
-          />
           <ProjectSelector
             projectId={nav.projectId}
             currentProject={nav.currentProject}
