@@ -1,10 +1,10 @@
 # Task: Executive Daily Brief AI Operations Gateway proof workflow
 
-Status: Draft
+Status: In Progress
 Owner: Codex
 Created: 2026-06-19
-Linear Issue: Not created yet - required before coding starts
-Related Handoff: TBD
+Linear Issue: AAI-551 - https://linear.app/megankharrison/issue/AAI-551/rebuild-executive-daily-brief-as-ai-operations-gateway-proof-workflow
+Related Handoff: docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md
 
 ## Objective
 
@@ -61,68 +61,138 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 
 ## Scope Checklist
 
-- [ ] Linear issue created before coding starts.
-- [ ] Existing Hermes/OpenClaw comparison re-read:
+- [x] Linear issue created before coding starts.
+- [x] Existing Hermes/OpenClaw comparison re-read:
       `docs/codebase-map/hermes-vs-openclaw-comparison.md`.
-- [ ] Pasted ChatGPT recommendation reviewed and accepted with the corrected
+- [x] Pasted ChatGPT recommendation reviewed and accepted with the corrected
       contract-before-schema order.
-- [ ] Current Daily Brief paths inventoried:
+- [x] Current Daily Brief paths inventoried:
       `frontend/src/lib/executive/brandon-daily-update.ts`.
-- [ ] Current Daily Brief workflow persistence inventoried:
+- [x] Current Daily Brief workflow persistence inventoried:
       `frontend/src/lib/executive/executive-briefing-workflow.ts`.
-- [ ] Current scheduled runner inventoried:
+- [x] Current scheduled runner inventoried:
       `frontend/scripts/run-executive-daily-brief.ts`.
-- [ ] Current Teams preview route inventoried:
+- [x] Current Teams preview route inventoried:
       `frontend/src/app/api/executive/daily-brief/preview-teams/route.ts`.
-- [ ] Current Teams send route inventoried:
+- [x] Current Teams send route inventoried:
       `frontend/src/app/api/executive/daily-brief/send-teams/route.ts`.
-- [ ] Current owner briefing delivery path inventoried:
+- [x] Current owner briefing delivery path inventoried:
       `frontend/src/lib/executive/owner-briefing-delivery.ts`.
-- [ ] Current AI work runs admin API/UI inventoried:
+- [x] Current AI work runs admin API/UI inventoried:
       `frontend/src/app/api/admin/ai-work-runs/route.ts` and
       `frontend/src/app/(admin)/ai-work-runs/*`.
-- [ ] Current ledger migration inventoried:
+- [x] Current ledger migration inventoried:
       `supabase/migrations/20260619090000_create_ai_operations_gateway_ledger.sql`.
-- [ ] Current source health and RAG/source sync paths inventoried.
-- [ ] Deprecated or bypassing paths listed explicitly before replacement.
-- [ ] Single source-of-truth owner chosen for run construction.
-- [ ] Failure-loudly behavior defined for stale sources, missing evidence,
+- [x] Current source health and RAG/source sync paths inventoried.
+- [x] Deprecated or bypassing paths listed explicitly before replacement.
+- [x] Single source-of-truth owner chosen for run construction.
+- [x] Failure-loudly behavior defined for stale sources, missing evidence,
       disabled delivery, provider failure, quota failure, schedule skip, and
       partial delivery.
 
+## Current Path Inventory
+
+| Path                                                                                             | Current owner                                                  | Keep / wrap / retire                                                          | Inventory finding                                                                                                                                                                                                               |
+| ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `frontend/src/lib/executive/brandon-daily-update.ts`                                             | Daily Brief generation and source gathering                    | Wrap, then thin/retire internals behind workflow pack and adapters            | Generates packets from operating records, RAG chunks, communications, financial pulse, and enrichment prompts. It owns too many concerns: source fetch, ranking, synthesis, evidence text, source coverage, and product policy. |
+| `frontend/src/lib/executive/executive-briefing-workflow.ts`                                      | `daily_recaps` persistence, versioning, approval, follow-ups   | Wrap immediately; later split into artifact persistence and follow-up service | `regenerateExecutiveBriefingDraft()` writes `daily_recaps` and follow-ups but does not create `ai_work_runs`, which is the main bypass.                                                                                         |
+| `frontend/src/app/api/executive/daily-brief/route-helpers.ts`                                    | GET packet API and fresh regeneration                          | Wrap through gateway                                                          | `fresh=true` calls `regenerateExecutiveBriefingDraft()` directly and can generate a packet outside the AI operations ledger.                                                                                                    |
+| `frontend/src/app/api/executive/daily-brief/preview-teams/route.ts`                              | No-send Teams text/card preview                                | Wrap through gateway                                                          | `fresh=true` regenerates directly and returns a card without a canonical run, artifact, delivery attempt, or claim-level ledger proof.                                                                                          |
+| `frontend/scripts/run-executive-daily-brief.ts`                                                  | Scheduled Render runner and partial AI work-run projection     | Keep as thin schedule wrapper only                                            | Creates `ai_operation_events`, `source_sync_runs`, `ai_work_runs`, and `ai_work_run_sources`, but only for this scheduled path. It calls the send route instead of owning generation through a shared runtime.                  |
+| `frontend/src/app/api/executive/daily-brief/send-teams/route.ts`                                 | Teams send API                                                 | Wrap through gateway                                                          | Gated by `EXECUTIVE_DAILY_BRIEF_ENABLED`; delegates to owner briefing delivery. Disabled returns HTTP 200 and does not currently guarantee a canonical run row for every call.                                                  |
+| `frontend/src/lib/executive/owner-briefing-delivery.ts`                                          | Pipeline B Teams owner briefing delivery                       | Wrap as delivery adapter                                                      | Builds card data from `intelligence_targets`, `intelligence_packets`, and `insight_cards`; audits `source_sync_runs`, not the canonical `ai_work_runs` path.                                                                    |
+| `frontend/src/lib/executive/executive-briefing-teams-delivery.ts`                                | Legacy approved `daily_recaps` Teams send                      | Retire or make gateway-only                                                   | Reads latest approved `daily_recaps`, sends to Teams, then sets `sent_teams`; bypasses `ai_work_runs` and delivery attempts.                                                                                                    |
+| `frontend/src/app/api/admin/owner-briefing/send-test/route.ts`                                   | Test send route                                                | Retire or make gateway dry-run/test adapter                                   | Bypasses the delivery kill switch and sends a Teams message from `daily_recaps` without a canonical run.                                                                                                                        |
+| `frontend/src/app/(main)/actions/executive-briefing-actions.ts`                                  | Executive page actions, approval, source linking, email action | Wrap generation, approval, and email through gateway/artifact services        | Email action uses `sendEmail` from the page action path and `sent_email` flags, not a canonical delivery attempt. Source linking mutates packets/follow-ups directly.                                                           |
+| `frontend/src/app/api/admin/ai-work-runs/route.ts` and `frontend/src/app/(admin)/ai-work-runs/*` | AI work-run control UI/API                                     | Keep and expand                                                               | Reads `ai_work_runs`, events, source sync rows, and source rows. It is currently only as complete as the writers; preview/regenerate paths can leave it empty.                                                                  |
+| `supabase/migrations/20260619090000_create_ai_operations_gateway_ledger.sql`                     | Phase 1 ledger schema                                          | Keep, audit, likely extend                                                    | Creates `ai_operation_events`, `ai_work_runs`, and `ai_work_run_sources`; explicitly says it does not change underlying generation/delivery. Needs artifact and delivery-attempt coverage or mapped equivalent.                 |
+| `frontend/src/app/api/admin/operations-readiness/status/route.ts`                                | Readiness dashboard                                            | Wrap/read canonical ledger                                                    | Daily Brief readiness reads `daily_recaps.sent_teams` and packet source coverage, not canonical run/delivery attempts.                                                                                                          |
+| `frontend/src/app/api/admin/source-sync/_contracts.ts` and `status/route.ts`                     | Source sync status contracts/UI API                            | Reuse as source health adapter input                                          | Has typed source health, alerts, recent runs, stuck items, and counts. This should feed run source-health snapshots instead of being UI-only.                                                                                   |
+| `frontend/src/lib/ai/tools/executive-brief-tools.ts`                                             | AI assistant tool for brief generation                         | Wrap through tool registry/policy                                             | Tool directly calls `regenerateExecutiveBriefingDraft()`, so assistant-triggered generation can bypass canonical gateway runs.                                                                                                  |
+| `frontend/src/lib/ai/tools/project-tools.ts` and sub-tools                                       | Existing broad tool barrel                                     | Reuse selectively through policy                                              | Existing tools are broad and heterogeneous. They need registration/policy before the workflow sees them.                                                                                                                        |
+| `backend/src/services/daily_digest.py` and `backend/src/services/scheduler.py`                   | Legacy backend daily digest/email scheduler                    | Retire for Executive Daily Brief unless proven still active                   | Separate Python daily digest path can create conceptual confusion. It should not be treated as the CEO Daily Brief unless explicitly wired through the gateway.                                                                 |
+
+## Inventory Decisions
+
+- Canonical owner for run construction:
+  `frontend/src/lib/ai-ops` or the selected equivalent AI operations module.
+- Keep `ai_work_runs` as the user-visible operations ledger, but audit/extend it
+  before adding tables.
+- Keep `daily_recaps` as the current stored brief packet table during migration,
+  but it must become an artifact linked to `ai_work_runs`, not the run source of
+  truth.
+- Keep `/ai-work-runs` as the control UI, but it cannot be considered proof
+  until every generation and delivery entry point writes to the same ledger.
+- Retire direct model/generation calls from routes and tools after gateway
+  wrappers exist.
+- Treat disabled delivery, missing evidence, stale sources, provider failures,
+  quota failures, and schedule skips as explicit run outcomes, not successful
+  no-ops.
+
 ## Contract Checklist
 
-- [ ] `AiEvent` contract defined for scheduled runs, preview requests,
+- [x] `AiEvent` contract defined for scheduled runs, preview requests,
       source-sync events, Teams/Graph events, Fireflies events, document/RAG
       events, Acumatica events, and Procore events.
-- [ ] `AiRun` contract defined for queued, running, skipped, succeeded,
-      partial, failed retryable, failed permanent, disabled, and dry-run states.
-- [ ] `AiRunStep` or equivalent event log contract defined for generation,
+- [x] `AiRun` contract defined for queued, running, skipped, succeeded, partial,
+      failed retryable, and failed permanent states, with disabled and dry-run
+      represented through delivery/run metadata until the ledger audit locks
+      exact database statuses.
+- [x] `AiRunStep` or equivalent event log contract defined for generation,
       source fetch, synthesis, artifact persistence, delivery, and verification.
-- [ ] `AiArtifact` contract defined for generated brief packet, Teams payload,
+- [x] `AiArtifact` contract defined for generated brief packet, Teams payload,
       email payload, source health report, and delivered artifact.
-- [ ] `EvidenceRef` contract defined with source family, source id, source URL,
+- [x] `EvidenceRef` contract defined with source family, source id, source URL,
       source title, occurred-at timestamp, excerpt, confidence, and project
       linkage.
-- [ ] `ToolDefinition` contract defined with tool name, description, input
+- [x] `ToolDefinition` contract defined with tool name, description, input
       schema, output schema, owning adapter, and failure shape.
-- [ ] `ToolPolicy` contract defined for role, project, channel, workflow,
+- [x] `ToolPolicy` contract defined for role, project, channel, workflow,
       source access, write permission, and delivery permission.
-- [ ] `WorkflowDefinition` contract defined with workflow id, version, allowed
+- [x] `WorkflowDefinition` contract defined with workflow id, version, allowed
       tools, source policy, evidence policy, delivery policy, runtime budget,
       prompt contract, and failure modes.
-- [ ] `DeliveryAttempt` contract defined for Teams/email recipient, channel,
+- [x] `DeliveryAttempt` contract defined for Teams/email recipient, channel,
       payload artifact, sent/skipped/blocked/failed/dry-run status, provider
       response, and retryability.
-- [ ] Contracts are shared from one stable module, not copied into routes.
-- [ ] Contracts have unit or type-level tests that fail when required fields are
+- [x] Contracts are shared from one stable module, not copied into routes.
+- [x] Contracts have unit or type-level tests that fail when required fields are
       omitted.
+
+## Ledger Audit Decision
+
+| Table / surface           | Decision | Reason                                                                                                                | Required follow-up                                                                                                                |
+| ------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `ai_operation_events`     | Keep     | Matches the shared `AiEvent` envelope closely enough for scheduled, preview, source, and delivery-trigger events.     | Route every entry point through this table with explicit idempotency, status, permission context, and failure shape.              |
+| `ai_work_runs`            | Extend   | Correct top-level run ledger exists and is already shown in `/ai-work-runs`, but it lacks workflow version and steps. | Add/use metadata for `workflowVersion` now; add first-class step/artifact/delivery attempt rows before end-to-end completion.     |
+| `ai_work_run_sources`     | Extend   | Useful evidence projection exists, but current fields are nullable and not enough for claim-level evidence policy.    | Enforce required source identity/excerpt in gateway writes and add artifact/claim linkage when packet persistence is wired.       |
+| `daily_recaps`            | Keep     | Existing Executive Daily Brief packet store remains the practical generated packet table during migration.            | Treat as the generated brief packet artifact linked from `ai_work_runs.daily_recap_id`; stop using it as the run source of truth. |
+| `/api/admin/ai-work-runs` | Extend   | Current admin API reads runs, events, source sync runs, and evidence rows.                                            | Add step logs, artifacts, delivery attempts, workflow version, and source health detail once ledger rows exist.                   |
+| `/ai-work-runs` admin UI  | Extend   | Current UI is useful for top-level run inspection.                                                                    | Add tabs/sections for steps, artifacts, delivery attempts, and claim evidence; keep quiet table-first layout.                     |
+
+## Gateway Foundation Checklist
+
+- [x] Shared AI Ops ledger writer created.
+- [x] Ledger writer validates `AiEvent`, `AiRun`, and `EvidenceRef` before
+      inserts.
+- [x] Ledger writer maps contract fields to existing `ai_operation_events`,
+      `ai_work_runs`, and `ai_work_run_sources` columns.
+- [x] Ledger writer preserves workflow version, source health, retryability, and
+      artifact projections in run metadata until first-class artifact tables are
+      added.
+- [x] Tests prove invalid run contracts fail before a database write begins.
+- [x] Existing scheduled runner uses the shared ledger writer instead of local
+      duplicate insert helpers.
+- [ ] Preview route uses the shared ledger writer.
+- [ ] Send route uses the shared ledger writer.
+- [ ] Admin test-send route uses the shared ledger writer or is retired.
+- [ ] AI tool path uses the shared ledger writer or is retired.
 
 ## Ledger Checklist
 
-- [ ] Existing `ai_operation_events`, `ai_work_runs`, and `ai_work_run_sources`
+- [x] Existing `ai_operation_events`, `ai_work_runs`, and `ai_work_run_sources`
       tables audited against the contracts.
-- [ ] Decision recorded: keep, migrate, extend, or replace each existing AI
+- [x] Decision recorded: keep, migrate, extend, or replace each existing AI
       ledger table.
 - [ ] `daily_recaps` relationship standardized so every generated Executive
       Daily Brief draft links to exactly one `ai_work_runs` record.
@@ -312,13 +382,18 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 
 ## Evidence
 
-| Check                 | Command / artifact | Result  | Notes                                         |
-| --------------------- | ------------------ | ------- | --------------------------------------------- |
-| Static/type/lint      | Pending            | Pending | Required before implementation can be closed. |
-| Targeted tests        | Pending            | Pending | Required before implementation can be closed. |
-| Browser/user-flow     | Pending            | Pending | `/ai-work-runs` proof required.               |
-| DB/provider read-back | Pending            | Pending | Required for ledger/config/migrations.        |
-| End-to-end proof      | Pending            | Pending | Must include run id, packet id, and artifact. |
+| Check                 | Command / artifact                                                                                                                                                  | Result  | Notes                                                                                           |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------- |
+| AI Ops focused lint   | `cd frontend && npx eslint src/lib/ai-ops/contracts.ts src/lib/ai-ops/ledger.ts src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts` | Passed  | Contract and ledger module lint cleanly.                                                        |
+| Runner forced lint    | `cd frontend && npx eslint --no-ignore scripts/run-executive-daily-brief.ts`                                                                                        | Passed  | Script is ignored by default ESLint config, so it was linted with `--no-ignore`.                |
+| AI Ops focused tests  | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand`               | Passed  | 2 suites, 11 tests passed. Required fields and pre-write validation fail loudly.                |
+| Runner no-write smoke | `cd frontend && npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:00:00.000Z`                                                                        | Passed  | Kill switch off; script loaded and exited with `executive_daily_brief_disabled`, no send/write. |
+| Static/type/lint      | Pending                                                                                                                                                             | Pending | Broader implementation lint/typecheck required before workflow can be closed.                   |
+| Targeted tests        | Pending                                                                                                                                                             | Pending | Gateway/runtime tests still required before implementation can be closed.                       |
+| Browser/user-flow     | Pending                                                                                                                                                             | Pending | `/ai-work-runs` proof required.                                                                 |
+| DB/provider read-back | Pending                                                                                                                                                             | Pending | Required for ledger/config/migrations.                                                          |
+| End-to-end proof      | Pending                                                                                                                                                             | Pending | Must include run id, packet id, and artifact.                                                   |
+| Planning gate         | Linear AAI-551 plus this task file and S57 handoff                                                                                                                  | Passed  | Linear issue created before coding; architecture recommendation accepted with corrected order.  |
 
 ## Files Expected To Change
 
