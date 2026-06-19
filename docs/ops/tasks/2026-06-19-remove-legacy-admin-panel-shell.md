@@ -73,6 +73,7 @@ filled in. If any item cannot be completed, change `Status` to
 | Browser/user-flow     | Not applicable | Pass | No user-facing UI expected. |
 | DB/provider read-back | Not applicable | Pass | No database/provider change. |
 | End-to-end proof      | `rg ...`; `pnpm --dir frontend exec knip --config knip.json --no-exit-code --no-progress --reporter compact \| rg 'src/components/admin-panel\|admin-panel' \|\| true` | Pass | Only S71 docs mention the removed path; Knip no longer reports the bucket. |
+| Publish proof         | `npm run codex:finish -- --message "Remove unused admin panel shell" --files ...` | Pass | Published implementation to `origin/main` at `14cdedb4e2`; local `HEAD` matched `origin/main`. |
 
 ## Files Changed
 

@@ -72,7 +72,7 @@ Leader reviews all pending handoffs here.
 | `docs/ops/handoffs/2026-06-19-S67-code-mode-rpc-security-decision.md` | S67 | AAI-566 | 2026-06-19 | Yes | Accepted | Goal 7 C10 accepted. Published at `e9d736b2df`; Code-Mode RPC remains not approved, verifier blocks runtime markers, syntax/focused checks, handoff check, and `codex:finish` evidence passed. |
 | `docs/ops/handoffs/2026-06-19-S68-unified-delivery-router.md` | S68 | AAI-567 | 2026-06-19 | Yes | Accepted | Goal 7 G5 accepted. Published at `613a8c6f09`; Alleato-native delivery router, Executive Daily Brief ledger policy integration, focused tests, changed-file quality, and `codex:finish` evidence passed. |
 | `docs/ops/handoffs/2026-06-19-S70-knip-dead-code-audit.md` | S70 | AAI-569 | 2026-06-19 | Yes | Accepted | Knip dead-code audit accepted. Published at `99e7e824e9`; report artifacts generated, handoff validation passed, Linear AAI-569 done, and no app code was deleted. Use report for small future deletion batches. |
-| `docs/ops/handoffs/2026-06-19-S71-remove-legacy-admin-panel-shell.md` | S71 | AAI-570 | 2026-06-19 | Partial | Pending Review | First deletion batch opened from S70. Scope limited to verified unused `frontend/src/components/admin-panel/**` shell. |
+| `docs/ops/handoffs/2026-06-19-S71-remove-legacy-admin-panel-shell.md` | S71 | AAI-570 | 2026-06-19 | Yes | Accepted | First S70 deletion batch accepted. Published at `14cdedb4e2`; verified unused legacy `frontend/src/components/admin-panel/**` shell removed, component graph regenerated, route checks and high-heap typecheck passed. |
 
 ## Disposition Rules
 
