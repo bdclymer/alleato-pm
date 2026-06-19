@@ -6,7 +6,7 @@
 2) Task ID: AAI-557
 3) Linear issue: AAI-557
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-557/finish-openclaw-net-policy-closeout-for-guarded-outbound-fetches
-5) Current status: Pending Review
+5) Current status: Accepted; implementation and closeout docs published to `origin/main`.
 6) Files changed (absolute paths):
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-19-openclaw-net-policy-closeout.md`
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-19-S59-openclaw-net-policy-closeout.md`
@@ -27,7 +27,7 @@
 - No frontend-visible issue; this is a runtime fetch guard.
 - Net-policy implementation is already published in commit `35deb02dc feat(ai): add SSRF egress guard + URL secret redaction to fetchWithGuardrails`.
 - Broad quality is blocked by unrelated frontend typecheck timeout, likely owned by `frontend/tsconfig.json` and included heavy app/generated surfaces.
-10) Recommended next action (one line): Publish the goal/task/handoff docs with exact file scope, then move to Goal 2.
+10) Recommended next action (one line): Historical closeout recorded; continue with the next accepted goal evidence.
 11) Handoff file path: docs/ops/handoffs/2026-06-19-S59-openclaw-net-policy-closeout.md
 12) Migration ledger evidence: Not applicable; no database migration.
 
@@ -39,11 +39,11 @@
 
 ## Current Status
 
-Linear issue AAI-557 is In Review. Local planning docs for Goal 1 are present. The C2 implementation is already published to `origin/main` in commit `35deb02dc`; the goal/task/handoff docs were published in `61a9f657a`.
+Linear issue AAI-557 has closeout evidence recorded. Local planning docs for Goal 1 are present. The C2 implementation is already published to `origin/main` in commit `35deb02dc`; the goal/task/handoff docs were published in `61a9f657a` and later closeout evidence was recorded in `251e50de5`.
 
 ## Exact Next Step
 
-Move to Goal 2: `docs/ai-plan/hermes-openclaw-goals/goal-02-outbound-action-policy.md`.
+No action required for this historical handoff.
 
 ## Known Pitfalls
 
