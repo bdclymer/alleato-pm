@@ -457,14 +457,42 @@ def write_email_triage(
     try:
         client = _supabase_client()
         if client:
-            client.table("outlook_email_intake").update(
-                {
-                    "triage_action": action,
-                    "triage_reason": _clean_text(triage_reason),
-                    "triage_at": datetime.now(timezone.utc).isoformat(),
+            response = (
+                client.table("outlook_email_intake")
+                .update(
+                    {
+                        "triage_action": action,
+                        "triage_reason": _clean_text(triage_reason),
+                        "triage_at": datetime.now(timezone.utc).isoformat(),
+                    }
+                )
+                .eq("graph_message_id", graph_message_id)
+                .execute()
+            )
+            matched = len(response.data or [])
+            if matched > 0:
+                db_result = {"written": True, "matchedRows": matched}
+            else:
+                # Fail loudly: the live email is not in outlook_email_intake yet
+                # (sync/webhook drain has not landed this message). A silent no-op
+                # here is exactly the kind of bug CLAUDE.md forbids — surface it so
+                # the agent knows the triage classification was NOT persisted.
+                db_result = {
+                    "written": False,
+                    "matchedRows": 0,
+                    "reason": "no_matching_row",
+                    "detail": (
+                        f"No outlook_email_intake row for graph_message_id={graph_message_id}. "
+                        "The message has not been synced to the DB yet (webhook drain / sync "
+                        "must populate it before triage can persist). Outlook category was still "
+                        "applied to the live message."
+                    ),
                 }
-            ).eq("graph_message_id", graph_message_id).execute()
-            db_result = {"written": True}
+                logger.warning(
+                    "[ExecAssistant] Triage write matched 0 rows for graph_message_id=%s — "
+                    "email not yet in outlook_email_intake.",
+                    graph_message_id,
+                )
         else:
             db_result = {"written": False, "reason": "supabase_not_configured"}
     except Exception as exc:
