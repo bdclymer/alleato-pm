@@ -1,7 +1,21 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { AiEvent, AiRun, EvidenceRef } from "./contracts";
-import { aiEventSchema, aiRunSchema, evidenceRefSchema } from "./contracts";
+import type {
+  AiArtifact,
+  AiEvent,
+  AiRun,
+  AiRunStep,
+  DeliveryAttempt,
+  EvidenceRef,
+} from "./contracts";
+import {
+  aiArtifactSchema,
+  aiEventSchema,
+  aiRunSchema,
+  aiRunStepSchema,
+  deliveryAttemptSchema,
+  evidenceRefSchema,
+} from "./contracts";
 import type { Database, Json } from "@/types/database.types";
 
 type AiOperationEventInsert =
@@ -12,6 +26,12 @@ type AiWorkRunInsert = Database["public"]["Tables"]["ai_work_runs"]["Insert"];
 type AiWorkRunUpdate = Database["public"]["Tables"]["ai_work_runs"]["Update"];
 type AiWorkRunSourceInsert =
   Database["public"]["Tables"]["ai_work_run_sources"]["Insert"];
+type AiWorkRunStepInsert =
+  Database["public"]["Tables"]["ai_work_run_steps"]["Insert"];
+type AiWorkRunArtifactInsert =
+  Database["public"]["Tables"]["ai_work_run_artifacts"]["Insert"];
+type AiWorkRunDeliveryAttemptInsert =
+  Database["public"]["Tables"]["ai_work_run_delivery_attempts"]["Insert"];
 
 type JsonRecord = Record<string, unknown>;
 
@@ -43,6 +63,9 @@ export type AiOpsLedger = {
     >,
   ): Promise<void>;
   insertEvidenceRefs(runId: string, refs: EvidenceRef[]): Promise<void>;
+  createRunStep(step: AiRunStep): Promise<{ id: string }>;
+  createArtifact(artifact: AiArtifact): Promise<{ id: string }>;
+  createDeliveryAttempt(attempt: DeliveryAttempt): Promise<{ id: string }>;
 };
 
 function toJson(value: unknown): Json {
@@ -141,6 +164,62 @@ function toSourceInsert(
       projectLabel: parsed.projectLabel,
       ...parsed.metadata,
     }),
+  };
+}
+
+function toStepInsert(step: AiRunStep): AiWorkRunStepInsert {
+  const parsed = aiRunStepSchema.parse(step);
+  return {
+    id: parsed.id,
+    work_run_id: parsed.runId,
+    step_type: parsed.stepType,
+    status: parsed.status,
+    started_at: parsed.startedAt,
+    completed_at: parsed.completedAt,
+    failure_code: parsed.failureCode,
+    failure_message: parsed.failureMessage,
+    metadata: toJson(parsed.metadata),
+  };
+}
+
+function toArtifactInsert(artifact: AiArtifact): AiWorkRunArtifactInsert {
+  const parsed = aiArtifactSchema.parse(artifact);
+  return {
+    id: parsed.id,
+    work_run_id: parsed.runId,
+    kind: parsed.kind,
+    title: parsed.title,
+    storage_table: parsed.storageTable,
+    storage_id: parsed.storageId,
+    content_type: parsed.contentType,
+    checksum: parsed.checksum,
+    source_ref_count: parsed.sourceRefs.length,
+    metadata: toJson({
+      sourceRefs: parsed.sourceRefs,
+      ...parsed.metadata,
+    }),
+    created_at: parsed.createdAt,
+  };
+}
+
+function toDeliveryAttemptInsert(
+  attempt: DeliveryAttempt,
+): AiWorkRunDeliveryAttemptInsert {
+  const parsed = deliveryAttemptSchema.parse(attempt);
+  return {
+    id: parsed.id,
+    work_run_id: parsed.runId,
+    artifact_id: parsed.artifactId,
+    channel: parsed.channel,
+    recipient_id: parsed.recipientId,
+    recipient_address: parsed.recipientAddress,
+    status: parsed.status,
+    provider_message_id: parsed.providerMessageId,
+    failure_code: parsed.failureCode,
+    failure_message: parsed.failureMessage,
+    retryable: parsed.retryable,
+    attempted_at: parsed.attemptedAt,
+    metadata: toJson(parsed.metadata),
   };
 }
 
@@ -243,6 +322,53 @@ export function createAiOpsLedger(
       if (error) {
         throw new Error(`ai_work_run_sources insert failed: ${error.message}`);
       }
+    },
+
+    async createRunStep(step) {
+      const payload = toStepInsert(step);
+      const { data, error } = await supabase
+        .from("ai_work_run_steps")
+        .insert(payload)
+        .select("id")
+        .single();
+
+      if (error) {
+        throw new Error(`ai_work_run_steps insert failed: ${error.message}`);
+      }
+
+      return assertId(data, "ai_work_run_steps");
+    },
+
+    async createArtifact(artifact) {
+      const payload = toArtifactInsert(artifact);
+      const { data, error } = await supabase
+        .from("ai_work_run_artifacts")
+        .insert(payload)
+        .select("id")
+        .single();
+
+      if (error) {
+        throw new Error(`ai_work_run_artifacts insert failed: ${error.message}`);
+      }
+
+      return assertId(data, "ai_work_run_artifacts");
+    },
+
+    async createDeliveryAttempt(attempt) {
+      const payload = toDeliveryAttemptInsert(attempt);
+      const { data, error } = await supabase
+        .from("ai_work_run_delivery_attempts")
+        .insert(payload)
+        .select("id")
+        .single();
+
+      if (error) {
+        throw new Error(
+          `ai_work_run_delivery_attempts insert failed: ${error.message}`,
+        );
+      }
+
+      return assertId(data, "ai_work_run_delivery_attempts");
     },
   };
 }

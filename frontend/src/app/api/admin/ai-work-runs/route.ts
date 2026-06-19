@@ -40,6 +40,47 @@ const SOURCE_SELECT = `
   confidence,
   metadata
 `;
+const STEP_SELECT = `
+  id,
+  work_run_id,
+  step_type,
+  status,
+  started_at,
+  completed_at,
+  failure_code,
+  failure_message,
+  metadata,
+  created_at
+`;
+const ARTIFACT_SELECT = `
+  id,
+  work_run_id,
+  kind,
+  title,
+  storage_table,
+  storage_id,
+  content_type,
+  checksum,
+  source_ref_count,
+  metadata,
+  created_at
+`;
+const DELIVERY_ATTEMPT_SELECT = `
+  id,
+  work_run_id,
+  artifact_id,
+  channel,
+  recipient_id,
+  recipient_address,
+  status,
+  provider_message_id,
+  failure_code,
+  failure_message,
+  retryable,
+  attempted_at,
+  metadata,
+  created_at
+`;
 
 type JsonObject = Record<string, unknown>;
 
@@ -52,6 +93,47 @@ export type AiWorkRunSourceView = {
   evidenceExcerpt: string | null;
   confidence: string | null;
   metadata: JsonObject;
+};
+
+export type AiWorkRunStepView = {
+  id: string;
+  stepType: string;
+  status: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  failureCode: string | null;
+  failureMessage: string | null;
+  metadata: JsonObject;
+  createdAt: string;
+};
+
+export type AiWorkRunArtifactView = {
+  id: string;
+  kind: string;
+  title: string;
+  storageTable: string | null;
+  storageId: string | null;
+  contentType: string;
+  checksum: string | null;
+  sourceRefCount: number;
+  metadata: JsonObject;
+  createdAt: string;
+};
+
+export type AiWorkRunDeliveryAttemptView = {
+  id: string;
+  artifactId: string | null;
+  channel: string;
+  recipientId: string | null;
+  recipientAddress: string | null;
+  status: string;
+  providerMessageId: string | null;
+  failureCode: string | null;
+  failureMessage: string | null;
+  retryable: boolean;
+  attemptedAt: string;
+  metadata: JsonObject;
+  createdAt: string;
 };
 
 export type AiWorkRunView = {
@@ -92,6 +174,9 @@ export type AiWorkRunView = {
     errorMessage: string | null;
   } | null;
   sources: AiWorkRunSourceView[];
+  steps: AiWorkRunStepView[];
+  artifacts: AiWorkRunArtifactView[];
+  deliveryAttempts: AiWorkRunDeliveryAttemptView[];
 };
 
 type AiWorkRunRow = {
@@ -148,6 +233,50 @@ type AiWorkRunSourceRow = {
   metadata: unknown;
 };
 
+type AiWorkRunStepRow = {
+  id: string;
+  work_run_id: string;
+  step_type: string;
+  status: string;
+  started_at: string | null;
+  completed_at: string | null;
+  failure_code: string | null;
+  failure_message: string | null;
+  metadata: unknown;
+  created_at: string;
+};
+
+type AiWorkRunArtifactRow = {
+  id: string;
+  work_run_id: string;
+  kind: string;
+  title: string;
+  storage_table: string | null;
+  storage_id: string | null;
+  content_type: string;
+  checksum: string | null;
+  source_ref_count: number | null;
+  metadata: unknown;
+  created_at: string;
+};
+
+type AiWorkRunDeliveryAttemptRow = {
+  id: string;
+  work_run_id: string;
+  artifact_id: string | null;
+  channel: string;
+  recipient_id: string | null;
+  recipient_address: string | null;
+  status: string;
+  provider_message_id: string | null;
+  failure_code: string | null;
+  failure_message: string | null;
+  retryable: boolean | null;
+  attempted_at: string;
+  metadata: unknown;
+  created_at: string;
+};
+
 function asObject(value: unknown): JsonObject {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   return value as JsonObject;
@@ -171,6 +300,55 @@ function mapSource(row: AiWorkRunSourceRow): AiWorkRunSourceView {
     evidenceExcerpt: row.evidence_excerpt,
     confidence: row.confidence,
     metadata: asObject(row.metadata),
+  };
+}
+
+function mapStep(row: AiWorkRunStepRow): AiWorkRunStepView {
+  return {
+    id: row.id,
+    stepType: row.step_type,
+    status: row.status,
+    startedAt: row.started_at,
+    completedAt: row.completed_at,
+    failureCode: row.failure_code,
+    failureMessage: row.failure_message,
+    metadata: asObject(row.metadata),
+    createdAt: row.created_at,
+  };
+}
+
+function mapArtifact(row: AiWorkRunArtifactRow): AiWorkRunArtifactView {
+  return {
+    id: row.id,
+    kind: row.kind,
+    title: row.title,
+    storageTable: row.storage_table,
+    storageId: row.storage_id,
+    contentType: row.content_type,
+    checksum: row.checksum,
+    sourceRefCount: row.source_ref_count ?? 0,
+    metadata: asObject(row.metadata),
+    createdAt: row.created_at,
+  };
+}
+
+function mapDeliveryAttempt(
+  row: AiWorkRunDeliveryAttemptRow,
+): AiWorkRunDeliveryAttemptView {
+  return {
+    id: row.id,
+    artifactId: row.artifact_id,
+    channel: row.channel,
+    recipientId: row.recipient_id,
+    recipientAddress: row.recipient_address,
+    status: row.status,
+    providerMessageId: row.provider_message_id,
+    failureCode: row.failure_code,
+    failureMessage: row.failure_message,
+    retryable: Boolean(row.retryable),
+    attemptedAt: row.attempted_at,
+    metadata: asObject(row.metadata),
+    createdAt: row.created_at,
   };
 }
 
@@ -201,7 +379,14 @@ export const GET = withApiGuardrails(WHERE, async ({ request }) => {
     .filter((id): id is string => Boolean(id));
   const runIds = runs.map((run) => run.id);
 
-  const [eventsResult, sourceSyncResult, sourcesResult] = await Promise.all([
+  const [
+    eventsResult,
+    sourceSyncResult,
+    sourcesResult,
+    stepsResult,
+    artifactsResult,
+    deliveryAttemptsResult,
+  ] = await Promise.all([
     eventIds.length > 0
       ? supabase
           .from("ai_operation_events")
@@ -221,6 +406,27 @@ export const GET = withApiGuardrails(WHERE, async ({ request }) => {
           .in("work_run_id", runIds)
           .order("created_at", { ascending: true })
       : Promise.resolve({ data: [], error: null }),
+    runIds.length > 0
+      ? supabase
+          .from("ai_work_run_steps")
+          .select(STEP_SELECT)
+          .in("work_run_id", runIds)
+          .order("created_at", { ascending: true })
+      : Promise.resolve({ data: [], error: null }),
+    runIds.length > 0
+      ? supabase
+          .from("ai_work_run_artifacts")
+          .select(ARTIFACT_SELECT)
+          .in("work_run_id", runIds)
+          .order("created_at", { ascending: true })
+      : Promise.resolve({ data: [], error: null }),
+    runIds.length > 0
+      ? supabase
+          .from("ai_work_run_delivery_attempts")
+          .select(DELIVERY_ATTEMPT_SELECT)
+          .in("work_run_id", runIds)
+          .order("attempted_at", { ascending: true })
+      : Promise.resolve({ data: [], error: null }),
   ]);
 
   if (eventsResult.error) {
@@ -231,6 +437,17 @@ export const GET = withApiGuardrails(WHERE, async ({ request }) => {
   }
   if (sourcesResult.error) {
     throw new Error(`ai_work_run_sources query failed: ${sourcesResult.error.message}`);
+  }
+  if (stepsResult.error) {
+    throw new Error(`ai_work_run_steps query failed: ${stepsResult.error.message}`);
+  }
+  if (artifactsResult.error) {
+    throw new Error(`ai_work_run_artifacts query failed: ${artifactsResult.error.message}`);
+  }
+  if (deliveryAttemptsResult.error) {
+    throw new Error(
+      `ai_work_run_delivery_attempts query failed: ${deliveryAttemptsResult.error.message}`,
+    );
   }
 
   const eventsById = new Map(
@@ -244,6 +461,25 @@ export const GET = withApiGuardrails(WHERE, async ({ request }) => {
     const bucket = sourcesByRunId.get(source.work_run_id) ?? [];
     bucket.push(mapSource(source));
     sourcesByRunId.set(source.work_run_id, bucket);
+  }
+  const stepsByRunId = new Map<string, AiWorkRunStepView[]>();
+  for (const step of (stepsResult.data ?? []) as AiWorkRunStepRow[]) {
+    const bucket = stepsByRunId.get(step.work_run_id) ?? [];
+    bucket.push(mapStep(step));
+    stepsByRunId.set(step.work_run_id, bucket);
+  }
+  const artifactsByRunId = new Map<string, AiWorkRunArtifactView[]>();
+  for (const artifact of (artifactsResult.data ?? []) as AiWorkRunArtifactRow[]) {
+    const bucket = artifactsByRunId.get(artifact.work_run_id) ?? [];
+    bucket.push(mapArtifact(artifact));
+    artifactsByRunId.set(artifact.work_run_id, bucket);
+  }
+  const deliveryAttemptsByRunId = new Map<string, AiWorkRunDeliveryAttemptView[]>();
+  for (const attempt of (deliveryAttemptsResult.data ??
+    []) as AiWorkRunDeliveryAttemptRow[]) {
+    const bucket = deliveryAttemptsByRunId.get(attempt.work_run_id) ?? [];
+    bucket.push(mapDeliveryAttempt(attempt));
+    deliveryAttemptsByRunId.set(attempt.work_run_id, bucket);
   }
 
   const mappedRuns: AiWorkRunView[] = runs.map((run) => {
@@ -294,6 +530,9 @@ export const GET = withApiGuardrails(WHERE, async ({ request }) => {
           }
         : null,
       sources: sourcesByRunId.get(run.id) ?? [],
+      steps: stepsByRunId.get(run.id) ?? [],
+      artifacts: artifactsByRunId.get(run.id) ?? [],
+      deliveryAttempts: deliveryAttemptsByRunId.get(run.id) ?? [],
     };
   });
 

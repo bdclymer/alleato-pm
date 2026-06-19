@@ -23,7 +23,9 @@ import { sendOwnerBriefingToTeams } from "@/lib/executive/owner-briefing-deliver
 import {
   completeDailyBriefRun,
   failDailyBriefRun,
+  recordDeliveryAttempt,
   recordDeliveryEvidence,
+  recordTeamsPayloadArtifact,
   sourceHealthForDeliveryResult,
   startDailyBriefRun,
 } from "@/lib/ai-ops/executive-daily-brief-ledger";
@@ -48,6 +50,14 @@ export const POST = withApiGuardrails(
         normalizedGoal: "Record disabled Teams delivery state without sending.",
         deliveryTarget: { channel: "teams" },
         payload: { enabled: false },
+      });
+      await recordDeliveryAttempt(runContext, {
+        channel: "teams",
+        status: "disabled",
+        failureCode: "EXECUTIVE_DAILY_BRIEF_DISABLED",
+        failureMessage:
+          "Executive Daily Brief Teams delivery is disabled by configuration.",
+        metadata: { reason: "executive_daily_brief_disabled" },
       });
       await completeDailyBriefRun(runContext, {
         status: "skipped",
@@ -139,6 +149,20 @@ export const POST = withApiGuardrails(
     try {
       const result = await sendOwnerBriefingToTeams({ dryRun: body.dryRun });
       if (result.ok) {
+        const payloadArtifact = await recordTeamsPayloadArtifact(runContext, {
+          title: body.dryRun
+            ? "Executive Daily Brief Teams dry-run payload"
+            : "Executive Daily Brief Teams delivery payload",
+          contentType: "application/vnd.microsoft.teams.card+json",
+          metadata: {
+            dryRun: Boolean(body.dryRun),
+            sentAt: result.sentAt,
+            recipientCount: result.recipients.length,
+            decisionsNeeded: result.decisionsNeeded,
+            actionsRequired: result.actionsRequired,
+            projectsShown: result.projectsShown,
+          },
+        });
         const sentCount = result.recipients.filter(
           (recipient) => recipient.sent,
         ).length;
@@ -146,7 +170,7 @@ export const POST = withApiGuardrails(
           (recipient) => !recipient.sent && recipient.reason !== "dry_run",
         ).length;
 
-        await recordDeliveryEvidence(runContext, result);
+        await recordDeliveryEvidence(runContext, result, payloadArtifact.id);
         await completeDailyBriefRun(runContext, {
           status: failedRecipientCount > 0 ? "partial_success" : "succeeded",
           deliveryStatus: body.dryRun ? "dry_run" : "sent",
@@ -177,6 +201,7 @@ export const POST = withApiGuardrails(
         return NextResponse.json({ ...result, runId: runContext.runId });
       }
 
+      await recordDeliveryEvidence(runContext, result);
       await completeDailyBriefRun(runContext, {
         status:
           result.status === "blocked" ? "partial_success" : "failed_permanent",

@@ -22,7 +22,10 @@ import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
 import type {
+  AiWorkRunArtifactView,
+  AiWorkRunDeliveryAttemptView,
   AiWorkRunSourceView,
+  AiWorkRunStepView,
   AiWorkRunView,
 } from "@/app/api/admin/ai-work-runs/route";
 
@@ -162,6 +165,157 @@ function SourceRows({ sources }: { sources: AiWorkRunSourceView[] }) {
   );
 }
 
+function ArtifactRows({ artifacts }: { artifacts: AiWorkRunArtifactView[] }) {
+  if (artifacts.length === 0) {
+    return (
+      <div className="text-xs text-muted-foreground">
+        No artifacts were recorded for this run.
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs">
+        <thead className="text-left text-muted-foreground">
+          <tr className="border-b">
+            <th className="py-2 pr-3 font-medium">Kind</th>
+            <th className="py-2 pr-3 font-medium">Title</th>
+            <th className="py-2 pr-3 font-medium">Storage</th>
+            <th className="py-2 pr-3 font-medium">Refs</th>
+            <th className="py-2 pr-3 font-medium">Created</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y">
+          {artifacts.map((artifact) => (
+            <tr key={artifact.id}>
+              <td className="py-2 pr-3 align-top text-muted-foreground">
+                {formatLabel(artifact.kind)}
+              </td>
+              <td className="py-2 pr-3 align-top font-medium text-foreground">
+                {artifact.title}
+              </td>
+              <td className="py-2 pr-3 align-top font-mono text-[11px] text-muted-foreground">
+                {artifact.storageTable && artifact.storageId
+                  ? `${artifact.storageTable}:${artifact.storageId}`
+                  : artifact.contentType}
+              </td>
+              <td className="py-2 pr-3 align-top text-muted-foreground">
+                {artifact.sourceRefCount}
+              </td>
+              <td className="py-2 pr-3 align-top text-muted-foreground">
+                {formatDateTime(artifact.createdAt)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function DeliveryAttemptRows({
+  attempts,
+}: {
+  attempts: AiWorkRunDeliveryAttemptView[];
+}) {
+  if (attempts.length === 0) {
+    return (
+      <div className="text-xs text-muted-foreground">
+        No delivery attempts were recorded for this run.
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs">
+        <thead className="text-left text-muted-foreground">
+          <tr className="border-b">
+            <th className="py-2 pr-3 font-medium">Channel</th>
+            <th className="py-2 pr-3 font-medium">Status</th>
+            <th className="py-2 pr-3 font-medium">Recipient</th>
+            <th className="py-2 pr-3 font-medium">Failure</th>
+            <th className="py-2 pr-3 font-medium">Retry</th>
+            <th className="py-2 pr-3 font-medium">Attempted</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y">
+          {attempts.map((attempt) => (
+            <tr key={attempt.id}>
+              <td className="py-2 pr-3 align-top text-muted-foreground">
+                {formatLabel(attempt.channel)}
+              </td>
+              <td className="py-2 pr-3 align-top">
+                <StatusPill status={attempt.status} />
+              </td>
+              <td className="py-2 pr-3 align-top text-foreground">
+                {attempt.recipientAddress ?? attempt.recipientId ?? "-"}
+              </td>
+              <td className="max-w-md py-2 pr-3 align-top text-muted-foreground">
+                {attempt.failureCode || attempt.failureMessage
+                  ? `${attempt.failureCode ?? "Failure"}: ${attempt.failureMessage ?? ""}`
+                  : "-"}
+              </td>
+              <td className="py-2 pr-3 align-top text-muted-foreground">
+                {attempt.retryable ? "retryable" : "no"}
+              </td>
+              <td className="py-2 pr-3 align-top text-muted-foreground">
+                {formatDateTime(attempt.attemptedAt)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function StepRows({ steps }: { steps: AiWorkRunStepView[] }) {
+  if (steps.length === 0) {
+    return (
+      <div className="text-xs text-muted-foreground">
+        No step rows were recorded for this run.
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-xs">
+        <thead className="text-left text-muted-foreground">
+          <tr className="border-b">
+            <th className="py-2 pr-3 font-medium">Step</th>
+            <th className="py-2 pr-3 font-medium">Status</th>
+            <th className="py-2 pr-3 font-medium">Failure</th>
+            <th className="py-2 pr-3 font-medium">Completed</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y">
+          {steps.map((step) => (
+            <tr key={step.id}>
+              <td className="py-2 pr-3 align-top text-muted-foreground">
+                {formatLabel(step.stepType)}
+              </td>
+              <td className="py-2 pr-3 align-top">
+                <StatusPill status={step.status} />
+              </td>
+              <td className="max-w-md py-2 pr-3 align-top text-muted-foreground">
+                {step.failureCode || step.failureMessage
+                  ? `${step.failureCode ?? "Failure"}: ${step.failureMessage ?? ""}`
+                  : "-"}
+              </td>
+              <td className="py-2 pr-3 align-top text-muted-foreground">
+                {formatDateTime(step.completedAt ?? step.createdAt)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function RunDetail({ run }: { run: AiWorkRunView }) {
   const sourceSyncEntries: Array<[string, string]> = run.sourceSyncRun
     ? ([
@@ -192,7 +346,9 @@ function RunDetail({ run }: { run: AiWorkRunView }) {
       )}
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <DetailList title="Generated Artifact" entries={artifactEntries} />
+        {run.artifacts.length === 0 && (
+          <DetailList title="Generated Artifact" entries={artifactEntries} />
+        )}
         <DetailList title="Source Counts" entries={jsonEntries(run.sourceCounts)} />
         <DetailList title="Delivery Target" entries={jsonEntries(run.deliveryTarget)} />
       </div>
@@ -214,6 +370,21 @@ function RunDetail({ run }: { run: AiWorkRunView }) {
           ]}
         />
       )}
+
+      <div className="space-y-2">
+        <div className="text-xs font-semibold text-foreground">Artifacts</div>
+        <ArtifactRows artifacts={run.artifacts} />
+      </div>
+
+      <div className="space-y-2">
+        <div className="text-xs font-semibold text-foreground">Delivery Attempts</div>
+        <DeliveryAttemptRows attempts={run.deliveryAttempts} />
+      </div>
+
+      <div className="space-y-2">
+        <div className="text-xs font-semibold text-foreground">Run Steps</div>
+        <StepRows steps={run.steps} />
+      </div>
 
       <div className="space-y-2">
         <div className="text-xs font-semibold text-foreground">Evidence Rows</div>

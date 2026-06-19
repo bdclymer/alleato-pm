@@ -204,12 +204,12 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
       explicitly blocked/deferred with owner and reason.
 - [ ] Skipped schedules are recorded as skipped runs with reason.
 - [x] Disabled delivery is recorded as disabled, not silently successful.
-- [ ] Failure state records exact failure code, failure message, owning step, and
+- [x] Failure state records exact failure code, failure message, owning step, and
       retryability.
 - [ ] Source health snapshot is stored with each run.
 - [ ] Generated artifact id and delivered artifact id are stored with each run.
-- [ ] Migration applied and remote ledger verified if schema changes are needed.
-- [ ] Generated Supabase types updated after schema changes, if applicable.
+- [x] Migration applied and remote ledger verified if schema changes are needed.
+- [x] Generated Supabase types updated after schema changes, if applicable.
 
 ## Source Adapter Checklist
 
@@ -300,11 +300,11 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
       and succeeded runs.
 - [ ] UI shows source health per run.
 - [x] UI shows generated artifact per run.
-- [ ] UI shows delivery attempts per run.
+- [x] UI shows delivery attempts per run.
 - [ ] UI shows source refs/evidence drilldown per generated packet.
-- [ ] UI shows exact failure code/message and owning step.
+- [x] UI shows exact failure code/message and owning step.
 - [ ] UI shows retryability and next action.
-- [ ] UI does not imply success when a run is skipped, disabled, or partial.
+- [x] UI does not imply success when a run is skipped, disabled, or partial.
 - [ ] Browser verification proves a real generated brief appears without direct
       Supabase querying.
 
@@ -346,8 +346,8 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [ ] Targeted workflow tests run.
 - [x] Targeted ledger tests run.
 - [ ] Targeted delivery adapter tests run.
-- [ ] Supabase migration ledger verified if migrations changed.
-- [ ] Generated Supabase types verified if schema changed.
+- [x] Supabase migration ledger verified if migrations changed.
+- [x] Generated Supabase types verified if schema changed.
 - [ ] Local or staging preview run executed through the gateway.
 - [ ] Local or staging scheduled run executed through the gateway.
 - [ ] No-send Teams preview/dry-run verified.
@@ -394,14 +394,20 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 | Gateway guardrail     | `npm run rag:verify:executive-daily-brief-gateway`                                                                                                                                       | Passed  | Blocks raw `regenerateExecutiveBriefingDraft` usage under `frontend/src/app` so route/action generation cannot bypass the AI Ops ledger. |
 | Artifact linkage lint | `cd frontend && npx eslint src/lib/ai-ops/contracts.ts src/lib/ai-ops/ledger.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/lib/ai/tools/executive-brief-tools.ts src/app/api/executive/daily-brief/preview-teams/route.ts src/app/api/admin/owner-briefing/send-test/route.ts src/app/api/admin/ai-work-runs/route.ts 'src/app/(admin)/ai-work-runs/ai-work-runs-client.tsx'` | Passed  | Contract/writer, AI tool, preview/admin send routes, admin API, and run UI lint cleanly after `daily_recap_id` linkage. |
 | Artifact linkage tests | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand`                                  | Passed  | 2 suites, 13 tests passed. Tests now prove `dailyRecapId` is accepted and mapped to `ai_work_runs.daily_recap_id`. |
-| Supabase type gate    | `npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema public`                                                                                                | Blocked | CLI returned `LegacyInvalidAccessTokenError`; no schema migration was added in this slice. The accidentally truncated generated type file was restored from `HEAD`. |
+| Run artifact migration | `bash -lc 'set -a; source .env; set +a; psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql'` | Passed | Created `ai_work_run_steps`, `ai_work_run_artifacts`, and `ai_work_run_delivery_attempts` on the linked database. |
+| Migration ledger      | `npm run db:migrations:verify-applied -- supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql`                                                            | Passed  | Remote Supabase migration ledger reports `20260619183000` applied. |
+| Supabase type gate    | `bash -lc 'set -a; source .env; set +a; tmp=$(mktemp); SUPABASE_ACCESS_TOKEN="$SUPABASE_ACCESS_TOKEN" npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema public > "$tmp" && test -s "$tmp" && mv "$tmp" frontend/src/types/database.types.ts'` | Passed | Generated types now include the new AI work-run step/artifact/delivery tables. |
+| Run artifact lint     | `cd frontend && npx eslint src/lib/ai-ops/contracts.ts src/lib/ai-ops/ledger.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/app/api/executive/daily-brief/preview-teams/route.ts src/app/api/executive/daily-brief/send-teams/route.ts src/app/api/admin/owner-briefing/send-test/route.ts src/app/api/admin/ai-work-runs/route.ts 'src/app/(admin)/ai-work-runs/ai-work-runs-client.tsx'` | Passed | Ledger writers, Daily Brief routes, admin API, and admin UI lint cleanly after first-class artifacts/delivery attempts. |
+| Run artifact tests    | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand`                                  | Passed  | 2 suites, 17 tests passed. Tests cover step, artifact, delivery-attempt mapping and pre-write validation. |
 | Runner no-write smoke | `cd frontend && npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:00:00.000Z`                                                                                              | Passed  | Kill switch off; script loaded and exited with `executive_daily_brief_disabled`, no send/write.    |
-| Disabled send smoke   | `curl -sS -X POST http://localhost:3001/api/executive/daily-brief/send-teams -H 'content-type: application/json' -d '{}'`                                                                 | Passed  | Kill switch off; route returned disabled state with run id `45c9f9a2-2ac1-45fe-8893-a2cd07c28374`. |
-| Admin UI/API readback | `curl -sS 'http://localhost:3001/api/admin/ai-work-runs?workflow=executive_daily_brief&limit=5'`                                                                                          | Blocked | Curl lacks authenticated admin browser session; response was `AUTH_EXPIRED`.                       |
-| Static/type/lint      | Pending                                                                                                                                                                                   | Pending | Broader implementation lint/typecheck required before workflow can be closed.                      |
+| Disabled send smoke   | `curl -sS -X POST http://localhost:3001/api/executive/daily-brief/send-teams -H 'content-type: application/json' -d '{}'`                                                                 | Passed  | Kill switch off; route returned disabled state with run id `b88b3b30-b766-4aa2-8e02-84ef175e207b`. |
+| Disabled run SQL readback | `select r.id, r.status, r.delivery_status, a.status, a.failure_code, s.step_type, s.status ... where r.id = 'b88b3b30-b766-4aa2-8e02-84ef175e207b'` | Passed | Readback returned `skipped`, `disabled`, delivery attempt `disabled`, failure code `EXECUTIVE_DAILY_BRIEF_DISABLED`, and delivery step `blocked`. |
+| Admin UI/API readback | `agent-browser state load frontend/tests/.auth/user.json && agent-browser open http://localhost:3001/ai-work-runs ...`                                                                    | Passed  | Authenticated page stayed on `/ai-work-runs`; page text shows disabled run `b88b3b30-b766-4aa2-8e02-84ef175e207b`, Delivery Attempts, Run Steps, exact failure code/message, and retryability. Artifacts: `tests/agent-browser-runs/2026-06-19-executive-daily-brief-ai-runs/snapshot-playwright-auth.txt`, `page-text.txt`, `ai-work-runs-playwright-auth.png`. |
+| Static/type/lint      | `cd frontend && NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`                                                                                                  | Failed  | Current slice diagnostics were fixed. Remaining errors are unrelated repo debt in `src/app/(admin)/admin/page.tsx`, `src/app/(main)/[projectId]/intelligence/page.tsx`, `src/features/ai-agents/ai-agent-dag.tsx`, `src/features/kanban/components/board-column.tsx`, `src/lib/executive/brandon-daily-update.ts`, and `src/lib/progress-reports/ai-generate.ts`. A cheaper sub-agent also ran the default command and hit Node heap OOM before diagnostics. |
 | Targeted tests        | Pending                                                                                                                                                                                   | Pending | Gateway/runtime tests still required before implementation can be closed.                          |
 | Browser/user-flow     | Pending                                                                                                                                                                                   | Pending | `/ai-work-runs` proof required.                                                                    |
-| DB/provider read-back | Pending                                                                                                                                                                                   | Pending | Required for ledger/config/migrations.                                                             |
+| DB inventory          | `npm run db:inventory`                                                                                                                                                                   | Failed  | The three new AI work-run tables are documented and were not reported missing, but the command fails on pre-existing inventory drift across existing MAIN/RAG tables such as `ai_agents`, `ai_work_runs`, `ai_operation_events`, Graph/Outlook RAG tables, and project intelligence tables. |
+| DB/provider read-back | `select table_name from information_schema.tables where table_schema = 'public' and table_name in ('ai_work_run_steps','ai_work_run_artifacts','ai_work_run_delivery_attempts')`          | Passed  | Linked database returned all three new tables.                                                     |
 | End-to-end proof      | Pending                                                                                                                                                                                   | Pending | Must include run id, packet id, and artifact.                                                      |
 | Planning gate         | Linear AAI-551 plus this task file and S57 handoff                                                                                                                                        | Passed  | Linear issue created before coding; architecture recommendation accepted with corrected order.     |
 

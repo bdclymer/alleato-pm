@@ -1,5 +1,12 @@
 import { createAiOpsLedger } from "../ledger";
-import type { AiEvent, AiRun, EvidenceRef } from "../contracts";
+import type {
+  AiArtifact,
+  AiEvent,
+  AiRun,
+  AiRunStep,
+  DeliveryAttempt,
+  EvidenceRef,
+} from "../contracts";
 
 const RUN_ID = "11111111-1111-4111-8111-111111111111";
 const EVENT_ID = "22222222-2222-4222-8222-222222222222";
@@ -106,6 +113,49 @@ function evidenceRef(overrides: Partial<EvidenceRef> = {}): EvidenceRef {
   };
 }
 
+function step(overrides: Partial<AiRunStep> = {}): AiRunStep {
+  return {
+    runId: RUN_ID,
+    stepType: "artifact_persist",
+    status: "succeeded",
+    startedAt: "2026-06-19T12:00:30.000Z",
+    completedAt: "2026-06-19T12:00:31.000Z",
+    metadata: { artifactKind: "brief_packet" },
+    ...overrides,
+  };
+}
+
+function artifact(overrides: Partial<AiArtifact> = {}): AiArtifact {
+  return {
+    runId: RUN_ID,
+    kind: "brief_packet",
+    title: "Executive Daily Brief packet",
+    storageTable: "daily_recaps",
+    storageId: DAILY_RECAP_ID,
+    contentType: "application/vnd.alleato.executive-brief+json",
+    sourceRefs: [evidenceRef()],
+    metadata: { recapDate: "2026-06-19" },
+    ...overrides,
+  };
+}
+
+function deliveryAttempt(
+  overrides: Partial<DeliveryAttempt> = {},
+): DeliveryAttempt {
+  return {
+    runId: RUN_ID,
+    artifactId: "44444444-4444-4444-8444-444444444444",
+    channel: "teams",
+    recipientId: "user-1",
+    recipientAddress: "brandon@example.com",
+    status: "dry_run",
+    retryable: false,
+    attemptedAt: "2026-06-19T12:01:00.000Z",
+    metadata: { reason: "dry_run" },
+    ...overrides,
+  };
+}
+
 describe("ai-ops ledger", () => {
   it("validates and maps event inserts through the canonical ledger writer", async () => {
     const { supabase, calls } = createSupabaseMock();
@@ -203,5 +253,77 @@ describe("ai-ops ledger", () => {
         },
       ],
     });
+  });
+
+  it("maps run steps to ai_work_run_steps", async () => {
+    const { supabase, calls } = createSupabaseMock();
+    const ledger = createAiOpsLedger(supabase as never);
+
+    await ledger.createRunStep(step());
+
+    expect(supabase.from).toHaveBeenCalledWith("ai_work_run_steps");
+    expect(calls[0]).toMatchObject({
+      table: "ai_work_run_steps",
+      method: "insert",
+      payload: {
+        work_run_id: RUN_ID,
+        step_type: "artifact_persist",
+        status: "succeeded",
+        failure_code: undefined,
+      },
+    });
+  });
+
+  it("maps generated artifacts to ai_work_run_artifacts with source ref counts", async () => {
+    const { supabase, calls } = createSupabaseMock();
+    const ledger = createAiOpsLedger(supabase as never);
+
+    await ledger.createArtifact(artifact());
+
+    expect(supabase.from).toHaveBeenCalledWith("ai_work_run_artifacts");
+    expect(calls[0]).toMatchObject({
+      table: "ai_work_run_artifacts",
+      method: "insert",
+      payload: {
+        work_run_id: RUN_ID,
+        kind: "brief_packet",
+        storage_table: "daily_recaps",
+        storage_id: DAILY_RECAP_ID,
+        source_ref_count: 1,
+      },
+    });
+  });
+
+  it("maps delivery attempts to ai_work_run_delivery_attempts", async () => {
+    const { supabase, calls } = createSupabaseMock();
+    const ledger = createAiOpsLedger(supabase as never);
+
+    await ledger.createDeliveryAttempt(deliveryAttempt());
+
+    expect(supabase.from).toHaveBeenCalledWith(
+      "ai_work_run_delivery_attempts",
+    );
+    expect(calls[0]).toMatchObject({
+      table: "ai_work_run_delivery_attempts",
+      method: "insert",
+      payload: {
+        work_run_id: RUN_ID,
+        channel: "teams",
+        recipient_id: "user-1",
+        recipient_address: "brandon@example.com",
+        status: "dry_run",
+        retryable: false,
+      },
+    });
+  });
+
+  it("rejects invalid delivery attempts before writing to Supabase", async () => {
+    const { supabase } = createSupabaseMock();
+    const ledger = createAiOpsLedger(supabase as never);
+
+    await expect(
+      ledger.createDeliveryAttempt(deliveryAttempt({ recipientAddress: "" })),
+    ).rejects.toThrow();
+    expect(supabase.from).not.toHaveBeenCalled();
   });
 });

@@ -2410,6 +2410,35 @@ tables:
     purpose: "Dormant AI tool write audit log."
     relatedTables: []
 
+  - name: ai_work_run_steps
+    db: MAIN
+    domain: ai
+    owner: ai-ops
+    status: live
+    purpose: "Step-level execution log for canonical AI workflow runs, including source fetch, tool call, synthesis, artifact persistence, delivery, and verification outcomes."
+    relatedTables:
+      - ai_work_runs
+
+  - name: ai_work_run_artifacts
+    db: MAIN
+    domain: ai
+    owner: ai-ops
+    status: live
+    purpose: "Inspectable generated and delivered artifacts for AI workflow runs, including Executive Daily Brief packets, Teams/email payloads, source-health reports, delivery receipts, and verification reports."
+    relatedTables:
+      - ai_work_runs
+      - daily_recaps
+
+  - name: ai_work_run_delivery_attempts
+    db: MAIN
+    domain: ai
+    owner: ai-ops
+    status: live
+    purpose: "Per-channel delivery attempt ledger for AI workflow runs, with recipient, status, exact failure code/message, retryability, provider response, and artifact linkage."
+    relatedTables:
+      - ai_work_runs
+      - ai_work_run_artifacts
+
   # ─── Executive briefing + strategic ─────────────────────
 
   - name: executive_briefing_follow_ups

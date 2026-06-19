@@ -3771,6 +3771,122 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_work_run_artifacts: {
+        Row: {
+          checksum: string | null
+          content_type: string
+          created_at: string
+          id: string
+          kind: string
+          metadata: Json
+          source_ref_count: number
+          storage_id: string | null
+          storage_table: string | null
+          title: string
+          work_run_id: string
+        }
+        Insert: {
+          checksum?: string | null
+          content_type: string
+          created_at?: string
+          id?: string
+          kind: string
+          metadata?: Json
+          source_ref_count?: number
+          storage_id?: string | null
+          storage_table?: string | null
+          title: string
+          work_run_id: string
+        }
+        Update: {
+          checksum?: string | null
+          content_type?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          metadata?: Json
+          source_ref_count?: number
+          storage_id?: string | null
+          storage_table?: string | null
+          title?: string
+          work_run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_work_run_artifacts_work_run_id_fkey"
+            columns: ["work_run_id"]
+            isOneToOne: false
+            referencedRelation: "ai_work_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_work_run_delivery_attempts: {
+        Row: {
+          artifact_id: string | null
+          attempted_at: string
+          channel: string
+          created_at: string
+          failure_code: string | null
+          failure_message: string | null
+          id: string
+          metadata: Json
+          provider_message_id: string | null
+          recipient_address: string | null
+          recipient_id: string | null
+          retryable: boolean
+          status: string
+          work_run_id: string
+        }
+        Insert: {
+          artifact_id?: string | null
+          attempted_at?: string
+          channel: string
+          created_at?: string
+          failure_code?: string | null
+          failure_message?: string | null
+          id?: string
+          metadata?: Json
+          provider_message_id?: string | null
+          recipient_address?: string | null
+          recipient_id?: string | null
+          retryable?: boolean
+          status: string
+          work_run_id: string
+        }
+        Update: {
+          artifact_id?: string | null
+          attempted_at?: string
+          channel?: string
+          created_at?: string
+          failure_code?: string | null
+          failure_message?: string | null
+          id?: string
+          metadata?: Json
+          provider_message_id?: string | null
+          recipient_address?: string | null
+          recipient_id?: string | null
+          retryable?: boolean
+          status?: string
+          work_run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_work_run_delivery_attempts_artifact_id_fkey"
+            columns: ["artifact_id"]
+            isOneToOne: false
+            referencedRelation: "ai_work_run_artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_work_run_delivery_attempts_work_run_id_fkey"
+            columns: ["work_run_id"]
+            isOneToOne: false
+            referencedRelation: "ai_work_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_work_run_sources: {
         Row: {
           confidence: string | null
@@ -3814,6 +3930,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ai_work_run_sources_work_run_id_fkey"
+            columns: ["work_run_id"]
+            isOneToOne: false
+            referencedRelation: "ai_work_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_work_run_steps: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          failure_code: string | null
+          failure_message: string | null
+          id: string
+          metadata: Json
+          started_at: string | null
+          status: string
+          step_type: string
+          updated_at: string
+          work_run_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          failure_code?: string | null
+          failure_message?: string | null
+          id?: string
+          metadata?: Json
+          started_at?: string | null
+          status: string
+          step_type: string
+          updated_at?: string
+          work_run_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          failure_code?: string | null
+          failure_message?: string | null
+          id?: string
+          metadata?: Json
+          started_at?: string | null
+          status?: string
+          step_type?: string
+          updated_at?: string
+          work_run_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_work_run_steps_work_run_id_fkey"
             columns: ["work_run_id"]
             isOneToOne: false
             referencedRelation: "ai_work_runs"

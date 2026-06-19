@@ -27,7 +27,9 @@ import { formatExecutiveBriefingTeamsMessage } from "@/lib/executive/executive-b
 import {
   completeDailyBriefRun,
   failDailyBriefRun,
+  recordDeliveryAttempt,
   recordDraftEvidence,
+  recordTeamsPayloadArtifact,
   regenerateDailyBriefDraftForRun,
   sourceHealthForDraft,
   startDailyBriefRun,
@@ -87,6 +89,15 @@ export const POST = withApiGuardrails(
         : (await getExecutiveBriefingDashboard({ windowDays })).draft;
 
       if (!draft) {
+        await recordDeliveryAttempt(runContext, {
+          channel: "teams",
+          status: "skipped",
+          recipientAddress: firstName,
+          failureCode: "NO_BRIEF_AVAILABLE",
+          failureMessage:
+            "No brief available for this window. Try fresh=true to regenerate.",
+          metadata: { dryRun: true, windowDays },
+        });
         await completeDailyBriefRun(runContext, {
           status: "skipped",
           deliveryStatus: "skipped",
@@ -123,6 +134,28 @@ export const POST = withApiGuardrails(
       if (!body.fresh) {
         await recordDraftEvidence(runContext, draft);
       }
+      const payloadArtifact = await recordTeamsPayloadArtifact(runContext, {
+        title: "Executive Daily Brief Teams preview payload",
+        contentType: "application/vnd.microsoft.teams.card+json",
+        metadata: {
+          dryRun: true,
+          firstName,
+          itemCount: totalItems,
+          recapDate: draft.recapDate,
+          cardKeys: Object.keys(card),
+        },
+      });
+      await recordDeliveryAttempt(runContext, {
+        artifactId: payloadArtifact.id,
+        channel: "teams",
+        recipientAddress: firstName,
+        status: "dry_run",
+        metadata: {
+          preview: true,
+          windowDays,
+          generatedFresh: Boolean(body.fresh),
+        },
+      });
       await completeDailyBriefRun(runContext, {
         status: "succeeded",
         dailyRecapId: draft.id,

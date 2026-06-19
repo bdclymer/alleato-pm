@@ -33,6 +33,10 @@
    - `/Users/meganharrison/Documents/alleato-pm/package.json`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/admin/ai-work-runs/route.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/(admin)/ai-work-runs/ai-work-runs-client.tsx`
+   - `/Users/meganharrison/Documents/alleato-pm/supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/types/database.types.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/docs/architecture/AI-RAG-ARCHITECTURE.md`
+   - `/Users/meganharrison/Documents/alleato-pm/docs/architecture/tables.yaml`
 7) Commands run and outcome (pass/fail counts):
    - Pass: read pasted ChatGPT recommendation from Codex attachment.
    - Pass: read `docs/codebase-map/hermes-vs-openclaw-comparison.md`.
@@ -67,6 +71,21 @@
    - Pass: extended `AiRun`/ledger mapping with `dailyRecapId`, mapped it to existing `ai_work_runs.daily_recap_id`, and exposed it as the generated artifact in `/api/admin/ai-work-runs` and `/ai-work-runs`.
    - Pass: `cd frontend && npx eslint src/lib/ai-ops/contracts.ts src/lib/ai-ops/ledger.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/lib/ai/tools/executive-brief-tools.ts src/app/api/executive/daily-brief/preview-teams/route.ts src/app/api/admin/owner-briefing/send-test/route.ts src/app/api/admin/ai-work-runs/route.ts 'src/app/(admin)/ai-work-runs/ai-work-runs-client.tsx'`.
    - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand` passed 2 suites / 13 tests.
+   - Pass: applied `supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql` directly with `psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f ...`, creating `ai_work_run_steps`, `ai_work_run_artifacts`, and `ai_work_run_delivery_attempts`.
+   - Pass: inserted the exact migration version into the Supabase migration ledger after direct apply, then `npm run db:migrations:verify-applied -- supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql` passed.
+   - Pass: regenerated Supabase types through a temp file using the `.env` Supabase access token path; `frontend/src/types/database.types.ts` now includes the three new AI Ops ledger tables.
+   - Pass: extended the shared AI Ops ledger writer with validated `createRunStep`, `createArtifact`, and `createDeliveryAttempt` methods.
+   - Pass: Daily Brief preview, send, disabled delivery, and admin test-send paths now record first-class Teams payload artifacts and/or delivery attempt rows.
+   - Pass: `/api/admin/ai-work-runs` returns `steps`, `artifacts`, and `deliveryAttempts`; `/ai-work-runs` renders those rows with exact failure code/message and retryability.
+   - Pass: `cd frontend && npx eslint src/lib/ai-ops/contracts.ts src/lib/ai-ops/ledger.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/app/api/executive/daily-brief/preview-teams/route.ts src/app/api/executive/daily-brief/send-teams/route.ts src/app/api/admin/owner-briefing/send-test/route.ts src/app/api/admin/ai-work-runs/route.ts 'src/app/(admin)/ai-work-runs/ai-work-runs-client.tsx'`.
+   - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand` passed 2 suites / 17 tests.
+   - Pass: `curl -sS -X POST http://localhost:3001/api/executive/daily-brief/send-teams -H 'content-type: application/json' -d '{}'` returned disabled state with run id `b88b3b30-b766-4aa2-8e02-84ef175e207b`.
+   - Pass: SQL readback for run `b88b3b30-b766-4aa2-8e02-84ef175e207b` returned run status `skipped`, delivery status `disabled`, delivery attempt status `disabled`, failure code `EXECUTIVE_DAILY_BRIEF_DISABLED`, and delivery step `blocked`.
+   - Pass: authenticated `agent-browser` proof loaded `/ai-work-runs` using `frontend/tests/.auth/user.json`; page text shows the disabled run, Delivery Attempts, Run Steps, exact failure code/message, and retryability.
+   - Fail then fixed: larger-heap typecheck initially surfaced three current-slice diagnostics in `frontend/src/lib/ai-ops/executive-daily-brief-ledger.ts`; fixed missing source-health metadata, safe skipped-state narrowing, and `sourceRefs: []` for Teams payload artifacts.
+   - Fail unrelated: `cd frontend && npx tsc --noEmit --pretty false` in cheaper sub-agent failed with Node heap OOM before diagnostics.
+   - Fail unrelated: `cd frontend && NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false` now has no current-slice diagnostics, but still fails on unrelated repo debt in `src/app/(admin)/admin/page.tsx`, `src/app/(main)/[projectId]/intelligence/page.tsx`, `src/features/ai-agents/ai-agent-dag.tsx`, `src/features/kanban/components/board-column.tsx`, `src/lib/executive/brandon-daily-update.ts`, and `src/lib/progress-reports/ai-generate.ts`.
+   - Fail unrelated: `npm run db:inventory` fails on pre-existing missing metadata for many existing MAIN/RAG tables. The three new tables added in this slice are documented in `docs/architecture/tables.yaml` and were not listed as missing.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
@@ -88,14 +107,22 @@
    - `scripts/verify/verify_executive_daily_brief_gateway.mjs`
    - `frontend/src/app/api/admin/ai-work-runs/route.ts`
    - `frontend/src/app/(admin)/ai-work-runs/ai-work-runs-client.tsx`
+   - `supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql`
+   - `frontend/src/types/database.types.ts`
+   - `docs/architecture/AI-RAG-ARCHITECTURE.md`
+   - `docs/architecture/tables.yaml`
+   - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-ai-runs/snapshot-playwright-auth.txt`
+   - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-ai-runs/page-text.txt`
+   - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-ai-runs/ai-work-runs-playwright-auth.png`
 9) Top 3 findings (frontend-visible issues first):
    - No frontend-visible changes yet.
    - Inventory confirmed multiple bypasses: preview routes, send routes, admin test send, actions, AI tools, and legacy delivery paths can generate or deliver without one canonical `ai_work_runs` record.
    - Shared AI Ops contracts and a shared ledger writer now exist and are tested; scheduled runner, preview/send routes, widget fresh generation, executive page regeneration, admin test-send, and AI tool generation now use the shared writer or an existing-run helper.
    - New generated Daily Brief runs now set `ai_work_runs.daily_recap_id` when a `daily_recaps` draft id is available, and `/ai-work-runs` shows that generated artifact reference.
-10) Recommended next action (one line): Fix the Supabase CLI token, then add first-class delivery-attempt/artifact tables or explicitly defer them before authenticated `/ai-work-runs` browser proof.
+   - First-class AI Ops run steps, artifacts, and delivery attempts now exist in the database, are exposed by `/api/admin/ai-work-runs`, and are visible in `/ai-work-runs`.
+10) Recommended next action (one line): Build the Executive Daily Brief workflow pack plus source adapters/tool policy, then prove a real generated preview/dry-run packet with artifact, source refs, and source health.
 11) Handoff file path: `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
-12) Migration ledger evidence: Not applicable yet; no migrations have been created or changed.
+12) Migration ledger evidence: `npm run db:migrations:verify-applied -- supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql` passed for version `20260619183000`.
 <!-- markdownlint-enable MD029 MD034 -->
 
 ## Linear Updates
@@ -106,6 +133,7 @@
   - `8ad449c3-f770-4f2a-bbd5-d81e33def16a` recorded scheduled-runner migration through the shared ledger writer.
   - `d7e0ea7f-b634-4423-9e5c-ea0630f63bd7` recorded preview/send route ledger wiring and disabled-send smoke evidence.
   - `bb5df727-1331-45da-8eb4-60030c5cad8f` recorded admin test-send and AI tool ledger wrapping.
+  - `14c489d3-a9d8-47bb-b98a-5191d64566d8` recorded first-class run steps/artifacts/delivery attempts, migration/type evidence, UI proof, and unrelated verification blockers.
 - Completion/blocker comment: None yet.
 
 ## Current Status
@@ -114,18 +142,20 @@ In progress. Linear issue AAI-551 is created and the task markdown file is the
 source of truth. Current-path inventory, ledger audit, shared AI Ops contracts,
 the shared ledger writer, scheduled-runner migration, preview/send route ledger
 wiring, app fresh-generation bypass closure, a route/action raw-generator
-guardrail, and existing `daily_recaps` artifact linkage through
-`ai_work_runs.daily_recap_id` are implemented with focused tests/lint. The
-workflow is not complete until source adapter normalization, first-class delivery
-attempt/artifact modeling or explicit deferral, authenticated UI inspection, and
-end-to-end proof checklists are complete.
+guardrail, existing `daily_recaps` artifact linkage through
+`ai_work_runs.daily_recap_id`, and first-class run steps/artifacts/delivery
+attempts are implemented with focused tests/lint, migration ledger verification,
+SQL readback, and authenticated `/ai-work-runs` browser evidence. The workflow is
+not complete until source adapter normalization, workflow pack/tool policy,
+claim-level source-ref enforcement, real generated preview/dry-run proof, email
+delivery disposition, and end-to-end accuracy checklists are complete.
 
 ## Exact Next Step
 
-Fix the Supabase CLI token (`LegacyInvalidAccessTokenError` from type
-generation), then add first-class delivery-attempt/artifact tables or explicitly
-defer them. After that, verify an authenticated `/ai-work-runs` browser view for
-a real generated preview run.
+Build the Executive Daily Brief workflow pack plus source adapter/tool policy
+layer, then execute a real no-send generated preview/dry-run packet so
+`/ai-work-runs` shows a generated artifact, source health, evidence refs,
+delivery attempt, and exact run state from the same canonical ledger.
 
 ## Known Pitfalls
 
@@ -135,6 +165,8 @@ a real generated preview run.
   a canonical run row and claim-level evidence refs.
 - Do not treat `/ai-work-runs` as proof until the actual generation paths write
   to it.
+- Do not treat the current disabled-send proof as generated-brief proof; it only
+  proves disabled delivery writes canonical run, delivery-attempt, and step rows.
 
 ## Resume Commands
 

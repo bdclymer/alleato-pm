@@ -1,4 +1,5 @@
 import type {
+  DeliveryAttempt,
   AiEvent,
   AiRun,
   EvidenceRef,
@@ -63,6 +64,25 @@ type CompleteDailyBriefRunInput = {
   deliveryTarget?: Record<string, unknown>;
   sourceCounts?: Record<string, unknown>;
   sourceHealth?: SourceHealthSnapshot[];
+  metadata?: Record<string, unknown>;
+};
+
+type RecordTeamsPayloadArtifactInput = {
+  title: string;
+  contentType: string;
+  metadata?: Record<string, unknown>;
+};
+
+type RecordDeliveryAttemptInput = {
+  artifactId?: string | null;
+  channel: DeliveryAttempt["channel"];
+  recipientId?: string | null;
+  recipientAddress?: string | null;
+  status: DeliveryAttempt["status"];
+  providerMessageId?: string | null;
+  failureCode?: string | null;
+  failureMessage?: string | null;
+  retryable?: boolean;
   metadata?: Record<string, unknown>;
 };
 
@@ -244,13 +264,15 @@ export function sourceHealthForDeliveryResult(
         resourceId: "owner_briefing_delivery",
         resourceName: "Owner briefing delivery",
         status:
-          result.status === "disabled" || result.skipped
+          result.status === "disabled" ||
+          ("skipped" in result && result.skipped)
             ? "skipped"
             : "unknown",
         checkedAt: nowIso(),
         loadedCount: 0,
         missingCount: 0,
         warning: result.reason ?? null,
+        metadata: {},
       },
     ];
   }
@@ -381,18 +403,190 @@ export async function recordDraftEvidence(
   draft: ExecutiveBriefingDraft,
 ) {
   const ledger = createAiOpsLedger(createServiceClient());
-  await ledger.insertEvidenceRefs(context.runId, evidenceRefsFromDraft(draft));
+  const sourceRefs = evidenceRefsFromDraft(draft);
+  await ledger.insertEvidenceRefs(context.runId, sourceRefs);
+  const artifact = await ledger.createArtifact({
+    runId: context.runId,
+    kind: "brief_packet",
+    title: "Executive Daily Brief packet",
+    storageTable: "daily_recaps",
+    storageId: draft.id,
+    contentType: "application/vnd.alleato.executive-brief+json",
+    sourceRefs,
+    metadata: {
+      recapDate: draft.recapDate,
+      workflowStatus: draft.workflowStatus,
+      itemCount:
+        draft.packet.sections.needsBrandon.length +
+        draft.packet.sections.waitingOnOthers.length +
+        draft.packet.sections.importantUpdates.length,
+    },
+  });
+  await ledger.createRunStep({
+    runId: context.runId,
+    stepType: "artifact_persist",
+    status: "succeeded",
+    startedAt: nowIso(),
+    completedAt: nowIso(),
+    metadata: {
+      artifactId: artifact.id,
+      artifactKind: "brief_packet",
+      storageTable: "daily_recaps",
+      storageId: draft.id,
+      sourceRefCount: sourceRefs.length,
+    },
+  });
+  return artifact;
 }
 
 export async function recordDeliveryEvidence(
   context: DailyBriefRunContext,
   result: OwnerBriefingDeliveryResult,
+  artifactId?: string | null,
 ) {
   const ledger = createAiOpsLedger(createServiceClient());
   await ledger.insertEvidenceRefs(
     context.runId,
     evidenceRefsFromDeliveryResult(result),
   );
+  if (result.ok) {
+    for (const recipient of result.recipients) {
+      await ledger.createDeliveryAttempt({
+        runId: context.runId,
+        artifactId: artifactId ?? null,
+        channel: "teams",
+        recipientId: recipient.userId,
+        recipientAddress: recipient.email,
+        status:
+          recipient.reason === "dry_run"
+            ? "dry_run"
+            : recipient.sent
+              ? "sent"
+              : "failed",
+        failureCode:
+          !recipient.sent && recipient.reason !== "dry_run"
+            ? "TEAMS_RECIPIENT_SEND_FAILED"
+            : null,
+        failureMessage:
+          !recipient.sent && recipient.reason !== "dry_run"
+            ? recipient.reason ?? "Teams send failed for recipient."
+            : null,
+        retryable: !recipient.sent && recipient.reason !== "dry_run",
+        attemptedAt: result.sentAt,
+        metadata: {
+          displayName: recipient.displayName,
+          reason: recipient.reason ?? null,
+        },
+      });
+    }
+    await ledger.createRunStep({
+      runId: context.runId,
+      stepType: "delivery",
+      status: result.recipients.every(
+        (recipient) => recipient.sent || recipient.reason === "dry_run",
+      )
+        ? "succeeded"
+        : "failed_retryable",
+      startedAt: result.sentAt,
+      completedAt: result.sentAt,
+      metadata: {
+        channel: "teams",
+        artifactId: artifactId ?? null,
+        recipientCount: result.recipients.length,
+      },
+    });
+    return;
+  }
+
+  await ledger.createDeliveryAttempt({
+    runId: context.runId,
+    artifactId: artifactId ?? null,
+    channel: "teams",
+    status: result.status,
+    failureCode:
+      result.status === "blocked"
+        ? "TEAMS_DELIVERY_BLOCKED"
+        : "TEAMS_DELIVERY_FAILED",
+    failureMessage: result.reason,
+    retryable: result.status === "failed",
+    attemptedAt: nowIso(),
+    metadata: { reason: result.reason },
+  });
+  await ledger.createRunStep({
+    runId: context.runId,
+    stepType: "delivery",
+    status: result.status === "blocked" ? "blocked" : "failed_retryable",
+    startedAt: nowIso(),
+    completedAt: nowIso(),
+    failureCode:
+      result.status === "blocked"
+        ? "TEAMS_DELIVERY_BLOCKED"
+        : "TEAMS_DELIVERY_FAILED",
+    failureMessage: result.reason,
+    metadata: { channel: "teams", artifactId: artifactId ?? null },
+  });
+}
+
+export async function recordTeamsPayloadArtifact(
+  context: DailyBriefRunContext,
+  input: RecordTeamsPayloadArtifactInput,
+): Promise<{ id: string }> {
+  const ledger = createAiOpsLedger(createServiceClient());
+  return ledger.createArtifact({
+    runId: context.runId,
+    kind: "teams_payload",
+    title: input.title,
+    contentType: input.contentType,
+    sourceRefs: [],
+    metadata: input.metadata ?? {},
+  });
+}
+
+export async function recordDeliveryAttempt(
+  context: DailyBriefRunContext,
+  input: RecordDeliveryAttemptInput,
+) {
+  const ledger = createAiOpsLedger(createServiceClient());
+  const attempt = await ledger.createDeliveryAttempt({
+    runId: context.runId,
+    artifactId: input.artifactId ?? null,
+    channel: input.channel,
+    recipientId: input.recipientId ?? null,
+    recipientAddress: input.recipientAddress ?? null,
+    status: input.status,
+    providerMessageId: input.providerMessageId ?? null,
+    failureCode: input.failureCode ?? null,
+    failureMessage: input.failureMessage ?? null,
+    retryable: input.retryable ?? false,
+    attemptedAt: nowIso(),
+    metadata: input.metadata ?? {},
+  });
+  await ledger.createRunStep({
+    runId: context.runId,
+    stepType: "delivery",
+    status:
+      input.status === "sent" || input.status === "dry_run"
+        ? "succeeded"
+        : input.status === "disabled" ||
+            input.status === "blocked" ||
+            input.status === "skipped"
+          ? "blocked"
+          : input.retryable
+            ? "failed_retryable"
+            : "failed_permanent",
+    startedAt: nowIso(),
+    completedAt: nowIso(),
+    failureCode: input.failureCode ?? null,
+    failureMessage: input.failureMessage ?? null,
+    metadata: {
+      channel: input.channel,
+      status: input.status,
+      artifactId: input.artifactId ?? null,
+      deliveryAttemptId: attempt.id,
+      ...(input.metadata ?? {}),
+    },
+  });
+  return attempt;
 }
 
 export function sourceHealthForDraft(draft: ExecutiveBriefingDraft) {

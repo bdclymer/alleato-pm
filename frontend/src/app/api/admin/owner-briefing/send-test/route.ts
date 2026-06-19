@@ -27,7 +27,9 @@ import type { BrandonDailyUpdatePacket } from "@/lib/executive/brandon-daily-upd
 import {
   completeDailyBriefRun,
   failDailyBriefRun,
+  recordDeliveryAttempt,
   recordDraftEvidence,
+  recordTeamsPayloadArtifact,
   sourceHealthForDraft,
   startDailyBriefRun,
 } from "@/lib/ai-ops/executive-daily-brief-ledger";
@@ -69,6 +71,7 @@ export const POST = withApiGuardrails(
     });
 
     const supabase = createServiceClient();
+    let payloadArtifactId: string | null = null;
 
     try {
       // If draftId is specified, load that exact packet.
@@ -108,6 +111,14 @@ export const POST = withApiGuardrails(
       }
 
       if (!packet || !draftId) {
+        await recordDeliveryAttempt(runContext, {
+          channel: "teams",
+          recipientId: targetUserId,
+          status: "skipped",
+          failureCode: "NO_APPROVED_BRIEFING_PACKET",
+          failureMessage: "No approved briefing packet found.",
+          metadata: { adminTestSend: true },
+        });
         await completeDailyBriefRun(runContext, {
           status: "skipped",
           deliveryStatus: "skipped",
@@ -143,6 +154,18 @@ export const POST = withApiGuardrails(
       // Send the brief as a plain, normal-width Teams text message (not a card —
       // Adaptive Cards render cramped on Teams desktop).
       const text = formatExecutiveBriefingTeamsMessage(packet, "Brandon");
+      const payloadArtifact = await recordTeamsPayloadArtifact(runContext, {
+        title: "Owner briefing admin test Teams text payload",
+        contentType: "text/plain",
+        metadata: {
+          draftId,
+          recapDate,
+          targetUserId,
+          adminTestSend: true,
+          characterCount: text.length,
+        },
+      });
+      payloadArtifactId = payloadArtifact.id;
       const { sendProactiveMessage } = await import("@/lib/bot/teams-chat");
       await sendProactiveMessage(targetUserId, text);
 
@@ -157,6 +180,17 @@ export const POST = withApiGuardrails(
         sections.importantUpdates;
 
       await recordDraftEvidence(runContext, draft);
+      await recordDeliveryAttempt(runContext, {
+        artifactId: payloadArtifactId,
+        channel: "teams",
+        recipientId: targetUserId,
+        status: "sent",
+        metadata: {
+          draftId,
+          recapDate,
+          adminTestSend: true,
+        },
+      });
       await completeDailyBriefRun(runContext, {
         status: "succeeded",
         dailyRecapId: draftId,
@@ -188,6 +222,16 @@ export const POST = withApiGuardrails(
         text,
       });
     } catch (error) {
+      await recordDeliveryAttempt(runContext, {
+        artifactId: payloadArtifactId,
+        channel: "teams",
+        recipientId: targetUserId,
+        status: "failed",
+        failureCode: "ADMIN_TEST_SEND_FAILED",
+        failureMessage: error instanceof Error ? error.message : String(error),
+        retryable: true,
+        metadata: { adminTestSend: true },
+      });
       await failDailyBriefRun(
         runContext,
         error,
