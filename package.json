@@ -128,6 +128,7 @@
     "rag:verify:strategist-frontend": "node scripts/verify/verify_ai_strategist_frontend_conversation.mjs",
     "rag:verify:assistant-routing": "pnpm --dir frontend exec playwright test tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts --config=config/playwright/playwright.no-webserver.config.ts --project=chromium",
     "rag:verify:assistant-routing:with-server": "pnpm --dir frontend exec playwright test tests/e2e/ai-assistant/ai-assistant-routing.api.spec.ts --config=config/playwright/playwright.config.ts --project=chromium",
+    "rag:verify:assistant-tool-registry": "node scripts/verify/verify_ai_assistant_tool_registry.mjs",
     "rag:verify:excalidraw-mcp": "node scripts/verify/verify_ai_assistant_excalidraw_mcp.mjs",
     "rag:verify:latest-briefing": "node scripts/verify/verify_ai_assistant_latest_briefing_shape.mjs",
     "rag:verify:executive-daily-brief": "node scripts/verify/verify_executive_daily_brief_fresh.mjs",

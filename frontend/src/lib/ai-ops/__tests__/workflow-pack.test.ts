@@ -14,6 +14,7 @@ import {
   executiveDailyBriefToolScope,
   visibleToolsForPolicy,
 } from "../tool-registry";
+import { toolDefinitionsForWorkflow } from "@/lib/ai/tool-registry";
 
 describe("Executive Daily Brief workflow pack", () => {
   it("declares the workflow pack, evidence policy, delivery policy, and runtime budget", () => {
@@ -95,6 +96,15 @@ describe("Executive Daily Brief workflow pack", () => {
 
     expect(visibleToolNames).toContain("send-teams-daily-brief");
     expect(visibleToolNames).not.toContain("send-email-daily-brief");
+  });
+
+  it("builds its registry from the global assistant registry", () => {
+    const globalDefinitions = toolDefinitionsForWorkflow({
+      workflowId: EXECUTIVE_DAILY_BRIEF_WORKFLOW_ID,
+      allowedToolNames: EXECUTIVE_DAILY_BRIEF_WORKFLOW.allowedTools,
+    });
+
+    expect(EXECUTIVE_DAILY_BRIEF_TOOL_REGISTRY).toEqual(globalDefinitions);
   });
 
   it("hides send tools when delivery is disabled or dry-run only", () => {

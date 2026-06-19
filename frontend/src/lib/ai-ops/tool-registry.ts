@@ -1,79 +1,16 @@
 import type { ToolDefinition, ToolPolicy } from "./contracts";
+import { toolDefinitionsForWorkflow } from "@/lib/ai/tool-registry";
 import {
   EXECUTIVE_DAILY_BRIEF_ALLOWED_TOOLS,
   EXECUTIVE_DAILY_BRIEF_WORKFLOW,
   EXECUTIVE_DAILY_BRIEF_WORKFLOW_ID,
 } from "./executive-daily-brief-workflow";
-import { sourceAdapterToolDefinitions } from "./source-adapters";
-
-const WORKFLOW_TOOL_DEFINITIONS: ToolDefinition[] = [
-  ...sourceAdapterToolDefinitions(),
-  {
-    name: "generate-executive-daily-brief-packet",
-    description:
-      "Synthesize a source-backed Executive Daily Brief packet from normalized adapter records.",
-    owningAdapter: "executive_daily_brief_workflow",
-    inputSchemaName: "GenerateExecutiveDailyBriefPacketInput",
-    outputSchemaName: "ExecutiveDailyBriefPacket",
-    failureShape: "throws",
-  },
-  {
-    name: "persist-executive-daily-brief-artifact",
-    description:
-      "Persist the generated packet and expose it as an AI work-run artifact.",
-    owningAdapter: "ai_ops_artifacts",
-    inputSchemaName: "PersistExecutiveDailyBriefArtifactInput",
-    outputSchemaName: "AiArtifact",
-    failureShape: "throws",
-  },
-  {
-    name: "build-teams-daily-brief-payload",
-    description:
-      "Build a no-send or sendable Teams payload from an Executive Daily Brief packet.",
-    owningAdapter: "teams_delivery",
-    inputSchemaName: "BuildTeamsDailyBriefPayloadInput",
-    outputSchemaName: "TeamsDailyBriefPayload",
-    failureShape: "result_error",
-    metadata: { channel: "teams", deliveryTool: false },
-  },
-  {
-    name: "send-teams-daily-brief",
-    description:
-      "Send a Teams Executive Daily Brief payload and record provider/recipient outcome.",
-    owningAdapter: "teams_delivery",
-    inputSchemaName: "SendTeamsDailyBriefInput",
-    outputSchemaName: "DeliveryAttempt",
-    failureShape: "result_error",
-    metadata: { channel: "teams", deliveryTool: true },
-  },
-  {
-    name: "build-email-daily-brief-payload",
-    description:
-      "Build a no-send or sendable email payload from an Executive Daily Brief packet.",
-    owningAdapter: "email_delivery",
-    inputSchemaName: "BuildEmailDailyBriefPayloadInput",
-    outputSchemaName: "EmailDailyBriefPayload",
-    failureShape: "result_error",
-    metadata: { channel: "email", deliveryTool: false },
-  },
-  {
-    name: "send-email-daily-brief",
-    description:
-      "Send an email Executive Daily Brief payload and record provider/recipient outcome.",
-    owningAdapter: "email_delivery",
-    inputSchemaName: "SendEmailDailyBriefInput",
-    outputSchemaName: "DeliveryAttempt",
-    failureShape: "result_error",
-    metadata: { channel: "email", deliveryTool: true },
-  },
-];
 
 export const EXECUTIVE_DAILY_BRIEF_TOOL_REGISTRY =
-  WORKFLOW_TOOL_DEFINITIONS.filter((tool) =>
-    EXECUTIVE_DAILY_BRIEF_ALLOWED_TOOLS.includes(
-      tool.name as (typeof EXECUTIVE_DAILY_BRIEF_ALLOWED_TOOLS)[number],
-    ),
-  );
+  toolDefinitionsForWorkflow({
+    workflowId: EXECUTIVE_DAILY_BRIEF_WORKFLOW_ID,
+    allowedToolNames: EXECUTIVE_DAILY_BRIEF_ALLOWED_TOOLS,
+  });
 
 export function createExecutiveDailyBriefToolPolicy(input: {
   actorMode?: ToolPolicy["actorMode"];

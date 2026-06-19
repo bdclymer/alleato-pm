@@ -1,10 +1,10 @@
 # Task: Global AI Assistant Tool Registry
 
-Status: Draft
+Status: In Progress
 Owner: Codex
 Created: 2026-06-19
-Linear Issue: Not created yet - blocked until this task is started
-Related Handoff: Not created yet
+Linear Issue: AAI-554 - https://linear.app/megankharrison/issue/AAI-554/implement-global-ai-assistant-tool-registry
+Related Handoff: docs/ops/handoffs/2026-06-19-S58-global-ai-assistant-tool-registry.md
 
 ## Objective
 
@@ -27,31 +27,31 @@ filled in. If any item cannot be completed, change `Status` to
 
 ## Scope Checklist
 
-- [ ] Inventory every AI assistant tool factory under `frontend/src/lib/ai/tools/**`.
-- [ ] Inventory non-`tools/**` assistant tool definitions, including
+- [x] Inventory every AI assistant tool factory under `frontend/src/lib/ai/tools/**`.
+- [x] Inventory non-`tools/**` assistant tool definitions, including
       self-knowledge, orchestrator, RAG, document, and route-local tools.
-- [ ] Identify duplicate tool names, overlapping responsibilities, and direct
+- [x] Identify duplicate tool names, overlapping responsibilities, and direct
       `tool({ ... })` definitions that bypass shared constructors.
-- [ ] Define one canonical registry module path.
-- [ ] Define the registry contract: name, description, owner, category, input
+- [x] Define one canonical registry module path.
+- [x] Define the registry contract: name, description, owner, category, input
       schema, output schema, read/write capability, delivery capability, source
       families, project scope, actor modes, ledger/evidence requirements, and
       execution factory.
-- [ ] Define how workflow packs request filtered subsets from the global
+- [x] Define how workflow packs request filtered subsets from the global
       registry.
-- [ ] Define failure-loudly behavior for unregistered tools, duplicate names,
+- [x] Define failure-loudly behavior for unregistered tools, duplicate names,
       forbidden writes, forbidden delivery, and missing evidence policy.
 
 ## Implementation Checklist
 
-- [ ] Create the global assistant tool registry module.
+- [x] Create the global assistant tool registry module.
 - [ ] Move or wrap `project-tools.ts` tools into registry entries.
 - [ ] Move or wrap `action-tools.ts` tools into registry entries.
 - [ ] Move or wrap operational/search/memory tools into registry entries.
 - [ ] Move or wrap financial/Acumatica tools into registry entries.
 - [ ] Move or wrap schedule/progress-report/document/intelligence tools into
       registry entries.
-- [ ] Move or wrap Executive Daily Brief tools so
+- [x] Move or wrap Executive Daily Brief tools so
       `frontend/src/lib/ai-ops/tool-registry.ts` consumes the global registry
       instead of owning standalone definitions.
 - [ ] Update assistant/orchestrator tool assembly to request tools through the
@@ -67,7 +67,7 @@ filled in. If any item cannot be completed, change `Status` to
 
 - [ ] AI assistant runtime uses the global registry for tool selection.
 - [ ] Specialist agents use registry-filtered tool subsets.
-- [ ] Executive Daily Brief workflow uses registry-filtered tool subsets.
+- [x] Executive Daily Brief workflow uses registry-filtered tool subsets.
 - [ ] Tool policy filters by actor, workflow, project/source access, write
       permission, delivery permission, and channel.
 - [ ] Tool visibility is recorded before model calls.
@@ -76,23 +76,23 @@ filled in. If any item cannot be completed, change `Status` to
 
 ## Regression Guardrails
 
-- [ ] Test fails on duplicate registered tool names.
+- [x] Test fails on duplicate registered tool names.
 - [ ] Test fails when an assistant tool exists outside the registry without an
       explicit allowlist reason.
-- [ ] Test fails when a write/delivery tool lacks policy metadata.
-- [ ] Test fails when a source-bearing tool lacks source-family metadata.
-- [ ] Test proves Executive Daily Brief receives only its allowed subset.
-- [ ] Test proves disabled delivery tools are hidden and cannot send.
+- [x] Test fails when a write/delivery tool lacks policy metadata.
+- [x] Test fails when a source-bearing tool lacks source-family metadata.
+- [x] Test proves Executive Daily Brief receives only its allowed subset.
+- [x] Test proves disabled delivery tools are hidden and cannot send.
 - [ ] Static guardrail added to detect new direct `tool({ ... })` definitions
       outside approved constructors/registry files.
 
 ## Verification Checklist
 
-- [ ] Static/type/lint check run, or explicitly delegated to a cheaper
+- [x] Static/type/lint check run, or explicitly delegated to a cheaper
       sub-agent.
-- [ ] Targeted registry contract tests run.
+- [x] Targeted registry contract tests run.
 - [ ] Targeted assistant/orchestrator tests run.
-- [ ] Targeted Executive Daily Brief workflow-pack tests run.
+- [x] Targeted Executive Daily Brief workflow-pack tests run.
 - [ ] Browser or API smoke test verifies assistant still responds with expected
       tool visibility.
 - [ ] Evidence artifacts recorded below.
@@ -102,11 +102,13 @@ filled in. If any item cannot be completed, change `Status` to
 
 | Check                 | Command / artifact | Result | Notes |
 | --------------------- | ------------------ | ------ | ----- |
-| Static/type/lint      |                    |        |       |
-| Targeted tests        |                    |        |       |
-| Assistant smoke       |                    |        |       |
-| Workflow-pack proof   |                    |        |       |
-| Guardrail proof       |                    |        |       |
+| Static/type/lint      | `cd frontend && npx eslint src/lib/ai/tool-registry.ts src/lib/ai/__tests__/tool-registry.test.ts src/lib/ai-ops/tool-registry.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts` | Passed | Global registry, registry tests, Executive Daily Brief registry consumer, and workflow-pack test lint cleanly. |
+| Targeted tests        | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai/__tests__/tool-registry.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts --runInBand` | Passed | 2 suites, 14 tests passed. Tests prove duplicate-name failure, source-bearing metadata failure, delivery-channel metadata failure, Executive Daily Brief filtered subset, and AI Ops definition projection. |
+| Assistant smoke       | Pending | Pending | Broad assistant/orchestrator runtime still needs smoke verification after more tool factories are wrapped. |
+| Workflow-pack proof   | `src/lib/ai-ops/__tests__/workflow-pack.test.ts` | Passed | Executive Daily Brief registry now equals `toolDefinitionsForWorkflow({ workflowId: executive_daily_brief })` from the global registry. |
+| Guardrail proof       | `npm run rag:verify:assistant-tool-registry` | Passed | Guardrail ensures `frontend/src/lib/ai-ops/tool-registry.ts` imports the global registry and does not reintroduce workflow-local `WORKFLOW_TOOL_DEFINITIONS` or `sourceAdapterToolDefinitions`. |
+| RAG docs gate         | `npm run codex:finish -- --message "Add global assistant tool registry foundation" --files ...` | Initially blocked, then remediated | Pre-commit correctly blocked because `frontend/src/lib/ai/**` changed without updating `docs/architecture/AI-RAG-ARCHITECTURE.md`. Architecture doc now records the global assistant tool registry foundation and notes no table/schema, embedding, RAG chunk sync, search RPC, or retrieval policy changed. |
+| Linear handoff check  | `npm run linear:codex:check -- docs/ops/handoffs/2026-06-19-S58-global-ai-assistant-tool-registry.md` | Passed | Handoff includes Linear issue, changed files, commands, evidence, milestone comment IDs, risks, and next action. |
 
 ## Files Expected To Change
 
@@ -123,9 +125,15 @@ filled in. If any item cannot be completed, change `Status` to
   coverage.
 - `scripts/verify/**` - add direct-tool-definition guardrail if no existing
   guardrail fits.
+- `docs/architecture/AI-RAG-ARCHITECTURE.md` - keep the AI/RAG architecture map
+  current when assistant tool-layer files change.
 
 ## Risks / Gaps
 
+- First implementation slice created the global registry contract and migrated
+  Executive Daily Brief only. The large assistant factories are inventoried but
+  still need registry-backed wrapping in follow-up slices before this task can
+  close.
 - This is cross-cutting and may expose existing duplicate names or tools with
   unclear ownership.
 - A mechanical migration without policy metadata would repeat the same problem

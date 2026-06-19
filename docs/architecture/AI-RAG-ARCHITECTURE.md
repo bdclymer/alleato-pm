@@ -2,6 +2,8 @@
 
 **Authoritative reference for all AI work. Read this before touching any file under `frontend/src/lib/ai/` or `backend/src/services/pipeline/`.**
 
+Last verified: 2026-06-19 (**Global assistant tool registry foundation**: `frontend/src/lib/ai/tool-registry.ts` now owns the canonical assistant tool registry contract for name, owner, category, capabilities, source families, actor/workflow visibility, write/delivery policy, evidence policy, and execution metadata. Executive Daily Brief source, generation, artifact, Teams delivery, and email delivery tools are registered there, while `frontend/src/lib/ai-ops/tool-registry.ts` now consumes a registry-filtered workflow subset instead of owning standalone workflow-local definitions. Focused lint, registry/workflow-pack Jest tests, the Executive Daily Brief registry guardrail, and the Linear handoff check passed. No table/schema, embedding model, RAG chunk sync, search RPC, or retrieval policy changed.)
+
 Last verified: 2026-06-19 (**Executive Daily Brief legacy generation blocks**: raw frontend `regenerateExecutiveBriefingDraft()` is now explicitly deprecated for route/action/script/tool callers and points to the AI Ops gateway helper. Backend legacy `run_daily_digest()` is default-blocked unless `LEGACY_DAILY_DIGEST_ENABLED=true`, returning `status=disabled`, `reason=legacy_daily_digest_disabled`, and canonical runner `frontend/scripts/run-executive-daily-brief.ts`; `/api/digests/daily/generate` now returns a `LEGACY_DAILY_DIGEST_DISABLED` conflict instead of queueing a direct `daily_recaps` write. Focused frontend lint, backend py_compile, direct disabled-service proof, and the static gateway guardrail passed. No table/schema, embedding model, RAG chunk sync, search RPC, or retrieval policy changed.)
 
 Last verified: 2026-06-19 (**Executive Daily Brief ledger integration verifier**: `frontend/scripts/verify-executive-daily-brief-ledger-integration.ts` now authenticates against the local app, calls the real Teams preview route, disabled Teams delivery route, and scheduled runner, then reads back Supabase AI Ops ledger rows and generated packet source refs. `npm run rag:verify:executive-daily-brief-ledger-integration` passed against `http://localhost:3001`: preview run `4cc005f3-b1a2-471e-b708-28ccb35aa109` wrote `ai_work_runs`, 4 evidence rows, 3 artifacts, and 1 Teams dry-run delivery attempt; packet inspection found 4 surfaced items and 4 source refs with family counts `document=3`, `acumatica=1`; meeting/fireflies/email/outlook/Teams were absent from surfaced claims and therefore excluded. Disabled delivery run `84c4de07-1d94-4731-8ff0-086b3e77bc6a` wrote a disabled Teams delivery attempt; scheduled proof run `5cfeac2e-7e7e-4817-9a4f-abe6ce0f4b03` wrote a scheduled AI Ops run with status `skipped` and delivery `disabled`. No table/schema, embedding model, RAG chunk sync, search RPC, or retrieval policy changed.)
@@ -195,7 +197,7 @@ Orchestrator — frontend/src/lib/ai/orchestrator.ts
     ├──[direct]──────────────► createProjectTools() + all other tool sets
     │
     ▼
-Tool Layer (AI SDK tools + backend specialist tools)
+Tool Layer (global assistant registry + AI SDK tools + backend specialist tools)
     │
     ├── Structured SQL reads from Supabase (projects, budgets, commitments...)
     ├── pgvector semantic search (document_chunks, 24K+ rows)
@@ -256,6 +258,7 @@ COO, CHRO, CRO, and VP BD agents are designed (prompts exist at `frontend/src/li
 | `frontend/src/lib/ai/agents/types.ts` | `AgentName` union type, `AgentResponse` type. Update when adding agents. |
 | `frontend/src/lib/ai/providers.ts` | AI Gateway provider setup. `getLanguageModel(modelId)` is the single entry point for all LLM calls. |
 | `frontend/src/lib/ai/assistant-models.ts` | User-selectable model list and `DEFAULT_AI_ASSISTANT_MODEL`. Includes the `deep-agents/strategist` option, which routes eligible project, executive, and external-research prompts through the backend Deep Agents strategist harness before local synthesis fallback. |
+| `frontend/src/lib/ai/tool-registry.ts` | Canonical global assistant tool registry contract and policy metadata layer. Workflow packs request filtered subsets from here; Executive Daily Brief now registers source/generation/artifact/delivery tools here and projects them into AI Ops tool definitions through `toolDefinitionsForWorkflow()`. Broader assistant factories are still being migrated under task AAI-554. |
 | `frontend/src/lib/ai/tools/project-tools.ts` | Core project tools plus SAIS structured backlog/spend tools (portfolio, risk, budget, meetings, search, SOP backlog, finance spend rollup). |
 | `frontend/src/lib/ai/tools/sais.ts` | SAIS tools: `getSopBacklog` for missing accounting/finance SOP requirements and `getFinanceSpendRollup` for trailing Acumatica AP bill spend classification. These are structured SQL reads, not vector/RAG document search. |
 | `frontend/src/lib/ai/tools/financial.ts` | 6 financial tools (commitments, change orders, direct costs, budget line items, cost trends, margin). |
@@ -785,6 +788,7 @@ Exhaustive inventory of every file that meaningfully touches AI assistant logic 
 
 | File Path | What it controls / does | Related files |
 |-----------|-------------------------|---------------|
+| `frontend/src/lib/ai/tool-registry.ts` | Global assistant tool registry and workflow subset projection. Executive Daily Brief is the first migrated workflow; remaining `frontend/src/lib/ai/tools/**` factories still need registry-backed wrappers before direct `tool({ ... })` definitions can be globally forbidden. | ai-ops/tool-registry.ts, orchestrator.ts |
 | `frontend/src/lib/ai/tools/project-tools.ts` | Core project tools plus SAIS structured tools: portfolio overview, risk analysis, briefing snapshot, financial analysis, budget summary, action items, meetings by date, document search, project details, SOP backlog, finance spend rollup. | orchestrator.ts, financial.ts, sais.ts |
 | `frontend/src/lib/ai/tools/sais.ts` | `getSopBacklog`, `getFinanceSpendRollup` — structured accounting/finance leadership tools backed by `sop_backlog`, `acumatica_ap_bills`, and `finance_spend_classification_rules`. | project-tools.ts, rag-assistant-prompt.ts |
 | `frontend/src/lib/ai/tools/financial.ts` | 6 financial tools: commitments, change orders, direct costs, budget line items, cost trends, margin analysis. | cfo.ts, acumatica.ts |
