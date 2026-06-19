@@ -25,6 +25,7 @@ import {
   EXECUTIVE_DAILY_BRIEF_WORKFLOW_VERSION,
   executiveDailyBriefSourcePolicyMetadata,
 } from "./executive-daily-brief-workflow";
+import { sourceAdapterRunStepsFromHealth } from "./source-adapters";
 import { executiveDailyBriefToolScope } from "./tool-registry";
 
 export type DailyBriefRunContext = {
@@ -402,8 +403,31 @@ export async function recordDraftEvidence(
   draft: ExecutiveBriefingDraft,
 ) {
   const ledger = createAiOpsLedger(createServiceClient());
+  const sourceHealth = sourceHealthFromDraft(draft);
+  const adapterStepAt = nowIso();
+  for (const step of sourceAdapterRunStepsFromHealth({
+    runId: context.runId,
+    health: sourceHealth,
+    at: adapterStepAt,
+  })) {
+    await ledger.createRunStep(step);
+  }
+
   const sourceRefs = assertExecutiveBriefingDraftEvidence(draft);
   await ledger.insertEvidenceRefs(context.runId, sourceRefs);
+  await ledger.createArtifact({
+    runId: context.runId,
+    kind: "source_health_report",
+    title: "Executive Daily Brief source health report",
+    storageTable: "ai_work_runs",
+    storageId: context.runId,
+    contentType: "application/vnd.alleato.source-health+json",
+    sourceRefs: [],
+    metadata: {
+      recapDate: draft.recapDate,
+      sourceHealth,
+    },
+  });
   const artifact = await ledger.createArtifact({
     runId: context.runId,
     kind: "brief_packet",

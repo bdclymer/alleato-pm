@@ -214,16 +214,16 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 ## Source Adapter Checklist
 
 - [x] Source adapter interface created for normalized fetch and health output.
-- [ ] Fireflies/meeting adapter implemented or wrapped.
-- [ ] Outlook/email adapter implemented or wrapped.
-- [ ] Teams message adapter implemented or wrapped.
-- [ ] Documents/RAG adapter implemented or wrapped.
-- [ ] Acumatica adapter implemented or wrapped.
-- [ ] Procore/project data adapter implemented or wrapped if used by this brief.
-- [ ] Project Intelligence packet adapter implemented or wrapped.
+- [x] Fireflies/meeting adapter implemented or wrapped.
+- [x] Outlook/email adapter implemented or wrapped.
+- [x] Teams message adapter implemented or wrapped.
+- [x] Documents/RAG adapter implemented or wrapped.
+- [x] Acumatica adapter implemented or wrapped.
+- [x] Procore/project data adapter implemented or wrapped if used by this brief.
+- [x] Project Intelligence packet adapter implemented or wrapped.
 - [x] Each adapter returns typed source records and typed health state.
 - [x] Each adapter reports loaded, stale, missing, degraded, failed, and skipped.
-- [ ] Adapter failures fail loudly into the run ledger.
+- [x] Adapter failures fail loudly into the run ledger.
 - [ ] No route-level source query remains as a bypass for this workflow.
 
 ## Tool Registry And Policy Checklist
@@ -298,7 +298,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [x] `/ai-work-runs` reads the canonical run ledger.
 - [ ] UI shows scheduled, preview, dry-run, skipped, failed, disabled, partial,
       and succeeded runs.
-- [ ] UI shows source health per run.
+- [x] UI shows source health per run.
 - [x] UI shows generated artifact per run.
 - [x] UI shows delivery attempts per run.
 - [ ] UI shows source refs/evidence drilldown per generated packet.
@@ -332,7 +332,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [ ] Integration tests cover scheduled generation writing `ai_work_runs`.
 - [ ] Integration tests cover dry-run delivery writing delivery attempts.
 - [ ] Integration tests cover disabled delivery writing disabled state.
-- [ ] Integration tests cover source-health degraded/failure behavior.
+- [x] Integration tests cover source-health degraded/failure behavior.
 - [x] Browser or API verification covers `/ai-work-runs` showing the generated
       run.
 - [x] Guardrail added so no future Executive Daily Brief route can call
@@ -411,6 +411,11 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 | Scheduled run SQL readback | SQL readback for triggers `codex_scheduled_disabled_delivery_proof` and `codex_skipped_schedule_proof` | Passed | Latest rows show scheduled run `4b4bcd6a-a401-4db0-8970-3c96a9c6a2f8` as `skipped/disabled`, skipped schedule `00f52478-deba-40e6-bac6-e487ceb75778` as `skipped/skipped`, and the earlier missing-secret failure `d56b69e2-13a1-4efa-9eff-98b15e65167d` as `failed_permanent` with `CRON_SECRET is required.` |
 | Teams delivery route lint | `cd frontend && npx eslint src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts src/app/api/executive/daily-brief/send-teams/route.ts` | Passed | Send route and targeted delivery tests lint cleanly. |
 | Teams delivery route tests | `cd frontend && npm run test:unit -- --runTestsByPath src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts src/app/api/executive/daily-brief/__tests__/route.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand` | Passed | 3 suites, 17 tests passed. Tests prove disabled delivery records before provider send, dry-run records payload/evidence/completion, blocked provider results record blocked outcomes, partial recipient failures record partial success, and thrown provider errors fail the run. |
+| Source adapter lint | `cd frontend && npx eslint src/lib/ai-ops/source-adapters.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/source-adapters.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts` | Passed | Source adapter wrapper, run-ledger integration, and adapter tests lint cleanly. |
+| Source adapter tests | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/source-adapters.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts --runInBand` | Passed | 4 suites, 19 tests passed. Tests prove all Executive Daily Brief adapters map from source health and required missing adapters create failed-retryable source-fetch steps. |
+| Source adapter live proof | Authenticated POST to `/api/executive/daily-brief/preview-teams` with `fresh=true` | Passed | Client timed out at 30s, but server completed run `0c3b8979-3a31-4aab-98d0-a975ab845e21` as succeeded/dry-run, linked packet `1399b250-4151-429c-a3ce-156e0a161ba9`, and stored source-health report, brief-packet, and Teams-payload artifacts. |
+| Source adapter SQL readback | SQL readback for run `0c3b8979-3a31-4aab-98d0-a975ab845e21` | Passed | Source-fetch steps show Fireflies loaded/succeeded, Outlook missing/failed-retryable, Teams loaded/succeeded, Documents/RAG loaded/succeeded, Acumatica missing/failed-retryable, Procore skipped, and Project Intelligence missing/failed-retryable. |
+| Source adapter browser proof | Playwright-authenticated `/ai-work-runs` capture | Passed | Page text shows run `0c3b8979-3a31-4aab-98d0-a975ab845e21`, `source health report`, source-fetch steps, and `SOURCE_ADAPTER_MISSING`. Artifacts: `tests/agent-browser-runs/2026-06-19-executive-daily-brief-source-adapters/page-text.txt`, `ai-work-runs-source-adapters.png`. |
 | Runner no-write smoke | `cd frontend && npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:00:00.000Z`                                                                                              | Passed  | Kill switch off; script loaded and exited with `executive_daily_brief_disabled`, no send/write.    |
 | Disabled send smoke   | `curl -sS -X POST http://localhost:3001/api/executive/daily-brief/send-teams -H 'content-type: application/json' -d '{}'`                                                                 | Passed  | Kill switch off; route returned disabled state with run id `b88b3b30-b766-4aa2-8e02-84ef175e207b`. |
 | Disabled run SQL readback | `select r.id, r.status, r.delivery_status, a.status, a.failure_code, s.step_type, s.status ... where r.id = 'b88b3b30-b766-4aa2-8e02-84ef175e207b'` | Passed | Readback returned `skipped`, `disabled`, delivery attempt `disabled`, failure code `EXECUTIVE_DAILY_BRIEF_DISABLED`, and delivery step `blocked`. |

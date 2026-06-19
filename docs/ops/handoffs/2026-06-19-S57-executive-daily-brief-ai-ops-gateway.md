@@ -45,6 +45,7 @@
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/scripts/__tests__/run-executive-daily-brief.test.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/__tests__/source-adapters.test.ts`
 7) Commands run and outcome (pass/fail counts):
    - Pass: read pasted ChatGPT recommendation from Codex attachment.
    - Pass: read `docs/codebase-map/hermes-vs-openclaw-comparison.md`.
@@ -122,6 +123,13 @@
    - Pass: added targeted Teams delivery route tests for disabled delivery, dry-run payload/evidence completion, blocked provider result, partial recipient failure, and thrown provider failure.
    - Pass: `cd frontend && npx eslint src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts src/app/api/executive/daily-brief/send-teams/route.ts`.
    - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts src/app/api/executive/daily-brief/__tests__/route.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand` passed 3 suites / 17 tests.
+   - Pass: source adapter wrappers now map packet source health into per-adapter source-fetch run steps for Fireflies/meeting, Outlook/email, Teams, Documents/RAG, Acumatica, Procore/project data, and Project Intelligence packets.
+   - Pass: generated draft evidence now writes a source-health report artifact before the brief-packet artifact.
+   - Pass: `cd frontend && npx eslint src/lib/ai-ops/source-adapters.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/source-adapters.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts`.
+   - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/source-adapters.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts --runInBand` passed 4 suites / 19 tests.
+   - Fail then completed server-side: authenticated preview POST timed out client-side at 30 seconds, but the server completed run `0c3b8979-3a31-4aab-98d0-a975ab845e21` as succeeded / dry-run.
+   - Pass: SQL readback for run `0c3b8979-3a31-4aab-98d0-a975ab845e21` shows source-fetch steps for all seven adapters, including failed-retryable `SOURCE_ADAPTER_MISSING` rows for Outlook/email, Acumatica, and Project Intelligence packet coverage, plus artifacts source-health report, brief packet, and Teams payload.
+   - Pass: Playwright-authenticated `/ai-work-runs` proof shows run `0c3b8979-3a31-4aab-98d0-a975ab845e21`, source-health report, source-fetch steps, and `SOURCE_ADAPTER_MISSING`.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
@@ -158,6 +166,9 @@
    - `frontend/src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts`
    - `frontend/scripts/__tests__/run-executive-daily-brief.test.ts`
    - `frontend/src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts`
+   - `frontend/src/lib/ai-ops/__tests__/source-adapters.test.ts`
+   - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-source-adapters/page-text.txt`
+   - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-source-adapters/ai-work-runs-source-adapters.png`
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-generated-preview/page-text-playwright.txt`
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-generated-preview/ai-work-runs-generated-preview-playwright.png`
 9) Top 3 findings (frontend-visible issues first):
@@ -171,6 +182,7 @@
    - A real generated no-send preview run is proven in the ledger and visible in `/ai-work-runs` with packet artifact, Teams payload artifact, dry-run delivery attempt, source health, and evidence rows.
    - Scheduled runner proof now shows both outside-window skipped schedules and matching scheduled triggers create canonical AI Ops runs; explicit runtime env now wins over `.env.local`.
    - Teams delivery route tests now prove disabled, dry-run, blocked, partial, and thrown-provider paths cannot bypass the AI Ops ledger helpers.
+   - Source adapter wrappers now produce visible source-fetch run steps and a source-health report artifact; missing required adapters fail loudly as failed-retryable run steps without silently suppressing the generated packet.
 10) Recommended next action (one line): Close remaining source adapter execution/failure behavior, email delivery disposition, scheduled-run proof, and legacy retirement gaps.
 11) Handoff file path: `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
 12) Migration ledger evidence: `npm run db:migrations:verify-applied -- supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql` passed for version `20260619183000`.
@@ -204,15 +216,16 @@ the workflow pack/source-adapter/tool-policy layer, and a real generated no-send
 preview proof are implemented with focused tests/lint, migration ledger
 verification, SQL readback, authenticated `/ai-work-runs` browser evidence,
 claim-level evidence-policy unit coverage, and scheduled-run skip/disabled
-delivery proof. The workflow is not complete until live adapter failure
-behavior, email delivery disposition, real Teams delivery when safe/enabled, and
+delivery proof. Source adapter failures now land as visible source-fetch step
+failures with a source-health report artifact. The workflow is not complete
+until email delivery disposition, real Teams delivery when safe/enabled, and
 remaining legacy retirement gaps are complete.
 
 ## Exact Next Step
 
-Close remaining source adapter execution/failure behavior, email delivery
-disposition, real Teams delivery when safe/enabled, and legacy retirement gaps
-without weakening the canonical ledger path.
+Close remaining email delivery disposition, real Teams delivery when
+safe/enabled, and legacy retirement gaps without weakening the canonical ledger
+path.
 
 ## Known Pitfalls
 
@@ -252,6 +265,8 @@ cd frontend && npx eslint --no-ignore scripts/run-executive-daily-brief.ts scrip
 cd frontend && npx tsx --test scripts/__tests__/run-executive-daily-brief.test.ts
 cd frontend && npx eslint src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts src/app/api/executive/daily-brief/send-teams/route.ts
 cd frontend && npm run test:unit -- --runTestsByPath src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts src/app/api/executive/daily-brief/__tests__/route.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand
+cd frontend && npx eslint src/lib/ai-ops/source-adapters.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/source-adapters.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts
+cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/source-adapters.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts --runInBand
 ```
 
 ## Evidence
@@ -278,3 +293,4 @@ cd frontend && npm run test:unit -- --runTestsByPath src/app/api/executive/daily
 - Evidence policy tests: `frontend/src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts`
 - Scheduled runner tests: `frontend/scripts/__tests__/run-executive-daily-brief.test.ts`
 - Teams delivery route tests: `frontend/src/app/api/executive/daily-brief/__tests__/send-teams-route.test.ts`
+- Source adapter tests: `frontend/src/lib/ai-ops/__tests__/source-adapters.test.ts`
