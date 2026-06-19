@@ -34,6 +34,10 @@ import {
   shouldLoadTaskTrainingContext,
 } from "@/lib/ai/services/task-training-service";
 import {
+  buildSkillInjectionContext,
+  type SkillInjectionUsageSummary,
+} from "@/lib/ai/services/skill-injection-service";
+import {
   listArtifacts,
   buildWorkspaceContextBlock,
 } from "@/lib/ai/services/workspace-artifact-service";
@@ -62,6 +66,8 @@ export interface BotCoreOptions {
   onTrace?: (trace: Record<string, unknown>) => void;
   /** Callback for learnings injected into the prompt */
   onLearningUsage?: (usage: BotLearningUsageSummary) => void;
+  /** Callback for approved skills injected into the prompt */
+  onSkillUsage?: (usage: SkillInjectionUsageSummary | null) => void;
   /** Channel this response will be posted to — used to inject platform-specific formatting rules */
   platform?: "teams" | "web";
   /** Arbitrary metadata passed through from the adapter (logged, not used in generation) */
@@ -92,6 +98,8 @@ export interface MemoryUsageSummary {
 }
 
 export interface BotLearningUsageSummary extends AgentLearningUsageSummary {}
+
+export type BotSkillUsageSummary = SkillInjectionUsageSummary;
 
 export interface BotCoreResult {
   /** The generated response text */
@@ -135,6 +143,7 @@ export async function assembleSystemPrompt(options: {
   platform?: "teams" | "web";
   onMemoryUsage?: (usage: MemoryUsageSummary) => void;
   onLearningUsage?: (usage: BotLearningUsageSummary) => void;
+  onSkillUsage?: (usage: BotSkillUsageSummary | null) => void;
 }): Promise<string> {
   const {
     userId,
@@ -146,6 +155,7 @@ export async function assembleSystemPrompt(options: {
     platform,
     onMemoryUsage,
     onLearningUsage,
+    onSkillUsage,
   } = options;
 
   let systemPrompt = getStrategistSystemPrompt();
@@ -183,6 +193,24 @@ export async function assembleSystemPrompt(options: {
         projectId: selectedProjectId,
         limit: 4,
       });
+      let skillContextBlock = "";
+      let skillUsage: BotSkillUsageSummary | null = null;
+      try {
+        const skillContext = await buildSkillInjectionContext({
+          userId,
+          messageText,
+          selectedProjectId,
+          limit: 4,
+        });
+        skillContextBlock = skillContext.block;
+        skillUsage = skillContext.usage;
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unknown skill context error";
+        contextHealth.push(
+          `Skill Library context could not be loaded: ${message}`,
+        );
+      }
 
       const { block: memoryBlock, selected: selectedMemories } =
         buildMemoryContextPayload(preferences, relevant, team, {
@@ -234,12 +262,19 @@ export async function assembleSystemPrompt(options: {
           preventionPrompt: learning.prevention_prompt,
         })),
       });
+      onSkillUsage?.(skillUsage);
       const recentBlock = buildRecentConversationsBlock(recentSummaries);
 
       const workspaceBlock = buildWorkspaceContextBlock(activeArtifacts);
       // Append after the static strategist prompt — static content first is
       // required for OpenAI's prefix-based automatic prompt caching.
-      const contextParts = [recentBlock, memoryBlock, learningBlock, workspaceBlock].filter(Boolean);
+      const contextParts = [
+        recentBlock,
+        memoryBlock,
+        learningBlock,
+        skillContextBlock,
+        workspaceBlock,
+      ].filter(Boolean);
       if (contextParts.length > 0) {
         systemPrompt = systemPrompt + "\n\n---\n\n" + contextParts.join("\n\n");
       }
@@ -261,6 +296,7 @@ export async function assembleSystemPrompt(options: {
         totalUsed: 0,
         learnings: [],
       });
+      onSkillUsage?.(null);
     }
   }
 
@@ -542,6 +578,7 @@ export async function generateBotResponse(
     isFirstTurn: !options.conversationHistory?.length,
     platform: options.platform,
     onLearningUsage: options.onLearningUsage,
+    onSkillUsage: options.onSkillUsage,
   });
 
   const messages: ModelMessage[] = options.conversationHistory?.length
@@ -604,6 +641,7 @@ export async function streamBotResponse(options: BotCoreOptions) {
     sessionId: options.sessionId,
     isFirstTurn: !options.conversationHistory?.length,
     onLearningUsage: options.onLearningUsage,
+    onSkillUsage: options.onSkillUsage,
   });
 
   const messages: ModelMessage[] = options.conversationHistory?.length

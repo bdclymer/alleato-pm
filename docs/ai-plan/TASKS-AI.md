@@ -394,26 +394,26 @@ Goal: approved skills affect assistant behavior selectively and visibly.
 
 ### Retrieval And Selection
 
-- [ ] Build skill selection service.
-- [ ] Select by category.
+- [x] Build skill selection service.
+- [x] Select by category.
 - [ ] Select by route/surface.
-- [ ] Select by project.
-- [ ] Select by user/team/company scope.
-- [ ] Select by explicit user request.
-- [ ] Limit prompt token budget.
-- [ ] Avoid injecting every active skill into every prompt.
+- [x] Select by project.
+- [x] Select by user/team/company scope.
+- [x] Select by explicit user request.
+- [x] Limit prompt token budget.
+- [x] Avoid injecting every active skill into every prompt.
 
 ### Assistant Integration
 
-- [ ] Inject selected skills into main AI assistant prompt.
+- [x] Inject selected skills into main AI assistant prompt.
 - [ ] Inject selected skills into backend Deep Agents where appropriate.
 - [ ] Inject selected skills into App Expert only when app-help relevant.
 - [ ] Inject selected skills into Microsoft Executive Assistant only when email/Teams relevant.
-- [ ] Add clear instruction priority between system prompt, source evidence, memory, and skills.
+- [x] Add clear instruction priority between system prompt, source evidence, memory, and skills.
 
 ### Traceability
 
-- [ ] Persist selected skill IDs in chat metadata.
+- [x] Persist selected skill IDs in chat metadata.
 - [ ] Render "Skill used" trace in assistant answer.
 - [ ] Show skill title and version.
 - [ ] Link to skill page.
@@ -423,9 +423,9 @@ Goal: approved skills affect assistant behavior selectively and visibly.
 ### Evals
 
 - [ ] Add eval cases for each seeded skill.
-- [ ] Verify correct skill selection.
-- [ ] Verify irrelevant skills are not injected.
-- [ ] Verify source evidence still outranks skill instructions.
+- [x] Verify correct skill selection.
+- [x] Verify irrelevant skills are not injected.
+- [x] Verify source evidence still outranks skill instructions.
 - [ ] Verify high-risk skill only drafts/recommends.
 
 ## Phase 7: AI Work Queue

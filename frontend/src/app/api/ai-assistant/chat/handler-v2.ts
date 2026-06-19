@@ -37,7 +37,9 @@ import {
   assembleSystemPrompt,
   runPostResponseTasks,
   type MemoryUsageSummary,
+  type BotSkillUsageSummary,
 } from "@/lib/ai/bot-core";
+import { recordSelectedSkillUsage } from "@/lib/ai/services/skill-injection-service";
 import { isPersonalTaskRegisterRequest } from "@/lib/ai/personal-daily-brief";
 import { createStrategistTools } from "@/lib/ai/orchestrator";
 import { fetchWithGuardrails } from "@/lib/fetch-with-guardrails";
@@ -1335,6 +1337,7 @@ function buildAnswerDebugMetadata(params: {
   plan: ReturnType<typeof planRetrieval>;
   toolTrace: Array<Record<string, unknown>>;
   memoryUsage?: MemoryUsageSummary | null;
+  skillUsage?: BotSkillUsageSummary | null;
   sourceCoverage?: Array<Record<string, unknown>>;
   evidenceCount?: number;
   outputPolicy?: Record<string, unknown>;
@@ -1356,6 +1359,13 @@ function buildAnswerDebugMetadata(params: {
         status: "not_loaded_in_frontend",
         reason:
           "This answer was produced by a delegated specialist/direct Deep Agents path; inspect delegated trace and backend memory metadata for specialist-side context.",
+      },
+    skills:
+      params.skillUsage ??
+      {
+        status: "not_loaded_or_not_selected",
+        reason:
+          "No approved Skill Library records were selected for this answer, or the answer used a delegated/direct path that does not yet inject skills.",
       },
     sources: {
       toolNames,
@@ -1638,6 +1648,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
     : "";
   let responseAlreadyPersisted = false;
   let memoryUsage: MemoryUsageSummary | null = null;
+  let skillUsage: BotSkillUsageSummary | null = null;
   // Captured inside the OTel root span; persisted to chat_history metadata so the
   // feedback route (and eval/experiment tooling) can attach Langfuse scores to
   // the exact trace this message produced.
@@ -3109,6 +3120,9 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
               onMemoryUsage: (usage) => {
                 memoryUsage = usage;
               },
+              onSkillUsage: (usage) => {
+                skillUsage = usage;
+              },
             }),
             executeRetrievalPlan(
               plan,
@@ -3572,6 +3586,7 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
           plan,
           toolTrace,
           memoryUsage,
+          skillUsage,
           sourceCoverage: latestRetrievalCtx?.warnings.map((warning) => ({
             sourceType: warning.source,
             status: "warning",
@@ -3595,6 +3610,10 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
         metadata.memory_usage = memoryUsage;
       }
 
+      if (skillUsage) {
+        metadata.skill_usage = skillUsage;
+      }
+
       if (dataParts.length > 0) {
         metadata.data_parts = dataParts;
       }
@@ -3610,6 +3629,24 @@ async function runChatV2(args: HandlerArgs): Promise<Response> {
       if (error) {
         throw new Error(
           `Persisting the assistant response failed: ${error.message}`,
+        );
+      }
+
+      if (skillUsage) {
+        waitUntil(
+          recordSelectedSkillUsage({
+            usage: skillUsage,
+            userId: args.user.id,
+            projectId: args.selectedProjectId ?? null,
+            sessionId: args.sessionId,
+            surface: "ai_assistant_chat",
+            metadata: {
+              responseMessageId: responseMessage.id,
+              finishReason: finishMetadata?.finishReason ?? finishReason ?? null,
+              planIntent: plan.intent,
+              planReason: plan.reason,
+            },
+          }),
         );
       }
 
