@@ -455,6 +455,7 @@ function factoryToolEntries(input: {
 
 function assistantReadToolCategory(name: string): AssistantToolCategory {
   const normalized = name.toLowerCase();
+  if (normalized.includes("conversation")) return "memory";
   if (normalized.includes("document") || normalized.includes("spec")) return "document";
   if (normalized.includes("memory") || normalized.includes("knowledge")) return "memory";
   if (
@@ -477,6 +478,7 @@ function assistantReadSourceFamilies(
   name: string,
 ): EvidenceRef["sourceFamily"][] {
   const normalized = name.toLowerCase();
+  if (normalized.includes("conversation")) return ["system"];
   if (normalized.includes("email") || normalized.includes("outlook")) {
     return ["outlook", "email"];
   }
@@ -528,6 +530,7 @@ const projectToolNames = [
   "semanticSearch",
   "getCompanyKnowledge",
   "recallPastConversations",
+  "searchPastConversations",
   "searchMeetingsByTopic",
   "getMeetingDetails",
   "saveToKnowledgeBase",

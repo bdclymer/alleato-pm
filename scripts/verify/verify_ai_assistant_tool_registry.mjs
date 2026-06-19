@@ -88,6 +88,10 @@ const approvedDirectToolDefinitionFiles = new Map([
     "Composed by createProjectTools and filtered by the global registry.",
   ],
   [
+    "frontend/src/lib/ai/tools/search-past-conversations.ts",
+    "Composed by createProjectTools and filtered by the global registry.",
+  ],
+  [
     "frontend/src/lib/ai/tools/structured-output.ts",
     "Approved assistant factory; runtime exposure is filtered by the global registry.",
   ],

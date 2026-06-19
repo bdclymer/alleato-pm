@@ -37033,6 +37033,35 @@ export type Database = {
           relevance_score: number
         }[]
       }
+      search_chat_history: {
+        Args: {
+          p_match_count?: number
+          p_project_id?: number
+          p_query: string
+          p_user_id?: string
+          p_window_size?: number
+        }
+        Returns: {
+          anchor_created_at: string
+          anchor_message_id: string
+          anchor_role: string
+          anchored_window: Json
+          bookend_end: Json
+          bookend_start: Json
+          headline: string
+          lineage_root_session_id: string
+          project_id: number
+          query: string
+          rank: number
+          result_count: number
+          scope: Json
+          session_created_at: string
+          session_id: string
+          session_last_message_at: string
+          status: string
+          title: string
+        }[]
+      }
       search_conversation_memories:
         | {
             Args: {

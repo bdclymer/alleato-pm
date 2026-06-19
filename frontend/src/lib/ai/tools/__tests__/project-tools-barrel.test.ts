@@ -89,6 +89,7 @@ const CORE_TOOLS = [
   "getMeetingIntelligence",
   "getOutlookOperationsStatus",
   "getOutlookCalendarEvents",
+  "searchPastConversations",
   "searchDocuments",
   "getProjectDetails",
   // financial module

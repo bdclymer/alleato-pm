@@ -1,7 +1,7 @@
 // AUTO-GENERATED — DO NOT EDIT BY HAND.
 // Regenerate with: npm run db:inventory
 // Source: docs/architecture/tables.yaml + live Supabase (MAIN + RAG) + codebase grep.
-// Generated: 2026-06-17T09:31:24.662Z
+// Generated: 2026-06-19T17:52:58.293Z
 
 import inventoryJson from "./db-inventory.generated.json";
 
@@ -11,12 +11,14 @@ export type DbInventoryStatus =
   | "dormant"
   | "legacy"
   | "live"
-  | "live-empty";
+  | "live-empty"
+  | "orphan-mirror";
 
 export type DbInventoryDomain =
   | "admin"
   | "ai"
   | "auth"
+  | "change_management"
   | "communications"
   | "directory"
   | "documents"
@@ -26,8 +28,10 @@ export type DbInventoryDomain =
   | "infrastructure"
   | "intelligence"
   | "marketing"
+  | "ops"
   | "permissions"
   | "pipeline"
+  | "project_intelligence"
   | "projects"
   | "support"
   | "workflow";

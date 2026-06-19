@@ -1647,18 +1647,6 @@ tables:
       - project_emails
     notesForAi: "Use document_metadata for filtering by project, source type, or date. Use document_chunks (RAG) for semantic search."
 
-  - name: document_chunks
-    db: MAIN
-    domain: documents
-    owner: pipeline
-    status: orphan-mirror
-    purpose: "STALE copy of the RAG vector store. 103,255 rows. RAG.document_chunks is canonical. Do not write."
-    gotchas: "CRITICAL: Do not write. RAG project is canonical after 2026-05-15 migration. Reads still work for historical queries only. Truncate when verified safe."
-    cleanupPriority: high
-    relatedTables:
-      - document_metadata
-    notesForAi: "Use RAG.document_chunks for all vector search. This MAIN copy is stale and will be truncated."
-
   - name: document_attribution_candidates
     db: MAIN
     domain: documents
@@ -1972,7 +1960,7 @@ tables:
     purpose: "AI assistant chat message persistence. 2,908 rows. The live chat store."
     relatedTables:
       - conversations
-    notesForAi: "Primary chat log table. Use with conversations for session context."
+    notesForAi: "Primary chat log table. Use with conversations for session context. `public.search_chat_history` provides scoped prior-conversation recall using chat_history FTS/trigram indexes, deduped session lineage, anchored neighboring windows, and session bookends. Do not route this recall through document_chunks or document RAG."
 
   - name: conversations
     db: MAIN
@@ -2208,17 +2196,6 @@ tables:
     relatedTables:
       - sources
 
-  - name: source_sync_health_snapshots
-    db: MAIN
-    domain: pipeline
-    owner: pipeline
-    status: deleted
-    purpose: "Former PM APP duplicate of the source sync health read model. Removed on 2026-06-09 after runtime reads were confirmed to use the RAG database directly."
-    gotchas: "Historical documentation only. Use RAG.source_sync_health_snapshots via createRagServiceClient()."
-    cleanupPriority: medium
-    relatedTables:
-      - system_alerts
-
   - name: graph_subscriptions
     db: MAIN
     domain: pipeline
@@ -2268,15 +2245,6 @@ tables:
     owner: unknown
     status: dormant
     purpose: "Dormant pipeline configuration table."
-    relatedTables: []
-
-  - name: rag_pipeline_state
-    db: MAIN
-    domain: pipeline
-    owner: unknown
-    status: orphan-mirror
-    purpose: "STALE legacy RAG pipeline state. RAG.rag_pipeline_state is canonical."
-    cleanupPriority: medium
     relatedTables: []
 
   - name: processing_queue
@@ -3962,4 +3930,224 @@ tables:
     owner: unknown
     status: live
     purpose: "Scope items attached to estimate sublists. TODO: expand metadata, identify writers/readers."
+    relatedTables: []
+
+  # ─── Inventory Drift Catch-Up: AI Ops / Intelligence ─────────────────────
+
+  - name: ai_agents
+    db: MAIN
+    domain: ai
+    owner: core
+    status: live
+    purpose: "AI agent registry rows for configured assistant agents, approvals, thresholds, and admin-visible agent metadata."
+    relatedTables:
+      - ai_agent_runs
+
+  - name: ai_agent_runs
+    db: MAIN
+    domain: ai
+    owner: core
+    status: live
+    purpose: "Run history for configured AI agents. Used by admin AI agent drilldowns and operational review."
+    relatedTables:
+      - ai_agents
+
+  - name: ai_operation_events
+    db: MAIN
+    domain: ai
+    owner: core
+    status: live
+    purpose: "AI Ops event ledger for scheduled/manual AI workflow events, accepted/rejected event state, and run conversion."
+    relatedTables:
+      - ai_work_runs
+
+  - name: ai_skills
+    db: MAIN
+    domain: ai
+    owner: core
+    status: live
+    purpose: "Approved Skill Library definitions consumed by assistant surface-specific skill injection."
+    relatedTables:
+      - ai_skill_usage_events
+
+  - name: ai_skill_usage_events
+    db: MAIN
+    domain: ai
+    owner: core
+    status: live
+    purpose: "Telemetry ledger for selected Skill Library context attached to assistant responses."
+    relatedTables:
+      - ai_skills
+      - chat_history
+
+  - name: ai_work_runs
+    db: MAIN
+    domain: ai
+    owner: core
+    status: live
+    purpose: "Canonical AI workflow run ledger for Executive Daily Brief and related AI Ops workflows."
+    relatedTables:
+      - ai_operation_events
+      - ai_work_run_sources
+
+  - name: ai_work_run_sources
+    db: MAIN
+    domain: ai
+    owner: core
+    status: live
+    purpose: "Evidence/source rows linked to AI workflow runs."
+    relatedTables:
+      - ai_work_runs
+
+  - name: change_event_candidates
+    db: MAIN
+    domain: change_management
+    owner: core
+    status: live
+    purpose: "Candidate change-event records staged from AI/intelligence signals before promotion into formal change management."
+    relatedTables:
+      - change_events
+
+  - name: project_current_state
+    db: MAIN
+    domain: project_intelligence
+    owner: core
+    status: live
+    purpose: "Current synthesized project state used by intelligence and executive surfaces."
+    relatedTables:
+      - projects
+      - project_intelligence_timeline_events
+
+  - name: project_intelligence_timeline_events
+    db: MAIN
+    domain: project_intelligence
+    owner: core
+    status: live
+    purpose: "Project intelligence timeline events used for current-state and executive drilldown views."
+    relatedTables:
+      - project_intelligence_timeline_event_sources
+      - projects
+
+  - name: project_intelligence_timeline_event_sources
+    db: MAIN
+    domain: project_intelligence
+    owner: core
+    status: live
+    purpose: "Source/evidence links for project intelligence timeline events."
+    relatedTables:
+      - project_intelligence_timeline_events
+
+  - name: project_operating_snapshots
+    db: MAIN
+    domain: project_intelligence
+    owner: core
+    status: live
+    purpose: "Point-in-time project operating snapshots for intelligence and reporting comparisons."
+    relatedTables:
+      - projects
+
+  - name: project_report_suggestions
+    db: MAIN
+    domain: project_intelligence
+    owner: core
+    status: live
+    purpose: "Suggested project report content/actions generated from project intelligence workflows."
+    relatedTables:
+      - projects
+
+  - name: db_incident_activity_samples
+    db: MAIN
+    domain: ops
+    owner: core
+    status: live
+    purpose: "Operational diagnostic samples captured during database incident investigations."
+    relatedTables: []
+
+  - name: db_incident_outlook_write_block_log
+    db: MAIN
+    domain: ops
+    owner: core
+    status: live
+    purpose: "Operational audit log for Outlook write blocks during database incident mitigation."
+    relatedTables: []
+
+  - name: db_incident_write_log
+    db: MAIN
+    domain: ops
+    owner: core
+    status: live
+    purpose: "Operational audit log for write attempts captured during database incident mitigation."
+    relatedTables: []
+
+  # ─── Inventory Drift Catch-Up: RAG / Microsoft Graph ─────────────────────
+
+  - name: graph_subscriptions
+    db: RAG
+    domain: pipeline
+    owner: pipeline
+    status: live
+    purpose: "RAG database copy of Microsoft Graph webhook subscriptions used by Graph ingestion workers."
+    relatedTables:
+      - graph_sync_state
+
+  - name: graph_sync_state
+    db: RAG
+    domain: pipeline
+    owner: pipeline
+    status: live
+    purpose: "RAG database Graph delta-token state for mailbox, Teams, and OneDrive sync workers."
+    relatedTables:
+      - graph_subscriptions
+
+  - name: outlook_email_intake
+    db: RAG
+    domain: communications
+    owner: pipeline
+    status: live
+    purpose: "RAG database Outlook email intake rows for Microsoft Graph ingestion and vectorization workflows."
+    relatedTables:
+      - outlook_email_intake_attachments
+
+  - name: outlook_email_intake_attachments
+    db: RAG
+    domain: communications
+    owner: pipeline
+    status: live
+    purpose: "RAG database attachment metadata for Outlook email intake rows."
+    relatedTables:
+      - outlook_email_intake
+
+  - name: outlook_email_skip_audit
+    db: RAG
+    domain: communications
+    owner: pipeline
+    status: live
+    purpose: "Audit rows for Outlook email messages skipped by ingestion or filtering rules."
+    relatedTables:
+      - outlook_email_intake
+
+  - name: project_daily_deltas
+    db: RAG
+    domain: project_intelligence
+    owner: pipeline
+    status: live
+    purpose: "Daily project delta summaries produced by RAG/intelligence processing."
+    relatedTables:
+      - source_syntheses
+
+  - name: source_syntheses
+    db: RAG
+    domain: project_intelligence
+    owner: pipeline
+    status: live
+    purpose: "Synthesized source-level intelligence outputs generated from RAG-ingested communications and documents."
+    relatedTables:
+      - project_daily_deltas
+
+  - name: system_alerts
+    db: RAG
+    domain: pipeline
+    owner: pipeline
+    status: live
+    purpose: "RAG database pipeline health and system alert sink."
     relatedTables: []

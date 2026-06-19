@@ -94,7 +94,7 @@ for (const entry of parsedYaml.tables) {
   if (!entry.domain) fail(`YAML entry '${entry.name}' missing required field 'domain'`);
   if (!entry.status) fail(`YAML entry '${entry.name}' missing required field 'status'`);
   if (!entry.purpose) fail(`YAML entry '${entry.name}' missing required field 'purpose'`);
-  yamlByName.set(entry.name, entry);
+  yamlByName.set(`${entry.name}:${entry.db}`, entry);
 }
 
 log(`Loaded ${yamlByName.size} entries from tables.yaml`);
@@ -392,22 +392,19 @@ async function checkSchemaDrift(mainDb, ragDb) {
 
   // Check DB tables not in YAML
   for (const t of mainTables) {
-    if (!yamlByName.has(t)) {
+    if (!yamlByName.has(`${t}:MAIN`)) {
       missing.push({ table: t, db: "MAIN" });
     }
   }
   for (const t of ragTables) {
-    const key = `${t}:RAG`;
-    const found = [...yamlByName.values()].some(
-      (e) => e.name === t && e.db === "RAG"
-    );
-    if (!found) {
+    if (!yamlByName.has(`${t}:RAG`)) {
       missing.push({ table: t, db: "RAG" });
     }
   }
 
   // Check YAML entries where the DB table no longer exists
-  for (const [name, entry] of yamlByName) {
+  for (const [, entry] of yamlByName) {
+    const name = entry.name;
     const dbSet = entry.db === "MAIN" ? mainTables : ragTables;
     if (!dbSet.has(name)) {
       stale.push({ table: name, db: entry.db });

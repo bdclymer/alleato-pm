@@ -9,6 +9,7 @@ import { createAppHelpTools } from "./app-help-tools";
 import { createForecastTools } from "./forecast-tools";
 import { createOutlookOperationsTools } from "./outlook-operations";
 import { createSaisTools } from "./sais";
+import { createSessionSearchTools } from "./search-past-conversations";
 import { createToolGuardrails } from "./guardrails";
 import { type ToolTracePayload, asNumber, withTrace as _withTrace } from "./tool-utils";
 import type { MeetingIntelligenceWidgetPayload } from "@/lib/ai/assistant-widgets";
@@ -32,6 +33,7 @@ type AnyRow = Record<string, any>;
 export type CreateProjectToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
   pinnedProjectId?: number;
+  sessionId?: string;
 };
 
 function parseTextList(value: unknown): string[] {
@@ -455,6 +457,7 @@ export function createProjectTools(
   const forecastTools = createForecastTools(_userId, options);
   const outlookOperationsTools = createOutlookOperationsTools(_userId, options);
   const saisTools = createSaisTools(_userId, options);
+  const sessionSearchTools = createSessionSearchTools(_userId, options);
 
   return {
     ...financialTools,
@@ -465,6 +468,7 @@ export function createProjectTools(
     ...forecastTools,
     ...outlookOperationsTools,
     ...saisTools,
+    ...sessionSearchTools,
 
     getMeetingIntelligence: tool({
       description:

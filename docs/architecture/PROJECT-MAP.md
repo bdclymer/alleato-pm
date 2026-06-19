@@ -997,7 +997,7 @@
 | `/api/velt/token` | POST | frontend/src/app/api/velt/token/route.ts |
 | `/api/webhooks/resend` | POST | frontend/src/app/api/webhooks/resend/route.ts |
 
-## AI Tools (104)
+## AI Tools (105)
 
 These are the tools the AI assistant can call. Each lives in `frontend/src/lib/ai/tools/`.
 
@@ -1158,6 +1158,12 @@ These are the tools the AI assistant can call. Each lives in `frontend/src/lib/a
 | Tool | Description |
 |------|-------------|
 | `getScheduleAnalysis` | Analyze the project schedule: overdue tasks, milestones at risk, critical path items, completion percentage, and task dependencies. Use when asked about schedule, timeline, delays, milestones, or task progress for a project. |
+
+### `search-past-conversations.ts` (1)
+
+| Tool | Description |
+|------|-------------|
+| `searchPastConversations` | Search this user's prior assistant chat messages using live chat_history full-text search. Use for continuity questions such as what was discussed before, previous decisions, or when the user references an earlier chat. Returns anchored message windows and session bookends. This is not document search and must not be used for project files, meeting transcripts, or emails. |
 
 ### `structured-output.ts` (1)
 
