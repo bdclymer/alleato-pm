@@ -38,7 +38,7 @@ Reference: `docs/ops/orchestration/session-board.md`
 
 ## Accepted Work
 
-- 2026-06-19: Hermes/OpenClaw AI assistant plan accepted through Goal 7. Goal 1 net-policy closeout plus Goals 2-6 and Goal 7 slices G3, G6, C10, and G5 are task-complete, evidence-backed, Linear-commented, and published to `origin/main`. Review ledger entries S60-S68 are accepted; Goal 1 closeout evidence remains in `docs/ops/tasks/2026-06-19-openclaw-net-policy-closeout.md` and `docs/ops/handoffs/2026-06-19-S59-openclaw-net-policy-closeout.md`.
+- 2026-06-19: Hermes/OpenClaw AI assistant plan accepted through Goal 7. Goal 1 net-policy closeout plus Goals 2-6 and Goal 7 slices G3, G6, C10, and G5 are task-complete, evidence-backed, Linear-commented, and published to `origin/main`. Review ledger entries S59-S68 are accepted.
 
 ## Next Actions
 
