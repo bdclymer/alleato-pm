@@ -42,16 +42,19 @@ function toIsoOrNull(value: string | null | undefined) {
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
-function sourceFamily(value: string): EvidenceRef["sourceFamily"] {
-  const normalized = value.toLowerCase();
+function sourceFamily(
+  value: string,
+  detail?: string | null,
+): EvidenceRef["sourceFamily"] {
+  const normalized = `${value} ${detail ?? ""}`.toLowerCase();
   if (normalized.includes("meeting") || normalized.includes("fireflies"))
     return "meeting";
   if (normalized.includes("email") || normalized.includes("outlook"))
     return "email";
   if (normalized.includes("teams")) return "teams";
-  if (normalized.includes("document")) return "document";
   if (normalized.includes("financial") || normalized.includes("acumatica"))
     return "acumatica";
+  if (normalized.includes("document")) return "document";
   if (normalized.includes("procore")) return "procore";
   if (normalized.includes("packet")) return "intelligence_packet";
   if (normalized.includes("card")) return "insight_card";
@@ -64,10 +67,16 @@ function internalHrefForCitation(
 ) {
   const sourceId = citation.sourceId ?? item.sourceId;
   const projectId = item.projectInternalId;
-  if (!sourceId || !projectId) return null;
+  if (!sourceId) return null;
 
   const encodedSourceId = encodeURIComponent(sourceId);
-  const family = sourceFamily(citation.source);
+  const family = sourceFamily(citation.source, citation.sourceDetail);
+  if (family === "acumatica") {
+    return "/financial-insights";
+  }
+
+  if (!projectId) return null;
+
   if (family === "meeting" || family === "fireflies") {
     return `/${projectId}/meetings/${encodedSourceId}`;
   }
@@ -97,7 +106,7 @@ export function evidenceRefsForBriefItem({
   itemIndex: number;
 }): EvidenceRef[] {
   return item.citations.map((citation, citationIndex) => ({
-    sourceFamily: sourceFamily(citation.source),
+    sourceFamily: sourceFamily(citation.source, citation.sourceDetail),
     sourceId:
       citation.sourceId ??
       item.sourceId ??

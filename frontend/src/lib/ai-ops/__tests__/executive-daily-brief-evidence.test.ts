@@ -104,10 +104,10 @@ describe("Executive Daily Brief evidence policy", () => {
     expect(() => assertExecutiveBriefingDraftEvidence(draft)).not.toThrow();
     expect(evidenceRefsFromDraft(draft)).toMatchObject([
       {
-        sourceFamily: "document",
+        sourceFamily: "acumatica",
         sourceId: "co-report-1",
         sourceTitle: "Acumatica ERP - Change Order Report",
-        internalHref: "/760/intelligence/sources/co-report-1",
+        internalHref: "/financial-insights",
         excerpt: "9 projects with on-hold COs - $400K total pending revenue.",
       },
       {
@@ -149,6 +149,33 @@ describe("Executive Daily Brief evidence policy", () => {
       draft.packet.sections.needsBrandon[0].sourceRefs,
     );
     expect(() => assertExecutiveBriefingDraftEvidence(draft)).not.toThrow();
+  });
+
+  it("routes portfolio Acumatica evidence to the financial source surface", () => {
+    const draft = draftWithItem({
+      source: "Document",
+      sourceDetail: "Acumatica ERP - Change Order Report",
+      sourceId: "financial-co-Jun 19, 2026",
+      project: "Multiple (9 projects)",
+      projectInternalId: null,
+      citations: [
+        {
+          source: "Document",
+          sourceDetail: "Acumatica ERP - Change Order Report",
+          sourceId: "financial-co-Jun 19, 2026",
+          evidence: "9 projects with on-hold COs - $400K total pending revenue.",
+          date: "2026-06-19T00:00:00.000Z",
+        },
+      ],
+    });
+
+    expect(evidenceRefsFromDraft(draft)[0]).toMatchObject({
+      sourceFamily: "acumatica",
+      sourceId: "financial-co-Jun 19, 2026",
+      internalHref: "/financial-insights",
+      projectId: null,
+      projectLabel: "Multiple (9 projects)",
+    });
   });
 
   it("fails when a surfaced claim has no citation", () => {

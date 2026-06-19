@@ -152,6 +152,14 @@
    - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts --runInBand` passed 1 suite / 4 tests.
    - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/executive/__tests__/executive-briefing-workflow.test.ts --runInBand` passed 1 suite / 4 tests.
    - Pass: `cd frontend && npx eslint --no-ignore src/lib/ai-ops/executive-daily-brief-evidence.ts src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts src/lib/executive/brandon-daily-update.ts src/lib/executive/executive-briefing-workflow.ts src/lib/executive/__tests__/executive-briefing-workflow.test.ts`.
+   - Fail then fixed: live packet proof run `d0062e88-8f3b-4c24-82bd-406eb2840f7f` showed the portfolio Acumatica financial item had a structured ref but no URL/internal route. Fixed by classifying Acumatica from citation detail and routing portfolio financial refs to `/financial-insights`.
+   - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts --runInBand` passed 1 suite / 5 tests after adding the portfolio Acumatica fallback test.
+   - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/executive/__tests__/executive-briefing-workflow.test.ts --runInBand` passed 1 suite / 4 tests.
+   - Pass: `cd frontend && npx eslint --no-ignore src/lib/ai-ops/executive-daily-brief-evidence.ts src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts src/lib/executive/brandon-daily-update.ts src/lib/executive/executive-briefing-workflow.ts src/lib/executive/__tests__/executive-briefing-workflow.test.ts`.
+   - Pass: authenticated no-send preview after the fix returned HTTP 200 with run `10c6f901-0d3f-43b7-a602-16e6eb7fd7ab`, `itemCount=4`, `recapDate=2026-06-19`, and `generatedFresh=true`.
+   - Pass: SQL readback for run `10c6f901-0d3f-43b7-a602-16e6eb7fd7ab` returned status succeeded, delivery dry-run, packet id `1399b250-4151-429c-a3ce-156e0a161ba9`, source health count `4`, source-ref rows `4`, artifact rows `3`, and delivery attempts `1`.
+   - Pass: SQL packet expansion found 4 surfaced items, each with 1 source ref; every ref had source family, id, title, link, excerpt, occurred-at, and confidence; `items_without_source_refs=0`, `refs_without_links=0`.
+   - Pass: dev-server socket-close proof run `4adcf1e3-0715-4108-8cc5-083e21e6db6c` was marked `failed_retryable` / `failed` with `DEV_PROOF_SOCKET_CLOSED` and metadata pointing to successful follow-up run `10c6f901-0d3f-43b7-a602-16e6eb7fd7ab`.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
@@ -225,9 +233,9 @@
    - Source adapter wrappers now produce visible source-fetch run steps and a source-health report artifact; missing required adapters fail loudly as failed-retryable run steps without silently suppressing the generated packet.
    - The old cron Teams delivery path no longer sends directly; it delegates to the canonical gateway and the old direct sender fails loudly if imported.
    - Manual email sends from the executive action now create canonical AI Ops runs, packet/artifact evidence, and per-recipient delivery attempts for both successful and provider-failed Resend outcomes.
-   - `/ai-work-runs` now shows retryability/next-action guidance and generated-packet evidence drilldown; newly regenerated packets now persist item-level `sourceRefs`, but live end-to-end proof must still regenerate and inspect a fresh packet after this source-ref persistence change.
+   - `/ai-work-runs` now shows retryability/next-action guidance and generated-packet evidence drilldown; live no-send preview run `10c6f901-0d3f-43b7-a602-16e6eb7fd7ab` proves packet-level `sourceRefs` are present and linkable for all four surfaced claims.
    - Duplicate frontend Daily Brief scripts are ledger-backed wrappers or no-send previews, and backend legacy digest paths are default-disabled with loud operator messaging.
-10) Recommended next action (one line): Regenerate one live no-send preview after source-ref persistence, inspect packet `sourceRefs`, then close remaining source coverage/readiness legacy gaps and real Teams delivery when safe/enabled.
+10) Recommended next action (one line): Close remaining `daily_recaps` canonical-run relationship, source coverage/readiness legacy gaps, actor/source-access policy filters, and real Teams delivery when safe/enabled.
 11) Handoff file path: `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
 12) Migration ledger evidence: `npm run db:migrations:verify-applied -- supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql` passed for version `20260619183000`.
 <!-- markdownlint-enable MD029 MD034 -->
@@ -250,6 +258,7 @@
   - `d8a88aa5-7358-4603-8e3d-58e390dbcca1` recorded legacy Teams cron path retirement, focused lint/tests, and remaining gaps.
   - `5d26abde-09b9-4e6e-a044-45ffa72c12b5` recorded email delivery action ledger wrapping, focused lint/tests, and remaining gaps.
   - `17e47a71-797e-43c7-a763-8e3181750dda` recorded packet-level `sourceRefs` persistence, focused lint/tests, and live regenerated-packet proof remaining.
+  - `7445ddd5-e71d-4b5c-9193-05993d462635` recorded live packet sourceRefs proof, Acumatica fallback, focused lint/tests, and remaining gaps.
   - `e5b1568a-90ea-4912-84bd-aed849ac6b3a` recorded admin UI source drilldown, retry guidance, browser proof, and remaining structured source-ref gaps.
   - `0647ed44-013a-47ce-b738-979c7b285444` recorded duplicate script and backend legacy digest disposition, focused checks, and remaining source coverage/readiness gaps.
 - Completion/blocker comment: None yet.

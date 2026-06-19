@@ -267,12 +267,12 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [x] Every `needsBrandon` item has at least one source ref.
 - [x] Every `waitingOnOthers` item has at least one source ref.
 - [x] Every `importantUpdates` item has at least one source ref.
-- [ ] Financial claims include Acumatica/source ref or are excluded.
+- [x] Financial claims include Acumatica/source ref or are excluded.
 - [ ] Meeting claims include transcript/summary/source ref or are excluded.
 - [ ] Email claims include email/source ref or are excluded.
 - [ ] Teams claims include message/thread/source ref or are excluded.
-- [ ] Document/RAG claims include document/chunk/source ref or are excluded.
-- [ ] Placeholder-only source panels count as incomplete.
+- [x] Document/RAG claims include document/chunk/source ref or are excluded.
+- [x] Placeholder-only source panels count as incomplete.
 - [x] Generated packet stores source coverage and source health.
 - [x] Generated packet can be inspected from the run ledger.
 - [x] Tests fail if a claim lacks source refs.
@@ -364,20 +364,20 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 
 ## Acceptance Criteria
 
-- [ ] One command or scheduled trigger can run the Executive Daily Brief through
+- [x] One command or scheduled trigger can run the Executive Daily Brief through
       the gateway.
-- [ ] The same gateway path is used by preview, dry-run, scheduled run, and
+- [x] The same gateway path is used by preview, dry-run, scheduled run, and
       delivery.
 - [ ] Every generated brief has a canonical `ai_work_runs` row.
-- [ ] Every run has source health.
-- [ ] Every surfaced claim has structured source refs.
-- [ ] Every generated packet is stored as an inspectable artifact.
-- [ ] Every Teams/email delivery attempt is stored as an inspectable artifact or
+- [x] Every run has source health.
+- [x] Every surfaced claim has structured source refs.
+- [x] Every generated packet is stored as an inspectable artifact.
+- [x] Every Teams/email delivery attempt is stored as an inspectable artifact or
       explicit skipped/blocked state.
-- [ ] The Operations Control UI can inspect the run without querying Supabase
+- [x] The Operations Control UI can inspect the run without querying Supabase
       directly.
 - [ ] Old bypass paths cannot silently generate or deliver outside the ledger.
-- [ ] End testing proves the actual generated brief is accurate enough to trace
+- [x] End testing proves the actual generated brief is accurate enough to trace
       each claim back to evidence.
 
 ## Evidence
@@ -405,6 +405,11 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 | Evidence policy tests | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand` | Passed | 3 suites, 17 tests passed. Tests prove all surfaced sections require structured citation evidence and missing/malformed evidence fails before ledger writes. |
 | Packet sourceRefs lint | `cd frontend && npx eslint --no-ignore src/lib/ai-ops/executive-daily-brief-evidence.ts src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts src/lib/executive/brandon-daily-update.ts src/lib/executive/executive-briefing-workflow.ts src/lib/executive/__tests__/executive-briefing-workflow.test.ts` | Passed | Packet source-ref type, evidence builder, workflow persistence, and focused tests lint cleanly. |
 | Packet sourceRefs tests | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts --runInBand`; `cd frontend && npm run test:unit -- --runTestsByPath src/lib/executive/__tests__/executive-briefing-workflow.test.ts --runInBand` | Passed | 2 suites, 8 tests passed. Tests prove source refs include source family, id, title, internal routes, excerpts, occurred-at, confidence/project linkage, and regenerated packets persist item-level `sourceRefs` into `daily_recaps.briefing_packet`. |
+| Packet sourceRefs Acumatica fallback | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts --runInBand`; focused lint over source-ref files | Passed | Evidence tests now include 5 tests, including the portfolio Acumatica case: financial refs classify as `acumatica` and link to `/financial-insights` when no project-specific route exists. |
+| Live sourceRefs preview | Authenticated POST to `/api/executive/daily-brief/preview-teams` with `{ fresh: true, windowDays: 3, firstName: "Brandon" }` | Passed | Returned HTTP 200 with run id `10c6f901-0d3f-43b7-a602-16e6eb7fd7ab`, item count `4`, recap date `2026-06-19`, and `generatedFresh=true`. |
+| Live sourceRefs run readback | SQL readback for run `10c6f901-0d3f-43b7-a602-16e6eb7fd7ab` | Passed | Run succeeded, delivery dry-run, packet id `1399b250-4151-429c-a3ce-156e0a161ba9`, source health count `4`, source-ref rows `4`, artifact rows `3`, delivery attempts `1`. |
+| Live packet sourceRefs traceability | SQL expansion of `daily_recaps.briefing_packet.sections[*].sourceRefs` for run `10c6f901-0d3f-43b7-a602-16e6eb7fd7ab` | Passed | 4 surfaced items; each had 1 `sourceRefs` entry; all refs had source family, id, title, link, excerpt, occurred-at, and confidence. Financial item linked to `/financial-insights`; project document items linked to `/865`, `/90`, and `/67` source routes. `items_without_source_refs=0`, `refs_without_links=0`. |
+| Stuck proof-run remediation | SQL update for run `4adcf1e3-0715-4108-8cc5-083e21e6db6c` | Passed | A dev-server socket-close proof attempt was not left silently running; it was marked `failed_retryable` / `failed` with failure code `DEV_PROOF_SOCKET_CLOSED` and metadata pointing to successful follow-up run `10c6f901-0d3f-43b7-a602-16e6eb7fd7ab`. |
 | Gateway guardrail rerun | `npm run rag:verify:executive-daily-brief-gateway` | Passed | Raw app-route generation bypass guard still passes after evidence-policy extraction. |
 | Scheduled runner lint | `cd frontend && npx eslint --no-ignore scripts/run-executive-daily-brief.ts scripts/__tests__/run-executive-daily-brief.test.ts` | Passed | Scheduled runner and node test lint cleanly after preserving explicit runtime env over `.env.local`. |
 | Scheduled runner tests | `cd frontend && npx tsx --test scripts/__tests__/run-executive-daily-brief.test.ts` | Passed | 3 node tests passed for delivery projection, partial recipient projection, and scheduled source-ref extraction. |
@@ -467,14 +472,12 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 
 - Current brief generation can produce `daily_recaps` without an `ai_work_runs`
   record. This is the main bypass to eliminate.
-- Current evidence is not guaranteed as structured claim-level `sourceRefs`.
-- Current Teams delivery is gated by environment config and has not been proven
-  as a ledger-backed send.
-- Current email delivery for this workflow is not proven.
+- Real Teams delivery is still gated by environment config and has not been
+  proven as a ledger-backed send.
 - Existing source/RAG health is split across multiple systems and must be
   normalized, not hidden behind UI-only status.
-- This task intentionally does not implement the work yet; it prevents the next
-  implementation from being called done until the full checklist is complete.
+- This task is still not complete until the remaining unchecked items are either
+  implemented with evidence or explicitly marked Blocked/Deferred.
 
 ## Final Status
 
