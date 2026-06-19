@@ -1,3 +1,4 @@
+import type { ToolSet } from "ai";
 import type {
   EvidenceRef,
   ToolDefinition,
@@ -50,6 +51,14 @@ export type AssistantToolRegistryValidation = {
   ok: boolean;
   duplicateNames: string[];
   missingPolicyMetadata: string[];
+};
+
+export type RegisteredToolSetInput = {
+  tools: ToolSet;
+  workflowId: string;
+  factoryModulePath: string;
+  allowedToolNames?: readonly string[];
+  registry?: AssistantToolRegistryEntry[];
 };
 
 function uniqueValues<T>(values: T[]): T[] {
@@ -155,6 +164,41 @@ export function toolDefinitionsForWorkflow(input: {
   return assistantToolsForWorkflow(input).map(toToolDefinition);
 }
 
+export function filterRegisteredToolSet(input: RegisteredToolSetInput): ToolSet {
+  const registry = input.registry ?? GLOBAL_ASSISTANT_TOOL_REGISTRY;
+  const workflowEntries = assistantToolsForWorkflow({
+    registry,
+    workflowId: input.workflowId,
+    allowedToolNames: input.allowedToolNames,
+  }).filter((entry) => entry.factory?.modulePath === input.factoryModulePath);
+
+  const registeredNames = new Set(workflowEntries.map((entry) => entry.name));
+  const toolNames = Object.keys(input.tools);
+  const missingTools = [...registeredNames].filter((name) => !input.tools[name]);
+  const unregisteredTools = toolNames.filter((name) => !registeredNames.has(name));
+
+  if (missingTools.length > 0 || unregisteredTools.length > 0) {
+    const details = [
+      missingTools.length
+        ? `missing factory tools: ${missingTools.join(", ")}`
+        : null,
+      unregisteredTools.length
+        ? `unregistered factory tools: ${unregisteredTools.join(", ")}`
+        : null,
+    ].filter(Boolean);
+
+    throw new Error(
+      `Invalid AI assistant tool factory registration for ${input.factoryModulePath}: ${details.join("; ")}`,
+    );
+  }
+
+  return Object.fromEntries(
+    toolNames
+      .filter((name) => registeredNames.has(name))
+      .map((name) => [name, input.tools[name]]),
+  ) as ToolSet;
+}
+
 export function toToolDefinition(
   entry: AssistantToolRegistryEntry,
 ): ToolDefinition {
@@ -184,8 +228,12 @@ export function toToolDefinition(
 }
 
 const EXECUTIVE_DAILY_BRIEF_WORKFLOW_ID = "executive_daily_brief";
+export const AI_ASSISTANT_CHAT_WORKFLOW_ID = "ai_assistant_chat";
 const EXECUTIVE_DAILY_BRIEF_ACTOR_MODES: ToolPolicy["actorMode"][] = [
   "service",
+  "user_delegated",
+];
+const AI_ASSISTANT_CHAT_ACTOR_MODES: ToolPolicy["actorMode"][] = [
   "user_delegated",
 ];
 
@@ -212,7 +260,481 @@ function executiveDailyBriefTool(
   };
 }
 
+function assistantChatTool(
+  entry: Omit<
+    AssistantToolRegistryEntry,
+    "workflows" | "actorModes" | "factory" | "failureShape" | "metadata"
+  > & {
+    factory: NonNullable<AssistantToolRegistryEntry["factory"]>;
+    failureShape?: AssistantToolRegistryEntry["failureShape"];
+    metadata?: AssistantToolRegistryEntry["metadata"];
+  },
+): AssistantToolRegistryEntry {
+  return {
+    ...entry,
+    workflows: [AI_ASSISTANT_CHAT_WORKFLOW_ID],
+    actorModes: AI_ASSISTANT_CHAT_ACTOR_MODES,
+    failureShape: entry.failureShape ?? "result_error",
+    metadata: {
+      runtimeFactory: true,
+      ...entry.metadata,
+    },
+    sourceFamilies: entry.sourceFamilies
+      ? uniqueValues(entry.sourceFamilies)
+      : undefined,
+    allowedChannels: entry.allowedChannels
+      ? uniqueValues(entry.allowedChannels)
+      : undefined,
+  };
+}
+
+const PROJECT_TOOL_FACTORY = {
+  modulePath: "frontend/src/lib/ai/tools/project-tools.ts",
+  exportName: "createProjectTools",
+} as const;
+
+const ACTION_TOOL_FACTORY = {
+  modulePath: "frontend/src/lib/ai/tools/action-tools.ts",
+  exportName: "createActionTools",
+} as const;
+
+const factory = (modulePath: string, exportName: string) =>
+  ({ modulePath, exportName }) as const;
+
+function factoryToolEntries(input: {
+  names: readonly string[];
+  factory: NonNullable<AssistantToolRegistryEntry["factory"]>;
+  owner?: string;
+  owningAdapter: string;
+  category: AssistantToolCategory;
+  capabilities?: AssistantToolCapability[];
+  sourceFamilies?: EvidenceRef["sourceFamily"][];
+  writeToolNames?: ReadonlySet<string>;
+  deliveryToolNames?: ReadonlySet<string>;
+  allowedChannels?: Array<"teams" | "email">;
+  requiresProjectScope?: boolean;
+  sourceBearing?: boolean;
+  ledgerRequired?: boolean;
+}): AssistantToolRegistryEntry[] {
+  return input.names.map((name) => {
+    const isWrite = input.writeToolNames?.has(name) ?? false;
+    const isDelivery = input.deliveryToolNames?.has(name) ?? false;
+    return assistantChatTool({
+      name,
+      description: `Assistant tool exposed by ${input.factory.exportName}: ${name}.`,
+      owningAdapter: input.owningAdapter,
+      inputSchemaName: `${name}.input`,
+      outputSchemaName: `${name}.output`,
+      owner: input.owner ?? "ai_assistant",
+      category: isDelivery ? "delivery" : input.category,
+      capabilities:
+        input.capabilities ??
+        (isDelivery ? ["write", "delivery"] : isWrite ? ["write"] : ["read"]),
+      sourceFamilies:
+        input.sourceFamilies ??
+        (isDelivery ? ["delivery"] : ["procore", "project_intelligence"]),
+      allowedChannels: isDelivery ? input.allowedChannels : undefined,
+      requiresProjectScope: input.requiresProjectScope ?? false,
+      requiresWritePermission: isWrite || isDelivery,
+      requiresDeliveryPermission: isDelivery,
+      evidencePolicy: {
+        sourceBearing: input.sourceBearing ?? !isWrite,
+        requiresSourceRefs: false,
+        ledgerRequired: input.ledgerRequired ?? (isWrite || isDelivery),
+      },
+      factory: input.factory,
+    });
+  });
+}
+
+function assistantReadToolCategory(name: string): AssistantToolCategory {
+  const normalized = name.toLowerCase();
+  if (normalized.includes("document") || normalized.includes("spec")) return "document";
+  if (normalized.includes("memory") || normalized.includes("knowledge")) return "memory";
+  if (
+    normalized.includes("cost") ||
+    normalized.includes("budget") ||
+    normalized.includes("margin") ||
+    normalized.includes("cash") ||
+    normalized.includes("aging") ||
+    normalized.includes("bill") ||
+    normalized.includes("invoice") ||
+    normalized.includes("purchaseorder") ||
+    normalized.includes("spend")
+  ) {
+    return "financial";
+  }
+  return "project";
+}
+
+function assistantReadSourceFamilies(
+  name: string,
+): EvidenceRef["sourceFamily"][] {
+  const normalized = name.toLowerCase();
+  if (normalized.includes("email") || normalized.includes("outlook")) {
+    return ["outlook", "email"];
+  }
+  if (normalized.includes("teams")) return ["teams"];
+  if (
+    normalized.includes("document") ||
+    normalized.includes("semantic") ||
+    normalized.includes("search")
+  ) {
+    return ["document", "rag"];
+  }
+  if (
+    normalized.includes("acumatica") ||
+    normalized.includes("aging") ||
+    normalized.includes("cash") ||
+    normalized.includes("bill") ||
+    normalized.includes("invoice") ||
+    normalized.includes("purchaseorder") ||
+    normalized.includes("spend")
+  ) {
+    return ["acumatica"];
+  }
+  if (normalized.includes("meeting")) return ["meeting", "fireflies"];
+  return ["procore", "project_intelligence", "insight_card"];
+}
+
+const projectToolNames = [
+  "getCommitmentsOverview",
+  "getChangeOrderDetails",
+  "getDirectCostsSummary",
+  "getBudgetLineItems",
+  "getCostTrends",
+  "getMarginAnalysis",
+  "getAPAgingReport",
+  "getARAgingReport",
+  "getCashPositionReport",
+  "getVendorSpendReport",
+  "getRecentBills",
+  "getRecentInvoices",
+  "getAcumaticaProjectBudget",
+  "getAcumaticaProjectList",
+  "getPurchaseOrderSummary",
+  "getPeopleAndRoles",
+  "getVendorPerformance",
+  "getRFIStatus",
+  "getSubmittalStatus",
+  "getCrossProjectComparison",
+  "getHistoricalTrends",
+  "semanticSearch",
+  "getCompanyKnowledge",
+  "recallPastConversations",
+  "searchMeetingsByTopic",
+  "getMeetingDetails",
+  "saveToKnowledgeBase",
+  "saveInsight",
+  "searchMemories",
+  "writeMemory",
+  "findProject",
+  "getRecentEmails",
+  "searchEmails",
+  "searchTeamsMessages",
+  "searchExternalDocuments",
+  "getScheduleAnalysis",
+  "searchAppHelp",
+  "getForecastComparison",
+  "getOutlookOperationsStatus",
+  "getOutlookCalendarEvents",
+  "getSopBacklog",
+  "getFinanceSpendRollup",
+  "getMeetingIntelligence",
+  "getProjectBriefingSnapshot",
+  "getPortfolioOverview",
+  "getProjectsWithRisks",
+  "getProjectRiskAnalysis",
+  "getFinancialAnalysis",
+  "getProjectBudgetSummary",
+  "getActionItemsAndInsights",
+  "getMeetingsByDate",
+  "findProjectDocuments",
+  "searchDocuments",
+  "getProjectDetails",
+] as const;
+
+const projectAssistantTools: AssistantToolRegistryEntry[] = projectToolNames.map(
+  (name) =>
+    assistantChatTool({
+      name,
+      description: `Core project read tool exposed by createProjectTools: ${name}.`,
+      owningAdapter: "project_tools",
+      inputSchemaName: `${name}.input`,
+      outputSchemaName: `${name}.output`,
+      owner: "ai_assistant",
+      category: assistantReadToolCategory(name),
+      capabilities:
+        name === "saveToKnowledgeBase" ||
+        name === "saveInsight" ||
+        name === "writeMemory"
+          ? ["read", "write"]
+          : ["read"],
+      sourceFamilies: assistantReadSourceFamilies(name),
+      requiresProjectScope: false,
+      requiresWritePermission:
+        name === "saveToKnowledgeBase" ||
+        name === "saveInsight" ||
+        name === "writeMemory",
+      requiresDeliveryPermission: false,
+      evidencePolicy: {
+        sourceBearing: true,
+        requiresSourceRefs: false,
+        ledgerRequired:
+          name === "saveToKnowledgeBase" ||
+          name === "saveInsight" ||
+          name === "writeMemory",
+      },
+      factory: PROJECT_TOOL_FACTORY,
+    }),
+);
+
+const actionToolNames = [
+  "createChangeOrder",
+  "createChangeEvent",
+  "updateProjectStatus",
+  "createRFI",
+  "createTask",
+  "createGeneratedTask",
+  "createProjectCompany",
+  "createProjectContact",
+  "createContact",
+  "updateGeneratedTask",
+  "deleteGeneratedTask",
+  "flagProjectRisk",
+  "updateRFIStatus",
+  "createMeetingNote",
+  "createSubmittal",
+  "logDailyReport",
+  "generateProjectSummary",
+  "createInitiativeCard",
+  "createCommitment",
+  "submitFeedback",
+  "addBoardItem",
+  "createOutlookCalendarInvite",
+  "draftOutlookEmail",
+  "sendTeamsMessage",
+] as const;
+
+const deliveryActionTools = new Set([
+  "createOutlookCalendarInvite",
+  "draftOutlookEmail",
+  "sendTeamsMessage",
+]);
+
+const nonProjectScopedActionTools = new Set([
+  "createContact",
+  "submitFeedback",
+  "addBoardItem",
+  "draftOutlookEmail",
+  "sendTeamsMessage",
+]);
+
+const actionAssistantTools: AssistantToolRegistryEntry[] = actionToolNames.map(
+  (name) => {
+    const isDelivery = deliveryActionTools.has(name);
+    return assistantChatTool({
+      name,
+      description: `Assistant write or delivery tool exposed by createActionTools: ${name}.`,
+      owningAdapter: "action_tools",
+      inputSchemaName: `${name}.input`,
+      outputSchemaName: `${name}.output`,
+      owner: "ai_assistant",
+      category: isDelivery ? "delivery" : "workflow",
+      capabilities: isDelivery ? ["write", "delivery"] : ["write"],
+      sourceFamilies: isDelivery ? ["outlook", "email", "teams", "delivery"] : ["procore", "system"],
+      allowedChannels: isDelivery ? ["email", "teams"] : undefined,
+      requiresProjectScope: !nonProjectScopedActionTools.has(name),
+      requiresWritePermission: true,
+      requiresDeliveryPermission: isDelivery,
+      evidencePolicy: {
+        sourceBearing: false,
+        requiresSourceRefs: false,
+        ledgerRequired: true,
+      },
+      factory: ACTION_TOOL_FACTORY,
+    });
+  },
+);
+
+const webSearchAssistantTools = factoryToolEntries({
+  names: ["searchWeb", "researchCompany", "searchConstructionMarket"],
+  factory: factory("frontend/src/lib/ai/tools/web-search.ts", "createWebSearchTools"),
+  owningAdapter: "web_search_tools",
+  category: "operational",
+  sourceFamilies: ["system"],
+  requiresProjectScope: false,
+});
+
+const structuredOutputAssistantTools = factoryToolEntries({
+  names: ["extractStructuredActionBrief"],
+  factory: factory(
+    "frontend/src/lib/ai/tools/structured-output.ts",
+    "createStructuredOutputTools",
+  ),
+  owningAdapter: "structured_output_tools",
+  category: "generation",
+  sourceFamilies: ["system"],
+  sourceBearing: false,
+});
+
+const featureRequestWriteTools = new Set([
+  "captureFeatureRequestPacket",
+  "updateFeatureRequestPacket",
+  "generateImplementationPlan",
+  "generateClaudeCodeHandoff",
+  "draftLinearIssueFromFeatureRequest",
+  "draftLinearSubIssuesFromImplementationPlan",
+  "attachLinearIssueToFeatureRequest",
+  "attachLinearSubIssueToFeatureRequest",
+  "recordLinearStatusUpdateForFeatureRequest",
+]);
+
+const featureRequestAssistantTools = factoryToolEntries({
+  names: [
+    "findRelatedFeatureRequests",
+    "captureFeatureRequestPacket",
+    "updateFeatureRequestPacket",
+    "scoreFeatureRequestReadiness",
+    "generateImplementationPlan",
+    "generateClaudeCodeHandoff",
+    "draftLinearIssueFromFeatureRequest",
+    "draftLinearSubIssuesFromImplementationPlan",
+    "attachLinearIssueToFeatureRequest",
+    "attachLinearSubIssueToFeatureRequest",
+    "recordLinearStatusUpdateForFeatureRequest",
+  ],
+  factory: factory(
+    "frontend/src/lib/ai/tools/feature-request-tools.ts",
+    "createFeatureRequestTools",
+  ),
+  owningAdapter: "feature_request_tools",
+  category: "workflow",
+  sourceFamilies: ["system"],
+  writeToolNames: featureRequestWriteTools,
+  sourceBearing: false,
+});
+
+const progressReportWriteTools = new Set([
+  "createWeeklyProgressReportDraft",
+  "updateProgressReportSections",
+  "selectProgressReportPhotos",
+  "generateProgressReportPdf",
+]);
+
+const progressReportAssistantTools = factoryToolEntries({
+  names: [
+    "createWeeklyProgressReportDraft",
+    "updateProgressReportSections",
+    "listProgressReportPhotos",
+    "selectProgressReportPhotos",
+    "generateProgressReportPdf",
+  ],
+  factory: factory(
+    "frontend/src/lib/ai/tools/progress-report-tools.ts",
+    "createProgressReportTools",
+  ),
+  owningAdapter: "progress_report_tools",
+  category: "workflow",
+  sourceFamilies: ["procore", "document"],
+  writeToolNames: progressReportWriteTools,
+  requiresProjectScope: true,
+});
+
+const workspaceAssistantTools = factoryToolEntries({
+  names: [
+    "listWorkspaceArtifacts",
+    "getDraftArtifact",
+    "saveWorkspaceArtifact",
+    "promoteWorkspaceArtifact",
+  ],
+  factory: factory(
+    "frontend/src/lib/ai/tools/workspace-tools.ts",
+    "createWorkspaceTools",
+  ),
+  owningAdapter: "workspace_tools",
+  category: "workflow",
+  sourceFamilies: ["system"],
+  writeToolNames: new Set(["saveWorkspaceArtifact", "promoteWorkspaceArtifact"]),
+  sourceBearing: false,
+});
+
+const documentIntelligenceAssistantTools = factoryToolEntries({
+  names: [
+    "getSubmittalLog",
+    "getSpecRequirements",
+    "detectMissingSubmittals",
+    "logFeedback",
+    "reviewDocument",
+  ],
+  factory: factory(
+    "frontend/src/lib/ai/tools/document-intelligence.ts",
+    "createDocumentIntelligenceTools",
+  ),
+  owningAdapter: "document_intelligence_tools",
+  category: "document",
+  sourceFamilies: ["document", "rag", "procore"],
+  writeToolNames: new Set(["logFeedback", "reviewDocument"]),
+});
+
+const intelligenceAssistantTools = factoryToolEntries({
+  names: ["listDomainIntelligence", "getDomainIntelligence"],
+  factory: factory(
+    "frontend/src/lib/ai/tools/intelligence-tools.ts",
+    "createIntelligenceTools",
+  ),
+  owningAdapter: "intelligence_tools",
+  category: "operational",
+  sourceFamilies: ["project_intelligence", "insight_card"],
+});
+
+const executiveBriefAssistantTools = factoryToolEntries({
+  names: ["generateExecutiveDailyBrief"],
+  factory: factory(
+    "frontend/src/lib/ai/tools/executive-brief-tools.ts",
+    "createExecutiveBriefTools",
+  ),
+  owningAdapter: "executive_brief_tools",
+  category: "generation",
+  sourceFamilies: ["daily_recap", "project_intelligence", "document", "acumatica"],
+  writeToolNames: new Set(["generateExecutiveDailyBrief"]),
+});
+
+const marketingWriteTools = new Set([
+  "createMarketingIntelligenceItem",
+  "createMarketingIntelligenceFromCandidate",
+  "createContentCalendarDraft",
+  "createMarketingContentAsset",
+]);
+
+const marketingAssistantTools = factoryToolEntries({
+  names: [
+    "findMarketingSourceCandidates",
+    "createMarketingIntelligenceItem",
+    "createMarketingIntelligenceFromCandidate",
+    "createContentCalendarDraft",
+    "createMarketingContentAsset",
+    "getMarketingCalendar",
+  ],
+  factory: factory("frontend/src/lib/ai/tools/marketing.ts", "createMarketingTools"),
+  owningAdapter: "marketing_tools",
+  category: "workflow",
+  sourceFamilies: ["document", "project_intelligence", "system"],
+  writeToolNames: marketingWriteTools,
+});
+
 export const GLOBAL_ASSISTANT_TOOL_REGISTRY: AssistantToolRegistryEntry[] = [
+  ...projectAssistantTools,
+  ...actionAssistantTools,
+  ...webSearchAssistantTools,
+  ...structuredOutputAssistantTools,
+  ...featureRequestAssistantTools,
+  ...progressReportAssistantTools,
+  ...workspaceAssistantTools,
+  ...documentIntelligenceAssistantTools,
+  ...intelligenceAssistantTools,
+  ...executiveBriefAssistantTools,
+  ...marketingAssistantTools,
   executiveDailyBriefTool({
     name: "fetch-fireflies-meeting-sources",
     description:

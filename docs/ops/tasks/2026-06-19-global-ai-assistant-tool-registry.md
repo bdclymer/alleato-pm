@@ -45,28 +45,28 @@ filled in. If any item cannot be completed, change `Status` to
 ## Implementation Checklist
 
 - [x] Create the global assistant tool registry module.
-- [ ] Move or wrap `project-tools.ts` tools into registry entries.
-- [ ] Move or wrap `action-tools.ts` tools into registry entries.
-- [ ] Move or wrap operational/search/memory tools into registry entries.
-- [ ] Move or wrap financial/Acumatica tools into registry entries.
-- [ ] Move or wrap schedule/progress-report/document/intelligence tools into
+- [x] Move or wrap `project-tools.ts` tools into registry entries.
+- [x] Move or wrap `action-tools.ts` tools into registry entries.
+- [x] Move or wrap operational/search/memory tools into registry entries.
+- [x] Move or wrap financial/Acumatica tools into registry entries.
+- [x] Move or wrap schedule/progress-report/document/intelligence tools into
       registry entries.
 - [x] Move or wrap Executive Daily Brief tools so
       `frontend/src/lib/ai-ops/tool-registry.ts` consumes the global registry
       instead of owning standalone definitions.
-- [ ] Update assistant/orchestrator tool assembly to request tools through the
+- [x] Update assistant/orchestrator tool assembly to request tools through the
       registry policy layer.
 - [ ] Update route-local tool usage or document why a route-local tool is not an
       assistant tool.
 - [ ] Ensure all write/delivery tools have explicit policy gates.
-- [ ] Ensure source-bearing tools declare source family and evidence behavior.
+- [x] Ensure source-bearing tools declare source family and evidence behavior.
 - [ ] Ensure every tool execution can be traced to run/task/session telemetry
       appropriate to its workflow.
 
 ## Integration Checklist
 
-- [ ] AI assistant runtime uses the global registry for tool selection.
-- [ ] Specialist agents use registry-filtered tool subsets.
+- [x] AI assistant runtime uses the global registry for tool selection.
+- [x] Specialist agents use registry-filtered tool subsets.
 - [x] Executive Daily Brief workflow uses registry-filtered tool subsets.
 - [ ] Tool policy filters by actor, workflow, project/source access, write
       permission, delivery permission, and channel.
@@ -109,6 +109,12 @@ filled in. If any item cannot be completed, change `Status` to
 | Guardrail proof       | `npm run rag:verify:assistant-tool-registry` | Passed | Guardrail ensures `frontend/src/lib/ai-ops/tool-registry.ts` imports the global registry and does not reintroduce workflow-local `WORKFLOW_TOOL_DEFINITIONS` or `sourceAdapterToolDefinitions`. |
 | RAG docs gate         | `npm run codex:finish -- --message "Add global assistant tool registry foundation" --files ...` | Initially blocked, then remediated | Pre-commit correctly blocked because `frontend/src/lib/ai/**` changed without updating `docs/architecture/AI-RAG-ARCHITECTURE.md`. Architecture doc now records the global assistant tool registry foundation and notes no table/schema, embedding, RAG chunk sync, search RPC, or retrieval policy changed. |
 | Linear handoff check  | `npm run linear:codex:check -- docs/ops/handoffs/2026-06-19-S58-global-ai-assistant-tool-registry.md` | Passed | Handoff includes Linear issue, changed files, commands, evidence, milestone comment IDs, risks, and next action. |
+| Runtime registry proof | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai/__tests__/tool-registry.test.ts --runInBand` | Passed | Registry tests now prove the assistant chat workflow exposes project/action/factory-composed tools and fails loudly when a runtime factory exposes an unregistered tool. |
+| Orchestrator registry proof | `cd frontend && npx eslint src/lib/ai/tool-registry.ts src/lib/ai/__tests__/tool-registry.test.ts src/lib/ai/orchestrator.ts` | Passed | Strategist assembly now filters `createProjectTools()` and `createActionTools()` through `filterRegisteredToolSet()` before Microsoft operator exclusions. |
+| Expanded orchestrator registry proof | `cd frontend && npx eslint src/lib/ai/tool-registry.ts src/lib/ai/__tests__/tool-registry.test.ts src/lib/ai/orchestrator.ts` | Passed | Strategist and specialist tool assembly now filters project, action, web search, marketing, feature request, progress report, workspace, structured output, document intelligence, intelligence, and Executive Brief factories through `filterRegisteredToolSet()`. |
+| Expanded registry tests | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai/__tests__/tool-registry.test.ts --runInBand` | Passed | 9 tests prove assistant chat registry coverage for aggregate project/action tools plus standalone web/search/feature/progress/workspace/document/intelligence/executive/marketing factories and fail-loud runtime filtering. |
+| Typecheck delegation | Sub-agent `019edf88-2f4e-74f0-beec-ca24692af2f3`, `cd frontend && npm run typecheck` | Failed unrelated repo debt | Bounded typecheck timed out after 60s with no current-task type error surfaced. Worker identified likely owner files as `frontend/tsconfig.json` and `frontend/scripts/run-typecheck-bounded.mjs`, unrelated to `tool-registry.ts`, `orchestrator.ts`, or registry tests. |
+| Runtime import smoke | Direct TSX-based import of `createStrategistTools()` | Invalid smoke method | Direct TSX-based import hit Next `server-only` guard through `microsoft-graph/calendar-events.ts`; this is not a valid app/server harness for the orchestrator module. |
 
 ## Files Expected To Change
 

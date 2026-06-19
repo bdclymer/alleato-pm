@@ -49,6 +49,7 @@ const globalRegistryPath = path.join(
   repoRoot,
   "frontend/src/lib/ai/tool-registry.ts",
 );
+const orchestratorPath = path.join(repoRoot, "frontend/src/lib/ai/orchestrator.ts");
 
 if (fs.existsSync(globalRegistryPath)) {
   const source = fs.readFileSync(globalRegistryPath, "utf8");
@@ -61,6 +62,44 @@ if (fs.existsSync(globalRegistryPath)) {
     if (!source.includes(requiredExport)) {
       failures.push(
         `frontend/src/lib/ai/tool-registry.ts: missing ${requiredExport}`,
+      );
+    }
+  }
+}
+
+if (fs.existsSync(orchestratorPath)) {
+  const source = fs.readFileSync(orchestratorPath, "utf8");
+  if (!source.includes("filterRegisteredToolSet")) {
+    failures.push(
+      "frontend/src/lib/ai/orchestrator.ts: Strategist project/action tool assembly must use filterRegisteredToolSet",
+    );
+  }
+  if (source.includes("omitMicrosoftOperatorTools(createProjectTools(")) {
+    failures.push(
+      "frontend/src/lib/ai/orchestrator.ts: createProjectTools must be filtered through the global assistant registry before model exposure",
+    );
+  }
+  if (source.includes("omitMicrosoftOperatorTools(createActionTools(")) {
+    failures.push(
+      "frontend/src/lib/ai/orchestrator.ts: createActionTools must be filtered through the global assistant registry before model exposure",
+    );
+  }
+  for (const factoryName of [
+    "createProjectTools",
+    "createActionTools",
+    "createWebSearchTools",
+    "createMarketingTools",
+    "createFeatureRequestTools",
+    "createProgressReportTools",
+    "createWorkspaceTools",
+    "createStructuredOutputTools",
+    "createDocumentIntelligenceTools",
+    "createIntelligenceTools",
+    "createExecutiveBriefTools",
+  ]) {
+    if (source.includes(`...${factoryName}(`)) {
+      failures.push(
+        `frontend/src/lib/ai/orchestrator.ts: ${factoryName} must not be spread directly; use filterRegisteredToolSet`,
       );
     }
   }

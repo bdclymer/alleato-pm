@@ -53,6 +53,10 @@ import { createDocumentIntelligenceTools } from "@/lib/ai/tools/document-intelli
 import { createIntelligenceTools } from "@/lib/ai/tools/intelligence-tools";
 import { createExecutiveBriefTools } from "@/lib/ai/tools/executive-brief-tools";
 import { createAssistantSelfInspectionTools } from "@/lib/ai/assistant-self-knowledge";
+import {
+  AI_ASSISTANT_CHAT_WORKFLOW_ID,
+  filterRegisteredToolSet,
+} from "@/lib/ai/tool-registry";
 import { buildSkillInjectionContext } from "@/lib/ai/services/skill-injection-service";
 import { strategistSystemPrompt } from "@/lib/ai/agents/strategist";
 import { soul } from "@/lib/ai/soul";
@@ -97,6 +101,39 @@ function omitMicrosoftOperatorTools(tools: ToolSet): ToolSet {
   return Object.fromEntries(
     Object.entries(tools).filter(([name]) => !MICROSOFT_OPERATOR_TOOL_NAMES.has(name)),
   ) as ToolSet;
+}
+
+function registeredProjectTools(
+  userId: string,
+  options: CreateProjectToolsOptions,
+): ToolSet {
+  return filterRegisteredToolSet({
+    tools: createProjectTools(userId, options),
+    workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
+    factoryModulePath: "frontend/src/lib/ai/tools/project-tools.ts",
+  });
+}
+
+function registeredActionTools(
+  userId: string,
+  options: ActionToolsOptions,
+): ToolSet {
+  return filterRegisteredToolSet({
+    tools: createActionTools(userId, options),
+    workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
+    factoryModulePath: "frontend/src/lib/ai/tools/action-tools.ts",
+  });
+}
+
+function registeredFactoryTools(input: {
+  tools: ToolSet;
+  factoryModulePath: string;
+}): ToolSet {
+  return filterRegisteredToolSet({
+    tools: input.tools,
+    workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
+    factoryModulePath: input.factoryModulePath,
+  });
 }
 
 function microsoftAssistantBackendUrl(): string {
@@ -643,8 +680,11 @@ export const agentRegistry: Record<string, AgentConfig> = {
       // getHistoricalTrends, and getCrossProjectComparison.
       // Plus web search for competitive/market intelligence.
       return {
-        ...createProjectTools(userId, options),
-        ...createWebSearchTools(options),
+        ...registeredProjectTools(userId, options ?? {}),
+        ...registeredFactoryTools({
+          tools: createWebSearchTools(options),
+          factoryModulePath: "frontend/src/lib/ai/tools/web-search.ts",
+        }),
       } as ToolSet; // ToolSet is an index signature — spread inference requires explicit cast
     },
   },
@@ -682,10 +722,20 @@ export const agentRegistry: Record<string, AgentConfig> = {
     ],
     createTools: (userId: string, options?: StrategistToolOptions) => {
       return {
-        ...createMarketingTools(userId, options),
-        ...createProjectTools(userId, options),
-        ...createWebSearchTools(options),
-        ...createDocumentIntelligenceTools(userId, options),
+        ...registeredFactoryTools({
+          tools: createMarketingTools(userId, options),
+          factoryModulePath: "frontend/src/lib/ai/tools/marketing.ts",
+        }),
+        ...registeredProjectTools(userId, options ?? {}),
+        ...registeredFactoryTools({
+          tools: createWebSearchTools(options),
+          factoryModulePath: "frontend/src/lib/ai/tools/web-search.ts",
+        }),
+        ...registeredFactoryTools({
+          tools: createDocumentIntelligenceTools(userId, options),
+          factoryModulePath:
+            "frontend/src/lib/ai/tools/document-intelligence.ts",
+        }),
       } as ToolSet;
     },
   },
@@ -696,9 +746,15 @@ function createDefaultSpecialistTools(
   options?: StrategistToolOptions,
 ): ToolSet {
   return {
-    ...createProjectTools(userId, options),
-    ...createWebSearchTools(options),
-    ...createIntelligenceTools(options),
+    ...registeredProjectTools(userId, options ?? {}),
+    ...registeredFactoryTools({
+      tools: createWebSearchTools(options),
+      factoryModulePath: "frontend/src/lib/ai/tools/web-search.ts",
+    }),
+    ...registeredFactoryTools({
+      tools: createIntelligenceTools(options),
+      factoryModulePath: "frontend/src/lib/ai/tools/intelligence-tools.ts",
+    }),
   } as ToolSet;
 }
 
@@ -714,7 +770,10 @@ export function createSpecialistAgentTools(
 
   return {
     ...domainTools,
-    ...createWebSearchTools(options),
+    ...registeredFactoryTools({
+      tools: createWebSearchTools(options),
+      factoryModulePath: "frontend/src/lib/ai/tools/web-search.ts",
+    }),
   } as ToolSet;
 }
 
@@ -1002,18 +1061,44 @@ export function createStrategistTools(
 ) {
   // Include the base project tools so the Strategist can answer
   // general questions without routing to a specialist
-  const baseTools = omitMicrosoftOperatorTools(createProjectTools(userId, options));
+  const baseTools = omitMicrosoftOperatorTools(
+    registeredProjectTools(userId, options),
+  );
   const strategistActionTools = options.includeActionTools
-    ? omitMicrosoftOperatorTools(createActionTools(userId, options))
+    ? omitMicrosoftOperatorTools(registeredActionTools(userId, options))
     : {};
-  const featureRequestTools = createFeatureRequestTools(userId, options);
-  const progressReportTools = createProgressReportTools(userId, options);
-  const workspaceTools = createWorkspaceTools(userId, { onTrace: options.onTrace });
-  const webSearchTools = createWebSearchTools(options);
-  const structuredOutputTools = createStructuredOutputTools(options);
-  const documentIntelligenceTools = createDocumentIntelligenceTools(userId, options);
-  const intelligenceTools = createIntelligenceTools({ onTrace: options.onTrace });
-  const executiveBriefTools = createExecutiveBriefTools({ onTrace: options.onTrace });
+  const featureRequestTools = registeredFactoryTools({
+    tools: createFeatureRequestTools(userId, options),
+    factoryModulePath: "frontend/src/lib/ai/tools/feature-request-tools.ts",
+  });
+  const progressReportTools = registeredFactoryTools({
+    tools: createProgressReportTools(userId, options),
+    factoryModulePath: "frontend/src/lib/ai/tools/progress-report-tools.ts",
+  });
+  const workspaceTools = registeredFactoryTools({
+    tools: createWorkspaceTools(userId, { onTrace: options.onTrace }),
+    factoryModulePath: "frontend/src/lib/ai/tools/workspace-tools.ts",
+  });
+  const webSearchTools = registeredFactoryTools({
+    tools: createWebSearchTools(options),
+    factoryModulePath: "frontend/src/lib/ai/tools/web-search.ts",
+  });
+  const structuredOutputTools = registeredFactoryTools({
+    tools: createStructuredOutputTools(options),
+    factoryModulePath: "frontend/src/lib/ai/tools/structured-output.ts",
+  });
+  const documentIntelligenceTools = registeredFactoryTools({
+    tools: createDocumentIntelligenceTools(userId, options),
+    factoryModulePath: "frontend/src/lib/ai/tools/document-intelligence.ts",
+  });
+  const intelligenceTools = registeredFactoryTools({
+    tools: createIntelligenceTools({ onTrace: options.onTrace }),
+    factoryModulePath: "frontend/src/lib/ai/tools/intelligence-tools.ts",
+  });
+  const executiveBriefTools = registeredFactoryTools({
+    tools: createExecutiveBriefTools({ onTrace: options.onTrace }),
+    factoryModulePath: "frontend/src/lib/ai/tools/executive-brief-tools.ts",
+  });
   const strategistBaseTools = baseTools;
 
   const toolsWithoutSelfInspection = {

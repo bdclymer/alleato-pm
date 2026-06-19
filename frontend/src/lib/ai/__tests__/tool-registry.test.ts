@@ -1,11 +1,14 @@
 import {
+  AI_ASSISTANT_CHAT_WORKFLOW_ID,
   assistantToolsForWorkflow,
   assertUniqueAssistantToolNames,
+  filterRegisteredToolSet,
   GLOBAL_ASSISTANT_TOOL_REGISTRY,
   toolDefinitionsForWorkflow,
   validateAssistantToolRegistry,
   type AssistantToolRegistryEntry,
 } from "../tool-registry";
+import type { ToolSet } from "ai";
 import {
   EXECUTIVE_DAILY_BRIEF_ALLOWED_TOOLS,
   EXECUTIVE_DAILY_BRIEF_WORKFLOW_ID,
@@ -38,6 +41,17 @@ function registryEntry(
     factory: null,
     ...overrides,
   };
+}
+
+function testToolSet(names: string[]): ToolSet {
+  return Object.fromEntries(
+    names.map((name) => [
+      name,
+      {
+        execute: jest.fn(),
+      },
+    ]),
+  ) as ToolSet;
 }
 
 describe("global AI assistant tool registry", () => {
@@ -115,6 +129,94 @@ describe("global AI assistant tool registry", () => {
         "send-teams-daily-brief",
         "send-email-daily-brief",
       ]),
+    );
+  });
+
+  it("exposes project and action factories to the assistant chat workflow", () => {
+    const tools = assistantToolsForWorkflow({
+      workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
+    });
+    const names = tools.map((tool) => tool.name);
+
+    expect(names).toEqual(
+      expect.arrayContaining([
+        "getProjectBriefingSnapshot",
+        "getCommitmentsOverview",
+        "getAPAgingReport",
+        "semanticSearch",
+        "getSopBacklog",
+        "createTask",
+        "draftOutlookEmail",
+        "sendTeamsMessage",
+        "searchWeb",
+        "captureFeatureRequestPacket",
+        "createWeeklyProgressReportDraft",
+        "saveWorkspaceArtifact",
+        "extractStructuredActionBrief",
+        "getSpecRequirements",
+        "getDomainIntelligence",
+        "generateExecutiveDailyBrief",
+        "createMarketingContentAsset",
+      ]),
+    );
+    expect(
+      tools.find((tool) => tool.name === "sendTeamsMessage"),
+    ).toMatchObject({
+      requiresWritePermission: true,
+      requiresDeliveryPermission: true,
+      allowedChannels: expect.arrayContaining(["email", "teams"]),
+    });
+  });
+
+  it("filters runtime tool sets through registered factory metadata", () => {
+    const registry = [
+      registryEntry({
+        name: "registeredRuntimeTool",
+        workflows: [AI_ASSISTANT_CHAT_WORKFLOW_ID],
+        factory: {
+          modulePath: "frontend/src/lib/ai/tools/test-tools.ts",
+          exportName: "createTestTools",
+        },
+      }),
+    ];
+    const registeredTool = { execute: jest.fn() };
+
+    expect(
+      Object.keys(
+        filterRegisteredToolSet({
+          registry,
+          workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
+          factoryModulePath: "frontend/src/lib/ai/tools/test-tools.ts",
+          tools: { registeredRuntimeTool: registeredTool } as ToolSet,
+        }),
+      ),
+    ).toEqual(["registeredRuntimeTool"]);
+  });
+
+  it("fails loudly when a runtime factory exposes an unregistered tool", () => {
+    const registry = [
+      registryEntry({
+        name: "registeredRuntimeTool",
+        workflows: [AI_ASSISTANT_CHAT_WORKFLOW_ID],
+        factory: {
+          modulePath: "frontend/src/lib/ai/tools/test-tools.ts",
+          exportName: "createTestTools",
+        },
+      }),
+    ];
+
+    expect(() =>
+      filterRegisteredToolSet({
+        registry,
+        workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
+        factoryModulePath: "frontend/src/lib/ai/tools/test-tools.ts",
+        tools: testToolSet([
+          "registeredRuntimeTool",
+          "unregisteredRuntimeTool",
+        ]),
+      }),
+    ).toThrow(
+      "Invalid AI assistant tool factory registration for frontend/src/lib/ai/tools/test-tools.ts: unregistered factory tools: unregisteredRuntimeTool",
     );
   });
 
