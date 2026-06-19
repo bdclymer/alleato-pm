@@ -71,7 +71,7 @@ Leader reviews all pending handoffs here.
 | `docs/ops/handoffs/2026-06-19-S66-nl-schedule-parser-automation-blueprints.md` | S66 | AAI-565 | 2026-06-19 | Yes | Accepted | Goal 7 G6 accepted. Published at `3e135cf41b57852b93dafd2b3b710d7478f8996d`; default-off parser/planner, reviewable `ai_work_runs` drafts, focused tests, changed-file quality, and `codex:finish` evidence passed. |
 | `docs/ops/handoffs/2026-06-19-S67-code-mode-rpc-security-decision.md` | S67 | AAI-566 | 2026-06-19 | Yes | Accepted | Goal 7 C10 accepted. Published at `e9d736b2df`; Code-Mode RPC remains not approved, verifier blocks runtime markers, syntax/focused checks, handoff check, and `codex:finish` evidence passed. |
 | `docs/ops/handoffs/2026-06-19-S68-unified-delivery-router.md` | S68 | AAI-567 | 2026-06-19 | Yes | Accepted | Goal 7 G5 accepted. Published at `613a8c6f09`; Alleato-native delivery router, Executive Daily Brief ledger policy integration, focused tests, changed-file quality, and `codex:finish` evidence passed. |
-| `docs/ops/handoffs/2026-06-19-S70-knip-dead-code-audit.md` | S70 | AAI-569 | 2026-06-19 | Yes | Pending Review | Knip dead-code audit implemented. Report artifacts generated, handoff validation passed, no app code deleted; use report for small future deletion batches. |
+| `docs/ops/handoffs/2026-06-19-S70-knip-dead-code-audit.md` | S70 | AAI-569 | 2026-06-19 | Yes | Accepted | Knip dead-code audit accepted. Published at `99e7e824e9`; report artifacts generated, handoff validation passed, Linear AAI-569 done, and no app code was deleted. Use report for small future deletion batches. |
 
 ## Disposition Rules
 

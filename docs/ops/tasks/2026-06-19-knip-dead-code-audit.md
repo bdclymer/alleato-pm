@@ -73,6 +73,7 @@ filled in. If any item cannot be completed, change `Status` to
 | Browser/user-flow     | Not applicable | Pass | No user-facing UI change. |
 | DB/provider read-back | Not applicable | Pass | No database/provider change. |
 | End-to-end proof      | `npm run audit:dead-code:frontend:report` | Pass | Wrote raw JSON and triage summary under `docs/ops/evidence/2026-06-19-S70-knip-dead-code-audit/`. |
+| Publish               | `npm run codex:finish -- --message "Add Knip dead-code audit report" --files ...` | Pass | Published to `origin/main` at `99e7e824e9`. |
 
 ## Files Changed
 
@@ -100,6 +101,7 @@ filled in. If any item cannot be completed, change `Status` to
   unused devDependencies, 114 unlisted dependencies, 110 unresolved imports,
   1005 unused exports, 677 unused exported types, 3 duplicate exports, and 4
   unlisted binaries.
+- Published to `origin/main` at `99e7e824e9`; Linear AAI-569 moved to Done.
 
 ## Final Status
 

@@ -6,7 +6,7 @@
 2) Task ID: AAI-569
 3) Linear issue: AAI-569
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-569/add-knip-based-dead-code-audit-before-deleting-app-cleanup-candidates
-5) Current status: Complete; pending publish/review acceptance
+5) Current status: Published to `origin/main` at `99e7e824e9`; accepted and Linear issue Done.
 6) Files changed (absolute paths):
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-19-knip-dead-code-audit.md`
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-19-S70-knip-dead-code-audit.md`
@@ -25,6 +25,8 @@
 - PASS: `pnpm --dir frontend exec knip --config knip.json --no-exit-code --no-progress --max-show-issues 5`.
 - PASS: `node --check scripts/audits/run-knip-dead-code-report.mjs`.
 - PASS: `npm run audit:dead-code:frontend:report`.
+- PASS: `npm run codex:finish -- --message "Add Knip dead-code audit report" --files ...` published `99e7e824e9`.
+- PASS: Linear AAI-569 moved to Done.
 8) Evidence artifacts (screenshot/video/report/log paths):
 - `docs/ops/evidence/2026-06-19-S70-knip-dead-code-audit/knip-report.json`
 - `docs/ops/evidence/2026-06-19-S70-knip-dead-code-audit/SUMMARY.md`
@@ -45,8 +47,8 @@
 
 ## Current Status
 
-S70 added a trustworthy dead-code audit layer using Knip before any deletion
-work. The report is advisory and explicitly not a bulk-delete list.
+S70 added and published a trustworthy dead-code audit layer using Knip before
+any deletion work. The report is advisory and explicitly not a bulk-delete list.
 
 ## Known Pitfalls
 
@@ -73,3 +75,4 @@ npm run audit:dead-code:frontend:report
 - `pnpm --dir frontend exec knip --config knip.json --no-exit-code --no-progress --max-show-issues 5` passed and produced issue counts.
 - `npm run audit:dead-code:frontend:report` passed and wrote the raw JSON plus summary artifacts.
 - Summary artifact: `docs/ops/evidence/2026-06-19-S70-knip-dead-code-audit/SUMMARY.md`.
+- Published commit: `99e7e824e9` (`Add Knip dead-code audit report`).
