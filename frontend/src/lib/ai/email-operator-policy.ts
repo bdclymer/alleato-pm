@@ -1,3 +1,4 @@
+// Deprecated for write/delivery gating: outbound write confirmation and output redaction now belong to tools/outbound-action-policy.ts. Keep this module limited to inbox triage semantics.
 export type EmailOperatorAction = "alert" | "reply" | "delegate" | "watch" | "suppress";
 
 export type EmailOperatorTriage = {

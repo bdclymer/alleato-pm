@@ -61,6 +61,7 @@ Leader reviews all pending handoffs here.
 | `docs/ops/handoffs/2026-06-18-S54-skill-library-schema-service.md` | S54 | AAI-541 | 2026-06-18 | Yes | Accepted | Skill Library schema/service accepted. Migration `20260618214000` is applied and ledger-verified; `ai_skills` and `ai_skill_usage_events` have RLS, indexes, usage trigger, service methods, focused Jest, changed-file gates, and live DB smoke evidence. Official Supabase typegen remains blocked by local CLI auth/Docker, with a scoped generated-style type patch verified by guardrail. |
 | `docs/ops/handoffs/2026-06-18-S55-skill-library-ui.md` | S55 | AAI-542 | 2026-06-18 | Yes | Accepted | Skill Library UI/API accepted. `/ai-assistant/skills` and `/ai-skills` load against the service-backed APIs, with focused component/API tests, route checks, changed-file gates, and browser screenshots. |
 | `docs/ops/handoffs/2026-06-18-S56-skill-library-review-docs.md` | S56 | AAI-543 | 2026-06-18 | Yes | Accepted | Skill review/apply bridge accepted. `kind=skill`, parser routing, `applySkillLibraryPromotion`, `ai_skills` destination, Phase 5 docs, architecture note, focused Jest, and Skill Review browser evidence passed. |
+| `docs/ops/handoffs/2026-06-19-S60-outbound-action-policy.md` | S60 | AAI-558 | 2026-06-19 | Yes | Pending Review | Goal 2 implementation, focused Jest/lint/type guard, handoff validation, and controlled local single-case eval passed. Awaiting main publish verification. |
 
 ## Disposition Rules
 

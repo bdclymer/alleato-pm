@@ -1,3 +1,4 @@
+// Deprecated for policy enforcement: this file is descriptive capability copy only. Runtime write approval and redaction belong to tools/outbound-action-policy.ts.
 export type AssistantActionCapability = {
   title: string;
   actions: string[];

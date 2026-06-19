@@ -13,6 +13,7 @@ import type { Database, Json } from "@/types/database.types";
 import { createServiceClient } from "@/lib/supabase/service";
 import { createToolGuardrails } from "./guardrails";
 import { type ToolTracePayload, getOpenAI, withWriteTrace } from "./tool-utils";
+import { wrapToolSetWithOutboundActionPolicy } from "./outbound-action-policy";
 import {
   RISK_CARD_TYPES,
   deriveSeverity,
@@ -709,7 +710,7 @@ export function createActionTools(
     return data?.length === 1 ? data[0] : null;
   }
 
-  return {
+  const tools = {
 
     // -------------------------------------------------------------------------
     // TIER 1 — Core write actions
@@ -4203,4 +4204,8 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
     }),
 
   }; // end return
+
+  return wrapToolSetWithOutboundActionPolicy(tools, {
+    onTrace: options.onTrace,
+  });
 } // end createActionTools
