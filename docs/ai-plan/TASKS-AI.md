@@ -396,7 +396,7 @@ Goal: approved skills affect assistant behavior selectively and visibly.
 
 - [x] Build skill selection service.
 - [x] Select by category.
-- [ ] Select by route/surface.
+- [x] Select by route/surface.
 - [x] Select by project.
 - [x] Select by user/team/company scope.
 - [x] Select by explicit user request.

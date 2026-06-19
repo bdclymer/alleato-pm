@@ -9,6 +9,7 @@ import type { Json } from "@/types/database.types";
 export interface SkillInjectionUsageSummary {
   totalSelected: number;
   selectionReason: string;
+  selectionSurface: string | null;
   skills: Array<{
     id: string;
     title: string;
@@ -27,6 +28,7 @@ export interface BuildSkillInjectionContextParams {
   userId: string;
   messageText: string;
   selectedProjectId?: number;
+  surface?: string | null;
   limit?: number;
 }
 
@@ -51,6 +53,17 @@ const CATEGORY_HINTS: Record<string, string[]> = {
   task: ["task", "follow up", "action item", "todo", "to-do"],
   teams: ["teams", "microsoft teams", "chat thread", "channel"],
   workflow: ["workflow", "process", "sop", "how should", "standard"],
+};
+
+const SURFACE_CATEGORY_HINTS: Record<string, string[]> = {
+  ai_app_expert: ["app_help"],
+  ai_assistant_app_help: ["app_help"],
+  app_expert: ["app_help"],
+  executive_email: ["email"],
+  microsoft_executive_assistant: ["email", "teams"],
+  microsoft_teams: ["teams"],
+  outlook_assistant: ["email"],
+  teams: ["teams"],
 };
 
 const STOP_WORDS = new Set([
@@ -104,12 +117,18 @@ function isExplicitSkillRequest(message: string): boolean {
   );
 }
 
+function normalizeSurface(value: string | null | undefined): string | null {
+  const normalized = normalizeText(value ?? "").replaceAll(" ", "_");
+  return normalized || null;
+}
+
 function scoreSkill(params: {
   skill: AiSkill;
   normalizedMessage: string;
   messageTokens: Set<string>;
   selectedProjectId?: number;
   explicitSkillRequest: boolean;
+  selectionSurface: string | null;
 }): { score: number; reasons: string[] } {
   const reasons: string[] = [];
   let score = 0;
@@ -121,6 +140,16 @@ function scoreSkill(params: {
   if (matchedCategoryHints.length > 0) {
     score += 80 + Math.min(matchedCategoryHints.length * 5, 20);
     reasons.push(`category:${params.skill.category}`);
+  }
+
+  if (
+    params.selectionSurface &&
+    (SURFACE_CATEGORY_HINTS[params.selectionSurface] ?? []).includes(
+      params.skill.category,
+    )
+  ) {
+    score += 55;
+    reasons.push(`surface:${params.selectionSurface}`);
   }
 
   if (
@@ -196,6 +225,7 @@ export async function buildSkillInjectionContext(
   const normalizedMessage = normalizeText(params.messageText);
   const messageTokens = tokenize(params.messageText);
   const explicitSkillRequest = isExplicitSkillRequest(params.messageText);
+  const selectionSurface = normalizeSurface(params.surface);
   const candidates = await listActiveVisibleSkills({
     viewerUserId: params.userId,
     viewerProjectIds: params.selectedProjectId ? [params.selectedProjectId] : [],
@@ -210,6 +240,7 @@ export async function buildSkillInjectionContext(
         messageTokens,
         selectedProjectId: params.selectedProjectId,
         explicitSkillRequest,
+        selectionSurface,
       });
       return { skill, ...scoredSkill };
     })
@@ -223,9 +254,16 @@ export async function buildSkillInjectionContext(
 
   const usage: SkillInjectionUsageSummary = {
     totalSelected: scored.length,
-    selectionReason: explicitSkillRequest
-      ? "explicit skill/playbook language or matching approved skill content"
-      : "category, project, and keyword relevance",
+    selectionReason: [
+      explicitSkillRequest
+        ? "explicit skill/playbook language or matching approved skill content"
+        : null,
+      selectionSurface ? `surface ${selectionSurface}` : null,
+      "category, project, and keyword relevance",
+    ]
+      .filter(Boolean)
+      .join("; "),
+    selectionSurface,
     skills: scored.map(({ skill, score, reasons }) => ({
       id: skill.id,
       title: skill.title,

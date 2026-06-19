@@ -200,6 +200,7 @@ export async function assembleSystemPrompt(options: {
           userId,
           messageText,
           selectedProjectId,
+          surface: platform === "teams" ? "teams" : "ai_assistant_chat",
           limit: 4,
         });
         skillContextBlock = skillContext.block;

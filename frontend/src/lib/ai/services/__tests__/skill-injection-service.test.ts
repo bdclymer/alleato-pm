@@ -109,6 +109,44 @@ describe("skill-injection-service", () => {
     expect(result.block).not.toContain("Draft RFI with source evidence");
   });
 
+  it("selects app-help skills when the calling surface is app expert", async () => {
+    listActiveVisibleSkillsMock.mockResolvedValue([
+      skill({
+        id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        title: "Explain where app actions live",
+        slug: "explain-where-app-actions-live",
+        summary: "Help users understand where app actions and page controls live.",
+        instructions: "When users ask about this app, explain the relevant page controls.",
+        category: "app_help",
+        scopeType: "company",
+        projectId: null,
+        usageCount: 0,
+      }),
+      skill({
+        id: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+        category: "pay_app_review",
+        scopeType: "company",
+        projectId: null,
+        usageCount: 0,
+      }),
+    ]);
+
+    const result = await buildSkillInjectionContext({
+      userId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      messageText: "What can I do here?",
+      surface: "app_expert",
+    });
+
+    expect(result.usage?.selectionSurface).toBe("app_expert");
+    expect(result.usage?.skills).toHaveLength(1);
+    expect(result.usage?.skills[0]).toMatchObject({
+      category: "app_help",
+      reasons: ["surface:app_expert"],
+    });
+    expect(result.block).toContain("Explain where app actions live");
+    expect(result.block).not.toContain("Review stored materials");
+  });
+
   it("does not inject irrelevant skills into unrelated prompts", async () => {
     listActiveVisibleSkillsMock.mockResolvedValue([
       skill({
@@ -137,6 +175,7 @@ describe("skill-injection-service", () => {
       usage: {
         totalSelected: 1,
         selectionReason: "category, project, and keyword relevance",
+        selectionSurface: "ai_assistant_chat",
         skills: [
           {
             id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
