@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { existsSync } from "node:fs";
 import type {
   ExecutionHandoffRow,
   FeatureRequestRow,
@@ -34,6 +35,79 @@ function slugify(value: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 54) || "feature-request";
+}
+
+function normalizeRelativePath(value: string): string {
+  return value.split(path.sep).join("/");
+}
+
+function configuredPathValue(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed || trimmed === "undefined" || trimmed === "null") return null;
+  return trimmed;
+}
+
+function findWorkspaceRoot(startDirectory: string): string | null {
+  let current = path.resolve(startDirectory);
+  while (true) {
+    const hasOpsDocs = existsSync(path.join(current, "docs", "ops"));
+    const hasProjectMarker = existsSync(path.join(current, "AGENTS.md")) || existsSync(path.join(current, "package.json"));
+    if (hasOpsDocs && hasProjectMarker) {
+      return current;
+    }
+
+    const parent = path.dirname(current);
+    if (parent === current) return null;
+    current = parent;
+  }
+}
+
+function resolveWorkspaceRoot(explicitRoot?: string | null): string {
+  const configuredRoot =
+    configuredPathValue(explicitRoot) ||
+    configuredPathValue(process.env.ALLEATO_WORKSPACE_ROOT) ||
+    configuredPathValue(process.env.CODEX_WORKSPACE_ROOT) ||
+    null;
+  const root = configuredRoot
+    ? path.resolve(configuredRoot)
+    : findWorkspaceRoot(process.cwd());
+
+  if (!root) {
+    throw new Error(
+      [
+        "Failed to resolve workspace root for Claude Code handoff generation.",
+        `Runtime cwd: ${process.cwd()}.`,
+        "Set ALLEATO_WORKSPACE_ROOT to the alleato-pm repo root or call the writer with workspaceRoot.",
+      ].join(" "),
+    );
+  }
+
+  return root;
+}
+
+function resolveHandoffPaths(params: {
+  fileName: string;
+  workspaceRoot?: string | null;
+  handoffRoot?: string | null;
+}) {
+  const workspaceRoot = resolveWorkspaceRoot(params.workspaceRoot);
+  const configuredHandoffRoot =
+    configuredPathValue(params.handoffRoot) ||
+    configuredPathValue(process.env.AIS_HANDOFF_ROOT) ||
+    path.join("docs", "ops", "handoffs");
+  const handoffDirectory = path.isAbsolute(configuredHandoffRoot)
+    ? configuredHandoffRoot
+    : path.join(workspaceRoot, configuredHandoffRoot);
+  const absolutePath = path.join(handoffDirectory, params.fileName);
+  const relativePath = normalizeRelativePath(path.relative(workspaceRoot, absolutePath));
+
+  if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+    throw new Error(
+      `Refusing to write Claude Code handoff outside workspace root: ${absolutePath}`,
+    );
+  }
+
+  return { absolutePath, relativePath };
 }
 
 export function buildClaudeCodeHandoffMarkdown(params: {
@@ -116,6 +190,8 @@ export async function writeClaudeCodeHandoffFile(params: {
   plan: ImplementationPlanRow | null;
   linearIssue?: string | null;
   sessionLabel?: string;
+  workspaceRoot?: string | null;
+  handoffRoot?: string | null;
 }): Promise<{
   path: string;
   title: string;
@@ -126,10 +202,25 @@ export async function writeClaudeCodeHandoffFile(params: {
   const built = buildClaudeCodeHandoffMarkdown(params);
   const today = new Date().toISOString().slice(0, 10);
   const session = (params.sessionLabel ?? "SAIS").replace(/[^A-Za-z0-9]/g, "") || "SAIS";
-  const relativePath = `docs/ops/handoffs/${today}-${session}-${slugify(params.request.title)}.md`;
-  const absolutePath = path.join(process.cwd(), relativePath);
-  await mkdir(path.dirname(absolutePath), { recursive: true });
-  await writeFile(absolutePath, built.markdown, "utf8");
+  const fileName = `${today}-${session}-${slugify(params.request.title)}.md`;
+  const { absolutePath, relativePath } = resolveHandoffPaths({
+    fileName,
+    workspaceRoot: params.workspaceRoot,
+    handoffRoot: params.handoffRoot,
+  });
+  try {
+    await mkdir(path.dirname(absolutePath), { recursive: true });
+    await writeFile(absolutePath, built.markdown, "utf8");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      [
+        `Failed to write Claude Code handoff file to ${relativePath}: ${message}`,
+        "No handoff metadata was recorded.",
+        "Check workspace filesystem permissions or configure AIS_HANDOFF_ROOT.",
+      ].join(" "),
+    );
+  }
 
   return {
     path: relativePath,
