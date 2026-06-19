@@ -43,6 +43,7 @@
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/__tests__/workflow-pack.test.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/executive-daily-brief-evidence.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/scripts/__tests__/run-executive-daily-brief.test.ts`
 7) Commands run and outcome (pass/fail counts):
    - Pass: read pasted ChatGPT recommendation from Codex attachment.
    - Pass: read `docs/codebase-map/hermes-vs-openclaw-comparison.md`.
@@ -110,6 +111,13 @@
    - Pass: `cd frontend && npx eslint src/lib/ai-ops/executive-daily-brief-evidence.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts`.
    - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand` passed 3 suites / 17 tests.
    - Pass: `npm run rag:verify:executive-daily-brief-gateway`.
+   - Fail then fixed: scheduled proof showed `.env.local` loaded with `override: true`, which overwrote explicit runtime `EXECUTIVE_DAILY_BRIEF_ENABLED=true` and forced the disabled branch. Fixed runner env loading so explicit runtime env wins.
+   - Pass: updated `frontend/scripts/__tests__/run-executive-daily-brief.test.ts` from the stale `buildWorkRunSourceRows` helper to current `buildWorkRunSourceRefs` evidence-ref output.
+   - Pass: `cd frontend && npx eslint --no-ignore scripts/run-executive-daily-brief.ts scripts/__tests__/run-executive-daily-brief.test.ts`.
+   - Pass: `cd frontend && npx tsx --test scripts/__tests__/run-executive-daily-brief.test.ts` passed 3 node tests.
+   - Pass: skipped schedule proof created run `00f52478-deba-40e6-bac6-e487ceb75778` with status skipped, delivery status skipped, reason `Outside target local schedule.`, event status ignored, and source-health status skipped.
+   - Fail documented: matching scheduled trigger without `CRON_SECRET` created failed run `d56b69e2-13a1-4efa-9eff-98b15e65167d` with `EXECUTIVE_DAILY_BRIEF_FAILED` / `CRON_SECRET is required.`.
+   - Pass: matching scheduled trigger with dummy non-secret cron value reached the disabled delivery route and created scheduler run `4b4bcd6a-a401-4db0-8970-3c96a9c6a2f8` plus downstream disabled delivery run `10e04a08-c1dd-4ac3-8847-75950f94bcc4`; no Teams send occurred because the route kill switch was disabled.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
@@ -144,6 +152,7 @@
    - `frontend/src/lib/ai-ops/__tests__/workflow-pack.test.ts`
    - `frontend/src/lib/ai-ops/executive-daily-brief-evidence.ts`
    - `frontend/src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts`
+   - `frontend/scripts/__tests__/run-executive-daily-brief.test.ts`
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-generated-preview/page-text-playwright.txt`
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-generated-preview/ai-work-runs-generated-preview-playwright.png`
 9) Top 3 findings (frontend-visible issues first):
@@ -155,6 +164,7 @@
    - The Executive Daily Brief workflow pack, source adapter contract, and tool registry/policy are centralized and used by run construction.
    - Claim-level evidence guardrails now fail before ledger writes when surfaced `needsBrandon`, `waitingOnOthers`, or `importantUpdates` items lack structured citation evidence.
    - A real generated no-send preview run is proven in the ledger and visible in `/ai-work-runs` with packet artifact, Teams payload artifact, dry-run delivery attempt, source health, and evidence rows.
+   - Scheduled runner proof now shows both outside-window skipped schedules and matching scheduled triggers create canonical AI Ops runs; explicit runtime env now wins over `.env.local`.
 10) Recommended next action (one line): Close remaining source adapter execution/failure behavior, email delivery disposition, scheduled-run proof, and legacy retirement gaps.
 11) Handoff file path: `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
 12) Migration ledger evidence: `npm run db:migrations:verify-applied -- supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql` passed for version `20260619183000`.
@@ -184,16 +194,17 @@ guardrail, existing `daily_recaps` artifact linkage through
 `ai_work_runs.daily_recap_id`, first-class run steps/artifacts/delivery attempts,
 the workflow pack/source-adapter/tool-policy layer, and a real generated no-send
 preview proof are implemented with focused tests/lint, migration ledger
-verification, SQL readback, authenticated `/ai-work-runs` browser evidence, and
-claim-level evidence-policy unit coverage. The workflow is not complete until
-live adapter failure behavior, email delivery disposition, scheduled-run proof,
-and remaining legacy retirement gaps are complete.
+verification, SQL readback, authenticated `/ai-work-runs` browser evidence,
+claim-level evidence-policy unit coverage, and scheduled-run skip/disabled
+delivery proof. The workflow is not complete until live adapter failure
+behavior, email delivery disposition, real Teams delivery when safe/enabled, and
+remaining legacy retirement gaps are complete.
 
 ## Exact Next Step
 
 Close remaining source adapter execution/failure behavior, email delivery
-disposition, scheduled-run proof, and legacy retirement gaps without weakening
-the canonical ledger path.
+disposition, real Teams delivery when safe/enabled, and legacy retirement gaps
+without weakening the canonical ledger path.
 
 ## Known Pitfalls
 
@@ -229,6 +240,8 @@ cd frontend && npx eslint src/lib/ai-ops/contracts.ts src/lib/ai-ops/ledger.ts s
 cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand
 cd frontend && npx eslint src/lib/ai-ops/executive-daily-brief-evidence.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts
 cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand
+cd frontend && npx eslint --no-ignore scripts/run-executive-daily-brief.ts scripts/__tests__/run-executive-daily-brief.test.ts
+cd frontend && npx tsx --test scripts/__tests__/run-executive-daily-brief.test.ts
 ```
 
 ## Evidence
@@ -253,3 +266,4 @@ cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/ex
 - Admin run UI: `frontend/src/app/(admin)/ai-work-runs/ai-work-runs-client.tsx`
 - Evidence policy: `frontend/src/lib/ai-ops/executive-daily-brief-evidence.ts`
 - Evidence policy tests: `frontend/src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts`
+- Scheduled runner tests: `frontend/scripts/__tests__/run-executive-daily-brief.test.ts`

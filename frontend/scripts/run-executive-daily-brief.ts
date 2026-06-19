@@ -13,7 +13,7 @@ import type { Database } from "../src/types/database.types";
 
 dotenv.config({ path: resolve(process.cwd(), "../.env") });
 dotenv.config({ path: resolve(process.cwd(), ".env") });
-dotenv.config({ path: resolve(process.cwd(), ".env.local"), override: true });
+dotenv.config({ path: resolve(process.cwd(), ".env.local") });
 
 type RunStatus = "running" | "succeeded" | "failed" | "skipped";
 type SourceSyncRunInsert =

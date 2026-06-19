@@ -197,12 +197,12 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [ ] `daily_recaps` relationship standardized so every generated Executive
       Daily Brief draft links to exactly one `ai_work_runs` record.
 - [x] Preview generation writes a run ledger row.
-- [ ] Scheduled generation writes a run ledger row.
+- [x] Scheduled generation writes a run ledger row.
 - [x] Dry-run delivery writes a run ledger row and delivery attempt.
 - [ ] Real Teams delivery writes a run ledger row and delivery attempt.
 - [ ] Email delivery writes a run ledger row and delivery attempt, or the task is
       explicitly blocked/deferred with owner and reason.
-- [ ] Skipped schedules are recorded as skipped runs with reason.
+- [x] Skipped schedules are recorded as skipped runs with reason.
 - [x] Disabled delivery is recorded as disabled, not silently successful.
 - [x] Failure state records exact failure code, failure message, owning step, and
       retryability.
@@ -311,7 +311,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 ## Legacy Retirement Checklist
 
 - [x] Old preview path either routes through the gateway or is removed.
-- [ ] Old scheduled runner either routes through the gateway or is removed.
+- [x] Old scheduled runner either routes through the gateway or is removed.
 - [ ] Old Teams delivery path either routes through the gateway or is removed.
 - [ ] Old source coverage fields that bypass canonical source health are removed
       or marked deprecated.
@@ -349,7 +349,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [x] Supabase migration ledger verified if migrations changed.
 - [x] Generated Supabase types verified if schema changed.
 - [x] Local or staging preview run executed through the gateway.
-- [ ] Local or staging scheduled run executed through the gateway.
+- [x] Local or staging scheduled run executed through the gateway.
 - [x] No-send Teams preview/dry-run verified.
 - [ ] Real Teams delivery verified only if explicitly safe and enabled.
 - [ ] Email delivery verified or explicitly blocked/deferred.
@@ -404,6 +404,11 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 | Evidence policy lint  | `cd frontend && npx eslint src/lib/ai-ops/executive-daily-brief-evidence.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts` | Passed | Evidence-policy module, run-ledger integration, and source-ref guardrail tests lint cleanly. |
 | Evidence policy tests | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand` | Passed | 3 suites, 17 tests passed. Tests prove all surfaced sections require structured citation evidence and missing/malformed evidence fails before ledger writes. |
 | Gateway guardrail rerun | `npm run rag:verify:executive-daily-brief-gateway` | Passed | Raw app-route generation bypass guard still passes after evidence-policy extraction. |
+| Scheduled runner lint | `cd frontend && npx eslint --no-ignore scripts/run-executive-daily-brief.ts scripts/__tests__/run-executive-daily-brief.test.ts` | Passed | Scheduled runner and node test lint cleanly after preserving explicit runtime env over `.env.local`. |
+| Scheduled runner tests | `cd frontend && npx tsx --test scripts/__tests__/run-executive-daily-brief.test.ts` | Passed | 3 node tests passed for delivery projection, partial recipient projection, and scheduled source-ref extraction. |
+| Skipped schedule proof | `cd frontend && EXECUTIVE_DAILY_BRIEF_ENABLED=true EXECUTIVE_DAILY_BRIEF_TARGET_TIMEZONE=America/Indiana/Indianapolis EXECUTIVE_DAILY_BRIEF_TARGET_LOCAL_TIME=03:17 EXECUTIVE_DAILY_BRIEF_TARGET_WEEKDAYS=1,2,3,4,5 EXECUTIVE_DAILY_BRIEF_TRIGGER=codex_skipped_schedule_proof npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:00:00.000Z` | Passed | Created skipped scheduled-check run `00f52478-deba-40e6-bac6-e487ceb75778` with reason `Outside target local schedule.` and source-health status skipped. |
+| Scheduled trigger proof | `cd frontend && EXECUTIVE_DAILY_BRIEF_ENABLED=true EXECUTIVE_DAILY_BRIEF_FRONTEND_BASE_URL=http://localhost:3001 EXECUTIVE_DAILY_BRIEF_TARGET_TIMEZONE=America/Indiana/Indianapolis EXECUTIVE_DAILY_BRIEF_TARGET_LOCAL_TIME=08:00 EXECUTIVE_DAILY_BRIEF_TARGET_WEEKDAYS=1,2,3,4,5 EXECUTIVE_DAILY_BRIEF_TRIGGER=codex_scheduled_disabled_delivery_proof CRON_SECRET=dummy-nonsecret npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:00:00.000Z` | Passed | Created scheduled run `4b4bcd6a-a401-4db0-8970-3c96a9c6a2f8`; downstream disabled delivery run `10e04a08-c1dd-4ac3-8847-75950f94bcc4`; no Teams send occurred because the route kill switch remained disabled. |
+| Scheduled run SQL readback | SQL readback for triggers `codex_scheduled_disabled_delivery_proof` and `codex_skipped_schedule_proof` | Passed | Latest rows show scheduled run `4b4bcd6a-a401-4db0-8970-3c96a9c6a2f8` as `skipped/disabled`, skipped schedule `00f52478-deba-40e6-bac6-e487ceb75778` as `skipped/skipped`, and the earlier missing-secret failure `d56b69e2-13a1-4efa-9eff-98b15e65167d` as `failed_permanent` with `CRON_SECRET is required.` |
 | Runner no-write smoke | `cd frontend && npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:00:00.000Z`                                                                                              | Passed  | Kill switch off; script loaded and exited with `executive_daily_brief_disabled`, no send/write.    |
 | Disabled send smoke   | `curl -sS -X POST http://localhost:3001/api/executive/daily-brief/send-teams -H 'content-type: application/json' -d '{}'`                                                                 | Passed  | Kill switch off; route returned disabled state with run id `b88b3b30-b766-4aa2-8e02-84ef175e207b`. |
 | Disabled run SQL readback | `select r.id, r.status, r.delivery_status, a.status, a.failure_code, s.step_type, s.status ... where r.id = 'b88b3b30-b766-4aa2-8e02-84ef175e207b'` | Passed | Readback returned `skipped`, `disabled`, delivery attempt `disabled`, failure code `EXECUTIVE_DAILY_BRIEF_DISABLED`, and delivery step `blocked`. |

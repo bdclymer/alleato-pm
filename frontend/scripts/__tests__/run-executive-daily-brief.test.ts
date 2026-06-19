@@ -1,7 +1,7 @@
 import * as assert from "node:assert/strict";
 import { test } from "node:test";
 import {
-  buildWorkRunSourceRows,
+  buildWorkRunSourceRefs,
   summarizeDeliveryResult,
 } from "../run-executive-daily-brief";
 
@@ -55,9 +55,8 @@ test("summarizeDeliveryResult marks partial success when a recipient fails", () 
   assert.equal(projection.sourceCounts.failedRecipientCount, 1);
 });
 
-test("buildWorkRunSourceRows extracts packet, card, and recipient sources", () => {
-  const rows = buildWorkRunSourceRows({
-    workRunId: "run-1",
+test("buildWorkRunSourceRefs extracts packet, card, and recipient sources", () => {
+  const refs = buildWorkRunSourceRefs({
     result: {
       ok: true,
       status: "sent",
@@ -90,9 +89,9 @@ test("buildWorkRunSourceRows extracts packet, card, and recipient sources", () =
     },
   });
 
-  assert.equal(rows.length, 3);
-  assert.equal(rows[0].source_family, "intelligence_packet");
-  assert.equal(rows[1].source_family, "insight_card");
-  assert.equal(rows[1].confidence, "high");
-  assert.equal(rows[2].source_family, "teams_recipient");
+  assert.equal(refs.length, 3);
+  assert.equal(refs[0].sourceFamily, "intelligence_packet");
+  assert.equal(refs[1].sourceFamily, "insight_card");
+  assert.equal(refs[1].confidence, "high");
+  assert.equal(refs[2].sourceFamily, "teams_recipient");
 });
