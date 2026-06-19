@@ -1684,7 +1684,10 @@ export function createOperationalTools(
               const similarity =
                 Math.round(asNumber(row.similarity) * 1000) / 1000;
               const hybridScore = computeHybridRetrievalScore({
-                vectorScore: row.vector_score ?? row.similarity,
+                vectorScore: (row.vector_score ?? row.similarity) as
+                  | number
+                  | null
+                  | undefined,
                 textScore: row.text_score as number | null | undefined,
                 recallCount:
                   row.score_components &&

@@ -104,9 +104,11 @@ function textFromContent(content: ModelMessage["content"]): string {
         return `[tool-approval-request:${part.toolCallId}]`;
       }
       if (part.type === "tool-approval-response") {
-        return `[tool-approval-response:${part.toolCallId}:${part.approved ? "approved" : "denied"}]`;
+        return `[tool-approval-response:${part.approvalId}:${part.approved ? "approved" : "denied"}]`;
       }
-      return `[${part.type}]`;
+      // Defensive fallback: the runtime may emit part types not yet in the SDK's
+      // type union, at which point `part` narrows to `never` above.
+      return `[${(part as { type: string }).type}]`;
     })
     .join("\n");
 }

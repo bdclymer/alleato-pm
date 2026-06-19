@@ -137,7 +137,7 @@ export function wrapToolSetWithOutboundActionPolicy<TTools extends ToolSet>(tool
           options.onTrace?.({ tool: toolName, input, output: denied, timestamp: new Date().toISOString() });
           return denied;
         }
-        const output = await execute(input as never, executionOptions);
+        const output = await execute(input as never, executionOptions as ToolExecutionOptions);
         const safeOutput = (() => {
           try {
             return policy.afterToolCall({ toolName, input, output, decision });

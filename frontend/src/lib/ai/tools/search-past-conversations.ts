@@ -239,7 +239,7 @@ export function createSessionSearchTools(
           const { data, error } = await supabase.rpc("search_chat_history", {
             p_query: query,
             p_user_id: userId,
-            p_project_id: scopedProjectId,
+            p_project_id: scopedProjectId ?? undefined,
             p_match_count: matchCount ?? 5,
             p_window_size: windowSize ?? 3,
           });
