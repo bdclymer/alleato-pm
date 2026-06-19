@@ -220,6 +220,32 @@ describe("global AI assistant tool registry", () => {
     );
   });
 
+  it("allows explicitly optional provider factories to be disabled", () => {
+    const registry = [
+      registryEntry({
+        name: "optionalProviderTool",
+        workflows: [AI_ASSISTANT_CHAT_WORKFLOW_ID],
+        factory: {
+          modulePath: "frontend/src/lib/ai/tools/optional-provider.ts",
+          exportName: "createOptionalProviderTools",
+        },
+        metadata: {
+          optionalFactory: true,
+          provider: "test-provider",
+        },
+      }),
+    ];
+
+    expect(
+      filterRegisteredToolSet({
+        registry,
+        workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
+        factoryModulePath: "frontend/src/lib/ai/tools/optional-provider.ts",
+        tools: {} as ToolSet,
+      }),
+    ).toEqual({});
+  });
+
   it("hides write tools when the runtime policy does not allow writes", () => {
     const registry = [
       registryEntry({
@@ -259,6 +285,85 @@ describe("global AI assistant tool registry", () => {
         }),
       ),
     ).toEqual(["readRuntimeTool"]);
+  });
+
+  it("hides project-scoped tools when no project scope is selected", () => {
+    const registry = [
+      registryEntry({
+        name: "globalReadTool",
+        workflows: [AI_ASSISTANT_CHAT_WORKFLOW_ID],
+        actorModes: ["user_delegated"],
+        factory: {
+          modulePath: "frontend/src/lib/ai/tools/test-tools.ts",
+          exportName: "createTestTools",
+        },
+      }),
+      registryEntry({
+        name: "projectScopedTool",
+        workflows: [AI_ASSISTANT_CHAT_WORKFLOW_ID],
+        actorModes: ["user_delegated"],
+        requiresProjectScope: true,
+        factory: {
+          modulePath: "frontend/src/lib/ai/tools/test-tools.ts",
+          exportName: "createTestTools",
+        },
+      }),
+    ];
+
+    expect(
+      Object.keys(
+        filterRegisteredToolSet({
+          registry,
+          workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
+          factoryModulePath: "frontend/src/lib/ai/tools/test-tools.ts",
+          tools: testToolSet(["globalReadTool", "projectScopedTool"]),
+          policy: {
+            actorMode: "user_delegated",
+            selectedProjectId: null,
+          },
+        }),
+      ),
+    ).toEqual(["globalReadTool"]);
+  });
+
+  it("hides source-scoped tools outside allowed source families", () => {
+    const registry = [
+      registryEntry({
+        name: "documentTool",
+        workflows: [AI_ASSISTANT_CHAT_WORKFLOW_ID],
+        actorModes: ["user_delegated"],
+        sourceFamilies: ["document", "rag"],
+        factory: {
+          modulePath: "frontend/src/lib/ai/tools/test-tools.ts",
+          exportName: "createTestTools",
+        },
+      }),
+      registryEntry({
+        name: "emailTool",
+        workflows: [AI_ASSISTANT_CHAT_WORKFLOW_ID],
+        actorModes: ["user_delegated"],
+        sourceFamilies: ["email", "outlook"],
+        factory: {
+          modulePath: "frontend/src/lib/ai/tools/test-tools.ts",
+          exportName: "createTestTools",
+        },
+      }),
+    ];
+
+    expect(
+      Object.keys(
+        filterRegisteredToolSet({
+          registry,
+          workflowId: AI_ASSISTANT_CHAT_WORKFLOW_ID,
+          factoryModulePath: "frontend/src/lib/ai/tools/test-tools.ts",
+          tools: testToolSet(["documentTool", "emailTool"]),
+          policy: {
+            actorMode: "user_delegated",
+            allowedSourceFamilies: ["document"],
+          },
+        }),
+      ),
+    ).toEqual(["documentTool"]);
   });
 
   it("returns AI Ops tool definitions for workflow consumers", () => {

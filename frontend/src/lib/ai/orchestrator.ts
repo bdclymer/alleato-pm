@@ -1144,6 +1144,7 @@ export function createStrategistTools(
     actorMode: "user_delegated",
     allowWrites: Boolean(options.includeActionTools),
     allowDelivery: false,
+    selectedProjectId: options.pinnedProjectId ?? null,
   };
 
   // Include the base project tools so the Strategist can answer

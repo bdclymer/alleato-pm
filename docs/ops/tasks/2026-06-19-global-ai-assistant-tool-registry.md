@@ -1,6 +1,6 @@
 # Task: Global AI Assistant Tool Registry
 
-Status: In Progress
+Status: Complete
 Owner: Codex
 Created: 2026-06-19
 Linear Issue: AAI-554 - https://linear.app/megankharrison/issue/AAI-554/implement-global-ai-assistant-tool-registry
@@ -60,7 +60,7 @@ filled in. If any item cannot be completed, change `Status` to
       assistant tool.
 - [x] Ensure all write/delivery tools have explicit policy gates.
 - [x] Ensure source-bearing tools declare source family and evidence behavior.
-- [ ] Ensure every tool execution can be traced to run/task/session telemetry
+- [x] Ensure every tool execution can be traced to run/task/session telemetry
       appropriate to its workflow.
 
 ## Integration Checklist
@@ -68,11 +68,11 @@ filled in. If any item cannot be completed, change `Status` to
 - [x] AI assistant runtime uses the global registry for tool selection.
 - [x] Specialist agents use registry-filtered tool subsets.
 - [x] Executive Daily Brief workflow uses registry-filtered tool subsets.
-- [ ] Tool policy filters by actor, workflow, project/source access, write
+- [x] Tool policy filters by actor, workflow, project/source access, write
       permission, delivery permission, and channel.
 - [x] Tool visibility is recorded before model calls.
 - [x] Forbidden tools are hidden before model calls and fail loudly if invoked.
-- [ ] Existing public behavior remains compatible for users.
+- [x] Existing public behavior remains compatible for users.
 
 ## Regression Guardrails
 
@@ -93,7 +93,7 @@ filled in. If any item cannot be completed, change `Status` to
 - [x] Targeted registry contract tests run.
 - [x] Targeted assistant/orchestrator tests run.
 - [x] Targeted Executive Daily Brief workflow-pack tests run.
-- [ ] Browser or API smoke test verifies assistant still responds with expected
+- [x] Browser or API smoke test verifies assistant still responds with expected
       tool visibility.
 - [x] Evidence artifacts recorded below.
 - [x] Known unrelated failures documented with exact command and owner files.
@@ -104,7 +104,7 @@ filled in. If any item cannot be completed, change `Status` to
 | --------------------- | ------------------ | ------ | ----- |
 | Static/type/lint      | `cd frontend && npx eslint src/lib/ai/tool-registry.ts src/lib/ai/__tests__/tool-registry.test.ts src/lib/ai-ops/tool-registry.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts` | Passed | Global registry, registry tests, Executive Daily Brief registry consumer, and workflow-pack test lint cleanly. |
 | Targeted tests        | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai/__tests__/tool-registry.test.ts src/lib/ai-ops/__tests__/workflow-pack.test.ts --runInBand` | Passed | 2 suites, 14 tests passed. Tests prove duplicate-name failure, source-bearing metadata failure, delivery-channel metadata failure, Executive Daily Brief filtered subset, and AI Ops definition projection. |
-| Assistant smoke       | Pending | Pending | Broad assistant/orchestrator runtime still needs smoke verification after more tool factories are wrapped. |
+| Assistant smoke       | `agent-browser open http://localhost:3002/ai`; prompt: `In one sentence, say what tools are available for project questions without taking any actions.` | Passed | Real `/api/ai-assistant/chat` route returned 200 on current repo dev server, created session `c1956283-00ed-42ce-9c1a-d8198ef57592`, exposed `tool_count: 94` after project-scope filtering, made no tool calls, and generated a one-sentence tool-availability answer without registry errors. Screenshot artifact path: `tests/agent-browser-runs/2026-06-19-assistant-tool-registry-smoke/ai-tool-registry-project-policy-smoke.png`. |
 | Workflow-pack proof   | `src/lib/ai-ops/__tests__/workflow-pack.test.ts` | Passed | Executive Daily Brief registry now equals `toolDefinitionsForWorkflow({ workflowId: executive_daily_brief })` from the global registry. |
 | Guardrail proof       | `npm run rag:verify:assistant-tool-registry` | Passed | Guardrail ensures `frontend/src/lib/ai-ops/tool-registry.ts` imports the global registry and does not reintroduce workflow-local `WORKFLOW_TOOL_DEFINITIONS` or `sourceAdapterToolDefinitions`. |
 | RAG docs gate         | `npm run codex:finish -- --message "Add global assistant tool registry foundation" --files ...` | Initially blocked, then remediated | Pre-commit correctly blocked because `frontend/src/lib/ai/**` changed without updating `docs/architecture/AI-RAG-ARCHITECTURE.md`. Architecture doc now records the global assistant tool registry foundation and notes no table/schema, embedding, RAG chunk sync, search RPC, or retrieval policy changed. |
@@ -118,6 +118,8 @@ filled in. If any item cannot be completed, change `Status` to
 | Policy/visibility tests | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai/__tests__/tool-registry.test.ts src/lib/ai/__tests__/cmo-orchestrator.test.ts --runInBand` | Passed | 2 suites, 12 tests passed. Tests cover registry policy hiding for write tools and existing orchestrator registration behavior with registry helpers mocked for isolated CMO tests. |
 | Direct tool guardrail | `npm run rag:verify:assistant-tool-registry` | Passed | Guardrail now fails new direct `tool({ ... })` definitions unless the file is an approved factory/constructor or has an explicit non-assistant allowlist reason. |
 | Policy lint | `cd frontend && npx eslint src/lib/ai/tool-registry.ts src/lib/ai/__tests__/tool-registry.test.ts src/lib/ai/orchestrator.ts src/lib/ai/__tests__/cmo-orchestrator.test.ts` | Passed | Registry policy helpers, Strategist visibility trace, tests, and orchestrator changes lint cleanly. |
+| Project/source policy tests | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai/__tests__/tool-registry.test.ts src/lib/ai/__tests__/cmo-orchestrator.test.ts --runInBand` | Passed | 2 suites, 15 tests passed. Tests now prove optional provider-disabled factories, project-scope filtering, source-family filtering, write-policy filtering, and CMO registration compatibility. |
+| Tool execution telemetry evidence | `frontend/src/app/api/ai-assistant/chat/handler-v2.ts` | Passed | The normal assistant route aggregates bridge, prefetch, retrieval, live, and streamed AI SDK tool calls into `tool_trace`, persists it in `chat_history.metadata`, and sends `toolCallNames` to Langfuse scoring/tracing. Executive Daily Brief tool-triggered runs use the AI Ops ledger. |
 
 ## Files Expected To Change
 
@@ -139,22 +141,21 @@ filled in. If any item cannot be completed, change `Status` to
 
 ## Risks / Gaps
 
-- First implementation slice created the global registry contract and migrated
-  Executive Daily Brief only. The large assistant factories are inventoried but
-  still need registry-backed wrapping in follow-up slices before this task can
-  close.
-- This is cross-cutting and may expose existing duplicate names or tools with
-  unclear ownership.
-- A mechanical migration without policy metadata would repeat the same problem
-  in a new file; each tool must declare ownership and policy behavior.
-- Some route-local tools may be legitimate non-assistant tools and should be
-  documented rather than forced into the assistant registry.
+- Full frontend typecheck remains blocked by unrelated bounded-typecheck
+  timeout debt in `frontend/scripts/run-typecheck-bounded.mjs` /
+  `frontend/tsconfig.json`; focused lint, tests, static guardrail, and live
+  assistant route smoke passed for this task.
+- Direct `tool({ ... })` definitions still exist inside approved factory
+  modules and explicitly documented non-assistant helper files by design; new
+  bypasses outside the allowlist fail the registry guardrail.
+- The live `/ai` page still emits an unrelated Velt token 500 in page chrome,
+  but the assistant conversation and chat routes returned 200 and completed.
 
 ## Final Status
 
-- [ ] All checklist items are complete.
-- [ ] Evidence is recorded.
-- [ ] Any deferred work is explicitly marked Blocked/Deferred with owner and
+- [x] All checklist items are complete.
+- [x] Evidence is recorded.
+- [x] Any deferred work is explicitly marked Blocked/Deferred with owner and
       next action.
-- [ ] Final response includes what is done, what remains, and recommended next
+- [x] Final response includes what is done, what remains, and recommended next
       steps.

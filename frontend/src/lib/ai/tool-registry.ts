@@ -63,6 +63,8 @@ export type RegisteredToolSetInput = {
     allowWrites?: boolean;
     allowDelivery?: boolean;
     allowedChannels?: Array<"teams" | "email">;
+    selectedProjectId?: number | null;
+    allowedSourceFamilies?: EvidenceRef["sourceFamily"][];
   };
   registry?: AssistantToolRegistryEntry[];
 };
@@ -190,9 +192,13 @@ export function filterRegisteredToolSet(input: RegisteredToolSetInput): ToolSet 
   const toolNames = Object.keys(input.tools);
   const visibility = toolVisibilityForEntries(factoryEntries, input.policy);
   const visibleNames = new Set(visibility.visibleToolNames);
-  const missingTools = visibility.visibleToolNames.filter(
-    (name) => !input.tools[name],
-  );
+  const optionalFactoryDisabled =
+    toolNames.length === 0 &&
+    factoryEntries.length > 0 &&
+    factoryEntries.every((entry) => entry.metadata.optionalFactory === true);
+  const missingTools = optionalFactoryDisabled
+    ? []
+    : visibility.visibleToolNames.filter((name) => !input.tools[name]);
   const unregisteredTools = toolNames.filter((name) => !registeredNames.has(name));
 
   if (missingTools.length > 0 || unregisteredTools.length > 0) {
@@ -235,11 +241,19 @@ export function toolVisibilityForEntries(
   policy: RegisteredToolSetInput["policy"] = {},
 ): AssistantToolVisibility {
   const allowedChannels = new Set(policy.allowedChannels ?? []);
+  const allowedSourceFamilies = policy.allowedSourceFamilies
+    ? new Set(policy.allowedSourceFamilies)
+    : null;
   const hiddenTools: AssistantToolVisibility["hiddenTools"] = [];
   const visibleToolNames: string[] = [];
 
   for (const entry of entries) {
-    const hiddenReason = hiddenReasonForEntry(entry, policy, allowedChannels);
+    const hiddenReason = hiddenReasonForEntry(
+      entry,
+      policy,
+      allowedChannels,
+      allowedSourceFamilies,
+    );
     if (hiddenReason) {
       hiddenTools.push({ name: entry.name, reason: hiddenReason });
     } else {
@@ -254,9 +268,26 @@ function hiddenReasonForEntry(
   entry: AssistantToolRegistryEntry,
   policy: RegisteredToolSetInput["policy"],
   allowedChannels: Set<"teams" | "email">,
+  allowedSourceFamilies: Set<EvidenceRef["sourceFamily"]> | null,
 ): string | null {
   if (policy?.actorMode && !entry.actorModes.includes(policy.actorMode)) {
     return `actor_mode_denied:${policy.actorMode}`;
+  }
+  if (
+    entry.requiresProjectScope &&
+    (policy?.selectedProjectId === null ||
+      policy?.selectedProjectId === undefined)
+  ) {
+    return "project_scope_required";
+  }
+  if (
+    allowedSourceFamilies &&
+    (entry.sourceFamilies ?? []).length > 0 &&
+    (entry.sourceFamilies ?? []).every(
+      (sourceFamily) => !allowedSourceFamilies.has(sourceFamily),
+    )
+  ) {
+    return "source_family_denied";
   }
   if (entry.requiresWritePermission && !policy?.allowWrites) {
     return "write_permission_denied";
@@ -508,6 +539,13 @@ const projectToolNames = [
   "searchEmails",
   "searchTeamsMessages",
   "searchExternalDocuments",
+  "queryBudgetData",
+  "queryChangeOrders",
+  "queryCommitments",
+  "queryDirectCosts",
+  "queryScheduleTasks",
+  "queryDocumentRows",
+  "searchStructuredFinancialRows",
   "getScheduleAnalysis",
   "searchAppHelp",
   "getForecastComparison",
@@ -634,12 +672,22 @@ const actionAssistantTools: AssistantToolRegistryEntry[] = actionToolNames.map(
 
 const webSearchAssistantTools = factoryToolEntries({
   names: ["searchWeb", "researchCompany", "searchConstructionMarket"],
-  factory: factory("frontend/src/lib/ai/tools/web-search.ts", "createWebSearchTools"),
+  factory: factory(
+    "frontend/src/lib/ai/tools/web-search.ts",
+    "createWebSearchTools",
+  ),
   owningAdapter: "web_search_tools",
   category: "operational",
   sourceFamilies: ["system"],
   requiresProjectScope: false,
-});
+}).map((entry) => ({
+  ...entry,
+  metadata: {
+    ...entry.metadata,
+    optionalFactory: true,
+    provider: "tavily",
+  },
+}));
 
 const structuredOutputAssistantTools = factoryToolEntries({
   names: ["extractStructuredActionBrief"],
