@@ -68,6 +68,7 @@ This task is not done until every checklist item below is checked, with evidence
 | Browser/user-flow     | `VERCEL_ENV=development PORT=3003 npx next dev --port 3003 --turbopack`; live POST to `http://localhost:3003/api/ai-operator/presentation-preview` | Passed | Returned HTTP 200, `AdaptiveCard`, `Action.Submit`, rendered `approve`, and dropped unsupported `copy` with metadata. A first production-like e2e probe returned HTTP 403, proving the no-send preview route is blocked when `VERCEL_ENV=production`. |
 | DB/provider read-back | N/A                | N/A    | No database or provider config changes expected. |
 | End-to-end proof      | Live preview API POST with supported button and unsupported copy affordance | Passed | Response proved deterministic Teams card rendering and inspectable `unsupported_affordance` metadata without sending. |
+| Publish               | Git history | Passed | Published to `origin/main` at `061991dfc` (`Add operator presentation adapter`). |
 
 ## Files Changed
 

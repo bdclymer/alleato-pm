@@ -6,7 +6,7 @@
 2) Task ID: AAI-561
 3) Linear issue: AAI-561
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-561/goal-5-hybrid-rag-ranking-telemetry-and-evaluation
-5) Current status: Implementation verified locally; ready for `codex:finish`
+5) Current status: Published to `origin/main` at `7b530ace6`; closeout evidence recorded.
 6) Files changed (absolute paths):
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-19-hybrid-rag-ranking.md`
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-19-S63-hybrid-rag-ranking.md`
@@ -84,3 +84,4 @@ cd frontend && npm run quality:changed
 - RPC overload cleanup verified: exactly one `search_document_chunks` function remains.
 - Live hybrid-vs-vector eval passed via AI Gateway embeddings and AI Database RPC; hybrid coverage did not regress (`hybridHits=16`, `vectorHits=16`) and telemetry readback succeeded.
 - DB inventory regenerated after documenting `document_chunk_retrieval_telemetry`.
+- Published commit: `7b530ace6` (`Add hybrid RAG ranking telemetry`).

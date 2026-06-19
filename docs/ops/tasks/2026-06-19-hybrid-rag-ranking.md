@@ -87,6 +87,7 @@ This task is not done until every checklist item below is checked, with evidence
 | Targeted tests        | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai/retrieval/__tests__/retrieval-weight-scoring.test.ts --runInBand` | Passed | 1 suite, 7 tests. |
 | Retrieval eval        | `npm run rag:verify:hybrid-ranking` | Passed | Live AI Gateway embedding + RAG RPC: vectorHits=16, hybridHits=16, same top chunk, score components present. |
 | End-to-end proof      | `npm run rag:verify:hybrid-ranking` | Passed | Telemetry readback found recent hybrid recall rows; `telemetryRecallCount=16`. |
+| Publish               | Git history | Passed | Published to `origin/main` at `7b530ace6` (`Add hybrid RAG ranking telemetry`). |
 
 ## Known Unrelated Worktree Dirt
 

@@ -6,7 +6,7 @@
 2) Task ID: AAI-559
 3) Linear issue: AAI-559
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-559/goal-3-operator-presentation-envelope-for-ai-approval-prompts
-5) Current status: Pending Review
+5) Current status: Published to `origin/main` at `061991dfc`; closeout evidence recorded.
 6) Files changed (absolute paths):
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-19-operator-presentation.md`
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-19-S61-operator-presentation.md`
@@ -73,3 +73,4 @@ npm run linear:codex:check -- docs/ops/handoffs/2026-06-19-S61-operator-presenta
 - HTTP e2e preview: passed with HTTP 200, `AdaptiveCard`, rendered `approve`, and dropped unsupported `copy` with `unsupported_affordance`.
 - Broad quality: failed unrelated at bounded frontend typecheck timeout after 60000ms.
 - Changed-file quality: passed.
+- Published commit: `061991dfc` (`Add operator presentation adapter`).

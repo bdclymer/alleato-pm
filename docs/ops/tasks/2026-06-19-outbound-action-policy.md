@@ -68,6 +68,7 @@ This task is not done until every checklist item below is checked, with evidence
 | Browser/user-flow     | N/A | Passed | No frontend-visible UI change. |
 | DB/provider read-back | N/A | Passed | No database, migration, or provider config changes. |
 | End-to-end proof      | `AI_EVAL_BASE_URL=http://localhost:3002 AI_EVAL_JUDGE_ENABLED=false AI_EVAL_CASE_TIMEOUT_MS=60000 npm run rag:verify:eval-suite:case -- outbound_action_policy_high_risk_draft_only_guard` | Passed | Controlled local server used `ALLEATO_OUTBOUND_ACTION_POLICY_ENABLED=true` with Teams/Microsoft delivery credentials blanked. Eval passed 1/1 with one warning for duration over 30s. Artifacts: `docs/ai-plan/evals/runs/2026-06-19T17-11-56-784Z-f8ac2775/summary.md`, `docs/ai-plan/evals/runs/2026-06-19T17-11-56-784Z-f8ac2775/results.json`. |
+| Publish               | Git history | Passed | Published to `origin/main` at `28dcca971` (`Add outbound action policy`). |
 
 ## Files Changed
 

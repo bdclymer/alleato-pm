@@ -6,7 +6,7 @@
 2) Task ID: AAI-562
 3) Linear issue: AAI-562
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-562/goal-6-context-compaction-for-long-assistant-chats
-5) Current status: Implementation verified locally; ready for `codex:finish`
+5) Current status: Published to `origin/main` at `32e73c773`; closeout evidence recorded.
 6) Files changed (absolute paths):
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-19-context-compaction.md`
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-19-S64-context-compaction.md`
@@ -66,3 +66,4 @@ cd frontend && npm run quality:changed
 - OpenClaw/Hermes references reviewed and adapted: threshold gating, head/tail retention, reference-only summaries, tool pruning, binary placeholders, and summary refresh.
 - Focused Jest suite passed: under-threshold no-op, over-threshold preservation, summary refresh, bulky tool-result pruning, image/file placeholders, and hard-limit failure.
 - Changed-file quality passed.
+- Published commit: `32e73c773` (`Add assistant context compaction`).

@@ -6,7 +6,7 @@
 2) Task ID: AAI-558
 3) Linear issue: AAI-558
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-558/goal-2-outbound-action-policy-for-ai-write-tools
-5) Current status: Pending Review
+5) Current status: Published to `origin/main` at `28dcca971`; closeout evidence recorded.
 6) Files changed (absolute paths):
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-19-outbound-action-policy.md`
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-19-S60-outbound-action-policy.md`
@@ -84,3 +84,4 @@ npm run codex:finish -- --check
 - Changed-file type guard: passed.
 - Eval suite parse guard: passed.
 - Live single-case eval: passed 1/1 with duration warning, no send-success claim, and `semanticSearch` only.
+- Published commit: `28dcca971` (`Add outbound action policy`).

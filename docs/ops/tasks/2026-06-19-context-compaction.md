@@ -90,6 +90,7 @@ This task is not done until every checklist item below is checked, with evidence
 | Targeted tests        | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai/stream/__tests__/compaction.test.ts --runInBand` | Passed | 1 suite, 5 tests. |
 | Long-context proof    | Focused Jest over threshold/hard-limit cases | Passed | Proves under-threshold no-op, over-threshold compaction, summary refresh, tool/binary pruning, and hard-limit failure. |
 | End-to-end proof      | Handler integration through `convertToModelMessages` -> `maybeCompactModelMessages` -> `streamText` | Passed | Feature flag default-off; compacted messages replace model messages only when enabled and over threshold; metadata persists to `chat_history`. |
+| Publish               | Git history | Passed | Published to `origin/main` at `32e73c773` (`Add assistant context compaction`). |
 
 ## Known Unrelated Worktree Dirt
 
