@@ -502,7 +502,6 @@ Components scoped to individual application features, organized by feature direc
 
 | Directory | Files | Description |
 |-----------|-------|-------------|
-| `admin-panel/` | 11 | Admin dashboard, user management, system settings |
 | `project-home/` | 20 | Project dashboard, widgets, activity feeds, quick actions |
 | `project-setup-wizard/` | 9 | Multi-step project creation wizard |
 | `portfolio/` | 7 | Multi-project portfolio views and analytics |
