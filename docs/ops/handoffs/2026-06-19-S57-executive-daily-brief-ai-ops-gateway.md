@@ -43,6 +43,8 @@
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/__tests__/workflow-pack.test.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/executive-daily-brief-evidence.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/daily-brief-canonical-link.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/ai-ops/__tests__/executive-daily-brief-ledger.test.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/executive/brandon-daily-update.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/executive/executive-briefing-workflow.ts`
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/lib/executive/__tests__/executive-briefing-workflow.test.ts`
@@ -160,6 +162,13 @@
    - Pass: SQL readback for run `10c6f901-0d3f-43b7-a602-16e6eb7fd7ab` returned status succeeded, delivery dry-run, packet id `1399b250-4151-429c-a3ce-156e0a161ba9`, source health count `4`, source-ref rows `4`, artifact rows `3`, and delivery attempts `1`.
    - Pass: SQL packet expansion found 4 surfaced items, each with 1 source ref; every ref had source family, id, title, link, excerpt, occurred-at, and confidence; `items_without_source_refs=0`, `refs_without_links=0`.
    - Pass: dev-server socket-close proof run `4adcf1e3-0715-4108-8cc5-083e21e6db6c` was marked `failed_retryable` / `failed` with `DEV_PROOF_SOCKET_CLOSED` and metadata pointing to successful follow-up run `10c6f901-0d3f-43b7-a602-16e6eb7fd7ab`.
+   - Pass: applied migration `20260619195500_add_daily_recaps_ai_work_run_id.sql` with `psql`, inserted the version into the Supabase migration ledger, and `npm run db:migrations:verify-applied -- supabase/migrations/20260619195500_add_daily_recaps_ai_work_run_id.sql` passed.
+   - Pass: regenerated Supabase types; `frontend/src/types/database.types.ts` now includes `daily_recaps.ai_work_run_id` and FK daily_recaps_ai_work_run_id_fkey.
+   - Pass: generated Daily Brief runs now update `daily_recaps.ai_work_run_id` through `daily-brief-canonical-link.ts` after evidence records successfully.
+   - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/executive-daily-brief-ledger.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand` passed 2 suites / 11 tests.
+   - Pass: `cd frontend && npx eslint src/lib/ai-ops/daily-brief-canonical-link.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/executive-daily-brief-ledger.test.ts src/lib/ai-ops/__tests__/ledger.test.ts`.
+   - Pass: authenticated no-send preview returned HTTP 200 with run `64285fe0-a122-4745-b888-b7b6116ac854`.
+   - Pass: SQL readback proved `daily_recaps.ai_work_run_id = 64285fe0-a122-4745-b888-b7b6116ac854`, `recap_points_to_run=true`, `canonical_run_count=1`, historical run count `5`, source refs `4`, artifacts `3`, and delivery attempts `1`.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
@@ -194,6 +203,8 @@
    - `frontend/src/lib/ai-ops/__tests__/workflow-pack.test.ts`
    - `frontend/src/lib/ai-ops/executive-daily-brief-evidence.ts`
    - `frontend/src/lib/ai-ops/__tests__/executive-daily-brief-evidence.test.ts`
+   - `frontend/src/lib/ai-ops/daily-brief-canonical-link.ts`
+   - `frontend/src/lib/ai-ops/__tests__/executive-daily-brief-ledger.test.ts`
    - `frontend/src/lib/executive/brandon-daily-update.ts`
    - `frontend/src/lib/executive/executive-briefing-workflow.ts`
    - `frontend/src/lib/executive/__tests__/executive-briefing-workflow.test.ts`
@@ -223,7 +234,7 @@
    - No frontend-visible changes yet.
    - Inventory confirmed multiple bypasses: preview routes, send routes, admin test send, actions, AI tools, and legacy delivery paths can generate or deliver without one canonical `ai_work_runs` record.
    - Shared AI Ops contracts and a shared ledger writer now exist and are tested; scheduled runner, preview/send routes, widget fresh generation, executive page regeneration, admin test-send, and AI tool generation now use the shared writer or an existing-run helper.
-   - New generated Daily Brief runs now set `ai_work_runs.daily_recap_id` when a `daily_recaps` draft id is available, and `/ai-work-runs` shows that generated artifact reference.
+   - New generated Daily Brief runs now set `ai_work_runs.daily_recap_id` and the reciprocal `daily_recaps.ai_work_run_id`; live proof `64285fe0-a122-4745-b888-b7b6116ac854` shows exactly one canonical run pointer for the packet while preserving historical run links.
    - First-class AI Ops run steps, artifacts, and delivery attempts now exist in the database, are exposed by `/api/admin/ai-work-runs`, and are visible in `/ai-work-runs`.
    - The Executive Daily Brief workflow pack, source adapter contract, and tool registry/policy are centralized and used by run construction.
    - Claim-level evidence guardrails now fail before ledger writes when surfaced `needsBrandon`, `waitingOnOthers`, or `importantUpdates` items lack structured citation evidence.
@@ -235,7 +246,7 @@
    - Manual email sends from the executive action now create canonical AI Ops runs, packet/artifact evidence, and per-recipient delivery attempts for both successful and provider-failed Resend outcomes.
    - `/ai-work-runs` now shows retryability/next-action guidance and generated-packet evidence drilldown; live no-send preview run `10c6f901-0d3f-43b7-a602-16e6eb7fd7ab` proves packet-level `sourceRefs` are present and linkable for all four surfaced claims.
    - Duplicate frontend Daily Brief scripts are ledger-backed wrappers or no-send previews, and backend legacy digest paths are default-disabled with loud operator messaging.
-10) Recommended next action (one line): Close remaining `daily_recaps` canonical-run relationship, source coverage/readiness legacy gaps, actor/source-access policy filters, and real Teams delivery when safe/enabled.
+10) Recommended next action (one line): Close remaining source coverage/readiness legacy gaps, actor/source-access policy filters, tool-call run-step recording, and real Teams delivery when safe/enabled.
 11) Handoff file path: `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
 12) Migration ledger evidence: `npm run db:migrations:verify-applied -- supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql` passed for version `20260619183000`.
 <!-- markdownlint-enable MD029 MD034 -->
@@ -259,6 +270,7 @@
   - `5d26abde-09b9-4e6e-a044-45ffa72c12b5` recorded email delivery action ledger wrapping, focused lint/tests, and remaining gaps.
   - `17e47a71-797e-43c7-a763-8e3181750dda` recorded packet-level `sourceRefs` persistence, focused lint/tests, and live regenerated-packet proof remaining.
   - `7445ddd5-e71d-4b5c-9193-05993d462635` recorded live packet sourceRefs proof, Acumatica fallback, focused lint/tests, and remaining gaps.
+  - `8207b9a9-e26d-44c4-b853-11acedf9f350` recorded canonical `daily_recaps.ai_work_run_id` relationship, migration/type evidence, live proof, and remaining gaps.
   - `e5b1568a-90ea-4912-84bd-aed849ac6b3a` recorded admin UI source drilldown, retry guidance, browser proof, and remaining structured source-ref gaps.
   - `0647ed44-013a-47ce-b738-979c7b285444` recorded duplicate script and backend legacy digest disposition, focused checks, and remaining source coverage/readiness gaps.
 - Completion/blocker comment: None yet.

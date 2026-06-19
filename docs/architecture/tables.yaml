@@ -1940,9 +1940,10 @@ tables:
     domain: intelligence
     owner: pipeline
     status: live
-    purpose: "Legacy executive briefing packets. 49 rows. Still used by alleato-executive-daily-brief-* Render crons."
-    gotchas: "Legacy mechanism. intelligence_packets is the modern equivalent but daily_recaps is still actively generated."
+    purpose: "Executive briefing packet store. Executive Daily Brief generation now writes canonical AI Ops run linkage through ai_work_run_id."
+    gotchas: "Legacy mechanism, but still actively generated for Executive Daily Brief. ai_work_run_id is the canonical generation run pointer; ai_work_runs.daily_recap_id remains the run-to-packet history link."
     relatedTables:
+      - ai_work_runs
       - executive_briefing_follow_ups
 
   - name: briefing_runs

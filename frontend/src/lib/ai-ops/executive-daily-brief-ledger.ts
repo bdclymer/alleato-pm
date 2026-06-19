@@ -9,6 +9,7 @@ import {
   assertExecutiveBriefingDraftEvidence,
   evidenceRefsFromDraft,
 } from "./executive-daily-brief-evidence";
+import { linkDailyRecapToCanonicalRun } from "./daily-brief-canonical-link";
 import { createAiOpsLedger } from "./ledger";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
@@ -640,6 +641,10 @@ export async function regenerateDailyBriefDraftForRun(
     sourceBackedOnly: input.sourceBackedOnly,
   });
   await recordDraftEvidence(context, draft);
+  await linkDailyRecapToCanonicalRun({
+    dailyRecapId: draft.id,
+    runId: context.runId,
+  });
   return { draft };
 }
 

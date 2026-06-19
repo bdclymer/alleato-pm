@@ -10300,6 +10300,7 @@ export type Database = {
       }
       daily_recaps: {
         Row: {
+          ai_work_run_id: string | null
           approval_notes: string | null
           approved_at: string | null
           approved_by: string | null
@@ -10329,6 +10330,7 @@ export type Database = {
           workflow_status: string
         }
         Insert: {
+          ai_work_run_id?: string | null
           approval_notes?: string | null
           approved_at?: string | null
           approved_by?: string | null
@@ -10358,6 +10360,7 @@ export type Database = {
           workflow_status?: string
         }
         Update: {
+          ai_work_run_id?: string | null
           approval_notes?: string | null
           approved_at?: string | null
           approved_by?: string | null
@@ -10386,7 +10389,15 @@ export type Database = {
           wins?: Json | null
           workflow_status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "daily_recaps_ai_work_run_id_fkey"
+            columns: ["ai_work_run_id"]
+            isOneToOne: false
+            referencedRelation: "ai_work_runs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       database_tables_catalog: {
         Row: {

@@ -194,7 +194,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
       tables audited against the contracts.
 - [x] Decision recorded: keep, migrate, extend, or replace each existing AI
       ledger table.
-- [ ] `daily_recaps` relationship standardized so every generated Executive
+- [x] `daily_recaps` relationship standardized so every generated Executive
       Daily Brief draft links to exactly one `ai_work_runs` record.
 - [x] Preview generation writes a run ledger row.
 - [x] Scheduled generation writes a run ledger row.
@@ -368,7 +368,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
       the gateway.
 - [x] The same gateway path is used by preview, dry-run, scheduled run, and
       delivery.
-- [ ] Every generated brief has a canonical `ai_work_runs` row.
+- [x] Every generated brief has a canonical `ai_work_runs` row.
 - [x] Every run has source health.
 - [x] Every surfaced claim has structured source refs.
 - [x] Every generated packet is stored as an inspectable artifact.
@@ -410,6 +410,10 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 | Live sourceRefs run readback | SQL readback for run `10c6f901-0d3f-43b7-a602-16e6eb7fd7ab` | Passed | Run succeeded, delivery dry-run, packet id `1399b250-4151-429c-a3ce-156e0a161ba9`, source health count `4`, source-ref rows `4`, artifact rows `3`, delivery attempts `1`. |
 | Live packet sourceRefs traceability | SQL expansion of `daily_recaps.briefing_packet.sections[*].sourceRefs` for run `10c6f901-0d3f-43b7-a602-16e6eb7fd7ab` | Passed | 4 surfaced items; each had 1 `sourceRefs` entry; all refs had source family, id, title, link, excerpt, occurred-at, and confidence. Financial item linked to `/financial-insights`; project document items linked to `/865`, `/90`, and `/67` source routes. `items_without_source_refs=0`, `refs_without_links=0`. |
 | Stuck proof-run remediation | SQL update for run `4adcf1e3-0715-4108-8cc5-083e21e6db6c` | Passed | A dev-server socket-close proof attempt was not left silently running; it was marked `failed_retryable` / `failed` with failure code `DEV_PROOF_SOCKET_CLOSED` and metadata pointing to successful follow-up run `10c6f901-0d3f-43b7-a602-16e6eb7fd7ab`. |
+| Canonical recap/run migration | `psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20260619195500_add_daily_recaps_ai_work_run_id.sql`; migration-ledger insert/readback; `npm run db:migrations:verify-applied -- supabase/migrations/20260619195500_add_daily_recaps_ai_work_run_id.sql` | Passed | Added `daily_recaps.ai_work_run_id` as the canonical generation-run pointer to `ai_work_runs.id`; remote migration ledger verified version `20260619195500`. |
+| Canonical recap/run types | `SUPABASE_ACCESS_TOKEN="$SUPABASE_ACCESS_TOKEN" npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema public > tmp && mv tmp frontend/src/types/database.types.ts` | Passed | Generated types include `daily_recaps.ai_work_run_id` and FK daily_recaps_ai_work_run_id_fkey. |
+| Canonical recap/run tests | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/executive-daily-brief-ledger.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand`; focused lint over canonical-link and ledger files | Passed | 2 suites, 11 tests passed. Tests prove generated packets update `daily_recaps.ai_work_run_id` and fail loudly if the canonical link write fails. |
+| Canonical recap/run live proof | Authenticated POST to `/api/executive/daily-brief/preview-teams` with `{ fresh: true, windowDays: 3, firstName: "Brandon" }`; SQL readback for run `64285fe0-a122-4745-b888-b7b6116ac854` | Passed | Run succeeded/dry-run and linked packet `1399b250-4151-429c-a3ce-156e0a161ba9`; `daily_recaps.ai_work_run_id` equals run `64285fe0-a122-4745-b888-b7b6116ac854`; `recap_points_to_run=true`; `canonical_run_count=1`; historical run count remains `5`; source refs `4`, artifacts `3`, delivery attempts `1`. |
 | Gateway guardrail rerun | `npm run rag:verify:executive-daily-brief-gateway` | Passed | Raw app-route generation bypass guard still passes after evidence-policy extraction. |
 | Scheduled runner lint | `cd frontend && npx eslint --no-ignore scripts/run-executive-daily-brief.ts scripts/__tests__/run-executive-daily-brief.test.ts` | Passed | Scheduled runner and node test lint cleanly after preserving explicit runtime env over `.env.local`. |
 | Scheduled runner tests | `cd frontend && npx tsx --test scripts/__tests__/run-executive-daily-brief.test.ts` | Passed | 3 node tests passed for delivery projection, partial recipient projection, and scheduled source-ref extraction. |
