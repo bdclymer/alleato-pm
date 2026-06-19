@@ -199,17 +199,23 @@ def init_scheduler() -> None:
             backlog_stale_minutes,
         )
 
-    # Daily digest at 6 PM (configurable via env)
-    digest_hour = int(os.getenv("DAILY_DIGEST_HOUR", "18"))
-    digest_minute = int(os.getenv("DAILY_DIGEST_MINUTE", "0"))
+    if _env_flag_enabled("LEGACY_DAILY_DIGEST_ENABLED", default="false"):
+        # Legacy meeting digest only. Executive Daily Brief runs through the
+        # frontend AI Ops gateway and ai_work_runs ledger.
+        digest_hour = int(os.getenv("DAILY_DIGEST_HOUR", "18"))
+        digest_minute = int(os.getenv("DAILY_DIGEST_MINUTE", "0"))
 
-    scheduler.add_job(
-        run_daily_digest_job,
-        CronTrigger(hour=digest_hour, minute=digest_minute),
-        id="daily_digest",
-        name="Daily Meeting Digest",
-        replace_existing=True,
-    )
+        scheduler.add_job(
+            run_daily_digest_job,
+            CronTrigger(hour=digest_hour, minute=digest_minute),
+            id="daily_digest",
+            name="Legacy Daily Meeting Digest",
+            replace_existing=True,
+        )
+    else:
+        logger.warning(
+            "[Scheduler] Legacy daily digest disabled. Executive Daily Brief must run through the AI Ops gateway."
+        )
 
     if _env_flag_enabled("ACUMATICA_FINANCIAL_SYNC_ENABLED"):
         if _log_job_misconfiguration(
@@ -510,7 +516,13 @@ async def run_daily_digest_job() -> None:
     """
     import asyncio
 
-    logger.info("[Scheduler] Running daily digest job")
+    if not _env_flag_enabled("LEGACY_DAILY_DIGEST_ENABLED", default="false"):
+        logger.warning(
+            "[Scheduler] Legacy daily digest skipped. Executive Daily Brief must run through the AI Ops gateway."
+        )
+        return
+
+    logger.info("[Scheduler] Running legacy daily digest job")
     try:
         # Run the sync digest function in a thread pool
         loop = asyncio.get_event_loop()

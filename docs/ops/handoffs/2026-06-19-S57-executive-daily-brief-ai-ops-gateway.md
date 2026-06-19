@@ -140,6 +140,10 @@
    - Pass: `/api/admin/ai-work-runs` now exposes source URL, internal route, and project linkage for evidence rows; `/ai-work-runs` shows Run Guidance with retryability/nextAction and Packet Evidence Drilldown for generated packet refs.
    - Pass: `cd frontend && npx eslint src/app/api/admin/ai-work-runs/route.ts 'src/app/(admin)/ai-work-runs/ai-work-runs-client.tsx'`.
    - Pass: Playwright-authenticated `/ai-work-runs` capture rendered Run Guidance, retryability, nextAction, and Packet Evidence Drilldown for run `0c3b8979-3a31-4aab-98d0-a975ab845e21`.
+   - Pass: `frontend/scripts/regenerate-executive-briefing.ts` and fresh Teams preview script now regenerate through `regenerateDailyBriefDraftWithLedger`; the raw-regeneration guardrail scans app routes/actions and frontend scripts.
+   - Pass: backend legacy daily digest scheduler is default-off behind `LEGACY_DAILY_DIGEST_ENABLED=false` unless explicitly enabled; standalone `backend/scripts/generate_daily_recap.py` exits 2 by default and points operators to the AI Ops gateway runner.
+   - Pass: `python -m py_compile backend/src/services/scheduler.py backend/scripts/generate_daily_recap.py`; `cd frontend && npx eslint --no-ignore scripts/regenerate-executive-briefing.ts scripts/preview-brandon-teams-message.ts`; `npm run rag:verify:executive-daily-brief-gateway`.
+   - Pass: `python backend/scripts/generate_daily_recap.py` default-block proof exited 2 with the gateway message.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
@@ -183,6 +187,11 @@
    - `frontend/src/app/(main)/actions/__tests__/executive-briefing-actions.test.ts`
    - `frontend/src/app/api/admin/ai-work-runs/route.ts`
    - `frontend/src/app/(admin)/ai-work-runs/ai-work-runs-client.tsx`
+   - `frontend/scripts/regenerate-executive-briefing.ts`
+   - `frontend/scripts/preview-brandon-teams-message.ts`
+   - `scripts/verify/verify_executive_daily_brief_gateway.mjs`
+   - `backend/src/services/scheduler.py`
+   - `backend/scripts/generate_daily_recap.py`
    - `frontend/src/lib/executive/executive-briefing-teams-delivery.ts`
    - `frontend/src/lib/executive/__tests__/executive-briefing-teams-delivery.test.ts`
    - `tests/agent-browser-runs/2026-06-19-executive-daily-brief-source-adapters/page-text.txt`
@@ -206,7 +215,8 @@
    - The old cron Teams delivery path no longer sends directly; it delegates to the canonical gateway and the old direct sender fails loudly if imported.
    - Manual email sends from the executive action now create canonical AI Ops runs, packet/artifact evidence, and per-recipient delivery attempts for both successful and provider-failed Resend outcomes.
    - `/ai-work-runs` now shows retryability/next-action guidance and generated-packet evidence drilldown; current live packet evidence still lacks some openable source URLs, so structured source-ref completeness remains open.
-10) Recommended next action (one line): Close structured source-ref completeness, real Teams delivery when safe/enabled, and remaining non-Teams legacy retirement gaps.
+   - Duplicate frontend Daily Brief scripts are ledger-backed wrappers or no-send previews, and backend legacy digest paths are default-disabled with loud operator messaging.
+10) Recommended next action (one line): Close structured source-ref completeness, real Teams delivery when safe/enabled, and remaining source coverage/readiness legacy gaps.
 11) Handoff file path: `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
 12) Migration ledger evidence: `npm run db:migrations:verify-applied -- supabase/migrations/20260619183000_add_ai_work_run_artifacts_delivery_attempts.sql` passed for version `20260619183000`.
 <!-- markdownlint-enable MD029 MD034 -->
@@ -229,6 +239,7 @@
   - `d8a88aa5-7358-4603-8e3d-58e390dbcca1` recorded legacy Teams cron path retirement, focused lint/tests, and remaining gaps.
   - `5d26abde-09b9-4e6e-a044-45ffa72c12b5` recorded email delivery action ledger wrapping, focused lint/tests, and remaining gaps.
   - `e5b1568a-90ea-4912-84bd-aed849ac6b3a` recorded admin UI source drilldown, retry guidance, browser proof, and remaining structured source-ref gaps.
+  - `0647ed44-013a-47ce-b738-979c7b285444` recorded duplicate script and backend legacy digest disposition, focused checks, and remaining source coverage/readiness gaps.
 - Completion/blocker comment: None yet.
 
 ## Current Status
@@ -250,15 +261,17 @@ loudly instead of claiming success outside the ledger. Manual email sends from
 the executive action now create canonical AI Ops runs with draft evidence,
 email-payload artifacts, provider ids or provider failures, and per-recipient
 delivery attempts. `/ai-work-runs` now exposes retryability/next-action guidance
-and generated-packet evidence drilldown. The workflow is not complete until
-structured source-ref completeness, real Teams delivery when safe/enabled, and
-remaining non-Teams legacy retirement gaps are complete.
+and generated-packet evidence drilldown. Duplicate frontend Daily Brief scripts
+are now ledger-backed wrappers or no-send previews, and backend legacy digest
+paths are default-disabled with loud operator messaging. The workflow is not
+complete until structured source-ref completeness, real Teams delivery when
+safe/enabled, and remaining source coverage/readiness legacy gaps are complete.
 
 ## Exact Next Step
 
 Close structured source-ref completeness, real Teams delivery when safe/enabled,
-and remaining non-Teams legacy retirement gaps without weakening the canonical
-ledger path.
+and remaining source coverage/readiness legacy gaps without weakening the
+canonical ledger path.
 
 ## Known Pitfalls
 

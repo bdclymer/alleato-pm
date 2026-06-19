@@ -4,12 +4,15 @@ import fs from "node:fs";
 import path from "node:path";
 
 const repoRoot = process.cwd();
-const appRoot = path.join(repoRoot, "frontend", "src", "app");
+const scanRoots = [
+  path.join(repoRoot, "frontend", "src", "app"),
+  path.join(repoRoot, "frontend", "scripts"),
+];
 const forbidden = [
   {
     pattern: /\bregenerateExecutiveBriefingDraft\b/,
     message:
-      "App routes/actions must regenerate the Executive Daily Brief through regenerateDailyBriefDraftWithLedger so every generated draft has an ai_work_runs record.",
+      "App routes/actions/scripts must regenerate the Executive Daily Brief through regenerateDailyBriefDraftWithLedger so every generated draft has an ai_work_runs record.",
   },
 ];
 
@@ -28,14 +31,17 @@ function listFiles(dir) {
 
 const failures = [];
 
-for (const file of listFiles(appRoot)) {
-  const source = fs.readFileSync(file, "utf8");
-  for (const rule of forbidden) {
-    if (rule.pattern.test(source)) {
-      failures.push({
-        file: path.relative(repoRoot, file),
-        message: rule.message,
-      });
+for (const root of scanRoots) {
+  if (!fs.existsSync(root)) continue;
+  for (const file of listFiles(root)) {
+    const source = fs.readFileSync(file, "utf8");
+    for (const rule of forbidden) {
+      if (rule.pattern.test(source)) {
+        failures.push({
+          file: path.relative(repoRoot, file),
+          message: rule.message,
+        });
+      }
     }
   }
 }

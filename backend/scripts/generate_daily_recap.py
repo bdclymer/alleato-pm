@@ -458,6 +458,13 @@ async def main():
     parser.add_argument('--verbose', '-v', action='store_true', help='Show detailed progress')
     args = parser.parse_args()
 
+    if os.getenv("LEGACY_DAILY_RECAP_SCRIPT_ENABLED", "").lower() not in ("1", "true", "yes"):
+        print(
+            "Legacy daily recap script is disabled. Executive Daily Brief generation must run through frontend/scripts/run-executive-daily-brief.ts and the AI Ops gateway ledger.",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
     start_time = time.time()
 
     # Determine date range

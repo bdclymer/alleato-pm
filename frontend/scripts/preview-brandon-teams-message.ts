@@ -1,13 +1,13 @@
-/* eslint-disable */
 /**
- * Preview the Teams message that would be sent to Brandon's evening brief —
- * regenerates the executive briefing draft and renders the Teams-formatted text.
+ * Preview the Teams message that would be sent to Brandon's evening brief.
+ * With --fresh, regeneration goes through the AI Ops ledger.
  *
  * Usage:
  *   pnpm tsx scripts/preview-brandon-teams-message.ts [--fresh] [--days=2]
  */
 
-import { regenerateExecutiveBriefingDraft, getExecutiveBriefingDashboard } from "@/lib/executive/executive-briefing-workflow";
+import { getExecutiveBriefingDashboard } from "@/lib/executive/executive-briefing-workflow";
+import { regenerateDailyBriefDraftWithLedger } from "@/lib/ai-ops/executive-daily-brief-ledger";
 import { formatExecutiveBriefingTeamsMessage } from "@/lib/executive/executive-briefing-teams-delivery";
 
 async function main() {
@@ -18,7 +18,18 @@ async function main() {
   console.error(`[preview] fresh=${fresh} windowDays=${windowDays}`);
 
   const draft = fresh
-    ? (await regenerateExecutiveBriefingDraft({ windowDays })).draft
+    ? (
+        await regenerateDailyBriefDraftWithLedger({
+          windowDays,
+          sourceBackedOnly: false,
+          triggerType: "manual_script_preview_refresh",
+          surface: "frontend/scripts/preview-brandon-teams-message.ts",
+          title: "Executive Daily Brief Teams preview script refresh",
+          userGoal: "Regenerate the Executive Daily Brief for a local Teams preview.",
+          normalizedGoal:
+            "Generate the Executive Daily Brief through the AI Ops ledger before rendering the local Teams preview.",
+        })
+      ).draft
     : (await getExecutiveBriefingDashboard({ windowDays })).draft;
 
   if (!draft) {

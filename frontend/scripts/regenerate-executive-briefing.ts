@@ -6,12 +6,21 @@ dotenv.config({ path: resolve(__dirname, "../.env") });
 dotenv.config({ path: resolve(__dirname, "../.env.local"), override: true });
 
 async function main() {
-  const { regenerateExecutiveBriefingDraft } = await import(
-    "../src/lib/executive/executive-briefing-workflow"
+  const { regenerateDailyBriefDraftWithLedger } = await import(
+    "../src/lib/ai-ops/executive-daily-brief-ledger"
   );
 
   const start = Date.now();
-  const { draft } = await regenerateExecutiveBriefingDraft({});
+  const { draft, runId } = await regenerateDailyBriefDraftWithLedger({
+    windowDays: 3,
+    sourceBackedOnly: false,
+    triggerType: "manual_script_regeneration",
+    surface: "frontend/scripts/regenerate-executive-briefing.ts",
+    title: "Executive Daily Brief script regeneration",
+    userGoal: "Regenerate the Executive Daily Brief from the local script.",
+    normalizedGoal:
+      "Generate the Executive Daily Brief through the AI Ops ledger from the local script.",
+  });
   const ms = Date.now() - start;
 
   const allItems = [
@@ -22,6 +31,7 @@ async function main() {
   const multiCitation = allItems.filter((item) => item.citations.length > 1);
 
   console.log(`✓ Regenerated draft ${draft.id} for ${draft.recapDate} in ${ms}ms`);
+  console.log(`  aiWorkRunId: ${runId}`);
   console.log(`  needsBrandon: ${draft.packet.sections.needsBrandon.length}`);
   console.log(`  waitingOnOthers: ${draft.packet.sections.waitingOnOthers.length}`);
   console.log(`  importantUpdates: ${draft.packet.sections.importantUpdates.length}`);
