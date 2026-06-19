@@ -4,31 +4,104 @@ import * as React from "react";
 import Link from "next/link";
 import {
   AlertCircle,
+  ArrowUpRight,
   CalendarClock,
   GripVertical,
   Loader2,
+  Trash2,
   UserRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { UniqueIdentifier } from "@dnd-kit/core";
 
+import { TaskFeedbackButtons } from "@/components/ai/TaskFeedbackButtons";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalFooter,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/unified-modal";
+import { Input } from "@/components/ui/input";
 import {
   Kanban,
   KanbanBoard,
   KanbanColumn,
   KanbanColumnHandle,
   KanbanItem,
+  KanbanItemHandle,
   KanbanOverlay,
 } from "@/components/ui/kanban";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/ds";
 import { apiFetch } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
-import { type TasksRow, getTaskSourceLabel } from "@/features/tasks/task-utils";
+import {
+  type TasksRow,
+  getTaskCategory,
+  getTaskSourceLabel,
+  getTaskSourceTarget,
+  getTaskSourceTitle,
+} from "@/features/tasks/task-utils";
+import {
+  TASK_PRIORITY_VALUES,
+  TASK_STATUS_VALUES,
+  type TaskPriorityValue,
+} from "@/features/tasks/task-values";
+import {
+  buildTaskFeedbackSnapshot,
+  getTaskProjectId,
+  isAiGeneratedTask,
+} from "@/features/tasks/tasks-table-config";
 
 type TaskKanbanStatus = "open" | "in_progress" | "blocked" | "done";
 
 type TaskColumns = Record<TaskKanbanStatus, TasksRow[]>;
+
+type TaskPatch = {
+  title?: string | null;
+  description?: string;
+  status?: string;
+  due_date?: string | null;
+  project_id?: number | null;
+  category?: string | null;
+  priority?: string | null;
+  assignee_person_id?: string | null;
+};
+
+type EmployeeOption = {
+  id: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  job_title?: string | null;
+};
+
+type ProjectOption = {
+  id: number;
+  name: string | null;
+  "job number"?: string | null;
+  project_number?: string | null;
+};
 
 const COLUMN_DEFINITIONS: Array<{
   id: TaskKanbanStatus;
@@ -45,6 +118,11 @@ const COLUMN_DEFINITIONS: Array<{
   { id: "done", label: "Done", emptyLabel: "Nothing done yet" },
 ];
 
+const DEFAULT_COLUMN_ORDER = COLUMN_DEFINITIONS.map((column) => column.id);
+const COLUMN_BY_ID = Object.fromEntries(
+  COLUMN_DEFINITIONS.map((column) => [column.id, column]),
+) as Record<TaskKanbanStatus, (typeof COLUMN_DEFINITIONS)[number]>;
+
 const EMPTY_COLUMNS: TaskColumns = {
   open: [],
   in_progress: [],
@@ -55,6 +133,18 @@ const EMPTY_COLUMNS: TaskColumns = {
 const DONE_STATUSES = new Set(["complete", "closed", "done", "cancelled"]);
 const IN_PROGRESS_STATUSES = new Set(["in_progress", "started", "active"]);
 const BLOCKED_STATUSES = new Set(["blocked", "stuck", "waiting"]);
+const UNASSIGNED = "__unassigned__";
+const NO_PROJECT = "__no_project__";
+const NO_CATEGORY = "__no_category__";
+const NO_PRIORITY = "__no_priority__";
+const TASK_CATEGORIES = [
+  "Accounting",
+  "Compliance",
+  "Design",
+  "Estimating",
+  "General",
+  "Operations",
+];
 
 function toKanbanStatus(status: string | null): TaskKanbanStatus {
   const normalized = (status ?? "").toLowerCase();
@@ -113,6 +203,79 @@ function buildColumns(tasks: TasksRow[]): TaskColumns {
   return columns;
 }
 
+function orderedColumns(
+  columns: TaskColumns,
+  order: TaskKanbanStatus[],
+): TaskColumns {
+  return order.reduce((next, columnId) => {
+    next[columnId] = columns[columnId] ?? [];
+    return next;
+  }, {} as TaskColumns);
+}
+
+function normalizeColumnOrder(
+  columnIds: UniqueIdentifier[],
+): TaskKanbanStatus[] {
+  const seen = new Set<TaskKanbanStatus>();
+  const next: TaskKanbanStatus[] = [];
+
+  for (const columnId of columnIds) {
+    if (
+      typeof columnId === "string" &&
+      columnId in COLUMN_BY_ID &&
+      !seen.has(columnId as TaskKanbanStatus)
+    ) {
+      seen.add(columnId as TaskKanbanStatus);
+      next.push(columnId as TaskKanbanStatus);
+    }
+  }
+
+  for (const columnId of DEFAULT_COLUMN_ORDER) {
+    if (!seen.has(columnId)) next.push(columnId);
+  }
+
+  return next;
+}
+
+function updateTaskInColumns(
+  columns: TaskColumns,
+  taskId: string,
+  updater: (task: TasksRow) => TasksRow,
+): TaskColumns {
+  const next: TaskColumns = {
+    open: [],
+    in_progress: [],
+    blocked: [],
+    done: [],
+  };
+
+  for (const column of COLUMN_DEFINITIONS) {
+    for (const task of columns[column.id]) {
+      if (task.id !== taskId) {
+        next[column.id].push(task);
+        continue;
+      }
+
+      const updated = updater(task);
+      next[toKanbanStatus(updated.status)].push(updated);
+    }
+  }
+
+  return next;
+}
+
+function removeTaskFromColumns(
+  columns: TaskColumns,
+  taskId: string,
+): TaskColumns {
+  return {
+    open: columns.open.filter((task) => task.id !== taskId),
+    in_progress: columns.in_progress.filter((task) => task.id !== taskId),
+    blocked: columns.blocked.filter((task) => task.id !== taskId),
+    done: columns.done.filter((task) => task.id !== taskId),
+  };
+}
+
 function formatShortDate(value: string | null): string | null {
   if (!value) return null;
   const date = new Date(value);
@@ -120,6 +283,17 @@ function formatShortDate(value: string | null): string | null {
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
+  }).format(date);
+}
+
+function formatLongDate(value: string | null): string {
+  if (!value) return "Not set";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Not set";
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   }).format(date);
 }
 
@@ -131,15 +305,88 @@ function isOverdue(value: string | null, status: string | null): boolean {
 }
 
 function getTaskTitle(task: TasksRow): string {
-  return task.description || task.title || "Untitled task";
+  return task.title || task.description || "Untitled task";
+}
+
+function employeeLabel(employee: EmployeeOption): string {
+  const name = [employee.first_name, employee.last_name]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  return name || employee.email || "Unnamed employee";
+}
+
+function projectLabel(project: ProjectOption): string {
+  const number = project.project_number ?? project["job number"];
+  return number
+    ? `${number} - ${project.name || `Project ${project.id}`}`
+    : project.name || `Project ${project.id}`;
+}
+
+function metadataRecord(task: TasksRow): Record<string, unknown> {
+  return task.extraction_metadata &&
+    typeof task.extraction_metadata === "object" &&
+    !Array.isArray(task.extraction_metadata)
+    ? (task.extraction_metadata as Record<string, unknown>)
+    : {};
+}
+
+function mergeTaskPatch(
+  task: TasksRow,
+  patch: TaskPatch,
+  employees: EmployeeOption[],
+  projects: ProjectOption[],
+): TasksRow {
+  const next: TasksRow = { ...task };
+
+  if (patch.title !== undefined) next.title = patch.title;
+  if (patch.description !== undefined) next.description = patch.description;
+  if (patch.status !== undefined) next.status = patch.status;
+  if (patch.due_date !== undefined) next.due_date = patch.due_date;
+  if (patch.priority !== undefined) next.priority = patch.priority;
+
+  if (patch.project_id !== undefined) {
+    const project =
+      patch.project_id === null
+        ? null
+        : projects.find((item) => item.id === patch.project_id);
+    next.project_id = patch.project_id;
+    next.project_ids = patch.project_id === null ? [] : [patch.project_id];
+    next.project_name = project ? projectLabel(project) : next.project_name;
+  }
+
+  if (patch.assignee_person_id !== undefined) {
+    const employee =
+      patch.assignee_person_id === null
+        ? null
+        : employees.find((item) => item.id === patch.assignee_person_id);
+    next.assignee_person_id = patch.assignee_person_id;
+    next.assignee_name = employee ? employeeLabel(employee) : null;
+    next.assignee_email = employee?.email ?? null;
+  }
+
+  if (patch.category !== undefined) {
+    const metadata = metadataRecord(next);
+    if (patch.category === null) {
+      delete metadata.task_category;
+    } else {
+      metadata.task_category = patch.category;
+    }
+    next.extraction_metadata = metadata;
+  }
+
+  next.updated_at = new Date().toISOString();
+  return next;
 }
 
 function TaskCard({
   task,
   overlay = false,
+  onOpen,
 }: {
   task: TasksRow;
   overlay?: boolean;
+  onOpen?: (task: TasksRow) => void;
 }) {
   const title = getTaskTitle(task);
   const assignee = task.assignee_name || task.assignee_email || "Unassigned";
@@ -148,12 +395,7 @@ function TaskCard({
   const sourceLabel = getTaskSourceLabel(task);
 
   return (
-    <KanbanItem
-      value={task.id ?? title}
-      asHandle
-      disabled={!task.id}
-      aria-label={`Move task: ${title}`}
-    >
+    <KanbanItem value={task.id ?? title} disabled={!task.id}>
       <article
         className={cn(
           "rounded-md border border-border/70 bg-background p-3 shadow-xs transition-colors",
@@ -161,41 +403,59 @@ function TaskCard({
           overlay && "w-80 shadow-md",
         )}
       >
-        <div className="flex items-start justify-between gap-3">
-          <p className="line-clamp-3 text-sm font-medium leading-5 text-foreground">
-            {title}
-          </p>
-          {task.priority ? (
-            <StatusBadge
-              status={task.priority}
-              className="pointer-events-none h-5 shrink-0 px-1.5 text-[11px] capitalize"
-            />
-          ) : null}
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-          <span className="inline-flex min-w-0 items-center gap-1.5">
-            <UserRound className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{assignee}</span>
-          </span>
-          {dueLabel ? (
-            <span
-              className={cn(
-                "inline-flex items-center gap-1.5",
-                overdue && "font-medium text-destructive",
-              )}
+        <div className="flex items-start gap-2">
+          {!overlay ? (
+            <KanbanItemHandle
+              aria-label={`Move task: ${title}`}
+              className="-ml-1 mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
             >
-              <CalendarClock className="h-3.5 w-3.5 shrink-0" />
-              {dueLabel}
-            </span>
+              <GripVertical className="h-4 w-4" />
+            </KanbanItemHandle>
           ) : null}
-        </div>
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-auto min-w-0 flex-1 flex-col items-stretch justify-start p-0 text-left font-normal hover:bg-transparent"
+            onClick={() => onOpen?.(task)}
+            disabled={overlay}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <p className="line-clamp-3 text-sm font-medium leading-5 text-foreground">
+                {title}
+              </p>
+              {task.priority ? (
+                <StatusBadge
+                  status={task.priority}
+                  className="pointer-events-none h-5 shrink-0 px-1.5 text-[11px] capitalize"
+                />
+              ) : null}
+            </div>
 
-        {sourceLabel ? (
-          <p className="mt-3 truncate text-xs text-muted-foreground">
-            {sourceLabel}
-          </p>
-        ) : null}
+            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <span className="inline-flex min-w-0 items-center gap-1.5">
+                <UserRound className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{assignee}</span>
+              </span>
+              {dueLabel ? (
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1.5",
+                    overdue && "font-medium text-destructive",
+                  )}
+                >
+                  <CalendarClock className="h-3.5 w-3.5 shrink-0" />
+                  {dueLabel}
+                </span>
+              ) : null}
+            </div>
+
+            {sourceLabel ? (
+              <p className="mt-3 truncate text-xs text-muted-foreground">
+                {sourceLabel}
+              </p>
+            ) : null}
+          </Button>
+        </div>
       </article>
     </KanbanItem>
   );
@@ -204,9 +464,11 @@ function TaskCard({
 function TaskColumn({
   column,
   tasks,
+  onOpenTask,
 }: {
   column: (typeof COLUMN_DEFINITIONS)[number];
   tasks: TasksRow[];
+  onOpenTask?: (task: TasksRow) => void;
 }) {
   return (
     <KanbanColumn
@@ -232,7 +494,9 @@ function TaskColumn({
 
       <div className="flex flex-1 flex-col gap-2">
         {tasks.length > 0 ? (
-          tasks.map((task) => <TaskCard key={task.id} task={task} />)
+          tasks.map((task) => (
+            <TaskCard key={task.id} task={task} onOpen={onOpenTask} />
+          ))
         ) : (
           <div className="flex min-h-32 items-center justify-center rounded-md border border-dashed border-border/70 px-4 text-center text-sm text-muted-foreground">
             {column.emptyLabel}
@@ -243,15 +507,492 @@ function TaskColumn({
   );
 }
 
+function DetailRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="grid gap-1 border-b border-border/60 py-3 last:border-b-0 sm:grid-cols-[9rem_1fr] sm:gap-4">
+      <dt className="text-xs font-medium uppercase text-muted-foreground">
+        {label}
+      </dt>
+      <dd className="min-w-0 text-sm text-foreground">{children}</dd>
+    </div>
+  );
+}
+
+function TaskDetailDialog({
+  projectId,
+  task,
+  open,
+  loading,
+  saving,
+  deleting,
+  employees,
+  projects,
+  onOpenChange,
+  onPatch,
+  onDelete,
+}: {
+  projectId: string;
+  task: TasksRow | null;
+  open: boolean;
+  loading: boolean;
+  saving: boolean;
+  deleting: boolean;
+  employees: EmployeeOption[];
+  projects: ProjectOption[];
+  onOpenChange: (open: boolean) => void;
+  onPatch: (task: TasksRow, patch: TaskPatch) => Promise<void>;
+  onDelete: (task: TasksRow) => Promise<void>;
+}) {
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
+  const [draft, setDraft] = React.useState({
+    title: "",
+    description: "",
+    status: "open",
+    priority: NO_PRIORITY,
+    assigneePersonId: UNASSIGNED,
+    projectId: NO_PROJECT,
+    category: NO_CATEGORY,
+    dueDate: "",
+  });
+
+  React.useEffect(() => {
+    if (!task) return;
+    setDraft({
+      title: task.title ?? "",
+      description: task.description ?? "",
+      status: task.status ?? "open",
+      priority: task.priority ?? NO_PRIORITY,
+      assigneePersonId: task.assignee_person_id ?? UNASSIGNED,
+      projectId: task.project_id ? String(task.project_id) : NO_PROJECT,
+      category: getTaskCategory(task) || NO_CATEGORY,
+      dueDate: task.due_date ?? "",
+    });
+  }, [task]);
+
+  if (!task) {
+    return (
+      <Modal open={open} onOpenChange={onOpenChange}>
+        <ModalContent size="form">
+          <div className="flex min-h-56 items-center justify-center text-sm text-muted-foreground">
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Loading task...
+              </>
+            ) : (
+              "Task not found."
+            )}
+          </div>
+        </ModalContent>
+      </Modal>
+    );
+  }
+
+  const sourceTarget = getTaskSourceTarget(task, projectId);
+  const sourceTitle = getTaskSourceTitle(task);
+  const sourceLabel = getTaskSourceLabel(task);
+  const category = draft.category === NO_CATEGORY ? null : draft.category;
+  const priority =
+    draft.priority === NO_PRIORITY
+      ? null
+      : (draft.priority as TaskPriorityValue);
+  const selectedProjectId =
+    draft.projectId === NO_PROJECT
+      ? null
+      : Number.parseInt(draft.projectId, 10);
+  const selectedAssigneeId =
+    draft.assigneePersonId === UNASSIGNED ? null : draft.assigneePersonId;
+
+  const saveTask = async () => {
+    const title = draft.title.trim() || null;
+    const description = draft.description.trim();
+    if (!description) {
+      toast.error("Task description is required");
+      return;
+    }
+
+    await onPatch(task, {
+      title,
+      description,
+      status: draft.status,
+      priority,
+      assignee_person_id: selectedAssigneeId,
+      project_id: selectedProjectId,
+      category,
+      due_date: draft.dueDate || null,
+    });
+  };
+
+  const sourceHref = sourceTarget?.href;
+
+  return (
+    <>
+      <Modal open={open} onOpenChange={onOpenChange}>
+        <ModalContent size="form" className="max-h-[calc(100svh-2rem)] p-0">
+          <ModalHeader className="border-b border-border/60 px-6 py-5">
+            <ModalTitle>Task details</ModalTitle>
+            <ModalDescription>
+              Review the source context, edit task fields, and send extraction
+              feedback.
+            </ModalDescription>
+          </ModalHeader>
+
+          <div className="max-h-[calc(100svh-12rem)] overflow-y-auto px-6 py-5">
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    Title
+                  </label>
+                  <Input
+                    value={draft.title}
+                    onChange={(event) =>
+                      setDraft((current) => ({
+                        ...current,
+                        title: event.target.value,
+                      }))
+                    }
+                    placeholder="Task title"
+                    disabled={saving || deleting}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    Description
+                  </label>
+                  <Textarea
+                    value={draft.description}
+                    onChange={(event) =>
+                      setDraft((current) => ({
+                        ...current,
+                        description: event.target.value,
+                      }))
+                    }
+                    placeholder="Describe the task"
+                    disabled={saving || deleting}
+                    className="min-h-32 resize-y"
+                  />
+                </div>
+
+                <dl className="rounded-md bg-muted/30 px-4">
+                  <DetailRow label="Status">
+                    <Select
+                      value={draft.status}
+                      onValueChange={(value) =>
+                        setDraft((current) => ({ ...current, status: value }))
+                      }
+                      disabled={saving || deleting}
+                    >
+                      <SelectTrigger className="h-8 max-w-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TASK_STATUS_VALUES.map((value) => (
+                          <SelectItem key={value} value={value}>
+                            {value.replace(/_/g, " ")}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </DetailRow>
+
+                  <DetailRow label="Priority">
+                    <Select
+                      value={draft.priority}
+                      onValueChange={(value) =>
+                        setDraft((current) => ({ ...current, priority: value }))
+                      }
+                      disabled={saving || deleting}
+                    >
+                      <SelectTrigger className="h-8 max-w-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={NO_PRIORITY}>Not set</SelectItem>
+                        {TASK_PRIORITY_VALUES.map((value) => (
+                          <SelectItem key={value} value={value}>
+                            {value}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </DetailRow>
+
+                  <DetailRow label="Assignee">
+                    <Select
+                      value={draft.assigneePersonId}
+                      onValueChange={(value) =>
+                        setDraft((current) => ({
+                          ...current,
+                          assigneePersonId: value,
+                        }))
+                      }
+                      disabled={saving || deleting}
+                    >
+                      <SelectTrigger className="h-8 max-w-xs">
+                        <SelectValue placeholder="Unassigned" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
+                        {employees.map((employee) => (
+                          <SelectItem key={employee.id} value={employee.id}>
+                            {employeeLabel(employee)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </DetailRow>
+
+                  <DetailRow label="Project">
+                    <Select
+                      value={draft.projectId}
+                      onValueChange={(value) =>
+                        setDraft((current) => ({
+                          ...current,
+                          projectId: value,
+                        }))
+                      }
+                      disabled={saving || deleting}
+                    >
+                      <SelectTrigger className="h-8 max-w-xs">
+                        <SelectValue placeholder="No project" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={NO_PROJECT}>No project</SelectItem>
+                        {projects.map((project) => (
+                          <SelectItem
+                            key={project.id}
+                            value={String(project.id)}
+                          >
+                            {projectLabel(project)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </DetailRow>
+
+                  <DetailRow label="Category">
+                    <Select
+                      value={draft.category}
+                      onValueChange={(value) =>
+                        setDraft((current) => ({ ...current, category: value }))
+                      }
+                      disabled={saving || deleting}
+                    >
+                      <SelectTrigger className="h-8 max-w-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={NO_CATEGORY}>Not set</SelectItem>
+                        {TASK_CATEGORIES.map((value) => (
+                          <SelectItem key={value} value={value}>
+                            {value}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </DetailRow>
+
+                  <DetailRow label="Due date">
+                    <Input
+                      type="date"
+                      value={draft.dueDate}
+                      onChange={(event) =>
+                        setDraft((current) => ({
+                          ...current,
+                          dueDate: event.target.value,
+                        }))
+                      }
+                      disabled={saving || deleting}
+                      className="h-8 max-w-xs"
+                    />
+                  </DetailRow>
+
+                  <DetailRow label="Created">
+                    {formatLongDate(task.created_at)}
+                  </DetailRow>
+                  <DetailRow label="Updated">
+                    {formatLongDate(task.updated_at)}
+                  </DetailRow>
+                  <DetailRow label="Source date">
+                    {formatLongDate(task.source_date)}
+                  </DetailRow>
+                  <DetailRow label="Generated">
+                    {task.extraction_model ||
+                      task.extraction_source ||
+                      task.extraction_prompt_version ||
+                      "Not tracked"}
+                  </DetailRow>
+                  <DetailRow label="Source">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      <span className="text-muted-foreground">
+                        {sourceLabel}
+                      </span>
+                      {sourceHref ? (
+                        <Button asChild variant="link" className="h-auto p-0">
+                          <a
+                            href={sourceHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <ArrowUpRight className="h-3.5 w-3.5" />
+                            {sourceTitle}
+                          </a>
+                        </Button>
+                      ) : (
+                        <span className="truncate">{sourceTitle}</span>
+                      )}
+                    </div>
+                  </DetailRow>
+                  <DetailRow label="IDs">
+                    <div className="space-y-1 text-xs text-muted-foreground">
+                      <p>Task: {task.id}</p>
+                      {task.metadata_id ? (
+                        <p>Source: {task.metadata_id}</p>
+                      ) : null}
+                      {task.source_chunk_id ? (
+                        <p>Chunk: {task.source_chunk_id}</p>
+                      ) : null}
+                      {task.segment_id ? (
+                        <p>Segment: {task.segment_id}</p>
+                      ) : null}
+                    </div>
+                  </DetailRow>
+                </dl>
+              </div>
+
+              <aside className="space-y-4">
+                {task.id && isAiGeneratedTask(task) ? (
+                  <section className="space-y-2">
+                    <p className="text-sm font-medium text-foreground">
+                      AI feedback
+                    </p>
+                    <TaskFeedbackButtons
+                      projectId={getTaskProjectId(task)}
+                      taskId={task.id}
+                      taskSnapshot={buildTaskFeedbackSnapshot(task)}
+                      onRemove={() => {
+                        void onDelete(task);
+                      }}
+                    />
+                  </section>
+                ) : null}
+
+                <section className="space-y-2">
+                  <p className="text-sm font-medium text-foreground">Context</p>
+                  {loading ? (
+                    <div className="flex min-h-32 items-center text-sm text-muted-foreground">
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Loading source context...
+                    </div>
+                  ) : task.source_context ? (
+                    <div className="max-h-96 overflow-y-auto whitespace-pre-wrap rounded-md bg-muted/40 p-3 text-sm leading-6 text-muted-foreground">
+                      {task.source_context}
+                    </div>
+                  ) : (
+                    <p className="rounded-md bg-muted/40 p-3 text-sm text-muted-foreground">
+                      No source context is available for this task.
+                    </p>
+                  )}
+                </section>
+              </aside>
+            </div>
+          </div>
+
+          <ModalFooter className="border-t border-border/60 px-6 py-4">
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => setDeleteConfirmOpen(true)}
+              disabled={saving || deleting}
+              className="sm:mr-auto"
+            >
+              {deleting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+              Delete
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={saving || deleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                void saveTask();
+              }}
+              disabled={saving || deleting}
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Save changes
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete task?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes the task from the project Kanban board. This action
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleting}
+              onClick={(event) => {
+                event.preventDefault();
+                void onDelete(task).then(() => setDeleteConfirmOpen(false));
+              }}
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Delete task
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
 interface TasksKanbanPageProps {
   projectId: string;
 }
 
 export function TasksKanbanPage({ projectId }: TasksKanbanPageProps) {
   const [columns, setColumns] = React.useState<TaskColumns>(EMPTY_COLUMNS);
+  const [columnOrder, setColumnOrder] =
+    React.useState<TaskKanbanStatus[]>(DEFAULT_COLUMN_ORDER);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [savingTaskId, setSavingTaskId] = React.useState<string | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = React.useState<string | null>(
+    null,
+  );
+  const [selectedTask, setSelectedTask] = React.useState<TasksRow | null>(null);
+  const [selectedTaskLoading, setSelectedTaskLoading] = React.useState(false);
+  const [deletingTaskId, setDeletingTaskId] = React.useState<string | null>(
+    null,
+  );
+  const [employees, setEmployees] = React.useState<EmployeeOption[]>([]);
+  const [projects, setProjects] = React.useState<ProjectOption[]>([]);
   const columnsRef = React.useRef(columns);
   const dragStartRef = React.useRef<{
     columns: TaskColumns;
@@ -294,15 +1035,86 @@ export function TasksKanbanPage({ projectId }: TasksKanbanPageProps) {
     };
   }, [projectId]);
 
+  React.useEffect(() => {
+    let cancelled = false;
+
+    async function loadOptions() {
+      try {
+        const [employeePayload, projectPayload] = await Promise.all([
+          apiFetch<EmployeeOption[]>("/api/employees"),
+          apiFetch<{ data?: ProjectOption[] }>(
+            "/api/projects?fields=id,name,project_number,job_number&limit=500&includeClient=false",
+          ),
+        ]);
+        if (cancelled) return;
+        setEmployees(employeePayload);
+        setProjects(projectPayload.data ?? []);
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Task edit options did not load.";
+        toast.error("Could not load task edit options", {
+          description: message,
+        });
+      }
+    }
+
+    void loadOptions();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (!selectedTaskId) {
+      setSelectedTask(null);
+      return;
+    }
+
+    const taskId = selectedTaskId;
+    let cancelled = false;
+    async function loadTaskDetail() {
+      setSelectedTaskLoading(true);
+      try {
+        const payload = await apiFetch<{ task: TasksRow }>(
+          `/api/tasks/${taskId}`,
+        );
+        if (cancelled) return;
+        setSelectedTask(payload.task);
+        setColumns((current) =>
+          updateTaskInColumns(current, taskId, () => payload.task),
+        );
+      } catch (err) {
+        if (cancelled) return;
+        const message =
+          err instanceof Error ? err.message : "Task details did not load.";
+        toast.error("Could not open task", { description: message });
+      } finally {
+        if (!cancelled) setSelectedTaskLoading(false);
+      }
+    }
+
+    void loadTaskDetail();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedTaskId]);
+
   function handleColumnsChange(
     nextColumns: Record<UniqueIdentifier, TasksRow[]>,
   ) {
-    const typedColumns: TaskColumns = {
-      open: nextColumns.open ?? [],
-      in_progress: nextColumns.in_progress ?? [],
-      blocked: nextColumns.blocked ?? [],
-      done: nextColumns.done ?? [],
-    };
+    const nextOrder = normalizeColumnOrder(Object.keys(nextColumns));
+    const typedColumns = orderedColumns(
+      {
+        open: nextColumns.open ?? [],
+        in_progress: nextColumns.in_progress ?? [],
+        blocked: nextColumns.blocked ?? [],
+        done: nextColumns.done ?? [],
+      },
+      nextOrder,
+    );
+    setColumnOrder(nextOrder);
     columnsRef.current = typedColumns;
     setColumns(typedColumns);
   }
@@ -314,6 +1126,12 @@ export function TasksKanbanPage({ projectId }: TasksKanbanPageProps) {
         method: "PATCH",
         body: JSON.stringify({ status }),
       });
+      setColumns((current) =>
+        updateTaskInColumns(current, taskId, (task) => ({ ...task, status })),
+      );
+      setSelectedTask((current) =>
+        current?.id === taskId ? { ...current, status } : current,
+      );
       toast.success("Task status updated");
     } catch (err) {
       const previousColumns = dragStartRef.current?.columns;
@@ -326,6 +1144,48 @@ export function TasksKanbanPage({ projectId }: TasksKanbanPageProps) {
       toast.error("Could not move task", { description: message });
     } finally {
       setSavingTaskId(null);
+    }
+  }
+
+  async function patchTask(task: TasksRow, patch: TaskPatch) {
+    if (!task.id) return;
+    setSavingTaskId(task.id);
+    try {
+      await apiFetch(`/api/tasks/${task.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(patch),
+      });
+      const nextTask = mergeTaskPatch(task, patch, employees, projects);
+      setColumns((current) =>
+        updateTaskInColumns(current, task.id!, () => nextTask),
+      );
+      setSelectedTask(nextTask);
+      toast.success("Task updated");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "The task update did not save.";
+      toast.error("Could not update task", { description: message });
+    } finally {
+      setSavingTaskId(null);
+    }
+  }
+
+  async function deleteTask(task: TasksRow) {
+    if (!task.id) return;
+
+    setDeletingTaskId(task.id);
+    try {
+      await apiFetch(`/api/tasks/${task.id}`, { method: "DELETE" });
+      setColumns((current) => removeTaskFromColumns(current, task.id!));
+      setSelectedTaskId(null);
+      setSelectedTask(null);
+      toast.success("Task deleted");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "The task was not deleted.";
+      toast.error("Could not delete task", { description: message });
+    } finally {
+      setDeletingTaskId(null);
     }
   }
 
@@ -355,13 +1215,15 @@ export function TasksKanbanPage({ projectId }: TasksKanbanPageProps) {
     );
   }
 
+  const kanbanValue = orderedColumns(columns, columnOrder);
+
   return (
     <div className="min-w-0 space-y-3">
       {savingTaskId ? (
-        <div className="text-xs text-muted-foreground">Saving task move...</div>
+        <div className="text-xs text-muted-foreground">Saving task...</div>
       ) : null}
       <Kanban
-        value={columns}
+        value={kanbanValue}
         onValueChange={handleColumnsChange}
         getItemValue={(item) => item.id ?? getTaskTitle(item)}
         autoScroll
@@ -397,11 +1259,16 @@ export function TasksKanbanPage({ projectId }: TasksKanbanPageProps) {
       >
         <div className="w-full overflow-x-auto pb-4">
           <KanbanBoard className="min-w-max items-start">
-            {COLUMN_DEFINITIONS.map((column) => (
+            {columnOrder.map((columnId) => (
               <TaskColumn
-                key={column.id}
-                column={column}
-                tasks={columns[column.id]}
+                key={columnId}
+                column={COLUMN_BY_ID[columnId]}
+                tasks={columns[columnId]}
+                onOpenTask={(task) => {
+                  if (!task.id) return;
+                  setSelectedTask(task);
+                  setSelectedTaskId(task.id);
+                }}
               />
             ))}
           </KanbanBoard>
@@ -409,9 +1276,7 @@ export function TasksKanbanPage({ projectId }: TasksKanbanPageProps) {
         <KanbanOverlay>
           {({ value, variant }) => {
             if (variant === "column") {
-              const column = COLUMN_DEFINITIONS.find(
-                (item) => item.id === value,
-              );
+              const column = COLUMN_BY_ID[value as TaskKanbanStatus];
               if (!column) return null;
               return <TaskColumn column={column} tasks={columns[column.id]} />;
             }
@@ -424,6 +1289,27 @@ export function TasksKanbanPage({ projectId }: TasksKanbanPageProps) {
           }}
         </KanbanOverlay>
       </Kanban>
+
+      <TaskDetailDialog
+        projectId={projectId}
+        task={selectedTask}
+        open={Boolean(selectedTaskId)}
+        loading={selectedTaskLoading}
+        saving={Boolean(savingTaskId && savingTaskId === selectedTask?.id)}
+        deleting={Boolean(
+          deletingTaskId && deletingTaskId === selectedTask?.id,
+        )}
+        employees={employees}
+        projects={projects}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedTaskId(null);
+            setSelectedTask(null);
+          }
+        }}
+        onPatch={patchTask}
+        onDelete={deleteTask}
+      />
     </div>
   );
 }

@@ -6,7 +6,10 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
-import { TASK_PRIORITY_VALUES, TASK_STATUS_VALUES } from "@/features/tasks/task-values";
+import {
+  TASK_PRIORITY_VALUES,
+  TASK_STATUS_VALUES,
+} from "@/features/tasks/task-values";
 import type { Json } from "@/types/database.types";
 import { mapTaskRow, type JoinedTaskRow } from "@/features/tasks/task-utils";
 
@@ -69,29 +72,35 @@ type JsonRecord = { [key: string]: Json | undefined };
 const TaskStatusSchema = z.enum(TASK_STATUS_VALUES);
 const TaskPrioritySchema = z.enum(TASK_PRIORITY_VALUES);
 
-const PatchBodySchema = z.object({
-  description: z.string().trim().min(1).optional(),
-  status: TaskStatusSchema.optional(),
-  due_date: z
-    .union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal(""), z.null()])
-    .optional(),
-  project_id: z.union([z.coerce.number().int().positive(), z.null()]).optional(),
-  category: z.union([z.string().trim().min(1), z.null()]).optional(),
-  priority: z.union([TaskPrioritySchema, z.null()]).optional(),
-  assignee_user_id: z.union([z.string().uuid(), z.null()]).optional(),
-  assignee_person_id: z.union([z.string().uuid(), z.null()]).optional(),
-}).refine(
-  (body) =>
-    body.description !== undefined ||
-    body.status !== undefined ||
-    body.due_date !== undefined ||
-    body.project_id !== undefined ||
-    body.category !== undefined ||
-    body.priority !== undefined ||
-    body.assignee_user_id !== undefined ||
-    body.assignee_person_id !== undefined,
-  { message: "At least one task field is required." },
-);
+const PatchBodySchema = z
+  .object({
+    title: z.union([z.string().trim().min(1), z.null()]).optional(),
+    description: z.string().trim().min(1).optional(),
+    status: TaskStatusSchema.optional(),
+    due_date: z
+      .union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal(""), z.null()])
+      .optional(),
+    project_id: z
+      .union([z.coerce.number().int().positive(), z.null()])
+      .optional(),
+    category: z.union([z.string().trim().min(1), z.null()]).optional(),
+    priority: z.union([TaskPrioritySchema, z.null()]).optional(),
+    assignee_user_id: z.union([z.string().uuid(), z.null()]).optional(),
+    assignee_person_id: z.union([z.string().uuid(), z.null()]).optional(),
+  })
+  .refine(
+    (body) =>
+      body.description !== undefined ||
+      body.title !== undefined ||
+      body.status !== undefined ||
+      body.due_date !== undefined ||
+      body.project_id !== undefined ||
+      body.category !== undefined ||
+      body.priority !== undefined ||
+      body.assignee_user_id !== undefined ||
+      body.assignee_person_id !== undefined,
+    { message: "At least one task field is required." },
+  );
 
 function toJsonRecord(value: unknown): JsonRecord {
   return typeof value === "object" && value !== null && !Array.isArray(value)
@@ -211,13 +220,23 @@ export const GET = withApiGuardrails(
   async ({ request, params }) => {
     const { taskId } = await params;
     if (!taskId) {
-      return NextResponse.json({ error: "Task ID is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Task ID is required" },
+        { status: 400 },
+      );
     }
 
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "tasks/[taskId]#GET", message: "Authentication required." });
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "tasks/[taskId]#GET",
+        message: "Authentication required.",
+      });
     }
 
     const serviceClient = createServiceClient();
@@ -237,7 +256,8 @@ export const GET = withApiGuardrails(
       });
     }
 
-    const readClient = profileData?.is_admin === true ? serviceClient : supabase;
+    const readClient =
+      profileData?.is_admin === true ? serviceClient : supabase;
     const { data, error } = await readClient
       .from("tasks")
       .select(TASK_SELECT_FULL)
@@ -260,22 +280,36 @@ export const PATCH = withApiGuardrails(
   async ({ request, params }) => {
     const { taskId } = await params;
     if (!taskId) {
-      return NextResponse.json({ error: "Task ID is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Task ID is required" },
+        { status: 400 },
+      );
     }
 
     const body = await request.json();
     const parsed = PatchBodySchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid request body", details: parsed.error.flatten() }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid request body", details: parsed.error.flatten() },
+        { status: 400 },
+      );
     }
 
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "tasks/[taskId]#PATCH", message: "Authentication required." });
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "tasks/[taskId]#PATCH",
+        message: "Authentication required.",
+      });
     }
 
     const updates: {
+      title?: string | null;
       description?: string;
       status?: string;
       due_date?: string | null;
@@ -295,17 +329,23 @@ export const PATCH = withApiGuardrails(
       updates.status = parsed.data.status;
     }
 
+    if (parsed.data.title !== undefined) {
+      updates.title = parsed.data.title;
+    }
+
     if (parsed.data.description !== undefined) {
       updates.description = parsed.data.description;
     }
 
     if (parsed.data.due_date !== undefined) {
-      updates.due_date = parsed.data.due_date === "" ? null : parsed.data.due_date;
+      updates.due_date =
+        parsed.data.due_date === "" ? null : parsed.data.due_date;
     }
 
     if (parsed.data.project_id !== undefined) {
       updates.project_id = parsed.data.project_id;
-      updates.project_ids = parsed.data.project_id === null ? [] : [parsed.data.project_id];
+      updates.project_ids =
+        parsed.data.project_id === null ? [] : [parsed.data.project_id];
     }
 
     if (parsed.data.priority !== undefined) {
@@ -313,11 +353,17 @@ export const PATCH = withApiGuardrails(
     }
 
     if (parsed.data.assignee_user_id !== undefined) {
-      Object.assign(updates, await resolveAssignee(parsed.data.assignee_user_id));
+      Object.assign(
+        updates,
+        await resolveAssignee(parsed.data.assignee_user_id),
+      );
     }
 
     if (parsed.data.assignee_person_id !== undefined) {
-      Object.assign(updates, await resolveAssigneePerson(parsed.data.assignee_person_id));
+      Object.assign(
+        updates,
+        await resolveAssigneePerson(parsed.data.assignee_person_id),
+      );
     }
 
     if (parsed.data.category !== undefined) {
@@ -360,7 +406,10 @@ export const DELETE = withApiGuardrails(
   async ({ request, params }) => {
     const { taskId } = await params;
     if (!taskId) {
-      return NextResponse.json({ error: "Task ID is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Task ID is required" },
+        { status: 400 },
+      );
     }
 
     const supabase = await createClient();
@@ -370,7 +419,11 @@ export const DELETE = withApiGuardrails(
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "tasks/[taskId]#DELETE", message: "Authentication required." });
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "tasks/[taskId]#DELETE",
+        message: "Authentication required.",
+      });
     }
 
     const { error } = await supabase.from("tasks").delete().eq("id", taskId);

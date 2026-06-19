@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { PageShell } from "@/components/layout";
-import { createServiceClient } from "@/lib/supabase/service";
 import { TasksKanbanPage } from "@/features/tasks/tasks-kanban-page";
 
 export default async function ProjectTasksKanbanPage({
@@ -20,27 +19,11 @@ export default async function ProjectTasksKanbanPage({
     notFound();
   }
 
-  const supabase = createServiceClient();
-  const { data: project, error } = await supabase
-    .from("projects")
-    .select("id, name")
-    .eq("id", numericProjectId)
-    .single();
-
-  if (error || !project) {
-    notFound();
-  }
-
   return (
     <PageShell
       variant="dashboard"
       title="Task Kanban"
       description="Drag cards between statuses. Moves save immediately."
-      breadcrumbs={[
-        { label: project.name ?? "Project", href: `/${projectId}/home` },
-        { label: "Tasks", href: `/${projectId}/tasks` },
-        { label: "Kanban" },
-      ]}
       actions={
         <Button asChild variant="outline" size="sm">
           <Link href={`/${projectId}/tasks`}>Task inbox</Link>
