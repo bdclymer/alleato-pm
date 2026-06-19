@@ -83,6 +83,11 @@ def test_run_microsoft_assistant_uses_deep_agents_tools_memory_and_skills():
             mailboxUserId="megan@alleatogroup.com",
             projectId=983,
             prompt="Triage today's urgent inbox items and draft replies.",
+            approvedSkillContext=(
+                "## Approved Skill Library Context\n\n"
+                "### Draft Outlook replies from source evidence (v1, email, low risk)\n"
+                "Instructions: Draft replies only from the current email thread."
+            ),
         ),
         create_agent=fake_create_agent,
     )
@@ -109,8 +114,12 @@ def test_run_microsoft_assistant_uses_deep_agents_tools_memory_and_skills():
     assert captured["config"]["configurable"]["mailbox_user_id"] == "megan@alleatogroup.com"
     prompt = captured["payload"]["messages"][0]["content"]
     assert "Microsoft operator request" in prompt
+    assert "Approved email/Teams Skill Library context" in prompt
+    assert "Draft Outlook replies from source evidence" in prompt
     assert "Draft email or Teams payloads for review only" in prompt
     assert "Project ID supplied by caller: 983" in prompt
+    assert response.approved_skill_context is not None
+    assert "Draft Outlook replies from source evidence" in response.approved_skill_context
 
 
 def test_run_microsoft_assistant_extracts_draft_actions_from_tool_outputs():
@@ -523,6 +532,42 @@ def test_microsoft_assistant_route_returns_payload(client, monkeypatch):
     body = response.json()
     assert body["mode"] == "deep_agents"
     assert body["toolTrace"][0]["status"] == "success"
+
+
+def test_microsoft_assistant_route_accepts_approved_skill_context(client, monkeypatch):
+    _override_auth(client.app)
+    monkeypatch.setenv("DEEP_AGENTS_MICROSOFT_EXECUTIVE_ASSISTANT_ENABLED", "true")
+
+    captured: dict[str, Any] = {}
+
+    def fake_run(request, *, model):
+        captured["approved_skill_context"] = request.approved_skill_context
+        return run_microsoft_executive_assistant(
+            request,
+            create_agent=lambda **kwargs: _FakeAgent({}),
+            model=model,
+        )
+
+    monkeypatch.setitem(_route_endpoint(client.app).__globals__, "run_microsoft_executive_assistant", fake_run)
+    try:
+        response = client.post(
+            "/api/intelligence/microsoft-executive-assistant",
+            json={
+                "userId": "user-1",
+                "sessionId": "session-1",
+                "prompt": "Check email and draft a Teams follow-up",
+                "approvedSkillContext": (
+                    "## Approved Skill Library Context\n\n"
+                    "### Escalate Teams threads with concise asks (v1, teams, low risk)"
+                ),
+            },
+        )
+    finally:
+        _clear_auth(client.app)
+
+    assert response.status_code == 200
+    assert "Escalate Teams threads" in captured["approved_skill_context"]
+    assert "Escalate Teams threads" in response.json()["approvedSkillContext"]
 
 
 def test_scheduled_trigger_is_feature_gated(monkeypatch):

@@ -27,6 +27,7 @@ class MicrosoftExecutiveAssistantRequest(BaseModel):
     prompt: str = Field(..., min_length=1)
     mailbox_user_id: Optional[str] = Field(default=None, alias="mailboxUserId")
     project_id: Optional[int] = Field(default=None, ge=1, alias="projectId")
+    approved_skill_context: Optional[str] = Field(default=None, alias="approvedSkillContext")
     trigger: Literal["strategist_delegation", "outlook_event", "teams_message", "scheduled_check"] = (
         "strategist_delegation"
     )
@@ -83,6 +84,7 @@ class MicrosoftExecutiveAssistantResponse(BaseModel):
     actions: List[MicrosoftAssistantAction] = Field(default_factory=list)
     tool_trace: List[MicrosoftAssistantTraceItem] = Field(..., alias="toolTrace")
     skills_loaded: List[str] = Field(default_factory=list, alias="skillsLoaded")
+    approved_skill_context: Optional[str] = Field(default=None, alias="approvedSkillContext")
     orchestrator: str
 
     model_config = {"populate_by_name": True}

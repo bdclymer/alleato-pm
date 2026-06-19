@@ -53,6 +53,7 @@ import { createDocumentIntelligenceTools } from "@/lib/ai/tools/document-intelli
 import { createIntelligenceTools } from "@/lib/ai/tools/intelligence-tools";
 import { createExecutiveBriefTools } from "@/lib/ai/tools/executive-brief-tools";
 import { createAssistantSelfInspectionTools } from "@/lib/ai/assistant-self-knowledge";
+import { buildSkillInjectionContext } from "@/lib/ai/services/skill-injection-service";
 import { strategistSystemPrompt } from "@/lib/ai/agents/strategist";
 import { soul } from "@/lib/ai/soul";
 import { identity } from "@/lib/ai/identity";
@@ -144,6 +145,7 @@ async function callMicrosoftExecutiveAssistant(input: {
   context?: string;
   mailboxUserId?: string;
   projectId?: number;
+  approvedSkillContext?: string;
 }) {
   const response = await fetch(
     `${microsoftAssistantBackendUrl()}/api/intelligence/microsoft-executive-assistant`,
@@ -162,6 +164,7 @@ async function callMicrosoftExecutiveAssistant(input: {
           : input.question,
         mailboxUserId: input.mailboxUserId ?? defaultMicrosoftMailbox(),
         projectId: input.projectId,
+        approvedSkillContext: input.approvedSkillContext || undefined,
         trigger: "strategist_delegation",
       }),
     },
@@ -1136,19 +1139,44 @@ export function createStrategistTools(
           .describe("Optional Alleato project ID for project-scoped Microsoft context."),
       }),
       execute: async ({ question, context, mailboxUserId, projectId }) => {
+        const resolvedProjectId = projectId ?? options.pinnedProjectId;
+        let approvedSkillContext = "";
+        try {
+          const skillContext = await buildSkillInjectionContext({
+            userId,
+            messageText: [question, context].filter(Boolean).join("\n\n"),
+            selectedProjectId: resolvedProjectId,
+            surface: "microsoft_executive_assistant",
+            allowedCategories: ["email", "teams"],
+            limit: 3,
+          });
+          approvedSkillContext = skillContext.block;
+        } catch (error) {
+          console.error("[microsoft-executive-assistant] failed to load approved email/teams skills", {
+            message: error instanceof Error ? error.message : "Unknown skill context error",
+          });
+        }
+
         const response = await callMicrosoftExecutiveAssistant({
           userId,
           sessionId: options.sessionId,
           question,
           context,
           mailboxUserId,
-          projectId: projectId ?? options.pinnedProjectId,
+          projectId: resolvedProjectId,
+          approvedSkillContext: approvedSkillContext || undefined,
         });
         options.onTrace?.({
           toolName: "consultMicrosoftExecutiveAssistant",
           status: response.success ? "success" : "error",
-          projectId: projectId ?? options.pinnedProjectId ?? null,
-          input: { question, context, mailboxUserId, projectId },
+          projectId: resolvedProjectId ?? null,
+          input: {
+            question,
+            context,
+            mailboxUserId,
+            projectId,
+            approvedSkillContextIncluded: Boolean(approvedSkillContext),
+          },
           response,
         });
         return response;

@@ -189,6 +189,59 @@ describe("skill-injection-service", () => {
     expect(result.block).not.toContain("Review app pay approvals");
   });
 
+  it("limits Microsoft Executive Assistant skill injection to email and Teams categories", async () => {
+    listActiveVisibleSkillsMock.mockResolvedValue([
+      skill({
+        id: "11111111-1111-4111-8111-111111111111",
+        title: "Draft Outlook replies from source evidence",
+        slug: "draft-outlook-replies-from-source-evidence",
+        summary: "Use thread evidence before drafting Outlook replies.",
+        instructions: "Draft Outlook replies only from the current email thread.",
+        category: "email",
+        scopeType: "company",
+        projectId: null,
+        usageCount: 0,
+      }),
+      skill({
+        id: "22222222-2222-4222-8222-222222222222",
+        title: "Escalate Teams threads with concise asks",
+        slug: "escalate-teams-threads-with-concise-asks",
+        summary: "Summarize Teams escalation asks clearly.",
+        instructions: "For Teams escalations, name the ask, owner, and evidence.",
+        category: "teams",
+        scopeType: "company",
+        projectId: null,
+        usageCount: 0,
+      }),
+      skill({
+        id: "33333333-3333-4333-8333-333333333333",
+        title: "Explain app inbox navigation",
+        slug: "explain-app-inbox-navigation",
+        summary: "Explain where inbox pages live in the app.",
+        instructions: "Explain the app page before giving workflow guidance.",
+        category: "app_help",
+        scopeType: "company",
+        projectId: null,
+        usageCount: 10,
+      }),
+    ]);
+
+    const result = await buildSkillInjectionContext({
+      userId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      messageText: "Review today's Outlook inbox and draft a Teams escalation.",
+      surface: "microsoft_executive_assistant",
+      allowedCategories: ["email", "teams"],
+    });
+
+    expect(result.usage?.skills.map((item) => item.category).sort()).toEqual([
+      "email",
+      "teams",
+    ]);
+    expect(result.block).toContain("Draft Outlook replies from source evidence");
+    expect(result.block).toContain("Escalate Teams threads with concise asks");
+    expect(result.block).not.toContain("Explain app inbox navigation");
+  });
+
   it("does not inject irrelevant skills into unrelated prompts", async () => {
     listActiveVisibleSkillsMock.mockResolvedValue([
       skill({

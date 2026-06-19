@@ -408,7 +408,7 @@ Goal: approved skills affect assistant behavior selectively and visibly.
 - [x] Inject selected skills into main AI assistant prompt.
 - [ ] Inject selected skills into backend Deep Agents where appropriate.
 - [x] Inject selected skills into App Expert only when app-help relevant.
-- [ ] Inject selected skills into Microsoft Executive Assistant only when email/Teams relevant.
+- [x] Inject selected skills into Microsoft Executive Assistant only when email/Teams relevant.
 - [x] Add clear instruction priority between system prompt, source evidence, memory, and skills.
 
 ### Traceability

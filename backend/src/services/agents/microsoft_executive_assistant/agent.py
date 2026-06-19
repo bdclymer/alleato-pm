@@ -164,12 +164,19 @@ def _microsoft_prompt(request: MicrosoftExecutiveAssistantRequest) -> str:
     )
     owner = _mailbox_owner_label(request)
     question_directives = _microsoft_question_directives(request)
+    approved_skill_context = (
+        "Approved email/Teams Skill Library context:\n"
+        f"{request.approved_skill_context.strip()}\n\n"
+        if request.approved_skill_context and request.approved_skill_context.strip()
+        else ""
+    )
     return (
         f"Microsoft operator request:\n{request.prompt}\n\n"
         f"Trigger: {request.trigger}.\n"
         f"{mailbox}\n"
         f"{project}\n"
         f"Maximum messages to inspect: {request.max_messages}.\n\n"
+        f"{approved_skill_context}"
         "Required workflow:\n"
         f"1. Treat this as Microsoft executive-assistant work for {owner}, not as generic Alleato strategist work.\n"
         "2. Use live Outlook inbox reads for date-based inbox questions when a mailbox is available.\n"
@@ -914,6 +921,7 @@ def run_microsoft_executive_assistant(
             actions=_extract_actions(answer, result),
             toolTrace=_tool_trace_from_result(result, runtime_trace=runtime_trace),
             skillsLoaded=loaded_skills,
+            approvedSkillContext=request.approved_skill_context,
             orchestrator=ORCHESTRATOR_NAME,
         )
     except Exception as exc:
@@ -941,5 +949,6 @@ def run_microsoft_executive_assistant(
                 )
             ],
             skillsLoaded=loaded_skills,
+            approvedSkillContext=request.approved_skill_context,
             orchestrator=ORCHESTRATOR_NAME,
         )
