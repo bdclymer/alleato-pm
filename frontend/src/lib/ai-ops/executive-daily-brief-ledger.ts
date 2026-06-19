@@ -58,6 +58,7 @@ type RegenerateDailyBriefDraftForRunInput = {
 type CompleteDailyBriefRunInput = {
   status: AiRun["status"];
   resultSummary: string;
+  dailyRecapId?: string | null;
   deliveryStatus?: AiRun["deliveryStatus"];
   deliveryTarget?: Record<string, unknown>;
   sourceCounts?: Record<string, unknown>;
@@ -336,6 +337,7 @@ export async function completeDailyBriefRun(
   });
   await ledger.updateRun(context.runId, {
     status: input.status,
+    dailyRecapId: input.dailyRecapId,
     resultSummary: input.resultSummary,
     deliveryStatus: input.deliveryStatus,
     deliveryTarget: input.deliveryTarget,
@@ -439,6 +441,7 @@ export async function regenerateDailyBriefDraftWithLedger(
 
     await completeDailyBriefRun(runContext, {
       status: "succeeded",
+      dailyRecapId: draft.id,
       resultSummary: `Generated Executive Daily Brief draft with ${itemCount} evidence-backed item(s).`,
       sourceCounts: { itemCount, windowDays: input.windowDays },
       sourceHealth: sourceHealthForDraft(draft),

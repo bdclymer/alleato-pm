@@ -159,6 +159,7 @@ export const POST = withApiGuardrails(
       await recordDraftEvidence(runContext, draft);
       await completeDailyBriefRun(runContext, {
         status: "succeeded",
+        dailyRecapId: draftId,
         deliveryStatus: "sent",
         resultSummary: `Sent admin owner briefing test message with ${itemCount} item(s).`,
         deliveryTarget: {

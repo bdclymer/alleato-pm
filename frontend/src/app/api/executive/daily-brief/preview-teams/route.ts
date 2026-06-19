@@ -125,6 +125,7 @@ export const POST = withApiGuardrails(
       }
       await completeDailyBriefRun(runContext, {
         status: "succeeded",
+        dailyRecapId: draft.id,
         deliveryStatus: "dry_run",
         resultSummary: `Built Teams preview with ${totalItems} brief items.`,
         deliveryTarget: {

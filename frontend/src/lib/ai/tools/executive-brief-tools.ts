@@ -1,10 +1,9 @@
 import { tool } from "ai";
 import { z } from "zod";
-import { regenerateExecutiveBriefingDraft } from "@/lib/executive/executive-briefing-workflow";
 import {
   completeDailyBriefRun,
   failDailyBriefRun,
-  recordDraftEvidence,
+  regenerateDailyBriefDraftForRun,
   sourceHealthForDraft,
   startDailyBriefRun,
 } from "@/lib/ai-ops/executive-daily-brief-ledger";
@@ -62,7 +61,7 @@ export function createExecutiveBriefTools(
           });
 
           try {
-            const result = await regenerateExecutiveBriefingDraft({
+            const result = await regenerateDailyBriefDraftForRun(runContext, {
               windowDays,
             });
 
@@ -73,9 +72,9 @@ export function createExecutiveBriefTools(
               sections.waitingOnOthers.length +
               sections.importantUpdates.length;
 
-            await recordDraftEvidence(runContext, result.draft);
             await completeDailyBriefRun(runContext, {
               status: "succeeded",
+              dailyRecapId: result.draft.id,
               deliveryStatus: "dry_run",
               resultSummary: `Generated Executive Daily Brief with ${itemCount} item(s) from AI tool.`,
               deliveryTarget: { channel: "none", dryRun: true },

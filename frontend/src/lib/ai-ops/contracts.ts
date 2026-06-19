@@ -197,6 +197,7 @@ export const aiRunSchema = z.object({
   id: z.string().uuid().optional(),
   eventId: z.string().uuid().nullable().optional(),
   sourceSyncRunId: z.string().uuid().nullable().optional(),
+  dailyRecapId: z.string().uuid().nullable().optional(),
   workflowId: z.string().min(1),
   workflowVersion: z.string().min(1),
   triggerType: z.string().min(1),

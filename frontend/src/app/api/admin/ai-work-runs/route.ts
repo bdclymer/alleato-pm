@@ -26,7 +26,8 @@ const WORK_RUN_SELECT = `
   source_policy,
   metadata,
   event_id,
-  source_sync_run_id
+  source_sync_run_id,
+  daily_recap_id
 `;
 const SOURCE_SELECT = `
   id,
@@ -72,6 +73,7 @@ export type AiWorkRunView = {
   toolScope: JsonObject;
   sourcePolicy: JsonObject;
   metadata: JsonObject;
+  dailyRecapId: string | null;
   event: {
     id: string;
     eventType: string;
@@ -112,6 +114,7 @@ type AiWorkRunRow = {
   metadata: unknown;
   event_id: string | null;
   source_sync_run_id: string | null;
+  daily_recap_id: string | null;
 };
 
 type AiOperationEventRow = {
@@ -268,6 +271,7 @@ export const GET = withApiGuardrails(WHERE, async ({ request }) => {
       toolScope: asObject(run.tool_scope),
       sourcePolicy: asObject(run.source_policy),
       metadata: asObject(run.metadata),
+      dailyRecapId: run.daily_recap_id,
       event: event
         ? {
             id: event.id,

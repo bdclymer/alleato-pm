@@ -30,6 +30,7 @@ export type AiOpsLedger = {
     patch: Pick<
       Partial<AiRun>,
       | "status"
+      | "dailyRecapId"
       | "sourceCounts"
       | "resultSummary"
       | "confidence"
@@ -82,6 +83,7 @@ function toRunInsert(run: AiRun): AiWorkRunInsert {
     id: parsed.id,
     event_id: parsed.eventId,
     source_sync_run_id: parsed.sourceSyncRunId,
+    daily_recap_id: parsed.dailyRecapId,
     workflow_id: parsed.workflowId,
     trigger_type: parsed.triggerType,
     surface: parsed.surface,
@@ -204,6 +206,7 @@ export function createAiOpsLedger(
     async updateRun(runId, patch) {
       const payload: AiWorkRunUpdate = {
         status: patch.status,
+        daily_recap_id: patch.dailyRecapId,
         source_counts: patch.sourceCounts
           ? toJson(patch.sourceCounts)
           : undefined,

@@ -174,6 +174,13 @@ function RunDetail({ run }: { run: AiWorkRunView }) {
         ["errorMessage", run.sourceSyncRun.errorMessage ?? ""],
       ] as Array<[string, string]>).filter(([, value]) => value !== "")
     : [];
+  const artifactEntries: Array<[string, string]> = run.dailyRecapId
+    ? [
+        ["kind", "brief_packet"],
+        ["storageTable", "daily_recaps"],
+        ["storageId", run.dailyRecapId],
+      ]
+    : [];
 
   return (
     <div className="space-y-5 py-4">
@@ -185,12 +192,13 @@ function RunDetail({ run }: { run: AiWorkRunView }) {
       )}
 
       <div className="grid gap-6 lg:grid-cols-3">
+        <DetailList title="Generated Artifact" entries={artifactEntries} />
         <DetailList title="Source Counts" entries={jsonEntries(run.sourceCounts)} />
         <DetailList title="Delivery Target" entries={jsonEntries(run.deliveryTarget)} />
-        <DetailList title="Source Sync Run" entries={sourceSyncEntries} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
+        <DetailList title="Source Sync Run" entries={sourceSyncEntries} />
         <DetailList title="Tool Scope" entries={jsonEntries(run.toolScope)} />
         <DetailList title="Source Policy" entries={jsonEntries(run.sourcePolicy)} />
       </div>

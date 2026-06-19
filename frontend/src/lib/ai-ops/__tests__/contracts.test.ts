@@ -60,6 +60,27 @@ describe("ai-ops contracts", () => {
     expect(parsed.sourceHealth).toHaveLength(1);
   });
 
+  it("allows generated Daily Brief runs to carry their daily_recaps artifact id", () => {
+    const parsed = aiRunSchema.parse({
+      dailyRecapId: "33333333-3333-4333-8333-333333333333",
+      workflowId: "executive_daily_brief",
+      workflowVersion: "2026-06-19",
+      triggerType: "preview_request",
+      surface: "executive_daily_brief",
+      title: "Executive Daily Brief",
+      userGoal: "Generate the Executive Daily Brief.",
+      normalizedGoal: "Generate evidence-linked owner briefing.",
+      status: "succeeded",
+      permissionMode: "service",
+      sourceHealth: [],
+      artifacts: [],
+    });
+
+    expect(parsed.dailyRecapId).toBe(
+      "33333333-3333-4333-8333-333333333333",
+    );
+  });
+
   it("rejects runs without workflow version or source health shape", () => {
     expect(() =>
       aiRunSchema.parse({

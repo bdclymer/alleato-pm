@@ -274,7 +274,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [ ] Document/RAG claims include document/chunk/source ref or are excluded.
 - [ ] Placeholder-only source panels count as incomplete.
 - [ ] Generated packet stores source coverage and source health.
-- [ ] Generated packet can be inspected from the run ledger.
+- [x] Generated packet can be inspected from the run ledger.
 - [ ] Tests fail if a claim lacks source refs.
 
 ## Delivery Checklist
@@ -299,7 +299,7 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 - [ ] UI shows scheduled, preview, dry-run, skipped, failed, disabled, partial,
       and succeeded runs.
 - [ ] UI shows source health per run.
-- [ ] UI shows generated artifact per run.
+- [x] UI shows generated artifact per run.
 - [ ] UI shows delivery attempts per run.
 - [ ] UI shows source refs/evidence drilldown per generated packet.
 - [ ] UI shows exact failure code/message and owning step.
@@ -392,6 +392,9 @@ more schema, because `ai_work_runs` already exists and is only partially wired.
 | AI Ops focused tests  | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand`                                     | Passed  | 2 suites, 11 tests passed. Required fields and pre-write validation fail loudly.                   |
 | App route tests       | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/app/api/executive/daily-brief/__tests__/route.test.ts src/app/api/executive/brandon-daily-update/__tests__/route.test.ts --runInBand` | Passed  | 4 suites, 16 tests passed. Fresh packet routes now assert the ledger-backed helper is used.        |
 | Gateway guardrail     | `npm run rag:verify:executive-daily-brief-gateway`                                                                                                                                       | Passed  | Blocks raw `regenerateExecutiveBriefingDraft` usage under `frontend/src/app` so route/action generation cannot bypass the AI Ops ledger. |
+| Artifact linkage lint | `cd frontend && npx eslint src/lib/ai-ops/contracts.ts src/lib/ai-ops/ledger.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/lib/ai/tools/executive-brief-tools.ts src/app/api/executive/daily-brief/preview-teams/route.ts src/app/api/admin/owner-briefing/send-test/route.ts src/app/api/admin/ai-work-runs/route.ts 'src/app/(admin)/ai-work-runs/ai-work-runs-client.tsx'` | Passed  | Contract/writer, AI tool, preview/admin send routes, admin API, and run UI lint cleanly after `daily_recap_id` linkage. |
+| Artifact linkage tests | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand`                                  | Passed  | 2 suites, 13 tests passed. Tests now prove `dailyRecapId` is accepted and mapped to `ai_work_runs.daily_recap_id`. |
+| Supabase type gate    | `npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema public`                                                                                                | Blocked | CLI returned `LegacyInvalidAccessTokenError`; no schema migration was added in this slice. The accidentally truncated generated type file was restored from `HEAD`. |
 | Runner no-write smoke | `cd frontend && npx tsx scripts/run-executive-daily-brief.ts --now=2026-06-19T12:00:00.000Z`                                                                                              | Passed  | Kill switch off; script loaded and exited with `executive_daily_brief_disabled`, no send/write.    |
 | Disabled send smoke   | `curl -sS -X POST http://localhost:3001/api/executive/daily-brief/send-teams -H 'content-type: application/json' -d '{}'`                                                                 | Passed  | Kill switch off; route returned disabled state with run id `45c9f9a2-2ac1-45fe-8893-a2cd07c28374`. |
 | Admin UI/API readback | `curl -sS 'http://localhost:3001/api/admin/ai-work-runs?workflow=executive_daily_brief&limit=5'`                                                                                          | Blocked | Curl lacks authenticated admin browser session; response was `AUTH_EXPIRED`.                       |

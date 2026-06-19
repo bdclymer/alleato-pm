@@ -31,6 +31,8 @@
    - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/executive/brandon-daily-update/__tests__/route.test.ts`
    - `/Users/meganharrison/Documents/alleato-pm/scripts/verify/verify_executive_daily_brief_gateway.mjs`
    - `/Users/meganharrison/Documents/alleato-pm/package.json`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/api/admin/ai-work-runs/route.ts`
+   - `/Users/meganharrison/Documents/alleato-pm/frontend/src/app/(admin)/ai-work-runs/ai-work-runs-client.tsx`
 7) Commands run and outcome (pass/fail counts):
    - Pass: read pasted ChatGPT recommendation from Codex attachment.
    - Pass: read `docs/codebase-map/hermes-vs-openclaw-comparison.md`.
@@ -60,6 +62,11 @@
    - Pass: `npm run rag:verify:executive-daily-brief-gateway`.
    - Pass: `cd frontend && npx eslint src/lib/ai-ops/executive-daily-brief-ledger.ts src/app/api/executive/daily-brief/preview-teams/route.ts src/app/api/executive/daily-brief/route-helpers.ts src/app/api/executive/daily-brief/widget/route.ts 'src/app/(main)/actions/executive-briefing-actions.ts' src/app/api/executive/daily-brief/__tests__/route.test.ts src/app/api/executive/brandon-daily-update/__tests__/route.test.ts`.
    - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/app/api/executive/daily-brief/__tests__/route.test.ts src/app/api/executive/brandon-daily-update/__tests__/route.test.ts --runInBand` passed 4 suites / 16 tests.
+   - Blocked: `npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema public` returned `LegacyInvalidAccessTokenError`; no schema migration was added in the artifact-linkage slice.
+   - Pass: restored the accidentally truncated `frontend/src/types/database.types.ts` from `HEAD` after the failed Supabase command.
+   - Pass: extended `AiRun`/ledger mapping with `dailyRecapId`, mapped it to existing `ai_work_runs.daily_recap_id`, and exposed it as the generated artifact in `/api/admin/ai-work-runs` and `/ai-work-runs`.
+   - Pass: `cd frontend && npx eslint src/lib/ai-ops/contracts.ts src/lib/ai-ops/ledger.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/lib/ai/tools/executive-brief-tools.ts src/app/api/executive/daily-brief/preview-teams/route.ts src/app/api/admin/owner-briefing/send-test/route.ts src/app/api/admin/ai-work-runs/route.ts 'src/app/(admin)/ai-work-runs/ai-work-runs-client.tsx'`.
+   - Pass: `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand` passed 2 suites / 13 tests.
 8) Evidence artifacts (screenshot/video/report/log paths):
    - `docs/ops/tasks/2026-06-19-executive-daily-brief-ai-ops-gateway.md`
    - `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
@@ -79,11 +86,14 @@
    - `frontend/src/app/api/executive/daily-brief/__tests__/route.test.ts`
    - `frontend/src/app/api/executive/brandon-daily-update/__tests__/route.test.ts`
    - `scripts/verify/verify_executive_daily_brief_gateway.mjs`
+   - `frontend/src/app/api/admin/ai-work-runs/route.ts`
+   - `frontend/src/app/(admin)/ai-work-runs/ai-work-runs-client.tsx`
 9) Top 3 findings (frontend-visible issues first):
    - No frontend-visible changes yet.
    - Inventory confirmed multiple bypasses: preview routes, send routes, admin test send, actions, AI tools, and legacy delivery paths can generate or deliver without one canonical `ai_work_runs` record.
    - Shared AI Ops contracts and a shared ledger writer now exist and are tested; scheduled runner, preview/send routes, widget fresh generation, executive page regeneration, admin test-send, and AI tool generation now use the shared writer or an existing-run helper.
-10) Recommended next action (one line): Standardize `daily_recaps` artifact linkage and delivery-attempt modeling, then verify a real generated preview in `/ai-work-runs` with authenticated browser evidence.
+   - New generated Daily Brief runs now set `ai_work_runs.daily_recap_id` when a `daily_recaps` draft id is available, and `/ai-work-runs` shows that generated artifact reference.
+10) Recommended next action (one line): Fix the Supabase CLI token, then add first-class delivery-attempt/artifact tables or explicitly defer them before authenticated `/ai-work-runs` browser proof.
 11) Handoff file path: `docs/ops/handoffs/2026-06-19-S57-executive-daily-brief-ai-ops-gateway.md`
 12) Migration ledger evidence: Not applicable yet; no migrations have been created or changed.
 <!-- markdownlint-enable MD029 MD034 -->
@@ -103,17 +113,19 @@
 In progress. Linear issue AAI-551 is created and the task markdown file is the
 source of truth. Current-path inventory, ledger audit, shared AI Ops contracts,
 the shared ledger writer, scheduled-runner migration, preview/send route ledger
-wiring, app fresh-generation bypass closure, and a route/action raw-generator
-guardrail are implemented with focused tests/lint. The workflow is not complete
-until `daily_recaps` artifact linkage, source adapter normalization, delivery
-attempt/artifact modeling, UI inspection, and end-to-end proof checklists are
-complete.
+wiring, app fresh-generation bypass closure, a route/action raw-generator
+guardrail, and existing `daily_recaps` artifact linkage through
+`ai_work_runs.daily_recap_id` are implemented with focused tests/lint. The
+workflow is not complete until source adapter normalization, first-class delivery
+attempt/artifact modeling or explicit deferral, authenticated UI inspection, and
+end-to-end proof checklists are complete.
 
 ## Exact Next Step
 
-Standardize the `daily_recaps` to `ai_work_runs` artifact relationship and
-delivery-attempt model. Then verify an authenticated `/ai-work-runs` browser
-view for a real generated preview run.
+Fix the Supabase CLI token (`LegacyInvalidAccessTokenError` from type
+generation), then add first-class delivery-attempt/artifact tables or explicitly
+defer them. After that, verify an authenticated `/ai-work-runs` browser view for
+a real generated preview run.
 
 ## Known Pitfalls
 
@@ -142,6 +154,9 @@ cd frontend && npx eslint src/app/api/admin/owner-briefing/send-test/route.ts sr
 npm run rag:verify:executive-daily-brief-gateway
 cd frontend && npx eslint src/lib/ai-ops/executive-daily-brief-ledger.ts src/app/api/executive/daily-brief/preview-teams/route.ts src/app/api/executive/daily-brief/route-helpers.ts src/app/api/executive/daily-brief/widget/route.ts 'src/app/(main)/actions/executive-briefing-actions.ts' src/app/api/executive/daily-brief/__tests__/route.test.ts src/app/api/executive/brandon-daily-update/__tests__/route.test.ts
 cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/app/api/executive/daily-brief/__tests__/route.test.ts src/app/api/executive/brandon-daily-update/__tests__/route.test.ts --runInBand
+npx supabase gen types typescript --project-id "lgveqfnpkxvzbnnwuled" --schema public
+cd frontend && npx eslint src/lib/ai-ops/contracts.ts src/lib/ai-ops/ledger.ts src/lib/ai-ops/executive-daily-brief-ledger.ts src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts src/lib/ai/tools/executive-brief-tools.ts src/app/api/executive/daily-brief/preview-teams/route.ts src/app/api/admin/owner-briefing/send-test/route.ts src/app/api/admin/ai-work-runs/route.ts 'src/app/(admin)/ai-work-runs/ai-work-runs-client.tsx'
+cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/contracts.test.ts src/lib/ai-ops/__tests__/ledger.test.ts --runInBand
 ```
 
 ## Evidence
@@ -162,3 +177,5 @@ cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai-ops/__tests__/co
 - Widget route: `frontend/src/app/api/executive/daily-brief/widget/route.ts`
 - Executive regenerate action: `frontend/src/app/(main)/actions/executive-briefing-actions.ts`
 - Gateway guardrail: `scripts/verify/verify_executive_daily_brief_gateway.mjs`
+- Admin run API: `frontend/src/app/api/admin/ai-work-runs/route.ts`
+- Admin run UI: `frontend/src/app/(admin)/ai-work-runs/ai-work-runs-client.tsx`

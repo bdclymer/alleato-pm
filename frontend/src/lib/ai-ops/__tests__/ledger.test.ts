@@ -3,6 +3,7 @@ import type { AiEvent, AiRun, EvidenceRef } from "../contracts";
 
 const RUN_ID = "11111111-1111-4111-8111-111111111111";
 const EVENT_ID = "22222222-2222-4222-8222-222222222222";
+const DAILY_RECAP_ID = "33333333-3333-4333-8333-333333333333";
 
 function createSupabaseMock() {
   const calls: Array<{ table: string; method: string; payload?: unknown }> = [];
@@ -60,6 +61,7 @@ function event(overrides: Partial<AiEvent> = {}): AiEvent {
 function run(overrides: Partial<AiRun> = {}): AiRun {
   return {
     eventId: EVENT_ID,
+    dailyRecapId: DAILY_RECAP_ID,
     workflowId: "executive_daily_brief",
     workflowVersion: "2026-06-19",
     triggerType: "scheduled_run",
@@ -136,6 +138,7 @@ describe("ai-ops ledger", () => {
       method: "insert",
       payload: {
         workflow_id: "executive_daily_brief",
+        daily_recap_id: DAILY_RECAP_ID,
         status: "running",
         metadata: expect.objectContaining({
           workflowVersion: "2026-06-19",
@@ -143,6 +146,29 @@ describe("ai-ops ledger", () => {
           sourceHealth: expect.any(Array),
           artifacts: [],
         }),
+      },
+    });
+  });
+
+  it("maps run updates to daily_recap_id for generated packet artifact linkage", async () => {
+    const { supabase, calls } = createSupabaseMock();
+    const ledger = createAiOpsLedger(supabase as never);
+
+    await ledger.updateRun(RUN_ID, {
+      status: "succeeded",
+      dailyRecapId: DAILY_RECAP_ID,
+      resultSummary: "Generated Executive Daily Brief draft.",
+      completedAt: "2026-06-19T12:01:00.000Z",
+    });
+
+    expect(supabase.from).toHaveBeenCalledWith("ai_work_runs");
+    expect(calls[0]).toMatchObject({
+      table: "ai_work_runs",
+      method: "update",
+      payload: {
+        status: "succeeded",
+        daily_recap_id: DAILY_RECAP_ID,
+        result_summary: "Generated Executive Daily Brief draft.",
       },
     });
   });
