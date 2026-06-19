@@ -14,6 +14,39 @@ Rule 7: Before closing any task, ask: “How does this fail loudly?”
 Rule 8: Before closing any bug, ask: “What makes this never happen again?”
 Rule 9: Never ship band-aid fixes. If a change only satisfies the immediate error without addressing the underlying design, contract, ownership boundary, or guardrail gap, stop and replace it with a durable fix. Temporary mitigations are allowed only when explicitly labeled as temporary, paired with a tracked follow-up, and justified because the durable fix is blocked.
 
+## Mandatory Task Markdown Done Gate
+
+Every non-trivial task must have a task markdown file before implementation
+starts. Use `docs/ops/tasks/TASK-TEMPLATE.md` and save active task files under
+`docs/ops/tasks/YYYY-MM-DD-<short-slug>.md`.
+
+The task markdown file is the working definition of done. Do not say a task is
+done, complete, finished, shipped, verified, ready to close, or pushed as
+complete unless every checklist item in the task file is checked and the
+evidence section is filled in. This explicitly includes end testing.
+
+Rules:
+
+1. Create the task markdown file before coding, migrations, provider changes, UI
+   work, or delivery wiring.
+2. Break scope into concrete checklist items that prove the pieces come together
+   into one workflow, not just separate files.
+3. Include integration and verification checklist items before implementation
+   starts.
+4. Update the task file as work progresses; do not backfill a vague checklist at
+   the end.
+5. If any checklist item cannot be completed, the task status must be
+   `Blocked/Deferred`, with cause, detection gap, prevention step, owner, and
+   next action.
+6. A final answer must not claim done if the task file has unchecked required
+   items. The correct status is partial, blocked, or in progress.
+7. For user-facing, scheduled, database-backed, integration, AI, RAG, delivery,
+   or external-service work, verification must include actual end-to-end proof
+   of the requested outcome, not only typecheck/lint/unit tests.
+
+This gate is in addition to handoff, Linear, migration, browser-verification,
+and `codex:finish` requirements.
+
 ## General
 
 - When searching for text or files, prefer `rg` or `rg --files` (faster than `grep`).
@@ -32,6 +65,7 @@ Execute the provider operation directly, then verify it with a read-back command
 deployment log, migration ledger, or service status check.
 
 This explicitly includes:
+
 - Vercel environment variables, project settings, builds, and deployments
 - Sentry DSNs, org/project/token-backed source-map configuration, and test events
 - PostHog keys and capture/replay configuration
@@ -175,44 +209,44 @@ This project uses **BMAD Method v6** (`_bmad/`). When the user invokes a BMAD ag
 
 Read the agent file and adopt its persona, principles, and menu for the conversation:
 
-| User request | File to read |
-|---|---|
-| "act as dev" / "bmad dev" | `_bmad/bmm/agents/dev.md` |
-| "act as pm" / "bmad pm" | `_bmad/bmm/agents/pm.md` |
-| "act as architect" / "bmad architect" | `_bmad/bmm/agents/architect.md` |
-| "act as analyst" / "bmad analyst" | `_bmad/bmm/agents/analyst.md` |
-| "act as sm" / "bmad sm" | `_bmad/bmm/agents/sm.md` |
-| "act as qa" / "bmad qa" | `_bmad/bmm/agents/qa.md` |
-| "act as ux" / "bmad ux" | `_bmad/bmm/agents/ux-designer.md` |
-| "act as tech-writer" | `_bmad/bmm/agents/tech-writer/tech-writer.md` |
-| "act as quick-dev" / "barry" | `_bmad/bmm/agents/quick-flow-solo-dev.md` |
-| "act as tea" / "murat" | `_bmad/tea/agents/tea.md` |
-| "act as bmad-master" | `_bmad/core/agents/bmad-master.md` |
+| User request                          | File to read                                  |
+| ------------------------------------- | --------------------------------------------- |
+| "act as dev" / "bmad dev"             | `_bmad/bmm/agents/dev.md`                     |
+| "act as pm" / "bmad pm"               | `_bmad/bmm/agents/pm.md`                      |
+| "act as architect" / "bmad architect" | `_bmad/bmm/agents/architect.md`               |
+| "act as analyst" / "bmad analyst"     | `_bmad/bmm/agents/analyst.md`                 |
+| "act as sm" / "bmad sm"               | `_bmad/bmm/agents/sm.md`                      |
+| "act as qa" / "bmad qa"               | `_bmad/bmm/agents/qa.md`                      |
+| "act as ux" / "bmad ux"               | `_bmad/bmm/agents/ux-designer.md`             |
+| "act as tech-writer"                  | `_bmad/bmm/agents/tech-writer/tech-writer.md` |
+| "act as quick-dev" / "barry"          | `_bmad/bmm/agents/quick-flow-solo-dev.md`     |
+| "act as tea" / "murat"                | `_bmad/tea/agents/tea.md`                     |
+| "act as bmad-master"                  | `_bmad/core/agents/bmad-master.md`            |
 
 ### Invoking Workflows
 
 Read the workflow file and execute its steps:
 
-| User request | File to read |
-|---|---|
-| "create prd" | `_bmad/bmm/workflows/2-plan-workflows/create-prd/workflow-create-prd.md` |
-| "create architecture" | `_bmad/bmm/workflows/3-solutioning/create-architecture/workflow.md` |
-| "create epics and stories" | `_bmad/bmm/workflows/3-solutioning/create-epics-and-stories/workflow.md` |
-| "create story [id]" | `_bmad/bmm/workflows/4-implementation/create-story/workflow.yaml` |
-| "dev this story [file]" | `_bmad/bmm/workflows/4-implementation/dev-story/workflow.yaml` |
-| "sprint planning" | `_bmad/bmm/workflows/4-implementation/sprint-planning/workflow.yaml` |
-| "sprint status" | `_bmad/bmm/workflows/4-implementation/sprint-status/workflow.yaml` |
-| "code review" | `_bmad/bmm/workflows/4-implementation/code-review/workflow.yaml` |
-| "quick spec" | `_bmad/bmm/workflows/bmad-quick-flow/quick-spec/workflow.md` |
-| "quick dev [spec]" | `_bmad/bmm/workflows/bmad-quick-flow/quick-dev/workflow.md` |
-| "document project" | `_bmad/bmm/workflows/document-project/workflow.yaml` |
-| "generate project context" | `_bmad/bmm/workflows/generate-project-context/workflow.md` |
-| "qa generate e2e tests [feature]" | `_bmad/bmm/workflows/qa-generate-e2e-tests/workflow.yaml` |
-| "setup test framework" | `_bmad/tea/workflows/testarch/framework/workflow.yaml` |
-| "write acceptance tests" | `_bmad/tea/workflows/testarch/atdd/workflow.yaml` |
-| "expand test coverage" | `_bmad/tea/workflows/testarch/automate/workflow.yaml` |
-| "review tests" | `_bmad/tea/workflows/testarch/test-review/workflow.yaml` |
-| "brainstorm" | `_bmad/core/workflows/brainstorming/workflow.md` |
+| User request                      | File to read                                                             |
+| --------------------------------- | ------------------------------------------------------------------------ |
+| "create prd"                      | `_bmad/bmm/workflows/2-plan-workflows/create-prd/workflow-create-prd.md` |
+| "create architecture"             | `_bmad/bmm/workflows/3-solutioning/create-architecture/workflow.md`      |
+| "create epics and stories"        | `_bmad/bmm/workflows/3-solutioning/create-epics-and-stories/workflow.md` |
+| "create story [id]"               | `_bmad/bmm/workflows/4-implementation/create-story/workflow.yaml`        |
+| "dev this story [file]"           | `_bmad/bmm/workflows/4-implementation/dev-story/workflow.yaml`           |
+| "sprint planning"                 | `_bmad/bmm/workflows/4-implementation/sprint-planning/workflow.yaml`     |
+| "sprint status"                   | `_bmad/bmm/workflows/4-implementation/sprint-status/workflow.yaml`       |
+| "code review"                     | `_bmad/bmm/workflows/4-implementation/code-review/workflow.yaml`         |
+| "quick spec"                      | `_bmad/bmm/workflows/bmad-quick-flow/quick-spec/workflow.md`             |
+| "quick dev [spec]"                | `_bmad/bmm/workflows/bmad-quick-flow/quick-dev/workflow.md`              |
+| "document project"                | `_bmad/bmm/workflows/document-project/workflow.yaml`                     |
+| "generate project context"        | `_bmad/bmm/workflows/generate-project-context/workflow.md`               |
+| "qa generate e2e tests [feature]" | `_bmad/bmm/workflows/qa-generate-e2e-tests/workflow.yaml`                |
+| "setup test framework"            | `_bmad/tea/workflows/testarch/framework/workflow.yaml`                   |
+| "write acceptance tests"          | `_bmad/tea/workflows/testarch/atdd/workflow.yaml`                        |
+| "expand test coverage"            | `_bmad/tea/workflows/testarch/automate/workflow.yaml`                    |
+| "review tests"                    | `_bmad/tea/workflows/testarch/test-review/workflow.yaml`                 |
+| "brainstorm"                      | `_bmad/core/workflows/brainstorming/workflow.md`                         |
 
 Full agent + workflow list: `_bmad/_config/agent-manifest.csv`, `_bmad/_config/workflow-manifest.csv`.
 
@@ -229,6 +263,7 @@ Full agent + workflow list: `_bmad/_config/agent-manifest.csv`, `_bmad/_config/w
 Use `agent-browser` for web automation. Run `agent-browser --help` for all commands.
 
 **Default policy (mandatory):**
+
 - For frontend user-journey and manual-style E2E verification, use `agent-browser` first.
 - Use Playwright code-based suites when deterministic CI coverage or deep crawl/extraction workflows are required.
 - Never claim "verified" without evidence artifacts (screenshots, video, markdown summary).
@@ -321,13 +356,13 @@ Completion rules:
 
 Always use specific parameter names. **Never** use generic `[id]` — causes Next.js routing conflicts that crash the dev server.
 
-| Resource | Correct param |
-|---|---|
-| Project | `[projectId]` |
-| Contract | `[contractId]` |
-| Company | `[companyId]` |
-| User | `[userId]` |
-| Record (admin) | `[recordId]` |
+| Resource       | Correct param  |
+| -------------- | -------------- |
+| Project        | `[projectId]`  |
+| Contract       | `[contractId]` |
+| Company        | `[companyId]`  |
+| User           | `[userId]`     |
+| Record (admin) | `[recordId]`   |
 
 Run `npm run check:routes` after creating dynamic routes.
 
@@ -361,7 +396,7 @@ import { PageContainer, ProjectPageHeader } from "@/components/layout";
 <>
   <ProjectPageHeader title="..." description="..." actions={<div>...</div>} />
   <PageContainer>{/* content */}</PageContainer>
-</>
+</>;
 ```
 
 Never use deprecated `ProjectToolPage` or `PageHeader` from `@/components/design-system`.
@@ -466,15 +501,18 @@ Required behavior:
 For any form that includes editable line items (SOV, cost lines, invoice lines, etc.), the line-items UI must follow the same visual shell and spacing pattern as the Direct Costs form line-items component.
 
 Canonical reference:
+
 - `frontend/src/components/direct-costs/LineItemsManager.tsx`
 
 Required parity points:
+
 - Same table container treatment (subtle bordered shell + muted header row)
 - Same compact header typography and row density
 - Same totals-row treatment and right-aligned monetary totals
 - Primary `Add Line Item` action placed below the table (not embedded in header cells)
 
 Not allowed for line-items sections:
+
 - Accordion-only presentation for the line-items block
 - Decorative alternate table skins that diverge from the canonical pattern
 - Per-page reinvention of spacing/typography for line-item grids
@@ -486,6 +524,7 @@ Primary design reference: `docs/design/DESIGN.md`
 Design fixes must be applied at the shared primitive/component level when the issue originates there.
 
 Required behavior:
+
 - If the defect comes from a shared primitive (`components/ui/*`, shared layout/table primitives), fix that primitive globally.
 - Page-level or feature-level visual overrides are forbidden as a default fix path.
 - Do not apply local overrides to compensate for primitive defects. Fix the primitive instead.
@@ -493,6 +532,7 @@ Required behavior:
 - Never bypass design-system lint rules using force flags (`--force`, `--no-verify`) to push style drift.
 
 Decision rule:
+
 - First determine whether the styling is owned by a primitive or a page.
 - Primitive-owned issue -> global fix.
 - Page-owned issue -> local fix aligned to tokens and shared patterns.
@@ -533,6 +573,7 @@ npx playwright test tests/e2e/budget-line-item-validation.spec.ts --headed
 ```
 
 **agent-browser verification artifacts:**
+
 - Output root: `tests/agent-browser-runs/<timestamp>-<run-name>/`
 - Required evidence per run: `session.webm`, before/after screenshots, snapshots, action log, `VERIFICATION_SUMMARY.md`
 - Optional scripted actions file template: `scripts/templates/agent-browser-actions.example.txt`
@@ -540,14 +581,16 @@ npx playwright test tests/e2e/budget-line-item-validation.spec.ts --headed
 **Auth is pre-configured.** Playwright uses saved session at `tests/.auth/user.json`. Never add login code to individual tests. If the session expires, run `npx playwright test tests/auth.setup.ts` once to refresh it.
 
 **Credential source of truth:**
+
 - For Alleato app login (`projects.alleatogroup.com`, local app auth pages, Playwright auth refresh), use `.env` `TEST_USER_1` / `TEST_PASSWORD_1`. `APP_USERNAME` / `APP_PASSWORD` are equivalent aliases.
 - For Procore login and Procore crawl scripts, use `.env` `PROCORE_USER` / `PROCORE_PASSWORD`.
 - Never use `PROCORE_USER` / `PROCORE_PASSWORD` to log into the Alleato app unless the user explicitly says the app is configured to share those credentials.
 
 **Agent-browser auth rule:** when `agent-browser` hits an authenticated page and redirects to login, do not treat auth as a blocker. Choose credentials based on the target system:
+
 - Alleato app -> `TEST_USER_1` / `TEST_PASSWORD_1`
 - Procore -> `PROCORE_USER` / `PROCORE_PASSWORD`
-If the first login attempt fails, verify that the correct credential family was used before reporting an auth blocker.
+  If the first login attempt fails, verify that the correct credential family was used before reporting an auth blocker.
 
 ---
 
@@ -585,15 +628,15 @@ If the first login attempt fails, verify that the correct credential family was 
 
 ## File Organization
 
-| File type | Location |
-|---|---|
-| Scripts (.js/.ts/.py/.sh) | `scripts/` |
-| SQL migrations | `supabase/migrations/` |
-| Frontend source | `frontend/src/` |
-| E2E tests | `frontend/tests/` |
-| Claude/Codex rules | `.claude/rules/` |
-| PRPs / feature specs | `_bmad-output/planning-artifacts/<feature>/` |
-| Docs | `docs/` |
+| File type                 | Location                                     |
+| ------------------------- | -------------------------------------------- |
+| Scripts (.js/.ts/.py/.sh) | `scripts/`                                   |
+| SQL migrations            | `supabase/migrations/`                       |
+| Frontend source           | `frontend/src/`                              |
+| E2E tests                 | `frontend/tests/`                            |
+| Claude/Codex rules        | `.claude/rules/`                             |
+| PRPs / feature specs      | `_bmad-output/planning-artifacts/<feature>/` |
+| Docs                      | `docs/`                                      |
 
 Never create `.md`, `.js`, `.ts`, `.py`, or `.sh` files at project root (except `CLAUDE.md`, `AGENTS.md`, `README.md`).
 
