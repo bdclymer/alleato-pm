@@ -182,6 +182,7 @@
   - `d2280aa3-e2cc-4282-aec4-84839d6840aa` recorded workflow pack, source adapter contract, tool policy, disabled delivery tool hiding, and remaining proof gaps.
   - `e4027597-e511-46d9-9b18-c49661505d11` recorded generated no-send preview proof, artifact/delivery/source-health readback, browser proof, and remaining gaps.
   - `ade23489-9add-47a6-834f-af71ee6adac4` recorded claim-level evidence-policy guardrail, focused tests, gateway guardrail rerun, commit `519d8b802`, and remaining gaps.
+  - `d01eb6c1-a4ab-4217-a543-97f4d2a7d855` recorded scheduled-run proof, env precedence fix, skipped/matching scheduled run IDs, commit `017956053`, and remaining gaps.
 - Completion/blocker comment: None yet.
 
 ## Current Status
