@@ -5,8 +5,10 @@
 
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const ROOT = "/Users/meganharrison/Documents/github/alleato-pm";
+// Derive repo root from this file's location, not a hardcoded absolute path.
+const ROOT = join(fileURLToPath(import.meta.url), "..", "..", "..");
 const SRC = join(ROOT, "frontend/src");
 const API_ROOT = join(SRC, "app/api");
 
@@ -45,6 +47,13 @@ function toSegments(urlPattern) {
 // Gather all route files
 const allFiles = walk(API_ROOT);
 const routeFiles = allFiles.filter((f) => f.endsWith("/route.ts") || f.endsWith("/route.tsx"));
+
+if (routeFiles.length === 0) {
+  console.error(
+    `ERROR: scanned 0 route files under ${API_ROOT}. Broken audit (wrong/empty path), not a clean result.`,
+  );
+  process.exit(2);
+}
 
 // Gather all source files to search (excluding the route files themselves and tests)
 const allSrc = walk(SRC).filter(

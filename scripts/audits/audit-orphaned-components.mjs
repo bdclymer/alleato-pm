@@ -4,8 +4,11 @@
 
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative, basename } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const ROOT = "/Users/meganharrison/Documents/github/alleato-pm";
+// Derive repo root from this file's location (scripts/audits/x.mjs → ../../..),
+// not a hardcoded absolute path that silently scans nothing on another machine/clone.
+const ROOT = join(fileURLToPath(import.meta.url), "..", "..", "..");
 const SRC = join(ROOT, "frontend/src");
 const COMPONENTS_ROOT = join(SRC, "components");
 
@@ -41,6 +44,16 @@ function isCodeFile(f) {
 const componentFiles = walk(COMPONENTS_ROOT).filter(
   (f) => isCodeFile(f) && !f.startsWith(join(COMPONENTS_ROOT, "ui") + "/")
 );
+
+// Fail loudly instead of reporting "0 orphans" when the scan path is wrong —
+// a zero-file scan is a broken audit, not a clean codebase.
+if (componentFiles.length === 0) {
+  console.error(
+    `ERROR: scanned 0 component files under ${COMPONENTS_ROOT}. ` +
+      `The path is wrong or empty — this is a broken audit, not a clean result.`,
+  );
+  process.exit(2);
+}
 
 function extractComponentExports(content, file) {
   const exports = new Set();

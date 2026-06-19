@@ -4,8 +4,10 @@
 
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative, basename } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const ROOT = "/Users/meganharrison/Documents/github/alleato-pm";
+// Derive repo root from this file's location, not a hardcoded absolute path.
+const ROOT = join(fileURLToPath(import.meta.url), "..", "..", "..");
 const SRC = join(ROOT, "frontend/src");
 const HOOKS_ROOT = join(SRC, "hooks");
 
@@ -38,6 +40,13 @@ const hookFiles = walk(HOOKS_ROOT).filter(
     !f.endsWith(".spec.tsx") &&
     !f.includes("/__tests__/")
 );
+
+if (hookFiles.length === 0) {
+  console.error(
+    `ERROR: scanned 0 hook files under ${HOOKS_ROOT}. Broken audit (wrong/empty path), not a clean result.`,
+  );
+  process.exit(2);
+}
 
 // Extract exports per hook file
 function extractExports(content, file) {

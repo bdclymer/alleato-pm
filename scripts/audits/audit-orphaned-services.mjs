@@ -4,8 +4,10 @@
 
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative, basename } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const ROOT = "/Users/meganharrison/Documents/github/alleato-pm";
+// Derive repo root from this file's location, not a hardcoded absolute path.
+const ROOT = join(fileURLToPath(import.meta.url), "..", "..", "..");
 const SRC = join(ROOT, "frontend/src");
 const SERVICES_ROOT = join(SRC, "services");
 const LIB_ROOT = join(SRC, "lib");
@@ -51,6 +53,13 @@ const serviceFiles = walk(SERVICES_ROOT).filter(isCodeFile);
 const libFiles = walk(LIB_ROOT).filter((f) => isCodeFile(f) && !isTypeOnlyFile(f));
 
 const targetFiles = [...serviceFiles, ...libFiles];
+
+if (targetFiles.length === 0) {
+  console.error(
+    `ERROR: scanned 0 service/lib files under ${SERVICES_ROOT} + ${LIB_ROOT}. Broken audit (wrong/empty path), not a clean result.`,
+  );
+  process.exit(2);
+}
 
 function extractExports(content, file) {
   const exports = new Set();
