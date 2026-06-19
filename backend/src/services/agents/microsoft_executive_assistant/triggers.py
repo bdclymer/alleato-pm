@@ -66,7 +66,7 @@ def run_scheduled_microsoft_executive_assistant_check(
         prompt=(
             "Run the 15-minute Microsoft executive assistant check. Review recent unread or important Outlook "
             "inbox activity, identify urgent client/prospect/legal/security items, prepare reply or Teams escalation "
-            "drafts for Megan's review, and avoid duplicate recommendations for the same issue when evidence is visible."
+            "drafts for Brandon's review, and avoid duplicate recommendations for the same issue when evidence is visible."
         ),
         mailboxUserId=mailbox,
         trigger="scheduled_check",

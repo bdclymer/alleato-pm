@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 import json
+import logging
+import os
 import re
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from urllib.parse import quote, urlencode
 
+import httpx
 from langchain_core.tools import tool
+
+logger = logging.getLogger(__name__)
 
 
 def _json(data: dict[str, Any]) -> str:
@@ -196,23 +201,161 @@ def list_outlook_calendar_events(
         )
 
 
+def _auto_draft_enabled() -> bool:
+    return os.getenv("MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_DRAFT", "true").lower() in {"1", "true", "yes"}
+
+
+def _auto_teams_alert_enabled() -> bool:
+    return os.getenv("MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_TEAMS_ALERT", "true").lower() in {"1", "true", "yes"}
+
+
+def _notification_service_key() -> Optional[str]:
+    return os.getenv("NOTIFICATION_SERVICE_KEY") or None
+
+
+def _app_base_url() -> str:
+    return (
+        os.getenv("NEXT_PUBLIC_APP_URL")
+        or os.getenv("APP_BASE_URL")
+        or "https://projects.alleatogroup.com"
+    ).rstrip("/")
+
+
+def _operator_teams_user_id() -> Optional[str]:
+    return (
+        os.getenv("MICROSOFT_EXECUTIVE_ASSISTANT_TEAMS_USER_ID")
+        or os.getenv("AI_HEALTH_ALERT_TEAMS_USER_ID")
+        or None
+    )
+
+
+def _send_teams_dm(message: str) -> dict[str, Any]:
+    """Post a Teams DM via the Archon bot proactive endpoint. Best-effort, never raises."""
+    service_key = _notification_service_key()
+    user_id = _operator_teams_user_id()
+    if not service_key or not user_id:
+        missing = []
+        if not service_key:
+            missing.append("NOTIFICATION_SERVICE_KEY")
+        if not user_id:
+            missing.append("MICROSOFT_EXECUTIVE_ASSISTANT_TEAMS_USER_ID")
+        logger.warning("[ExecAssistant] Teams DM skipped — missing env: %s", ", ".join(missing))
+        return {"sent": False, "reason": f"missing_env:{','.join(missing)}"}
+    try:
+        resp = httpx.post(
+            f"{_app_base_url()}/api/bot/proactive/teams",
+            headers={"Authorization": f"Bearer {service_key}"},
+            json={"userId": user_id, "message": message},
+            timeout=15,
+        )
+        if resp.status_code >= 400:
+            logger.warning("[ExecAssistant] Teams DM HTTP %s: %s", resp.status_code, resp.text[:200])
+            return {"sent": False, "http_status": resp.status_code}
+        return {"sent": True, "http_status": resp.status_code}
+    except Exception as exc:
+        logger.warning("[ExecAssistant] Teams DM failed: %s", exc)
+        return {"sent": False, "error": str(exc)}
+
+
+def _create_graph_draft(
+    *,
+    mailbox: str,
+    to_recipients: list[str],
+    subject: str,
+    body: str,
+    cc_recipients: list[str],
+    reply_to_message_id: Optional[str],
+) -> dict[str, Any]:
+    """Create an Outlook draft in the mailbox via Microsoft Graph. Best-effort, never raises."""
+    try:
+        from src.services.integrations.microsoft_graph.client import get_graph_client
+
+        graph = get_graph_client()
+        if not graph.is_configured():
+            return {"created": False, "reason": "graph_not_configured"}
+
+        safe_mailbox = mailbox.strip().lower()
+
+        if reply_to_message_id:
+            # Threaded reply draft — lands in Drafts folder, pre-threads the conversation
+            reply_resp = graph.post(
+                f"/users/{quote(safe_mailbox)}/messages/{reply_to_message_id}/createReply",
+                {},
+            )
+            draft_id = reply_resp.get("id")
+            if not draft_id:
+                return {"created": False, "reason": "no_draft_id_from_createReply"}
+            # Patch the draft body now that we have the draft ID
+            graph.patch(
+                f"/users/{quote(safe_mailbox)}/messages/{draft_id}",
+                {"body": {"contentType": "Text", "content": body}},
+            )
+        else:
+            # Standalone new draft
+            recipient_objects = [{"emailAddress": {"address": r}} for r in to_recipients]
+            cc_objects = [{"emailAddress": {"address": c}} for c in cc_recipients]
+            msg_payload: dict[str, Any] = {
+                "subject": subject,
+                "body": {"contentType": "Text", "content": body},
+                "toRecipients": recipient_objects,
+                "isDraft": True,
+            }
+            if cc_objects:
+                msg_payload["ccRecipients"] = cc_objects
+            reply_resp = graph.post(f"/users/{quote(safe_mailbox)}/messages", msg_payload)
+            draft_id = reply_resp.get("id")
+            if not draft_id:
+                return {"created": False, "reason": "no_draft_id_from_new_message"}
+
+        return {"created": True, "draftId": draft_id, "mailbox": safe_mailbox}
+    except Exception as exc:
+        logger.warning("[ExecAssistant] Graph draft creation failed: %s", exc)
+        return {"created": False, "error": str(exc)}
+
+
 @tool
 def draft_outlook_email_for_review(
     to_recipients: list[str],
     subject: str,
     body: str,
+    mailbox_user_id: Optional[str] = None,
     cc_recipients: Optional[list[str]] = None,
     reply_to_graph_message_id: Optional[str] = None,
 ) -> str:
-    """Prepare an Outlook email draft payload for Megan's review. Never sends."""
+    """Create an Outlook email draft in the operator's Drafts folder for review. Never sends.
+
+    When MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_DRAFT is true (default), the draft is written
+    directly to the Outlook Drafts folder via Microsoft Graph so Brandon can find it in
+    Outlook and send or edit it. The draft is never sent automatically.
+    """
     if not to_recipients and not reply_to_graph_message_id:
         return "OUTLOOK_DRAFT_BLOCKED: Provide recipients or reply_to_graph_message_id before drafting."
+
+    mailbox = (
+        mailbox_user_id
+        or os.getenv("MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX")
+        or (os.getenv("MICROSOFT_SYNC_USERS", "").split(",")[0].strip() or None)
+    )
+
+    graph_result: dict[str, Any] = {"created": False, "reason": "auto_draft_disabled"}
+    if _auto_draft_enabled() and mailbox:
+        graph_result = _create_graph_draft(
+            mailbox=mailbox,
+            to_recipients=to_recipients,
+            subject=subject,
+            body=body,
+            cc_recipients=cc_recipients or [],
+            reply_to_message_id=reply_to_graph_message_id,
+        )
+
     payload = {
-        "action": "preview",
+        "action": "draft_created" if graph_result.get("created") else "preview",
         "type": "outlook_email_draft",
         "approvalRequired": True,
-        "approvalReason": "External communication requires Megan's review before any Outlook draft/send action.",
+        "approvalReason": "Draft saved to Outlook Drafts — Brandon reviews and sends from Outlook.",
+        "graphResult": graph_result,
         "fields": {
+            "mailbox": mailbox,
             "toRecipients": to_recipients,
             "ccRecipients": cc_recipients or [],
             "subject": subject,
@@ -225,14 +368,25 @@ def draft_outlook_email_for_review(
 
 @tool
 def draft_teams_message_for_review(recipient: str, message: str, urgency: str = "normal") -> str:
-    """Prepare a Teams private-message payload for Megan's review. Never posts."""
+    """Send or prepare a Teams DM for Brandon's awareness.
+
+    When urgency is "urgent" and MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_TEAMS_ALERT is true
+    (default), the message is sent immediately via the Archon bot. For non-urgent items,
+    a preview payload is returned for human review.
+    """
     if not _clean_text(recipient):
         return "TEAMS_DRAFT_BLOCKED: recipient must not be blank."
+
+    teams_result: dict[str, Any] = {"sent": False, "reason": "non_urgent_or_disabled"}
+    is_urgent = urgency.lower() in {"urgent", "high"}
+    if is_urgent and _auto_teams_alert_enabled():
+        teams_result = _send_teams_dm(message)
+
     payload = {
-        "action": "preview",
+        "action": "sent" if teams_result.get("sent") else "preview",
         "type": "teams_private_message_draft",
-        "approvalRequired": True,
-        "approvalReason": "Teams messages require approval unless Megan explicitly approved the exact send action.",
+        "approvalRequired": not teams_result.get("sent"),
+        "teamsResult": teams_result,
         "fields": {
             "recipient": recipient,
             "message": message,

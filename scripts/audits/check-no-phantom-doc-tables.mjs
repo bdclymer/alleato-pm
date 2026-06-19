@@ -37,7 +37,12 @@ const MD_EXT = /\.mdx?$/;
 // reference external-repo source filenames (`grammar.ts`, `payload.ts`) and
 // generic code words (`fetch`, `agent`) — none of which are Alleato table
 // assertions. Scanning them produces only false positives.
-const IGNORE_PATH_RE = /(^|\/)_bmad-output\//;
+// PROJECT-MAP.md is auto-generated from the filesystem (npm run map:project).
+// It references AI-tool source filenames (`financial.ts`, `marketing.ts`) that
+// look like table names but are not — and being generated, it cannot carry a
+// human-authored phantom-table claim anyway.
+const IGNORE_PATH_RE =
+  /(^|\/)_bmad-output\/|(^|\/)docs\/architecture\/PROJECT-MAP\.md$/;
 
 const args = new Set(process.argv.slice(2));
 const baseFlagIdx = process.argv.indexOf("--base");

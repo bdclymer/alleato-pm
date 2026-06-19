@@ -285,6 +285,61 @@ services:
       - key: OPENAI_API_KEY
         sync: false
 
+  # Ensures Microsoft Graph webhook subscriptions exist and are not near expiry.
+  # Mail subscriptions last 48 hours — this runs every 6 hours so they are
+  # renewed with 42 hours of headroom before the 6-hour renew_within_hours cutoff.
+  # Without this cron, subscriptions expire silently and real-time email
+  # notifications stop firing; the system falls back to the 2-hour polling cron.
+  - type: cron
+    name: alleato-graph-subscription-reconcile
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    schedule: "0 */6 * * *"
+    dockerCommand: >-
+      python3 -c "
+      import json, sys;
+      sys.path.insert(0, '/app');
+      from src.services.env_loader import load_env; load_env();
+      from src.services.integrations.microsoft_graph.subscriptions import (
+        ensure_subscriptions, configured_subscription_targets
+      );
+      from src.services.supabase_helpers import get_rag_write_client;
+      supabase = get_rag_write_client();
+      result = ensure_subscriptions(supabase, targets=configured_subscription_targets());
+      print(json.dumps(result, indent=2));
+      sys.exit(1 if result.get('failed', 0) > 0 and result.get('created', 0) == 0 and result.get('renewed', 0) == 0 else 0)
+      "
+    envVars:
+      - key: PYTHONPATH
+        value: /app:/app/src:/app/src/services
+      - key: PYTHONUNBUFFERED
+        value: 1
+      - key: APP_DB_PRESSURE_GUARD_REQUIRED
+        value: "true"
+      - key: MICROSOFT_CLIENT_ID
+        sync: false
+      - key: MICROSOFT_CLIENT_SECRET
+        sync: false
+      - key: MICROSOFT_TENANT_ID
+        sync: false
+      - key: MICROSOFT_SYNC_USERS
+        sync: false
+      - key: GRAPH_SUBSCRIBE_OUTLOOK
+        value: "true"
+      - key: GRAPH_WEBHOOK_NOTIFICATION_URL
+        sync: false
+      - key: GRAPH_WEBHOOK_CLIENT_STATE
+        sync: false
+      - key: RAG_SUPABASE_URL
+        sync: false
+      - key: RAG_SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAG_DATABASE_WRITES_ENABLED
+        value: "true"
+      - key: RAG_DATABASE_READS_ENABLED
+        value: "true"
+
   - type: cron
     name: alleato-microsoft-executive-assistant-check
     runtime: docker
@@ -322,6 +377,16 @@ services:
         sync: false
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX
         sync: false
+      - key: MICROSOFT_EXECUTIVE_ASSISTANT_TEAMS_USER_ID
+        sync: false
+      - key: MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_DRAFT
+        value: "true"
+      - key: MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_TEAMS_ALERT
+        value: "true"
+      - key: NOTIFICATION_SERVICE_KEY
+        sync: false
+      - key: NEXT_PUBLIC_APP_URL
+        value: "https://projects.alleatogroup.com"
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY
@@ -751,9 +816,9 @@ services:
       - key: GRAPH_SYNC_ENABLED
         value: "false"
       - key: GRAPH_SUBSCRIPTIONS_ENABLED
-        value: "false"
+        value: "auto"
       - key: GRAPH_WEBHOOK_DRAIN_ENABLED
-        value: "false"
+        value: "auto"
       - key: GRAPH_SYNC_OUTLOOK
         value: "false"
       - key: GRAPH_SYNC_TEAMS

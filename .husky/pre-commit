@@ -118,4 +118,13 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+# ── Project map freshness gate ───────────────────────────────────
+# If staged changes add/remove a UI route, API route, or AI tool, the
+# generated surface inventory (docs/architecture/PROJECT-MAP.md) must be
+# regenerated in the same commit. See scripts/dev-tools/generate-project-map.mjs.
+sh .husky/pre-commit-project-map
+if [ $? -ne 0 ]; then
+  exit 1
+fi
+
 npx lint-staged

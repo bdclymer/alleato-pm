@@ -1,0 +1,33 @@
+#!/usr/bin/env sh
+
+# Project map freshness gate
+# If staged changes add/remove/rename a UI route (page.tsx), an API route
+# (route.ts), or an AI tool (lib/ai/tools), the generated surface inventory at
+# docs/architecture/PROJECT-MAP.md must be regenerated and staged too. A stale
+# map is worse than none — it lies to the next agent session.
+#
+# Regenerate with: npm run map:project
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACMRD)
+
+if [ -z "$STAGED" ]; then
+  exit 0
+fi
+
+# Only these paths change the map's contents.
+SURFACE=$(echo "$STAGED" | grep -E '^frontend/src/app/.*/(page\.tsx|route\.ts)$|^frontend/src/lib/ai/tools/.*\.ts$' || true)
+
+if [ -z "$SURFACE" ]; then
+  exit 0
+fi
+
+node scripts/dev-tools/generate-project-map.mjs --check-only
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "Staged changes added/removed routes or AI tools but PROJECT-MAP.md is stale."
+  echo "Run: npm run map:project && git add docs/architecture/PROJECT-MAP.md"
+  exit 1
+fi
+
+echo "✅ Project map gate — surface inventory is current."
+exit 0

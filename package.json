@@ -29,6 +29,7 @@
     "schema:docs": "npm run schema:extract && node scripts/database/generate-schema-docs.js",
     "schema:audit-live-refs": "node scripts/database/audit-live-schema-references.mjs",
     "db:inventory": "node scripts/dev-tools/generate-db-inventory.mjs",
+    "map:project": "node scripts/dev-tools/generate-project-map.mjs",
     "db:types": "npx supabase gen types typescript --project-id lgveqfnpkxvzbnnwuled --schema public > frontend/src/types/database.types.ts && npm run devtools:sync-schema-fk",
     "db:types:check": "node scripts/check-db-types-current.mjs",
     "guardrails:db-type-overrides": "node scripts/audits/check-no-manual-db-type-overrides.mjs",
