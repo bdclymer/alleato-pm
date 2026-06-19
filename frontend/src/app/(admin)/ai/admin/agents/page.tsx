@@ -12,7 +12,6 @@ import {
   type FilterValue,
 } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
-import { PageShell } from "@/components/layout";
 import { apiFetch } from "@/lib/api-client";
 
 import {
@@ -77,9 +76,9 @@ export default function AiAgentsPage() {
 
   const activeFilters = React.useMemo<Record<string, FilterValue>>(
     () => ({
-      status: searchParams.get("status") ?? undefined,
-      domain: searchParams.get("domain") ?? undefined,
-      impact: searchParams.get("impact") ?? undefined,
+      status: searchParams?.get("status") ?? undefined,
+      domain: searchParams?.get("domain") ?? undefined,
+      impact: searchParams?.get("impact") ?? undefined,
     }),
     [searchParams],
   );
@@ -118,7 +117,7 @@ export default function AiAgentsPage() {
     error instanceof Error ? error : error ? new Error(String(error)) : null;
 
   return (
-    <PageShell variant="table">
+    <>
       <UnifiedTablePage
         header={{
           title: "AI Agent Registry",
@@ -174,6 +173,6 @@ export default function AiAgentsPage() {
         agent={selectedAgent}
         onClose={() => setSelectedAgent(null)}
       />
-    </PageShell>
+    </>
   );
 }
