@@ -59,7 +59,10 @@ export function ProjectSelector({
           variant="ghost"
           role="combobox"
           aria-expanded={open}
-          className={cn("project-selector-trigger w-56", headerSelectTriggerClassName)}
+          className={cn(
+            "project-selector-trigger w-56",
+            headerSelectTriggerClassName,
+          )}
         >
           <span className="flex min-w-0 items-center gap-1.5">
             {currentProject ? (
@@ -74,7 +77,9 @@ export function ProjectSelector({
                 )}
               </span>
             ) : (
-              <span className="text-xs text-muted-foreground">Select Project</span>
+              <span className="text-xs text-muted-foreground">
+                Select Project
+              </span>
             )}
           </span>
           <ChevronDown
@@ -132,8 +137,8 @@ export function ProjectSelector({
                         className={cn(
                           "group flex cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors",
                           isSelected
-                            ? "bg-muted text-foreground"
-                            : "text-foreground/75 hover:bg-muted hover:text-foreground",
+                            ? "bg-muted text-foreground data-[selected=true]:bg-muted"
+                            : "text-foreground/75 data-[selected=true]:bg-transparent data-[selected=true]:text-primary",
                         )}
                       >
                         <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -169,18 +174,18 @@ export function ProjectSelector({
 
         {/* Footer */}
         <div className="border-t border-border/50">
-          {/* eslint-disable-next-line design-system/no-design-violations -- full-width footer link-style action */}
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => {
               onViewAll();
               setOpen(false);
             }}
-            className="flex w-full items-center justify-between px-5 py-2.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="flex h-auto w-full items-center justify-between rounded-none px-5 py-2.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-transparent hover:text-primary"
           >
             View all projects
             <ArrowRight className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         </div>
       </PopoverContent>
     </Popover>

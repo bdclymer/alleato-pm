@@ -18,7 +18,11 @@ export interface InspectorRailProps {
 
 export function InspectorRail({ children, className }: InspectorRailProps) {
   return (
-    <aside className={cn("min-w-0 space-y-2", className)}>{children}</aside>
+    <aside
+      className={cn("min-w-0 space-y-2 lg:w-[360px] xl:w-[388px]", className)}
+    >
+      {children}
+    </aside>
   );
 }
 
@@ -32,6 +36,7 @@ export interface InspectorSectionProps {
   /** Controlled open state. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  variant?: "boxed" | "plain";
   className?: string;
   contentClassName?: string;
 }
@@ -43,20 +48,31 @@ export function InspectorSection({
   defaultOpen = true,
   open,
   onOpenChange,
+  variant = "boxed",
   className,
   contentClassName,
 }: InspectorSectionProps) {
+  const isPlain = variant === "plain";
+
   return (
     <Collapsible
       defaultOpen={defaultOpen}
       open={open}
       onOpenChange={onOpenChange}
       className={cn(
-        "group rounded-md border border-border/60 bg-background",
+        "group",
+        isPlain
+          ? "border-b border-border/60 last:border-b-0"
+          : "rounded-lg border border-border/70 bg-background shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
         className,
       )}
     >
-      <div className="flex min-h-10 items-center gap-2 px-3">
+      <div
+        className={cn(
+          "flex items-center gap-2",
+          isPlain ? "min-h-9" : "min-h-11 px-3",
+        )}
+      >
         <CollapsibleTrigger className="flex min-w-0 flex-1 items-center gap-1.5 text-left text-sm font-medium text-foreground outline-none transition-colors hover:text-foreground/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
           <ChevronRight className="size-3.5 shrink-0 text-muted-foreground transition-transform group-data-[state=open]:rotate-90" />
           <span className="truncate">{title}</span>
@@ -64,7 +80,10 @@ export function InspectorSection({
         {actions ? <div className="shrink-0">{actions}</div> : null}
       </div>
       <CollapsibleContent
-        className={cn("border-t border-border/60 px-3 py-2", contentClassName)}
+        className={cn(
+          isPlain ? "pb-3" : "border-t border-border/60 px-3 py-2.5",
+          contentClassName,
+        )}
       >
         {children}
       </CollapsibleContent>
@@ -108,7 +127,7 @@ export function PropertyRow({
   return (
     <div
       className={cn(
-        "grid min-w-0 gap-2 py-2 sm:grid-cols-[6.5rem_minmax(0,1fr)]",
+        "grid min-w-0 gap-2 py-2.5 sm:grid-cols-[5.75rem_minmax(0,1fr)]",
         className,
       )}
     >

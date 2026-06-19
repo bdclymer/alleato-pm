@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import type { UniqueIdentifier } from "@dnd-kit/core";
 
 import { TaskFeedbackButtons } from "@/components/ai/TaskFeedbackButtons";
+import { SectionRuleHeading } from "@/components/layout/spacing";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -623,23 +624,32 @@ function TaskDetailDialog({
   return (
     <>
       <Modal open={open} onOpenChange={onOpenChange}>
-        <ModalContent size="form" className="max-h-[calc(100svh-2rem)] p-0">
-          <ModalHeader className="border-b border-border/60 px-6 py-5">
-            <ModalTitle>Task details</ModalTitle>
-            <ModalDescription>
-              Review the source context, edit task fields, and send extraction
-              feedback.
+        <ModalContent
+          size="form"
+          className="max-h-[calc(100svh-2rem)] gap-0 overflow-hidden p-0 lg:max-w-5xl"
+          onOpenAutoFocus={(event) => event.preventDefault()}
+        >
+          <ModalHeader className="border-b border-border/60 px-6 py-4">
+            <div className="flex min-w-0 items-center gap-2 pr-8">
+              <StatusBadge
+                status={draft.status}
+                className="h-5 px-1.5 text-[11px] capitalize"
+              />
+              <ModalTitle className="truncate text-base font-semibold">
+                Task details
+              </ModalTitle>
+            </div>
+            <ModalDescription className="sr-only">
+              Edit the task and review source evidence.
             </ModalDescription>
           </ModalHeader>
 
-          <div className="max-h-[calc(100svh-12rem)] overflow-y-auto px-6 py-5">
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Title
-                  </label>
+          <div className="max-h-[calc(100svh-11rem)] overflow-y-auto">
+            <div className="grid min-w-0 lg:grid-cols-[minmax(0,1fr)_22rem]">
+              <div className="min-w-0 space-y-7 px-6 py-5">
+                <section className="space-y-3">
                   <Input
+                    variant="inline"
                     value={draft.title}
                     onChange={(event) =>
                       setDraft((current) => ({
@@ -649,13 +659,9 @@ function TaskDetailDialog({
                     }
                     placeholder="Task title"
                     disabled={saving || deleting}
+                    className="-mx-2 h-auto rounded-md px-2 py-1 text-xl font-semibold leading-7 tracking-normal md:text-xl"
                   />
-                </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Description
-                  </label>
                   <Textarea
                     value={draft.description}
                     onChange={(event) =>
@@ -664,15 +670,55 @@ function TaskDetailDialog({
                         description: event.target.value,
                       }))
                     }
-                    placeholder="Describe the task"
+                    placeholder="Add description..."
                     disabled={saving || deleting}
-                    className="min-h-32 resize-y"
+                    className="-mx-2 min-h-28 resize-none rounded-md border-0 bg-transparent px-2 py-2 text-sm leading-6 shadow-none focus-visible:ring-1 focus-visible:ring-ring"
                   />
-                </div>
+                </section>
+
+                <section className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <SectionRuleHeading
+                      label="Source context"
+                      className="mb-0 pb-0"
+                    />
+                    {sourceHref ? (
+                      <Button
+                        asChild
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                      >
+                        <a
+                          href={sourceHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <ArrowUpRight />
+                          Open source
+                        </a>
+                      </Button>
+                    ) : null}
+                  </div>
+                  {loading ? (
+                    <div className="flex min-h-24 items-center text-sm text-muted-foreground">
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Loading source context...
+                    </div>
+                  ) : task.source_context ? (
+                    <div className="max-h-80 overflow-y-auto whitespace-pre-wrap border-l border-border/70 pl-4 text-sm leading-6 text-muted-foreground">
+                      {task.source_context}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No source context is available for this task.
+                    </p>
+                  )}
+                </section>
               </div>
 
-              <InspectorRail>
-                <InspectorSection title="Properties">
+              <InspectorRail className="border-t border-border/60 bg-muted/20 px-6 py-4 lg:border-l lg:border-t-0">
+                <InspectorSection title="Properties" variant="plain">
                   <PropertyList>
                     <PropertyRow label="Status">
                       <Select
@@ -685,7 +731,11 @@ function TaskDetailDialog({
                         }
                         disabled={saving || deleting}
                       >
-                        <SelectTrigger className="h-8 w-full">
+                        <SelectTrigger
+                          variant="inline"
+                          size="sm"
+                          className="h-7 px-0 capitalize"
+                        >
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -709,7 +759,11 @@ function TaskDetailDialog({
                         }
                         disabled={saving || deleting}
                       >
-                        <SelectTrigger className="h-8 w-full">
+                        <SelectTrigger
+                          variant="inline"
+                          size="sm"
+                          className="h-7 px-0 capitalize"
+                        >
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -734,7 +788,11 @@ function TaskDetailDialog({
                         }
                         disabled={saving || deleting}
                       >
-                        <SelectTrigger className="h-8 w-full">
+                        <SelectTrigger
+                          variant="inline"
+                          size="sm"
+                          className="h-7 px-0"
+                        >
                           <SelectValue placeholder="Unassigned" />
                         </SelectTrigger>
                         <SelectContent>
@@ -759,7 +817,11 @@ function TaskDetailDialog({
                         }
                         disabled={saving || deleting}
                       >
-                        <SelectTrigger className="h-8 w-full">
+                        <SelectTrigger
+                          variant="inline"
+                          size="sm"
+                          className="h-7 px-0"
+                        >
                           <SelectValue placeholder="No project" />
                         </SelectTrigger>
                         <SelectContent>
@@ -787,7 +849,11 @@ function TaskDetailDialog({
                         }
                         disabled={saving || deleting}
                       >
-                        <SelectTrigger className="h-8 w-full">
+                        <SelectTrigger
+                          variant="inline"
+                          size="sm"
+                          className="h-7 px-0"
+                        >
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -803,6 +869,7 @@ function TaskDetailDialog({
 
                     <PropertyRow label="Due date">
                       <Input
+                        variant="inline"
                         type="date"
                         value={draft.dueDate}
                         onChange={(event) =>
@@ -812,7 +879,7 @@ function TaskDetailDialog({
                           }))
                         }
                         disabled={saving || deleting}
-                        className="h-8 w-full"
+                        className="h-7 px-0"
                       />
                     </PropertyRow>
 
@@ -845,7 +912,7 @@ function TaskDetailDialog({
                 </InspectorSection>
 
                 {task.id && isAiGeneratedTask(task) ? (
-                  <InspectorSection title="AI feedback">
+                  <InspectorSection title="AI feedback" variant="plain">
                     <TaskFeedbackButtons
                       projectId={getTaskProjectId(task)}
                       taskId={task.id}
@@ -857,24 +924,11 @@ function TaskDetailDialog({
                   </InspectorSection>
                 ) : null}
 
-                <InspectorSection title="Context">
-                  {loading ? (
-                    <div className="flex min-h-32 items-center text-sm text-muted-foreground">
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Loading source context...
-                    </div>
-                  ) : task.source_context ? (
-                    <div className="max-h-96 overflow-y-auto whitespace-pre-wrap rounded-md bg-muted/40 p-3 text-sm leading-6 text-muted-foreground">
-                      {task.source_context}
-                    </div>
-                  ) : (
-                    <p className="rounded-md bg-muted/40 p-3 text-sm text-muted-foreground">
-                      No source context is available for this task.
-                    </p>
-                  )}
-                </InspectorSection>
-
-                <InspectorSection title="Trace" defaultOpen={false}>
+                <InspectorSection
+                  title="Trace"
+                  defaultOpen={false}
+                  variant="plain"
+                >
                   <PropertyList>
                     <PropertyRow label="Created">
                       {formatLongDate(task.created_at)}

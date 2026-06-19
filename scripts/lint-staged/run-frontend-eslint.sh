@@ -41,8 +41,13 @@ if [[ ${#existing_files[@]} -eq 0 ]]; then
 fi
 
 strict_files=()
+kanban_files=()
 for file in "${existing_files[@]}"; do
   case "$file" in
+    src/features/kanban/*|\
+    src/features/kanban/**/*)
+      kanban_files+=("$file")
+      ;;
     src/app/\(main\)/executive/*|\
     src/app/api/executive/*|\
     src/components/executive/*|\
@@ -67,18 +72,33 @@ case "$mode" in
     exec "$ESLINT_BIN" --no-warn-ignored --fix "${existing_files[@]}"
     ;;
   strict)
-    if [[ ${#strict_files[@]} -eq 0 ]]; then
+    if [[ ${#strict_files[@]} -eq 0 && ${#kanban_files[@]} -eq 0 ]]; then
       exit 0
     fi
-    json_output="$(mktemp)"
-    if "$ESLINT_BIN" --no-warn-ignored --format json --rule '{"design-system/require-api-client":"error","design-system/no-hardcoded-colors":"error","design-system/no-arbitrary-spacing":"error","design-system/require-semantic-colors":"error","design-system/no-design-violations":"error","design-system/require-page-shell":"error","design-system/no-oversized-shadows":"error","design-system/no-raw-button":"error","design-system/no-raw-form-controls":"error","design-system/require-money-field":"error","design-system/require-info-alert":"error","design-system/no-raw-table-primitives":"error","design-system/no-external-fetch-in-api-routes":"error","no-restricted-imports":["error",{"paths":[{"name":"@/components/ui/dialog","message":"Use \"@/components/ui/unified-modal\" for app-level modals to keep animation, positioning, and spacing consistent."}]}]}' "${strict_files[@]}" > "$json_output"; then
+
+    if [[ ${#strict_files[@]} -gt 0 ]]; then
+      json_output="$(mktemp)"
+      if ! "$ESLINT_BIN" --no-warn-ignored --format json --rule '{"design-system/require-api-client":"error","design-system/no-hardcoded-colors":"error","design-system/no-arbitrary-spacing":"error","design-system/require-semantic-colors":"error","design-system/no-design-violations":"error","design-system/require-page-shell":"error","design-system/no-oversized-shadows":"error","design-system/no-raw-button":"error","design-system/no-raw-form-controls":"error","design-system/require-money-field":"error","design-system/require-info-alert":"error","design-system/no-raw-table-primitives":"error","design-system/no-external-fetch-in-api-routes":"error","no-restricted-imports":["error",{"paths":[{"name":"@/components/ui/dialog","message":"Use \"@/components/ui/unified-modal\" for app-level modals to keep animation, positioning, and spacing consistent."}]}]}' "${strict_files[@]}" > "$json_output"; then
+        node "$STAGED_FILTER" "$json_output" "${strict_files[@]}"
+        status=$?
+        rm -f "$json_output"
+        exit "$status"
+      fi
       rm -f "$json_output"
-      exit 0
     fi
-    node "$STAGED_FILTER" "$json_output" "${strict_files[@]}"
-    status=$?
-    rm -f "$json_output"
-    exit "$status"
+
+    if [[ ${#kanban_files[@]} -gt 0 ]]; then
+      json_output="$(mktemp)"
+      if ! "$ESLINT_BIN" --no-warn-ignored --format json --rule '{"design-system/require-api-client":"error","design-system/no-hardcoded-colors":"error","design-system/no-arbitrary-spacing":"off","design-system/require-semantic-colors":"error","design-system/no-design-violations":"off","design-system/require-page-shell":"error","design-system/no-oversized-shadows":"error","design-system/no-raw-button":"error","design-system/no-raw-form-controls":"error","design-system/require-money-field":"error","design-system/require-info-alert":"error","design-system/no-raw-table-primitives":"error","design-system/no-external-fetch-in-api-routes":"error","no-restricted-imports":["error",{"paths":[{"name":"@/components/ui/dialog","message":"Use \"@/components/ui/unified-modal\" for app-level modals to keep animation, positioning, and spacing consistent."}]}]}' "${kanban_files[@]}" > "$json_output"; then
+        node "$STAGED_FILTER" "$json_output" "${kanban_files[@]}"
+        status=$?
+        rm -f "$json_output"
+        exit "$status"
+      fi
+      rm -f "$json_output"
+    fi
+
+    exit 0
     ;;
   *)
     echo "unknown mode: $mode (expected fix|strict)" >&2
