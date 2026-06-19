@@ -27,6 +27,7 @@ import {
   EXECUTIVE_DAILY_BRIEF_WORKFLOW_VERSION,
   executiveDailyBriefSourcePolicyMetadata,
 } from "./executive-daily-brief-workflow";
+import { ledgerChannelForDeliveryPlatform } from "./delivery-router";
 import { sourceAdapterRunStepsFromHealth } from "./source-adapters";
 import { executiveDailyBriefToolScope } from "./tool-registry";
 
@@ -152,9 +153,8 @@ function allowDeliveryForTarget(deliveryTarget: Record<string, unknown>) {
   if (deliveryTarget.channel === "none") return false;
   if (deliveryTarget.dryRun === true) return false;
   if (deliveryTarget.deliveryEnabled === false) return false;
-  return (
-    deliveryTarget.channel === "teams" || deliveryTarget.channel === "email"
-  );
+  if (typeof deliveryTarget.channel !== "string") return false;
+  return ledgerChannelForDeliveryPlatform(deliveryTarget.channel) !== null;
 }
 
 function sourceFamily(value: string): EvidenceRef["sourceFamily"] {
