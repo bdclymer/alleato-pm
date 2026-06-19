@@ -4,8 +4,6 @@ import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { GitBranch, LayoutList, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
-
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -26,20 +24,37 @@ import { AiAgentDag } from "@/features/ai-agents/ai-agent-dag";
 // ─── Data fetching ────────────────────────────────────────────────────────────
 
 function useAiAgents(filters: Record<string, FilterValue>) {
-  const params = new URLSearchParams();
-  if (filters.status) params.set("status", String(filters.status));
-  if (filters.domain) params.set("domain", String(filters.domain));
-  if (filters.impact) params.set("impact", String(filters.impact));
+  const [agents, setAgents] = React.useState<AiAgent[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [isFetching, setIsFetching] = React.useState(false);
+  const [error, setError] = React.useState<Error | null>(null);
 
-  return useQuery({
-    queryKey: ["admin", "ai-agents", filters],
-    queryFn: async () => {
+  const fetchAgents = React.useCallback(async () => {
+    setIsFetching(true);
+    try {
+      const params = new URLSearchParams();
+      if (filters.status) params.set("status", String(filters.status));
+      if (filters.domain) params.set("domain", String(filters.domain));
+      if (filters.impact) params.set("impact", String(filters.impact));
       const res = await apiFetch<{ agents: AiAgent[] }>(
         `/api/admin/ai-agents${params.size ? `?${params}` : ""}`,
       );
-      return res.agents;
-    },
-  });
+      setAgents(res.agents ?? []);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error(String(err)));
+    } finally {
+      setIsLoading(false);
+      setIsFetching(false);
+    }
+  }, [filters.status, filters.domain, filters.impact]);
+
+  React.useEffect(() => {
+    console.log("[ai-agents] useEffect fired, calling fetchAgents");
+    void fetchAgents();
+  }, [fetchAgents]);
+
+  return { data: agents, isLoading, isFetching, error, refetch: fetchAgents };
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -89,7 +104,7 @@ export default function AiAgentsPage() {
 
   const hasActiveFilters = Object.values(activeFilters).some(Boolean);
 
-  const { data: agents = [], isLoading, isFetching, error, refetch } = useAiAgents(activeFilters);
+  const { data: agents, isLoading, isFetching, error, refetch } = useAiAgents(activeFilters);
 
   const filteredAgents = React.useMemo(() => {
     if (!tableState.debouncedSearch) return agents;
@@ -103,6 +118,14 @@ export default function AiAgentsPage() {
     );
   }, [agents, tableState.debouncedSearch]);
 
+  React.useEffect(() => {
+    if (!selectedAgent) return;
+    const refreshed = agents.find((agent) => agent.id === selectedAgent.id);
+    if (refreshed && refreshed !== selectedAgent) {
+      setSelectedAgent(refreshed);
+    }
+  }, [agents, selectedAgent]);
+
   const columns = React.useMemo(() => buildAiAgentColumns(), []);
 
   function handleFilterChange(filters: Record<string, FilterValue>) {
@@ -115,6 +138,11 @@ export default function AiAgentsPage() {
   async function handleRefresh() {
     await refetch();
     toast.success("Agent registry refreshed");
+  }
+
+  async function handleAgentUpdated(agent: AiAgent) {
+    setSelectedAgent(agent);
+    await refetch();
   }
 
   const resolvedError =
@@ -166,7 +194,7 @@ export default function AiAgentsPage() {
             <AiAgentDag
               agents={filteredAgents}
               onNodeClick={setSelectedAgent}
-              selectedAgentId={selectedAgent?.id ?? null}
+              selectedAgentId={selectedAgent?.slug ?? null}
             />
           </div>
         </div>
@@ -216,6 +244,7 @@ export default function AiAgentsPage() {
       <AiAgentDetailPanel
         agent={selectedAgent}
         onClose={() => setSelectedAgent(null)}
+        onAgentUpdated={handleAgentUpdated}
       />
     </>
   );

@@ -79,13 +79,28 @@ export const GET = withApiGuardrails(WHERE_GET, async ({ request }) => {
   const agentIds = (data ?? []).map((a) => a.id);
   const runStats: Record<string, { lastRun: string | null; successRate: number; totalRuns: number }> =
     {};
+  const recentRuns: Record<string, Array<{
+    id: string;
+    project_id: number | null;
+    started_at: string | null;
+    completed_at: string | null;
+    status: string | null;
+    confidence_score: number | null;
+    output_count: number | null;
+    tokens_used: number | null;
+    error_message: string | null;
+    metadata: unknown;
+    created_at: string;
+  }>> = {};
 
   if (agentIds.length > 0) {
     const { data: runs } = await supabase
       .from("ai_agent_runs")
-      .select("agent_id, status, completed_at")
+      .select(
+        "id, agent_id, project_id, started_at, completed_at, status, confidence_score, output_count, tokens_used, error_message, metadata, created_at",
+      )
       .in("agent_id", agentIds)
-      .order("completed_at", { ascending: false });
+      .order("created_at", { ascending: false });
 
     if (runs) {
       const byAgent: Record<string, typeof runs> = {};
@@ -100,6 +115,19 @@ export const GET = withApiGuardrails(WHERE_GET, async ({ request }) => {
           successRate: agentRuns.length > 0 ? Math.round((successes / agentRuns.length) * 100) : 0,
           totalRuns: agentRuns.length,
         };
+        recentRuns[agentId] = agentRuns.slice(0, 5).map((run) => ({
+          id: run.id,
+          project_id: run.project_id,
+          started_at: run.started_at,
+          completed_at: run.completed_at,
+          status: run.status,
+          confidence_score: run.confidence_score,
+          output_count: run.output_count,
+          tokens_used: run.tokens_used,
+          error_message: run.error_message,
+          metadata: run.metadata,
+          created_at: run.created_at,
+        }));
       }
     }
   }
@@ -107,6 +135,7 @@ export const GET = withApiGuardrails(WHERE_GET, async ({ request }) => {
   const agents = (data ?? []).map((agent) => ({
     ...agent,
     runStats: runStats[agent.id] ?? { lastRun: null, successRate: 0, totalRuns: 0 },
+    recentRuns: recentRuns[agent.id] ?? [],
     gapCount: [
       !agent.success_metric,
       !agent.confidence_threshold,
@@ -124,11 +153,11 @@ const patchSchema = z.object({
   id: z.string().uuid(),
   status: z.enum(["planned", "building", "beta", "production", "deprecated"]).optional(),
   priority_score: z.number().int().min(1).max(100).optional(),
-  notes: z.string().max(2000).optional(),
-  success_metric: z.string().max(500).optional(),
-  confidence_threshold: z.number().min(0).max(1).optional(),
-  failure_behavior: z.string().max(500).optional(),
-  approval_required: z.boolean().optional(),
+  notes: z.string().max(2000).nullable().optional(),
+  success_metric: z.string().max(500).nullable().optional(),
+  confidence_threshold: z.number().min(0).max(1).nullable().optional(),
+  failure_behavior: z.string().max(500).nullable().optional(),
+  approval_required: z.boolean().nullable().optional(),
 });
 
 export const PATCH = withApiGuardrails(WHERE_PATCH, async ({ request }) => {

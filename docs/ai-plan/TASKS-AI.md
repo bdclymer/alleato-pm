@@ -450,8 +450,8 @@ Goal: the team can see what agents exist, what they do, what they depend on, and
 - [x] Add filters for status, domain, and impact.
 - [x] Add detail panel for purpose, data sources, dependencies, gaps, runtime stats, blockers, and notes.
 - [x] Remove top summary/stat strip; keep prime page space focused on the table workflow.
-- [ ] Add edit actions for status, notes, confidence threshold, failure behavior, and approval requirement.
-- [ ] Add run-detail drilldown from runtime stats.
+- [x] Add edit actions for status, notes, confidence threshold, failure behavior, and approval requirement.
+- [x] Add run-detail drilldown from runtime stats.
 
 ## Phase 7: AI Work Queue
 

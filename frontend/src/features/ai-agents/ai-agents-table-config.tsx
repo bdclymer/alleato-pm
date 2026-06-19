@@ -2,6 +2,20 @@ import type { TableColumn, FilterConfig } from "@/components/tables/unified";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export interface AiAgentRun {
+  id: string;
+  project_id: number | null;
+  started_at: string | null;
+  completed_at: string | null;
+  status: "success" | "failure" | "partial" | "skipped" | null;
+  confidence_score: number | null;
+  output_count: number | null;
+  tokens_used: number | null;
+  error_message: string | null;
+  metadata: unknown;
+  created_at: string;
+}
+
 export interface AiAgent {
   id: string;
   name: string;
@@ -34,6 +48,7 @@ export interface AiAgent {
     successRate: number;
     totalRuns: number;
   };
+  recentRuns: AiAgentRun[];
   gapCount: number;
 }
 
