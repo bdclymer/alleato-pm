@@ -72,6 +72,7 @@ filled in. If any item cannot be completed, change `Status` to
 | Browser/user-flow     | Not applicable | Pass | No frontend surface should change because the component is unused. |
 | DB/provider read-back | Not applicable | Pass | No database/provider change. |
 | End-to-end proof      | `rg ...`; `pnpm --dir frontend exec knip --config knip.json --no-exit-code --no-progress --reporter compact \| rg 'src/components/daily-log/CreateDialogs\\.tsx\|CreateDialogs' \|\| true`; `test ! -e ...` | Pass | No live references remain, Knip no longer reports the file, and the file is absent. |
+| Publish proof         | `npm run codex:finish -- --message "Remove unused daily log create dialogs" --files ...` | Pass | Published implementation to `origin/main` at `13872d1baf`. |
 
 ## Files Changed
 
