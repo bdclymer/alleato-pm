@@ -466,7 +466,6 @@ Scanned files: 3061
 | frontend/src/artifacts/sheet/client.tsx |
 | frontend/src/artifacts/text/client.tsx |
 | frontend/src/components/admin-feedback/AdminFeedbackWidget.tsx |
-| frontend/src/components/admin/client-status-toggle.tsx |
 | frontend/src/components/admin/table-explorer/AutoForm.tsx |
 | frontend/src/components/admin/table-explorer/DeleteConfirmation.tsx |
 | frontend/src/components/admin/table-explorer/RowActions.tsx |
