@@ -6,7 +6,7 @@
 2) Task ID: AAI-575
 3) Linear issue: AAI-575
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-575/remove-unused-stale-clientredirect-permission-path
-5) Current status: Complete; pending publish/review acceptance
+5) Current status: Published to `origin/main` at `f2885f0539`; accepted; Linear AAI-575 marked Done
 6) Files changed (absolute paths):
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-20-remove-stale-client-redirect-path.md`
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-20-S74-remove-stale-client-redirect-path.md`
@@ -31,6 +31,7 @@
 - PASS: `npm run verify:nonprod-routes`.
 - PASS: `cd frontend && NODE_OPTIONS='--max-old-space-size=8192' TYPECHECK_NO_TIMEOUT=1 npx tsc --noEmit --pretty false`.
 - PASS: `git diff --check -- ...`.
+- PASS: `npm run codex:finish -- --message "Remove stale client redirect path" --files ...` published implementation to `origin/main` at `f2885f0539`.
 8) Evidence artifacts (screenshot/video/report/log paths):
 - Command output in this Codex run.
 9) Top 3 findings (frontend-visible issues first):
@@ -46,12 +47,14 @@
 - Kickoff comment: `2b449635-3c3d-40ad-ba38-f0188d73de2d`
 - Milestone comments: Not applicable yet.
 - Completion/blocker comment: `8d75c7ce-92a5-4434-a56c-eabd63968b73`
+- Acceptance/closeout comment: `f9287510-c062-4346-9d95-1ed4a8746a0c`
+- Final state: Done
 
 ## Current Status
 
-S74 removed a stale security/permissions path from S70. Scope stayed limited to
-removing an unused client redirect path and correcting docs that described that
-dead path as active.
+S74 removed a stale security/permissions path from S70 and published it to
+`origin/main` at `f2885f0539`. Scope stayed limited to removing an unused
+client redirect path and correcting docs that described that dead path as active.
 
 ## Known Pitfalls
 
@@ -79,3 +82,4 @@ npm run linear:codex:check -- docs/ops/handoffs/2026-06-20-S74-remove-stale-clie
 - Post-delete search found no live imports.
 - Post-delete Knip no longer reports either file.
 - Route, nonprod route, whitespace, and high-heap TypeScript checks passed.
+- Implementation published to `origin/main` at `f2885f0539`.

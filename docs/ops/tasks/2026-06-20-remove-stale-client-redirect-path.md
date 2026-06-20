@@ -73,6 +73,7 @@ filled in. If any item cannot be completed, change `Status` to
 | Browser/user-flow     | Not applicable | Pass | No frontend surface should change; this removes unused client code. |
 | DB/provider read-back | Not applicable | Pass | No database/provider change. |
 | End-to-end proof      | `rg ...`; `pnpm --dir frontend exec knip --config knip.json --no-exit-code --no-progress --reporter compact \| rg 'src/components/auth/client-redirect\\.tsx\|src/hooks/use-is-client\\.ts\|client-redirect\|use-is-client' \|\| true`; `test ! -e ...` | Pass | No live imports remain, Knip no longer reports the two files, and both files are absent. |
+| Publish proof         | `npm run codex:finish -- --message "Remove stale client redirect path" --files ...` | Pass | Published implementation to `origin/main` at `f2885f0539`. |
 
 ## Files Changed
 
