@@ -6,7 +6,7 @@
 2) Task ID: AAI-573
 3) Linear issue: AAI-573
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-573/remove-unused-legacy-clientcontact-components
-5) Current status: Complete; pending publish/review acceptance
+5) Current status: Published to `origin/main` at `a582935f21`; accepted; Linear AAI-573 marked Done
 6) Files changed (absolute paths):
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-20-remove-legacy-client-contact-components.md`
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-20-S73-remove-legacy-client-contact-components.md`
@@ -27,6 +27,7 @@
 - PASS: `npm run verify:nonprod-routes`.
 - PASS: `cd frontend && NODE_OPTIONS='--max-old-space-size=8192' TYPECHECK_NO_TIMEOUT=1 npx tsc --noEmit --pretty false`.
 - PASS: `git diff --check -- ...`.
+- PASS: `npm run codex:finish -- --message "Remove unused legacy client contact components" --files ...` published implementation to `origin/main` at `a582935f21`.
 8) Evidence artifacts (screenshot/video/report/log paths):
 - Command output in this Codex run.
 9) Top 3 findings (frontend-visible issues first):
@@ -42,11 +43,14 @@
 - Kickoff comment: `14622a26-ef91-49e7-ba2f-c819677e37a3`
 - Milestone comments: Not applicable yet.
 - Completion/blocker comment: `19d08a1b-1c0f-4c0f-ad70-d30e9f001b03`
+- Acceptance/closeout comment: `5639415c-09ae-4e6d-b382-426a74c76697`
+- Final state: Done
 
 ## Current Status
 
-S73 removed the third S70 deletion batch. Scope stayed limited to two verified
-unused legacy client/contact UI components and their stale documentation rows.
+S73 removed the third S70 deletion batch and published it to `origin/main` at
+`a582935f21`. Scope stayed limited to two verified unused legacy client/contact
+UI components and their stale documentation rows.
 
 ## Known Pitfalls
 
@@ -75,3 +79,4 @@ npm run linear:codex:check -- docs/ops/handoffs/2026-06-20-S73-remove-legacy-cli
 - Post-delete search found no live references.
 - Post-delete Knip no longer reports either file.
 - Route, nonprod route, whitespace, and high-heap TypeScript checks passed.
+- Implementation published to `origin/main` at `a582935f21`.

@@ -75,6 +75,7 @@ filled in. If any item cannot be completed, change `Status` to
 | Browser/user-flow     | Not applicable | Pass | No user-facing UI expected because both files are unused components. |
 | DB/provider read-back | Not applicable | Pass | No database/provider change. |
 | End-to-end proof      | `rg ...`; `pnpm --dir frontend exec knip --config knip.json --no-exit-code --no-progress --reporter compact \| rg 'src/components/(admin/client-status-toggle\|apps/contacts/components-apps-contacts)\\.tsx\|client-status-toggle\|components-apps-contacts' \|\| true`; `test ! -e ...` | Pass | No live references remain, Knip no longer reports the two files, and both files are absent. |
+| Publish proof         | `npm run codex:finish -- --message "Remove unused legacy client contact components" --files ...` | Pass | Published implementation to `origin/main` at `a582935f21`. |
 
 ## Files Changed
 
