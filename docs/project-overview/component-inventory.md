@@ -630,7 +630,6 @@ All hooks follow the pattern `use-{resource}.ts` and wrap Supabase/API calls wit
 | `use-chat-scroll` | Chat auto-scroll |
 | `use-scroll-to-bottom` | Scroll-to-bottom helper |
 | `use-sidebar` | Sidebar open/close state |
-| `use-is-client` | Client-side rendering guard |
 | `use-auto-resume` | Auto-resume incomplete ops |
 | `use-store` | Zustand store access |
 | `use-toast` | Toast notification trigger |

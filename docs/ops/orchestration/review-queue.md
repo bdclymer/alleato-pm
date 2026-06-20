@@ -75,6 +75,7 @@ Leader reviews all pending handoffs here.
 | `docs/ops/handoffs/2026-06-19-S71-remove-legacy-admin-panel-shell.md` | S71 | AAI-570 | 2026-06-19 | Yes | Accepted | First S70 deletion batch accepted. Published at `14cdedb4e2`; verified unused legacy `frontend/src/components/admin-panel/**` shell removed, component graph regenerated, route checks and high-heap typecheck passed. |
 | `docs/ops/handoffs/2026-06-20-S72-remove-storybook-next-mocks.md` | S72 | AAI-572 | 2026-06-20 | Yes | Accepted | Second S70 deletion batch accepted. Published at `097e8d1888`; verified unused Storybook Next mock shims removed, focused Knip/search proof, route checks, changed-file quality, and high-heap typecheck passed. |
 | `docs/ops/handoffs/2026-06-20-S73-remove-legacy-client-contact-components.md` | S73 | AAI-573 | 2026-06-20 | Yes | Accepted | Third S70 deletion batch accepted. Published at `a582935f21`; verified unused legacy client/contact components removed, stale doc rows cleaned, focused Knip/search proof, changed-file quality, route checks, and high-heap typecheck passed. |
+| `docs/ops/handoffs/2026-06-20-S74-remove-stale-client-redirect-path.md` | S74 | AAI-575 | 2026-06-20 | Partial | Pending Review | Fourth deletion batch opened from S70. Scope limited to stale unused `ClientRedirect`/`useIsClient` path plus docs/inventory corrections for active client access ownership. |
 
 ## Disposition Rules
 

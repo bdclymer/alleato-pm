@@ -54,8 +54,8 @@ UI components and their stale documentation rows.
 
 ## Known Pitfalls
 
-- Do not delete `frontend/src/components/auth/client-redirect.tsx` in this
-  slice; permission-related dead-code candidates require a separate decision.
+- `frontend/src/components/auth/client-redirect.tsx` was intentionally deferred
+  from this slice; see S74 for the separate permission-related cleanup decision.
 - Do not stage unrelated local worktree dirt or reference clones.
 - `frontend/src/components/dev-tools/db-inventory.generated.json` already has
   unrelated local changes and still references many scanned files; do not edit

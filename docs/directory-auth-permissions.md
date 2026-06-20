@@ -219,7 +219,7 @@ This document covers every Supabase table involved in user management, company/p
 
 - This is the table that ALL permission checks ultimately depend on
 - `PermissionService.getUserPermissions()` joins this table → `permission_templates` to get `rules_json`
-- `user_type` controls post-login routing (clients go to client dashboard) and content restriction via `ClientRedirect`
+- `user_type` controls post-login routing and client-dashboard access checks
 - A person can be in the membership table but still unable to log in (if `users_auth` row doesn't exist yet)
 - Invite flow: `not_invited` → admin sends invite → `invited` → user clicks link → `accepted`
 
@@ -511,35 +511,28 @@ In addition to module-level permissions, the `user_type` column on `project_dire
 
 ### Client Users (`user_type = 'client'`)
 
-Client users are restricted to a limited set of paths by the `ClientRedirect` component (`frontend/src/components/auth/client-redirect.tsx`):
+Client users are identified by
+`project_directory_memberships.user_type = 'client'`. The active client-facing
+route guard lives server-side in
+`frontend/src/app/(main)/[projectId]/client-dashboard/page.tsx`: non-admin
+users must have an active membership for the project, and non-client members are
+redirected to `/{projectId}/home`.
 
-**Allowed paths:**
-- `/{projectId}/client-dashboard`
-- `/{projectId}/documents`
-- `/{projectId}/photos`
-- `/{projectId}/meetings`
-- `/profile`
-- `/settings`
-
-Any other path triggers an automatic redirect to the client dashboard.
-
-**How it works:**
-1. `ClientRedirect` wraps project-scoped pages
-2. It calls `useIsClient()` hook to check if the current user is a client
-3. If the user is a client and the current path is not in the allowed list, it redirects
+General project-scoped access is enforced by
+`frontend/src/app/(main)/[projectId]/layout.tsx`, which verifies an active
+project membership before rendering project pages.
 
 **Post-login routing:** `post-login-router.ts` routes client users with a single project directly to `/{projectId}/client-dashboard` instead of `/{projectId}/home`.
 
 **Navigation filtering:** The sidebar uses `useProjectPermissions()` which returns `userType`. Tools marked `adminOnly: true` are hidden unless `userType` is `'developer'` or `isAppAdmin` is true.
 
-### Known Issue: Dual Client Detection
+### Removed Legacy Client Redirect Path
 
-There are currently two conflicting systems for detecting client users:
-
-1. **New system (canonical):** `project_directory_memberships.user_type = 'client'` — used by `post-login-router.ts`, `useProjectPermissions()`, and the project layout
-2. **Old system (deprecated):** `project_users.is_client` — used by `use-is-client.ts` hook, which `ClientRedirect` depends on. The `project_users` table may not exist in the current schema, causing `useIsClient()` to silently fail (always returns `isClient: false`).
-
-**Impact:** If `use-is-client.ts` fails silently, `ClientRedirect` will NOT restrict client users. The post-login redirect still works correctly since it uses `user_type`.
+The old client-side `ClientRedirect` / `useIsClient` path has been removed. It
+was not imported by the app and could drift from canonical lowercase
+`user_type = 'client'` semantics. Do not reintroduce a client-side wrapper as
+the source of truth for broad access control; use server-side membership checks
+and route guards.
 
 ---
 

@@ -1,18 +1,17 @@
-# Task: Remove Legacy Client/Contact Components
+# Task: Remove Stale Client Redirect Path
 
 Status: Complete
 Owner: Codex
 Created: 2026-06-20
-Linear Issue: AAI-573 - https://linear.app/megankharrison/issue/AAI-573/remove-unused-legacy-clientcontact-components
-Related Handoff: docs/ops/handoffs/2026-06-20-S73-remove-legacy-client-contact-components.md
+Linear Issue: AAI-575 - https://linear.app/megankharrison/issue/AAI-575/remove-unused-stale-clientredirect-permission-path
+Related Handoff: docs/ops/handoffs/2026-06-20-S74-remove-stale-client-redirect-path.md
 
 ## Objective
 
-Remove the third narrow, verified dead-code bucket from the S70 Knip report:
-the unused `frontend/src/components/admin/client-status-toggle.tsx` and
-`frontend/src/components/apps/contacts/components-apps-contacts.tsx` files.
-S73 did not delete `frontend/src/components/auth/client-redirect.tsx` because
-permission-related dead-code candidates needed a separate security decision.
+Remove the unused `ClientRedirect` permission path and its `useIsClient` hook
+after proving active client access is owned by server-side project membership
+checks and the client dashboard route. Update stale documentation so future work
+does not reason against a dead permission wrapper.
 
 ## Non-Negotiable Done Rule
 
@@ -71,31 +70,35 @@ filled in. If any item cannot be completed, change `Status` to
 | --------------------- | ------------------ | ------ | ----- |
 | Static/type/lint      | `cd frontend && NODE_OPTIONS='--max-old-space-size=8192' TYPECHECK_NO_TIMEOUT=1 npx tsc --noEmit --pretty false`; `git diff --check -- ...` | Pass | High-heap TypeScript passed with no compiler output; whitespace check passed. |
 | Targeted tests        | `npm run check:routes`; `npm run verify:nonprod-routes` | Pass | Route conflict and nonprod route manifest checks passed. |
-| Browser/user-flow     | Not applicable | Pass | No user-facing UI expected because both files are unused components. |
+| Browser/user-flow     | Not applicable | Pass | No frontend surface should change; this removes unused client code. |
 | DB/provider read-back | Not applicable | Pass | No database/provider change. |
-| End-to-end proof      | `rg ...`; `pnpm --dir frontend exec knip --config knip.json --no-exit-code --no-progress --reporter compact \| rg 'src/components/(admin/client-status-toggle\|apps/contacts/components-apps-contacts)\\.tsx\|client-status-toggle\|components-apps-contacts' \|\| true`; `test ! -e ...` | Pass | No live references remain, Knip no longer reports the two files, and both files are absent. |
-| Publish proof         | `npm run codex:finish -- --message "Remove unused legacy client contact components" --files ...` | Pass | Published implementation to `origin/main` at `a582935f21`. |
+| End-to-end proof      | `rg ...`; `pnpm --dir frontend exec knip --config knip.json --no-exit-code --no-progress --reporter compact \| rg 'src/components/auth/client-redirect\\.tsx\|src/hooks/use-is-client\\.ts\|client-redirect\|use-is-client' \|\| true`; `test ! -e ...` | Pass | No live imports remain, Knip no longer reports the two files, and both files are absent. |
 
 ## Files Changed
 
-- `docs/ops/tasks/2026-06-20-remove-legacy-client-contact-components.md` - task done gate.
-- `docs/ops/handoffs/2026-06-20-S73-remove-legacy-client-contact-components.md` - handoff/evidence ledger.
-- `docs/ops/orchestration/session-board.md` - S73 ownership row.
-- `docs/ops/orchestration/review-queue.md` - S73 review row.
-- `frontend/src/components/admin/client-status-toggle.tsx` - verified unused component deletion target.
-- `frontend/src/components/apps/contacts/components-apps-contacts.tsx` - verified unused demo/app component deletion target.
-- `docs/reports/toast-inventory.md` - remove stale reference to deleted component.
-- `docs/design/table-layout-audit.md` - remove stale reference to deleted component.
+- `docs/ops/tasks/2026-06-20-remove-stale-client-redirect-path.md` - task done gate.
+- `docs/ops/handoffs/2026-06-20-S74-remove-stale-client-redirect-path.md` - handoff/evidence ledger.
+- `docs/ops/orchestration/session-board.md` - S74 ownership row.
+- `docs/ops/orchestration/review-queue.md` - S74 review row.
+- `frontend/src/components/auth/client-redirect.tsx` - stale unused redirect wrapper deletion target.
+- `frontend/src/hooks/use-is-client.ts` - stale unused hook deletion target.
+- `docs/directory-auth-permissions.md` - replace stale active `ClientRedirect` claims with current ownership.
+- `docs/project-overview/component-inventory.md` - remove stale `use-is-client` row.
+- `docs/reports/route-inventory.csv` - remove stale dependency entries for deleted `client-redirect.tsx`.
+- `docs/ops/tasks/2026-06-20-remove-legacy-client-contact-components.md` - update S73 deferral note now that S74 owns the permission cleanup.
+- `docs/ops/handoffs/2026-06-20-S73-remove-legacy-client-contact-components.md` - update S73 deferral note now that S74 owns the permission cleanup.
 
 ## Risks / Gaps
 
-- `frontend/src/components/auth/client-redirect.tsx` was intentionally deferred
-  from S73 because it was permission-adjacent. It is handled by the separate S74
-  security/permissions cleanup decision.
+- This removes an unused client-side wrapper, not the active server-side project
+  membership guard or the client dashboard route guard.
 - Existing unrelated worktree dirt is out of scope and must not be staged.
 - Existing generated `frontend/src/components/dev-tools/db-inventory.generated.json`
-  has unrelated local changes and still contains scanned references; it was not
+  has unrelated local changes and still contains scanned references; it is not
   touched in this slice.
+- Remaining references to the removed path are historical S73/S74 documentation
+  notes and the S74 permissions-doc correction that explicitly says the old path
+  was removed.
 
 ## Final Status
 
