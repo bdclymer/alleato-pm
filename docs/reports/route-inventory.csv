@@ -279,7 +279,7 @@ route,kind,dynamic,refCount,file,refSample
 /api/rag-chatkit/state,api,false,2,frontend/src/app/api/rag-chatkit/state/route.ts,frontend/src/app/(chat)/chat-admin-view/page.nonprod.tsx; frontend/src/app/(chat)/chat-rag/page.nonprod.tsx
 /api/supabase-proxy/[...path],api,true,0,frontend/src/app/api/supabase-proxy/[...path]/route.ts,
 /api/table-delete,api,false,1,frontend/src/app/api/table-delete/route.ts,frontend/src/components/tables/GenericTableWithDelete.tsx
-/api/table-insert,api,false,1,frontend/src/app/api/table-insert/route.ts,frontend/src/components/daily-log/CreateDialogs.tsx
+/api/table-insert,api,false,0,frontend/src/app/api/table-insert/route.ts,
 /api/table-metadata,api,false,1,frontend/src/app/api/table-metadata/route.ts,frontend/src/app/(other)/tables-directory/page.tsx
 /api/table-update,api,false,1,frontend/src/app/api/table-update/route.ts,frontend/src/components/tables/generic-table-factory.tsx
 /api/tool-calling,api,false,1,frontend/src/app/api/tool-calling/route.ts,frontend/src/app/(chat)/chat-tool/page.nonprod.tsx

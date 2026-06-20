@@ -507,7 +507,6 @@ Scanned files: 3061
 | frontend/src/components/commitments/tabs/RelatedItemsTab.tsx |
 | frontend/src/components/commitments/tabs/ScheduleOfValuesTab.tsx |
 | frontend/src/components/commitments/tabs/SubcontractorSovTab.tsx |
-| frontend/src/components/daily-log/CreateDialogs.tsx |
 | frontend/src/components/dev-tools/enhanced-dev-panel.tsx |
 | frontend/src/components/dev-tools/test-runs-tab.tsx |
 | frontend/src/components/direct-costs/CreateDirectCostForm.tsx |

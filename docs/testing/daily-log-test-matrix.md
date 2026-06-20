@@ -21,7 +21,7 @@
 
 ## 1. Core Actions
 
-> Source: Codebase — DailyLogClient, CreateDialogs, page.tsx; Procore Daily Log manifest (list view, create/edit flows)
+> Source: Codebase — DailyLogClient, page.tsx; Procore Daily Log manifest (list view, create/edit flows)
 
 ### 1.1 Create
 
@@ -280,12 +280,11 @@
 |---|-------|----------------|---------|
 | 1 | Daily Log list page | `frontend/src/app/(main)/[projectId]/daily-log/page.tsx` | Codebase |
 | 2 | Daily Log client component | `frontend/src/app/(main)/[projectId]/daily-log/daily-log-client.tsx` | Codebase |
-| 3 | Create Dialogs (Manpower, Equipment, Notes) | `frontend/src/components/daily-log/CreateDialogs.tsx` | Codebase |
-| 4 | Database types — daily_logs table | `frontend/src/types/database.types.ts` (line 6472) | Codebase |
-| 5 | Database types — daily_log_manpower | `frontend/src/types/database.types.ts` (line 6395) | Codebase |
-| 6 | Database types — daily_log_equipment | `frontend/src/types/database.types.ts` (line 6357) | Codebase |
-| 7 | Database types — daily_log_notes | `frontend/src/types/database.types.ts` (line 6440) | Codebase |
-| 8 | Procore Daily Log manifest — list state | `.claude/procore-manifests/daily-log/manifest.json` | Procore Capture |
+| 3 | Database types — daily_logs table | `frontend/src/types/database.types.ts` (line 6472) | Codebase |
+| 4 | Database types — daily_log_manpower | `frontend/src/types/database.types.ts` (line 6395) | Codebase |
+| 5 | Database types — daily_log_equipment | `frontend/src/types/database.types.ts` (line 6357) | Codebase |
+| 6 | Database types — daily_log_notes | `frontend/src/types/database.types.ts` (line 6440) | Codebase |
+| 7 | Procore Daily Log manifest — list state | `.claude/procore-manifests/daily-log/manifest.json` | Procore Capture |
 | 9 | Daily Log guided test scenarios | `docs/testing/daily-log-scenarios.md` | Codebase |
 | 10 | Create a Daily Log (Procore docs) | https://v2.support.procore.com/product-manuals/daily-log-project/tutorials/create-a-daily-log | Procore Docs |
 | 11 | Edit a Daily Log (Procore docs) | https://v2.support.procore.com/product-manuals/daily-log-project/tutorials/edit-a-daily-log | Procore Docs |
