@@ -73,6 +73,7 @@ Leader reviews all pending handoffs here.
 | `docs/ops/handoffs/2026-06-19-S68-unified-delivery-router.md` | S68 | AAI-567 | 2026-06-19 | Yes | Accepted | Goal 7 G5 accepted. Published at `613a8c6f09`; Alleato-native delivery router, Executive Daily Brief ledger policy integration, focused tests, changed-file quality, and `codex:finish` evidence passed. |
 | `docs/ops/handoffs/2026-06-19-S70-knip-dead-code-audit.md` | S70 | AAI-569 | 2026-06-19 | Yes | Accepted | Knip dead-code audit accepted. Published at `99e7e824e9`; report artifacts generated, handoff validation passed, Linear AAI-569 done, and no app code was deleted. Use report for small future deletion batches. |
 | `docs/ops/handoffs/2026-06-19-S71-remove-legacy-admin-panel-shell.md` | S71 | AAI-570 | 2026-06-19 | Yes | Accepted | First S70 deletion batch accepted. Published at `14cdedb4e2`; verified unused legacy `frontend/src/components/admin-panel/**` shell removed, component graph regenerated, route checks and high-heap typecheck passed. |
+| `docs/ops/handoffs/2026-06-20-S72-remove-storybook-next-mocks.md` | S72 | AAI-572 | 2026-06-20 | Partial | Pending Review | Second deletion batch opened from S70. Scope limited to verified unused `frontend/.storybook/mocks/next-link.tsx` and `frontend/.storybook/mocks/next-navigation.ts`. |
 
 ## Disposition Rules
 
