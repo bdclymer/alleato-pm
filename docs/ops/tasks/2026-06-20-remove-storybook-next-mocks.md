@@ -74,6 +74,7 @@ filled in. If any item cannot be completed, change `Status` to
 | Browser/user-flow     | Not applicable | Pass | No user-facing UI expected; Storybook shims are not runtime app UI. |
 | DB/provider read-back | Not applicable | Pass | No database/provider change. |
 | End-to-end proof      | `rg ...`; `pnpm --dir frontend exec knip --config knip.json --no-exit-code --no-progress --reporter compact \| rg '\\.storybook/mocks/(next-link\|next-navigation)\|next-link\|next-navigation' \|\| true`; `test ! -e ...` | Pass | No live references remain, Knip no longer reports the two mocks, and both files are absent. |
+| Publish proof         | `npm run codex:finish -- --message "Remove unused Storybook Next mocks" --files ...` | Pass | Published implementation to `origin/main` at `097e8d1888`. |
 
 ## Files Changed
 

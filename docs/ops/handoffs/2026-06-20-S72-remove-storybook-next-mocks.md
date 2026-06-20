@@ -6,7 +6,7 @@
 2) Task ID: AAI-572
 3) Linear issue: AAI-572
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-572/remove-unused-storybook-next-mock-shims
-5) Current status: Complete; pending publish/review acceptance
+5) Current status: Published to `origin/main` at `097e8d1888`; accepted; Linear AAI-572 marked Done
 6) Files changed (absolute paths):
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-20-remove-storybook-next-mocks.md`
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-20-S72-remove-storybook-next-mocks.md`
@@ -26,6 +26,7 @@
 - PASS: `npm run verify:nonprod-routes`.
 - PASS: `cd frontend && NODE_OPTIONS='--max-old-space-size=8192' TYPECHECK_NO_TIMEOUT=1 npx tsc --noEmit --pretty false`.
 - PASS: `git diff --check -- ...`.
+- PASS: `npm run codex:finish -- --message "Remove unused Storybook Next mocks" --files ...` published implementation to `origin/main` at `097e8d1888`.
 8) Evidence artifacts (screenshot/video/report/log paths):
 - Command output in this Codex run.
 9) Top 3 findings (frontend-visible issues first):
@@ -41,11 +42,14 @@
 - Kickoff comment: `4c29bcd0-98b6-4062-93a8-986112fe9d9b`
 - Milestone comments: Not applicable yet.
 - Completion/blocker comment: `98e4dd81-62b6-4f21-b2d3-009e19fad2f9`
+- Acceptance/closeout comment: `1ea43278-11e3-446d-b65c-403970491fe4`
+- Final state: Done
 
 ## Current Status
 
-S72 removed the second S70 deletion batch. Scope stayed limited to two verified
-unused Storybook Next mock shims.
+S72 removed the second S70 deletion batch and published it to `origin/main` at
+`097e8d1888`. Scope stayed limited to two verified unused Storybook Next mock
+shims.
 
 ## Known Pitfalls
 
@@ -70,3 +74,4 @@ npm run linear:codex:check -- docs/ops/handoffs/2026-06-20-S72-remove-storybook-
 - Post-delete search found no live references.
 - Post-delete Knip no longer reports either file.
 - Route, nonprod route, whitespace, and high-heap TypeScript checks passed.
+- Implementation published to `origin/main` at `097e8d1888`.
