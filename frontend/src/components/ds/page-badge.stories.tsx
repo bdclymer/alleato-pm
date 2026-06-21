@@ -1,5 +1,5 @@
 import React from "react";
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { Sparkles, HardHat, Zap, Shield } from "lucide-react";
 import { PageBadge } from "./page-badge";
 

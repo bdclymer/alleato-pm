@@ -1,5 +1,5 @@
 import React from "react";
-import type { Meta } from "@storybook/react";
+import type { Meta } from "@storybook/nextjs-vite";
 import type { DateRange } from "react-day-picker";
 import { Label } from "@/components/ui/label";
 import { DateRangePicker } from "./date-range-picker";

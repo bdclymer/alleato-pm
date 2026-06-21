@@ -1,5 +1,5 @@
 import React from "react";
-import type { Meta } from "@storybook/react";
+import type { Meta } from "@storybook/nextjs-vite";
 import { Copy, ExternalLink, Trash2 } from "lucide-react";
 import { TableRowContextMenu } from "./context-menu-pattern";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";

@@ -1,5 +1,5 @@
 import React from "react";
-import type { Meta } from "@storybook/react";
+import type { Meta } from "@storybook/nextjs-vite";
 import { Building2, Mail, Phone } from "lucide-react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "./hover-card";
 

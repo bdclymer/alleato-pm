@@ -1,5 +1,5 @@
 import React from "react";
-import type { Meta } from "@storybook/react";
+import type { Meta } from "@storybook/nextjs-vite";
 import { Button } from "@/components/ui/button";
 import { Banner } from "./banner";
 

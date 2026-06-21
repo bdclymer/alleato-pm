@@ -1,5 +1,5 @@
 import React from "react";
-import type { Meta } from "@storybook/react";
+import type { Meta } from "@storybook/nextjs-vite";
 import { Label } from "./label";
 import {
   Select,

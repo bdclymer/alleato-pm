@@ -1,5 +1,5 @@
 import React from "react";
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { KpiBlock, KpiRow } from "./kpi";
 
 const meta: Meta<typeof KpiBlock> = {

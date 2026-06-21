@@ -1,5 +1,5 @@
 import React from "react";
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { AttachmentUploadPanel, type AttachmentUploadItem } from "./attachment-upload-panel";
 
 const meta: Meta<typeof AttachmentUploadPanel> = {

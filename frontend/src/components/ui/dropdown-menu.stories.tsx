@@ -1,5 +1,5 @@
 import React from "react";
-import type { Meta } from "@storybook/react";
+import type { Meta } from "@storybook/nextjs-vite";
 import { MoreVertical, Download, Archive, Trash2, Share2, Copy } from "lucide-react";
 import { Button } from "./button";
 import {

@@ -1,5 +1,5 @@
 import React from "react";
-import type { Meta } from "@storybook/react";
+import type { Meta } from "@storybook/nextjs-vite";
 import { Search } from "lucide-react";
 import { Button } from "./button";
 import { Input } from "./input";

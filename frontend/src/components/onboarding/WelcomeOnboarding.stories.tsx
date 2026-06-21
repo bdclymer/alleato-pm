@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import type * as React from "react";
 import { WelcomeOnboarding } from "./WelcomeOnboarding";
 import { FoundationStep } from "./steps/FoundationStep";

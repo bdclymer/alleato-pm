@@ -1,5 +1,5 @@
 import React from "react";
-import type { Meta } from "@storybook/react";
+import type { Meta } from "@storybook/nextjs-vite";
 import { TextField } from "./TextField";
 import { DateField } from "./DateField";
 import { SelectField } from "./SelectField";

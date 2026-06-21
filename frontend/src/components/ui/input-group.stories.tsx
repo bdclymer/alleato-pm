@@ -1,5 +1,5 @@
 import React from "react";
-import type { Meta } from "@storybook/react";
+import type { Meta } from "@storybook/nextjs-vite";
 import { Search, DollarSign, Percent } from "lucide-react";
 import { Input } from "./input";
 import { InputGroup, InputGroupAddon } from "./input-group";

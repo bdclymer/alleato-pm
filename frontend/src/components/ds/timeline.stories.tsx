@@ -1,5 +1,5 @@
 import React from "react";
-import type { Meta } from "@storybook/react";
+import type { Meta } from "@storybook/nextjs-vite";
 import { CheckCircle2, DollarSign, FileText, MessageSquare, User } from "lucide-react";
 import { Timeline, type TimelineItem } from "./timeline";
 

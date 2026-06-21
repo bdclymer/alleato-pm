@@ -1,5 +1,5 @@
 import React from "react";
-import type { Meta } from "@storybook/react";
+import type { Meta } from "@storybook/nextjs-vite";
 import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import { Toggle } from "./toggle";
 

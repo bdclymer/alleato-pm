@@ -1,5 +1,5 @@
 import React from "react";
-import type { Meta } from "@storybook/react";
+import type { Meta } from "@storybook/nextjs-vite";
 import { AlertCircle, CheckCircle, Info, TriangleAlert } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "./alert";
 

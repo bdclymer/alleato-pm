@@ -1,5 +1,5 @@
 import React from "react";
-import type { Meta } from "@storybook/react";
+import type { Meta } from "@storybook/nextjs-vite";
 import { ChevronDown } from "lucide-react";
 import { Button } from "./button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./collapsible";

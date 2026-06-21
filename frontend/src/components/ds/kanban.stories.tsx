@@ -1,5 +1,5 @@
 import React from "react";
-import type { Meta } from "@storybook/react";
+import type { Meta } from "@storybook/nextjs-vite";
 import { AlertCircle, CheckCircle2, Clock, FileText } from "lucide-react";
 import { KanbanCardShell, KanbanColumnShell, KanbanEmptyAction } from "./kanban";
 

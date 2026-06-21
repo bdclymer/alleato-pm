@@ -1,5 +1,5 @@
 import React from "react";
-import type { Meta } from "@storybook/react";
+import type { Meta } from "@storybook/nextjs-vite";
 import { AlignLeft, AlignCenter, AlignRight, List, Grid } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "./toggle-group";
 
