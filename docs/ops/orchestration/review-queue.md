@@ -78,6 +78,7 @@ Leader reviews all pending handoffs here.
 | `docs/ops/handoffs/2026-06-20-S74-remove-stale-client-redirect-path.md` | S74 | AAI-575 | 2026-06-20 | Yes | Accepted | Fourth S70 deletion batch accepted. Published at `f2885f0539`; stale unused `ClientRedirect`/`useIsClient` path removed, active server-side ownership documented, focused Knip/search proof, changed-file quality, route checks, and high-heap typecheck passed. |
 | `docs/ops/handoffs/2026-06-20-S75-remove-daily-log-create-dialogs.md` | S75 | AAI-576 | 2026-06-20 | Yes | Accepted | Fifth S70 deletion batch accepted. Published at `13872d1baf`; verified unused daily-log create dialogs component removed, stale docs/inventory cleaned, focused Knip/search proof, changed-file quality, route checks, and high-heap typecheck passed. |
 | `docs/ops/handoffs/2026-06-20-S76-remove-comments-barrel-helper.md` | S76 | AAI-582 | 2026-06-20 | Yes | Accepted | Sixth S70 deletion batch accepted. Published at `9b4ea0c098`; verified unused comments barrel/helper pair removed, active comments components preserved, focused Knip/search proof, changed-file quality, route checks, and high-heap typecheck passed. |
+| `docs/ops/handoffs/2026-06-21-S77-remove-budget-modal-barrels.md` | S77 | AAI-584 | 2026-06-21 | Yes | Pending Review | Seventh S70 deletion batch complete pending publish. Removed verified unused budget modal barrels; focused search/Knip proof, file preservation, route checks, diff hygiene, and high-heap typecheck passed. |
 
 ## Disposition Rules
 
