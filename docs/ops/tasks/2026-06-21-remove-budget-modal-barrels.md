@@ -74,6 +74,7 @@ filled in. If any item cannot be completed, change `Status` to
 | Route guard | `npm run check:routes` and `npm run verify:nonprod-routes` | Pass | No route conflicts; non-production route manifest valid. |
 | End-to-end proof      | `rg -n "@/components/budget/modals['\"]\|components/budget/modals['\"]\|components/budget/modals/index\|from ['\"][^'\"]*budget/modals['\"]" frontend/src docs scripts tests ...` plus file existence checks | Pass | No live import uses the deleted barrels; `BudgetModificationsModal.tsx` and `ApprovedCOsModal.tsx` remain present. The only broad search hit was the generated component graph directory node, not an import. |
 | Diff hygiene | `git diff --check -- <task-owned paths>` | Pass | No whitespace errors in the task-owned diff. |
+| Publish proof | `git push origin main && git fetch origin main && test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"` | Pass | Published implementation commit `033efafe7` to `origin/main`. |
 
 ## Files Changed
 
