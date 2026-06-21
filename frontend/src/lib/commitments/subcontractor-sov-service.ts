@@ -10,6 +10,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { sendEmail } from "@/lib/email/send";
 import { APP_BASE_URL } from "@/lib/email/client";
 import { logger } from "@/lib/logger";
+import { notifyStatusChange } from "@/services/notificationService";
 import {
   mergeSubcontractorSovAccessIds,
   type SubcontractorSovCommitmentAccess,
@@ -532,6 +533,121 @@ export async function notifyPMsOfSsovSubmission(args: {
       }),
     ),
   );
+}
+
+/**
+ * Notify the subcontractor (invoice contacts) when their SOV is approved or
+ * returned for revision. Closes the previously-silent ball-in-court hand-off:
+ * before this, the subcontractor only learned the outcome by logging back in.
+ * Sends email + best-effort in-app/Teams notification.
+ */
+export async function notifySubcontractorOfSsovReview(args: {
+  supabase: ServiceClient;
+  projectId: number;
+  commitmentId: string;
+  commitmentNumber: string | null;
+  contractAmount: number;
+  invoiceContactIds: string[];
+  decision: "approved" | "revise_resubmit";
+  reviewNotes?: string | null;
+  submissionId: string;
+}) {
+  const {
+    supabase,
+    projectId,
+    commitmentId,
+    commitmentNumber,
+    contractAmount,
+    invoiceContactIds,
+    decision,
+    reviewNotes,
+    submissionId,
+  } = args;
+
+  const contacts = await getInvoiceContactEmails(supabase, invoiceContactIds);
+  if (contacts.length === 0) return;
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("name")
+    .eq("id", projectId)
+    .maybeSingle();
+  const projectName = project?.name || `Project #${projectId}`;
+
+  const contractAmountFormatted = contractAmount.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+  });
+
+  const sovTabUrl = `${APP_BASE_URL}/${projectId}/commitments/${commitmentId}?tab=subcontractor-sov`;
+
+  if (decision === "approved") {
+    const { default: SovApprovedToSub } = await import("@/emails/subcontractor/SovApprovedToSub");
+    await Promise.all(
+      contacts.map((contact) =>
+        sendEmail({
+          template: "sov-approved",
+          to: contact.email,
+          subject: `Schedule of Values approved${commitmentNumber ? ` — ${commitmentNumber}` : ""}`,
+          react: SovApprovedToSub({
+            subcontractorName: contact.name,
+            projectName,
+            commitmentNumber: commitmentNumber || "—",
+            contractAmount: contractAmountFormatted,
+            invoiceUrl: sovTabUrl,
+          }),
+          entity: { type: "sov_submission", id: submissionId },
+          idempotencyKey: `sov-approved/${submissionId}/${contact.email}`,
+        }),
+      ),
+    );
+  } else {
+    const { default: SovRejectedToSub } = await import("@/emails/subcontractor/SovRejectedToSub");
+    await Promise.all(
+      contacts.map((contact) =>
+        sendEmail({
+          template: "sov-rejected",
+          to: contact.email,
+          subject: `Schedule of Values needs revisions${commitmentNumber ? ` — ${commitmentNumber}` : ""}`,
+          react: SovRejectedToSub({
+            subcontractorName: contact.name,
+            projectName,
+            commitmentNumber: commitmentNumber || "—",
+            reviewNotes: reviewNotes ?? null,
+            resubmitUrl: sovTabUrl,
+          }),
+          entity: { type: "sov_submission", id: submissionId },
+          idempotencyKey: `sov-rejected/${submissionId}/${contact.email}`,
+        }),
+      ),
+    );
+  }
+
+  // Best-effort in-app + Teams notification (never blocks the email path).
+  try {
+    const { data: authLinks } = await supabase
+      .from("users_auth")
+      .select("auth_user_id")
+      .in("person_id", contacts.map((contact) => contact.id));
+    const authUserIds = ((authLinks || []) as Array<{ auth_user_id: string | null }>)
+      .map((row) => row.auth_user_id)
+      .filter((id): id is string => !!id);
+    if (authUserIds.length > 0) {
+      await notifyStatusChange(authUserIds, {
+        projectId,
+        entityType: "sov_submission",
+        entityId: submissionId,
+        from: "under_review",
+        to: decision,
+      });
+    }
+  } catch (err) {
+    logger.error({
+      msg: "[ssov-review] in-app notification failed",
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
 }
 
 export async function createPmReviewTodos(params: {
