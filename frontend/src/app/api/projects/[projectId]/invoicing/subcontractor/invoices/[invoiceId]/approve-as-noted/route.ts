@@ -2,6 +2,7 @@ import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { notifySubcontractorOfInvoiceDecision } from "@/lib/invoicing/subcontractor-invoice-notifications";
 
 // POST /api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/approve-as-noted
 // Transition invoice to approved_as_noted. Pre-condition: must be under_review.
@@ -107,6 +108,14 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
         cause: updateError,
       });
     }
+
+    // Fire-and-forget: notify the subcontractor of the approval.
+    void notifySubcontractorOfInvoiceDecision({
+      projectId: projectIdNum,
+      invoiceId: invoiceIdNum,
+      decision: "approved_as_noted",
+      notes: notes?.trim() || null,
+    });
 
     return NextResponse.json({
       data: updated,

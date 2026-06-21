@@ -58,6 +58,12 @@ for file in "${existing_files[@]}"; do
     src/components/ds/futuristic-id-card.tsx|\
     src/components/ds/liquid-metal-id-card.tsx)
       ;;
+    # Transactional email templates: rendered by Resend/React Email to static
+    # HTML for external inboxes, which cannot resolve CSS variables. Inline hex
+    # is required here, matching the shared EmailShell palette.
+    src/emails/*|\
+    src/emails/**/*)
+      ;;
     # Redirect-only pages: no JSX rendered, page-shell rule does not apply
     src/app/\(main\)/\[projectId\]/estimates/new/page.tsx)
       ;;

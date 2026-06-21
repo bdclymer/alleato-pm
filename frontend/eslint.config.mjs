@@ -133,6 +133,15 @@ const config = [
     rules: {
       "design-system/require-page-shell": "off",
     },
+  }, // Transactional email templates: rendered by Resend/React Email to static HTML
+  // for external inboxes, which cannot resolve CSS variables. Inline hex is
+  // required here, matching the shared EmailShell palette.
+  {
+    files: ["src/emails/**/*.tsx", "src/emails/**/*.ts"],
+    rules: {
+      "design-system/no-hardcoded-colors": "off",
+      "design-system/require-semantic-colors": "off",
+    },
   }, // Kanban feature: board lanes and draggable cards require fixed geometry and card styling.
   // PageShell remains enforced; only geometry/card-noise rules are relaxed here.
   {

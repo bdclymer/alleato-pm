@@ -13,6 +13,7 @@ import {
   getInvoiceContactEmails,
   sendSsovInviteEmail,
   notifyPMsOfSsovSubmission,
+  notifySubcontractorOfSsovReview,
   createPmReviewTodos,
 } from "@/lib/commitments/subcontractor-sov-service";
 
@@ -244,6 +245,7 @@ export const POST = withApiGuardrails(
         | "reject"
         | "import_from_sov"
         | "send_notification";
+      notes?: string;
     };
     if (!body?.action) {
       return NextResponse.json({ error: "Action is required." }, { status: 400 });
@@ -480,16 +482,37 @@ export const POST = withApiGuardrails(
       }
       const nextStatus: SsovStatus =
         body.action === "approve" ? "approved" : "revise_resubmit";
+      const reviewNotes = body.notes?.trim() || null;
       const { error: reviewError } = await supabase
         .from("subcontractor_sov_submissions")
         .update({
           status: nextStatus,
           reviewed_by: membership.personId,
           reviewed_at: new Date().toISOString(),
+          review_notes: reviewNotes,
           updated_at: new Date().toISOString(),
         })
         .eq("id", submission.id);
       if (reviewError) throw reviewError;
+
+      // Fire-and-forget: notify the subcontractor of the decision so the
+      // ball-in-court hand-off is never silent.
+      notifySubcontractorOfSsovReview({
+        supabase,
+        projectId: numericProjectId,
+        commitmentId,
+        commitmentNumber: commitment.contract_number,
+        contractAmount: targetAmount,
+        invoiceContactIds: commitment.invoice_contact_ids || [],
+        decision: nextStatus === "approved" ? "approved" : "revise_resubmit",
+        reviewNotes,
+        submissionId: submission.id,
+      }).catch((err) => {
+        logger.error({
+          msg: "[ssov-review] subcontractor notification failed",
+          error: err instanceof Error ? err.message : String(err),
+        });
+      });
 
       return NextResponse.json({
         success: true,
