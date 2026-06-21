@@ -22,6 +22,9 @@ const TRANSIENT_NEXT_BUILD_FAILURES = [
 const TURBOPACK_BUILD_ARGS = ["exec", "next", "build", "--turbopack"];
 const WEBPACK_BUILD_ARGS = ["exec", "next", "build"];
 const isVercel = process.env.VERCEL === "1" || process.env.VERCEL === "true";
+const buildEngine = (process.env.NEXT_PRODUCTION_BUILD_ENGINE ?? "turbopack")
+  .trim()
+  .toLowerCase();
 
 let activeChild = null;
 let cleanedUp = false;
@@ -161,15 +164,30 @@ async function runNextBuildAttempt({ attempt, args, label }) {
 }
 
 async function main() {
+  if (!["turbopack", "webpack"].includes(buildEngine)) {
+    throw new Error(
+      `[build] Unsupported NEXT_PRODUCTION_BUILD_ENGINE="${buildEngine}". Expected "turbopack" or "webpack".`,
+    );
+  }
+
   await timedStep("Disable non-production routes", () => runNodeScript(disableScript));
 
-  const exitCode = await timedStep("Next production build", () =>
-    runNextBuildAttempt({
+  const exitCode = await timedStep("Next production build", () => {
+    if (buildEngine === "webpack") {
+      console.log("[build] NEXT_PRODUCTION_BUILD_ENGINE=webpack; skipping Turbopack production build.");
+      return runNextBuildAttempt({
+        attempt: 1,
+        args: WEBPACK_BUILD_ARGS,
+        label: "Webpack",
+      });
+    }
+
+    return runNextBuildAttempt({
       attempt: 1,
       args: TURBOPACK_BUILD_ARGS,
       label: "Turbopack",
-    }),
-  );
+    });
+  });
 
   await timedStep("Restore non-production routes", () => {
     runRestoreSync();
