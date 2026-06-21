@@ -73,6 +73,7 @@ filled in. If any item cannot be completed, change `Status` to
 | Browser/user-flow     | Not applicable | Pass | No frontend surface should change because the deleted files are unused exports/helpers. |
 | DB/provider read-back | Not applicable | Pass | No database/provider change. |
 | End-to-end proof      | `rg ...`; `pnpm --dir frontend exec knip --config knip.json --no-exit-code --no-progress --reporter compact \| rg 'src/components/comments/(index\|utils)\\.ts\|components/comments' \|\| true`; `test ! -e ...` | Pass | No live consumers remain, Knip no longer reports the files, both files are absent, and active comments components remain. |
+| Publish proof         | `npm run codex:finish -- --message "Remove unused comments barrel helper" --files ...` | Pass | Published implementation to `origin/main` at `9b4ea0c098`. |
 
 ## Files Changed
 

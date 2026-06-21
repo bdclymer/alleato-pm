@@ -6,7 +6,7 @@
 2) Task ID: AAI-582
 3) Linear issue: AAI-582
 4) Linear URL: https://linear.app/megankharrison/issue/AAI-582/remove-unused-comments-barrel-and-helper
-5) Current status: Complete; pending publish/review acceptance
+5) Current status: Published to `origin/main` at `9b4ea0c098`; accepted; Linear AAI-582 marked Done
 6) Files changed (absolute paths):
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/tasks/2026-06-20-remove-comments-barrel-helper.md`
 - `/Users/meganharrison/Documents/alleato-pm/docs/ops/handoffs/2026-06-20-S76-remove-comments-barrel-helper.md`
@@ -25,6 +25,7 @@
 - PASS: `npm run verify:nonprod-routes`.
 - PASS: `cd frontend && NODE_OPTIONS='--max-old-space-size=8192' TYPECHECK_NO_TIMEOUT=1 npx tsc --noEmit --pretty false`.
 - PASS: `git diff --check -- ...`.
+- PASS: `npm run codex:finish -- --message "Remove unused comments barrel helper" --files ...` published implementation to `origin/main` at `9b4ea0c098`.
 8) Evidence artifacts (screenshot/video/report/log paths):
 - Command output in this Codex run.
 9) Top 3 findings (frontend-visible issues first):
@@ -40,11 +41,13 @@
 - Kickoff comment: `055b7571-6324-401c-a4b7-03e4e6e76f94`
 - Milestone comments: Not applicable yet.
 - Completion/blocker comment: `035f9369-9083-4796-bf41-5ac2bda08b47`
+- Acceptance/closeout comment: `851fd2b2-a081-4db5-9b05-cffd739bd2c6`
+- Final state: Done
 
 ## Current Status
 
-S76 removed a narrow S70 deletion batch. Scope stayed limited to the unused
-comments barrel/helper pair.
+S76 removed a narrow S70 deletion batch and published it to `origin/main` at
+`9b4ea0c098`. Scope stayed limited to the unused comments barrel/helper pair.
 
 ## Known Pitfalls
 
@@ -69,3 +72,4 @@ npm run linear:codex:check -- docs/ops/handoffs/2026-06-20-S76-remove-comments-b
 - Post-delete Knip no longer reports either file.
 - Active comments components remain in place.
 - Route, nonprod route, whitespace, and high-heap TypeScript checks passed.
+- Implementation published to `origin/main` at `9b4ea0c098`.
