@@ -1,6 +1,6 @@
 # Task: AI Feature Flag Staging Rollout
 
-Status: Complete with Blocked/Deferred Preview rollout
+Status: Complete
 Owner: Codex
 Created: 2026-06-21
 Linear Issue: AAI-585 - https://linear.app/megankharrison/issue/AAI-585/enable-first-tranche-ai-feature-flags-in-non-production
@@ -78,8 +78,8 @@ This task is not done until every checklist item below is checked, with evidence
 | Static/type/lint      | N/A | Passed | Provider env-only rollout; no app code changed beyond this task markdown. |
 | Targeted tests        | `cd frontend && npm run test:unit -- --runTestsByPath src/lib/ai/tools/__tests__/outbound-action-policy.test.ts src/lib/ai/stream/__tests__/compaction.test.ts --runInBand` | Passed | 2 suites / 11 tests passed for outbound action policy and context compaction. |
 | Browser/user-flow     | Not run | Not applicable | No frontend UI change and no preview deployment was created. |
-| DB/provider read-back | `cd frontend && vercel env list development --scope meganharrisons-projects`; `cd frontend && vercel env list preview --scope meganharrisons-projects` | Partial pass | Development contains `ALLEATO_OUTBOUND_ACTION_POLICY_ENABLED`, `AI_ASSISTANT_CONTEXT_COMPACTION_ENABLED`, and `RAG_RETRIEVAL_TELEMETRY_ENABLED`. Preview does not contain these flags. |
-| End-to-end proof      | `cd frontend && vercel env add ... development --value true --yes --no-sensitive --scope meganharrisons-projects`; provider read-back above | Partial pass | Development rollout complete. Preview rollout deferred because non-interactive all-preview add returned `reason=git_branch_required`, and branch-scoped add to existing Vercel `staging` target returned `reason=branch_not_found`. Production was not changed. |
+| DB/provider read-back | `cd frontend && vercel env list development --scope meganharrisons-projects`; `cd frontend && vercel env list preview --scope meganharrisons-projects`; `cd frontend && vercel env list production --scope meganharrisons-projects` | Passed | Development contains `ALLEATO_OUTBOUND_ACTION_POLICY_ENABLED`, `AI_ASSISTANT_CONTEXT_COMPACTION_ENABLED`, and `RAG_RETRIEVAL_TELEMETRY_ENABLED`. Preview now contains the same three flags scoped to `staging`. Production does not contain those rollout flags. |
+| End-to-end proof      | `git push origin main:staging`; `cd frontend && vercel env add ... preview staging --value true --yes --no-sensitive --scope meganharrisons-projects`; provider read-back above | Passed | Restored remote `staging` branch from current `main`, then added the three Preview branch-scoped env vars. `git ls-remote --heads origin staging main` showed both refs at `b63391bceac2f4641f8c98561b21f9bec7c83558`. Production was not changed. |
 
 ## Files Changed
 
@@ -88,7 +88,7 @@ This task is not done until every checklist item below is checked, with evidence
 ## Risks / Gaps
 
 - Production flags were intentionally not changed in this rollout.
-- Preview rollout is blocked/deferred by Vercel CLI branch targeting: all-preview add requires interactive branch selection in this session, and the old `staging` target references a deleted Git branch.
+- Preview rollout was completed after restoring the remote `staging` branch from current `main`; initial failure was Vercel CLI branch targeting (`git_branch_required`) plus a missing Git branch (`branch_not_found`).
 - `vercel env pull` did not include the newly-created Development rows even though `vercel env list development` shows them; provider list output is the read-back source for this task.
 - Broad repo quality is not relevant to provider env state and is already known to have unrelated timeout debt.
 - Linear issue AAI-585 was created before provider changes.
