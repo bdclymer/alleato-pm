@@ -3,7 +3,6 @@
   "files": [
     "src/app/(admin)/api-docs/page.tsx",
     "src/app/(admin)/redoc/page.tsx",
-    "src/app/(admin)/spreadsheet-demo/page.tsx",
     "src/app/(admin)/template/form-standard/page.tsx",
     "src/app/(admin)/template/form-template/page.tsx",
     "src/app/(admin)/testing/page.tsx",

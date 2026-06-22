@@ -66,15 +66,79 @@ function parseRouteInventoryCsv(csv: string): InventoryCsvRow[] {
     .filter((row) => row.route);
 }
 
-function toTitle(route: string): string {
-  const segments = route.split("/").filter(Boolean);
-  const lastConcreteSegment =
-    [...segments].reverse().find((segment) => !segment.startsWith("[")) ?? "portfolio";
+// Tokens that should render fully uppercased instead of title-cased.
+const ACRONYMS: Record<string, string> = {
+  ai: "AI", rag: "RAG", rfi: "RFI", rfis: "RFIs", rfq: "RFQ", rfqs: "RFQs",
+  pco: "PCO", pcos: "PCOs", co: "CO", sov: "SOV", wip: "WIP", qa: "QA",
+  psr: "PSR", sop: "SOP", gc: "GC", ap: "AP", ar: "AR", erp: "ERP",
+  og: "OG", qr: "QR", pdf: "PDF", db: "DB", api: "API", fm: "FM",
+  prp: "PRP", crm: "CRM",
+};
 
-  return lastConcreteSegment
+// Concrete segments that name an action rather than a resource.
+const ACTION_LABELS: Record<string, string> = {
+  new: "New",
+  edit: "Edit",
+  create: "Create",
+};
+
+function humanizeSegment(segment: string): string {
+  return segment
     .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) => {
+      const lower = word.toLowerCase();
+      return ACRONYMS[lower] ?? word.charAt(0).toUpperCase() + word.slice(1);
+    })
     .join(" ");
+}
+
+/**
+ * Builds a differentiated, breadcrumb-style page name from the full route path
+ * rather than just its last segment. This keeps list, create, and detail pages
+ * distinct ("Direct Costs" vs "Direct Costs / New" vs "Direct Costs / Detail")
+ * instead of collapsing every create page to "New" and every detail page to its
+ * parent's name.
+ *
+ * Rules:
+ * - The leading `[projectId]` scope segment is dropped (every project page has
+ *   it — it adds no signal). Route-group segments like `(main)` are also dropped.
+ * - A trailing dynamic/record segment (`[costId]`, `[...slug]`) → "Detail".
+ * - An intermediate dynamic segment is the parent record scope and is skipped;
+ *   the sub-resource that follows it carries the meaning.
+ * - `new` / `edit` / `create` → "New" / "Edit" / "Create".
+ * - Everything else is humanized with acronym handling (PCOs, RFIs, AI, SOV…).
+ */
+function toTitle(route: string): string {
+  if (route === "/") return "Home";
+
+  let segments = route
+    .split("/")
+    .filter(Boolean)
+    .filter((segment) => !(segment.startsWith("(") && segment.endsWith(")")));
+
+  if (segments[0] === "[projectId]") {
+    segments = segments.slice(1);
+  }
+
+  const parts: string[] = [];
+  segments.forEach((segment, index) => {
+    const isLast = index === segments.length - 1;
+
+    if (segment.startsWith("[")) {
+      if (isLast) parts.push("Detail");
+      return;
+    }
+
+    const lower = segment.toLowerCase();
+    if (ACTION_LABELS[lower]) {
+      parts.push(ACTION_LABELS[lower]);
+      return;
+    }
+
+    parts.push(humanizeSegment(segment));
+  });
+
+  return parts.length > 0 ? parts.join(" / ") : "Home";
 }
 
 function inferCategory(route: string, file: string): InventoryRoute["category"] {

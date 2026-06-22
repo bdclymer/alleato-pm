@@ -222,8 +222,27 @@ function isDynamicRoute(route: string): boolean {
   return route.includes("[");
 }
 
+/**
+ * Project id injected into `[projectId]` routes so the site-map links resolve to
+ * a real project instead of 404-ing on the literal `/[projectId]/...` path.
+ * Project 876 = "Exol Morrisville".
+ */
+const PREVIEW_PROJECT_ID = "876";
+
+/**
+ * Replaces the `[projectId]` segment with a concrete project id. Any other
+ * dynamic segment (a specific record id like `[commitmentId]`) is left intact —
+ * those can't be linked without a real record, so the caller treats them as
+ * non-navigable.
+ */
+function resolveProjectScopedRoute(route: string): string {
+  return route.replace(/\[projectId\]/g, PREVIEW_PROJECT_ID);
+}
+
 function routeHref(route: string): string | null {
-  return isDynamicRoute(route) ? null : route;
+  const resolved = resolveProjectScopedRoute(route);
+  // Still has an unfilled record-id segment (e.g. [commitmentId]) — not navigable.
+  return isDynamicRoute(resolved) ? null : resolved;
 }
 
 function formatDateTime(value: string | undefined): string {
@@ -1408,9 +1427,9 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
                       <CheckCircle2 className="h-4 w-4" />
                       Mark reviewed
                     </Button>
-                    {!isDynamicRoute(activeRoute.route) ? (
+                    {routeHref(activeRoute.route) ? (
                       <Button variant="outline" size="sm" asChild className="gap-1.5">
-                        <Link href={activeRoute.route}>
+                        <Link href={routeHref(activeRoute.route) as string}>
                           Open route
                           <ExternalLink className="h-4 w-4" />
                         </Link>
