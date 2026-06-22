@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -10,7 +11,12 @@ from src.services.agents.microsoft_executive_assistant import (
     run_microsoft_executive_assistant,
 )
 from src.services.agents.microsoft_executive_assistant.agent import _inbox_request_kind, _microsoft_prompt
-from src.services.agents.microsoft_executive_assistant.tools import read_live_outlook_inbox
+from src.services.agents.microsoft_executive_assistant.tools import (
+    _patch_message_category,
+    _patch_message_categories,
+    patch_outlook_email_categories,
+    read_live_outlook_inbox,
+)
 from src.services.agents.microsoft_executive_assistant.triggers import (
     run_outlook_event_microsoft_executive_assistant,
     run_scheduled_microsoft_executive_assistant_check,
@@ -582,7 +588,7 @@ def test_scheduled_trigger_is_feature_gated(monkeypatch):
 def test_scheduled_trigger_runs_specialist_when_enabled(monkeypatch):
     captured: dict[str, Any] = {}
     monkeypatch.setenv("MICROSOFT_EXECUTIVE_ASSISTANT_SCHEDULED_ENABLED", "true")
-    monkeypatch.setenv("MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX", "megan@alleatogroup.com")
+    monkeypatch.setenv("MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX", "bclymer@alleatogroup.com")
 
     def fake_runner(request, *, model):
         captured["request"] = request
@@ -597,11 +603,17 @@ def test_scheduled_trigger_runs_specialist_when_enabled(monkeypatch):
 
     assert result["status"] == "completed"
     assert captured["request"].trigger == "scheduled_check"
-    assert captured["request"].mailbox_user_id == "megan@alleatogroup.com"
+    assert captured["request"].mailbox_user_id == "bclymer@alleatogroup.com"
     assert "unread_only=true" in captured["request"].prompt
+    assert "write_email_triage" in captured["request"].prompt
+    assert "draft_outlook_email_for_review" in captured["request"].prompt
+    assert "reply_to_graph_message_id" in captured["request"].prompt
+    assert "Outlook Drafts folder" in captured["request"].prompt
+    assert "Do not skip write_email_triage" in captured["request"].prompt
+    assert "app-only text" in captured["request"].prompt
 
 
-def test_outlook_event_trigger_runs_after_webhook_when_enabled(monkeypatch):
+def test_outlook_event_trigger_runs_from_webhook_for_brandon_outlook(monkeypatch):
     captured: dict[str, Any] = {}
     monkeypatch.setenv("MICROSOFT_EXECUTIVE_ASSISTANT_WEBHOOK_ENABLED", "true")
 
@@ -615,11 +627,104 @@ def test_outlook_event_trigger_runs_after_webhook_when_enabled(monkeypatch):
         )
 
     result = run_outlook_event_microsoft_executive_assistant(
-        sync_result={"mailbox": "megan@alleatogroup.com", "message_id": "abc123"},
+        sync_result={"mailbox": "bclymer@alleatogroup.com", "message_id": "abc123"},
         runner=fake_runner,
     )
 
     assert result["status"] == "completed"
     assert result["messageId"] == "abc123"
     assert captured["request"].trigger == "outlook_event"
-    assert captured["request"].mailbox_user_id == "megan@alleatogroup.com"
+    assert captured["request"].mailbox_user_id == "bclymer@alleatogroup.com"
+    assert "webhook was accepted and queued for delta sync" in captured["request"].prompt
+    assert "Use live Outlook tools" in captured["request"].prompt
+    assert "write_email_triage" in captured["request"].prompt
+    assert "Brandon sees the Outlook category" in captured["request"].prompt
+    assert "Outlook reply draft in Brandon's Drafts folder" in captured["request"].prompt
+    assert "Never send email directly" in captured["request"].prompt
+    assert "Megan" not in captured["request"].prompt
+
+
+class _FakeCategoryGraph:
+    def __init__(self, existing_categories: list[str] | None = None):
+        self.existing_categories = existing_categories or []
+        self.master_categories: list[dict[str, str]] = []
+        self.calls: list[tuple[str, str, Any]] = []
+        self.patch_payload: dict[str, Any] | None = None
+
+    def is_configured(self):
+        return True
+
+    def get(self, path):
+        self.calls.append(("get", path, None))
+        if "masterCategories" in path:
+            return {"value": self.master_categories}
+        return {"categories": list(self.existing_categories)}
+
+    def post(self, path, payload):
+        self.calls.append(("post", path, payload))
+        self.master_categories.append(
+            {"displayName": payload["displayName"], "color": payload["color"]}
+        )
+        return {"id": payload["displayName"]}
+
+    def patch(self, path, payload):
+        self.calls.append(("patch", path, payload))
+        self.patch_payload = payload
+        return {}
+
+
+def test_outlook_category_patch_merges_existing_categories(monkeypatch):
+    graph = _FakeCategoryGraph(existing_categories=["Client", "Existing"])
+    monkeypatch.setattr(
+        "src.services.integrations.microsoft_graph.client.get_graph_client",
+        lambda: graph,
+    )
+
+    result = _patch_message_category(
+        "bclymer@alleatogroup.com",
+        "message-1",
+        "Reply Needed",
+    )
+
+    assert result["patched"] is True
+    assert result["categories"] == ["Client", "Existing", "Reply Needed"]
+    assert graph.patch_payload == {"categories": ["Client", "Existing", "Reply Needed"]}
+    assert ("post", "/users/bclymer%40alleatogroup.com/outlook/masterCategories", {"displayName": "Reply Needed", "color": "preset1"}) in graph.calls
+
+
+def test_outlook_category_patch_dedupes_case_insensitively(monkeypatch):
+    graph = _FakeCategoryGraph(existing_categories=["reply needed", "Client"])
+    monkeypatch.setattr(
+        "src.services.integrations.microsoft_graph.client.get_graph_client",
+        lambda: graph,
+    )
+
+    result = _patch_message_categories(
+        "bclymer@alleatogroup.com",
+        "message-1",
+        ["Reply Needed", "Urgent"],
+        merge_existing=True,
+    )
+
+    assert result["patched"] is True
+    assert result["categories"] == ["reply needed", "Client", "Urgent"]
+    assert graph.patch_payload == {"categories": ["reply needed", "Client", "Urgent"]}
+
+
+def test_patch_outlook_email_categories_clears_when_explicitly_empty(monkeypatch):
+    graph = _FakeCategoryGraph(existing_categories=["Client", "Existing"])
+    monkeypatch.setattr(
+        "src.services.integrations.microsoft_graph.client.get_graph_client",
+        lambda: graph,
+    )
+
+    raw_result = patch_outlook_email_categories.func(
+        graph_message_id="message-1",
+        categories=[],
+        mailbox_user_id="bclymer@alleatogroup.com",
+    )
+    result = json.loads(raw_result)
+
+    assert result["ok"] is True
+    assert result["categories"] == []
+    assert graph.patch_payload == {"categories": []}

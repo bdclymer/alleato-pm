@@ -930,6 +930,20 @@ services:
         value: "10"
       - key: MICROSOFT_EXECUTIVE_ASSISTANT_MAILBOX
         sync: false
+      - key: MICROSOFT_EXECUTIVE_ASSISTANT_TEAMS_USER_ID
+        sync: false
+      - key: MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_DRAFT
+        value: "true"
+      - key: MICROSOFT_EXECUTIVE_ASSISTANT_AUTO_TEAMS_ALERT
+        value: "true"
+      - key: MICROSOFT_CLIENT_ID
+        sync: false
+      - key: MICROSOFT_CLIENT_SECRET
+        sync: false
+      - key: MICROSOFT_TENANT_ID
+        sync: false
+      - key: NOTIFICATION_SERVICE_KEY
+        sync: false
       - key: DEEP_AGENTS_CONTENT_BUILDER_ENABLED
         value: true
       - key: DEEP_AGENTS_CONTENT_BUILDER_MODEL

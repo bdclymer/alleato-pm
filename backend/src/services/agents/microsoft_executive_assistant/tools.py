@@ -428,6 +428,15 @@ TRIAGE_CATEGORY_MAP: dict[str, str] = {
     "delete": "Archive",
 }
 
+OUTLOOK_CATEGORY_COLOR_MAP: dict[str, str] = {
+    "Urgent": "preset0",
+    "Reply Needed": "preset1",
+    "To Delegate": "preset3",
+    "FYI": "preset4",
+    "Watching": "preset5",
+    "Archive": "preset7",
+}
+
 
 @tool
 def write_email_triage(
@@ -520,8 +529,65 @@ def write_email_triage(
     )
 
 
-def _patch_message_category(mailbox: str, message_id: str, category_name: str) -> dict[str, Any]:
-    """Patch a single Outlook category onto a message via Graph API. Best-effort, never raises."""
+def _ensure_master_category(graph: Any, mailbox: str, category_name: str) -> dict[str, Any]:
+    """Ensure a visible Outlook master category exists before applying it."""
+    if not category_name:
+        return {"ensured": False, "reason": "blank_category"}
+    try:
+        existing = graph.get(
+            f"/users/{quote(mailbox)}/outlook/masterCategories?$select=displayName,color"
+        )
+        categories = existing.get("value") if isinstance(existing, dict) else []
+        if any(
+            str(item.get("displayName") or "").lower() == category_name.lower()
+            for item in categories or []
+            if isinstance(item, dict)
+        ):
+            return {"ensured": True, "created": False}
+        graph.post(
+            f"/users/{quote(mailbox)}/outlook/masterCategories",
+            {
+                "displayName": category_name,
+                "color": OUTLOOK_CATEGORY_COLOR_MAP.get(category_name, "preset8"),
+            },
+        )
+        return {"ensured": True, "created": True}
+    except Exception as exc:
+        logger.warning("[ExecAssistant] Master category ensure failed for %s: %s", category_name, exc)
+        return {"ensured": False, "error": str(exc)}
+
+
+def _read_message_categories(graph: Any, mailbox: str, message_id: str) -> list[str]:
+    try:
+        response = graph.get(f"/users/{quote(mailbox)}/messages/{message_id}?$select=categories")
+        categories = response.get("categories") if isinstance(response, dict) else []
+        return [str(category) for category in categories or [] if str(category).strip()]
+    except Exception as exc:
+        logger.warning("[ExecAssistant] Category read failed for %s: %s", message_id, exc)
+        return []
+
+
+def _merge_categories(existing: list[str], additions: list[str]) -> list[str]:
+    merged: list[str] = []
+    seen: set[str] = set()
+    for category in [*existing, *additions]:
+        cleaned = str(category or "").strip()
+        key = cleaned.lower()
+        if not cleaned or key in seen:
+            continue
+        seen.add(key)
+        merged.append(cleaned)
+    return merged
+
+
+def _patch_message_categories(
+    mailbox: str,
+    message_id: str,
+    categories: list[str],
+    *,
+    merge_existing: bool = True,
+) -> dict[str, Any]:
+    """Patch Outlook categories on a message via Graph API. Best-effort, never raises."""
     try:
         from src.services.integrations.microsoft_graph.client import get_graph_client
 
@@ -530,14 +596,34 @@ def _patch_message_category(mailbox: str, message_id: str, category_name: str) -
             return {"patched": False, "reason": "graph_not_configured"}
 
         safe_mailbox = mailbox.strip().lower()
+        clean_categories = [category.strip() for category in categories if category and category.strip()]
+        ensure_results = [
+            _ensure_master_category(graph, safe_mailbox, category)
+            for category in clean_categories
+        ]
+        final_categories = clean_categories
+        if merge_existing:
+            final_categories = _merge_categories(
+                _read_message_categories(graph, safe_mailbox, message_id),
+                clean_categories,
+            )
         graph.patch(
             f"/users/{quote(safe_mailbox)}/messages/{message_id}",
-            {"categories": [category_name]},
+            {"categories": final_categories},
         )
-        return {"patched": True, "category": category_name}
+        return {
+            "patched": True,
+            "categories": final_categories,
+            "ensuredCategories": ensure_results,
+            "mergeExisting": merge_existing,
+        }
     except Exception as exc:
         logger.warning("[ExecAssistant] Category patch failed: %s", exc)
         return {"patched": False, "error": str(exc)}
+
+
+def _patch_message_category(mailbox: str, message_id: str, category_name: str) -> dict[str, Any]:
+    return _patch_message_categories(mailbox, message_id, [category_name], merge_existing=True)
 
 
 @tool
@@ -548,7 +634,7 @@ def patch_outlook_email_categories(
 ) -> str:
     """Set the Outlook categories (coloured tags) on a message via Microsoft Graph.
 
-    Replaces any existing categories on the message. Pass an empty list to clear them.
+    Adds categories without removing existing categories. Pass an empty list to clear them.
     This writes directly to the live Outlook mailbox — Brandon will see the tag instantly.
     """
     mailbox = (
@@ -559,8 +645,8 @@ def patch_outlook_email_categories(
     if not mailbox:
         return _json({"ok": False, "error": "OUTLOOK_CATEGORY_BLOCKED: No mailbox configured."})
 
-    result = _patch_message_category(mailbox, graph_message_id, categories[0] if categories else "")
     if not categories:
+        result = {"patched": False, "reason": "graph_not_configured"}
         # Clear categories
         try:
             from src.services.integrations.microsoft_graph.client import get_graph_client
@@ -574,6 +660,8 @@ def patch_outlook_email_categories(
                 result = {"patched": True, "categories": []}
         except Exception as exc:
             result = {"patched": False, "error": str(exc)}
+    else:
+        result = _patch_message_categories(mailbox, graph_message_id, categories, merge_existing=True)
     return _json({"ok": result.get("patched", False), **result})
 
 

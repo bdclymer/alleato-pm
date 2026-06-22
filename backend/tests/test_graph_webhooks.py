@@ -263,6 +263,57 @@ def test_handle_graph_notifications_enqueues_outlook_realtime(monkeypatch):
     assert queued[0]["resource"] == "users/a@example.com/messages/message-1"
 
 
+def test_webhook_notifications_endpoint_queues_microsoft_assistant_event(client, monkeypatch):
+    monkeypatch.delenv("BACKEND_API_ONLY", raising=False)
+    monkeypatch.delenv("GRAPH_API_INGESTION_ENABLED", raising=False)
+    monkeypatch.delenv("GRAPH_WEBHOOK_DRAIN_ENABLED", raising=False)
+    monkeypatch.setenv("GRAPH_WEBHOOK_CLIENT_STATE", "expected-state")
+    monkeypatch.setenv("MICROSOFT_EXECUTIVE_ASSISTANT_WEBHOOK_ENABLED", "true")
+    supabase = _FakeSupabase()
+    original_read, original_write, original_health_write = _route_graph_subscriptions_to_fake_rag(supabase)
+    queued_events = []
+
+    monkeypatch.setattr(
+        "src.services.supabase_helpers.get_supabase_client",
+        lambda: supabase,
+    )
+    monkeypatch.setattr(
+        "src.services.agents.microsoft_executive_assistant.triggers.run_outlook_event_microsoft_executive_assistant",
+        lambda *, sync_result: queued_events.append(sync_result)
+        or {"status": "completed", "messageId": sync_result.get("message_id")},
+    )
+
+    try:
+        response = client.post(
+            "/api/graph/webhooks/notifications",
+            json={
+                "value": [
+                    {
+                        "subscriptionId": "sub-1",
+                        "clientState": "expected-state",
+                        "changeType": "created",
+                        "resource": "users/bclymer@alleatogroup.com/messages/message-1",
+                        "resourceData": {"id": "message-1"},
+                    }
+                ]
+            },
+        )
+    finally:
+        _restore_graph_subscriptions_clients(original_read, original_write, original_health_write)
+
+    assert response.status_code == 200
+    assert response.json()["queued_mailboxes"] == 1
+    assert response.json()["queued_realtime"] == 1
+    assert queued_events == [
+        {
+            "mailbox": "bclymer@alleatogroup.com",
+            "message_id": "message-1",
+            "subscription_id": "sub-1",
+            "change_type": "created",
+        }
+    ]
+
+
 def test_process_graph_notification_realtime_queues_mailbox_delta(monkeypatch):
     monkeypatch.setenv("GRAPH_WEBHOOK_CLIENT_STATE", "expected-state")
     supabase = _FakeSupabase()

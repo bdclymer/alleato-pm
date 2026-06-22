@@ -69,9 +69,14 @@ def run_scheduled_microsoft_executive_assistant_check(
             "2. For EACH email, classify it with one of: urgent, reply_needed, delegate, fyi, watch, delete.\n"
             "3. Call write_email_triage for each classified email (pass graph_message_id, triage_action, "
             "and a one-sentence triage_reason). This persists your decision and tags the email in Outlook.\n"
-            "4. For urgent or reply_needed items, prepare a concise Teams escalation draft if AUTO_TEAMS_ALERT is active.\n"
-            "5. Avoid duplicate recommendations for emails already triaged (teams_alert_sent_at is set).\n"
-            "Do not skip write_email_triage — it is required for every classified email."
+            "4. For every urgent or reply_needed email that has a safe response path, call "
+            "draft_outlook_email_for_review with reply_to_graph_message_id so the reply lands in Brandon's "
+            "Outlook Drafts folder. If a safe response cannot be drafted, say why in the triage reason.\n"
+            "5. For urgent items, call draft_teams_message_for_review with urgency=urgent so the Teams alert "
+            "is sent when AUTO_TEAMS_ALERT is active.\n"
+            "6. Avoid duplicate recommendations for emails already triaged or already drafted.\n"
+            "Do not skip write_email_triage for classified email, and do not leave reply_needed email as "
+            "app-only text when an Outlook reply draft can be created."
         ),
         mailboxUserId=mailbox,
         trigger="scheduled_check",
@@ -93,7 +98,7 @@ def run_outlook_event_microsoft_executive_assistant(
     sync_result: dict[str, Any],
     runner: Runner = run_microsoft_executive_assistant,
 ) -> dict[str, Any]:
-    """Run a guarded Outlook-event specialist pass after Graph webhook sync."""
+    """Run a guarded Outlook-event specialist pass after Graph accepts a mailbox event."""
     if not _flag_enabled("MICROSOFT_EXECUTIVE_ASSISTANT_WEBHOOK_ENABLED", default=False):
         return {
             "status": "skipped",
@@ -109,10 +114,12 @@ def run_outlook_event_microsoft_executive_assistant(
         userId=_operator_user_id(),
         sessionId=f"microsoft-executive-assistant:outlook-event:{message_id or mailbox}",
         prompt=(
-            "A Microsoft Graph Outlook webhook just completed delta sync. Review the new or changed mailbox item, "
-            "classify urgency, prepare a concise Teams escalation draft only if the item is urgent, and prepare any "
-            "email reply draft for Megan's review. Do not send or mutate Microsoft records.\n\n"
-            f"Webhook sync result: {sync_result}"
+            "A Microsoft Graph Outlook webhook was accepted and queued for delta sync. Use live Outlook tools "
+            "to review the new or changed mailbox item, classify urgency, call write_email_triage so Brandon "
+            "sees the Outlook category, prepare a concise Teams escalation only if the item is urgent, and "
+            "create an Outlook reply draft in Brandon's Drafts folder when the item needs a response and a safe "
+            "response path exists. Never send email directly; Brandon reviews and sends from Outlook.\n\n"
+            f"Webhook work item: {sync_result}"
         ),
         mailboxUserId=mailbox,
         trigger="outlook_event",

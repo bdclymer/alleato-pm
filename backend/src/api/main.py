@@ -1158,6 +1158,7 @@ async def graph_outlook_mailbox_subscribe_endpoint(
 )
 async def graph_webhook_notifications_endpoint(
     request: Request,
+    background_tasks: BackgroundTasks,
     validationToken: Optional[str] = Query(default=None),
 ) -> Any:
     """Accept Microsoft Graph webhook validation and change notifications.
@@ -1185,11 +1186,49 @@ async def graph_webhook_notifications_endpoint(
         from src.services.integrations.microsoft_graph.webhooks import (
             GraphWebhookAuthError,
             handle_graph_notifications,
+            outlook_notification_work_item,
         )
         from src.services.supabase_helpers import get_supabase_client
 
         client = get_supabase_client()
-        result = handle_graph_notifications(client, payload)
+
+        def _queue_outlook_event_assistant(notification: Dict[str, Any]) -> bool:
+            work_item = outlook_notification_work_item(notification, supabase=client)
+            if not work_item:
+                return False
+
+            def _run_outlook_event_assistant() -> None:
+                try:
+                    from src.services.agents.microsoft_executive_assistant.triggers import (
+                        run_outlook_event_microsoft_executive_assistant,
+                    )
+
+                    result = run_outlook_event_microsoft_executive_assistant(
+                        sync_result=work_item,
+                    )
+                    logger.info(
+                        "[GraphWebhook] queued Microsoft executive assistant event mailbox=%s message_id=%s status=%s",
+                        work_item.get("mailbox"),
+                        work_item.get("message_id"),
+                        result.get("status"),
+                    )
+                except Exception as exc:
+                    logger.warning(
+                        "[GraphWebhook] Microsoft executive assistant event failed mailbox=%s message_id=%s: %s",
+                        work_item.get("mailbox"),
+                        work_item.get("message_id"),
+                        exc,
+                        exc_info=True,
+                    )
+
+            background_tasks.add_task(_run_outlook_event_assistant)
+            return True
+
+        result = handle_graph_notifications(
+            client,
+            payload,
+            on_realtime_notification=_queue_outlook_event_assistant,
+        )
         return result
     except GraphWebhookAuthError as exc:
         logger.warning("[GraphWebhook] rejected notification: %s", exc)
