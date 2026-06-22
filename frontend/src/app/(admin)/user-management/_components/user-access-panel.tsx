@@ -4,7 +4,6 @@ import {
   FolderKanban,
   KeyRound,
   ShieldCheck,
-  UserRound,
 } from "lucide-react";
 
 import {
@@ -122,7 +121,7 @@ export function UserAccessPanel({
           ]}
         />
 
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+      <section className="space-y-4">
         <div className="space-y-4">
           <SectionRuleHeading
             label="Company access"
@@ -154,24 +153,6 @@ export function UserAccessPanel({
             </div>
           </div>
         </div>
-
-        <div>
-          <SectionRuleHeading
-            label="Identity"
-            icon={<UserRound className="h-4 w-4" />}
-          />
-          <div className="grid gap-3 text-sm sm:grid-cols-2">
-            <IdentityField label="Email" value={user.email || "No email"} />
-            <IdentityField label="Person ID" value={user.personId} monospace />
-            <IdentityField
-              label="Auth user"
-              value={user.authUserId ?? "Not linked"}
-              monospace
-              missing={!user.authUserId}
-            />
-            <IdentityField label="Primary role" value={user.primaryTemplateName} />
-          </div>
-        </div>
       </section>
 
       <GranularExceptionPanel
@@ -188,19 +169,16 @@ export function UserAccessPanel({
             label="Project access"
             icon={<FolderKanban className="h-4 w-4" />}
           />
-          <p className="text-sm text-muted-foreground">
-            Each membership needs one project role unless the user is covered by admin access.
-          </p>
         </div>
 
         {user.memberships.length === 0 ? (
           <EmptyState
             title="No project memberships"
             description="This person is in the company directory, but has not been added to any project yet."
-            className="border-y border-border py-12"
+            className="border-t border-border py-12"
           />
         ) : (
-          <div className="overflow-hidden border-y border-border">
+          <div className="overflow-hidden border-t border-border">
             <InlineTable variant="read" className="hidden sm:block">
               <InlineTableHeader>
                 <InlineTableHeaderRow>
@@ -239,33 +217,6 @@ export function UserAccessPanel({
           </div>
         )}
       </section>
-    </div>
-  );
-}
-
-function IdentityField({
-  label,
-  value,
-  monospace,
-  missing,
-}: {
-  label: string;
-  value: string;
-  monospace?: boolean;
-  missing?: boolean;
-}) {
-  return (
-    <div className="min-w-0 border-t border-border/70 pt-3">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p
-        className={cn(
-          "mt-1 truncate text-sm font-medium text-foreground",
-          monospace && "font-mono text-xs",
-          missing && "text-muted-foreground",
-        )}
-      >
-        {value}
-      </p>
     </div>
   );
 }
@@ -340,12 +291,9 @@ function GranularExceptionPanel({
             <Badge variant="outline">{activeOverrideCount} active</Badge>
           )}
         </div>
-        <p className="text-sm text-muted-foreground">
-          Override individual capabilities without cloning a role. Deny takes precedence over role grants.
-        </p>
       </div>
 
-      <div className="overflow-hidden border-y border-border">
+      <div className="overflow-hidden border-t border-border">
         <InlineTable variant="read" className="hidden sm:block">
           <InlineTableHeader>
             <InlineTableHeaderRow>
