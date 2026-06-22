@@ -52,6 +52,7 @@ type ViewPreference = "external-first" | "internal-first";
 export interface DocumentsTablePageProps {
   definition: ServerTableDefinition<PipelineDoc, DocumentFilterState>;
   title: string;
+  eyebrow?: React.ReactNode;
   description: string;
   uploadEnabled?: boolean;
   inlineEditingEnabled?: boolean;
@@ -341,6 +342,7 @@ function getInternalDocumentHref(doc: PipelineDoc): string | null {
 export function DocumentsTablePage({
   definition,
   title,
+  eyebrow,
   description,
   uploadEnabled = true,
   inlineEditingEnabled = true,
@@ -589,6 +591,7 @@ export function DocumentsTablePage({
       <UnifiedTablePage
         header={{
           title,
+          eyebrow,
           description,
           actions: uploadEnabled ? (
             <Button

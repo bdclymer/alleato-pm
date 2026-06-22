@@ -2,6 +2,7 @@
 
 import { DocumentsTablePage } from "@/features/documents/documents-table-page";
 import { createDocumentsTableDefinition } from "@/features/documents/documents-table-definition";
+import { useOptionalProject } from "@/contexts/project-context";
 
 type DocumentsClientProps = {
   projectId: string;
@@ -9,6 +10,7 @@ type DocumentsClientProps = {
 
 export function DocumentsClient({ projectId }: DocumentsClientProps) {
   const numericProjectId = Number.parseInt(projectId, 10);
+  const projectName = useOptionalProject()?.selectedProject?.name ?? undefined;
 
   return (
     <DocumentsTablePage
@@ -18,6 +20,7 @@ export function DocumentsClient({ projectId }: DocumentsClientProps) {
           ? numericProjectId
           : undefined,
       })}
+      eyebrow={projectName}
       title="Documents"
       description="RAG document library and ingestion status"
       uploadEnabled

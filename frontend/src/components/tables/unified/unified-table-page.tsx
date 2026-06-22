@@ -372,6 +372,14 @@ export interface UnifiedTablePageProps<T> {
     };
     onExport?: () => void;
     onBulkDelete?: () => void;
+    /**
+     * Row-grouping options. When provided with `onGroupByChange`, the toolbar
+     * renders a global icon-only "Group by" control in the icon row. The first
+     * option should be the "no grouping" choice.
+     */
+    groupByOptions?: { value: string; label: string }[];
+    groupBy?: string | null;
+    onGroupByChange?: (value: string) => void;
     mobilePanelActions?: ReactNode;
     /** Extra action buttons rendered in the toolbar icon row (e.g. ERP sync) */
     customActions?: ReactNode;
@@ -1867,6 +1875,9 @@ export function UnifiedTablePage<T>({
       sortBy={effectiveSorting?.sortBy}
       sortDirection={effectiveSorting?.sortDirection}
       onSortChange={effectiveSorting?.onSortChange}
+      groupByOptions={toolbar.groupByOptions}
+      groupBy={toolbar.groupBy}
+      onGroupByChange={toolbar.onGroupByChange}
       onExport={effectiveOnExport}
       onBulkDelete={effectiveBulkDelete}
       mobilePanelActions={toolbar.mobilePanelActions}
