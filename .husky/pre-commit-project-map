@@ -30,4 +30,17 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "✅ Project map gate — surface inventory is current."
+
+# Generated docs-site Reference pages (🟢) derive from the same surface. Verify
+# they're current too. The script no-ops if the docs site (a symlink to the
+# alleato-os repo) isn't checked out, so this is safe on CI / fresh clones.
+# Note: those pages live in the alleato-os repo and are committed there.
+node scripts/dev-tools/generate-docs-reference.mjs --check-only
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "Docs-site Reference pages are stale relative to the code."
+  echo "Run: npm run docs:reference   (then commit them in the alleato-os repo)"
+  exit 1
+fi
+
 exit 0
