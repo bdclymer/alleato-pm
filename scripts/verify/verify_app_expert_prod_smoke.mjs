@@ -224,7 +224,7 @@ async function verifyAppExpertResponse() {
         return (
           sourceType === "sitemap" &&
           (route.includes("/change-events") ||
-            route.includes("docs/archive/2026-06-22-docs-migration/help/articles/change-events.md") ||
+            route.includes("docs/alleato-os-docs/help/articles/change-events.mdx") ||
             route.includes("frontend/src/app") ||
             route.includes("/src/app"))
         );

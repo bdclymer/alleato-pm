@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-06-22T14:05:29.087Z",
+  "generatedAt": "2026-06-22T20:34:20.815Z",
   "source": "scripts/docs/generate-app-expert-artifacts.mjs",
-  "routeCount": 310,
-  "documentedRouteCount": 0,
-  "helpArticleCount": 0,
+  "routeCount": 308,
+  "documentedRouteCount": 52,
+  "helpArticleCount": 60,
   "routes": [
     {
       "route": "/",
@@ -19,18 +19,22 @@
       "lastModified": "2026-05-22T19:05:02.995Z",
       "relatedFeatures": [
         {
-          "id": "route:/",
-          "title": "Portfolio",
-          "description": "Route discovered from frontend/src/app/(main)/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "app-navigation-and-feature-map",
+          "title": "Navigate Alleato PM",
+          "description": "Understand project pages, global tools, admin areas, and how Ask Alleato should point you to the right place.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "global",
-            "page"
+            "navigation",
+            "sitemap",
+            "projects",
+            "ai-assistant"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/app-navigation-and-feature-map.mdx"
+      ]
     },
     {
       "route": "/[projectId]/admin",
@@ -47,18 +51,23 @@
       "lastModified": "2026-05-08T01:55:22.187Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/admin",
-          "title": "Admin",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/admin/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "permissions-admin",
+          "title": "Permissions and Access Control",
+          "description": "Configure role-based permissions, capability flags, and per-user overrides at the project level.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "admin"
+            "permissions",
+            "admin",
+            "roles",
+            "capabilities",
+            "audit"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/permissions-admin.mdx"
+      ]
     },
     {
       "route": "/[projectId]/billing-periods",
@@ -103,18 +112,55 @@
       "lastModified": "2026-06-15T13:56:13.452Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/budget",
-          "title": "Budget",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/budget/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "budget-line-items",
+          "title": "Budget Line Items",
+          "description": "Add, edit, and modify budget line items and apply budget modifications.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "budget",
+            "line-items",
+            "modifications",
+            "cost-codes"
+          ]
+        },
+        {
+          "id": "budget-overview",
+          "title": "Budget Overview",
+          "description": "Understand the budget tool, its columns, and how to navigate budget line items.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "budget",
+            "line-items",
+            "cost-codes",
+            "forecast",
+            "actual"
+          ]
+        },
+        {
+          "id": "budget-reference",
+          "title": "Budget Reference",
+          "description": "Complete column-by-column reference for the Budget tool — definitions, formulas, source data, forecast methods, permissions, and how Budget connects to the rest of the system.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "budget",
+            "reference",
+            "columns",
+            "forecast",
+            "variance",
+            "committed",
+            "direct-costs",
+            "change-orders"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/budget-line-items.mdx",
+        "docs/alleato-os-docs/help/articles/budget-overview.mdx",
+        "docs/alleato-os-docs/help/articles/budget-reference.mdx"
+      ]
     },
     {
       "route": "/[projectId]/budget/line-item/new",
@@ -159,18 +205,26 @@
       "lastModified": "2026-06-16T00:16:10.137Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/budget/setup",
-          "title": "Setup",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/budget/setup/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "budget-reference",
+          "title": "Budget Reference",
+          "description": "Complete column-by-column reference for the Budget tool — definitions, formulas, source data, forecast methods, permissions, and how Budget connects to the rest of the system.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "budget",
+            "reference",
+            "columns",
+            "forecast",
+            "variance",
+            "committed",
+            "direct-costs",
+            "change-orders"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/budget-reference.mdx"
+      ]
     },
     {
       "route": "/[projectId]/change-events",
@@ -187,18 +241,37 @@
       "lastModified": "2026-06-16T14:28:11.038Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/change-events",
-          "title": "Change Events",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/change-events/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "change-event-to-change-order-workflow",
+          "title": "Change Event to Change Order Workflow",
+          "description": "Follow a scope change from initial capture through owner-approved change order and budget update.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "change-events",
+            "change-orders",
+            "pco",
+            "approval-workflow",
+            "budget"
+          ]
+        },
+        {
+          "id": "change-events",
+          "title": "Change Events",
+          "description": "Track potential changes to the project before they become approved change orders.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "change-events",
+            "pco",
+            "pricing",
+            "scope-change"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/change-event-to-change-order-workflow.mdx",
+        "docs/alleato-os-docs/help/articles/change-events.mdx"
+      ]
     },
     {
       "route": "/[projectId]/change-events/[changeEventId]",
@@ -301,18 +374,23 @@
       "lastModified": "2026-05-21T13:24:01.684Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/change-management",
-          "title": "Change Management",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/change-management/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "change-event-to-change-order-workflow",
+          "title": "Change Event to Change Order Workflow",
+          "description": "Follow a scope change from initial capture through owner-approved change order and budget update.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "change-events",
+            "change-orders",
+            "pco",
+            "approval-workflow",
+            "budget"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/change-event-to-change-order-workflow.mdx"
+      ]
     },
     {
       "route": "/[projectId]/change-orders",
@@ -329,18 +407,37 @@
       "lastModified": "2026-04-14T14:17:22.377Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/change-orders",
-          "title": "Change Orders",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/change-orders/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "change-event-to-change-order-workflow",
+          "title": "Change Event to Change Order Workflow",
+          "description": "Follow a scope change from initial capture through owner-approved change order and budget update.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "change-events",
+            "change-orders",
+            "pco",
+            "approval-workflow",
+            "budget"
+          ]
+        },
+        {
+          "id": "change-orders",
+          "title": "Change Orders",
+          "description": "Generate, approve, and issue prime contract change orders from approved change events.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "change-orders",
+            "prime-contract",
+            "approval",
+            "pdf"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/change-event-to-change-order-workflow.mdx",
+        "docs/alleato-os-docs/help/articles/change-orders.mdx"
+      ]
     },
     {
       "route": "/[projectId]/change-orders/[changeOrderId]/edit",
@@ -641,18 +738,40 @@
       "lastModified": "2026-06-15T17:30:01.518Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/commitments",
-          "title": "Commitments",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/commitments/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "commitments",
+          "title": "Commitments (Subcontracts and Purchase Orders)",
+          "description": "Manage subcontracts, purchase orders, schedule of values, and commitment change orders.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "commitments",
+            "subcontracts",
+            "purchase-orders",
+            "sov",
+            "vendors"
+          ]
+        },
+        {
+          "id": "commitments-reference",
+          "title": "Commitments Reference",
+          "description": "Complete reference for the Commitments tool — subcontracts and purchase orders, statuses, columns, change orders, SOV, retainage, and how Commitments drive the Budget table.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "commitments",
+            "subcontracts",
+            "purchase-orders",
+            "change-orders",
+            "sov",
+            "retainage",
+            "reference"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/commitments.mdx",
+        "docs/alleato-os-docs/help/articles/commitments-reference.mdx"
+      ]
     },
     {
       "route": "/[projectId]/commitments/[commitmentId]",
@@ -670,18 +789,25 @@
       "lastModified": "2026-06-17T03:36:49.951Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/commitments/[commitmentId]",
-          "title": "Commitments",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "commitments-reference",
+          "title": "Commitments Reference",
+          "description": "Complete reference for the Commitments tool — subcontracts and purchase orders, statuses, columns, change orders, SOV, retainage, and how Commitments drive the Budget table.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "commitments",
+            "subcontracts",
+            "purchase-orders",
+            "change-orders",
+            "sov",
+            "retainage",
+            "reference"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/commitments-reference.mdx"
+      ]
     },
     {
       "route": "/[projectId]/commitments/[commitmentId]/edit",
@@ -699,18 +825,25 @@
       "lastModified": "2026-06-18T00:18:04.749Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/commitments/[commitmentId]/edit",
-          "title": "Edit",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/edit/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "commitments-reference",
+          "title": "Commitments Reference",
+          "description": "Complete reference for the Commitments tool — subcontracts and purchase orders, statuses, columns, change orders, SOV, retainage, and how Commitments drive the Budget table.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "form"
+            "commitments",
+            "subcontracts",
+            "purchase-orders",
+            "change-orders",
+            "sov",
+            "retainage",
+            "reference"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/commitments-reference.mdx"
+      ]
     },
     {
       "route": "/[projectId]/commitments/[commitmentId]/invoices/[invoiceId]",
@@ -814,18 +947,25 @@
       "lastModified": "2026-06-18T00:18:21.018Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/commitments/new",
-          "title": "New",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/commitments/new/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "commitments-reference",
+          "title": "Commitments Reference",
+          "description": "Complete reference for the Commitments tool — subcontracts and purchase orders, statuses, columns, change orders, SOV, retainage, and how Commitments drive the Budget table.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "form"
+            "commitments",
+            "subcontracts",
+            "purchase-orders",
+            "change-orders",
+            "sov",
+            "retainage",
+            "reference"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/commitments-reference.mdx"
+      ]
     },
     {
       "route": "/[projectId]/commitments/recycle-bin",
@@ -898,18 +1038,23 @@
       "lastModified": "2026-06-12T19:26:25.283Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/daily-log",
+          "id": "daily-log",
           "title": "Daily Log",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/daily-log/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "description": "Record daily field reports including labor, equipment, weather, and notes.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "daily-log",
+            "field-report",
+            "labor",
+            "equipment",
+            "weather"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/daily-log.mdx"
+      ]
     },
     {
       "route": "/[projectId]/daily-log/[dailyLogId]/edit",
@@ -1011,18 +1156,22 @@
       "lastModified": "2026-04-29T14:12:15.922Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/direct-costs",
+          "id": "direct-costs",
           "title": "Direct Costs",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/direct-costs/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "description": "Record non-contract project costs like labor, materials, equipment, and reimbursements.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "direct-costs",
+            "labor",
+            "materials",
+            "equipment"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/direct-costs.mdx"
+      ]
     },
     {
       "route": "/[projectId]/direct-costs/[costId]",
@@ -1093,21 +1242,25 @@
       ],
       "routeGroup": "main",
       "appFile": "frontend/src/app/(main)/[projectId]/directory/page.tsx",
-      "lastModified": "2026-06-15T16:51:05.752Z",
+      "lastModified": "2026-06-22T15:47:35.039Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/directory",
-          "title": "Directory",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/directory/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "project-directory",
+          "title": "Project Directory",
+          "description": "Manage the project team roster with roles, contact info, and company affiliation.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "directory",
+            "project-team",
+            "roster",
+            "roles"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/project-directory.mdx"
+      ]
     },
     {
       "route": "/[projectId]/documents",
@@ -1124,18 +1277,22 @@
       "lastModified": "2026-06-17T20:54:04.971Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/documents",
+          "id": "documents",
           "title": "Documents",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/documents/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "description": "Manage project files in folders with version tracking, upload, and download.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "documents",
+            "files",
+            "folders",
+            "versions"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/documents.mdx"
+      ]
     },
     {
       "route": "/[projectId]/documents/[documentId]",
@@ -1181,18 +1338,37 @@
       "lastModified": "2026-05-15T05:25:19.270Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/drawings",
-          "title": "Drawings",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/drawings/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "drawings-viewer",
+          "title": "Drawing Viewer and Annotations",
+          "description": "Use the PDF viewer to mark up drawings and link pins to RFIs, punch items, and photos.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "drawings",
+            "viewer",
+            "annotations",
+            "markup",
+            "pins"
+          ]
+        },
+        {
+          "id": "drawings",
+          "title": "Drawings",
+          "description": "Upload, version, and organize construction drawings with sets, areas, and revisions.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "drawings",
+            "sets",
+            "revisions",
+            "versioning"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/drawings-viewer.mdx",
+        "docs/alleato-os-docs/help/articles/drawings.mdx"
+      ]
     },
     {
       "route": "/[projectId]/drawings/[drawingId]",
@@ -1322,18 +1498,22 @@
       "lastModified": "2026-05-08T01:55:22.287Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/drawings/revisions-report",
-          "title": "Revisions Report",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/drawings/revisions-report/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "drawings",
+          "title": "Drawings",
+          "description": "Upload, version, and organize construction drawings with sets, areas, and revisions.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "drawings",
+            "sets",
+            "revisions",
+            "versioning"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/drawings.mdx"
+      ]
     },
     {
       "route": "/[projectId]/drawings/sets",
@@ -1350,18 +1530,22 @@
       "lastModified": "2026-05-08T01:55:22.301Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/drawings/sets",
-          "title": "Sets",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/drawings/sets/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "drawings",
+          "title": "Drawings",
+          "description": "Upload, version, and organize construction drawings with sets, areas, and revisions.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "drawings",
+            "sets",
+            "revisions",
+            "versioning"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/drawings.mdx"
+      ]
     },
     {
       "route": "/[projectId]/drawings/viewer-v2/[drawingId]",
@@ -1405,7 +1589,7 @@
       ],
       "routeGroup": "main",
       "appFile": "frontend/src/app/(main)/[projectId]/drawings/viewer/[drawingId]/page.tsx",
-      "lastModified": "2026-06-22T00:10:03.376Z",
+      "lastModified": "2026-06-22T16:51:46.229Z",
       "relatedFeatures": [
         {
           "id": "route:/[projectId]/drawings/viewer/[drawingId]",
@@ -1436,18 +1620,22 @@
       "lastModified": "2026-06-17T20:54:04.971Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/emails",
-          "title": "Emails",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/emails/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "outlook-integration",
+          "title": "Microsoft Outlook Integration",
+          "description": "Sync incoming Microsoft 365 emails into project records with attachment search.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "outlook",
+            "microsoft-365",
+            "email",
+            "sync"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/outlook-integration.mdx"
+      ]
     },
     {
       "route": "/[projectId]/estimates",
@@ -1464,18 +1652,23 @@
       "lastModified": "2026-03-11T17:32:49.447Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/estimates",
+          "id": "estimates",
           "title": "Estimates",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/estimates/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "description": "Build quantity takeoff estimates in Alleato, then import them directly into a prime contract schedule of values.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "estimates",
+            "qto",
+            "quantity-takeoff",
+            "sov",
+            "cost-codes"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/estimates.mdx"
+      ]
     },
     {
       "route": "/[projectId]/estimates/[estimateId]",
@@ -1493,18 +1686,23 @@
       "lastModified": "2026-06-16T00:16:10.140Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/estimates/[estimateId]",
+          "id": "estimates",
           "title": "Estimates",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/estimates/[estimateId]/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "description": "Build quantity takeoff estimates in Alleato, then import them directly into a prime contract schedule of values.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "estimates",
+            "qto",
+            "quantity-takeoff",
+            "sov",
+            "cost-codes"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/estimates.mdx"
+      ]
     },
     {
       "route": "/[projectId]/estimates/[estimateId]/edit",
@@ -1550,18 +1748,23 @@
       "lastModified": "2026-05-14T22:44:40.290Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/estimates/new",
-          "title": "New",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/estimates/new/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "estimates",
+          "title": "Estimates",
+          "description": "Build quantity takeoff estimates in Alleato, then import them directly into a prime contract schedule of values.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "form"
+            "estimates",
+            "qto",
+            "quantity-takeoff",
+            "sov",
+            "cost-codes"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/estimates.mdx"
+      ]
     },
     {
       "route": "/[projectId]/home",
@@ -1575,21 +1778,53 @@
       ],
       "routeGroup": "main",
       "appFile": "frontend/src/app/(main)/[projectId]/home/page.tsx",
-      "lastModified": "2026-06-19T02:20:03.092Z",
+      "lastModified": "2026-06-22T16:53:36.595Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/home",
-          "title": "Home",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/home/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "app-navigation-and-feature-map",
+          "title": "Navigate Alleato PM",
+          "description": "Understand project pages, global tools, admin areas, and how Ask Alleato should point you to the right place.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "dashboard"
+            "navigation",
+            "sitemap",
+            "projects",
+            "ai-assistant"
+          ]
+        },
+        {
+          "id": "navigate-projects",
+          "title": "Navigate Projects",
+          "description": "Switch between projects, open the project home page, and find project tools.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "projects",
+            "navigation",
+            "project-selector",
+            "project-home"
+          ]
+        },
+        {
+          "id": "project-home",
+          "title": "Project Home",
+          "description": "Use the per-project dashboard for a quick read on KPIs, team, open items, and budget.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "project-home",
+            "dashboard",
+            "kpis",
+            "overview"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/app-navigation-and-feature-map.mdx",
+        "docs/alleato-os-docs/help/articles/navigate-projects.mdx",
+        "docs/alleato-os-docs/help/articles/project-home.mdx"
+      ]
     },
     {
       "route": "/[projectId]/hub",
@@ -1631,21 +1866,63 @@
       ],
       "routeGroup": "main",
       "appFile": "frontend/src/app/(main)/[projectId]/intelligence/page.tsx",
-      "lastModified": "2026-06-22T13:08:15.088Z",
+      "lastModified": "2026-06-22T16:51:46.230Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/intelligence",
-          "title": "Intelligence",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/intelligence/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "ai-capabilities-index",
+          "title": "AI Capabilities Index",
+          "description": "Every AI feature in Alleato OS — what it does, where to find it, and what to ask.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "ai-assistant",
+            "ask-alleato",
+            "c-suite",
+            "rag",
+            "intelligence",
+            "index",
+            "overview"
+          ]
+        },
+        {
+          "id": "ai-proactive-alerts",
+          "title": "Proactive AI Alerts",
+          "description": "The platform automatically flags budget variance, overdue RFIs, late tasks, and stale change events so issues surface before you have to look for them.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "alerts",
+            "proactive",
+            "budget-variance",
+            "rfi",
+            "schedule",
+            "cron",
+            "daily-flags"
+          ]
+        },
+        {
+          "id": "project-intelligence",
+          "title": "Project Intelligence",
+          "description": "Review the AI-compiled project storyline with an executive snapshot, current focus, risks, decisions, timeline, and evidence citations.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "intelligence",
+            "insights",
+            "ai",
+            "kpis",
+            "risk",
+            "decisions",
+            "blockers",
+            "financial-exposure"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/ai-capabilities-index.mdx",
+        "docs/alleato-os-docs/help/articles/ai-proactive-alerts.mdx",
+        "docs/alleato-os-docs/help/articles/project-intelligence.mdx"
+      ]
     },
     {
       "route": "/[projectId]/intelligence/sources/[sourceDocumentId]",
@@ -1775,18 +2052,22 @@
       "lastModified": "2026-04-17T10:00:39.564Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/invoicing",
+          "id": "invoicing",
           "title": "Invoicing",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/invoicing/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "description": "Manage owner pay applications and subcontractor invoices against the schedule of values.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "invoicing",
+            "pay-application",
+            "sov",
+            "billing"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/invoicing.mdx"
+      ]
     },
     {
       "route": "/[projectId]/invoicing/[invoiceId]",
@@ -1917,18 +2198,22 @@
       "lastModified": "2026-06-14T05:09:27.886Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/invoicing/subcontractor/new",
-          "title": "New",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/invoicing/subcontractor/new/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "submit-invoice",
+          "title": "Submit an Invoice (Subcontractor)",
+          "description": "Submit a pay application against your schedule of values.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "form"
+            "invoice",
+            "pay-application",
+            "sov",
+            "subcontractor"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/submit-invoice.mdx"
+      ]
     },
     {
       "route": "/[projectId]/meetings",
@@ -1945,18 +2230,39 @@
       "lastModified": "2026-05-11T20:03:21.461Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/meetings",
-          "title": "Meetings",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/meetings/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "ai-meeting-intelligence",
+          "title": "Ask the AI About Meetings",
+          "description": "How the AI assistant uses meeting transcripts, action items, and decisions from Fireflies to answer questions about project activity.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "ai-assistant",
+            "meetings",
+            "fireflies",
+            "transcripts",
+            "action-items",
+            "decisions"
+          ]
+        },
+        {
+          "id": "meetings",
+          "title": "Meetings",
+          "description": "Review meeting transcripts, AI-generated insights, action items, and meeting prep documents.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "meetings",
+            "fireflies",
+            "transcripts",
+            "action-items",
+            "ai-insights"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/ai-meeting-intelligence.mdx",
+        "docs/alleato-os-docs/help/articles/meetings.mdx"
+      ]
     },
     {
       "route": "/[projectId]/meetings/[meetingId]",
@@ -2056,49 +2362,27 @@
       ],
       "routeGroup": "main",
       "appFile": "frontend/src/app/(main)/[projectId]/my-work/page.tsx",
-      "lastModified": "2026-06-22T12:16:01.234Z",
+      "lastModified": "2026-06-22T16:51:46.230Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/my-work",
-          "title": "My Work",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/my-work/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "my-work",
+          "title": "My Work (Subcontractor Portal)",
+          "description": "Subcontractor view of assigned RFIs, submittals, SOV status, and invoice submission.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "my-work",
+            "subcontractor",
+            "portal",
+            "rfis",
+            "submittals",
+            "invoices"
           ]
         }
       ],
-      "relatedHelpArticles": []
-    },
-    {
-      "route": "/[projectId]/outlook-emails",
-      "title": "Outlook Emails",
-      "category": "Project",
-      "type": "page",
-      "scope": "project",
-      "dynamic": true,
-      "dynamicSegments": [
-        "projectId"
-      ],
-      "routeGroup": "main",
-      "appFile": "frontend/src/app/(main)/[projectId]/outlook-emails/page.tsx",
-      "lastModified": "2026-05-02T08:39:13.589Z",
-      "relatedFeatures": [
-        {
-          "id": "route:/[projectId]/outlook-emails",
-          "title": "Outlook Emails",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/outlook-emails/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
-          "tags": [
-            "project",
-            "page"
-          ]
-        }
-      ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/my-work.mdx"
+      ]
     },
     {
       "route": "/[projectId]/pcos",
@@ -2257,18 +2541,23 @@
       "lastModified": "2026-05-08T02:16:45.420Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/photos",
+          "id": "photos",
           "title": "Photos",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/photos/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "description": "Manage project photos with albums, geotagged map pins, favorites, and grid views.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "photos",
+            "albums",
+            "map",
+            "geotag",
+            "favorites"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/photos.mdx"
+      ]
     },
     {
       "route": "/[projectId]/prime-contract-pcos",
@@ -2399,18 +2688,22 @@
       "lastModified": "2026-05-21T23:53:56.988Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/prime-contracts",
+          "id": "prime-contracts",
           "title": "Prime Contracts",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/prime-contracts/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "description": "Manage the owner contract, schedule of values, and prime contract modifications.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "prime-contract",
+            "owner",
+            "sov",
+            "modifications"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/prime-contracts.mdx"
+      ]
     },
     {
       "route": "/[projectId]/prime-contracts/[contractId]",
@@ -2717,18 +3010,23 @@
       "lastModified": "2026-05-08T01:55:22.385Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/progress-reports",
+          "id": "progress-reports",
           "title": "Progress Reports",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/progress-reports/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "description": "Generate, approve, and export periodic project status reports with AI assistance.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "progress-reports",
+            "status",
+            "ai",
+            "pdf",
+            "owner"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/progress-reports.mdx"
+      ]
     },
     {
       "route": "/[projectId]/progress-reports/[reportId]",
@@ -2802,18 +3100,22 @@
       "lastModified": "2026-04-13T11:17:41.892Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/punch-list",
+          "id": "punch-list",
           "title": "Punch List",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/punch-list/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "description": "Track close-out punch items with assignees, locations, and due dates.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "punch-list",
+            "closeout",
+            "deficiencies",
+            "qa-qc"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/punch-list.mdx"
+      ]
     },
     {
       "route": "/[projectId]/punch-list/[punchItemId]",
@@ -2887,18 +3189,22 @@
       "lastModified": "2026-05-12T17:41:24.956Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/rfis",
-          "title": "Rfis",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/rfis/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "rfis",
+          "title": "RFIs",
+          "description": "Create, track, and close requests for information with assignees and due dates.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "rfis",
+            "requests-for-information",
+            "ball-in-court",
+            "design"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/rfis.mdx"
+      ]
     },
     {
       "route": "/[projectId]/rfis/[rfiId]",
@@ -2972,18 +3278,23 @@
       "lastModified": "2026-06-12T19:15:30.674Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/schedule",
+          "id": "schedule",
           "title": "Schedule",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/schedule/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "description": "View and manage the project schedule across grid, board, Gantt, timeline, and calendar views.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "schedule",
+            "gantt",
+            "kanban",
+            "tasks",
+            "dependencies"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/schedule.mdx"
+      ]
     },
     {
       "route": "/[projectId]/schedule/import",
@@ -3084,18 +3395,23 @@
       "lastModified": "2026-05-08T01:55:22.402Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/specifications",
+          "id": "specifications",
           "title": "Specifications",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/specifications/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "description": "Browse spec sections, subscribe to revisions, and download spec files.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "specifications",
+            "specs",
+            "csi",
+            "divisions",
+            "revisions"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/specifications.mdx"
+      ]
     },
     {
       "route": "/[projectId]/specifications/[sectionId]",
@@ -3141,18 +3457,22 @@
       "lastModified": "2026-06-14T20:51:42.625Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/submittals",
+          "id": "submittals",
           "title": "Submittals",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/submittals/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "description": "Manage the submittal log, review workflow, and revision tracking.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "submittals",
+            "shop-drawings",
+            "review",
+            "approval"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/submittals.mdx"
+      ]
     },
     {
       "route": "/[projectId]/submittals/[submittalId]",
@@ -3339,18 +3659,22 @@
       "lastModified": "2026-03-27T18:22:26.444Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/transmittals",
+          "id": "transmittals",
           "title": "Transmittals",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/transmittals/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "description": "Create formal transmittal cover sheets for documents sent or received.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "transmittals",
+            "delivery",
+            "tracking",
+            "formal"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/transmittals.mdx"
+      ]
     },
     {
       "route": "/[projectId]/user-management",
@@ -3367,18 +3691,38 @@
       "lastModified": "2026-05-08T01:55:22.420Z",
       "relatedFeatures": [
         {
-          "id": "route:/[projectId]/user-management",
-          "title": "User Management",
-          "description": "Route discovered from frontend/src/app/(main)/[projectId]/user-management/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "manage-permissions",
+          "title": "Manage User Access",
+          "description": "Manage users, roles, project access, and sensitive modules.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "project",
-            "page"
+            "permissions",
+            "users",
+            "roles",
+            "access",
+            "templates"
+          ]
+        },
+        {
+          "id": "app-permissions-and-visibility",
+          "title": "Understand Permissions And Visibility",
+          "description": "Learn why pages, records, employee information, or actions may be visible or hidden.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "permissions",
+            "visibility",
+            "roles",
+            "privacy",
+            "app-expert"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/manage-permissions.mdx",
+        "docs/alleato-os-docs/help/articles/app-permissions-and-visibility.mdx"
+      ]
     },
     {
       "route": "/access-denied",
@@ -3780,7 +4124,7 @@
       "dynamicSegments": [],
       "routeGroup": "admin",
       "appFile": "frontend/src/app/(admin)/admin/page.tsx",
-      "lastModified": "2026-06-22T14:02:26.035Z",
+      "lastModified": "2026-06-22T16:51:46.226Z",
       "relatedFeatures": [
         {
           "id": "route:/admin",
@@ -3939,18 +4283,197 @@
       "lastModified": "2026-06-18T22:26:05.111Z",
       "relatedFeatures": [
         {
-          "id": "route:/ai-assistant",
-          "title": "Ai Assistant",
-          "description": "Route discovered from frontend/src/app/(main)/ai-assistant/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "ai-chat-overview",
+          "title": "AI Chat Overview",
+          "description": "The AI Assistant chat — where it lives, what you can ask it, how conversations work, attachments, voice input, and the side panels that give you trace and source visibility.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "global",
-            "chat"
+            "ai",
+            "chat",
+            "assistant",
+            "conversations",
+            "voice",
+            "attachments",
+            "rag"
+          ]
+        },
+        {
+          "id": "ai-assistant-overview",
+          "title": "AI Assistant Overview",
+          "description": "Understand Ask Alleato — the multi-agent AI system with C-Suite advisors embedded in the platform.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "ai-assistant",
+            "ask-alleato",
+            "c-suite",
+            "cfo",
+            "coo",
+            "cro",
+            "chro",
+            "vpbd"
+          ]
+        },
+        {
+          "id": "ai-capabilities-index",
+          "title": "AI Capabilities Index",
+          "description": "Every AI feature in Alleato OS — what it does, where to find it, and what to ask.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "ai-assistant",
+            "ask-alleato",
+            "c-suite",
+            "rag",
+            "intelligence",
+            "index",
+            "overview"
+          ]
+        },
+        {
+          "id": "ai-financial-advisor",
+          "title": "Ask the AI About Finances",
+          "description": "Use the CFO advisor to analyze budgets, margins, cash flow, change order exposure, and live ERP data from Acumatica.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "ai-assistant",
+            "cfo",
+            "budget",
+            "margin",
+            "cash-flow",
+            "acumatica",
+            "change-orders",
+            "commitments"
+          ]
+        },
+        {
+          "id": "ai-meeting-intelligence",
+          "title": "Ask the AI About Meetings",
+          "description": "How the AI assistant uses meeting transcripts, action items, and decisions from Fireflies to answer questions about project activity.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "ai-assistant",
+            "meetings",
+            "fireflies",
+            "transcripts",
+            "action-items",
+            "decisions"
+          ]
+        },
+        {
+          "id": "ask-the-ai-assistant",
+          "title": "Ask the AI Assistant for Help",
+          "description": "Use Ask Alleato when you need help finding information or understanding how to use the platform.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "ai-assistant",
+            "help",
+            "onboarding"
+          ]
+        },
+        {
+          "id": "ai-project-updates",
+          "title": "Get a Project Briefing from the AI",
+          "description": "Ask the AI for a status update on any project and it pulls from meetings, emails, Teams messages, financials, and schedule simultaneously.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "ai-assistant",
+            "project-update",
+            "briefing",
+            "portfolio",
+            "status"
+          ]
+        },
+        {
+          "id": "self-learning-intelligence-architecture",
+          "title": "Self-Learning Intelligence Architecture",
+          "description": "Internal implementation blueprint for Alleato AI feedback loops, promotion rules, retrieval scoring, and packet-first learning.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "ai",
+            "feedback",
+            "memory",
+            "rag",
+            "project-intelligence",
+            "architecture"
+          ]
+        },
+        {
+          "id": "ai-assistant-actions",
+          "title": "What the AI Assistant Can Do (Actions)",
+          "description": "The AI assistant can create and update records directly from chat — learn which actions are available and how the confirmation flow works.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "ai-assistant",
+            "actions",
+            "create",
+            "rfi",
+            "change-order",
+            "tasks",
+            "confirmation"
+          ]
+        },
+        {
+          "id": "app-feature-status-and-limitations",
+          "title": "Understand Feature Status",
+          "description": "Learn how Alleato PM distinguishes live, partial, planned, blocked, and deprecated app behavior.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "feature-status",
+            "limitations",
+            "app-expert",
+            "ai-assistant"
+          ]
+        },
+        {
+          "id": "app-navigation-and-feature-map",
+          "title": "Navigate Alleato PM",
+          "description": "Understand project pages, global tools, admin areas, and how Ask Alleato should point you to the right place.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "navigation",
+            "sitemap",
+            "projects",
+            "ai-assistant"
+          ]
+        },
+        {
+          "id": "use-help-center-and-ai-assistant",
+          "title": "Use Help Center and Ask Alleato Together",
+          "description": "Find written guides in Help Center and ask the AI assistant follow-up questions.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "help-center",
+            "ai-assistant",
+            "ask-alleato",
+            "support"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/ai-chat-overview.mdx",
+        "docs/alleato-os-docs/help/articles/ai-assistant-overview.mdx",
+        "docs/alleato-os-docs/help/articles/ai-capabilities-index.mdx",
+        "docs/alleato-os-docs/help/articles/ai-financial-advisor.mdx",
+        "docs/alleato-os-docs/help/articles/ai-meeting-intelligence.mdx",
+        "docs/alleato-os-docs/help/articles/ask-the-ai-assistant.mdx",
+        "docs/alleato-os-docs/help/articles/ai-project-updates.mdx",
+        "docs/alleato-os-docs/help/articles/self-learning-intelligence-architecture.mdx",
+        "docs/alleato-os-docs/help/articles/ai-assistant-actions.mdx",
+        "docs/alleato-os-docs/help/articles/app-feature-status-and-limitations.mdx",
+        "docs/alleato-os-docs/help/articles/app-navigation-and-feature-map.mdx",
+        "docs/alleato-os-docs/help/articles/use-help-center-and-ai-assistant.mdx"
+      ]
     },
     {
       "route": "/ai-assistant/feature-requests",
@@ -4146,7 +4669,7 @@
       "dynamicSegments": [],
       "routeGroup": "admin",
       "appFile": "frontend/src/app/(admin)/ai-prompt-diagnostics/page.tsx",
-      "lastModified": "2026-06-22T13:07:04.333Z",
+      "lastModified": "2026-06-22T16:51:46.226Z",
       "relatedFeatures": [
         {
           "id": "route:/ai-prompt-diagnostics",
@@ -4224,7 +4747,7 @@
       "dynamicSegments": [],
       "routeGroup": "admin",
       "appFile": "frontend/src/app/(admin)/ai-vision/page.tsx",
-      "lastModified": "2026-06-22T13:08:26.780Z",
+      "lastModified": "2026-06-22T16:51:46.226Z",
       "relatedFeatures": [
         {
           "id": "route:/ai-vision",
@@ -4302,7 +4825,7 @@
       "dynamicSegments": [],
       "routeGroup": "admin",
       "appFile": "frontend/src/app/(admin)/ai/admin/skills/page.tsx",
-      "lastModified": "2026-06-22T13:07:04.335Z",
+      "lastModified": "2026-06-22T16:51:46.226Z",
       "relatedFeatures": [
         {
           "id": "route:/ai/admin/skills",
@@ -4328,7 +4851,7 @@
       "dynamicSegments": [],
       "routeGroup": "admin",
       "appFile": "frontend/src/app/(admin)/ai/learning-promotions/page.tsx",
-      "lastModified": "2026-06-22T13:07:04.334Z",
+      "lastModified": "2026-06-22T16:51:46.227Z",
       "relatedFeatures": [
         {
           "id": "route:/ai/learning-promotions",
@@ -5086,7 +5609,7 @@
       "dynamicSegments": [],
       "routeGroup": "admin",
       "appFile": "frontend/src/app/(admin)/database/page.tsx",
-      "lastModified": "2026-05-02T13:46:08.860Z",
+      "lastModified": "2026-06-22T16:51:46.227Z",
       "relatedFeatures": [
         {
           "id": "route:/database",
@@ -5138,7 +5661,7 @@
       "dynamicSegments": [],
       "routeGroup": "admin",
       "appFile": "frontend/src/app/(admin)/deep-research/page.tsx",
-      "lastModified": "2026-06-16T00:16:10.134Z",
+      "lastModified": "2026-06-22T16:51:46.227Z",
       "relatedFeatures": [
         {
           "id": "route:/deep-research",
@@ -5323,18 +5846,23 @@
       "lastModified": "2026-03-02T23:38:22.218Z",
       "relatedFeatures": [
         {
-          "id": "route:/directory",
-          "title": "Directory",
-          "description": "Route discovered from frontend/src/app/(main)/directory/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "company-directory",
+          "title": "Company Directory",
+          "description": "Manage the global directory of companies, clients, contacts, vendors, prospects, distribution groups, and employees.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "global",
-            "page"
+            "directory",
+            "companies",
+            "contacts",
+            "vendors",
+            "clients"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/company-directory.mdx"
+      ]
     },
     {
       "route": "/directory/clients",
@@ -5666,7 +6194,7 @@
       "dynamicSegments": [],
       "routeGroup": "admin",
       "appFile": "frontend/src/app/(admin)/docs/ai-overview/data-sources/page.tsx",
-      "lastModified": "2026-06-22T13:08:18.420Z",
+      "lastModified": "2026-06-22T16:51:46.227Z",
       "relatedFeatures": [
         {
           "id": "route:/docs/ai-overview/data-sources",
@@ -5692,7 +6220,7 @@
       "dynamicSegments": [],
       "routeGroup": "admin",
       "appFile": "frontend/src/app/(admin)/docs/ai-overview/learning/page.tsx",
-      "lastModified": "2026-06-22T13:08:21.299Z",
+      "lastModified": "2026-06-22T16:51:46.227Z",
       "relatedFeatures": [
         {
           "id": "route:/docs/ai-overview/learning",
@@ -5825,18 +6353,24 @@
       "lastModified": "2026-05-12T17:43:45.040Z",
       "relatedFeatures": [
         {
-          "id": "route:/document-metadata",
-          "title": "Document Metadata",
-          "description": "Route discovered from frontend/src/app/(admin)/document-metadata/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "teams-chat-compiler",
+          "title": "Teams Chat Compiler",
+          "description": "Understand how raw Microsoft Teams conversations become project intelligence, tasks, risks, and decisions.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "admin",
-            "page"
+            "teams",
+            "microsoft-graph",
+            "compiler",
+            "intelligence",
+            "tasks",
+            "risks"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/teams-chat-compiler.mdx"
+      ]
     },
     {
       "route": "/documents",
@@ -6032,7 +6566,7 @@
       "dynamicSegments": [],
       "routeGroup": "admin",
       "appFile": "frontend/src/app/(admin)/eval-runs/page.tsx",
-      "lastModified": "2026-06-12T19:15:30.662Z",
+      "lastModified": "2026-06-22T16:51:46.228Z",
       "relatedFeatures": [
         {
           "id": "route:/eval-runs",
@@ -6139,18 +6673,23 @@
       "lastModified": "2026-06-12T19:15:30.664Z",
       "relatedFeatures": [
         {
-          "id": "route:/feedback-inbox",
-          "title": "Feedback Inbox",
-          "description": "Route discovered from frontend/src/app/(admin)/feedback-inbox/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "submit-feedback",
+          "title": "Submit Feedback",
+          "description": "Send feedback from inside the app when something is wrong, confusing, or missing.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "admin",
-            "page"
+            "feedback",
+            "support",
+            "issue",
+            "request",
+            "annotation"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/submit-feedback.mdx"
+      ]
     },
     {
       "route": "/files",
@@ -6792,7 +7331,7 @@
       "dynamicSegments": [],
       "routeGroup": "admin",
       "appFile": "frontend/src/app/(admin)/outlook-draft-feedback/page.tsx",
-      "lastModified": "2026-06-22T13:07:04.334Z",
+      "lastModified": "2026-06-22T16:51:46.228Z",
       "relatedFeatures": [
         {
           "id": "route:/outlook-draft-feedback",
@@ -6802,32 +7341,6 @@
           "source": "route_inventory",
           "tags": [
             "admin",
-            "page"
-          ]
-        }
-      ],
-      "relatedHelpArticles": []
-    },
-    {
-      "route": "/outlook-emails",
-      "title": "Outlook Emails",
-      "category": "Tables",
-      "type": "page",
-      "scope": "global",
-      "dynamic": false,
-      "dynamicSegments": [],
-      "routeGroup": "tables",
-      "appFile": "frontend/src/app/(tables)/outlook-emails/page.tsx",
-      "lastModified": "2026-05-02T08:39:13.589Z",
-      "relatedFeatures": [
-        {
-          "id": "route:/outlook-emails",
-          "title": "Outlook Emails",
-          "description": "Route discovered from frontend/src/app/(tables)/outlook-emails/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
-          "tags": [
-            "global",
             "page"
           ]
         }
@@ -7167,18 +7680,23 @@
       "lastModified": "2026-05-08T15:19:39.743Z",
       "relatedFeatures": [
         {
-          "id": "route:/progress-reports",
+          "id": "progress-reports",
           "title": "Progress Reports",
-          "description": "Route discovered from frontend/src/app/(tables)/progress-reports/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "description": "Generate, approve, and export periodic project status reports with AI assistance.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "global",
-            "page"
+            "progress-reports",
+            "status",
+            "ai",
+            "pdf",
+            "owner"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/progress-reports.mdx"
+      ]
     },
     {
       "route": "/project-attribution",
@@ -7193,18 +7711,24 @@
       "lastModified": "2026-05-02T01:41:34.169Z",
       "relatedFeatures": [
         {
-          "id": "route:/project-attribution",
-          "title": "Project Attribution",
-          "description": "Route discovered from frontend/src/app/(admin)/project-attribution/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "teams-chat-compiler",
+          "title": "Teams Chat Compiler",
+          "description": "Understand how raw Microsoft Teams conversations become project intelligence, tasks, risks, and decisions.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "admin",
-            "page"
+            "teams",
+            "microsoft-graph",
+            "compiler",
+            "intelligence",
+            "tasks",
+            "risks"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/teams-chat-compiler.mdx"
+      ]
     },
     {
       "route": "/project-documents",
@@ -7245,18 +7769,22 @@
       "lastModified": "2026-05-12T09:26:21.492Z",
       "relatedFeatures": [
         {
-          "id": "route:/projects",
-          "title": "Projects",
-          "description": "Route discovered from frontend/src/app/(tables)/projects/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "navigate-projects",
+          "title": "Navigate Projects",
+          "description": "Switch between projects, open the project home page, and find project tools.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "global",
-            "page"
+            "projects",
+            "navigation",
+            "project-selector",
+            "project-home"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/navigate-projects.mdx"
+      ]
     },
     {
       "route": "/projects-table-demo",
@@ -7346,7 +7874,7 @@
       "dynamicSegments": [],
       "routeGroup": "admin",
       "appFile": "frontend/src/app/(admin)/rag-eval/page.tsx",
-      "lastModified": "2026-05-14T21:15:26.863Z",
+      "lastModified": "2026-06-22T16:51:46.228Z",
       "relatedFeatures": [
         {
           "id": "route:/rag-eval",
@@ -7401,18 +7929,23 @@
       "lastModified": "2026-04-29T15:41:42.848Z",
       "relatedFeatures": [
         {
-          "id": "route:/settings",
-          "title": "Settings",
-          "description": "Route discovered from frontend/src/app/(main)/settings/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "app-permissions-and-visibility",
+          "title": "Understand Permissions And Visibility",
+          "description": "Learn why pages, records, employee information, or actions may be visible or hidden.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "user_settings",
-            "settings"
+            "permissions",
+            "visibility",
+            "roles",
+            "privacy",
+            "app-expert"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/app-permissions-and-visibility.mdx"
+      ]
     },
     {
       "route": "/settings/account",
@@ -7479,18 +8012,22 @@
       "lastModified": "2026-06-18T22:25:39.332Z",
       "relatedFeatures": [
         {
-          "id": "route:/settings/memory",
-          "title": "Memory",
-          "description": "Route discovered from frontend/src/app/(main)/settings/memory/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "ai-memory",
+          "title": "AI Memory",
+          "description": "View and manage the facts, preferences, and context the AI assistant remembers about you across sessions.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "user_settings",
-            "settings"
+            "ai-memory",
+            "preferences",
+            "context",
+            "personalization"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/ai-memory.mdx"
+      ]
     },
     {
       "route": "/settings/preferences",
@@ -7531,18 +8068,22 @@
       "lastModified": "2026-05-15T20:37:54.156Z",
       "relatedFeatures": [
         {
-          "id": "route:/settings/profile",
-          "title": "Profile",
-          "description": "Route discovered from frontend/src/app/(main)/settings/profile/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "update-your-profile",
+          "title": "Update Your Profile",
+          "description": "Review your profile details and update your profile image.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "user_settings",
-            "settings"
+            "profile",
+            "settings",
+            "account",
+            "avatar"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/update-your-profile.mdx"
+      ]
     },
     {
       "route": "/settings/security",
@@ -7580,21 +8121,25 @@
       "dynamicSegments": [],
       "routeGroup": "admin",
       "appFile": "frontend/src/app/(admin)/site-map/page.tsx",
-      "lastModified": "2026-06-12T19:15:30.664Z",
+      "lastModified": "2026-06-22T15:51:56.719Z",
       "relatedFeatures": [
         {
-          "id": "route:/site-map",
-          "title": "Site Map",
-          "description": "Route discovered from frontend/src/app/(admin)/site-map/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "app-navigation-and-feature-map",
+          "title": "Navigate Alleato PM",
+          "description": "Understand project pages, global tools, admin areas, and how Ask Alleato should point you to the right place.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "admin",
-            "page"
+            "navigation",
+            "sitemap",
+            "projects",
+            "ai-assistant"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/app-navigation-and-feature-map.mdx"
+      ]
     },
     {
       "route": "/source-sync",
@@ -7875,7 +8420,7 @@
       "dynamicSegments": [],
       "routeGroup": "admin",
       "appFile": "frontend/src/app/(admin)/task-training/page.tsx",
-      "lastModified": "2026-06-22T13:07:04.333Z",
+      "lastModified": "2026-06-22T16:51:46.228Z",
       "relatedFeatures": [
         {
           "id": "route:/task-training",
@@ -7930,18 +8475,23 @@
       "lastModified": "2026-04-17T10:00:39.571Z",
       "relatedFeatures": [
         {
-          "id": "route:/team-chat",
-          "title": "Team Chat",
-          "description": "Route discovered from frontend/src/app/(main)/team-chat/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "teams-integration",
+          "title": "Microsoft Teams Integration",
+          "description": "Sync Teams messages and DMs into project intelligence with AI compilation.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "global",
-            "page"
+            "teams",
+            "microsoft-365",
+            "chat",
+            "sync",
+            "intelligence"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/teams-integration.mdx"
+      ]
     },
     {
       "route": "/teams-conversations",
@@ -8329,21 +8879,25 @@
       "dynamicSegments": [],
       "routeGroup": "admin",
       "appFile": "frontend/src/app/(admin)/updates/page.tsx",
-      "lastModified": "2026-04-29T14:12:15.877Z",
+      "lastModified": "2026-06-22T16:51:46.229Z",
       "relatedFeatures": [
         {
-          "id": "route:/updates",
-          "title": "Updates",
-          "description": "Route discovered from frontend/src/app/(admin)/updates/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "changelog",
+          "title": "What's New",
+          "description": "Read recent release notes covering new features, improvements, and fixes.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
-            "admin",
-            "page"
+            "changelog",
+            "releases",
+            "updates",
+            "whats-new"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/changelog.mdx"
+      ]
     },
     {
       "route": "/user-management",
@@ -8358,18 +8912,80 @@
       "lastModified": "2026-05-18T21:19:43.552Z",
       "relatedFeatures": [
         {
-          "id": "route:/user-management",
-          "title": "User Management",
-          "description": "Route discovered from frontend/src/app/(admin)/user-management/page.tsx. User-facing help article not yet linked.",
-          "status": "route_discovered",
-          "source": "route_inventory",
+          "id": "manage-permissions",
+          "title": "Manage User Access",
+          "description": "Manage users, roles, project access, and sensitive modules.",
+          "status": "documented",
+          "source": "help_article",
           "tags": [
+            "permissions",
+            "users",
+            "roles",
+            "access",
+            "templates"
+          ]
+        },
+        {
+          "id": "app-permissions-and-visibility",
+          "title": "Understand Permissions And Visibility",
+          "description": "Learn why pages, records, employee information, or actions may be visible or hidden.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "permissions",
+            "visibility",
+            "roles",
+            "privacy",
+            "app-expert"
+          ]
+        },
+        {
+          "id": "create-or-invite-a-user",
+          "title": "Create or Invite a User",
+          "description": "Add an app user from User Management and explain how the invited person finishes login setup.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "users",
+            "invite",
+            "account",
+            "onboarding"
+          ]
+        },
+        {
+          "id": "update-your-profile",
+          "title": "Update Your Profile",
+          "description": "Review your profile details and update your profile image.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "profile",
+            "settings",
+            "account",
+            "avatar"
+          ]
+        },
+        {
+          "id": "user-management",
+          "title": "User Management",
+          "description": "Create users, manage existing users, and assign project access at the company level.",
+          "status": "documented",
+          "source": "help_article",
+          "tags": [
+            "users",
             "admin",
-            "page"
+            "user-management",
+            "access"
           ]
         }
       ],
-      "relatedHelpArticles": []
+      "relatedHelpArticles": [
+        "docs/alleato-os-docs/help/articles/manage-permissions.mdx",
+        "docs/alleato-os-docs/help/articles/app-permissions-and-visibility.mdx",
+        "docs/alleato-os-docs/help/articles/create-or-invite-a-user.mdx",
+        "docs/alleato-os-docs/help/articles/update-your-profile.mdx",
+        "docs/alleato-os-docs/help/articles/user-management.mdx"
+      ]
     },
     {
       "route": "/user-management/users/[personId]",

@@ -25,7 +25,7 @@ GENERATED_DIRS = [
     RUNTIME_DIR / "generated",
 ]
 HELP_ROOTS = [
-    _repo_root() / "docs" / "help" / "articles",
+    _repo_root() / "docs" / "alleato-os-docs" / "help" / "articles",
     RUNTIME_DIR / "help" / "articles",
 ]
 SITEMAP_PATHS = [directory / "app-sitemap.generated.json" for directory in GENERATED_DIRS]
@@ -117,12 +117,25 @@ def _safe_help_article_path(file_path: str) -> Path | None:
     raw = file_path.strip()
     if not raw:
         return None
-    relative = raw.removeprefix("docs/archive/2026-06-22-docs-migration/help/articles/")
+    relative = raw
+    for prefix in [
+        "docs/alleato-os-docs/help/articles/",
+        "docs/archive/2026-06-22-docs-migration/help/articles/",
+        "docs/help/articles/",
+    ]:
+        relative = relative.removeprefix(prefix)
     candidates: list[Path] = []
     if raw.startswith("docs/"):
         candidates.append((_repo_root() / raw).resolve())
     for help_root in HELP_ROOTS:
         candidates.append((help_root / relative).resolve())
+        if relative.endswith(".md"):
+            candidates.append((help_root / f"{relative[:-3]}.mdx").resolve())
+        elif relative.endswith(".mdx"):
+            candidates.append((help_root / f"{relative[:-4]}.md").resolve())
+        else:
+            candidates.append((help_root / f"{relative}.mdx").resolve())
+            candidates.append((help_root / f"{relative}.md").resolve())
     for candidate in candidates:
         if candidate.exists() and candidate.suffix in {".md", ".mdx"} and any(
             _is_relative_to(candidate, help_root.resolve()) for help_root in HELP_ROOTS
@@ -137,6 +150,17 @@ def _is_relative_to(candidate: Path, parent: Path) -> bool:
         return True
     except ValueError:
         return False
+
+
+def _display_help_article_path(article_path: Path) -> str:
+    repo_root = _repo_root()
+    if _is_relative_to(article_path, repo_root):
+        return str(article_path.relative_to(repo_root))
+    docs_site_root = (repo_root / "docs" / "alleato-os-docs" / "help" / "articles").resolve()
+    if _is_relative_to(article_path, docs_site_root):
+        relative = article_path.relative_to(docs_site_root)
+        return str(Path("docs/alleato-os-docs/help/articles") / relative)
+    return article_path.name
 
 
 @tool
@@ -267,7 +291,7 @@ def get_feature_details(feature_id_or_title: str) -> str:
 
 @tool
 def get_help_article(file_path_or_slug: str, max_chars: int = 6000) -> str:
-    """Read one curated help article by docs/archive/2026-06-22-docs-migration/help/articles path or article slug."""
+    """Read one curated help article by docs-site help path or article slug."""
     article_path = _safe_help_article_path(file_path_or_slug)
     if article_path is None:
         slug = file_path_or_slug.strip().removesuffix(".md").removesuffix(".mdx")
@@ -278,7 +302,7 @@ def get_help_article(file_path_or_slug: str, max_chars: int = 6000) -> str:
                 "ok": False,
                 "error": (
                     "GET_HELP_ARTICLE_NOT_FOUND: expected a path under "
-                    "docs/archive/2026-06-22-docs-migration/help/articles or an article slug."
+                    "docs/alleato-os-docs/help/articles or an article slug."
                 ),
             }
         )
@@ -290,7 +314,7 @@ def get_help_article(file_path_or_slug: str, max_chars: int = 6000) -> str:
         {
             "ok": True,
             "source": "help_article",
-            "filePath": str(article_path.relative_to(_repo_root())),
+            "filePath": _display_help_article_path(article_path),
             "content": raw[:max_chars],
             "truncated": truncated,
         }

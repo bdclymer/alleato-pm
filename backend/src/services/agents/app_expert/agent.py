@@ -139,11 +139,18 @@ def _extract_sources(answer: str) -> list[AppExpertSource]:
         if key not in seen:
             seen.add(key)
             sources.append(AppExpertSource(title=route, sourceType="sitemap", route=route))
-    for file_path in re.findall(r"(docs/archive/2026-06-22-docs-migration/help/articles/[A-Za-z0-9._~!$&'()*+,;=:@%/-]+\\.md|frontend/src/app/[A-Za-z0-9._~!$&'()*+,;=:@%/\\[\\]-]+/page\\.(?:tsx|ts|jsx|js))", answer):
+    help_article_pattern = (
+        r"docs/(?:alleato-os-docs/help/articles|archive/2026-06-22-docs-migration/help/articles)/"
+        r"[A-Za-z0-9._~!$&'()*+,;=:@%/-]+\\.(?:md|mdx)"
+    )
+    source_file_pattern = (
+        r"frontend/src/app/[A-Za-z0-9._~!$&'()*+,;=:@%/\\[\\]-]+/page\\.(?:tsx|ts|jsx|js)"
+    )
+    for file_path in re.findall(rf"({help_article_pattern}|{source_file_pattern})", answer):
         key = ("file", file_path)
         if key not in seen:
             seen.add(key)
-            source_type = "help_article" if file_path.startswith("docs/archive/2026-06-22-docs-migration/help") else "source_map"
+            source_type = "help_article" if "/help/articles/" in file_path else "source_map"
             sources.append(AppExpertSource(title=file_path, sourceType=source_type, filePath=file_path))
     return sources[:20]
 

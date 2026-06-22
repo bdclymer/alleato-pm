@@ -49,7 +49,7 @@ class _FakeAgent:
                 {
                     "content": (
                         "Use /[projectId]/change-events for project change events. "
-                        "Source: docs/archive/2026-06-22-docs-migration/help/articles/change-events.md and "
+                        "Source: docs/alleato-os-docs/help/articles/change-events.mdx and "
                         "frontend/src/app/(main)/[projectId]/change-events/page.tsx."
                     )
                 }

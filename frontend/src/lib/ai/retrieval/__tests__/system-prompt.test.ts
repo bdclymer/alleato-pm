@@ -36,7 +36,7 @@ describe("assembleSystemPromptFromContext", () => {
           {
             title: "App permissions and visibility",
             sourceType: "help_article",
-            filePath: "docs/archive/2026-06-22-docs-migration/help/articles/app-permissions-and-visibility.md",
+            filePath: "docs/alleato-os-docs/help/articles/app-permissions-and-visibility.mdx",
             detail: "Published AI-visible help article.",
           },
         ],
