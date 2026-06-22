@@ -4,6 +4,7 @@ import * as React from "react";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button, type ButtonProps, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 // Simple Pagination Component (for basic use cases)
 type SimplePaginationProps = {
@@ -107,8 +108,62 @@ export function SimplePagination({
             <ChevronRight />
           </Button>
         </li>
+
+        {totalPages > MAX_PAGES_SHOWN && (
+          <li>
+            <SimplePaginationJump
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={onPageChange}
+            />
+          </li>
+        )}
       </ul>
     </nav>
+  );
+}
+
+function SimplePaginationJump({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  const [value, setValue] = React.useState("");
+
+  const commit = () => {
+    const parsed = Number.parseInt(value, 10);
+    setValue("");
+    if (Number.isNaN(parsed)) return;
+    const next = Math.min(Math.max(parsed, 1), totalPages);
+    if (next !== currentPage) onPageChange(next);
+  };
+
+  return (
+    <div className="ml-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+      <span>Go to</span>
+      <Input
+        type="number"
+        min={1}
+        max={totalPages}
+        inputMode="numeric"
+        value={value}
+        aria-label="Go to page"
+        placeholder={String(currentPage)}
+        onChange={(event) => setValue(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            commit();
+          }
+        }}
+        onBlur={commit}
+        className="h-8 w-14 px-2 text-center text-xs [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+      />
+    </div>
   );
 }
 

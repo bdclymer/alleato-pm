@@ -327,6 +327,7 @@ export interface UnifiedTableFeatures {
 export interface UnifiedTablePageProps<T> {
   header: {
     title: string;
+    eyebrow?: ReactNode;
     description?: ReactNode;
     actions?: ReactNode;
     variant?: "default" | "compact";
@@ -495,7 +496,7 @@ export interface UnifiedTablePageProps<T> {
     collapsible?: boolean;
     /** Show drag handle for resizing (default: true) */
     resizable?: boolean;
-    /** Keep panel sticky to viewport on desktop (default: false) */
+    /** Keep panel sticky to viewport on desktop so it scrolls independently and stays in view (default: true). Pass false to let the panel scroll with the page. */
     sticky?: boolean;
     /** localStorage key suffix for persisting width/collapsed state */
     storageKey?: string;
@@ -996,7 +997,7 @@ export function UnifiedTablePage<T>({
   const panelMaxWidth = getPanelMaxWidth();
   const panelCollapsible = sidePanel?.collapsible !== false;
   const panelResizable = sidePanel?.resizable !== false;
-  const panelSticky = sidePanel?.sticky === true;
+  const panelSticky = sidePanel?.sticky !== false;
 
   const [panelCollapsed, setPanelCollapsed] = React.useState(false);
   const [panelWidth, setPanelWidth] = React.useState(panelDefaultWidth);
@@ -1925,6 +1926,7 @@ export function UnifiedTablePage<T>({
   const headerContent = (
     <PageHeader
       title={header.title}
+      eyebrow={header.eyebrow}
       description={isCompactDensity ? undefined : header.description}
       variant={header.variant}
       mobileActionsInline={header.mobileActionsInline ?? true}
