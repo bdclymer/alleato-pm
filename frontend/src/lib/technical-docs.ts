@@ -68,12 +68,6 @@ const TECHNICAL_DOC_SOURCES: TechnicalDocSource[] = [
     description: "Backend API references, schemas, authentication, and integration examples.",
   },
   {
-    category: "Database",
-    directory: "docs/database",
-    slugPrefix: "database",
-    description: "Database architecture, relationships, table inventory, and schema implementation notes.",
-  },
-  {
     category: "Deployment & Operations",
     directory: "docs/deployment",
     slugPrefix: "deployment",
