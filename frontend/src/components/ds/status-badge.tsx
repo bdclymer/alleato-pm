@@ -13,7 +13,8 @@ export type StatusVariant =
   | "info"
   | "neutral"
   | "purple"
-  | "orange";
+  | "orange"
+  | "rose";
 
 const badgeStyles: Record<StatusVariant, string> = {
   success: "bg-green-50 text-green-600",
@@ -23,6 +24,7 @@ const badgeStyles: Record<StatusVariant, string> = {
   neutral: "bg-muted text-muted-foreground",
   purple: "bg-purple-50 text-purple-600",
   orange: "bg-orange-50 text-orange-600",
+  rose: "bg-rose-50 text-rose-600",
 };
 
 // ---------------------------------------------------------------------------
@@ -77,6 +79,7 @@ const STATUS_TO_VARIANT: Record<string, StatusVariant> = {
   deprecated: "neutral",
   broken: "error",
   planned: "purple",
+  "design issues": "rose",
 
   // Neutral statuses
   draft: "neutral",
@@ -145,6 +148,7 @@ const dotColors: Record<StatusVariant, string> = {
   neutral: "bg-muted-foreground/40",
   purple: "bg-purple-500",
   orange: "bg-orange-500",
+  rose: "bg-rose-500",
 };
 
 interface StatusDotProps {
@@ -182,6 +186,7 @@ const textColors: Record<StatusVariant, string> = {
   neutral: "text-muted-foreground",
   purple: "text-purple-600",
   orange: "text-orange-600",
+  rose: "text-rose-600",
 };
 
 export function StatusText({ status, className }: StatusTextProps) {

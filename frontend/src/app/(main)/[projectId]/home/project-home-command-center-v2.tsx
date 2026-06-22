@@ -307,9 +307,13 @@ export function ProjectHomeCommandCenterV2({
 
   const pm = React.useMemo(() => {
     const members = team ?? [];
+    const role = (m: ProjectTeamMember) => (m.role ?? "").toLowerCase();
     return (
-      members.find((m) => (m.role ?? "").toLowerCase().includes("project manager")) ??
-      members.find((m) => (m.role ?? "").toLowerCase().includes("manager")) ??
+      // Prefer the actual PM over an Assistant PM (both contain "project manager").
+      members.find((m) => role(m) === "project manager") ??
+      members.find((m) => role(m).includes("project manager") && !role(m).includes("assistant")) ??
+      members.find((m) => role(m).includes("manager") && !role(m).includes("assistant")) ??
+      members.find((m) => role(m).includes("project manager")) ??
       members[0] ??
       null
     );
@@ -787,7 +791,7 @@ export function ProjectHomeCommandCenterV2({
                     >
                       <div className="mb-2 flex items-center justify-between">
                         <span className="text-[13px] font-medium text-foreground">{formatShortDate(lg.log_date) ?? `Log ${lg.id}`}</span>
-                        {lg.weather_conditions ? (
+                        {typeof lg.weather_conditions === "string" && lg.weather_conditions ? (
                           <span className="text-[11px] text-muted-foreground">{lg.weather_conditions}</span>
                         ) : null}
                       </div>

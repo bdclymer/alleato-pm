@@ -94,7 +94,8 @@ export type InventoryStatus =
   | "Internal Only"
   | "Deprecated"
   | "Broken"
-  | "Planned";
+  | "Planned"
+  | "Design Issues";
 
 export type InventoryRoute = {
   route: string;
@@ -176,6 +177,7 @@ const STATUSES: InventoryStatus[] = [
   "Deprecated",
   "Broken",
   "Planned",
+  "Design Issues",
 ];
 
 const GROUP_BY_LABELS: Record<GroupBy, string> = {
