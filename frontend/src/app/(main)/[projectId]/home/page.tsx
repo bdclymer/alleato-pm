@@ -2,7 +2,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { PageShell } from "@/components/layout";
 import { notFound, redirect } from "next/navigation";
-import { ProjectCommandCenter as ProjectHomeClient } from "./project-command-center";
+import { ProjectHomeCommandCenterV2 as ProjectHomeClient } from "./project-home-command-center-v2";
 import type { BudgetGrandTotals } from "@/types/budget";
 
 export const dynamic = "force-dynamic";
@@ -511,8 +511,7 @@ export default async function ProjectHomePage({
     <PageShell
       variant="dashboard"
       title={project.name ?? "Untitled Project"}
-      eyebrow={project["job number"] ?? project.project_number ? `Job #${project["job number"] ?? project.project_number}` : undefined}
-      contentClassName="space-y-8"
+      showHeader={false}
     >
       <ProjectHomeClient
         project={project}

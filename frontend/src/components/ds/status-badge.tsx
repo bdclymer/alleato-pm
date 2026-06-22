@@ -6,7 +6,14 @@ import { cn } from "@/lib/utils";
 // Status variant system — ONE place for all status-to-color mappings
 // ---------------------------------------------------------------------------
 
-export type StatusVariant = "success" | "warning" | "error" | "info" | "neutral";
+export type StatusVariant =
+  | "success"
+  | "warning"
+  | "error"
+  | "info"
+  | "neutral"
+  | "purple"
+  | "orange";
 
 const badgeStyles: Record<StatusVariant, string> = {
   success: "bg-green-50 text-green-600",
@@ -14,6 +21,8 @@ const badgeStyles: Record<StatusVariant, string> = {
   error: "bg-red-50 text-red-600",
   info: "bg-blue-50 text-blue-600",
   neutral: "bg-muted text-muted-foreground",
+  purple: "bg-purple-50 text-purple-600",
+  orange: "bg-orange-50 text-orange-600",
 };
 
 // ---------------------------------------------------------------------------
@@ -60,6 +69,14 @@ const STATUS_TO_VARIANT: Record<string, StatusVariant> = {
 
   // Info statuses
   "not synced": "info",
+
+  // Site-map inventory statuses
+  "needs review": "warning",
+  "missing nav": "orange",
+  "internal only": "info",
+  deprecated: "neutral",
+  broken: "error",
+  planned: "purple",
 
   // Neutral statuses
   draft: "neutral",
@@ -126,6 +143,8 @@ const dotColors: Record<StatusVariant, string> = {
   error: "bg-red-500",
   info: "bg-blue-500",
   neutral: "bg-muted-foreground/40",
+  purple: "bg-purple-500",
+  orange: "bg-orange-500",
 };
 
 interface StatusDotProps {
@@ -161,6 +180,8 @@ const textColors: Record<StatusVariant, string> = {
   error: "text-red-600",
   info: "text-blue-600",
   neutral: "text-muted-foreground",
+  purple: "text-purple-600",
+  orange: "text-orange-600",
 };
 
 export function StatusText({ status, className }: StatusTextProps) {

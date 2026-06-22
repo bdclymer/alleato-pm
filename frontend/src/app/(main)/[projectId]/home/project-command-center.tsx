@@ -534,7 +534,7 @@ function divisionIdFromCostCode(costCodeId: string | null | undefined): string {
   return match?.[1]?.padStart(2, "0") ?? "uncategorized";
 }
 
-function buildBudgetDivisionSummaries({
+export function buildBudgetDivisionSummaries({
   budget,
   contractLineItems,
 }: {
@@ -815,7 +815,7 @@ function classifyTeamSlot({
   return email?.includes("@") ? "subcontractor" : "internal";
 }
 
-function SidebarTeamSection({
+export function SidebarTeamSection({
   projectId,
   team = [],
 }: {
@@ -1093,7 +1093,7 @@ const SETUP_ITEMS = [
   { id: "schedule", icon: Calendar, title: "Create Schedule", description: "Build project timeline and milestones", href: (id: string) => `/${id}/schedule` },
 ];
 
-function ProjectSetupSheet({
+export function ProjectSetupSheet({
   open,
   onOpenChange,
   projectId,
@@ -1170,7 +1170,7 @@ function ProjectSetupSheet({
    ReadinessIndicator
 ───────────────────────────────────────────────────────────── */
 
-function ReadinessIndicator({ completedCount, totalCount, onOpen }: { completedCount: number; totalCount: number; onOpen: () => void }) {
+export function ReadinessIndicator({ completedCount, totalCount, onOpen }: { completedCount: number; totalCount: number; onOpen: () => void }) {
   if (completedCount >= totalCount) return null;
   return (
     <Button type="button" variant="ghost" onClick={onOpen} className="group h-auto flex-col items-stretch gap-1 px-3 py-2 text-left hover:bg-muted/50">

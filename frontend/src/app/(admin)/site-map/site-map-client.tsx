@@ -22,6 +22,7 @@ import {
   type FilterValue,
   type TableColumn,
 } from "@/components/tables/unified";
+import { StatusBadge } from "@/components/ds/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -199,18 +200,24 @@ const TAB_LABELS: Record<SitemapTab, string> = {
 const columns: ColumnConfig[] = [
   { id: "page", label: "Page", alwaysVisible: true },
   { id: "route", label: "Route", defaultVisible: true },
+  { id: "status", label: "Status", defaultVisible: true },
   { id: "category", label: "Category", defaultVisible: true },
   { id: "type", label: "Type", defaultVisible: true },
   { id: "layout", label: "Layout", defaultVisible: true },
   { id: "accessLevel", label: "Access", defaultVisible: true },
   { id: "permissionModule", label: "Module", defaultVisible: true },
   { id: "dynamic", label: "Dynamic", defaultVisible: true },
-  { id: "status", label: "Status", defaultVisible: true },
   { id: "notes", label: "Notes", defaultVisible: true },
   { id: "lastReviewed", label: "Last Reviewed", defaultVisible: true },
   { id: "refCount", label: "Refs", defaultVisible: false },
   { id: "actions", label: "Actions", alwaysVisible: true },
 ];
+
+// Lookup config by id so column blocks stay aligned regardless of array order.
+const columnById = Object.fromEntries(columns.map((column) => [column.id, column])) as Record<
+  string,
+  ColumnConfig
+>;
 
 const defaultVisibleColumns = columns
   .filter((column) => column.defaultVisible !== false)
@@ -489,6 +496,32 @@ function fieldSelect<TValue extends string>({
   );
 }
 
+function statusSelect({
+  value,
+  onChange,
+}: {
+  value: InventoryStatus;
+  onChange: (value: InventoryStatus) => void;
+}) {
+  return (
+    <Select value={value} onValueChange={(next) => onChange(next as InventoryStatus)}>
+      <SelectTrigger
+        className="h-8 min-w-36 border-0 bg-transparent px-0 shadow-none focus:ring-0 focus:ring-offset-0"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <StatusBadge status={value} />
+      </SelectTrigger>
+      <SelectContent>
+        {STATUSES.map((option) => (
+          <SelectItem key={option} value={option}>
+            <StatusBadge status={option} />
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 function pageAccessSelect({
   value,
   onChange,
@@ -570,7 +603,7 @@ function buildColumns({
 }): TableColumn<InventoryRoute>[] {
   return [
     {
-      ...columns[0],
+      ...columnById.page,
       width: 220,
       render: (item) => {
         if (item._group) {
@@ -608,7 +641,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[1],
+      ...columnById.route,
       width: 300,
       render: (item) => {
         if (item._group) return null;
@@ -639,7 +672,20 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[2],
+      ...columnById.status,
+      render: (item) =>
+        item._group
+          ? null
+          : statusSelect({
+              value: item.status,
+              onChange: (value) => onFieldChange(item.route, "status", value),
+            }),
+      csvValue: (item) => item.status,
+      sortValue: (item) => item.status,
+      sortable: true,
+    },
+    {
+      ...columnById.category,
       render: (item) =>
         item._group
           ? null
@@ -653,7 +699,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[3],
+      ...columnById.type,
       render: (item) =>
         item._group
           ? null
@@ -667,7 +713,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[4],
+      ...columnById.layout,
       render: (item) =>
         item._group
           ? null
@@ -681,7 +727,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[5],
+      ...columnById.accessLevel,
       render: (item) =>
         item._group
           ? null
@@ -694,7 +740,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[6],
+      ...columnById.permissionModule,
       render: (item) =>
         item._group
           ? null
@@ -708,7 +754,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[7],
+      ...columnById.dynamic,
       render: (item) =>
         item._group ? null : (
           <span className="text-xs text-muted-foreground">
@@ -720,21 +766,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[8],
-      render: (item) =>
-        item._group
-          ? null
-          : fieldSelect({
-              value: item.status,
-              options: STATUSES,
-              onChange: (value) => onFieldChange(item.route, "status", value),
-            }),
-      csvValue: (item) => item.status,
-      sortValue: (item) => item.status,
-      sortable: true,
-    },
-    {
-      ...columns[9],
+      ...columnById.notes,
       width: 280,
       render: (item) => {
         if (item._group) return null;
@@ -763,7 +795,7 @@ function buildColumns({
       sortable: false,
     },
     {
-      ...columns[10],
+      ...columnById.lastReviewed,
       render: (item) =>
         item._group ? null : (
           <span className="text-xs text-muted-foreground">
@@ -775,7 +807,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[11],
+      ...columnById.refCount,
       align: "right",
       render: (item) => (item._group ? null : <span className="text-xs text-muted-foreground">{item.refCount}</span>),
       csvValue: (item) => String(item.refCount),
@@ -783,7 +815,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[12],
+      ...columnById.actions,
       render: (item) => {
         if (item._group) return null;
         const href = routeHref(item.route);

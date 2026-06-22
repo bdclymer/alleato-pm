@@ -198,6 +198,12 @@ const nextConfig: NextConfig = {
   // @sparticuz/chromium upgrades. If you add a new PDF/email route, add it here.
   outputFileTracingIncludes: {
     "/**/*": ["../docs/archive/2026-06-22-docs-migration/help/**"],
+    // The site-map (Page Access) page is force-dynamic and reads this CSV via a
+    // dynamically-constructed readFileSync path that Next.js cannot statically
+    // trace, so without this the route inventory is empty on Vercel and the
+    // "pages" tab shows no routes. Scoped to /site-map so the CSV isn't bundled
+    // into every function. If route-audit.mjs output moves, update this path.
+    "/site-map": ["../docs/reports/route-inventory.csv"],
     "/api/commitments/[commitmentId]/email": CHROMIUM_TRACE_GLOBS,
     "/api/commitments/[commitmentId]/export": CHROMIUM_TRACE_GLOBS,
     "/api/projects/[projectId]/estimates/[estimateId]/pdf": CHROMIUM_TRACE_GLOBS,
