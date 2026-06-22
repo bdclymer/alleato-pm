@@ -1,18 +1,16 @@
 "use client";
 
-import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowUpRight, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowUpRight, Check, TrendingDown, TrendingUp, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatPercent } from "@/lib/format";
 
 /* ─────────────────────────────────────────────────────────────
    FinancialOverview — at-a-glance cost health for the project home.
 
-   Three differentiated readouts:
-     1. Budget vs committed bars.
-     2. Open work queue.
-     3. Change orders split.
+   One compact readout: the three numbers a PM scans first (budget,
+   committed, ECAC) plus a single committed-vs-budget bar with an
+   ECAC marker. Per-division detail lives on /budget, not here.
 ───────────────────────────────────────────────────────────── */
 
 export interface BudgetDivisionSummary {
@@ -28,8 +26,14 @@ interface FinancialOverviewProps {
   committedCosts: number;
   estimatedCostAtCompletion: number;
   projectedOverUnder: number;
-  budgetDivisions: BudgetDivisionSummary[];
+  /** Prime contract schedule-of-values total, reconciled against the budget. */
+  primeSovTotal?: number;
+  /** Retained for call-site compatibility; division detail is shown on /budget. */
+  budgetDivisions?: BudgetDivisionSummary[];
 }
+
+/** Dollars below which the SOV and budget are treated as reconciled. */
+const SOV_MATCH_TOLERANCE = 1;
 
 function fmtFull(value: number | null | undefined): string {
   if (value == null) return "—";
@@ -49,305 +53,35 @@ function fmtCompact(value: number | null | undefined): string {
   return `${sign}$${abs.toFixed(0)}`;
 }
 
-function pct(part: number, whole: number): number {
-  if (whole <= 0) return 0;
-  return Math.min(100, Math.max(0, (part / whole) * 100));
+function clampPct(value: number): number {
+  return Math.min(100, Math.max(0, value));
 }
 
-function niceTickStep(maxValue: number): number {
-  if (maxValue <= 0) return 1;
-  const roughStep = maxValue / 4;
-  const magnitude = 10 ** Math.floor(Math.log10(roughStep));
-  const residual = roughStep / magnitude;
-
-  if (residual <= 1) return magnitude;
-  if (residual <= 1.5) return 1.5 * magnitude;
-  if (residual <= 2) return 2 * magnitude;
-  if (residual <= 2.5) return 2.5 * magnitude;
-  if (residual <= 5) return 5 * magnitude;
-  return 10 * magnitude;
-}
-
-function getDivisionCode(label: string): string {
-  const match = label.match(/^(\d{1,2})\b/);
-  return match?.[1] ?? label.slice(0, 2);
-}
-
-function getDivisionOrder(label: string): number {
-  const code = Number.parseInt(getDivisionCode(label), 10);
-  return Number.isFinite(code) ? code : Number.MAX_SAFE_INTEGER;
-}
-
-function getDivisionTitle(label: string): string {
-  return label.replace(/^\d{1,2}\s*/, "").trim();
-}
-
-function BudgetDivisionChart({
-  divisions,
+function Metric({
+  label,
+  value,
+  tone = "default",
 }: {
-  divisions: BudgetDivisionSummary[];
+  label: string;
+  value: string;
+  tone?: "default" | "danger";
 }) {
-  const chartRows = divisions
-    .filter((division) => division.budget > 0 || division.committed > 0)
-    .sort((left, right) => {
-      const orderDelta = getDivisionOrder(left.label) - getDivisionOrder(right.label);
-      return orderDelta || left.label.localeCompare(right.label);
-    });
-
-  if (chartRows.length === 0) {
-    return null;
-  }
-
-  const leftPadding = 52;
-  const rightPadding = 20;
-  const topPadding = 18;
-  const plotHeight = 230;
-  const axisHeight = 104;
-  const legendHeight = 24;
-  const groupWidth = 70;
-  const chartWidth = Math.max(680, leftPadding + rightPadding + chartRows.length * groupWidth);
-  const chartHeight = topPadding + plotHeight + axisHeight + legendHeight;
-  const plotWidth = chartWidth - leftPadding - rightPadding;
-  const maxValue = Math.max(...chartRows.flatMap((division) => [division.budget, division.committed]), 1);
-  const tickStep = niceTickStep(maxValue);
-  const axisMax = tickStep * 4;
-  const ticks = Array.from({ length: 5 }, (_, index) => index * tickStep);
-  const baselineY = topPadding + plotHeight;
-  const yForValue = (value: number) =>
-    baselineY - (Math.max(0, value) / axisMax) * plotHeight;
-
   return (
-    <div className="min-h-0 w-full overflow-x-auto">
-      <svg
-        role="img"
-        aria-label="Budget and committed costs by division"
-        viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-        className="h-auto min-w-full text-xs"
+    <div className="min-w-0">
+      <p
+        className={cn(
+          "text-lg font-semibold leading-none tabular-nums",
+          tone === "danger" ? "text-destructive" : "text-foreground",
+        )}
       >
-        <title>Budget and committed costs by division</title>
-        {ticks.map((tick) => {
-          const y = yForValue(tick);
-          return (
-            <g key={tick}>
-              <line
-                x1={leftPadding}
-                x2={leftPadding + plotWidth}
-                y1={y}
-                y2={y}
-                className="stroke-border"
-                strokeOpacity={0.65}
-              />
-              <text
-                x={leftPadding - 8}
-                y={y + 4}
-                textAnchor="end"
-                className="fill-muted-foreground tabular-nums"
-              >
-                {fmtCompact(tick)}
-              </text>
-            </g>
-          );
-        })}
-        {chartRows.map((division, index) => {
-          const groupX = leftPadding + index * groupWidth + groupWidth / 2;
-          const budgetY = yForValue(division.budget);
-          const committedY = yForValue(division.committed);
-          const budgetHeight = Math.max(2, baselineY - budgetY);
-          const committedHeight = Math.max(2, baselineY - committedY);
-          const divisionCode = getDivisionCode(division.label);
-          const divisionTitle = getDivisionTitle(division.label);
-          const label = `${divisionCode} ${divisionTitle}`.trim();
-
-          return (
-            <g key={division.id}>
-              <title>
-                {division.label}: Budget {fmtFull(division.budget)}, Committed {fmtFull(division.committed)}
-              </title>
-              <rect
-                x={groupX - 18}
-                y={budgetY}
-                width={16}
-                height={budgetHeight}
-                rx={4}
-                className="fill-muted-foreground/35"
-              />
-              <rect
-                x={groupX + 2}
-                y={committedY}
-                width={16}
-                height={committedHeight}
-                rx={4}
-                className="fill-primary"
-              />
-              <text
-                x={groupX - 12}
-                y={baselineY + 22}
-                textAnchor="end"
-                transform={`rotate(-45 ${groupX - 12} ${baselineY + 22})`}
-                className="fill-foreground font-medium"
-              >
-                {label}
-              </text>
-            </g>
-          );
-        })}
-        <line
-          x1={leftPadding}
-          x2={leftPadding + plotWidth}
-          y1={baselineY}
-          y2={baselineY}
-          className="stroke-border"
-        />
-        <g transform={`translate(${leftPadding}, ${baselineY + axisHeight + 8})`}>
-          <rect width={8} height={8} rx={2} className="fill-muted-foreground/35" />
-          <text x={16} y={8} className="fill-muted-foreground">
-            Budget
-          </text>
-          <rect x={80} width={8} height={8} rx={2} className="fill-primary" />
-          <text x={96} y={8} className="fill-muted-foreground">
-            Committed
-          </text>
-        </g>
-      </svg>
+        {value}
+      </p>
+      <p className="mt-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
     </div>
   );
 }
-
-/* ── Eyebrow label ─────────────────────────────────────────── */
-
-function Eyebrow({ children }: { children: ReactNode }) {
-  return (
-    <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-      {children}
-    </p>
-  );
-}
-
-/* ── Panel 1: Budget vs committed bars ─────────────────────── */
-
-function BudgetVsCommittedPanel({
-  projectId,
-  revisedBudget,
-  committedCosts,
-  estimatedCostAtCompletion,
-  projectedOverUnder,
-  budgetDivisions,
-}: {
-  projectId: string;
-  revisedBudget: number;
-  committedCosts: number;
-  estimatedCostAtCompletion: number;
-  projectedOverUnder: number;
-  budgetDivisions: BudgetDivisionSummary[];
-}) {
-  const overBudget = projectedOverUnder < 0;
-  const divisionRows = budgetDivisions.filter(
-    (division) => division.budget > 0 || division.committed > 0,
-  );
-  const divisionCommittedCosts = divisionRows.reduce(
-    (sum, division) => sum + division.committed,
-    0,
-  );
-  const displayedCommittedCosts =
-    committedCosts > 0 ? committedCosts : divisionCommittedCosts;
-  const variancePctOfBudget =
-    revisedBudget > 0 ? (projectedOverUnder / revisedBudget) * 100 : 0;
-
-  return (
-    <Link
-      href={`/${projectId}/budget`}
-      prefetch={false}
-      className="group flex flex-col justify-between gap-5 rounded-md border border-border/60 p-4 transition-colors hover:bg-muted/30"
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <Eyebrow>Budget vs committed</Eyebrow>
-          <div className="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-1">
-            <div>
-              <p className="text-xl font-semibold leading-none tabular-nums text-foreground">
-                {fmtFull(revisedBudget)}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">Budget</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium leading-none tabular-nums text-foreground">
-                {fmtCompact(displayedCommittedCosts)}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">Committed</p>
-            </div>
-          </div>
-        </div>
-        <span
-          className={cn(
-            "mt-4 inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold tabular-nums",
-            overBudget
-              ? "bg-destructive/10 text-destructive"
-              : "bg-success/10 text-success",
-          )}
-        >
-          {overBudget ? (
-            <TrendingDown className="h-3 w-3" />
-          ) : (
-            <TrendingUp className="h-3 w-3" />
-          )}
-          {overBudget ? "" : "+"}
-          {fmtCompact(projectedOverUnder)}
-          <span className="opacity-60">
-            {formatPercent(Math.abs(variancePctOfBudget), 1)}
-          </span>
-        </span>
-      </div>
-
-      <div className="space-y-3">
-        {divisionRows.length > 0 ? (
-          <BudgetDivisionChart divisions={divisionRows} />
-        ) : (
-          <div className="space-y-3">
-            <div className="grid grid-cols-[5.5rem_1fr_4.5rem] items-center gap-3">
-              <span className="text-xs font-medium text-muted-foreground">Budget</span>
-              <div className="h-2.5 overflow-hidden rounded-full bg-muted-foreground/12">
-                <div className="h-full rounded-full bg-muted-foreground/35" style={{ width: "100%" }} />
-              </div>
-              <span className="text-right text-xs font-medium tabular-nums text-foreground">
-                {fmtCompact(revisedBudget)}
-              </span>
-            </div>
-            <div className="grid grid-cols-[5.5rem_1fr_4.5rem] items-center gap-3">
-              <span className="text-xs font-medium text-muted-foreground">Committed</span>
-              <div className="h-2.5 overflow-hidden rounded-full bg-muted-foreground/12">
-                <div
-                  className={cn(
-                    "h-full rounded-full",
-                    displayedCommittedCosts > revisedBudget ? "bg-destructive" : "bg-primary",
-                  )}
-                  style={{
-                    width: `${pct(
-                      displayedCommittedCosts,
-                      Math.max(revisedBudget, displayedCommittedCosts, 1),
-                    )}%`,
-                  }}
-                />
-              </div>
-              <span className="text-right text-xs font-medium tabular-nums text-foreground">
-                {fmtCompact(displayedCommittedCosts)}
-              </span>
-            </div>
-          </div>
-        )}
-        <div className="grid grid-cols-[5.5rem_1fr_4.5rem] items-center gap-3">
-          <span className="text-xs font-medium text-muted-foreground">ECAC</span>
-          <div className="h-px bg-border" />
-          <span className={cn("text-right text-xs font-medium tabular-nums", overBudget ? "text-destructive" : "text-foreground")}>
-            {fmtCompact(estimatedCostAtCompletion)}
-          </span>
-        </div>
-      </div>
-      <ArrowUpRight className="ml-auto h-3.5 w-3.5 text-muted-foreground/40 transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
-    </Link>
-  );
-}
-
-/* ── Composite ─────────────────────────────────────────────── */
 
 export function FinancialOverview({
   projectId,
@@ -355,15 +89,25 @@ export function FinancialOverview({
   committedCosts,
   estimatedCostAtCompletion,
   projectedOverUnder,
-  budgetDivisions,
+  primeSovTotal = 0,
 }: FinancialOverviewProps) {
   // Nothing meaningful to show before a budget exists.
-  if (
-    revisedBudget <= 0 &&
-    committedCosts <= 0
-  ) {
+  if (revisedBudget <= 0 && committedCosts <= 0) {
     return null;
   }
+
+  const overBudget = projectedOverUnder < 0;
+  // SOV ↔ budget reconciliation (only when a prime SOV exists).
+  const hasSov = primeSovTotal > 0 && revisedBudget > 0;
+  const sovDiff = primeSovTotal - revisedBudget;
+  const sovMatched = Math.abs(sovDiff) < SOV_MATCH_TOLERANCE;
+  const denominator = Math.max(revisedBudget, committedCosts, estimatedCostAtCompletion, 1);
+  const committedWidth = clampPct((committedCosts / denominator) * 100);
+  const ecacPosition = clampPct((estimatedCostAtCompletion / denominator) * 100);
+  const budgetPosition = clampPct((revisedBudget / denominator) * 100);
+  const committedPctOfBudget = revisedBudget > 0 ? (committedCosts / revisedBudget) * 100 : 0;
+  const variancePctOfBudget =
+    revisedBudget > 0 ? (projectedOverUnder / revisedBudget) * 100 : 0;
 
   return (
     <section aria-label="Financial overview">
@@ -377,16 +121,114 @@ export function FinancialOverview({
           View budget
         </Link>
       </div>
-      <div>
-        <BudgetVsCommittedPanel
-          projectId={projectId}
-          revisedBudget={revisedBudget}
-          committedCosts={committedCosts}
-          estimatedCostAtCompletion={estimatedCostAtCompletion}
-          projectedOverUnder={projectedOverUnder}
-          budgetDivisions={budgetDivisions}
-        />
-      </div>
+
+      <Link
+        href={`/${projectId}/budget`}
+        prefetch={false}
+        className="group block rounded-lg bg-card p-5 transition-colors hover:bg-muted/40"
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-wrap items-start gap-x-10 gap-y-4">
+            <Metric label="Revised budget" value={fmtFull(revisedBudget)} />
+            <Metric label="Committed" value={fmtCompact(committedCosts)} />
+            <Metric
+              label="Forecast (ECAC)"
+              value={fmtCompact(estimatedCostAtCompletion)}
+              tone={overBudget ? "danger" : "default"}
+            />
+          </div>
+          <span
+            className={cn(
+              "inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold tabular-nums",
+              overBudget
+                ? "bg-destructive/10 text-destructive"
+                : "bg-success/10 text-success",
+            )}
+          >
+            {overBudget ? (
+              <TrendingDown className="h-3 w-3" />
+            ) : (
+              <TrendingUp className="h-3 w-3" />
+            )}
+            {overBudget ? "" : "+"}
+            {fmtCompact(projectedOverUnder)}
+            <span className="opacity-60">{formatPercent(Math.abs(variancePctOfBudget), 1)}</span>
+            <span className="ml-0.5 hidden text-muted-foreground sm:inline">
+              {overBudget ? "over" : "under"}
+            </span>
+          </span>
+        </div>
+
+        {/* Committed-vs-budget bar with an ECAC marker. */}
+        <div className="mt-5">
+          <div className="relative h-2.5 overflow-hidden rounded-full bg-muted">
+            <div
+              className={cn(
+                "h-full rounded-full transition-[width]",
+                committedCosts > revisedBudget ? "bg-destructive" : "bg-primary",
+              )}
+              style={{ width: `${committedWidth}%` }}
+            />
+            {/* Revised-budget reference line */}
+            <span
+              aria-hidden
+              className="absolute top-0 h-full w-px bg-foreground/30"
+              style={{ left: `${budgetPosition}%` }}
+            />
+          </div>
+          <div className="relative mt-2 h-4 text-[11px] tabular-nums text-muted-foreground">
+            <span className="absolute left-0">
+              {formatPercent(clampPct(committedPctOfBudget), 0)} committed
+            </span>
+            {/* ECAC marker label, kept inside the track bounds */}
+            <span
+              aria-hidden
+              className={cn(
+                "absolute -translate-x-1/2 font-medium",
+                overBudget ? "text-destructive" : "text-foreground/70",
+              )}
+              style={{ left: `${Math.min(92, Math.max(8, ecacPosition))}%` }}
+            >
+              ECAC
+            </span>
+          </div>
+        </div>
+
+        {hasSov && (
+          <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/60 pt-3">
+            <div className="min-w-0">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                Prime SOV vs budget
+              </p>
+              <p className="mt-0.5 text-sm font-medium tabular-nums text-foreground">
+                {fmtFull(primeSovTotal)}
+                <span className="ml-1 font-normal text-muted-foreground">SOV</span>
+              </p>
+            </div>
+            <span
+              className={cn(
+                "inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold",
+                sovMatched ? "bg-success/10 text-success" : "bg-warning/10 text-warning",
+              )}
+            >
+              {sovMatched ? (
+                <>
+                  <Check className="h-3 w-3" />
+                  Ties to budget
+                </>
+              ) : (
+                <>
+                  <TriangleAlert className="h-3 w-3" />
+                  <span className="tabular-nums">{fmtCompact(Math.abs(sovDiff))}</span>
+                  {sovDiff > 0 ? "over" : "under"} budget
+                </>
+              )}
+            </span>
+          </div>
+        )}
+
+        <ArrowUpRight className="ml-auto mt-1 h-3.5 w-3.5 text-muted-foreground/40 transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
+      </Link>
     </section>
   );
 }

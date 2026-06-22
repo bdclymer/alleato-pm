@@ -1280,6 +1280,18 @@ export function ProjectCommandCenter({
     () => buildBudgetDivisionSummaries({ budget: budget ?? [], contractLineItems: contractLineItems ?? [] }),
     [budget, contractLineItems],
   );
+  // Prime contract schedule-of-values total, for the SOV ↔ budget reconciliation.
+  const primeSovTotal = React.useMemo(
+    () =>
+      (contractLineItems ?? []).reduce(
+        (sum, line) =>
+          sum +
+          (Number(line.total_cost) ||
+            (Number(line.quantity) || 0) * (Number(line.unit_cost) || 0)),
+        0,
+      ),
+    [contractLineItems],
+  );
   const homeMeetings = lazyTabData.meetings;
   const homeDocuments = lazyTabData.projectDocuments;
   const homeDailyLogs = lazyTabData.dailyLogs;
@@ -1330,71 +1342,41 @@ export function ProjectCommandCenter({
 
   /* ── Tab content builders ────────────────────────────── */
 
-  const tasksContent = (search: string) => {
-    const filtered = openTasks
-      .filter((t) => t.description?.toLowerCase().includes(search.toLowerCase()))
-      .slice(0, 10);
+  const tasksContent = () => {
+    const filtered = openTasks.slice(0, 6);
     if (filtered.length === 0) return <EmptyTabState label="open tasks" />;
     return (
-      <>
-        <div className="divide-y divide-border/60 sm:hidden">
-          {filtered.map((task) => {
-            const overdue = task.due_date ? isPast(new Date(task.due_date)) : false;
-            return (
+      <ul className="divide-y divide-border/50">
+        {filtered.map((task) => {
+          const overdue = task.due_date ? isPast(new Date(task.due_date)) : false;
+          return (
+            <li key={task.id}>
               <Link
-                key={task.id}
                 href={`/${projectId}/tasks`}
                 prefetch={false}
-                className="block py-3 transition-colors hover:text-primary"
+                className="group flex items-center gap-3 py-2.5 transition-colors hover:text-primary"
               >
-                <p className="line-clamp-2 text-sm font-medium leading-5 text-foreground">
+                <span className="min-w-0 flex-1 truncate text-sm text-foreground transition-colors group-hover:text-primary">
                   {task.description}
-                </p>
-                <div className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="truncate">{task.assignee_name || "Unassigned"}</span>
-                  <span aria-hidden="true">/</span>
-                  <span className={cn(overdue && "font-medium text-destructive")}>
-                    {task.due_date ? formatMonthDay(task.due_date) : "No due date"}
+                </span>
+                {task.assignee_name && (
+                  <span className="hidden shrink-0 truncate text-xs text-muted-foreground sm:inline sm:max-w-40">
+                    {task.assignee_name}
                   </span>
-                </div>
+                )}
+                <span
+                  className={cn(
+                    "shrink-0 text-xs tabular-nums",
+                    overdue ? "font-medium text-destructive" : "text-muted-foreground",
+                  )}
+                >
+                  {task.due_date ? formatMonthDay(task.due_date) : "—"}
+                </span>
               </Link>
-            );
-          })}
-        </div>
-        <div className="hidden sm:block">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Task</TableHead>
-                <TableHead>Assignee</TableHead>
-                <TableHead>Due</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((task) => {
-                const overdue = task.due_date ? isPast(new Date(task.due_date)) : false;
-                return (
-                  <TableRow key={task.id}>
-                    <TableCell className="max-w-xs">
-                      <Link href={`/${projectId}/tasks`} prefetch={false} className="truncate text-foreground hover:text-primary transition-colors">
-                        {task.description}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{task.assignee_name || "—"}</TableCell>
-                    <TableCell className={cn(overdue ? "text-destructive font-medium" : "text-muted-foreground")}>
-                      {task.due_date ? formatMonthDay(task.due_date) : "—"}
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={overdue ? "Overdue" : (task.priority || task.status || "Open")} />
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      </>
+            </li>
+          );
+        })}
+      </ul>
     );
   };
 
@@ -1614,10 +1596,6 @@ export function ProjectCommandCenter({
           {/* Alerts */}
           {alerts.length > 0 && <AlertsBand alerts={alerts} />}
 
-          <HomeCollapsibleSection title="Open Tasks" href={`/${projectId}/tasks`}>
-            {tasksContent("")}
-          </HomeCollapsibleSection>
-
           {/* Financials */}
           <FinancialOverview
             projectId={projectId}
@@ -1625,6 +1603,7 @@ export function ProjectCommandCenter({
             committedCosts={committedCosts}
             estimatedCostAtCompletion={ecac}
             projectedOverUnder={variance}
+            primeSovTotal={primeSovTotal}
             budgetDivisions={budgetDivisions}
           />
 
@@ -1706,6 +1685,16 @@ export function ProjectCommandCenter({
               dailyLogsContent("")
             )}
           </HomeCollapsibleSection>
+
+          {openTasks.length > 0 && (
+            <HomeCollapsibleSection
+              title={`Open Tasks (${openTasks.length})`}
+              href={`/${projectId}/tasks`}
+              defaultOpen={false}
+            >
+              {tasksContent()}
+            </HomeCollapsibleSection>
+          )}
 
           <HomeCollapsibleSection title="Document Intelligence">
             <TabSection tabs={docIntelTabs} defaultTab="documents" />
