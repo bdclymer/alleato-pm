@@ -145,6 +145,10 @@ function inferCategory(route: string, file: string): InventoryRoute["category"] 
   const routeLower = route.toLowerCase();
   const fileLower = file.toLowerCase();
 
+  // Check Emails before AI — "email" contains the substring "ai".
+  if (routeLower.includes("email") || routeLower.includes("outlook") || routeLower.includes("inbox")) {
+    return "Emails";
+  }
   if (routeLower.includes("ai") || routeLower.includes("rag") || routeLower.includes("intelligence")) {
     return "AI Intelligence";
   }
@@ -163,7 +167,10 @@ function inferCategory(route: string, file: string): InventoryRoute["category"] 
   if (routeLower.includes("test") || routeLower.includes("qa") || routeLower.includes("errors")) {
     return "Testing / QA";
   }
-  if (routeLower.includes("settings") || routeLower.includes("auth") || routeLower.includes("api-docs") || routeLower.includes("design") || routeLower.includes("table-pages")) {
+  if (routeLower.includes("design") || routeLower.includes("style-guide") || routeLower.includes("tokens")) {
+    return "Design";
+  }
+  if (routeLower.includes("settings") || routeLower.includes("auth") || routeLower.includes("api-docs") || routeLower.includes("table-pages")) {
     return "System";
   }
   return "Project Management";
@@ -181,6 +188,51 @@ function inferType(route: string, file: string): InventoryRoute["type"] {
   if (fileLower.includes("/(tables)/") || routeLower.includes("table")) return "Database / Table";
   if (routeLower.includes("/new") || routeLower.includes("/edit") || routeLower.includes("/create") || routeLower.includes("workflow")) return "Workflow";
   return "Utility";
+}
+
+function inferLayout(route: string, file: string, kind: string): InventoryRoute["layout"] {
+  if (kind === "api") return "Other";
+
+  const routeLower = route.toLowerCase();
+  const fileLower = file.toLowerCase();
+  const segments = route.split("/").filter(Boolean);
+  const lastSegment = segments[segments.length - 1] ?? "";
+
+  // Create/edit pages are forms.
+  if (routeLower.endsWith("/new") || routeLower.endsWith("/edit") || routeLower.endsWith("/create") || routeLower.includes("/form")) {
+    return "Form";
+  }
+  // A trailing dynamic id segment (other than the project root) is a record detail page.
+  if (/^\[.+Id\]$/.test(lastSegment) && lastSegment !== "[projectId]") {
+    return "Detail";
+  }
+  // Tables live under the (tables) route group or read as list/table surfaces.
+  if (fileLower.includes("/(tables)/") || routeLower.includes("table")) {
+    return "Table";
+  }
+  // Project root, home, and overview surfaces are dashboards.
+  if (
+    route === "/" ||
+    lastSegment === "[projectId]" ||
+    routeLower.endsWith("/home") ||
+    routeLower.includes("dashboard") ||
+    routeLower.includes("overview") ||
+    routeLower.includes("command-center") ||
+    routeLower.includes("intelligence")
+  ) {
+    return "Dashboard";
+  }
+  // Read-heavy/settings/docs surfaces.
+  if (
+    routeLower.includes("settings") ||
+    routeLower.includes("docs") ||
+    routeLower.includes("guide") ||
+    routeLower.includes("design") ||
+    routeLower.includes("readme")
+  ) {
+    return "Content";
+  }
+  return "Other";
 }
 
 function readRouteInventory(): InventoryRoute[] {
@@ -206,6 +258,7 @@ function readRouteInventory(): InventoryRoute[] {
       page: toTitle(row.route),
       category,
       type: inferType(row.route, row.file),
+      layout: inferLayout(row.route, row.file, row.kind),
       status: "Needs Review",
       notes: "",
       lastReviewed: "",

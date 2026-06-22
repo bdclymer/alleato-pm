@@ -7,7 +7,6 @@ import {
   ChevronDown,
   ChevronRight,
   ExternalLink,
-  Layers,
   MoreHorizontal,
   PanelRightOpen,
 } from "lucide-react";
@@ -29,10 +28,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -68,6 +63,8 @@ export type InventoryCategory =
   | "Team / Directory"
   | "Admin"
   | "AI Intelligence"
+  | "Emails"
+  | "Design"
   | "Testing / QA"
   | "System";
 
@@ -80,6 +77,14 @@ export type InventoryType =
   | "Settings"
   | "Database / Table"
   | "Utility";
+
+export type InventoryLayout =
+  | "Form"
+  | "Detail"
+  | "Table"
+  | "Dashboard"
+  | "Content"
+  | "Other";
 
 export type InventoryStatus =
   | "Active"
@@ -95,6 +100,7 @@ export type InventoryRoute = {
   page: string;
   category: InventoryCategory;
   type: InventoryType;
+  layout: InventoryLayout;
   status: InventoryStatus;
   notes: string;
   lastReviewed: string;
@@ -111,11 +117,11 @@ export type InventoryRoute = {
   _groupCount?: number;
 };
 
-type InventoryOverlay = Partial<Pick<InventoryRoute, "category" | "type" | "status" | "notes" | "lastReviewed">> & {
+type InventoryOverlay = Partial<Pick<InventoryRoute, "category" | "type" | "layout" | "status" | "notes" | "lastReviewed">> & {
   updatedAt?: string;
 };
 
-type GroupBy = "none" | "category" | "type" | "status";
+type GroupBy = "none" | "category" | "type" | "layout" | "status";
 type SitemapTab =
   | "all"
   | "pages"
@@ -135,6 +141,8 @@ const CATEGORIES: InventoryCategory[] = [
   "Team / Directory",
   "Admin",
   "AI Intelligence",
+  "Emails",
+  "Design",
   "Testing / QA",
   "System",
 ];
@@ -148,6 +156,15 @@ const TYPES: InventoryType[] = [
   "Settings",
   "Database / Table",
   "Utility",
+];
+
+const LAYOUTS: InventoryLayout[] = [
+  "Form",
+  "Detail",
+  "Table",
+  "Dashboard",
+  "Content",
+  "Other",
 ];
 
 const STATUSES: InventoryStatus[] = [
@@ -164,6 +181,7 @@ const GROUP_BY_LABELS: Record<GroupBy, string> = {
   none: "None",
   category: "Category",
   type: "Type",
+  layout: "Layout",
   status: "Status",
 };
 
@@ -183,6 +201,7 @@ const columns: ColumnConfig[] = [
   { id: "route", label: "Route", defaultVisible: true },
   { id: "category", label: "Category", defaultVisible: true },
   { id: "type", label: "Type", defaultVisible: true },
+  { id: "layout", label: "Layout", defaultVisible: true },
   { id: "accessLevel", label: "Access", defaultVisible: true },
   { id: "permissionModule", label: "Module", defaultVisible: true },
   { id: "dynamic", label: "Dynamic", defaultVisible: true },
@@ -356,6 +375,7 @@ function tabNoun(tab: SitemapTab): string {
 function getGroupKey(route: InventoryRoute, groupBy: GroupBy): string {
   if (groupBy === "category") return route.category;
   if (groupBy === "type") return route.type;
+  if (groupBy === "layout") return route.layout;
   if (groupBy === "status") return route.status;
   return "";
 }
@@ -376,6 +396,7 @@ function buildGroupedItems(routes: InventoryRoute[], groupBy: GroupBy, collapsed
       page: group,
       category: "System",
       type: "Utility",
+      layout: "Other",
       status: "Needs Review",
       notes: "",
       lastReviewed: "",
@@ -413,6 +434,7 @@ function applyFilters(
         route.route.toLowerCase().includes(query) ||
         route.category.toLowerCase().includes(query) ||
         route.type.toLowerCase().includes(query) ||
+        route.layout.toLowerCase().includes(query) ||
         route.status.toLowerCase().includes(query) ||
         route.notes.toLowerCase().includes(query) ||
         route.file.toLowerCase().includes(query),
@@ -421,6 +443,7 @@ function applyFilters(
 
   if (filters.category) filtered = filtered.filter((route) => route.category === filters.category);
   if (filters.type) filtered = filtered.filter((route) => route.type === filters.type);
+  if (filters.layout) filtered = filtered.filter((route) => route.layout === filters.layout);
   if (filters.status) filtered = filtered.filter((route) => route.status === filters.status);
   if (filters.dynamic) filtered = filtered.filter((route) => route.dynamic === (filters.dynamic === "true"));
 
@@ -648,6 +671,20 @@ function buildColumns({
       render: (item) =>
         item._group
           ? null
+          : fieldSelect({
+              value: item.layout,
+              options: LAYOUTS,
+              onChange: (value) => onFieldChange(item.route, "layout", value),
+            }),
+      csvValue: (item) => item.layout,
+      sortValue: (item) => item.layout,
+      sortable: true,
+    },
+    {
+      ...columns[5],
+      render: (item) =>
+        item._group
+          ? null
           : pageAccessSelect({
               value: item.accessLevel,
               onChange: (value) => onAccessChange(item, value),
@@ -657,7 +694,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[5],
+      ...columns[6],
       render: (item) =>
         item._group
           ? null
@@ -671,7 +708,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[6],
+      ...columns[7],
       render: (item) =>
         item._group ? null : (
           <span className="text-xs text-muted-foreground">
@@ -683,7 +720,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[7],
+      ...columns[8],
       render: (item) =>
         item._group
           ? null
@@ -697,7 +734,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[8],
+      ...columns[9],
       width: 280,
       render: (item) => {
         if (item._group) return null;
@@ -726,7 +763,7 @@ function buildColumns({
       sortable: false,
     },
     {
-      ...columns[9],
+      ...columns[10],
       render: (item) =>
         item._group ? null : (
           <span className="text-xs text-muted-foreground">
@@ -738,7 +775,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[10],
+      ...columns[11],
       align: "right",
       render: (item) => (item._group ? null : <span className="text-xs text-muted-foreground">{item.refCount}</span>),
       csvValue: (item) => String(item.refCount),
@@ -746,7 +783,7 @@ function buildColumns({
       sortable: true,
     },
     {
-      ...columns[11],
+      ...columns[12],
       render: (item) => {
         if (item._group) return null;
         const href = routeHref(item.route);
@@ -1032,6 +1069,12 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
       options: TYPES.map((type) => ({ value: type, label: type })),
     },
     {
+      id: "layout",
+      label: "Layout",
+      type: "select",
+      options: LAYOUTS.map((layout) => ({ value: layout, label: layout })),
+    },
+    {
       id: "status",
       label: "Status",
       type: "select",
@@ -1052,6 +1095,7 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
     const next: Record<string, FilterValue> = {};
     if (tableState.activeFilters?.category) next.category = tableState.activeFilters.category;
     if (tableState.activeFilters?.type) next.type = tableState.activeFilters.type;
+    if (tableState.activeFilters?.layout) next.layout = tableState.activeFilters.layout;
     if (tableState.activeFilters?.status) next.status = tableState.activeFilters.status;
     if (tableState.activeFilters?.dynamic) next.dynamic = tableState.activeFilters.dynamic;
     return next;
@@ -1135,34 +1179,20 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
 
-  const groupByControl = (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant={groupBy !== "none" ? "secondary" : "ghost"} size="sm" className="h-8 gap-1.5 text-xs">
-          <Layers className="h-3.5 w-3.5" />
-          {groupBy !== "none" ? `Grouped by ${GROUP_BY_LABELS[groupBy]}` : "Group by"}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-44">
-        <DropdownMenuLabel className="text-xs text-muted-foreground">Group rows by</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuRadioGroup
-          value={groupBy}
-          onValueChange={(value) => {
-            setGroupBy(value as GroupBy);
-            setCollapsedGroups(new Set());
-            setSelectedIds([]);
-          }}
-        >
-          {Object.entries(GROUP_BY_LABELS).map(([value, label]) => (
-            <DropdownMenuRadioItem key={value} value={value} className="text-sm">
-              {label}
-            </DropdownMenuRadioItem>
-          ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+  const groupByOptions = useMemo(
+    () =>
+      Object.entries(GROUP_BY_LABELS).map(([value, label]) => ({
+        value,
+        label,
+      })),
+    [],
   );
+
+  const handleGroupByChange = useCallback((value: string) => {
+    setGroupBy(value as GroupBy);
+    setCollapsedGroups(new Set());
+    setSelectedIds([]);
+  }, []);
 
   const bulkToolbar =
     selectedIds.length > 0 ? (
@@ -1208,6 +1238,16 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
             ))}
           </SelectContent>
         </Select>
+        <Select key={`layout-${selectedIds.length}`} onValueChange={(value) => handleBulkFieldChange("layout", value as InventoryLayout)}>
+          <SelectTrigger className="h-8 w-40 bg-background text-xs">
+            <SelectValue placeholder="Set layout" />
+          </SelectTrigger>
+          <SelectContent>
+            {LAYOUTS.map((layout) => (
+              <SelectItem key={layout} value={layout}>{layout}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select key={`status-${selectedIds.length}`} onValueChange={(value) => handleBulkFieldChange("status", value as InventoryStatus)}>
           <SelectTrigger className="h-8 w-40 bg-background text-xs">
             <SelectValue placeholder="Set status" />
@@ -1245,7 +1285,6 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
                 <ExternalLink className="h-3.5 w-3.5" />
               </Link>
             </Button>
-            {groupByControl}
           </div>
         ),
       }}
@@ -1271,6 +1310,9 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
         columns,
         visibleColumns: tableState.visibleColumns,
         onColumnVisibilityChange: tableState.setVisibleColumns,
+        groupByOptions,
+        groupBy,
+        onGroupByChange: handleGroupByChange,
       }}
       data={{
         items: itemsForTable,
@@ -1348,6 +1390,10 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
                     <div>
                       <p className="text-xs text-muted-foreground">Type</p>
                       <p className="font-medium">{activeRoute.type}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Layout</p>
+                      <p className="font-medium">{activeRoute.layout}</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Last reviewed</p>
