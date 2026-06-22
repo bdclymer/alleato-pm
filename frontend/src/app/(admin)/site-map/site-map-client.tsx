@@ -116,7 +116,15 @@ type InventoryOverlay = Partial<Pick<InventoryRoute, "category" | "type" | "stat
 };
 
 type GroupBy = "none" | "category" | "type" | "status";
-type SitemapTab = "all" | "project-pages" | "admin-pages" | "table-pages" | "needs-review";
+type SitemapTab =
+  | "all"
+  | "pages"
+  | "api"
+  | "project-pages"
+  | "admin-pages"
+  | "table-pages"
+  | "form-pages"
+  | "needs-review";
 
 const OVERLAY_STORAGE_KEY = "sitemap-inventory-overrides";
 
@@ -161,9 +169,12 @@ const GROUP_BY_LABELS: Record<GroupBy, string> = {
 
 const TAB_LABELS: Record<SitemapTab, string> = {
   all: "All",
+  pages: "Pages",
+  api: "API",
   "project-pages": "Project Pages",
   "admin-pages": "Admin Pages",
   "table-pages": "Table Pages",
+  "form-pages": "Form Pages",
   "needs-review": "Needs Review",
 };
 
@@ -188,9 +199,12 @@ const defaultVisibleColumns = columns
 
 function parseTab(value: string | null): SitemapTab {
   if (
+    value === "pages" ||
+    value === "api" ||
     value === "project-pages" ||
     value === "admin-pages" ||
     value === "table-pages" ||
+    value === "form-pages" ||
     value === "needs-review"
   ) {
     return value;
@@ -303,11 +317,21 @@ function buildTabHref(pathname: string, searchParams: URLSearchParams, tab: Site
 }
 
 function matchesTab(route: InventoryRoute, tab: SitemapTab): boolean {
-  if (tab === "project-pages") return route.type === "Project Page" || route.route.includes("[projectId]");
-  if (tab === "admin-pages") return route.type === "Admin Page" || route.category === "Admin";
-  if (tab === "table-pages") return route.type === "Database / Table" || route.file.includes("/(tables)/");
+  const isPageRoute = route.kind === "page" || route.kind === "page.nonprod";
+  if (tab === "pages") return isPageRoute;
+  if (tab === "api") return route.kind === "api";
+  if (tab === "project-pages") return isPageRoute && (route.type === "Project Page" || route.route.includes("[projectId]"));
+  if (tab === "admin-pages") return isPageRoute && (route.type === "Admin Page" || route.category === "Admin");
+  if (tab === "table-pages") return isPageRoute && (route.type === "Database / Table" || route.file.includes("/(tables)/"));
+  if (tab === "form-pages") return isPageRoute && (route.type === "Workflow" || route.route.includes("/new") || route.route.includes("/edit") || route.route.includes("/create"));
   if (tab === "needs-review") return route.status === "Needs Review" || route.status === "Broken" || route.status === "Missing Nav";
   return true;
+}
+
+function tabNoun(tab: SitemapTab): string {
+  if (tab === "api") return "API routes";
+  if (tab === "all") return "routes";
+  return "pages";
 }
 
 function getGroupKey(route: InventoryRoute, groupBy: GroupBy): string {
@@ -1077,6 +1101,7 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
 
   const totalPages = Math.max(1, Math.ceil(sortedRoutes.length / tableState.perPage));
   const isFiltered = Boolean(tableState.debouncedSearch) || Object.keys(activeFilters).length > 0;
+  const activeTabNoun = tabNoun(currentTab);
 
   const tabs = useMemo(
     () =>
@@ -1190,7 +1215,7 @@ export default function SiteMapClient({ routes }: { routes: InventoryRoute[] }) 
     <UnifiedTablePage<InventoryRoute>
       header={{
         title: "Page Access",
-        description: `${filteredRoutes.length} of ${tabbedRoutes.length} generated pages shown`,
+        description: `${filteredRoutes.length} of ${tabbedRoutes.length} ${activeTabNoun} shown`,
         actions: (
           <div className="flex items-center gap-2">
             {savedAt ? <span className="text-xs text-muted-foreground">Saved</span> : null}

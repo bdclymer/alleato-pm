@@ -63,8 +63,11 @@ async function findRunsDir(): Promise<string | null> {
     try {
       const stat = await fs.stat(dir);
       if (stat.isDirectory()) return dir;
-    } catch {
-      // try next candidate
+    } catch (error) {
+      console.warn(`${WHERE}: eval runs directory candidate unavailable`, {
+        dir,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
   return null;
@@ -74,7 +77,11 @@ async function readRun(dir: string, runId: string): Promise<RawRun | null> {
   try {
     const raw = await fs.readFile(path.join(dir, runId, "results.json"), "utf8");
     return JSON.parse(raw) as RawRun;
-  } catch {
+  } catch (error) {
+    console.warn(`${WHERE}: eval run results could not be read`, {
+      runId,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
